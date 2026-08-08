@@ -1742,3 +1742,10 @@
 - Giữ độ phóng lớn của logo chế độ đang chọn đã chốt ở V1.3.113; chỉ cân vùng chứa và tỷ lệ với khung mới.
 - Không sửa Submit Result, Confirm Result, Dispute, Rematch, RP, Series, Parsec, Invite/Quick Match hay backend.
 - Cập nhật APP_VERSION thành 1.3.118.
+
+
+## V1.3.119 — Ket noi cot thong tin, Parsec va lich su — Phan 4
+- Chỉ thêm `static/css/room/21-target-side-rail-bridge.css`.
+- Cân tỷ lệ cột Thông tin phòng, Parsec và Lịch sử đấu theo giao diện mẫu.
+- Không đổi HTML/Jinja, ảnh/logo, dữ liệu động, route, RP, trạng thái phòng hay hành vi Parsec.
+- Giữ lịch sử ở đúng vị trí DOM hiện tại; chỉ chỉnh CSS/tỷ lệ để tránh xung đột luồng.
