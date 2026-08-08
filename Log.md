@@ -1736,3 +1736,10 @@
 - Co dinh thu tu 6 che do: rank_random -> random3_pick1 -> tactical_bo3 -> bo3 -> ban_pick_bo3 -> home_away.
 - Dong bo so thu tu mode dang chon va mode card.
 - Wrapper cho waiting shell dung `pes-room3-live-shell arena-room-v2` de nhan bien nen san dau.
+
+
+## V1.3.121 - trong_suot_khu_vuc_3_va_khung_vang_neon
+- Khu vuc 3 (center mode) chuyen sang nen trong suot hon, bo goc va bo khung vang anh kim co glow neon.
+- 6 logo che do va card che do chuyen ve nen trong suot, vien vang anh kim va hieu ung chieu sau.
+- Thu gon chieu cao toan bo waiting shell de o tile 100% nhin thay day du host / center / opponent / sidebar / nut / 6 che do.
+- Giu nguyen logic phong dau, chi tinh chinh giao dien trang thai Cho doi thu.
