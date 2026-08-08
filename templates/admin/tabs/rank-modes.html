@@ -1,0 +1,56 @@
+<section class="admin-tab-panel" data-admin-panel="rank-modes">
+    <div class="panel">
+        <div class="admin-section-heading">
+            <div><h2>🏆 Quản lý chế độ Rank</h2><p class="small">Thiết lập điều kiện mở khóa và công thức RP. Công tắc bật/tắt từng chế độ đã được chuyển sang tab Hệ thống để tránh cấu hình trùng lặp.</p></div>
+            <span class="admin-count">6 chế độ</span>
+        </div>
+        <form method="post" action="{{ url_for('admin_save_rank_modes') }}">
+            <div class="admin-rank-mode-grid">
+            {% for code in rank_mode_order %}
+                {% set mode = rank_mode_configs.get(code, {}) %}
+                <article class="admin-rank-mode-card">
+                    <div class="admin-rank-mode-head">
+                        <div><h3>{{ mode.label }}</h3><small>{{ code }}</small></div>
+                    </div>
+                    <div class="admin-rank-mode-fields">
+                        <label>RP mở khóa<input type="number" min="0" name="{{ code }}__min_rp" value="{{ mode.min_rp or 0 }}"></label>
+                        <label>Số trận tối thiểu<input type="number" min="0" name="{{ code }}__min_matches" value="{{ mode.min_matches or 0 }}"></label>
+                        <label>Chênh RP tối đa<input type="number" min="0" name="{{ code }}__max_rp_gap" value="{{ mode.max_rp_gap or 0 }}"></label>
+                        {% if code == 'ban_pick_bo3' %}
+                        <label>Kích thước Pool<input type="number" min="12" name="{{ code }}__pool_size" value="{{ mode.pool_size or 20 }}"><small>Tối thiểu = 2 × lượt cấm mỗi bên + 6 CLB cho tối đa 3 trận.</small></label>
+                        <label>Lượt cấm mỗi bên<input type="number" min="0" name="{{ code }}__bans_per_player" value="{{ mode.bans_per_player or 3 }}"></label>
+                        <label>Thời gian cấm (giây)<input type="number" min="5" name="{{ code }}__ban_seconds" value="{{ mode.ban_seconds or 30 }}"></label>
+                        <label>Thời gian chọn (giây)<input type="number" min="5" name="{{ code }}__pick_seconds" value="{{ mode.pick_seconds or 30 }}"></label>
+                        {% endif %}
+                    </div>
+                    {% if mode.series_type != 'single' %}
+                    <details class="admin-rp-details">
+                        <summary>Công thức RP Series (đã chốt)</summary>
+                        <div class="admin-rank-mode-fields admin-rp-fixed-summary">
+                        {% if code == 'home_away' %}
+                            <div><span>Thắng cả 2</span><strong>+{{ mode.rp.win_both }}</strong></div>
+                            <div><span>Thắng 1 + hòa 1</span><strong>+{{ mode.rp.one_win_one_draw_win }}</strong></div>
+                            <div><span>1 thắng + 1 thua, thắng tổng</span><strong>+{{ mode.rp.split_aggregate_win }}</strong></div>
+                            <div><span>1 thắng + 1 thua, thua tổng</span><strong>{{ mode.rp.split_aggregate_loss }}</strong></div>
+                            <div><span>Thua 1 + hòa 1</span><strong>{{ mode.rp.one_win_one_draw_loss }}</strong></div>
+                            <div><span>Thua cả 2</span><strong>{{ mode.rp.lose_both }}</strong></div>
+                        {% else %}
+                            <div><span>Thắng 2–0</span><strong>+{{ mode.rp.win_2_0 }}</strong></div>
+                            <div><span>Thắng 2–1</span><strong>+{{ mode.rp.win_2_1 }}</strong></div>
+                            <div><span>Thua 1–2</span><strong>{{ mode.rp.lose_1_2 }}</strong></div>
+                            <div><span>Thua 0–2</span><strong>{{ mode.rp.lose_0_2 }}</strong></div>
+                        {% endif %}
+                            <div><span>Biến động</span><strong>-2 → +3</strong></div>
+                            <div><span>Hòa</span><strong>Random +1 → +6</strong></div>
+                            <div><span>Bỏ cuộc</span><strong>-20 RP</strong></div>
+                        </div>
+                    </details>
+                    {% else %}<p class="small">Chế độ trận đơn dùng công thức RP Rank hiện tại.</p>{% endif %}
+                </article>
+            {% endfor %}
+            </div>
+            <div class="admin-rank-mode-save"><button class="btn gold" type="submit">💾 Lưu cấu hình 6 chế độ</button></div>
+        </form>
+    </div>
+</section>
+

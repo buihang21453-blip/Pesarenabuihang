@@ -1,0 +1,210 @@
+<section class="admin-tab-panel" data-admin-panel="users">
+    <div class="panel">
+        <div class="admin-section-heading admin-user-toolbar">
+            <div>
+                <h2>👥 Quản lý danh sách user</h2>
+                <p class="small">Bảng gọn để đối chiếu nhanh tài khoản, trạng thái và IP. Bấm <strong>Quản lý</strong> để sửa thông tin hoặc reset mật khẩu.</p>
+            </div>
+            <div class="admin-toolbar-actions">
+                <input id="adminUserSearch" type="search" placeholder="Tìm tài khoản, Zalo hoặc IP...">
+                <label class="admin-filter-toggle"><input id="adminDuplicateOnly" type="checkbox"> Chỉ hiện IP trùng</label>
+                <label class="admin-password-toggle"><input id="showAdminPasswords" type="checkbox"> Hiện mật khẩu mới</label>
+            </div>
+        </div>
+
+        <form method="post" action="{{ url_for('admin_update_duplicate_ip_warning') }}" class="admin-ip-settings-card">
+            <div>
+                <strong>🔎 Cảnh báo IP dùng chung</strong>
+                <p class="small">Tắt chỉ ẩn cảnh báo trên Admin; hệ thống vẫn lưu IP để đối chiếu khi cần.</p>
+            </div>
+            <label class="admin-filter-toggle"><input type="checkbox" name="enabled" value="1" {% if duplicate_ip_warning_config.enabled %}checked{% endif %}> Hiển thị cảnh báo IP</label>
+            <label class="admin-filter-toggle"><input type="checkbox" name="ignore_admin_managed" value="1" {% if duplicate_ip_warning_config.ignore_admin_managed %}checked{% endif %}> Bỏ qua Admin và tài khoản thử nghiệm</label>
+            <button class="btn gold" type="submit">Lưu thiết lập</button>
+        </form>
+
+        <div class="admin-ip-data-status {{ 'is-error' if ip_device_status.ok == false else 'is-ok' }}">
+            {% if ip_device_status.ok == false %}
+                <strong>⚠️ Không tải được lịch sử IP thiết bị.</strong>
+                <span>Bộ lọc hiện chỉ đối chiếu IP đăng ký. Hãy tải lại trang hoặc kiểm tra bảng <code>user_devices</code>/quyền Supabase.</span>
+                {% if ip_device_status.error %}<small>{{ ip_device_status.error }}</small>{% endif %}
+            {% else %}
+                <strong>✓ Dữ liệu IP đã tải</strong>
+                <span>{{ ip_device_status.row_count }} bản ghi thiết bị · {{ ip_device_status.account_ip_count }} tài khoản có IP · {{ ip_device_status.duplicate_group_count }} nhóm trùng</span>
+            {% endif %}
+            <button class="btn small" type="button" onclick="window.location.reload()">Tải lại IP</button>
+        </div>
+
+        {% if duplicate_ip_groups %}
+        <div class="admin-duplicate-alert" role="alert">
+            <div class="admin-duplicate-alert-title">
+                <strong>🚨 Phát hiện {{ duplicate_ip_groups|length }} nhóm IP trùng</strong>
+                <span>{{ duplicate_ip_user_count }} tài khoản cần đối chiếu</span>
+            </div>
+            <div class="admin-duplicate-groups">
+                {% for group in duplicate_ip_groups %}
+                <div class="admin-duplicate-group">
+                    <code>{{ group.ip }}</code>
+                    <span class="badge danger">{{ group.account_count }} tài khoản</span>
+                    <strong>{{ group.usernames|join(' ↔ ') }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+            <p class="small">Không tự khóa chỉ vì trùng IP. Hãy đối chiếu thêm Zalo, lịch sử trận và hành vi cộng điểm.</p>
+        </div>
+        {% else %}
+        <div class="admin-no-duplicate">✅ Chưa phát hiện tài khoản nào dùng chung IP.</div>
+        {% endif %}
+
+        <div class="table-wrap admin-user-compare-wrap">
+            <table class="admin-user-compare-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Tài khoản</th>
+                        <th>Tên / Zalo</th>
+                        <th>Trạng thái</th>
+                        <th>IP đăng ký</th>
+                        <th>IP gần nhất</th>
+                        <th>Đối chiếu IP</th>
+                        <th>Điểm / W-D-L</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="adminUserTableBody">
+                {% for p in admin_users %}
+                    {% set can_edit = (not (p.role == 'admin' or p.admin_level in ['owner', 'admin'])) or current_user.admin_level == 'owner' %}
+                    <tr class="admin-user-summary-row{% if p.duplicate_ip_warning_visible %} has-duplicate-ip{% endif %}"
+                        data-user-summary
+                        data-duplicate-ip="{{ 1 if p.duplicate_ip_detected else 0 }}"
+                        data-user-search="{{ (p.username ~ ' ' ~ (p.display_name or '') ~ ' ' ~ (p.zalo_name or '') ~ ' ' ~ (p.register_ip or '') ~ ' ' ~ (p.latest_ip or '') ~ ' ' ~ (p.duplicate_ip_accounts|join(' ')))|lower }}">
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ p.username }}</strong></td>
+                        <td>
+                            <strong>{{ p.display_name or p.username }}</strong><br>
+                            <span class="small">Zalo: {{ p.zalo_name or '-' }}</span>
+                        </td>
+                        <td>
+                            <span class="badge {{ 'gold' if p.role == 'admin' or p.admin_level in ['owner', 'admin'] else (p.account_status or 'approved') }}">
+                                {% if p.admin_level == 'owner' %}Admin{% elif p.admin_level == 'admin' %}Admin{% else %}{{ p.account_status or 'approved' }}{% endif %}
+                            </span>
+                        </td>
+                        <td><code class="admin-ip-code">{{ p.register_ip or '-' }}</code></td>
+                        <td><code class="admin-ip-code">{{ p.latest_ip or '-' }}</code></td>
+                        <td>
+                            {% if p.duplicate_ip_accounts %}
+                            <span class="badge {{ 'danger' if p.duplicate_ip_warning_visible else 'gold' }}">{{ '⚠️ Trùng IP' if p.duplicate_ip_warning_visible else 'Cùng IP' }}</span>
+                            <div class="admin-duplicate-with">{{ p.duplicate_ip_accounts|join(', ') }}</div>
+                            {% else %}
+                            <span class="admin-ip-safe">Không trùng</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ p.rank_points or 0 }} điểm</strong><br>
+                            <span class="small">{{ p.wins or 0 }}-{{ p.draws or 0 }}-{{ p.losses or 0 }}</span>
+                        </td>
+                        <td>
+                            <button class="btn admin-user-toggle" type="button" data-user-toggle="admin-user-detail-{{ p.id }}" aria-expanded="false">Quản lý</button>
+                        </td>
+                    </tr>
+                    <tr id="admin-user-detail-{{ p.id }}" class="admin-user-detail-row" data-user-detail hidden>
+                        <td colspan="9">
+                            <form id="rank-unlock-form-{{ p.id }}" method="post" action="{{ url_for('admin_save_user_rank_mode_unlocks', user_id=p.id) }}"></form>
+                            <form method="post" action="{{ url_for('admin_update_player', user_id=p.id) }}" class="admin-user-compact-form">
+                                <div class="admin-user-edit-group">
+                                    <h3>Thông tin tài khoản</h3>
+                                    <label>Tài khoản<input name="username" value="{{ p.username }}" required {% if not can_edit %}disabled{% endif %}></label>
+                                    <label>Tên hiển thị<input name="display_name" value="{{ p.display_name or p.username }}" required {% if not can_edit %}disabled{% endif %}></label>
+                                    <label>Tên Zalo<input name="zalo_name" value="{{ p.zalo_name or '' }}" {% if not can_edit %}disabled{% endif %}></label>
+                                </div>
+
+                                <div class="admin-user-edit-group">
+                                    <h3>IP đã ghi nhận</h3>
+                                    <p><span class="small">IP đăng ký</span><br><code>{{ p.register_ip or '-' }}</code></p>
+                                    <p><span class="small">IP gần nhất</span><br><code>{{ p.latest_ip or '-' }}</code></p>
+                                    {% if p.known_ips %}
+                                    <p class="small">Tất cả IP: {{ p.known_ips|join(', ') }}</p>
+                                    {% endif %}
+                                    {% if p.duplicate_ip_accounts %}
+                                    <p class="admin-ip-warning">Trùng với: {{ p.duplicate_ip_accounts|join(', ') }}</p>
+                                    {% endif %}
+                                    <button class="btn {{ 'red' if p.duplicate_ip_trusted else 'gold' }} admin-ip-trust-form" type="submit"
+                                        name="trusted" value="{{ 0 if p.duplicate_ip_trusted else 1 }}"
+                                        formaction="{{ url_for('admin_toggle_duplicate_ip_trust', user_id=p.id) }}" formmethod="post">
+                                        {{ 'Bỏ tài khoản tin cậy' if p.duplicate_ip_trusted else 'Đánh dấu tài khoản tin cậy' }}
+                                    </button>
+                                    {% if p.duplicate_ip_trusted %}<p class="small admin-ip-safe">✓ Đang bỏ qua cảnh báo IP cho tài khoản này.</p>{% endif %}
+                                </div>
+
+                                <div class="admin-user-edit-group">
+                                    <h3>Mật khẩu và điểm</h3>
+                                    <label>Mật khẩu tạm mới
+                                        <input class="admin-new-password" type="password" name="new_password" minlength="{{ minimum_password_length }}" autocomplete="new-password" placeholder="Bỏ trống nếu không reset" {% if not can_edit %}disabled{% endif %}>
+                                    </label>
+                                    <label>Điểm rank<input name="rank_points" type="number" value="{{ p.rank_points or 0 }}" min="0" required {% if not can_edit %}disabled{% endif %}></label>
+                                    <label>Lý do cộng/trừ RP
+                                        <input name="rp_adjustment_reason" maxlength="200" placeholder="Ví dụ: Thưởng giải đấu, bù RP do lỗi hệ thống..." {% if not can_edit %}disabled{% endif %}>
+                                    </label>
+                                    <p class="small">Chỉ bắt buộc nhập khi thay đổi điểm RP. Người chơi sẽ nhận thông báo ngay trên tài khoản.</p>
+                                    <p class="small">Ngày tạo: {{ format_vn_datetime(p.created_at) }}</p>
+                                </div>
+
+                                {% set account_id = p.id|string %}
+                                {% set unlocked_modes = rank_mode_user_unlocks.get(account_id, []) %}
+                                <div class="admin-user-edit-group admin-user-rank-unlocks">
+                                    <h3>🔓 Mở khóa chế độ Rank</h3>
+                                    {% if p.role == 'admin' or p.admin_level in ['owner', 'admin'] %}
+                                    <p class="small admin-mode-auto-note">Tài khoản Admin tự động được mở toàn bộ chế độ.</p>
+                                    {% else %}
+                                    <p class="small">Tích chế độ cần mở riêng cho người chơi này. Quyền riêng sẽ bỏ qua yêu cầu RP và số trận.</p>
+                                    <div class="admin-user-mode-checks">
+                                        {% for code in rank_mode_order %}
+                                        {% set mode = rank_mode_configs.get(code, {}) %}
+                                        <label class="admin-user-mode-option">
+                                            <input type="checkbox" name="mode__{{ code }}" value="1" form="rank-unlock-form-{{ p.id }}" {% if code in unlocked_modes %}checked{% endif %}>
+                                            <span>{{ mode.short_label or mode.label }}</span>
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                    <button class="btn gold small" type="submit" form="rank-unlock-form-{{ p.id }}">Lưu mở khóa chế độ</button>
+                                    {% endif %}
+                                </div>
+
+                                <div class="admin-user-edit-save">
+                                    {% if can_edit %}
+                                    <button class="btn green" type="submit">💾 Lưu thay đổi</button>
+                                    {% else %}
+                                    <span class="small">Chỉ Admin được sửa tài khoản Admin.</span>
+                                    {% endif %}
+                                </div>
+                            </form>
+
+                            {% if p.role == 'player' %}
+                            <div class="admin-user-actions admin-user-actions-compact">
+                                {% if p.account_status == 'banned' %}
+                                <form class="inline-form" method="post" action="{{ url_for('admin_unban_account', user_id=p.id) }}"><button class="btn green" type="submit">Mở khóa</button></form>
+                                {% elif p.account_status == 'approved' %}
+                                <form class="inline-form" method="post" action="{{ url_for('admin_ban_account', user_id=p.id) }}" onsubmit="return confirm('Khóa tài khoản này?')"><button class="btn red" type="submit">Khóa</button></form>
+                                {% endif %}
+                                {% if current_user.admin_level == 'owner' and p.account_status == 'approved' and p.admin_level == 'none' %}
+                                <form class="inline-form" method="post" action="{{ url_for('admin_promote_user', user_id=p.id) }}" onsubmit="return confirm('Thêm người này làm Admin?')"><button class="btn gold" type="submit">Thêm làm Admin</button></form>
+                                {% endif %}
+                                {% if p.admin_level == 'none' %}
+                                <form class="inline-form" method="post" action="{{ url_for('admin_reset_player_stats', user_id=p.id) }}" onsubmit="return confirm('Reset toàn bộ chỉ số thi đấu?')"><button class="btn gold" type="submit">Reset chỉ số</button></form>
+                                <form class="inline-form" method="post" action="{{ url_for('admin_delete_player', user_id=p.id) }}" onsubmit="return confirm('VÔ HIỆU HÓA tài khoản này? Lịch sử trận và RP của mọi người sẽ được giữ nguyên.')"><button class="btn red" type="submit">Xóa mềm</button></form>
+                                {% endif %}
+                                <a class="btn" href="{{ url_for('profile', user_id=p.id) }}">Xem hồ sơ</a>
+                            </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="9">Chưa có tài khoản.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p id="adminUserEmpty" class="small" hidden>Không tìm thấy user phù hợp.</p>
+    </div>
+</section>
+
+

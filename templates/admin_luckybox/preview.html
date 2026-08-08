@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Admin · Lucky Box Preview{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+    <div>
+      <h1 class="h3 mb-1">Lucky Box · Quay thử Draft</h1>
+      <p class="text-muted mb-0">Mô phỏng chỉ đọc, không trừ Zcoin và không phát vật phẩm.</p>
+    </div>
+    <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="{{ url_for('admin_luckybox', rate_version_id=selected_rate_version.id if selected_rate_version else None) }}">Quản lý tỷ lệ</a><a class="btn btn-outline-secondary" href="{{ url_for('admin') }}">Về Admin</a></div>
+  </div>
+
+  {% if preview_error %}<div class="alert alert-danger">{{ preview_error }}</div>{% endif %}
+  {% if not rate_versions %}
+    <div class="alert alert-warning">Chưa có Rate Version. Hãy chạy migration Giai đoạn 2A.</div>
+  {% else %}
+  <form method="post" class="card card-body mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-7">
+        <label class="form-label">Phiên bản tỷ lệ</label>
+        <select class="form-select" name="rate_version_id" required>
+          {% for version in rate_versions %}
+          <option value="{{ version.id }}" {% if selected_rate_version and version.id == selected_rate_version.id %}selected{% endif %}>
+            Version {{ version.version_number }} · {{ version.status|upper }}{% if version.notes %} · {{ version.notes }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Số lượt mô phỏng</label>
+        <input class="form-control" type="number" name="iterations" value="1000" min="1" max="{{ max_preview_iterations }}" required>
+      </div>
+      <div class="col-md-2 d-grid"><button class="btn btn-primary" type="submit">Quay thử</button></div>
+    </div>
+  </form>
+  {% endif %}
+
+  {% if selected_rate_version %}
+  <div class="card card-body mb-4">
+    <div><strong>Trạng thái:</strong> {{ selected_rate_version.status }}</div>
+    <div><strong>Phân phối số vật phẩm:</strong> {{ selected_rate_version.item_count_weights }}</div>
+    <div><strong>Số reward đang hiển thị:</strong> {{ rewards|length }}</div>
+  </div>
+  {% endif %}
+
+  {% if preview_result %}
+  <div class="card card-body mb-4">
+    <h2 class="h5">Kết quả mô phỏng {{ preview_result.iterations }} lượt</h2>
+    <p class="mb-1"><strong>Phân phối số vật phẩm:</strong> {{ preview_result.item_count_distribution }}</p>
+    <p class="mb-1"><strong>Zcoin trung bình/lượt:</strong> {{ preview_result.average_zcoin_reward }}</p>
+    <p class="mb-0"><strong>Số reward khác nhau:</strong> {{ preview_result.reward_counts|length }}</p>
+  </div>
+  <div class="card card-body">
+    <h2 class="h5">Các lượt mẫu</h2>
+    <pre class="mb-0" style="white-space:pre-wrap">{{ preview_result.sample_openings|tojson(indent=2) }}</pre>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

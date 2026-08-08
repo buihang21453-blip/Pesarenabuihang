@@ -1,0 +1,1078 @@
+{% from "_rank_macros.html" import rank_badge %}
+{% from "_avatar_macros.html" import player_avatar %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ APP_NAME }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {# Thứ tự CSS: nền tảng trước, module sau; module ở sau chỉ được phép tác động trong phạm vi class riêng. #}
+    <link rel="stylesheet" href="{{ static_asset('style.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/invite_center.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/zcoin.css') }}">
+    {% if request.endpoint == 'admin' %}
+    <link rel="stylesheet" href="{{ static_asset('css/admin_weekly_rewards.css') }}">
+    {% endif %}
+    {% if request.endpoint == 'zcoin_rewards' %}
+    <link rel="stylesheet" href="{{ static_asset('css/zcoin_rewards.css') }}">
+    {% endif %}
+    {% if request.endpoint in ['room_detail', 'admin'] %}
+    <link rel="stylesheet" href="{{ static_asset('css/rank_mode_toggle.css') }}">
+    {% endif %}
+    {% if request.endpoint in ['room_detail', 'profile'] %}
+    <link rel="stylesheet" href="{{ static_asset('css/parsec_room.css') }}">
+    {% endif %}
+    {% if request.endpoint == 'room_detail' %}
+    <link rel="stylesheet" href="{{ static_asset('css/quick_match.css') }}">
+    <script src="{{ static_asset('js/quick_match.js') }}" defer></script>
+    {% endif %}
+    <script src="{{ static_asset('js/pes_polling.js') }}" defer></script>
+    {% if current_user and not (auth_only|default(false)) %}
+    <script>
+    window.PES_PRESENCE_CONFIG = {
+        enabled: true,
+        heartbeatUrl: {{ url_for('heartbeat')|tojson }},
+        visibleInterval: 30000,
+        hiddenInterval: 60000,
+        jitter: 3000
+    };
+    </script>
+    <script src="{{ static_asset('js/presence.js') }}" defer></script>
+    <script>window.PES_INVITE_CONFIG={pendingUrl:{{ url_for('api_pending_invites')|tojson }}};</script>
+    <script src="{{ static_asset('js/invite_center.js') }}" defer></script>
+    {% endif %}
+    <script src="{{ static_asset('js/zcoin.js') }}" defer></script>
+    {% if request.endpoint == 'zcoin_rewards' %}
+    <script src="{{ static_asset('js/zcoin_rewards.js') }}" defer></script>
+    {% endif %}
+    {% if current_user and not (auth_only|default(false)) %}
+    <script>
+    window.PES_SESSION_CONFIG = {
+        enabled: true,
+        idleTimeoutSeconds: 3600,
+        warningSeconds: 300,
+        activitySyncSeconds: 60,
+        activityUrl: {{ url_for('api_session_activity')|tojson }},
+        timeoutCheckUrl: {{ url_for('api_session_timeout_check')|tojson }},
+        logoutUrl: {{ url_for('logout')|tojson }}
+    };
+    </script>
+    <script src="{{ static_asset('js/session-timeout.js') }}" defer></script>
+    {% endif %}
+    {% if current_user and not (auth_only|default(false)) %}
+      {% set bb_cfg = blackbox_runtime_config %}
+      {% if bb_cfg.enabled and bb_cfg.client_enabled %}
+      <script>
+      window.PES_BLACKBOX_CONFIG = {
+        enabled: true,
+        ingestUrl: {{ url_for('api_blackbox_events')|tojson }},
+        appVersion: {{ APP_VERSION|tojson }},
+        captureClicks: {{ bb_cfg.capture_clicks|tojson }},
+        captureNetwork: {{ bb_cfg.capture_network|tojson }},
+        batchSize: {{ bb_cfg.batch_size|tojson }},
+        maxBuffer: {{ bb_cfg.max_buffer|tojson }},
+        flushMs: {{ bb_cfg.flush_ms|tojson }},
+        slowApiMs: {{ bb_cfg.slow_api_ms|tojson }}
+      };
+      </script>
+      <script src="{{ static_asset('js/blackbox.js') }}" defer></script>
+      {% endif %}
+    {% endif %}
+
+<script>
+(function initTheme(){
+    const saved = localStorage.getItem('pes2026-theme');
+    const theme = saved || 'dark';
+    document.documentElement.dataset.theme = theme;
+})();
+function toggleTheme(){
+    const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem('pes2026-theme', next);
+}
+</script>
+<style>:root{--pes-login-background:url("{{ asset_url('login-background.webp') }}")}</style>
+<script>window.PES_ASSET_BASE_URL={{ asset_base_url()|tojson }};</script>
+{% block head_extra %}{% endblock %}
+<link rel="stylesheet" href="{{ static_asset('css/ui_dialog.css') }}">
+{% block page_styles %}{% endblock %}
+<link rel="stylesheet" href="{{ static_asset('css/gaming_neon_buttons.css') }}">
+</head>
+{% set btn_theme = button_theme_config|default({}) %}
+<body data-page="{{ request.endpoint|default('unknown') }}" data-ui-scope="{{ 'admin' if (request.endpoint and (request.endpoint == 'admin' or request.endpoint.startswith('admin_') or request.endpoint == 'backup_preview')) else 'player' }}"
+      style="--gn-role-invite:var(--gn-palette-{{ btn_theme.get('invite','gold') }});--gn-role-quick:var(--gn-palette-{{ btn_theme.get('quick','green') }});--gn-role-success:var(--gn-palette-{{ btn_theme.get('success','green') }});--gn-role-danger:var(--gn-palette-{{ btn_theme.get('danger','red') }});--gn-role-primary:var(--gn-palette-{{ btn_theme.get('primary','gold') }});--gn-role-secondary:var(--gn-palette-{{ btn_theme.get('secondary','gray') }});--gn-role-default:var(--gn-palette-{{ btn_theme.get('default','blue') }});--gn-role-special:var(--gn-palette-{{ btn_theme.get('special','purple') }});">
+{% if is_test_mode %}<div style="position:fixed;z-index:99999;left:0;right:0;top:0;text-align:center;background:#ffcc00;color:#111;font-weight:800;padding:6px">🧪 PES ARENA TEST MODE — KHÔNG DÙNG DATABASE PRODUCTION</div><div style="height:34px"></div>{% endif %}
+{% if maintenance_status and maintenance_status.countdown %}
+<div class="server-transition-banner {{ 'server-closing' if maintenance_status.countdown.kind == 'close' else 'server-opening' }}">
+    <strong>{{ '⚠️' if maintenance_status.countdown.kind == 'close' else '✅' }} {{ maintenance_status.countdown.label }}</strong>
+    <span data-maintenance-countdown="{{ maintenance_status.countdown.target_iso }}">--:--</span>
+</div>
+{% endif %}
+{% if current_user and not (auth_only|default(false)) %}
+<div class="layout player-app-shell">
+    <aside class="sidebar player-sidebar">
+        <div class="brand-lockup">
+            <img class="sidebar-brand-logo" src="{{ asset_url('pes-arena-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="PES Arena – Bản Lĩnh Sân Cỏ">
+        </div>
+
+        <nav class="nav player-nav">
+            <a class="{{ 'active' if request.endpoint == 'ranking' else '' }}" href="{{ url_for('ranking') }}"><span>🏆</span> BXH</a>
+            <a class="{{ 'active' if request.endpoint in ['rooms', 'room_detail'] else '' }}" href="#" onclick="event.preventDefault(); document.getElementById('quickCreateRoomForm').submit();"><span>🎮</span> Phòng đấu</a>
+            <a class="{{ 'active' if request.endpoint in ['shop', 'shop_purchase', 'luckybox_home', 'luckybox_history', 'luckybox_opening_detail'] else '' }}" href="{{ url_for('shop') }}"><span>🛒</span> Cửa hàng</a>
+            <a class="{{ 'active' if request.endpoint == 'guide' else '' }}" href="{{ url_for('guide') }}"><span>📘</span> Hướng dẫn</a>
+            {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}<a class="{{ 'active' if request.endpoint == 'admin' else '' }}" href="{{ url_for('admin') }}"><span>⚙️</span> Admin</a><a class="{{ 'active' if request.endpoint and request.endpoint.startswith('admin_shop') else '' }}" href="{{ url_for('admin_shop') }}"><span>🛍️</span> Quản trị Shop</a>{% endif %}
+        </nav>
+
+        <div class="sidebar-version-panel" aria-label="Thông tin phiên bản">
+            <span>Phiên bản</span>
+            <strong>V{{ APP_VERSION.replace("Collap_", "").split("_")[0].lstrip("V") }}</strong>
+        </div>
+
+        <form id="quickCreateRoomForm" method="post" action="{{ url_for('create_open_room') }}" hidden></form>
+
+    </aside>
+
+    <main class="main player-main">
+        <header class="player-topbar">
+            <button class="sidebar-menu-button" type="button" onclick="document.body.classList.toggle('sidebar-open')">☰</button>
+            {% set page_titles = {'dashboard':'Dashboard','ranking':'Bảng xếp hạng','players':'Players','guide':'Hướng dẫn bắt đầu','matches':'Lịch sử trận đấu','profile':'Hồ sơ cá nhân','change_password':'Đổi mật khẩu','admin':'Quản trị hệ thống','rooms':'Phòng đấu','room_detail':'Phòng đấu','zcoin_wallet':'Ví Zcoin','zcoin_rewards':'Điểm danh & Gift Code','admin_economy':'Quản trị Zcoin & Gift Code','shop':'Cửa hàng','inventory':'Kho đồ','admin_shop':'Quản trị Cửa hàng','luckybox_home':'Lucky Box','luckybox_history':'Lịch sử Lucky Box','luckybox_opening_detail':'Chi tiết Lucky Box'} %}
+            <div class="topbar-copy"><strong>{{ page_titles.get(request.endpoint, APP_NAME) }}</strong><small>Chào {{ current_user.display_name }}, chúc bạn có một ngày thi đấu tốt!</small></div>
+            <div id="adminAnnouncementMount" class="topbar-announcement-mount">
+                {% if active_announcement and system_features.announcements_enabled %}
+                <div class="admin-announcement" data-announcement-id="{{ active_announcement.id }}" data-announcement-message="{{ active_announcement.message|e }}">
+                    <div class="admin-announcement-label">📢 {{ active_announcement.title }}</div>
+                    <div class="admin-announcement-marquee" aria-label="{{ active_announcement.message }}">
+                        <div class="admin-announcement-track">
+                            <span>{{ active_announcement.message }}</span>
+                            <span aria-hidden="true">{{ active_announcement.message }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="topbar-actions">
+                <a id="activeRoomTopbarLink"
+                   class="active-room-topbar-link{% if not active_room or request.endpoint == 'room_detail' %} is-hidden{% endif %}"
+                   href="{% if active_room %}{{ url_for('room_detail', room_id=active_room.id) }}{% else %}#{% endif %}"
+                   title="Trở lại phòng đấu">
+                    <span class="active-room-topbar-icon">🎮</span>
+                    <span class="active-room-topbar-copy"><strong>Trở lại phòng đấu</strong><small>Bạn đang ở trong 1 phòng đấu</small></span>
+                </a>
+                <a class="topbar-icon" href="{{ url_for('players') }}" title="Tìm người chơi">⌕</a>
+                <button id="themeToggle" class="topbar-icon theme-toggle" type="button" onclick="toggleTheme()" title="Chuyển giao diện sáng/tối" aria-label="Chuyển giao diện sáng/tối"><span class="theme-sun">☀</span><span class="theme-moon">☾</span></button>
+                <div class="topbar-notification-wrap">
+                    <button id="notificationBellButton" class="topbar-icon notification-bell" type="button" onclick="toggleUserNotifications(event)" title="Thông báo" aria-label="Mở thông báo" aria-expanded="false">🔔{% if unread_notification_count %}<b>{{ unread_notification_count }}</b>{% endif %}</button>
+                    <div id="userNotificationDropdown" class="user-notification-dropdown" hidden>
+                        <div class="notification-dropdown-head">
+                            <strong>Thông báo</strong>
+                            <span>{{ unread_notification_count or 0 }} chưa đọc</span>
+                        </div>
+                        {% if bell_notifications %}
+                            <div class="notification-dropdown-list">
+                            {% for notice in bell_notifications %}
+                                <article class="user-notification-card">
+                                    <div class="user-notification-content">
+                                        <strong>{{ notice.title }}</strong>
+                                        <p>{{ notice.message }}</p>
+                                        <span class="small">{{ format_vn_datetime(notice.created_at) }}</span>
+                                    </div>
+                                    <div class="user-notification-actions">
+                                        <form method="post" action="{{ url_for('mark_notification_read', notification_id=notice.id) }}">
+                                            {% if notice.link_url %}<input type="hidden" name="next_url" value="{{ notice.link_url }}">{% endif %}
+                                            <button class="btn small green" type="submit">{{ 'Kiểm tra' if notice.link_url else 'Đã đọc' }}</button>
+                                        </form>
+                                        {% if notice.link_url %}
+                                        <form method="post" action="{{ url_for('mark_notification_read', notification_id=notice.id) }}">
+                                            <button class="btn small gray" type="submit">Bỏ qua</button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </article>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="notification-empty">Chưa có thông báo.</p>
+                        {% endif %}
+                        <div class="notification-dropdown-footer">
+                            <a href="{{ url_for('notifications') }}">Xem tất cả thông báo cũ →</a>
+                        </div>
+                    </div>
+                </div>
+                <a class="topbar-zcoin" href="{{ url_for('zcoin_wallet') }}" title="Mở ví Zcoin">
+                    <img src="{{ asset_url('zcoin-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Zcoin">
+                    <span><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }}</strong><small>ZCOIN</small></span>
+                </a>
+                <div class="topbar-account-wrap">
+                    <button id="accountMenuButton" class="topbar-profile" type="button" onclick="toggleAccountMenu(event)" aria-expanded="false" aria-haspopup="menu" aria-controls="accountDropdown">
+                        {{ player_avatar(current_user, size='sm', frame=current_profile_equipment.avatar_frame if current_profile_equipment else none) }}
+                        <span><strong class="{% if current_profile_equipment and current_profile_equipment.name_style %}{{ current_profile_equipment.name_style.metadata.get('css_class', '') }}{% endif %}">{{ current_user.display_name }}</strong><small class="account-presence-label {{ 'is-offline' if session.get('admin_presence_mode') == 'offline' and (current_user.role == 'admin' or current_user.admin_level in ['owner','admin']) else 'is-online' }}"><i></i> {{ 'Offline' if session.get('admin_presence_mode') == 'offline' and (current_user.role == 'admin' or current_user.admin_level in ['owner','admin']) else 'Online' }}</small></span><em>⌄</em>
+                    </button>
+                    <div id="accountDropdown" class="topbar-account-dropdown" role="menu" hidden>
+                        <div class="account-dropdown-wallet">
+                            <img src="{{ asset_url('zcoin-logo.webp') }}" alt="">
+                            <div><small>Số dư hiện tại</small><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} Zcoin</strong></div>
+                        </div>
+                        <a href="{{ url_for('profile', user_id=current_user.id) }}"><span>👤</span> Hồ sơ cá nhân</a>
+                        <a href="{{ url_for('zcoin_rewards') }}#daily-checkin"><span>📅</span> Điểm danh hằng ngày</a>
+                        <a href="{{ url_for('zcoin_rewards') }}#gift-code"><span>🎁</span> Nhập Gift Code</a>
+                        <a href="{{ url_for('zcoin_wallet') }}"><span>🪙</span> Ví & lịch sử Zcoin</a>
+                        <a href="{{ url_for('shop') }}"><span>🛒</span> Cửa hàng</a>
+                        <a href="{{ url_for('luckybox_home') }}"><span>🎁</span> Lucky Box</a>
+                        <a href="{{ url_for('inventory') }}"><span>🎒</span> Kho đồ</a>
+                        <a href="{{ url_for('matches') }}"><span>📜</span> Lịch sử trận đấu</a>
+                        {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}
+                        <form class="account-presence-control" method="post" action="{{ url_for('admin_presence_mode') }}">
+                            <input type="hidden" name="next_url" value="{{ request.full_path if request.query_string else request.path }}">
+                            <label for="adminPresenceMode"><span>●</span> Trạng thái hiển thị</label>
+                            <select id="adminPresenceMode" name="presence_mode" onchange="this.form.submit()" aria-label="Trạng thái hiển thị của Admin">
+                                <option value="online" {{ 'selected' if session.get('admin_presence_mode') != 'offline' else '' }}>Online</option>
+                                <option value="offline" {{ 'selected' if session.get('admin_presence_mode') == 'offline' else '' }}>Offline</option>
+                            </select>
+                        </form>
+                        {% endif %}
+                        <a class="account-dropdown-logout" href="{{ url_for('logout') }}"><span>↪</span> Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+        {% if request.endpoint == "players" %}
+        <div class="app-status-row">
+            <div class="online-floating-badge" title="Người đang online"><span class="online-floating-dot"></span><span id="onlineFloatingCount">0</span><span class="online-floating-text">online</span></div>
+        </div>
+        {% endif %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+
+        {% if incoming_invites %}
+        <div class="invite-banner">
+            <h3>🔔 Bạn có lời mời thi đấu hạng</h3>
+            {% for inv in incoming_invites %}
+            <div class="invite-item">
+                <div class="invite-player-inline">
+                    {{ player_avatar(name=inv.from_name, avatar_url=inv.from_avatar_url, achievement=inv.from_achievement, size='sm', frame=inv.from_avatar_frame) }}
+                    <div>
+                        <strong>{{ inv.from_name }}</strong> mời bạn thi đấu<br>
+                        <span class="small">Rank: {{ inv.from_rank }} • Điểm: {{ inv.from_points }} • Tier: {{ inv.tier }}</span>
+                    </div>
+                </div>
+                <form class="invite-response-actions" method="post" action="{{ url_for('respond_invite', invite_id=inv.id) }}">
+                    <button class="btn invite-action-btn is-accept" name="action" value="accept" type="submit">Chấp nhận</button>
+                    <button class="btn invite-action-btn is-reject" name="action" value="reject" type="submit">Từ chối</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+</div>
+{% else %}
+    {% block auth %}{% endblock %}
+{% endif %}
+
+
+{% if current_user and not (auth_only|default(false)) %}
+<div id="inviteModalBackdrop" class="invite-modal-backdrop">
+    <div class="invite-modal">
+        <h2>🔔 Có người mời bạn thi đấu hạng</h2>
+        <div id="inviteModalContent"></div>
+    </div>
+</div>
+
+
+{% if request.endpoint not in ["dashboard", "chat"] %}
+{% if system_features.lobby_chat_enabled %}<button id="chatToggleButton" class="chat-floating-toggle" type="button" onclick="toggleLobbyChat()">
+    💬 <span id="chatToggleText">Chat sảnh</span>
+    <span id="chatUnreadBadge" class="chat-unread-badge" hidden>0</span>
+</button>
+
+<div id="bottomLobbyChat" class="bottom-lobby-chat chat-collapsed" hidden>
+    <button class="bottom-chat-close" type="button" onclick="toggleLobbyChat()" aria-label="Đóng khung chat" title="Đóng">×</button>
+    {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}
+    <div class="admin-quick-announcement">
+        <div class="admin-quick-title">📢 Gửi thông báo Admin</div>
+        <div class="admin-quick-row">
+            <input id="adminAnnouncementTitle" maxlength="40" value="THÔNG BÁO" placeholder="Tiêu đề">
+            <input id="adminAnnouncementMessage" maxlength="220" placeholder="Nhập thông báo chạy ngang cho toàn app...">
+            <button class="btn gold" type="button" onclick="sendAdminAnnouncement()">Gửi</button>
+        </div>
+        <div id="adminAnnouncementStatus" class="bottom-chat-status"></div>
+    </div>
+    {% endif %}
+
+    <div class="bottom-chat-header">
+        <strong>💬 Chat sảnh</strong>
+    </div>
+
+    <div id="bottomGlobalChatBox" class="bottom-chat-messages">
+        <div class="bottom-chat-empty">Chưa có tin nhắn mới trong sảnh.</div>
+    </div>
+
+    <div class="bottom-chat-form">
+        <input id="bottomChatInput" maxlength="200" placeholder="Chat với anh em trong sảnh..." autocomplete="off">
+        <button class="btn green" type="button" onclick="sendBottomChat()">Gửi</button>
+    </div>
+    <div id="bottomChatStatus" class="bottom-chat-status"></div>
+</div>
+{% endif %}
+{% endif %}
+
+<script>
+// V1.3.36: không gửi Offline bằng pagehide/sendBeacon. Refresh, back/forward và
+// điều hướng có thể làm beacon của trang cũ đến muộn, ghi đè presence của trang
+// mới. Logout thật vẫn đánh dấu Offline; mất kết nối dùng timeout phía Backend.
+
+// Invite popup/render/fetch đã tách sang static/js/invite_center.js.
+
+let lastKnownActiveRoomId = null;
+
+function checkActiveRoom() {
+    if (document.hidden || window.location.pathname.startsWith("/room/")) return Promise.resolve();
+
+    const task = function () {
+        return fetch("{{ url_for('api_active_room') }}", {
+            method: "GET",
+            credentials: "same-origin",
+            cache: "no-store"
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+        const roomLink = document.getElementById("activeRoomTopbarLink");
+        if (!roomLink) return;
+
+        const currentPath = window.location.pathname;
+        const isRoomPage = currentPath.startsWith("/room/");
+
+        if (!data.ok || !data.has_room || !data.room_url || isRoomPage) {
+            roomLink.classList.add("is-hidden");
+            return;
+        }
+
+        lastKnownActiveRoomId = data.room_id;
+        roomLink.href = data.room_url;
+        roomLink.classList.remove("is-hidden");
+
+        if (data.auto_redirect === true) {
+            window.location.replace(data.room_url);
+        }
+        })
+        .catch(function () {});
+    };
+    return window.PESNet && typeof PESNet.singleFlight === "function"
+        ? PESNet.singleFlight("api:active-room", task)
+        : task();
+}
+
+
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.innerText = text || "";
+    return div.innerHTML;
+}
+
+function renderAvatarHtml(url, name, size, achievement, frameUrl) {
+    const safeName = escapeHtml(name || "?");
+    const initial = escapeHtml((name || "?").trim().charAt(0).toUpperCase() || "?");
+    const sizeClass = escapeHtml(size || "sm");
+    const safeFrame = frameUrl ? escapeHtml(frameUrl) : "";
+    const badge = achievement && achievement.icon
+        ? `<span class="avatar-achievement" title="${escapeHtml(achievement.name || 'Huy hiệu')}">${escapeHtml(achievement.icon)}</span>`
+        : "";
+    const avatarBody = url
+        ? `<img class="player-avatar-image" src="${escapeHtml(url)}" alt="Ảnh đại diện ${safeName}" loading="lazy">`
+        : `<span class="player-avatar-fallback">${initial}</span>`;
+    const frame = safeFrame
+        ? `<img class="player-avatar-equipped-frame" src="${safeFrame}" alt="" aria-hidden="true" loading="lazy">`
+        : "";
+    return `<span class="player-avatar avatar-${sizeClass}${safeFrame ? ' has-equipped-frame' : ''}" title="${safeName}">${avatarBody}${frame}${badge}</span>`;
+}
+
+function renderBottomChat(messages) {
+    const box = document.getElementById("bottomGlobalChatBox");
+    if (!box) return;
+
+    box.innerHTML = messages.map(function (msg) {
+        const adminBadge = ["owner", "admin"].includes(msg.user_role) ? '<span class="badge gold">ADMIN</span>' : '';
+        const adminClass = ["owner", "admin"].includes(msg.user_role) ? 'admin' : '';
+        return `
+            <div class="bottom-chat-message">
+                <div class="chat-message-head">
+                    ${renderAvatarHtml(msg.user_avatar_url, msg.user_name, 'xs', msg.user_achievement, msg.user_avatar_frame_url)}
+                    <span class="chat-name ${adminClass}">${escapeHtml(msg.user_name)}</span>
+                </div>
+                ${adminBadge}
+                <span class="bottom-chat-time">${escapeHtml(msg.created_at_display || msg.created_at)}</span>
+                <div class="bottom-chat-text">${escapeHtml(msg.message)}</div>
+            </div>
+        `;
+    }).join("");
+
+    box.scrollTop = box.scrollHeight;
+}
+
+let isLobbyChatOpen = false;
+let lobbyChatPoller = null;
+let bottomChatSendInFlight = false;
+let chatLastReadFallback = null;
+const chatLastReadStorageKey = "rankzone_chat_last_read_{{ current_user.id }}";
+
+function getChatLastRead() {
+    try {
+        return localStorage.getItem(chatLastReadStorageKey) || chatLastReadFallback;
+    } catch (error) {
+        return chatLastReadFallback;
+    }
+}
+
+function saveChatLastRead(timestamp) {
+    if (!timestamp) return;
+    chatLastReadFallback = timestamp;
+    try {
+        localStorage.setItem(chatLastReadStorageKey, timestamp);
+    } catch (error) {}
+}
+
+function setChatUnreadCount(count) {
+    const badge = document.getElementById("chatUnreadBadge");
+    if (!badge) return;
+
+    const safeCount = Math.max(0, Number(count) || 0);
+    if (safeCount <= 0) {
+        badge.hidden = true;
+        badge.innerText = "0";
+        return;
+    }
+
+    badge.hidden = false;
+    badge.innerText = safeCount > 99 ? "99+" : String(safeCount);
+}
+
+function newestChatTimestamp(messages) {
+    if (!Array.isArray(messages) || messages.length === 0) return null;
+    return messages[messages.length - 1].created_at || null;
+}
+
+function markLobbyChatRead(messages) {
+    const latestTimestamp = newestChatTimestamp(messages);
+    if (latestTimestamp) saveChatLastRead(latestTimestamp);
+    setChatUnreadCount(0);
+}
+
+
+function toggleUserNotifications(event) {
+    if (event) event.stopPropagation();
+    const panel = document.getElementById("userNotificationDropdown");
+    const button = document.getElementById("notificationBellButton");
+    if (!panel) return;
+    const willOpen = panel.hasAttribute("hidden");
+    panel.toggleAttribute("hidden", !willOpen);
+    if (button) button.setAttribute("aria-expanded", willOpen ? "true" : "false");
+}
+
+document.addEventListener("click", function(event) {
+    const wrap = document.querySelector(".topbar-notification-wrap");
+    const panel = document.getElementById("userNotificationDropdown");
+    const button = document.getElementById("notificationBellButton");
+    if (!wrap || !panel || wrap.contains(event.target)) return;
+    panel.setAttribute("hidden", "");
+    if (button) button.setAttribute("aria-expanded", "false");
+});
+
+function startLobbyChatPolling() {
+    if (!window.PESNet || !isLobbyChatOpen) return loadBottomChat();
+    lobbyChatPoller = PESNet.createPoller({
+        key: "lobby-chat",
+        task: loadBottomChatSmart,
+        visibleInterval: 45000,
+        hiddenInterval: 180000,
+        runWhenHidden: false,
+        immediate: true,
+        jitter: 2000
+    });
+    return lobbyChatPoller;
+}
+
+function stopLobbyChatPolling() {
+    if (lobbyChatPoller && typeof lobbyChatPoller.stop === "function") {
+        lobbyChatPoller.stop();
+    } else if (window.PESNet && typeof PESNet.stop === "function") {
+        PESNet.stop("lobby-chat");
+    }
+    lobbyChatPoller = null;
+}
+
+function toggleLobbyChat() {
+    const panel = document.getElementById("bottomLobbyChat");
+    const button = document.getElementById("chatToggleButton");
+    if (!panel) return;
+
+    const willOpen = panel.hidden || panel.classList.contains("chat-collapsed");
+    isLobbyChatOpen = willOpen;
+
+    panel.hidden = !willOpen;
+    panel.classList.toggle("chat-collapsed", !willOpen);
+
+    if (button) {
+        button.classList.toggle("chat-toggle-open", willOpen);
+        button.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    }
+
+    if (willOpen) {
+        startLobbyChatPolling();
+    } else {
+        stopLobbyChatPolling();
+        checkLobbyChatUnread();
+    }
+}
+
+function loadBottomChatSmart() {
+    if (document.hidden || !isLobbyChatOpen) return Promise.resolve();
+    return loadBottomChat();
+}
+
+function checkAnnouncementSmart() {
+    if (document.hidden) return Promise.resolve();
+    return checkAnnouncement();
+}
+
+function updateOnlineFloatingCountSmart() {
+    if (document.hidden) return Promise.resolve();
+    return updateOnlineFloatingCount();
+}
+
+function loadBottomChat() {
+    const task = function () {
+        return fetch("{{ url_for('api_global_chat') }}", {
+            credentials: "same-origin",
+            cache: "no-store"
+        })
+        .then(function (res) {
+            if (res.status === 204) {
+                stopLobbyChatPolling();
+                return null;
+            }
+            return res.json();
+        })
+        .then(function (data) {
+            if (!data || !data.ok) return;
+            renderBottomChat(data.messages);
+            if (isLobbyChatOpen) markLobbyChatRead(data.messages);
+        })
+        .catch(function () {});
+    };
+    return window.PESNet && typeof PESNet.singleFlight === "function"
+        ? PESNet.singleFlight("api:global-chat", task)
+        : task();
+}
+
+function checkLobbyChatUnread() {
+    if (document.hidden || isLobbyChatOpen) return Promise.resolve();
+
+    const task = function () {
+        return fetch("{{ url_for('api_global_chat_status') }}", {
+            credentials: "same-origin",
+            cache: "no-store"
+        })
+        .then(function (res) {
+            if (res.status === 204) return null;
+            return res.json();
+        })
+        .then(function (data) {
+            if (!data || !data.ok || !Array.isArray(data.messages)) return;
+
+            const latestTimestamp = data.latest_created_at || newestChatTimestamp(data.messages);
+            const lastRead = getChatLastRead();
+
+            // Lần đầu dùng tính năng: lấy mốc hiện tại, không báo toàn bộ tin cũ.
+            if (!lastRead) {
+                if (latestTimestamp) saveChatLastRead(latestTimestamp);
+                setChatUnreadCount(0);
+                return;
+            }
+
+            const lastReadMs = Date.parse(lastRead);
+            if (!Number.isFinite(lastReadMs)) {
+                if (latestTimestamp) saveChatLastRead(latestTimestamp);
+                setChatUnreadCount(0);
+                return;
+            }
+
+            const unreadCount = data.messages.filter(function (msg) {
+                const createdMs = Date.parse(msg.created_at || "");
+                return !msg.is_own && Number.isFinite(createdMs) && createdMs > lastReadMs;
+            }).length;
+
+            setChatUnreadCount(unreadCount);
+        })
+        .catch(function () {});
+    };
+    return window.PESNet && typeof PESNet.singleFlight === "function"
+        ? PESNet.singleFlight("api:global-chat-status", task)
+        : task();
+}
+
+function sendBottomChat() {
+    const input = document.getElementById("bottomChatInput");
+    const status = document.getElementById("bottomChatStatus");
+    const message = input ? input.value.trim() : "";
+
+    if (!message || bottomChatSendInFlight) return;
+
+    bottomChatSendInFlight = true;
+    if (status) status.innerText = "Đang gửi...";
+    if (input) input.disabled = true;
+
+    fetch("{{ url_for('api_send_global_chat') }}", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({message: message})
+    })
+    .then(function (res) {
+        if (res.status === 204) return {ok: false, data: {error: "Chat Sảnh đang tắt."}};
+        return res.json().then(function (data) { return {ok: res.ok, data: data}; });
+    })
+    .then(function (result) {
+        if (!result.ok) {
+            if (input) input.disabled = false;
+            if (status) status.innerText = result.data.error || "Không gửi được tin nhắn.";
+            return;
+        }
+        if (input) {
+            input.value = "";
+            input.disabled = false;
+            input.focus();
+        }
+        if (status) status.innerText = "";
+        loadBottomChat();
+    })
+    .catch(function () {
+        if (input) input.disabled = false;
+        if (status) status.innerText = "Lỗi kết nối.";
+    })
+    .finally(function () {
+        bottomChatSendInFlight = false;
+    });
+}
+
+const bottomChatInput = document.getElementById("bottomChatInput");
+if (bottomChatInput) {
+    bottomChatInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            sendBottomChat();
+        }
+    });
+}
+
+let lastAnnouncementId = null;
+let announcementAnimation = null;
+let announcementResizeTimer = null;
+let announcementRotateTimer = null;
+let announcementItems = [];
+let announcementIndex = 0;
+let overlayQueueRunning = false;
+
+function stopAnnouncementMarquee() {
+    if (announcementAnimation) {
+        announcementAnimation.cancel();
+        announcementAnimation = null;
+    }
+}
+
+function startAnnouncementMarquee() {
+    const marquee = document.querySelector("#adminAnnouncementMount .admin-announcement-marquee");
+    const track = marquee ? marquee.querySelector(".admin-announcement-track") : null;
+    const firstCopy = track ? track.querySelector("span") : null;
+    if (!marquee || !track || !firstCopy) return;
+
+    stopAnnouncementMarquee();
+    track.style.transform = "translate3d(0,0,0)";
+
+    requestAnimationFrame(function () {
+        const copyWidth = Math.ceil(firstCopy.getBoundingClientRect().width);
+        const viewportWidth = Math.ceil(marquee.getBoundingClientRect().width);
+        if (!copyWidth || !viewportWidth) return;
+
+        const distance = copyWidth;
+        const pixelsPerSecond = window.innerWidth <= 520 ? 42 : 52;
+        const duration = Math.max(9000, Math.round((distance / pixelsPerSecond) * 1000));
+
+        announcementAnimation = track.animate(
+            [
+                { transform: "translate3d(0,0,0)" },
+                { transform: `translate3d(-${distance}px,0,0)` }
+            ],
+            { duration: duration, iterations: Infinity, easing: "linear" }
+        );
+    });
+}
+
+function renderAnnouncement(announcement) {
+    const mount = document.getElementById("adminAnnouncementMount");
+    if (!mount) return;
+    if (!announcement) {
+        stopAnnouncementMarquee();
+        mount.innerHTML = "";
+        lastAnnouncementId = null;
+        return;
+    }
+
+    const type = String(announcement.announcement_type || "admin");
+    const icon = String(announcement.icon || (type === "admin" ? "📢" : "🏆"));
+    const existing = mount.querySelector("[data-announcement-id]");
+    const existingId = existing ? existing.getAttribute("data-announcement-id") : null;
+    const currentMessage = existing ? existing.getAttribute("data-announcement-message") : null;
+    if (existingId === String(announcement.id) && currentMessage === String(announcement.message || "")) return;
+
+    lastAnnouncementId = String(announcement.id);
+    mount.innerHTML = `
+        <div class="admin-announcement system-event-announcement ${escapeHtml(type)}" data-announcement-id="${escapeHtml(announcement.id)}" data-announcement-message="${escapeHtml(announcement.message)}">
+            <div class="admin-announcement-label">${escapeHtml(icon)} ${escapeHtml(announcement.title)}</div>
+            <div class="admin-announcement-marquee" aria-label="${escapeHtml(announcement.message)}"><div class="admin-announcement-track"><span>${escapeHtml(announcement.message)}</span><span aria-hidden="true">${escapeHtml(announcement.message)}</span></div></div>
+            ${type !== "admin" ? '<span class="system-event-spark spark-a"></span><span class="system-event-spark spark-b"></span><span class="system-event-spark spark-c"></span>' : ''}
+        </div>`;
+    startAnnouncementMarquee();
+}
+
+function rotateAnnouncementBanner() {
+    if (!announcementItems.length) {
+        renderAnnouncement(null);
+        return;
+    }
+    if (announcementIndex >= announcementItems.length) announcementIndex = 0;
+    renderAnnouncement(announcementItems[announcementIndex]);
+    announcementIndex = (announcementIndex + 1) % announcementItems.length;
+}
+
+function scheduleAnnouncementRotation() {
+    if (announcementRotateTimer) clearInterval(announcementRotateTimer);
+    announcementRotateTimer = null;
+    rotateAnnouncementBanner();
+    if (announcementItems.length > 1) {
+        announcementRotateTimer = setInterval(function () {
+            if (!document.hidden) rotateAnnouncementBanner();
+        }, 8000);
+    }
+}
+
+function showGlobalSystemEventOverlay(announcement) {
+    return new Promise(function (resolve) {
+        const type = String(announcement.announcement_type || "win_streak");
+        const overlay = document.createElement("div");
+        overlay.className = "global-system-event-overlay " + type;
+        overlay.innerHTML = `<div class="global-system-event-burst"></div><div class="global-system-event-card"><div class="global-system-event-icon">${escapeHtml(announcement.icon || "🏆")}</div><strong>${escapeHtml(announcement.title || "DANH HIỆU")}</strong><span>${escapeHtml(announcement.message || "")}</span></div>`;
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add("is-visible"));
+        const visibleMs = type === "shutdown" ? 5200 : 4300;
+        setTimeout(function () {
+            overlay.classList.add("is-leaving");
+            setTimeout(function () { overlay.remove(); resolve(); }, 700);
+        }, visibleMs);
+    });
+}
+
+const SYSTEM_EVENT_OVERLAY_WINDOW_MS = 60 * 1000;
+
+function isFreshSystemEvent(item) {
+    const publishedAt = Date.parse(String(item && item.created_at || ""));
+    if (!Number.isFinite(publishedAt)) return false;
+    const age = Date.now() - publishedAt;
+    return age >= -5000 && age <= SYSTEM_EVENT_OVERLAY_WINDOW_MS;
+}
+
+async function playSystemEventQueue(items) {
+    if (overlayQueueRunning || document.hidden) return;
+    const unseen = [];
+    for (const item of items) {
+        if (String(item.announcement_type || "admin") === "admin") continue;
+        // Animation toàn màn hình chỉ dành cho người đang online đúng lúc sự kiện vừa xảy ra.
+        // Các sự kiện cũ vẫn tiếp tục chạy ở thanh thông báo, nhưng không phát lại animation.
+        if (!isFreshSystemEvent(item)) continue;
+        const eventId = String(item.id || "");
+        if (!eventId) continue;
+        const storageKey = "pes-global-system-event:" + eventId;
+        let viewed = false;
+        try { viewed = localStorage.getItem(storageKey) === "1"; } catch (error) {}
+        if (!viewed) unseen.push({item, storageKey});
+        if (unseen.length >= 5) break;
+    }
+    if (!unseen.length) return;
+
+    overlayQueueRunning = true;
+    try {
+        for (let i = 0; i < unseen.length; i++) {
+            const entry = unseen[i];
+            try {
+                localStorage.setItem(entry.storageKey, "1");
+            } catch (error) {}
+            await showGlobalSystemEventOverlay(entry.item);
+            if (i < unseen.length - 1) await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    } finally {
+        overlayQueueRunning = false;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", startAnnouncementMarquee);
+window.addEventListener("load", startAnnouncementMarquee);
+window.addEventListener("resize", function () {
+    clearTimeout(announcementResizeTimer);
+    announcementResizeTimer = setTimeout(startAnnouncementMarquee, 180);
+});
+document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) {
+        if (!announcementAnimation) startAnnouncementMarquee();
+        playSystemEventQueue(announcementItems);
+    }
+});
+
+function checkAnnouncement() {
+    const task = function () {
+        return fetch("{{ url_for('api_current_announcement') }}", {
+            credentials: "same-origin",
+            cache: "no-store"
+        })
+        .then(function (res) {
+            if (res.status === 204 || !res.ok) return null;
+            return res.json().catch(function () { return null; });
+        });
+    };
+    const request = window.PESNet && typeof PESNet.singleFlight === "function"
+        ? PESNet.singleFlight("api:announcement-current", task)
+        : task();
+    return Promise.resolve(request)
+        .then(function (data) {
+            if (!data) return;
+            if (!data.ok) return;
+            const items = Array.isArray(data.announcements)
+                ? data.announcements
+                : (data.announcement ? [data.announcement] : []);
+            const oldIds = announcementItems.map(item => String(item.id || "")).join("|");
+            const newIds = items.map(item => String(item.id || "")).join("|");
+            announcementItems = items;
+            if (oldIds !== newIds) {
+                announcementIndex = 0;
+                scheduleAnnouncementRotation();
+            } else if (!items.length) {
+                renderAnnouncement(null);
+            }
+            playSystemEventQueue(items);
+        })
+        .catch(function () {});
+}
+
+function sendAdminAnnouncement() {
+    const title = document.getElementById("adminAnnouncementTitle");
+    const message = document.getElementById("adminAnnouncementMessage");
+    const status = document.getElementById("adminAnnouncementStatus");
+
+    const payload = {
+        title: title ? title.value.trim() : "THÔNG BÁO",
+        message: message ? message.value.trim() : ""
+    };
+
+    if (!payload.message) {
+        if (status) status.innerText = "Bạn chưa nhập nội dung thông báo.";
+        return;
+    }
+
+    fetch("{{ url_for('api_admin_send_announcement') }}", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+    })
+    .then(function (res) { return res.json().then(function (data) { return {ok: res.ok, data: data}; }); })
+    .then(function (result) {
+        if (!result.ok) {
+            if (status) status.innerText = result.data.error || "Không gửi được thông báo.";
+            return;
+        }
+        if (message) message.value = "";
+        if (status) status.innerText = "Đã gửi thông báo.";
+        checkAnnouncement();
+    })
+    .catch(function () {
+        if (status) status.innerText = "Lỗi kết nối.";
+    });
+}
+
+// Chỉ chạy polling cần thiết cho đúng trang hiện tại. Mỗi poller có key duy nhất,
+// nên kể cả script bị khởi tạo lại cũng không tạo vòng lặp thứ hai.
+window.addEventListener("DOMContentLoaded", function () {
+    if (!window.PESNet) return;
+    const path = window.location.pathname;
+    const isRoomPage = path.startsWith("/room/");
+    const isPlayersPage = path === "/players";
+    const isRankingPage = path === "/bxh" || path === "/ranking" || path === "/";
+    const isHistoryPage = path === "/matches";
+    const isGuidePage = path === "/guide";
+    const isPassivePage = isHistoryPage || isGuidePage;
+
+    // V1.14.41.32: ưu tiên gọi theo sự kiện. Polling chỉ còn là lớp dự phòng
+    // thưa để nhận thay đổi từ thiết bị khác khi không có WebSocket/Realtime.
+    // Presence V1.3.37 đã tách sang static/js/presence.js.
+    // base.html chỉ giữ các poller thuộc Invite/Room/Announcement.
+
+    // Không gọi heartbeat ngay trên mỗi click/phím. Việc này từng làm mọi thao tác
+    // đồng thời kích hoạt request nền, đặc biệt chậm trên mạng yếu hoặc Supabase cold start.
+    let lastActivityHeartbeatAt = Date.now();
+    function refreshOnUserActivity() {
+        lastActivityHeartbeatAt = Date.now();
+    }
+    ["pointerdown", "keydown", "touchstart"].forEach(function (eventName) {
+        document.addEventListener(eventName, refreshOnUserActivity, {passive: true});
+    });
+
+    let pendingInvitePoller = null;
+    let lastInviteActivityAt = Date.now();
+    let lastInviteImmediateCheckAt = 0;
+    function markInviteActivity() {
+        // Chỉ ghi nhận hoạt động để điều chỉnh chu kỳ; không fetch ngay khi click.
+        lastInviteActivityAt = Date.now();
+    }
+    ["pointerdown", "keydown", "touchstart"].forEach(function (eventName) {
+        document.addEventListener(eventName, markInviteActivity, {passive: true});
+    });
+    function pendingInviteInterval() {
+        // Không có Realtime/WebSocket nên cần lớp dự phòng ngắn khi người dùng
+        // đang thực sự thao tác. Khi bỏ máy, tự giãn chu kỳ để giảm request.
+        return (Date.now() - lastInviteActivityAt <= 60000) ? 5000 : 15000;
+    }
+    // Lời mời phải xuất hiện trên mọi trang đã đăng nhập, kể cả Lịch sử và
+    // Hướng dẫn. Khi tab chạy nền vẫn kiểm tra thưa để lời mời không hết hạn
+    // trước khi người dùng quay lại trình duyệt.
+    // Vẫn kiểm tra lời mời khi người chơi đang ở phòng một mình.
+    // Backend đã chặn gửi tới phòng đủ 2 người/đang thi đấu, vì vậy không được
+    // tắt polling chỉ vì URL hiện tại là /room/... .
+    pendingInvitePoller = PESNet.createPoller({
+            key: "pending-invites",
+            task: checkPendingInvites,
+            visibleInterval: pendingInviteInterval,
+            hiddenInterval: 30000,
+            runWhenHidden: false,
+            immediate: true,
+            jitter: 250
+        });
+
+    // Watchdog độc lập: nếu một module JS khác lỗi hoặc poller bị dừng quá lâu,
+    // lời mời vẫn được kiểm tra lại. Không tạo request trùng nhờ singleFlight.
+    window.setInterval(function () {
+        if (!document.hidden && Date.now() - ((window.PESInviteCenter && PESInviteCenter.getLastPollAt()) || 0) >= 30000) {
+            checkPendingInvites();
+        }
+    }, 30000);
+
+    // Active room không cần polling định kỳ. Chỉ kiểm tra khi tải trang, quay lại
+    // tab hoặc sau các sự kiện lời mời/phòng.
+    if (!isRoomPage && !isPassivePage) checkActiveRoom();
+
+    const announcementPoller = PESNet.createPoller({
+        key: "announcement",
+        task: checkAnnouncementSmart,
+        visibleInterval: 300000,
+        hiddenInterval: 600000,
+        runWhenHidden: false,
+        immediate: true,
+        jitter: 10000
+    });
+
+    function refreshEventDrivenData() {
+        refreshOnUserActivity();
+        if (pendingInvitePoller && typeof pendingInvitePoller.runNow === "function") pendingInvitePoller.runNow();
+        if (!isRoomPage && !isPassivePage) checkActiveRoom();
+        // Thông báo hệ thống đã có chu kỳ 5 phút; không cần fetch lại mỗi lần focus.
+    }
+    window.addEventListener("focus", refreshEventDrivenData);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) refreshEventDrivenData();
+    });
+    document.addEventListener("pes:invite-changed", refreshEventDrivenData);
+    document.addEventListener("pes:room-changed", refreshEventDrivenData);
+});
+
+document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && typeof isLobbyChatOpen !== "undefined" && isLobbyChatOpen) loadBottomChat();
+});
+</script>
+{% endif %}
+
+
+{% if current_user and not (auth_only|default(false)) and request.endpoint == "players" %}
+<script>
+function updateOnlineFloatingCount() {
+    const task = function () {
+        return fetch("{{ url_for('api_online_count') }}", {
+            credentials: "same-origin",
+            cache: "no-store"
+        })
+        .then(function (res) {
+            if (!res.ok) return null;
+            return res.json().catch(function () { return null; });
+        });
+    };
+    const request = window.PESNet && typeof PESNet.singleFlight === "function"
+        ? PESNet.singleFlight("api:online-count", task)
+        : task();
+    return Promise.resolve(request)
+        .then(function (data) {
+            if (!data || !data.ok) return;
+            const el = document.getElementById("onlineFloatingCount");
+            if (el) el.innerText = data.online_count;
+        })
+        .catch(function () {});
+}
+
+window.addEventListener("DOMContentLoaded", function () {
+    updateOnlineFloatingCount();
+    window.addEventListener("focus", updateOnlineFloatingCount);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) updateOnlineFloatingCount();
+    });
+    document.addEventListener("pes:presence-changed", updateOnlineFloatingCount);
+});
+</script>
+{% endif %}
+
+<script>
+(function maintenanceCountdowns(){
+    const countdownElements = document.querySelectorAll('[data-maintenance-countdown]');
+    if (!countdownElements.length) return;
+    function tick(){
+        countdownElements.forEach(function(el){
+            const target = Date.parse(el.dataset.maintenanceCountdown || '');
+            if (!Number.isFinite(target)) return;
+            const seconds = Math.max(0, Math.floor((target - Date.now()) / 1000));
+            const minutes = Math.floor(seconds / 60);
+            const remain = seconds % 60;
+            el.textContent = String(minutes).padStart(2,'0') + ':' + String(remain).padStart(2,'0');
+            if (seconds === 0) window.setTimeout(function(){ window.location.reload(); }, 1200);
+        });
+    }
+    tick();
+    window.setInterval(tick, 1000);
+})();
+</script>
+
+{% if request.endpoint == 'room_detail' %}
+{% include 'partials/quick_match_notice.html' %}
+{% endif %}
+<script>
+document.addEventListener('click', async function(event){
+  const button = event.target.closest('[data-copy-text]');
+  if(!button) return;
+  const text = button.getAttribute('data-copy-text') || '';
+  try { await navigator.clipboard.writeText(text); button.textContent='Đã sao chép'; setTimeout(()=>button.textContent=button.dataset.originalText||'Sao chép',1200); }
+  catch(e){ const area=document.createElement('textarea'); area.value=text; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove(); }
+}, true);
+</script>
+<script src="{{ static_asset('js/ui_dialog.js') }}" defer></script>
+{% block page_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,147 @@
+    <div class="panel room-extra-controls">
+    <h2 class="room-control-title">Điều khiển phòng</h2>
+
+    {% if (system_features.friendly_enabled or system_features.friendly_random3_enabled) and room.status == "waiting_ready" %}
+
+        {% if room_room_viewer_is_host or current_user.role == "admin" %}
+            {% if room.has_guest %}
+            <div class="room-mode-grid">
+
+                {% if system_features.friendly_enabled %}
+                <form method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" class="room-mode-card" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Đang quay đội...';">
+                    <input type="hidden" name="match_mode" value="friendly">
+                    <h3>🤝 Giao hữu</h3>
+                    <label>Chọn Tier CLB</label>
+                    <select name="friendly_tier" required>
+                        {% for tier in friendly_tiers %}
+                        <option value="{{ tier }}" {% if room.friendly_tier == tier %}selected{% endif %}>Tier {{ tier }}</option>
+                        {% endfor %}
+                    </select>
+                    <p class="small">Hai CLB khác nhau trong cùng Tier. Không lưu lịch sử, không tính RP.</p>
+                    <button class="btn arena-btn gold" type="submit">🎲 Quay đội Giao hữu</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endif %}
+
+    {% endif %}
+
+    {% if room.status == "friendly_playing" and ((room.team_tier == "random3_pick1" and system_features.friendly_random3_enabled) or (room.team_tier != "random3_pick1" and system_features.friendly_enabled)) %}
+    <div class="friendly-match-banner">
+        <h3>🤝 Trận giao hữu Tier {{ room.friendly_tier }}</h3>
+        <p>Không lưu lịch sử • Không cộng/trừ RP • Hai đội không trùng nhau.</p>
+        {% if room_room_viewer_is_host or current_user.role == "admin" %}
+        <form class="inline-form" method="post" action="{{ url_for('room_reroll_friendly', room_id=room.id) }}">
+            <button class="btn arena-btn gold" type="submit">🎲 Tự Random Tiếp</button>
+        </form>
+        <form class="inline-form" method="post" action="{{ url_for('room_finish_friendly', room_id=room.id) }}">
+            <button class="btn arena-btn gray" type="submit">✅ Kết thúc giao hữu</button>
+        </form>
+        {% else %}
+        <p class="small">Chờ chủ phòng kết thúc giao hữu để quay trận tiếp theo.</p>
+        {% endif %}
+        {% if room_viewer_is_guest %}
+        <form class="inline-form room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
+              data-modal-tone="danger"
+              data-modal-icon="⚠"
+              data-modal-title="Thoát giao hữu"
+              data-modal-message="Bạn có thể rời trận giao hữu mà không bị trừ RP và không lưu lịch sử."
+              data-modal-note="KHÔNG TRỪ RP"
+              data-modal-confirm-label="Thoát phòng">
+            <button class="btn arena-btn red" type="submit">🚪 Thoát Phòng</button>
+        </form>
+        <p class="small">Giao hữu không tính RP. Bạn có thể thoát phòng an toàn.</p>
+        {% elif room_room_viewer_is_host %}
+        <form class="inline-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}">
+            <button class="btn arena-btn red" type="submit">🚪 Thoát phòng</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if room.status == "playing" and room_viewer_is_guest %}
+    <div class="guest-forfeit-box">
+        <form class="inline-form room-exit-confirm-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}"
+              data-modal-tone="danger"
+              data-modal-icon="⚠"
+              data-modal-title="Thoát khi đối thủ đã sẵn sàng"
+              data-modal-message="Trận đã bắt đầu. Thoát phòng lúc này được tính là bỏ cuộc."
+              data-modal-note="−20 RP"
+              data-modal-confirm-label="Bỏ cuộc và thoát">
+            <button class="btn arena-btn red" type="submit">🚪 Thoát Phòng</button>
+        </form>
+        <p class="small danger-text">Thoát phòng sau khi đã quay đội được tính là bỏ cuộc và bị trừ 20 RP.</p>
+    </div>
+    {% endif %}
+
+    {% if room.status == "playing" and room_room_viewer_is_host %}
+    <div class="guest-forfeit-box host-forfeit-box">
+        <form class="inline-form room-exit-confirm-form" method="post" action="{{ url_for('room_host_forfeit', room_id=room.id) }}"
+              data-modal-tone="danger"
+              data-modal-icon="⚠"
+              data-modal-title="Bỏ cuộc và thoát phòng"
+              data-modal-message="Trận đã bắt đầu. Chủ phòng thoát lúc này được tính là bỏ cuộc."
+              data-modal-note="−20 RP"
+              data-modal-confirm-label="Bỏ cuộc và thoát">
+            <button class="btn arena-btn red" type="submit">🚪 Thoát Phòng</button>
+        </form>
+        <p class="small danger-text">Thoát phòng sau khi đã quay đội được tính là bỏ cuộc và bị trừ 20 RP.</p>
+    </div>
+    {% endif %}
+
+    {% if room.status == "confirmed" %}
+    <div class="room-finished-summary">
+        <strong><span class="{{ room.host_name_style_class or '' }}">{{ room.host_name }}</span> {{ room.host_score }} - {{ room.guest_score }} <span class="{{ room.guest_name_style_class or '' }}">{{ room.guest_name }}</span></strong>
+    </div>
+    {% endif %}
+
+    {% if room.status == "cancelled" %}
+    <p>{{ room.note or "Phòng đã bị hủy." }}</p>
+    <a class="btn arena-btn gray" href="{{ url_for('dashboard') }}">Về sảnh chính</a>
+    {% endif %}
+
+    {% if room.status == "disputed" %}
+    <div class="dispute-status-card">
+        <div class="dispute-status-heading">
+            <h3>⚠️ Đang chờ Admin xử lý</h3>
+            <span class="badge disputed">Chưa tính điểm</span>
+        </div>
+        <p class="dispute-score"><strong><span class="{{ room.host_name_style_class or '' }}">{{ room.host_name }}</span> {{ room.host_score }} - {{ room.guest_score }} <span class="{{ room.guest_name_style_class or '' }}">{{ room.guest_name }}</span></strong></p>
+        {% if room.dispute %}
+        <div class="dispute-detail-grid">
+            <div><span>Người gửi</span><strong>{{ room.dispute.raised_by_name }}</strong></div>
+            <div><span>Lý do</span><strong>{{ room.dispute.reason_label }}</strong></div>
+            <div><span>Thời gian</span><strong>{{ format_vn_datetime(room.dispute.created_at) }}</strong></div>
+            <div><span>Trạng thái</span><strong>Đang chờ Admin</strong></div>
+        </div>
+        {% if room.dispute.details %}<div class="dispute-note"><strong>Ghi chú:</strong> {{ room.dispute.details }}</div>{% endif %}
+        {% if room.dispute.evidence_url %}
+        <div class="dispute-evidence-block">
+            <strong>Ảnh bằng chứng</strong>
+            <a href="{{ room.dispute.evidence_url }}" target="_blank" rel="noopener">
+                <img src="{{ room.dispute.evidence_url }}" alt="Ảnh bằng chứng tranh chấp" loading="lazy">
+                <span>Mở ảnh kích thước đầy đủ</span>
+            </a>
+        </div>
+        {% endif %}
+        {% endif %}
+        <p class="small">Hai người có thể về sảnh và tiếp tục sử dụng app. Trận này chỉ được tính điểm sau khi Admin xử lý.</p>
+        {% if room.dispute and current_user.id == room.dispute.raised_by_id %}
+        <form class="inline-form room-action-confirm-form"
+              method="post"
+              action="{{ url_for('room_withdraw_dispute', room_id=room.id) }}"
+              data-modal-tone="warning"
+              data-modal-icon="↩"
+              data-modal-title="Rút tranh chấp?"
+              data-modal-message="Bạn sẽ chấp nhận tỷ số ban đầu và điểm rank được cập nhật ngay."
+              data-modal-note="XÁC NHẬN KẾT QUẢ"
+              data-modal-confirm-label="Rút tranh chấp">
+            <button class="btn arena-btn green" type="submit">↩️ Rút tranh chấp và chấp nhận kết quả</button>
+        </form>
+        {% endif %}
+        <a class="btn arena-btn gray" href="{{ url_for('dashboard') }}">Về sảnh chính</a>
+    </div>
+    {% endif %}
+    </div>
+

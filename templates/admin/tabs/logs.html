@@ -1,0 +1,31 @@
+{% if current_user.admin_level == 'owner' %}
+<section class="admin-tab-panel" data-admin-panel="logs">
+    <div class="panel">
+        <div class="admin-section-heading">
+            <div>
+                <h2>🧾 Nhật ký hoạt động Admin</h2>
+                <p class="small">Chỉ Admin được xem. Nhật ký ghi hành động, đối tượng, thời gian và IP thao tác.</p>
+            </div>
+            <span class="admin-count">{{ audit_logs|length }}</span>
+        </div>
+        <div class="table-wrap admin-table-wrap">
+            <table>
+                <thead><tr><th>Thời gian</th><th>Admin</th><th>Hành động</th><th>Đối tượng</th><th>Chi tiết</th><th>IP</th></tr></thead>
+                <tbody>
+                {% for log in audit_logs %}
+                <tr>
+                    <td>{{ format_vn_datetime(log.created_at) }}</td>
+                    <td><strong>{{ log.admin_name or '-' }}</strong></td>
+                    <td>{{ log.action }}</td>
+                    <td>{{ log.target_type or '-' }}{% if log.target_label %}<br><span class="small">{{ log.target_label }}</span>{% endif %}</td>
+                    <td class="admin-log-details">{{ log.details or '-' }}</td>
+                    <td><code>{{ log.ip_address or '-' }}</code></td>
+                </tr>
+                {% else %}<tr><td colspan="9">Chưa có nhật ký hoạt động.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endif %}
+

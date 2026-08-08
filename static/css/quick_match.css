@@ -1,0 +1,87 @@
+/* Quick Match module — only result/notice modal styles. The trigger has no stylesheet skin. */
+
+.game-notice-open { overflow: hidden; }
+.game-notice-modal[hidden] { display: none !important; }
+.game-notice-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  font-family: var(--app-font, Inter, "Segoe UI", Arial, sans-serif);
+}
+.game-notice-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(1, 7, 15, .78);
+  backdrop-filter: blur(5px);
+}
+.game-notice-card {
+  position: relative;
+  width: min(460px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid #2b4258;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #0b1724, #07101b 72%);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .62), 0 0 28px rgba(20, 114, 190, .16);
+  padding: 26px 24px 22px;
+  text-align: center;
+  color: #eef5fb;
+}
+.game-notice-accent {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #f0bd32, transparent);
+}
+.game-notice-icon {
+  width: 54px;
+  height: 54px;
+  margin: 2px auto 14px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #bd8c1f;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3a2a08, #171004 72%);
+  color: #ffd45c;
+  font-size: 25px;
+  font-weight: 950;
+  box-shadow: 0 0 20px rgba(232, 177, 42, .2);
+}
+.game-notice-copy h3 { margin: 0 0 8px; font-size: 20px; letter-spacing: .3px; }
+.game-notice-copy p { margin: 0; color: #aebdcc; font-size: 14px; line-height: 1.55; }
+.game-notice-button {
+  margin-top: 20px;
+  min-width: 132px;
+  border: 1px solid #d5a72e;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #f2c84d, #c99720);
+  color: #161004;
+  padding: 10px 18px;
+  font: 800 13px/1 var(--app-font, Inter, "Segoe UI", Arial, sans-serif);
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+}
+.game-notice-button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.game-notice-modal.tone-success .game-notice-accent { background: linear-gradient(90deg, transparent, #20d77a, transparent); }
+.game-notice-modal.tone-success .game-notice-icon {
+  border-color: #1fbd70;
+  background: radial-gradient(circle at 35% 30%, #123a28, #071c13 72%);
+  color: #6af0ae;
+}
+.game-notice-modal.tone-danger .game-notice-accent { background: linear-gradient(90deg, transparent, #ff4d63, transparent); }
+.game-notice-modal.tone-danger .game-notice-icon {
+  border-color: #e13c52;
+  background: radial-gradient(circle at 35% 30%, #45131c, #21070c 72%);
+  color: #ff8292;
+}
+
+
+@media (max-width: 520px) {
+  .game-notice-card { padding: 24px 18px 20px; }
+  .game-notice-copy h3 { font-size: 18px; }
+  .game-notice-copy p { font-size: 13px; }
+}

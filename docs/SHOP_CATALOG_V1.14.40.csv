@@ -1,0 +1,26 @@
+﻿code,name,item_type,rarity,price_zcoin,is_listed,is_featured,image_path
+avatar_frame_common,Khung Avatar Phổ Thông,avatar_frame,common,1500,1,0,shop/items/avatar_frame_common.webp
+avatar_frame_rare,Khung Avatar Hiếm,avatar_frame,rare,3200,1,0,shop/items/avatar_frame_rare.webp
+avatar_frame_epic,Khung Avatar Sử Thi,avatar_frame,epic,6000,1,0,shop/items/avatar_frame_epic.webp
+avatar_frame_ice_elite,Khung Băng Lam Tinh Anh,avatar_frame,elite,4800,1,0,shop/items/avatar_frame_ice_elite.webp
+avatar_frame_fire_warrior,Khung Lửa Chiến Thần,avatar_frame,epic,7500,1,1,shop/items/avatar_frame_fire_warrior.webp
+avatar_frame_legendary_crown,Khung Huyền Thoại Vương Miện,avatar_frame,legendary,12000,1,1,shop/items/avatar_frame_legendary_crown.webp
+profile_banner_stadium_blue,Banner Sân Vận Động Xanh,profile_banner,common,1800,1,0,shop/items/profile_banner_stadium_blue.webp
+profile_banner_stadium_premium,Banner Sân Vận Động Premium,profile_banner,rare,4500,1,1,shop/items/profile_banner_stadium_premium.webp
+profile_banner_ice,Banner Băng Lam,profile_banner,epic,5000,1,0,shop/items/profile_banner_ice.webp
+profile_banner_neon_green,Banner Xanh Lục Neon,profile_banner,rare,3500,1,0,shop/items/profile_banner_neon_green.webp
+profile_banner_fire,Banner Đỏ Lửa,profile_banner,epic,6500,1,0,shop/items/profile_banner_fire.webp
+profile_banner_legendary_red_purple,Banner Huyền Thoại Đỏ Tím,profile_banner,legendary,9500,1,1,shop/items/profile_banner_legendary_red_purple.webp
+profile_badge_rising_rookie,Tân Binh Sáng Giá,profile_badge,common,1500,1,0,shop/items/profile_badge_rising_rookie.webp
+profile_badge_pitch_warrior,Chiến Binh Sân Cỏ,profile_badge,rare,3000,1,0,shop/items/profile_badge_pitch_warrior.webp
+profile_badge_fire_streak,Chuỗi Thắng Rực Lửa,profile_badge,epic,5000,1,1,shop/items/profile_badge_fire_streak.webp
+profile_badge_elite_crown,Vương Miện Elite,profile_badge,elite,6500,1,0,shop/items/profile_badge_elite_crown.webp
+profile_badge_legendary_diamond,Huyền Thoại Kim Cương,profile_badge,legendary,9000,1,1,shop/items/profile_badge_legendary_diamond.webp
+name_style_neon_blue,Màu Tên Xanh Neon,name_style,rare,1800,1,0,shop/items/name_style_neon_blue.webp
+name_style_elite_purple,Màu Tên Tím Elite,name_style,epic,3500,1,0,shop/items/name_style_elite_purple.webp
+name_style_champion_gold,Màu Tên Vàng Champion,name_style,legendary,6000,1,1,shop/items/name_style_champion_gold.webp
+display_name_change_ticket,Vé Đổi Tên Hiển Thị,display_name_ticket,rare,2500,1,0,shop/items/display_name_change_ticket.webp
+discount_coupon_05,Phiếu Giảm Giá 5%,discount_coupon,common,150,1,0,shop/items/discount_coupon_05.webp
+discount_coupon_10,Phiếu Giảm Giá 10%,discount_coupon,rare,400,1,0,shop/items/discount_coupon_10.webp
+discount_coupon_20,Phiếu Giảm Giá 20%,discount_coupon,epic,0,0,0,shop/items/discount_coupon_20.webp
+discount_coupon_30,Phiếu Giảm Giá 30%,discount_coupon,legendary,0,0,0,shop/items/discount_coupon_30.webp

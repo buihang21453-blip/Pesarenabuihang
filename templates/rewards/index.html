@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="rewards-heading">
+    <div>
+        <span class="eyebrow">PHẦN THƯỞNG ZCOIN</span>
+        <h1>Nhận thưởng mỗi ngày</h1>
+        <p>Điểm danh đều đặn hoặc nhập Gift Code từ Admin.</p>
+    </div>
+    <a class="rewards-balance" href="{{ url_for('zcoin_wallet') }}">
+        <img src="{{ asset_url('zcoin-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="">
+        <span><small>Số dư</small><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} Zcoin</strong></span>
+    </a>
+</section>
+
+<section id="daily-checkin" class="panel rewards-panel daily-checkin-panel">
+    <div class="rewards-panel-head">
+        <div>
+            <span class="eyebrow">CHU KỲ 7 NGÀY</span>
+            <h2>Điểm danh hằng ngày</h2>
+            <p>Đăng nhập liên tục để nhận phần thưởng ngày càng lớn.</p>
+        </div>
+        {% if checkin_status.claimed_today %}
+        <span class="reward-status success">✓ Đã nhận hôm nay</span>
+        {% else %}
+        <span class="reward-status">Ngày tiếp theo: {{ checkin_status.next_day }}</span>
+        {% endif %}
+    </div>
+
+    <div class="daily-reward-grid">
+        {% for item in checkin_status.days %}
+        <article class="daily-reward-card{% if item.today %} is-today{% elif item.next %} is-next{% elif item.completed or item.claimed %} is-completed{% endif %}">
+            <span>Ngày {{ item.day }}</span>
+            <img src="{{ asset_url('zcoin-logo.webp') }}" alt="">
+            <strong>{{ format_zcoin(item.reward) }}</strong>
+            <small>Zcoin</small>
+            {% if item.today or item.completed or item.claimed %}<em>✓</em>{% endif %}
+        </article>
+        {% endfor %}
+    </div>
+
+    <div class="reward-action-row">
+        <div>
+            {% if checkin_status.claimed_today %}
+            <strong>Hẹn gặp lại vào ngày mai</strong>
+            <span>Chu kỳ hiện tại: ngày {{ checkin_status.current_day }}/7</span>
+            {% else %}
+            <strong>Phần thưởng hôm nay: {{ format_zcoin(checkin_status.next_reward) }} Zcoin</strong>
+            <span>Bỏ một ngày, chu kỳ sẽ bắt đầu lại từ ngày 1.</span>
+            {% endif %}
+        </div>
+        <form method="post" action="{{ url_for('claim_daily_checkin_route') }}">
+            <input type="hidden" name="request_token" value="{{ daily_request_token }}">
+            <button class="btn gold reward-primary-button" type="submit" {% if checkin_status.claimed_today or not checkin_ready %}disabled{% endif %}>
+                {{ 'Đã điểm danh' if checkin_status.claimed_today else 'Nhận Zcoin' }}
+            </button>
+        </form>
+    </div>
+    {% if not checkin_ready %}<p class="reward-error-note">Điểm danh chưa sẵn sàng. Admin cần chạy SQL V1.14.38.</p>{% endif %}
+</section>
+
+<section id="gift-code" class="panel rewards-panel gift-code-panel">
+    <div class="gift-code-copy">
+        <span class="eyebrow">QUÀ TỪ ADMIN</span>
+        <h2>Nhập Gift Code</h2>
+        <p>Gift Code có giới hạn thời gian và số lượt sử dụng. Mỗi mã chỉ nhận được theo giới hạn Admin thiết lập.</p>
+    </div>
+    <form class="gift-code-form" method="post" action="{{ url_for('redeem_gift_code_route') }}">
+        <input type="hidden" name="request_token" value="{{ gift_request_token }}">
+        <label>
+            <span>Gift Code</span>
+            <input id="giftCodeInput" name="code" minlength="4" maxlength="32" placeholder="VD: WEEKEND1000" autocomplete="off" value="{{ gift_code_prefill or '' }}" required>
+        </label>
+        <button class="btn gold reward-primary-button" type="submit">Đổi Gift Code</button>
+    </form>
+</section>
+
+{% if reward_effect %}
+<script id="zcoinRewardEffectData" type="application/json">{{ reward_effect|tojson }}</script>
+{% endif %}
+{% if gift_code_prefill %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+ const section=document.getElementById('gift-code'); const input=document.getElementById('giftCodeInput');
+ if(section){ section.classList.add('is-gift-focus'); section.scrollIntoView({behavior:'smooth',block:'center'}); }
+ if(input){ input.focus(); input.select(); }
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,191 @@
+/* Parsec room module — isolated UI, V1.14.41.21 */
+.room-layout-v137 .room-arena-right-rail{
+  display:flex;
+  flex-direction:column;
+}
+.room-layout-v137 .room-side-info-panel{order:1}
+.room-layout-v137 .parsec-room-panel{order:2}
+.room-layout-v137 .room-score-history-panel{order:3}
+.room-layout-v137 .room-chat-side{order:4}
+
+.parsec-room-panel,
+.parsec-room-panel *{
+  box-sizing:border-box;
+  font-family:inherit;
+}
+.parsec-room-panel{
+  width:100%;
+  margin:0;
+  padding:16px;
+  border:1px solid rgba(255,36,99,.9);
+  border-radius:15px;
+  background:linear-gradient(180deg,#091728 0%,#071321 100%);
+  box-shadow:0 0 0 1px rgba(255,36,99,.12),0 10px 26px rgba(0,0,0,.24);
+  overflow:hidden;
+}
+.parsec-room-heading{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:0 0 14px;
+  padding:0 0 12px;
+  border-bottom:1px solid rgba(221,174,56,.26);
+}
+.parsec-room-logo{
+  display:block!important;
+  width:18px!important;
+  height:18px!important;
+  min-width:18px!important;
+  min-height:18px!important;
+  max-width:18px!important;
+  max-height:18px!important;
+  flex:0 0 20px!important;
+  margin:-3px 0!important;
+  padding:0!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  overflow:visible!important;
+  transform:none!important;
+}
+.parsec-room-heading h3{
+  margin:0!important;
+  color:#f4f7fb;
+  font-size:15px!important;
+  font-weight:800;
+  line-height:1.2;
+  letter-spacing:0;
+  text-transform:uppercase;
+}
+.parsec-room-block{margin:0}
+.parsec-room-block+.parsec-room-block{margin-top:16px}
+.parsec-room-label{
+  margin:0 0 8px;
+  color:#b7c2d0;
+  font-size:13px;
+  font-weight:500;
+  line-height:1.3;
+}
+.parsec-room-inline{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+}
+.parsec-room-input,
+.parsec-room-link-form input{
+  display:block;
+  width:100%;
+  min-width:0;
+  height:40px;
+  margin:0;
+  padding:0 12px;
+  border:1px solid #28384b;
+  border-radius:9px;
+  outline:0;
+  background:#0d1a2a;
+  color:#edf2f8;
+  font-size:13px;
+  font-weight:600;
+  line-height:38px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+}
+.parsec-room-link-form{display:grid;gap:10px;margin:0}
+.parsec-room-link-form input:focus{
+  border-color:rgba(255,38,100,.78);
+  box-shadow:0 0 0 2px rgba(255,38,100,.1);
+}
+/* Nút Parsec tách hoàn toàn khỏi .btn toàn cục để không bị theme sáng ép thành màu vàng. */
+.parsec-action-btn{
+  appearance:none;
+  -webkit-appearance:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:auto;
+  min-height:34px;
+  margin:0;
+  padding:0 11px;
+  border:1px solid #ff3f72;
+  border-radius:8px;
+  background:linear-gradient(180deg,#ef2a62 0%,#cb164b 100%);
+  color:#fff;
+  font:700 12px/1 var(--app-font,Inter,"Segoe UI",Arial,sans-serif);
+  white-space:nowrap;
+  cursor:pointer;
+  box-shadow:none;
+  transform:none;
+}
+.parsec-action-btn:hover{
+  background:linear-gradient(180deg,#f43a70 0%,#d51b52 100%);
+  border-color:#ff5a84;
+  color:#fff;
+  filter:none;
+  transform:none;
+}
+.parsec-action-btn:active{
+  background:linear-gradient(180deg,#d91d53 0%,#b71041 100%);
+}
+.parsec-action-btn:focus-visible{
+  outline:2px solid rgba(255,63,114,.35);
+  outline-offset:2px;
+}
+.parsec-copy-btn{min-width:72px}
+.parsec-copy-link-btn{
+  min-width:0;
+  padding-inline:10px;
+  gap:5px;
+}
+.parsec-link-icon{font-size:11px;line-height:1}
+.parsec-room-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:7px;
+}
+.parsec-save-btn{min-width:54px}
+.parsec-delete-btn{min-width:52px}
+/* Chặn tuyệt đối rule theme sáng .btn màu vàng nếu HTML cũ còn cache. */
+html[data-theme="light"] .parsec-room-panel .parsec-action-btn,
+html[data-theme="light"] .parsec-room-panel button.parsec-action-btn{
+  background:linear-gradient(180deg,#ef2a62 0%,#cb164b 100%)!important;
+  border-color:#ff3f72!important;
+  color:#fff!important;
+  box-shadow:none!important;
+}
+html[data-theme="light"] .parsec-room-panel .parsec-action-btn:hover,
+html[data-theme="light"] .parsec-room-panel button.parsec-action-btn:hover{
+  background:linear-gradient(180deg,#f43a70 0%,#d51b52 100%)!important;
+  border-color:#ff5a84!important;
+  color:#fff!important;
+  transform:none!important;
+}
+.parsec-room-empty{
+  min-height:40px;
+  padding:10px 12px;
+  border:1px dashed #2a394b;
+  border-radius:9px;
+  background:#0d1a2a;
+  color:#8f9dae;
+  font-size:12px;
+  line-height:1.45;
+}
+.parsec-room-note{
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
+  margin:12px 0 0;
+  color:#91a0b2;
+  font-size:11px;
+  font-weight:400;
+  line-height:1.45;
+}
+.parsec-note-icon{flex:0 0 auto;color:#b9c4d1;line-height:1.35}
+
+@media(max-width:700px){
+  .parsec-room-panel{padding:14px}
+  .parsec-room-inline{grid-template-columns:minmax(0,1fr) auto}
+  .parsec-room-actions{justify-content:flex-start}
+}

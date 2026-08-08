@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ static_asset('css/shop_phase3.css') }}">
+{% if focus_item_code %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+ const target=document.getElementById({{ ('inventory-item-' ~ focus_item_code)|tojson }});
+ if(target){ target.scrollIntoView({behavior:'smooth',block:'center'}); }
+});
+</script>
+{% endif %}
+{% endblock %}
+{% block content %}
+<section class="shop3-hero inventory3-hero">
+    <div class="shop3-hero-copy">
+        <span class="eyebrow">KHO ĐỒ NGƯỜI DÙNG</span>
+        <h1>Vật phẩm của bạn</h1>
+        <p>Trang bị vật phẩm hồ sơ, quản lý phiếu giảm giá và Vé đổi tên.</p>
+        <div class="shop3-hero-actions"><a class="btn gold" href="{{ url_for('shop') }}">🛒 Đến Cửa hàng</a><a class="btn gray" href="{{ url_for('profile', user_id=current_user.id) }}">Xem Hồ sơ</a></div>
+    </div>
+    <div class="shop3-wallet"><span>Số vật phẩm</span><div><strong>{{ all_inventory_items|length }}</strong></div><small>ĐANG SỞ HỮU</small></div>
+</section>
+
+{% if inventory_setup_required %}
+<section class="panel shop3-setup-warning"><strong>⚠ Kho đồ chưa được cài đặt</strong><p>Chạy file <code>project_docs/sql/update_shop_inventory_phase3_v1_14_40.sql</code> trên Supabase.</p></section>
+{% else %}
+<section class="inventory3-equipped panel">
+    <div class="shop3-section-head"><div><span class="eyebrow">TRANG BỊ HIỆN TẠI</span><h2>Bộ ngoại hình hồ sơ</h2></div><p>Mỗi loại dùng tối đa 1 vật phẩm</p></div>
+    <div class="inventory3-slot-grid">
+        {% for slot in equipment_slots %}
+        <article class="inventory3-slot {% if slot.inventory_item %}has-item{% endif %}">
+            <span>{{ slot.label }}</span>
+            {% if slot.inventory_item %}
+            <img src="{{ slot.inventory_item.image_url }}" alt="{{ slot.inventory_item.item_name }}">
+            <strong>{{ slot.inventory_item.item_name }}</strong>
+            <form method="post" action="{{ url_for('inventory_unequip', slot=slot.slot) }}"><button class="btn gray small" type="submit">Gỡ trang bị</button></form>
+            {% else %}
+            <div class="inventory3-empty-slot">＋</div><strong>Chưa trang bị</strong><a href="{{ url_for('shop', category=slot.slot) }}">Tìm vật phẩm</a>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<nav class="shop3-tabs inventory3-tabs">
+    {% for tab in inventory_tabs %}
+    <a class="shop3-tab {% if active_inventory_tab == tab.code %}active{% endif %}" href="{{ url_for('inventory', tab=tab.code) }}"><strong>{{ tab.label }}</strong><small>{{ inventory_tab_counts.get(tab.code, 0) }}</small></a>
+    {% endfor %}
+</nav>
+
+{% if inventory_items %}
+<div class="inventory3-grid">
+    {% for entry in inventory_items %}
+    <article id="inventory-item-{{ entry.item_code }}" class="inventory3-card rarity-{{ entry.rarity }} {% if entry.is_equipped %}is-equipped{% endif %} {% if focus_item_code == entry.item_code %}is-gift-focus{% endif %}">
+        <div class="inventory3-media">
+            <img src="{{ entry.image_url }}" alt="{{ entry.item_name }}" loading="lazy">
+            <span>{{ entry.rarity_label }}</span>
+            {% if entry.is_equipped %}<b>ĐANG DÙNG</b>{% endif %}
+        </div>
+        <div class="inventory3-body">
+            <small>{{ entry.item_type_label }}</small>
+            <h3>{{ entry.item_name }}</h3>
+            <p>{{ entry.item.description }}</p>
+            <div class="inventory3-meta"><span>{{ entry.acquired_from_label }}</span><strong>×{{ entry.quantity }}</strong></div>
+            {% if entry.can_equip %}
+                {% if entry.is_equipped %}
+                <form method="post" action="{{ url_for('inventory_unequip', slot=entry.equipment_slot) }}"><button class="btn gray" type="submit">Gỡ trang bị</button></form>
+                {% else %}
+                <form method="post" action="{{ url_for('inventory_equip', inventory_id=entry.id) }}"><button class="btn gold" type="submit">Trang bị</button></form>
+                {% endif %}
+            {% elif entry.item_type == 'display_name_ticket' %}
+            <a class="btn gold" href="{{ url_for('profile', user_id=current_user.id) }}#display-name-manager">Dùng khi đổi tên</a>
+            {% elif entry.item_type == 'discount_coupon' %}
+            <a class="btn gold" href="{{ url_for('shop') }}">Dùng khi mua hàng</a>
+            {% endif %}
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<section class="panel empty-state"><h2>Kho đồ chưa có vật phẩm phù hợp</h2><p>Hãy vào Cửa hàng để mua vật phẩm đầu tiên.</p><a class="btn gold" href="{{ url_for('shop') }}">Đến Cửa hàng</a></section>
+{% endif %}
+{% endif %}
+{% if focus_item_code %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+ const target=document.getElementById({{ ('inventory-item-' ~ focus_item_code)|tojson }});
+ if(target){ target.scrollIntoView({behavior:'smooth',block:'center'}); }
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,60 @@
+{# HOTFIX V1.14.39.1: legacy Zcoin tab removed; use /admin/economy #}
+{% extends "base.html" %}
+{% block page_styles %}
+<link rel="stylesheet" href="{{ static_asset('css/admin_dashboard.css') }}">
+{% endblock %}
+{% block content %}
+
+<div class="admin-dashboard-heading">
+    <div>
+        <span class="admin-kicker">ADMIN PANEL</span>
+        <h1 class="page-title">Bảng điều khiển quản trị</h1>
+        <p class="page-subtitle">Theo dõi nhanh người chơi, phòng đấu, trận đấu và trạng thái vận hành.</p>
+    </div>
+    <div class="admin-heading-actions">
+        <a class="btn gray" href="{{ url_for('dashboard') }}">⌂ Trang người chơi</a>
+        <a class="btn" href="{{ url_for('admin_luckybox') }}">🎁 Quản trị Lucky Box</a>
+        {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<a class="btn" href="{{ url_for('admin', tab='system') }}#system">⚙ Cài đặt hệ thống</a>{% endif %}
+    </div>
+</div>
+
+{% if active_admin_tab == 'overview' %}
+<section class="admin-metric-grid" aria-label="Thống kê nhanh">
+    <article class="admin-metric-card metric-purple">
+        <div class="metric-icon">👥</div><div><span>Tổng người chơi</span><strong>{{ players|length }}</strong>{% if can_admin('users_approve') %}<small>{{ pending_users|length }} tài khoản chờ duyệt</small>{% endif %}</div>
+    </article>
+    <article class="admin-metric-card metric-blue">
+        <div class="metric-icon">🎮</div><div><span>Trận đang diễn ra</span><strong>{{ playing|length }}</strong><small>{{ all_matches|length }} trận gần nhất đã tải</small></div>
+    </article>
+    <article class="admin-metric-card metric-green">
+        <div class="metric-icon">🚪</div><div><span>Phòng đang mở</span><strong>{{ rooms|length }}</strong><small>{{ invites|length }} lời mời đang chờ</small></div>
+    </article>
+    <article class="admin-metric-card metric-orange">
+        <div class="metric-icon">🔑</div><div><span>Cần xử lý</span><strong>{{ password_reset_requests|length }}</strong><small>Yêu cầu quên mật khẩu</small></div>
+    </article>
+</section>
+{% endif %}
+
+<div class="admin-tabs" role="tablist" aria-label="Khu vực quản trị">
+    <button class="admin-tab-button{{ ' active' if active_admin_tab == 'overview' else '' }}" type="button" data-admin-tab="overview" data-admin-url="{{ url_for('admin', tab='overview') }}#overview">📌 Tổng quan</button>
+    <button class="admin-tab-button{{ ' active' if active_admin_tab == 'users' else '' }}" type="button" data-admin-tab="users" data-admin-url="{{ url_for('admin', tab='users') }}#users">👥 Quản lý danh sách user{% if duplicate_ip_groups %} · ⚠️ {{ duplicate_ip_groups|length }} IP trùng{% endif %}</button>
+    <button class="admin-tab-button{{ ' active' if active_admin_tab == 'passwords' else '' }}" type="button" data-admin-tab="passwords" data-admin-url="{{ url_for('admin', tab='passwords') }}#passwords">🔑 Quên mật khẩu{% if password_reset_requests %} ({{ password_reset_requests|length }}){% endif %}</button>
+    <button class="admin-tab-button{{ ' active' if active_admin_tab == 'rooms' else '' }}" type="button" data-admin-tab="rooms" data-admin-url="{{ url_for('admin', tab='rooms') }}#rooms">🚪 Phòng & lời mời</button>
+    {% if can_admin('matches_view') %}<button class="admin-tab-button{{ ' active' if active_admin_tab == 'matches' else '' }}" type="button" data-admin-tab="matches" data-admin-url="{{ url_for('admin', tab='matches') }}#matches">🎮 Trận đấu</button><button class="admin-tab-button{{ ' active' if active_admin_tab == 'match-report' else '' }}" type="button" data-admin-tab="match-report" data-admin-url="{{ url_for('admin', tab='match-report') }}#match-report">📊 Báo cáo trận đấu</button>{% endif %}
+    <button class="admin-tab-button{{ ' active' if active_admin_tab == 'rank-modes' else '' }}" type="button" data-admin-tab="rank-modes" data-admin-url="{{ url_for('admin', tab='rank-modes') }}#rank-modes">🏆 Quản lý chế độ Rank</button>
+{% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button{{ ' active' if active_admin_tab == 'test-data' else '' }}" type="button" data-admin-tab="test-data" data-admin-url="{{ url_for('admin', tab='test-data') }}#test-data">🧪 Tài khoản test & Import</button>{% endif %}
+    {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button{{ ' active' if active_admin_tab == 'system' else '' }}" type="button" data-admin-tab="system" data-admin-url="{{ url_for('admin', tab='system') }}#system">⚙️ Hệ thống</button>{% endif %}
+    {% if can_admin('rp_view') %}<button class="admin-tab-button{{ ' active' if active_admin_tab == 'rp-tools' else '' }}" type="button" data-admin-tab="rp-tools" data-admin-url="{{ url_for('admin', tab='rp-tools') }}#rp-tools">📈 Công cụ RP</button>{% endif %}
+    <button class="admin-tab-button{{ ' active' if active_admin_tab == 'economy' else '' }}" type="button" data-admin-tab="economy" data-admin-url="{{ url_for('admin', tab='economy') }}#economy">🪙 Zcoin & Gift Code</button>
+    {% if can_admin('admin_logs_view') %}<button class="admin-tab-button{{ ' active' if active_admin_tab == 'logs' else '' }}" type="button" data-admin-tab="logs" data-admin-url="{{ url_for('admin', tab='logs') }}#logs">🧾 Nhật ký</button>{% endif %}
+    <button class="admin-tab-button{{ ' active' if active_admin_tab == 'blackbox' else '' }}" type="button" data-admin-tab="blackbox" data-admin-url="{{ url_for('admin', tab='blackbox') }}#blackbox">🛡 Black Box</button>
+</div>
+
+{% set admin_tab_template = 'admin/tabs/' ~ active_admin_tab ~ '.html' %}
+{% include admin_tab_template %}
+
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ static_asset('js/admin_dashboard.js') }}" defer></script>
+{% endblock %}

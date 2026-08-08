@@ -1,0 +1,19 @@
+{
+  "baseline_version": "1.3.69",
+  "files": {
+    "modules/rp_engine.py": "e6ffb2a8b1f1dc049f263a8e2a56b475fadc4aede90ecc830ccea1849c8f7b67",
+    "modules/rp_formula.py": "659e3b9fdb0722ba02b423866379f63e8ad88a78fa945a3cf61b53814c2853a8",
+    "modules/match_result_service.py": "4faf18ae3d3bca2f538d97e61a066ca7de5af5ab1607049f001ba49754868e8d",
+    "modules/room_result_routes.py": "487f372dfeafc9c127de61a4a1c89e7e5287e8746bd9e00902c7847e213bc44f",
+    "modules/room_access_routes.py": "40a69d5690596ed62c1c98ab0fd8d0fc7231edf0a9d527798b1a1b41dccd3941",
+    "modules/room_rematch_routes.py": "dd85ef2379ef635522b31c8c9469896a3bd95cb42bb96dc465f0d989c98bcea3",
+    "modules/core/room_runtime.py": "5aa0caa274eeb19a21fa1b50c42d38735d5fd79ef5abb16cd8de7a289ea94262",
+    "modules/core/matchmaking_runtime.py": "36ce73e69484e0bde52cee621b90260c40d8cf62ec14c1e0f82150c4c07161c0",
+    "modules/core/match_repository.py": "1b489d45856a694234d048f784835bc1c336676e610428cbe3057e29d2ed6000",
+    "modules/quick_match/service.py": "ef29349a7bae972e0997803e29d9d65c0745867abdf7a352136fbdec75541e63",
+    "modules/invites/service.py": "de393156bc0e5bb2585141b31c87d88350f609396788318e873e33358f3a68e9",
+    "modules/presence/service.py": "6fbb6ae6b759a5fd543b9d005946e5b34948463319cb7113c6484dd9fc2da9dc",
+    "modules/rank_modes/service.py": "8800421275a6bf4314f3bf07bc115c34815b3fa4e46930fa92402f811105c825",
+    "modules/daily_rank_limit_service.py": "6f0294043c7b24cf6d69fb6873a0ae81f1346f71222993d278854fddab274e6e"
+  }
+}

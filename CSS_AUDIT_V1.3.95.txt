@@ -1,0 +1,85 @@
+
+## V1.3.95 CSS audit
+External CSS selectors directly targeting data-bare-action / quick-match button:
+
+Generic button rules that exist but are neutralized on these two buttons by inline all:unset!important:
+static/css/room/06-responsive-performance.css:5:.arena-room-v2 .arena-btn{
+static/css/room/06-responsive-performance.css:14:.arena-room-v2 .arena-btn.gold,
+static/css/room/06-responsive-performance.css:15:.arena-room-v2 .arena-btn.yellow,
+static/css/room/06-responsive-performance.css:16:.arena-room-v2 .arena-btn.is-gold,
+static/css/room/06-responsive-performance.css:22:.arena-room-v2 .arena-btn.green,
+static/css/room/06-responsive-performance.css:23:.arena-room-v2 .arena-btn.is-success,
+static/css/room/06-responsive-performance.css:29:.arena-room-v2 .arena-btn.red,
+static/css/room/06-responsive-performance.css:30:.arena-room-v2 .arena-btn.is-danger,
+static/css/room/06-responsive-performance.css:36:.arena-room-v2 .arena-btn.gray,
+static/css/room/06-responsive-performance.css:37:.arena-room-v2 .arena-btn.is-secondary,
+static/css/room/06-responsive-performance.css:100:.arena-room-v2 .arena-btn,
+static/css/room/06-responsive-performance.css:105:.arena-room-v2 .arena-btn:hover:not(:disabled):not(.disabled),
+static/css/room/06-responsive-performance.css:133:.arena-room-v2 .room-center-primary-actions-three .arena-btn{
+static/css/room/06-responsive-performance.css:140:.arena-room-v2 .room-center-primary-actions-three .arena-btn.gold{
+static/css/room/06-responsive-performance.css:148:.arena-room-v2 .room-center-primary-actions-three .arena-btn:hover{
+static/css/room/04-actions-history.css:6:.arena-room-v2 .arena-btn {
+static/css/room/04-actions-history.css:33:.arena-room-v2 .arena-btn.green,
+static/css/room/04-actions-history.css:34:.arena-room-v2 .arena-btn.is-success,
+static/css/room/04-actions-history.css:42:.arena-room-v2 .arena-btn.gray,
+static/css/room/04-actions-history.css:43:.arena-room-v2 .arena-btn.is-secondary,
+static/css/room/04-actions-history.css:50:.arena-room-v2 .arena-btn.red,
+static/css/room/04-actions-history.css:51:.arena-room-v2 .arena-btn.is-danger,
+static/css/room/04-actions-history.css:59:.arena-room-v2 .arena-btn.gold,
+static/css/room/04-actions-history.css:60:.arena-room-v2 .arena-btn.yellow,
+static/css/room/04-actions-history.css:61:.arena-room-v2 .arena-btn.is-gold,
+static/css/room/04-actions-history.css:69:.arena-room-v2 .arena-btn:hover:not(:disabled):not(.disabled) {
+static/css/room/04-actions-history.css:74:.arena-room-v2 .arena-btn:active:not(:disabled):not(.disabled){transform:translateY(0);filter:brightness(1.04)}
+static/css/room/04-actions-history.css:75:.arena-room-v2 .arena-btn:focus-visible{outline:2px solid rgba(255,255,255,.88);outline-offset:2px}
+static/css/room/04-actions-history.css:76:.arena-room-v2 .arena-btn:disabled,
+static/css/room/04-actions-history.css:77:.arena-room-v2 .arena-btn.disabled{opacity:.58;filter:saturate(.65);cursor:not-allowed;transform:none}
+static/css/room/04-actions-history.css:83:.arena-room-v2 .room-result-btn.arena-btn{width:100%;min-width:0;min-height:50px;padding:8px 12px;font-size:13px}
+static/css/room/04-actions-history.css:88:.arena-room-v2 .room-center-primary-actions .arena-btn,
+static/css/room/04-actions-history.css:89:.arena-room-v2 .room-action-zone .arena-btn{width:100%;min-height:45px;padding-inline:11px}
+static/css/room/04-actions-history.css:90:.arena-room-v2 .room-action-modal-button.arena-btn{min-width:130px}
+static/css/room/04-actions-history.css:105:  .arena-room-v2 .arena-btn{min-height:41px;padding:8px 13px;font-size:11px;border-radius:11px}
+static/css/room/04-actions-history.css:106:  .arena-room-v2 .room-result-btn.arena-btn{min-height:47px;font-size:12px}
+static/css/room/04-actions-history.css:110:  .arena-room-v2 .room-result-btn.arena-btn{padding-inline:8px;font-size:11px}
+static/css/room/04-actions-history.css:172:.arena-room-v2 .arena-btn{
+static/css/room/04-actions-history.css:179:.arena-room-v2 .arena-btn.green,
+static/css/room/04-actions-history.css:180:.arena-room-v2 .arena-btn.is-success,
+static/css/room/04-actions-history.css:188:.arena-room-v2 .arena-btn.gray,
+static/css/room/04-actions-history.css:189:.arena-room-v2 .arena-btn.is-secondary,
+static/css/room/04-actions-history.css:196:.arena-room-v2 .arena-btn.red,
+static/css/room/04-actions-history.css:197:.arena-room-v2 .arena-btn.is-danger,
+static/css/room/04-actions-history.css:206:.arena-room-v2 .room-result-btn.arena-btn{min-height:52px;padding:8px 12px;font-size:14px;border-radius:14px}
+static/css/room/10-prestart-flow.css:62:   move helper description out of the button, and align exit CTA cleanly. */
+static/css/room/12-mockup-layout-lock.css:111:.arena-room-v2 .room-center-primary-actions .arena-btn,
+static/css/room/12-mockup-layout-lock.css:112:.arena-room-v2 .room-action-zone .arena-btn,
+static/css/room/12-mockup-layout-lock.css:113:.arena-room-v2 .room-prestart-action-row .arena-btn{
+static/css/room/05-action-states.css:5:.arena-room-v2 .arena-btn{
+static/css/room/05-action-states.css:24:.arena-room-v2 .arena-btn.gold,
+static/css/room/05-action-states.css:25:.arena-room-v2 .arena-btn.yellow,
+static/css/room/05-action-states.css:26:.arena-room-v2 .arena-btn.is-gold,
+static/css/room/05-action-states.css:34:.arena-room-v2 .arena-btn.green,
+static/css/room/05-action-states.css:35:.arena-room-v2 .arena-btn.is-success,
+static/css/room/05-action-states.css:43:.arena-room-v2 .arena-btn.red,
+static/css/room/05-action-states.css:44:.arena-room-v2 .arena-btn.is-danger,
+static/css/room/05-action-states.css:52:.arena-room-v2 .arena-btn.gray,
+static/css/room/05-action-states.css:53:.arena-room-v2 .arena-btn.is-secondary,
+static/css/room/05-action-states.css:60:.arena-room-v2 .arena-btn:hover:not(:disabled):not(.disabled){
+static/css/room/05-action-states.css:182:.arena-room-v2 .room-result-btn.arena-btn{
+static/css/room/05-action-states.css:190:  .arena-room-v2 .arena-btn{min-height:44px;font-size:12.5px}
+static/css/room/08-action-layout-guard.css:375:.arena-room-v2 .room-center-primary-actions .arena-btn,
+static/css/room/08-action-layout-guard.css:376:.arena-room-v2 .room-action-zone .arena-btn,
+static/css/room/08-action-layout-guard.css:379:.arena-room-v2 .room-confirmed-center-actions .arena-btn,
+static/css/room/08-action-layout-guard.css:396:.arena-room-v2 .room-center-primary-actions .arena-btn.green,
+static/css/room/08-action-layout-guard.css:397:.arena-room-v2 .room-action-zone .arena-btn.green,
+static/css/room/08-action-layout-guard.css:408:.arena-room-v2 .room-center-primary-actions .arena-btn.gray,
+static/css/room/08-action-layout-guard.css:409:.arena-room-v2 .room-action-zone .arena-btn.gray,
+static/css/room/08-action-layout-guard.css:419:.arena-room-v2 .room-center-primary-actions .arena-btn.gold,
+static/css/room/08-action-layout-guard.css:420:.arena-room-v2 .room-action-zone .arena-btn.gold,
+static/css/room/08-action-layout-guard.css:421:.arena-room-v2 .room-confirmed-center-actions .arena-btn.gold {
+static/css/room/08-action-layout-guard.css:430:.arena-room-v2 .room-center-primary-actions .arena-btn.red,
+static/css/room/08-action-layout-guard.css:431:.arena-room-v2 .room-action-zone .arena-btn.red,
+static/css/room/08-action-layout-guard.css:432:.arena-room-v2 .room-confirmed-center-actions .arena-btn.red,
+static/css/room/08-action-layout-guard.css:441:.arena-room-v2 .room-center-primary-actions .arena-btn:hover:not(:disabled),
+static/css/room/08-action-layout-guard.css:442:.arena-room-v2 .room-action-zone .arena-btn:hover:not(:disabled),
+static/css/room/08-action-layout-guard.css:445:.arena-room-v2 .room-confirmed-center-actions .arena-btn:hover:not(:disabled),
+static/css/room/01-shell-layout.css:26:.arena-room-v2 .room-center-vs-image{position:relative;z-index:1;width:135px;height:135px;margin:auto 0 5px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(216,165,60,.18))}.arena-room-v2 .room-center-countdown-label,.arena-room-v2 .room-center-countdown{position:relative;z-index:1}.arena-room-v2 .room-center-primary-actions,.arena-room-v2 .room-action-zone{z-index:2;max-width:none}.arena-room-v2 .room-center-primary-actions .btn{min-height:42px;padding:9px 10px;border-radius:9px;font-size:11px;font-weight:850}.arena-room-v2 .room-center-primary-actions{position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:center;gap:7px;width:calc(100% - 16px);margin-top:auto;padding:0 0 10px}.arena-room-v2 .room-center-primary-actions>*{flex:1 1 30%;min-width:0}.arena-room-v2 .room-center-random-form,.arena-room-v2 .room-center-random-trigger{position:relative;z-index:1;width:calc(100% - 16px)}
+static/css/room/01-shell-layout.css:29:.arena-room-v2 .room-center-primary-actions-three .btn{width:100%;height:42px;min-height:42px;padding:8px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

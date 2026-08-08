@@ -1,0 +1,7 @@
+
+/* V1.3.34 - Read model status */
+.admin-report-read-model-warning{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0 14px;padding:10px 12px;border:1px solid rgba(245,184,64,.32);border-radius:10px;background:rgba(63,43,8,.22);color:#e8edf5;font-size:12px}.admin-report-read-model-warning strong{color:#f2c15e}.admin-report-read-model-warning code{color:#d8e8ff}
+
+/* V1.3.35 — công thức RP Series là thông tin cố định, không dùng input tránh sửa nhầm. */
+.admin-rp-fixed-summary > div{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:34px;padding:7px 9px;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(255,255,255,.025)}
+.admin-rp-fixed-summary > div span{font-size:11px;color:#aeb8c7}.admin-rp-fixed-summary > div strong{font-size:12px;color:#f0d074;white-space:nowrap}

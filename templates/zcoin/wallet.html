@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="zcoin-wallet-hero">
+    <div class="zcoin-wallet-brand">
+        <img src="{{ asset_url('zcoin-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Logo Zcoin">
+        <h1>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} <small>Zcoin</small></h1>
+    </div>
+</section>
+
+<section class="panel zcoin-history-panel">
+    <div class="section-heading zcoin-section-heading">
+        <h2>Lịch sử giao dịch</h2>
+    </div>
+
+    {% if not wallet_ready %}
+    <div class="notice warning">Hệ thống Zcoin chưa sẵn sàng. Vui lòng liên hệ Admin.</div>
+    {% elif transactions %}
+    <div class="zcoin-transaction-list">
+        {% for tx in transactions %}
+        <article id="zcoin-tx-{{ tx.id }}" class="zcoin-transaction-card {{ 'is-credit' if tx.is_credit else 'is-debit' }} {% if focus_transaction_id == (tx.id|string) %}is-gift-focus{% endif %}">
+            <div class="zcoin-transaction-icon">
+                <img src="{{ asset_url('zcoin-logo.webp') }}" alt="">
+            </div>
+            <div class="zcoin-transaction-copy">
+                <strong>{{ 'Nhận Zcoin' if tx.is_credit else 'Trừ Zcoin' }}</strong>
+                <span>{{ tx.reason }}</span>
+                <small>{{ format_vn_datetime(tx.created_at) }}{% if tx.actor_name %} • Thực hiện bởi {{ tx.actor_name }}{% endif %}</small>
+            </div>
+            <div class="zcoin-transaction-value">
+                <strong>{{ '+' if tx.is_credit else '-' }}{{ tx.amount_display }}</strong>
+                <small>Số dư: {{ tx.balance_after_display }}</small>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="zcoin-empty-state">
+        <img src="{{ asset_url('zcoin-logo.webp') }}" alt="">
+        <strong>Chưa có giao dịch Zcoin</strong>
+        <span>Lịch sử nhận và sử dụng Zcoin sẽ xuất hiện tại đây.</span>
+    </div>
+    {% endif %}
+</section>
+{% if focus_transaction_id %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+ const target=document.getElementById({{ ('zcoin-tx-' ~ focus_transaction_id)|tojson }});
+ if(target){ target.scrollIntoView({behavior:'smooth',block:'center'}); }
+});
+</script>
+{% endif %}
+{% endblock %}

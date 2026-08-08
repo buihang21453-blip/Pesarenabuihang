@@ -1,0 +1,212 @@
+<script>
+let currentRoomChatKey = "";
+let roomChatPoller = null;
+let roomChatRequestInFlight = false;
+let roomChatSendInFlight = false;
+
+function escapeRoomHtml(text) {
+    const div = document.createElement("div");
+    div.innerText = text || "";
+    return div.innerHTML;
+}
+
+function renderRoomAvatar(url, name, achievement, frameUrl) {
+    const safeName = escapeRoomHtml(name || "?");
+    const initial = escapeRoomHtml((name || "?").trim().charAt(0).toUpperCase() || "?");
+    const safeFrame = frameUrl ? escapeRoomHtml(frameUrl) : "";
+    const badge = achievement && achievement.icon
+        ? `<span class="avatar-achievement" title="${escapeRoomHtml(achievement.name || 'Huy hiệu')}">${escapeRoomHtml(achievement.icon)}</span>`
+        : "";
+    const avatarBody = url
+        ? `<img class="player-avatar-image" src="${escapeRoomHtml(url)}" alt="Ảnh đại diện ${safeName}" loading="lazy">`
+        : `<span class="player-avatar-fallback">${initial}</span>`;
+    const frame = safeFrame
+        ? `<img class="player-avatar-equipped-frame" src="${safeFrame}" alt="" aria-hidden="true" loading="lazy">`
+        : "";
+    return `<span class="player-avatar avatar-xs${safeFrame ? ' has-equipped-frame' : ''}">${avatarBody}${frame}${badge}</span>`;
+}
+
+function renderRoomChat(messages) {
+    const box = document.getElementById("roomChatBox");
+    if (!box) return;
+
+    const nextKey = (messages || []).map(function (msg) {
+        return [msg.id || "", msg.created_at || "", msg.message || ""].join(":");
+    }).join("|");
+    if (nextKey === currentRoomChatKey) return;
+    currentRoomChatKey = nextKey;
+
+    box.innerHTML = messages.map(function (msg) {
+        const adminBadge = msg.user_role === "admin" ? '<span class="badge gold">ADMIN</span>' : '';
+        const adminClass = msg.user_role === "admin" ? 'admin' : '';
+        return `
+            <div class="chat-message">
+                <div class="chat-message-head">${renderRoomAvatar(msg.user_avatar_url, msg.user_name, msg.user_achievement, msg.user_avatar_frame_url)}<span class="chat-name ${adminClass}">${escapeRoomHtml(msg.user_name)}</span></div>
+                ${adminBadge}
+                <span class="chat-time">${escapeRoomHtml(msg.created_at_display || msg.created_at)}</span>
+                <div class="chat-text">${escapeRoomHtml(msg.message)}</div>
+            </div>
+        `;
+    }).join("");
+
+    box.scrollTop = box.scrollHeight;
+}
+
+
+function bindRoomChatForm() {
+    const form = document.querySelector(".room-chat-form");
+    if (!form || form.dataset.roomChatBound === "1") return;
+    form.dataset.roomChatBound = "1";
+
+    form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (roomChatSendInFlight || roomStateStopped) return;
+
+        const input = form.querySelector('input[name="message"]');
+        const button = form.querySelector('button[type="submit"]');
+        const status = document.getElementById("roomChatStatus");
+        const message = input ? input.value.trim() : "";
+        if (!message) return;
+
+        roomChatSendInFlight = true;
+        if (input) input.disabled = true;
+        if (button) button.disabled = true;
+        if (status) status.textContent = "Đang gửi tin nhắn...";
+
+        const task = function () {
+            return fetch("{{ url_for('api_send_room_chat', room_id=room.id) }}", {
+                method: "POST",
+                credentials: "same-origin",
+                cache: "no-store",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: JSON.stringify({message: message})
+            });
+        };
+
+        const request = window.PESNet && typeof PESNet.singleFlight === "function"
+            ? PESNet.singleFlight("api:room-chat-send:{{ room.id }}", task)
+            : task();
+
+        request
+            .then(function (res) {
+                if (handleRoomSessionResponse(res)) {
+                    return {ok: false, error: "Phiên đăng nhập đã kết thúc."};
+                }
+                if (res.status === 204 || res.headers.get("X-PES-Polling-Stop")) {
+                    stopRoomChatPolling();
+                    return {ok: false, error: "Phiên chat phòng đã kết thúc."};
+                }
+                return res.json().catch(function () {
+                    return {ok: false, error: "Phản hồi chat không hợp lệ."};
+                });
+            })
+            .then(function (data) {
+                if (!data || !data.ok) {
+                    if (status) status.textContent = (data && data.error) || "Không gửi được tin nhắn.";
+                    return;
+                }
+                if (input) input.value = "";
+                if (status) status.textContent = "";
+                requestImmediateRoomChatRefresh();
+            })
+            .catch(function () {
+                if (status) status.textContent = "Kết nối chat bị gián đoạn. Vui lòng thử lại.";
+            })
+            .finally(function () {
+                roomChatSendInFlight = false;
+                if (input && document.contains(input)) {
+                    input.disabled = false;
+                    input.focus();
+                }
+                if (button && document.contains(button)) button.disabled = false;
+            });
+    });
+}
+
+function stopRoomChatPolling() {
+    if (roomChatPoller && typeof roomChatPoller.stop === "function") {
+        roomChatPoller.stop();
+    } else if (window.PESNet && typeof PESNet.stop === "function") {
+        PESNet.stop("room-chat:{{ room.id }}");
+    }
+    roomChatPoller = null;
+}
+
+function loadRoomChat() {
+    if (document.hidden || roomStateStopped || roomChatRequestInFlight) return Promise.resolve();
+
+    const task = function () {
+        if (roomStateStopped || roomChatRequestInFlight) return Promise.resolve();
+        roomChatRequestInFlight = true;
+        return fetch("{{ url_for('api_room_chat', room_id=room.id) }}", {
+            credentials: "same-origin",
+            cache: "no-store"
+        })
+        .then(function (res) {
+            if (handleRoomSessionResponse(res)) return null;
+            if (res.status === 204 || res.headers.get("X-PES-Polling-Stop")) {
+                stopRoomChatPolling();
+                return null;
+            }
+            if (!res.ok) {
+                if ([401, 403, 404, 410].includes(res.status)) stopRoomChatPolling();
+                return null;
+            }
+            return res.json();
+        })
+        .then(function (data) {
+            if (data && data.ok) renderRoomChat(data.messages);
+        })
+        .catch(function () {})
+        .finally(function () {
+            roomChatRequestInFlight = false;
+        });
+    };
+
+    return window.PESNet && typeof PESNet.singleFlight === "function"
+        ? PESNet.singleFlight("api:room-chat:{{ room.id }}", task)
+        : task();
+}
+
+function requestImmediateRoomChatRefresh() {
+    if (document.hidden || roomStateStopped) return;
+    if (roomChatPoller && typeof roomChatPoller.runNow === "function") roomChatPoller.runNow();
+    else loadRoomChat();
+}
+
+function startRoomChatPolling() {
+    stopRoomChatPolling();
+    if (!window.PESNet) return loadRoomChat();
+    roomChatPoller = PESNet.createPoller({
+        key: "room-chat:{{ room.id }}",
+        task: loadRoomChat,
+        visibleInterval: 30000,
+        hiddenInterval: 120000,
+        runWhenHidden: false,
+        immediate: true,
+        jitter: 1000
+    });
+    return roomChatPoller;
+}
+
+window.addEventListener("DOMContentLoaded", function () {
+    bindRoomChatForm();
+    const chatPanel = document.querySelector('.room-chat-side, [data-room-chat-panel]');
+    if (chatPanel && chatPanel.offsetParent !== null) startRoomChatPolling();
+});
+document.addEventListener('pes:room-chat-opened', startRoomChatPolling);
+document.addEventListener('pes:room-chat-closed', stopRoomChatPolling);
+
+function stopRoomLiveWork() {
+    stopRoomStatePolling();
+    stopRoomChatPolling();
+}
+window.addEventListener("pagehide", function (event) {
+    // BFCache cần giữ controller để PESNet có thể resume khi người dùng quay lại.
+    if (!event.persisted) stopRoomLiveWork();
+}, {once: true});
+window.addEventListener("beforeunload", stopRoomLiveWork, {once: true});
+</script>

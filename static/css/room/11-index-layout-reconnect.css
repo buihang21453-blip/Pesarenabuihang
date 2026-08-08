@@ -1,0 +1,173 @@
+/* PES Arena V1.3.106 — central match-stage rules moved to 17-center-match-stability.css. */
+/* PES Arena V1.3.105 — 11-index-layout-reconnect.css
+ * Side rail / Parsec / room history rules moved to 16-side-rail-history-stability.css.
+ * Remaining rules keep this module's other responsibilities.
+ */
+/* PES Arena V1.3.104 — 11-index-layout-reconnect.css
+ * Room action-control rules moved to 15-room-actions-stability.css.
+ * Remaining rules keep this module's non-action responsibility.
+ */
+/* PES Arena — Room UI reconnect layer
+   Source: user-approved index.html + styles.css mockup.
+   Frontend-only: keeps existing Jinja data, form actions, IDs and JS hooks intact. */
+/* TOP BAR */
+
+
+
+
+
+
+
+
+
+
+/* MAIN 4-COLUMN SHELL — same proportions as the approved mockup. */
+
+
+
+
+
+
+
+/* PLAYER HEADER */
+
+
+
+
+
+
+
+
+
+
+
+
+/* CLUB VISUALS — do not expose hidden Random3 data; only restyle data already rendered by backend. */
+
+
+
+
+
+
+/* User request: TOTAL SCORE copy/value must be white, same as the original mockup. */
+
+
+
+
+/* CENTER MODE CARD */
+
+
+
+
+
+
+
+
+
+
+
+
+/* VS & state-specific center sections */
+
+
+
+
+
+.arena-room-v2 .room-result-score span{color:#fff}
+
+
+
+/* ACTION DOCK — same gold / green / red hierarchy as index.html. */
+
+
+
+
+
+
+
+
+/* RIGHT RAIL */
+
+
+
+
+
+
+
+
+
+
+
+
+/* BOTTOM MODE STRIP */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Keep room history/functionality, but move it under the mode strip instead of stealing right-side battle width. */
+
+
+
+/* State treatment: keep one layout, let backend status drive only the center content. */
+
+
+
+
+
+/* Extra legacy/admin/friendly controls stay functional, visually separated from the core mockup shell. */
+
+
+
+
+
+/* ===== V1.3.85 visual fidelity + state/action hotfix ===== */
+
+
+/* Center mode emblem must use the supplied artwork at a visible size. */
+
+
+
+/* Keep the active-mode card shaped like the approved mockup. */
+
+
+
+
+
+
+/* Match the original: TOTAL SCORE caption and number are white on both sides. */
+
+
+/* Make the player/opponent cards more balanced, closer to the approved screenshot. */
+
+
+
+
+
+/* Right rail: room information + Parsec as two clean stacked panels. */
+
+
+
+
+
+/* Keep action buttons visually explicit and readable. */
+
+
+
+
+
+/* Ensure modal is always above the room and visibly communicates RP penalty. */

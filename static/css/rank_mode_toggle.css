@@ -1,0 +1,28 @@
+/* Rank Mode Toggle Module — selector có phạm vi, không ghi đè CSS toàn cục. */
+.admin-system-features-panel .admin-feature-help {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border: 1px solid rgba(59, 130, 246, .25);
+    border-radius: 10px;
+    background: rgba(59, 130, 246, .08);
+    line-height: 1.5;
+}
+
+.room-center-mode-zone .room-center-mode-actions--single {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 430px;
+    margin-inline: auto;
+}
+
+.room-center-mode-zone .room-center-mode-actions--single > form,
+.room-center-mode-zone .room-center-mode-actions--single .room-mode-select-btn {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 640px) {
+    .room-center-mode-zone .room-center-mode-actions--single {
+        max-width: 100%;
+    }
+}

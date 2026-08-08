@@ -1,0 +1,10 @@
+<section class="admin-tab-panel admin-economy-embed-panel" data-admin-panel="economy" hidden>
+    <div class="panel admin-module-shell">
+        <div class="admin-section-heading">
+            <div><h2>🪙 Quản trị Zcoin & Gift Code</h2><p class="small">Module được tải khi mở tab, không tải lại toàn bộ trang Admin.</p></div>
+            <a class="btn gray" href="{{ url_for('admin_economy') }}" target="_blank" rel="noopener">Mở trang riêng</a>
+        </div>
+        <iframe class="admin-module-frame" title="Quản trị Zcoin và Gift Code" data-admin-lazy-src="{{ url_for('admin_economy') }}?embedded=1" loading="lazy"></iframe>
+    </div>
+</section>
+

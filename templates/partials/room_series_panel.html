@@ -1,0 +1,67 @@
+{% if rank_series and selected_rank_mode in ['home_away','bo3','tactical_bo3','ban_pick_bo3'] %}
+<div class="series-panel{% if room.status == 'waiting_ready' and selected_rank_mode in ['tactical_bo3','ban_pick_bo3'] %} is-interactive{% endif %}" aria-label="Tiến trình Series">
+    <div class="series-score">
+        <span class="series-label">{% if selected_rank_mode == 'home_away' %}TỔNG TỶ SỐ{% else %}SERIES{% endif %}</span>
+        <strong>{{ rank_series.score }}</strong>
+    </div>
+    <div class="series-meta">
+        <span>{% if selected_rank_mode == 'home_away' %}Lượt {{ rank_series.game_no if rank_series.game_no <= 2 else 2 }}/2{% else %}Trận {{ rank_series.game_no if rank_series.game_no <= 3 else 3 }}/3{% endif %}</span>
+        <span class="series-meta-dot" aria-hidden="true">•</span>
+        <span class="series-rp-rule">RP chốt khi Series kết thúc</span>
+    </div>
+    {% if rank_series.games %}
+    <div class="series-history-mini">
+        {% for g in rank_series.games if g.status == 'completed' %}
+        <span>#{{ g.game_no }} {{ g.player1_score }}-{{ g.player2_score }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if room.status == 'waiting_ready' and selected_rank_mode == 'tactical_bo3' and rank_series.choices %}
+        {% set side = 'host' if room_room_viewer_is_host else 'guest' %}
+        {% set options = rank_series.choices.host_options if side == 'host' else rank_series.choices.guest_options %}
+        {% set choice = rank_series.choices.host_choice if side == 'host' else rank_series.choices.guest_choice %}
+        {% if choice is none %}
+        <div class="series-actions">
+            {% for team in options %}
+            <form method="post" action="{{ url_for('room_series_tactical_pick', room_id=room.id) }}">
+                <input type="hidden" name="choice_index" value="{{ loop.index0 }}">
+                <button class="series-club-btn" type="submit">
+                    {% if team.logo %}<img src="{{ team.logo }}" alt="">{% endif %}{{ team.name }}
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+        {% else %}<div class="series-meta">✓ Bạn đã khóa CLB • Chờ đối thủ</div>{% endif %}
+    {% endif %}
+
+    {% if room.status == 'waiting_ready' and selected_rank_mode == 'ban_pick_bo3' and rank_series.ban_pick %}
+        {% set bp = rank_series.ban_pick %}
+        {% set expected_host = ((bp.ban_count|int) % 2 == 0) %}
+        {% set my_turn_to_ban = (bp.phase == 'ban' and ((expected_host and room_room_viewer_is_host) or ((not expected_host) and room_viewer_is_guest))) %}
+        {% set can_pick = (bp.phase == 'pick' and ((room_room_viewer_is_host and not bp.host_pick) or (room_viewer_is_guest and bp.host_pick and not bp.guest_pick))) %}
+        <div class="series-meta">
+            {% if bp.phase == 'ban' %}Cấm {{ bp.ban_count|int }}/{{ (rank_mode_configs.get('ban_pick_bo3', {}).get('bans_per_player', 3)|int) * 2 }} • {{ 'Lượt Chủ phòng' if expected_host else 'Lượt Đối thủ' }}
+            {% else %}Chọn CLB • {{ 'Chủ phòng chọn trước' if not bp.host_pick else ('Đối thủ chọn' if not bp.guest_pick else 'Đã khóa đội') }}{% endif %}
+            {% if bp.phase in ['ban','pick'] and bp.turn_actor %}
+            • Tự động random sau <strong class="series-turn-countdown" data-seconds="{{ bp.turn_remaining_seconds|default(0)|int }}">{{ bp.turn_remaining_seconds|default(0)|int }}</strong>s
+            {% endif %}
+        </div>
+        {% if my_turn_to_ban or can_pick %}
+        <div class="series-actions">
+            {% for team in bp.pool %}
+                {% if team.name not in bp.banned and team.name != bp.host_pick and team.name != bp.guest_pick %}
+                <form method="post" action="{{ url_for('room_series_ban_pick', room_id=room.id) }}">
+                    <input type="hidden" name="action" value="{{ 'ban' if bp.phase == 'ban' else 'pick' }}">
+                    <input type="hidden" name="club_name" value="{{ team.name }}">
+                    <button class="series-club-btn {% if bp.phase == 'ban' %}is-ban{% endif %}" type="submit">
+                        {% if team.logo %}<img src="{{ team.logo }}" alt="">{% endif %}{{ team.name }}
+                    </button>
+                </form>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% else %}<div class="series-meta">Đang chờ lượt của đối thủ...</div>{% endif %}
+    {% endif %}
+</div>
+{% endif %}

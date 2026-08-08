@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ static_asset('css/luckybox_user.css') }}">
+<script src="{{ static_asset('js/luckybox_user.js') }}" defer></script>
+{% endblock %}
+{% block content %}
+<div class="lb3-page" data-lb3-page
+     data-open-url="{{ url_for('luckybox_admin_preview_open') if preview_mode else url_for('luckybox_open') }}"
+     data-preview-mode="{{ '1' if preview_mode else '0' }}"
+     data-rate-version-id="{{ selected_rate.id if selected_rate else '' }}"
+     data-box-code="{{ box.code if box else 'lucky_box_pes_arena' }}"
+     data-box-image="{{ asset_url(box.image_path) if box else asset_url('luckybox/luckybox-pes-arena.webp') }}"
+     data-open-price="{{ open_price }}">
+
+  {% if preview_mode %}
+  <div class="lb3-preview-banner">
+    <strong>🧪 ADMIN PREVIEW</strong>
+    <span>Quay thử giao diện người chơi, không trừ Zcoin và không phát vật phẩm.</span>
+    <a href="{{ url_for('admin_luckybox', rate_version_id=selected_rate.id if selected_rate else none) }}">Quản lý tỷ lệ</a>
+  </div>
+  {% endif %}
+
+  <section class="lb3-hero">
+    <div class="lb3-box-stage">
+      <div class="lb3-box-glow"></div>
+      <img src="{{ asset_url(box.image_path) if box else asset_url('luckybox/luckybox-pes-arena.webp') }}" alt="Lucky Box PES Arena">
+      <span class="lb3-status {{ 'is-live' if is_live else 'is-closed' }}">
+        {{ 'ĐANG MỞ' if is_live else ('CHẾ ĐỘ TEST' if preview_mode else 'CHƯA MỞ') }}
+      </span>
+    </div>
+    <div class="lb3-hero-copy">
+      <span class="lb3-kicker">PES ARENA · LUCKY BOX</span>
+      <h1>{{ box.name if box else 'Lucky Box PES Arena' }}</h1>
+      <p>{{ box.description if box else 'Hệ thống Lucky Box hiện chưa sẵn sàng.' }}</p>
+      <div class="lb3-price-row">
+        <div class="lb3-price">
+          <img src="{{ asset_url('zcoin-logo.webp') }}" alt="Zcoin">
+          <span><small>Giá mỗi lượt</small><strong>{{ format_zcoin(open_price) }}</strong></span>
+        </div>
+        <div class="lb3-balance">
+          <small>Số dư của bạn</small>
+          <strong data-lb3-balance>{{ format_zcoin(balance) }} Zcoin</strong>
+        </div>
+      </div>
+      <div class="lb3-actions">
+        <button class="btn gold lb3-open-button" type="button" data-lb3-open {% if not can_open %}disabled{% endif %}>
+          {{ '🎲 Quay thử giao diện' if preview_mode else '🎁 Mở Lucky Box' }}
+        </button>
+        <a class="btn gray" href="{{ url_for('luckybox_history') }}">Lịch sử mở hộp</a>
+      </div>
+      {% if not preview_mode and not is_live %}
+      <p class="lb3-notice">Lucky Box chưa được Admin bật cho người chơi.</p>
+      {% elif not preview_mode and balance < open_price %}
+      <p class="lb3-notice is-warning">Bạn chưa đủ Zcoin để mở hộp.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <div class="lb4-opening" data-lb4-overlay hidden aria-hidden="true">
+    <div class="lb4-backdrop"></div>
+    <section class="lb4-dialog" role="dialog" aria-modal="true" aria-labelledby="lb4OpeningTitle">
+      <button class="lb4-skip" type="button" data-lb4-skip>Bỏ qua hiệu ứng</button>
+      <div class="lb4-stage" data-lb4-stage>
+        <div class="lb4-ring ring-one"></div>
+        <div class="lb4-ring ring-two"></div>
+        <div class="lb4-flash"></div>
+        <div class="lb4-sparks" aria-hidden="true">
+          {% for _ in range(12) %}<i></i>{% endfor %}
+        </div>
+        <img class="lb4-box" data-lb4-box src="{{ asset_url(box.image_path) if box else asset_url('luckybox/luckybox-pes-arena.webp') }}" alt="Lucky Box PES Arena">
+      </div>
+      <span class="lb3-kicker">PES ARENA · OPENING</span>
+      <h2 id="lb4OpeningTitle">Đang mở Lucky Box</h2>
+      <p class="lb4-status-text" data-lb4-status>Đang tập trung năng lượng...</p>
+      <div class="lb4-reward-grid" data-lb4-rewards hidden></div>
+      <button class="btn gold lb4-continue" type="button" data-lb4-continue hidden>Xem phần thưởng</button>
+    </section>
+  </div>
+
+  <section class="lb3-result" data-lb3-result hidden aria-live="polite">
+    <div class="lb3-section-head">
+      <div><span class="lb3-kicker">KẾT QUẢ</span><h2>Ba phần thưởng của bạn</h2></div>
+      <span data-lb3-result-note></span>
+    </div>
+    <div class="lb3-result-grid" data-lb3-result-grid></div>
+    <div class="lb3-result-actions">
+      <button class="btn gold" type="button" data-lb3-open-again>Mở thêm lượt</button>
+      <a class="btn gray" data-lb3-opening-link href="{{ url_for('luckybox_history') }}">Xem chi tiết</a>
+    </div>
+  </section>
+
+  <section class="lb3-panel">
+    <div class="lb3-section-head">
+      <div><span class="lb3-kicker">POOL PHẦN THƯỞNG</span><h2>Có thể nhận được gì?</h2></div>
+      <span>{{ rewards|selectattr('available')|list|length }} reward đang hoạt động</span>
+    </div>
+
+    {% set group_defs = [
+      ('exclusive', 'Độc quyền Lucky Box', 'Chỉ có trong Lucky Box'),
+      ('shop', 'Vật phẩm & Coupon', 'Vật phẩm đang dùng chung với Kho đồ'),
+      ('zcoin', 'Zcoin', 'Các mốc Zcoin từ phổ biến đến cực hiếm'),
+      ('other', 'Kết quả đặc biệt', 'Chỉ xuất hiện khi Admin cho phép')
+    ] %}
+    {% for code, label, description in group_defs %}
+      {% set group = reward_groups.get(code, []) %}
+      {% if group %}
+      <div class="lb3-reward-section">
+        <div class="lb3-reward-title"><div><h3>{{ label }}</h3><p>{{ description }}</p></div><span>{{ group|length }}</span></div>
+        <div class="lb3-reward-grid">
+          {% for reward in group %}
+          <article class="lb3-reward-card rarity-{{ reward.rarity or 'common' }}">
+            <div class="lb3-reward-media">
+              <img src="{{ reward.image_url or asset_url('zcoin-logo.webp') }}" alt="{{ reward.reward_name }}" loading="lazy">
+              <span>{{ reward.rarity_label }}</span>
+            </div>
+            <div class="lb3-reward-copy">
+              <small>{{ reward.type_label }}</small>
+              <h4>{{ reward.reward_name }}</h4>
+              {% if reward.reward_amount %}<strong>{{ format_zcoin(reward.reward_amount) }} Zcoin</strong>{% endif %}
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </section>
+
+  <section class="lb3-panel">
+    <div class="lb3-section-head">
+      <div><span class="lb3-kicker">GẦN ĐÂY</span><h2>Lịch sử Lucky Box</h2></div>
+      <a href="{{ url_for('luckybox_history') }}">Xem tất cả →</a>
+    </div>
+    {% if openings %}
+    <div class="lb3-history-list">
+      {% for opening in openings %}
+      <a href="{{ url_for('luckybox_opening_detail', opening_id=opening.id) }}">
+        <span><strong>Version {{ opening.rate_version }}</strong><small>{{ format_vn_datetime(opening.opened_at) }}</small></span>
+        <span><b>-{{ format_zcoin(opening.zcoin_cost) }}</b><small>{{ format_zcoin(opening.balance_after) }} Zcoin còn lại</small></span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}<div class="lb3-empty">Bạn chưa có lượt mở Lucky Box nào.</div>{% endif %}
+  </section>
+
+  <div class="lb3-error" data-lb3-error hidden></div>
+  <script type="application/json" id="lb3RewardCatalog">{{ reward_catalog|tojson }}</script>
+</div>
+{% endblock %}

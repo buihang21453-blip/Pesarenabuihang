@@ -1,0 +1,11 @@
+/* PES Arena compatibility stylesheet entrypoint
+ * Compatibility entrypoint only. Legacy CSS was split into ordered modules.
+ * Do not add new feature CSS here; create a scoped module under static/css/.
+ * Import order is intentionally identical to the historical style.css cascade.
+ */
+@import url("css/legacy/01-foundation.css");
+@import url("css/legacy/02-visual-system.css");
+@import url("css/legacy/03-admin-account.css");
+@import url("css/legacy/04-room-generation-1.css");
+@import url("css/legacy/05-admin-system.css");
+@import url("css/legacy/06-room-generation-2.css");

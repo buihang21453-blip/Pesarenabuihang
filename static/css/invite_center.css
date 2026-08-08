@@ -1,0 +1,50 @@
+/* V1.3.76 — Invite response controls.
+   Keep invitation actions aligned with the PES Arena glass/neon button language. */
+.invite-response-actions,
+.invite-modal-actions{
+  display:flex!important;
+  align-items:center;
+  justify-content:center!important;
+  gap:12px;
+  flex-wrap:wrap;
+  width:100%;
+  margin-inline:auto;
+}
+.invite-item > .invite-response-actions{width:auto;min-width:248px}
+.invite-response-actions > *,
+.invite-modal-actions > *{margin:0!important;flex:0 1 132px}
+.invite-action-btn{
+  width:132px;
+  min-height:42px;
+  padding:9px 16px;
+  border:1px solid transparent!important;
+  border-radius:12px!important;
+  color:#fff!important;
+  font-weight:900!important;
+  letter-spacing:.015em;
+  text-align:center;
+  text-shadow:0 1px 2px rgba(0,0,0,.7),0 0 9px rgba(255,255,255,.08);
+  backdrop-filter:blur(8px) saturate(1.08);
+  -webkit-backdrop-filter:blur(8px) saturate(1.08);
+  transition:filter .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+.invite-action-btn.is-accept{
+  background:linear-gradient(180deg,rgba(8,104,65,.34),rgba(3,49,31,.48))!important;
+  border-color:rgba(55,238,157,.88)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 0 14px rgba(37,221,142,.22),0 5px 12px rgba(0,0,0,.16)!important;
+  color:#effff7!important;
+}
+.invite-action-btn.is-reject{
+  background:linear-gradient(180deg,rgba(116,23,43,.34),rgba(54,10,23,.48))!important;
+  border-color:rgba(255,94,121,.88)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 0 14px rgba(244,71,104,.20),0 5px 12px rgba(0,0,0,.16)!important;
+  color:#fff2f5!important;
+}
+.invite-action-btn:hover{filter:brightness(1.16) saturate(1.07);transform:translateY(-1px)}
+.invite-modal-actions{margin-top:16px}
+@media (max-width:640px){
+  .invite-item{align-items:flex-start;flex-direction:column}
+  .invite-item > .invite-response-actions{width:100%;min-width:0}
+  .invite-response-actions > *, .invite-modal-actions > *{flex:1 1 120px}
+  .invite-action-btn{width:100%}
+}

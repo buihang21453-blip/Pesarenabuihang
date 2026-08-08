@@ -1,0 +1,34 @@
+PES Arena V1.3.99 - Audit CSS nut Tim nhanh
+
+Trigger Tim nhanh hien tai:
+- HTML class duy nhat: room-quick-flat
+- Khong con: btn
+- Khong con: arena-btn
+- Khong con: green
+- Khong con: room-center-action-btn
+- Khong con: arena-action-quick
+- Khong con: gaming-quick-action
+- Khong con: room-quick-match-btn
+
+CSS duy nhat tac dong truc tiep trigger:
+static/css/room/01-shell-layout.css -> .room-quick-flat
+
+Hieu ung da tat:
+- box-shadow: none
+- text-shadow: none
+- gradient: none (background mau xanh phang)
+- filter: none
+- transform: none
+- transition: none
+- hover/focus/active: khong doi hinh dang, khong di chuyen
+- appearance: none
+
+Van giu:
+- kich thuoc 52px
+- vi tri 1/3 cum 3 nut
+- nen xanh phang #07512f
+- vien xanh #20d889
+- chu trang
+- chuc nang Quick Match qua data-quick-match-url + static/js/quick_match.js
+
+Test: 20 PASS + app.py py_compile PASS

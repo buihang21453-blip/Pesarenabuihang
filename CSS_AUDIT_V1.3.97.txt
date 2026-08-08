@@ -1,0 +1,46 @@
+CSS audit selectors for three-button dock:
+templates/room/_center_stage.html:231:                <div class="room-center-primary-actions room-action-zone room-center-primary-actions-three">
+templates/room/_center_stage.html:232:                    <a class="btn arena-btn gold room-center-action-btn arena-action-invite gaming-invite-action" href="{{ url_for('players') }}">Mời đấu</a>
+templates/room/_center_stage.html:234:                    <button type="button" class="btn arena-btn green room-center-action-btn arena-action-quick"
+templates/room/_center_stage.html:246:                        <button class="btn arena-btn red room-center-action-btn arena-action-exit" type="submit">Thoát phòng</button>
+templates/_room_live_content.html:264:                <div class="room-center-primary-actions room-action-zone room-center-primary-actions-three">
+templates/_room_live_content.html:265:                    <a class="btn arena-btn gold room-center-action-btn arena-action-invite gaming-invite-action" href="{{ url_for('players') }}">Mời đấu</a>
+templates/_room_live_content.html:267:                    <button type="button" class="btn arena-btn green room-center-action-btn arena-action-quick"
+templates/_room_live_content.html:279:                        <button class="btn arena-btn red room-center-action-btn arena-action-exit" type="submit">Thoát phòng</button>
+static/css/room/06-responsive-performance.css:17:.arena-room-v2 .arena-action-invite,
+static/css/room/06-responsive-performance.css:31:.arena-room-v2 .arena-action-exit,
+static/css/room/04-actions-history.css:52:.arena-room-v2 .arena-action-exit,
+static/css/room/04-actions-history.css:62:.arena-room-v2 .arena-action-invite,
+static/css/room/04-actions-history.css:198:.arena-room-v2 .arena-action-exit,
+static/css/room/04-actions-history.css:224:.arena-room-v2 .room-center-stage-plain > .room-center-primary-actions:not(.room-center-primary-actions-three) > *,
+static/css/room/04-actions-history.css:225:.arena-room-v2 .room-center-stage-plain > .room-action-zone:not(.room-center-primary-actions-three) > *{flex:1 1 0;min-width:0}
+static/css/room/10-prestart-flow.css:9:.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-center-primary-actions:not(.room-center-primary-actions-three),
+static/css/room/10-prestart-flow.css:10:.arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-action-zone:not(.room-center-primary-actions-three){
+static/css/room/10-prestart-flow.css:49:  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-center-primary-actions:not(.room-center-primary-actions-three),
+static/css/room/10-prestart-flow.css:50:  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-action-zone:not(.room-center-primary-actions-three){
+static/css/room/05-action-states.css:27:.arena-room-v2 .arena-action-invite,
+static/css/room/05-action-states.css:45:.arena-room-v2 .arena-action-exit,
+static/css/room/05-action-states.css:84:.arena-room-v2 .room-center-stage-plain > .room-center-primary-actions:not(.room-center-primary-actions-three) .room-center-action-btn,
+static/css/room/05-action-states.css:85:.arena-room-v2 .room-center-stage-plain > .room-action-zone:not(.room-center-primary-actions-three) .room-center-action-btn{
+static/css/room/08-action-layout-guard.css:123:.arena-room-v2 .room-center-primary-actions-three .arena-action-invite,
+static/css/room/08-action-layout-guard.css:124:.arena-room-v2 .room-center-primary-actions-three .arena-action-exit{
+static/css/room/08-action-layout-guard.css:131:.arena-room-v2 .room-center-primary-actions-three .arena-action-invite{
+static/css/room/08-action-layout-guard.css:136:.arena-room-v2 .room-center-primary-actions-three .arena-action-exit{
+static/css/room/08-action-layout-guard.css:141:.arena-room-v2 .room-center-primary-actions-three .arena-action-invite:hover,
+static/css/room/08-action-layout-guard.css:142:.arena-room-v2 .room-center-primary-actions-three .arena-action-exit:hover{
+static/css/room/01-shell-layout.css:26:.arena-room-v2 .room-center-vs-image{position:relative;z-index:1;width:135px;height:135px;margin:auto 0 5px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(216,165,60,.18))}.arena-room-v2 .room-center-countdown-label,.arena-room-v2 .room-center-countdown{position:relative;z-index:1}.arena-room-v2 .room-center-primary-actions,.arena-room-v2 .room-action-zone{z-index:2;max-width:none}.arena-room-v2 .room-center-primary-actions .btn{min-height:42px;padding:9px 10px;border-radius:9px;font-size:11px;font-weight:850}.arena-room-v2 .room-center-primary-actions{position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:center;gap:7px;width:calc(100% - 16px);margin-top:auto;padding:0 0 10px}.arena-room-v2 .room-center-primary-actions:not(.room-center-primary-actions-three)>*{flex:1 1 30%;min-width:0}.arena-room-v2 .room-center-random-form,.arena-room-v2 .room-center-random-trigger{position:relative;z-index:1;width:calc(100% - 16px)}
+static/css/room/01-shell-layout.css:27:.arena-room-v2 .room-center-primary-actions-three{
+static/css/room/01-shell-layout.css:37:.arena-room-v2 .room-center-primary-actions-three > a,
+static/css/room/01-shell-layout.css:38:.arena-room-v2 .room-center-primary-actions-three > button,
+static/css/room/01-shell-layout.css:39:.arena-room-v2 .room-center-primary-actions-three > form{
+static/css/room/01-shell-layout.css:47:.arena-room-v2 .room-center-primary-actions-three > form > .room-center-action-btn,
+static/css/room/01-shell-layout.css:48:.arena-room-v2 .room-center-primary-actions-three > .room-center-action-btn{
+static/css/room/01-shell-layout.css:215:  .arena-room-v2 .room-center-primary-actions-three {
+static/css/room/01-shell-layout.css:220:  .arena-room-v2 .room-center-primary-actions-three .room-center-action-btn {
+static/css/room/11-index-layout-reconnect.css:142:.arena-room-v2 .arena-action-invite,.arena-room-v2 .arena-btn.gold,.arena-room-v2 .arena-btn.is-gold{
+static/css/room/07-parsec-history-polish.css:65:.arena-room-v2 .arena-action-invite,
+static/css/room/07-parsec-history-polish.css:66:.arena-room-v2 .arena-action-exit{
+static/css/room/07-parsec-history-polish.css:73:.arena-room-v2 .arena-action-invite{
+static/css/room/07-parsec-history-polish.css:76:.arena-room-v2 .arena-action-exit{
+static/css/room/07-parsec-history-polish.css:79:.arena-room-v2 .arena-action-invite:hover,
+static/css/room/07-parsec-history-polish.css:80:.arena-room-v2 .arena-action-exit:hover{

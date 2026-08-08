@@ -1,0 +1,28 @@
+    <div class="room-stage-topbar panel">
+        <div class="room-stage-title-wrap">
+            <div>
+                <h1 class="room-stage-title">PHÒNG ĐẤU <span class="room-code-badge">#{{ room.room_code }}</span></h1>
+                <p class="room-stage-subtitle">{{ room.match_mode_label }} • 1 vs 1</p>
+            </div>
+        </div>
+        <div class="room-master-brand" aria-label="PES Arena">
+            <img src="{{ room_asset('pes-arena-room-logo.webp') }}" alt="PES ARENA">
+        </div>
+        {% if room.status == 'waiting_ready' and not room.has_guest and (room_room_viewer_is_host or current_user.role == 'admin') %}
+        <div class="room-stage-share-wrap">
+            <button id="copyRoomShareLink"
+                    class="room-share-button"
+                    type="button"
+                    data-share-path="{{ url_for('room_join_shared', room_id=room.id) }}"
+                    aria-label="Copy link chia sẻ phòng đấu">
+                <span class="room-share-icon" aria-hidden="true"><img src="{{ room_asset('share-link.webp') }}" alt=""></span>
+                <span class="room-share-copy">
+                    <strong>Chia sẻ phòng</strong>
+                    <small>Copy link tham gia</small>
+                </span>
+            </button>
+            <span id="roomShareStatus" class="room-share-status" role="status" aria-live="polite"></span>
+        </div>
+        {% endif %}
+    </div>
+

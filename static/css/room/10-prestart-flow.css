@@ -1,0 +1,21 @@
+/* PES Arena V1.3.106 — central match-stage rules moved to 17-center-match-stability.css. */
+/* PES Arena V1.3.104 — 10-prestart-flow.css
+ * Room action-control rules moved to 15-room-actions-stability.css.
+ * Remaining rules keep this module's non-action responsibility.
+ */
+/* V1.3.76 — pre-start hierarchy cleanup for every ranked mode / Series mode.
+   Readiness belongs to the player card; center stage owns only match orchestration.
+   A solid glass action dock prevents translucent buttons from visually colliding with status text. */
+
+
+/* Host start control gets its own lane above the exit dock instead of sharing its pixels. */
+
+/* Series waiting screen: reduce decorative VS footprint so orchestration and actions never compete for vertical space. */
+
+/* The participant counter is informational only; readiness is shown once on the guest player card. */
+
+
+
+
+/* V1.3.83 — prestart orchestration cleanup: keep only one primary CTA lane,
+   move helper description out of the button, and align exit CTA cleanly. */

@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ static_asset('css/shop_phase3.css') }}">
+<script src="{{ static_asset('js/shop_phase3.js') }}" defer></script>
+{% endblock %}
+{% block content %}
+<section class="shop3-hero">
+    <div class="shop3-hero-copy">
+        <span class="eyebrow">PES ARENA STORE · GIAI ĐOẠN 3</span>
+        <h1>Cửa hàng vật phẩm</h1>
+        <p>Mở khóa khung Avatar, Banner, màu tên, huy hiệu và tiện ích bằng Zcoin.</p>
+        <div class="shop3-hero-actions">
+            <a class="btn gold" href="{{ url_for('luckybox_home') }}">🎁 Lucky Box</a>
+            <a class="btn gray" href="{{ url_for('inventory') }}">🎒 Mở Kho đồ</a>
+            <a class="btn gray" href="{{ url_for('zcoin_wallet') }}">Lịch sử Zcoin</a>
+        </div>
+    </div>
+    <div class="shop3-wallet">
+        <span>Số dư hiện tại</span>
+        <div><img src="{{ asset_url('zcoin-logo.webp') }}" alt="Zcoin"><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }}</strong></div>
+        <small>ZCOIN</small>
+    </div>
+</section>
+
+<a class="shop3-luckybox-spotlight" href="{{ url_for('luckybox_home') }}" aria-label="Khám phá Lucky Box PES Arena">
+    <div class="shop3-luckybox-visual">
+        <span class="shop3-luckybox-orbit" aria-hidden="true"></span>
+        <img src="{{ asset_url('luckybox/luckybox-pes-arena.webp') }}" alt="Lucky Box PES Arena">
+        <span class="shop3-luckybox-badge">HỘP BÍ ẨN</span>
+    </div>
+    <div class="shop3-luckybox-copy">
+        <span class="eyebrow">SỰ KIỆN ĐẶC BIỆT · CHỈ CÓ TRONG LUCKY BOX</span>
+        <h2>Mở hộp, săn phần thưởng bí ẩn</h2>
+        <p>Mỗi lượt nhận 3 kết quả. Cơ hội sở hữu banner cầu thủ độc quyền, khung hiếm, Zcoin và nhiều vật phẩm đặc biệt.</p>
+        <div class="shop3-luckybox-highlights">
+            <span>🎁 3 kết quả mỗi lượt</span>
+            <span>✨ 14 vật phẩm độc quyền</span>
+            <span>🪙 Có thể nhận Zcoin</span>
+        </div>
+        <span class="btn gold shop3-luckybox-cta">Khám phá Lucky Box <b>→</b></span>
+    </div>
+    <div class="shop3-luckybox-sparkles" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+</a>
+
+{% if shop_setup_required %}
+<section class="panel shop3-setup-warning">
+    <strong>⚠ Cửa hàng chưa được cài đặt trên Supabase</strong>
+    <p>Chạy file <code>project_docs/sql/update_shop_inventory_phase3_v1_14_40.sql</code>, sau đó tải lại trang.</p>
+</section>
+{% else %}
+<nav class="shop3-tabs" aria-label="Danh mục Cửa hàng">
+    {% for category in shop_categories %}
+    <a class="shop3-tab {% if active_shop_category == category.code %}active{% endif %}"
+       href="{{ url_for('shop', category=category.code) }}">
+        <span>{{ category.icon }}</span>
+        <strong>{{ category.label }}</strong>
+        <small>{{ shop_category_counts.get(category.code, 0) }}</small>
+    </a>
+    {% endfor %}
+</nav>
+
+<section class="shop3-section-head">
+    <div>
+        <span class="eyebrow">{{ 'ĐỀ XUẤT CHO BẠN' if active_shop_category == 'featured' else 'DANH MỤC VẬT PHẨM' }}</span>
+        <h2>{{ (shop_categories|selectattr('code', 'equalto', active_shop_category)|list|first).label }}</h2>
+    </div>
+    <p>{{ shop_items|length }} vật phẩm đang hiển thị</p>
+</section>
+
+{% if shop_items %}
+<div class="shop3-grid">
+    {% for item in shop_items %}
+    <article class="shop3-card rarity-{{ item.rarity }} {% if item.owned %}is-owned{% endif %} {% if item.is_equipped %}is-equipped{% endif %}"
+        data-shop-item
+        data-item-type="{{ item.item_type }}"
+        data-item-name="{{ item.name|e }}"
+        data-item-description="{{ item.description|e }}"
+        data-item-image="{{ item.preview_url }}"
+        data-name-style="{{ item.metadata.get('css_class', '') }}">
+        <div class="shop3-card-media">
+            {% if item.item_type == 'profile_banner' %}
+            <img class="shop3-banner-image" src="{{ item.image_url }}" alt="{{ item.name }}" loading="lazy">
+            {% else %}
+            <img class="shop3-item-image" src="{{ item.image_url }}" alt="{{ item.name }}" loading="lazy">
+            {% endif %}
+            <span class="shop3-rarity">{{ item.rarity_label }}</span>
+            {% if item.is_featured %}<span class="shop3-featured">NỔI BẬT</span>{% endif %}
+            {% if item.is_equipped %}<span class="shop3-equipped-label">ĐANG DÙNG</span>{% endif %}
+        </div>
+        <div class="shop3-card-body">
+            <div class="shop3-card-heading">
+                <div>
+                    <small>{{ item.item_type_label }}</small>
+                    <h3>{{ item.name }}</h3>
+                </div>
+                {% if item.is_consumable and item.quantity_owned %}<b class="shop3-quantity">×{{ item.quantity_owned }}</b>{% endif %}
+            </div>
+            <p>{{ item.description }}</p>
+            {% if item.item_type == 'discount_coupon' %}
+            <div class="shop3-coupon-rule">
+                Giảm {{ item.discount_percent }}% · tối đa {{ format_zcoin(item.max_discount) }} Zcoin
+                {% if item.minimum_subtotal %}<br>Áp dụng từ {{ format_zcoin(item.minimum_subtotal) }} Zcoin{% endif %}
+            </div>
+            {% endif %}
+            <div class="shop3-price"><img src="{{ asset_url('zcoin-logo.webp') }}" alt=""><strong>{{ format_zcoin(item.price_zcoin) }}</strong><span>Zcoin</span></div>
+
+            <div class="shop3-card-actions">
+                <button class="btn gray js-shop3-preview" type="button">Xem trước</button>
+                {% if item.is_unique and item.owned %}
+                <a class="btn green" href="{{ url_for('inventory') }}">Đã sở hữu</a>
+                {% else %}
+                <form method="post" action="{{ url_for('shop_purchase', item_code=item.code) }}" class="shop3-buy-form" onsubmit="return confirm('Mua {{ item.name|e }} với {{ format_zcoin(item.price_zcoin) }} Zcoin?');">
+                    <input type="hidden" name="request_key" value="{{ shop_purchase_token }}-{{ item.code }}">
+                    <input type="hidden" name="category" value="{{ active_shop_category }}">
+                    {% if item.eligible_coupons %}
+                    <select name="coupon_inventory_id" aria-label="Phiếu giảm giá">
+                        <option value="">Không dùng phiếu</option>
+                        {% for coupon in item.eligible_coupons %}
+                        <option value="{{ coupon.inventory.id }}">{{ coupon.name }} (còn {{ coupon.quantity_owned }})</option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                    <button class="btn gold" type="submit" {% if not item.can_buy %}disabled{% endif %}>
+                        {% if not item.can_afford %}Thiếu Zcoin{% else %}Mua ngay{% endif %}
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<section class="panel empty-state">Danh mục này chưa có vật phẩm đang bày bán.</section>
+{% endif %}
+
+<section class="shop3-note panel">
+    <div>🛡️</div>
+    <div><strong>Giao dịch an toàn</strong><p>Zcoin chỉ bị trừ khi vật phẩm được thêm thành công vào Kho đồ. Phiếu 20% và 30% là phần thưởng do Admin cấp, không bày bán.</p></div>
+</section>
+{% endif %}
+
+<div class="shop3-preview-backdrop" id="shop3Preview" hidden>
+    <div class="shop3-preview-modal" role="dialog" aria-modal="true" aria-labelledby="shop3PreviewName">
+        <button class="shop3-preview-close" type="button" data-shop3-close aria-label="Đóng">×</button>
+        <div class="shop3-profile-preview" id="shop3ProfilePreview">
+            <div class="shop3-preview-banner" id="shop3PreviewBanner"></div>
+            <div class="shop3-preview-identity">
+                <div class="shop3-preview-avatar-shell">
+                    <img class="shop3-preview-avatar" src="{{ current_user.avatar_url or asset_url('zcoin-logo.webp') }}" alt="Avatar">
+                    <img class="shop3-preview-frame" id="shop3PreviewFrame" src="" alt="">
+                </div>
+                <div>
+                    <span class="eyebrow">HỒ SƠ PLAYER</span>
+                    <div class="shop3-preview-name-row">
+                        <strong id="shop3PreviewPlayerName">{{ current_user.display_name or current_user.username }}</strong>
+                        <img id="shop3PreviewBadge" src="" alt="">
+                    </div>
+                    <p>1051 điểm · Hạng #17 · Online</p>
+                </div>
+            </div>
+            <img class="shop3-preview-utility" id="shop3PreviewUtility" src="" alt="">
+        </div>
+        <div class="shop3-preview-copy">
+            <span class="eyebrow">XEM TRƯỚC VẬT PHẨM</span>
+            <h2 id="shop3PreviewName">Vật phẩm</h2>
+            <p id="shop3PreviewDescription"></p>
+            <button class="btn gray" type="button" data-shop3-close>Đóng</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

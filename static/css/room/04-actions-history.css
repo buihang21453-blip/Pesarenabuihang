@@ -1,0 +1,99 @@
+/* PES Arena V1.3.106 — central match-stage rules moved to 17-center-match-stability.css. */
+/* PES Arena V1.3.105 — 04-actions-history.css
+ * Side rail / Parsec / room history rules moved to 16-side-rail-history-stability.css.
+ * Remaining rules keep this module's other responsibilities.
+ */
+/* PES Arena V1.3.104 — 04-actions-history.css
+ * Room action-control rules moved to 15-room-actions-stability.css.
+ * Remaining rules keep this module's non-action responsibility.
+ */
+/* PES Arena V1.3.38 — Room CSS module: 04-actions-history.css
+   Scope: Primary room actions, confirm-result controls and match history layout.
+   IMPORTANT: load order is defined in templates/room_detail.html. */
+/* V1.3.24 — một lớp CSS duy nhất cho nút hành động phòng đấu.
+   Phong cách kính tối, viền neon rõ, chữ trắng; khu Parsec không bị tác động. */
+
+
+
+
+
+
+
+
+
+
+/* Hai nút xác nhận kết quả luôn cân bằng như mẫu, kể cả khi chữ xuống 2 dòng. */
+
+
+
+
+
+
+/* Các cụm hành động của chủ phòng và đối thủ có cùng chiều cao, không bị lệch cột. */
+
+
+
+/* Nút quay quân chỉ có một lớp nền; loại bỏ nền của span con từ CSS cũ. */
+
+
+
+/* Lịch sử phòng luôn chiếm một hàng đầy đủ, tiêu đề và tỷ số không bị co lệch. */
+
+
+
+
+
+
+
+/* V1.3.25 — Tối ưu nút hành động và đưa lịch sử đấu xuống cột phải bên dưới Parsec. */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* V1.3.44 — BOTTOM MODE LOGOS ONLY.
+   This file loads after 03-mode-selector.css, so the final dimensions must live here.
+   Crop the transparent canvas visually and enlarge the real emblem about 3x versus V1.3.43. */
+
+
+
+

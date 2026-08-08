@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ static_asset('css/luckybox_admin.css') }}">
+{% endblock %}
+{% block content %}
+<div class="lb-admin container py-4">
+  <div class="lb-admin-head">
+    <div>
+      <span class="lb-kicker">LUCKY BOX ADMIN · GIAI ĐOẠN 2B</span>
+      <h1>Quản trị Lucky Box PES Arena</h1>
+      <p>Chỉnh Draft, quay thử, kiểm tra và publish. Publish tỷ lệ không tự bật hộp.</p>
+    </div>
+    <div class="lb-head-actions">
+      <a class="btn gray" href="{{ url_for('admin') }}">← Về Admin</a>
+      <a class="btn gray" href="#member-openings">📜 Lịch sử member</a>
+      {% if selected_rate_version %}
+      <a class="btn gray" href="{{ url_for('luckybox_home', preview=1, rate_version_id=selected_rate_version.id) }}">👤 Xem UI người chơi</a>
+      <a class="btn yellow" href="{{ url_for('admin_luckybox_preview', rate_version_id=selected_rate_version.id) }}">🎲 Quay thử Draft</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not selected_box %}
+  <div class="lb-panel lb-danger">Chưa có dữ liệu Lucky Box. Hãy chạy migration Giai đoạn 2A.</div>
+  {% else %}
+
+  <section class="lb-status-grid">
+    <article class="lb-stat"><small>Trạng thái hộp</small><strong class="{{ 'is-on' if selected_box.is_enabled else 'is-off' }}">{{ 'ĐANG BẬT' if selected_box.is_enabled else 'ĐANG TẮT' }}</strong></article>
+    <article class="lb-stat"><small>Rate Active</small><strong>{{ 'Version ' ~ active_rate_version.version_number if active_rate_version else 'Chưa có' }}</strong></article>
+    <article class="lb-stat"><small>Version đang xem</small><strong>V{{ selected_rate_version.version_number if selected_rate_version else '-' }} · {{ selected_rate_version.status|upper if selected_rate_version else '-' }}</strong></article>
+    <article class="lb-stat"><small>Số reward</small><strong>{{ rewards|length }}</strong></article>
+  </section>
+
+  <section class="lb-panel">
+    <div class="lb-panel-title"><div><h2>1. Cấu hình chung của hộp</h2><p>Bật hộp chỉ được phép khi đã có Rate Active hợp lệ.</p></div></div>
+    <form method="post" action="{{ url_for('admin_luckybox_save_box', box_id=selected_box.id) }}" class="lb-form-grid">
+      {% if selected_rate_version %}<input type="hidden" name="rate_version_id" value="{{ selected_rate_version.id }}">{% endif %}
+      <label class="lb-switch-row"><input type="checkbox" name="is_enabled" value="1" {% if selected_box.is_enabled %}checked{% endif %}><span>Bật Lucky Box cho người chơi</span></label>
+      <label class="lb-switch-row"><input type="checkbox" name="no_reward_enabled" value="1" {% if selected_box.no_reward_enabled %}checked{% endif %}><span>Cho phép “Chúc bạn may mắn lần sau”</span></label>
+      <label class="lb-field lb-span-2"><span>Mô tả</span><textarea name="description" rows="2" maxlength="1000">{{ selected_box.description }}</textarea></label>
+      <label class="lb-field"><span>Tiêu đề thông báo</span><input name="notification_title" maxlength="120" value="{{ selected_box.notification_title }}" required></label>
+      <label class="lb-field"><span>Mẫu thông báo — bắt buộc có <code>{rewards}</code></span><input name="notification_template" maxlength="500" value="{{ selected_box.notification_template }}" required></label>
+      <label class="lb-field lb-span-2"><span>Lý do thay đổi</span><input name="reason" minlength="3" maxlength="500" placeholder="Ví dụ: Chuẩn bị kiểm thử Preview" required></label>
+      <div class="lb-span-2"><button class="btn yellow" type="submit">Lưu cấu hình hộp</button></div>
+    </form>
+  </section>
+
+  <section class="lb-panel">
+    <div class="lb-panel-title">
+      <div><h2>2. Phiên bản tỷ lệ</h2><p>Mỗi lần publish phải dùng một Draft riêng để giữ lịch sử.</p></div>
+      <form method="get" class="lb-version-picker">
+        <select name="rate_version_id" onchange="this.form.submit()">
+          {% for version in rate_versions %}
+          <option value="{{ version.id }}" {% if selected_rate_version and version.id == selected_rate_version.id %}selected{% endif %}>Version {{ version.version_number }} · {{ version.status|upper }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+
+    {% if selected_rate_version %}
+    <div class="lb-action-row">
+      <form method="post" action="{{ url_for('admin_luckybox_clone_rate', rate_version_id=selected_rate_version.id) }}" onsubmit="return confirm('Tạo một Draft mới từ phiên bản này?')">
+        <input name="reason" minlength="3" maxlength="500" placeholder="Lý do tạo Draft" required>
+        <button class="btn gray" type="submit">Nhân bản thành Draft mới</button>
+      </form>
+      {% if selected_rate_version.status == 'draft' %}
+      <form method="post" action="{{ url_for('admin_luckybox_sync_rewards', rate_version_id=selected_rate_version.id) }}" onsubmit="return confirm('Đồng bộ vật phẩm Shop mới vào Draft ở trạng thái tắt?')">
+        <input name="reason" minlength="3" maxlength="500" placeholder="Lý do đồng bộ" required>
+        <button class="btn gray" type="submit">Đồng bộ Shop → Draft</button>
+      </form>
+      {% endif %}
+    </div>
+
+    {% if selected_rate_version.status == 'draft' %}
+    <form method="post" action="{{ url_for('admin_luckybox_save_rate', rate_version_id=selected_rate_version.id) }}" class="lb-form-grid lb-rate-form">
+      <label class="lb-field"><span>Giá mở hộp (Zcoin)</span><input type="number" min="0" name="open_price_zcoin" value="{{ selected_rate_version.open_price_zcoin }}" required></label>
+      <label class="lb-field"><span>Xử lý vật phẩm trùng</span><select name="duplicate_policy">{% for code,label in duplicate_policies.items() %}<option value="{{ code }}" {% if selected_rate_version.duplicate_policy == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      {% set weights = selected_rate_version.item_count_weights or {} %}
+      <label class="lb-field"><span>Trọng số 0 vật phẩm</span><input type="number" min="0" name="weight_0" value="{{ weights.get('0', 0) }}" required></label>
+      <label class="lb-field"><span>Trọng số 1 vật phẩm</span><input type="number" min="0" name="weight_1" value="{{ weights.get('1', 0) }}" required></label>
+      <label class="lb-field"><span>Trọng số 2 vật phẩm</span><input type="number" min="0" name="weight_2" value="{{ weights.get('2', 0) }}" required></label>
+      <label class="lb-field"><span>Trọng số 3 vật phẩm</span><input type="number" min="0" name="weight_3" value="{{ weights.get('3', 0) }}" required></label>
+      <label class="lb-field lb-span-2"><span>Ghi chú Version</span><textarea name="notes" rows="2" maxlength="1000">{{ selected_rate_version.notes }}</textarea></label>
+      <label class="lb-field lb-span-2"><span>Lý do thay đổi</span><input name="reason" minlength="3" maxlength="500" placeholder="Ví dụ: Điều chỉnh tỷ lệ sau 10.000 lượt mô phỏng" required></label>
+      <div class="lb-span-2"><button class="btn yellow" type="submit">Lưu Draft</button></div>
+    </form>
+    {% else %}
+    <div class="lb-readonly-note">Phiên bản {{ selected_rate_version.status|upper }} chỉ được xem. Hãy nhân bản thành Draft mới để chỉnh sửa.</div>
+    {% endif %}
+    {% endif %}
+  </section>
+
+  {% if selected_rate_version and rate_validation %}
+  <section class="lb-panel {{ 'lb-valid' if rate_validation.valid else 'lb-invalid' }}">
+    <div class="lb-panel-title"><div><h2>3. Kiểm tra trước khi Publish</h2><p>Server kiểm tra cùng một bộ quy tắc với thao tác Publish.</p></div><span class="lb-validation-badge">{{ 'HỢP LỆ' if rate_validation.valid else 'CHƯA HỢP LỆ' }}</span></div>
+    <div class="lb-percent-grid">
+      {% for key in ['0','1','2','3'] %}<div><small>{{ key }} vật phẩm</small><strong>{{ rate_validation.item_count_percentages.get(key, 0) }}%</strong></div>{% endfor %}
+    </div>
+    {% if rate_validation.errors %}<div class="lb-message error"><strong>Lỗi cần sửa:</strong><ul>{% for item in rate_validation.errors %}<li>{{ item }}</li>{% endfor %}</ul></div>{% endif %}
+    {% if rate_validation.warnings %}<div class="lb-message warning"><strong>Cảnh báo:</strong><ul>{% for item in rate_validation.warnings %}<li>{{ item }}</li>{% endfor %}</ul></div>{% endif %}
+    <p class="lb-summary">Reward bật: <strong>{{ rate_validation.enabled_reward_count }}</strong> · Vật phẩm: <strong>{{ rate_validation.enabled_item_reward_count }}</strong> · Không phải vật phẩm: <strong>{{ rate_validation.enabled_non_item_reward_count }}</strong></p>
+    {% if selected_rate_version.status == 'draft' %}
+    <form method="post" action="{{ url_for('admin_luckybox_publish_rate', rate_version_id=selected_rate_version.id) }}" class="lb-publish-form" onsubmit="return confirm('Publish Version này thành Active? Rate Active cũ sẽ được lưu Archived. Hộp chưa tự bật.')">
+      <input name="reason" minlength="3" maxlength="500" placeholder="Lý do publish" required>
+      <button class="btn green" type="submit" {% if not rate_validation.valid %}disabled{% endif %}>Publish thành Active</button>
+    </form>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {% if selected_rate_version %}
+  <section class="lb-panel">
+    <div class="lb-panel-title"><div><h2>4. Quản lý từng Reward</h2><p>Trọng số càng lớn thì xác suất trong đúng nhóm càng cao. Mỗi dòng lưu riêng.</p></div><input id="lbRewardSearch" class="lb-search" type="search" placeholder="Tìm tên hoặc mã reward..."></div>
+    <div class="lb-tabs" role="tablist">
+      <button type="button" class="active" data-lb-filter="all">Tất cả ({{ rewards|length }})</button>
+      <button type="button" data-lb-filter="zcoin">Zcoin ({{ reward_groups.zcoin|length }})</button>
+      <button type="button" data-lb-filter="shop">Shop ({{ reward_groups.shop|length }})</button>
+      <button type="button" data-lb-filter="exclusive">Độc quyền ({{ reward_groups.exclusive|length }})</button>
+      <button type="button" data-lb-filter="other">Khác ({{ reward_groups.other|length }})</button>
+    </div>
+    <div class="lb-reward-list">
+      {% for reward in rewards %}
+      {% set group = 'zcoin' if reward.reward_type == 'zcoin' else ('exclusive' if reward.reward_type == 'exclusive_item' else ('other' if reward.reward_type == 'no_reward' else 'shop')) %}
+      <article class="lb-reward-card" data-group="{{ group }}" data-search="{{ (reward.reward_name ~ ' ' ~ reward.reward_code)|lower }}">
+        <div class="lb-reward-main">
+          <div class="lb-reward-image">{% if reward.image_url %}<img src="{{ reward.image_url }}" alt="">{% else %}<span>🪙</span>{% endif %}</div>
+          <div><strong>{{ reward.reward_name }}</strong><code>{{ reward.reward_code }}</code><small>{{ reward.type_label }} · {{ reward.rarity or '-' }}{% if reward.item and reward.item.price_zcoin is not none %} · Shop {{ reward.item.price_zcoin }} Zcoin{% endif %}</small></div>
+          <span class="lb-pill {{ 'on' if reward.is_enabled else 'off' }}">{{ 'BẬT' if reward.is_enabled else 'TẮT' }}</span>
+        </div>
+        <form method="post" action="{{ url_for('admin_luckybox_save_reward', reward_id=reward.id) }}" class="lb-reward-form">
+          <input type="hidden" name="rate_version_id" value="{{ selected_rate_version.id }}">
+          <label class="lb-check"><input type="checkbox" name="is_enabled" value="1" {% if reward.is_enabled %}checked{% endif %} {% if selected_rate_version.status != 'draft' %}disabled{% endif %}><span>Bật reward</span></label>
+          <label><span>Trọng số</span><input type="number" min="0" name="weight" value="{{ reward.weight }}" required {% if selected_rate_version.status != 'draft' %}disabled{% endif %}></label>
+          <label><span>Zcoin khi trùng</span><input type="number" min="0" name="duplicate_zcoin" value="{{ reward.duplicate_zcoin if reward.duplicate_zcoin is not none else '' }}" placeholder="Để trống" {% if selected_rate_version.status != 'draft' %}disabled{% endif %}></label>
+          <label><span>Bắt đầu</span><input type="datetime-local" name="starts_at" value="{{ reward.starts_at_local }}" {% if selected_rate_version.status != 'draft' %}disabled{% endif %}></label>
+          <label><span>Kết thúc</span><input type="datetime-local" name="ends_at" value="{{ reward.ends_at_local }}" {% if selected_rate_version.status != 'draft' %}disabled{% endif %}></label>
+          <label><span>Giới hạn phát hành</span><input type="number" min="0" name="issue_limit" value="{{ reward.issue_limit if reward.issue_limit is not none else '' }}" placeholder="Không giới hạn" {% if selected_rate_version.status != 'draft' %}disabled{% endif %}></label>
+          {% if selected_rate_version.status == 'draft' %}
+          <label class="lb-reason"><span>Lý do</span><input name="reason" minlength="3" maxlength="500" placeholder="Lý do chỉnh reward" required></label>
+          <button class="btn small yellow" type="submit">Lưu</button>
+          {% endif %}
+        </form>
+      </article>
+      {% else %}<p>Chưa có reward.</p>{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="lb-panel" id="member-openings">
+    <div class="lb-panel-title">
+      <div><h2>5. Lịch sử mở Lucky Box của member</h2><p>Hiển thị 50 lượt mở thật gần nhất. Admin có thể tìm theo tên member hoặc phần thưởng.</p></div>
+      <input id="lbOpeningSearch" class="lb-search" type="search" placeholder="Tìm member hoặc phần thưởng...">
+    </div>
+    <div class="lb-history-stats">
+      <article><small>Lượt đang hiển thị</small><strong>{{ member_history_summary.opening_count }}</strong></article>
+      <article><small>Member khác nhau</small><strong>{{ member_history_summary.member_count }}</strong></article>
+      <article><small>Zcoin đã chi</small><strong>{{ '{:,}'.format(member_history_summary.zcoin_spent) }}</strong></article>
+    </div>
+    <div class="lb-history-table-wrap">
+      <table class="lb-history-table">
+        <thead><tr><th>Member</th><th>Thời gian</th><th>Zcoin</th><th>Số dư</th><th>3 kết quả</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+          {% for opening in member_openings %}
+          {% set member_name = (opening.user.display_name or opening.user.username) if opening.user else opening.user_id %}
+          {% set reward_text = opening.rewards|map(attribute='reward_name')|join(' ') %}
+          <tr data-lb-opening-row data-search="{{ (member_name ~ ' ' ~ reward_text)|lower }}">
+            <td><strong>{{ member_name or 'Không rõ' }}</strong>{% if opening.user and opening.user.display_name and opening.user.username %}<small>@{{ opening.user.username }}</small>{% endif %}</td>
+            <td>{{ format_vn_datetime(opening.opened_at) }}</td>
+            <td><strong>{{ opening.zcoin_cost }}</strong> Zcoin</td>
+            <td>{{ opening.balance_before }} → <strong>{{ opening.balance_after }}</strong></td>
+            <td><div class="lb-opening-rewards">
+              {% for reward in opening.rewards %}
+              <span class="lb-opening-reward {{ 'no-reward' if reward.reward_type == 'no_reward' else '' }}">Ô {{ reward.reward_slot }}: {{ reward.reward_name }}{% if reward.duplicate_conversion %} (+{{ reward.duplicate_conversion }} Zcoin){% endif %}</span>
+              {% else %}<span class="lb-opening-reward">Chưa có dữ liệu</span>{% endfor %}
+            </div></td>
+            <td><span class="lb-pill {{ 'on' if opening.status == 'completed' else 'off' }}">{{ 'HOÀN TẤT' if opening.status == 'completed' else opening.status|upper }}</span></td>
+            <td><a class="btn small gray" href="{{ url_for('luckybox_opening_detail', opening_id=opening.id) }}">Chi tiết</a></td>
+          </tr>
+          {% else %}<tr><td colspan="7">Chưa có member nào mở Lucky Box.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="lb-panel">
+    <div class="lb-panel-title"><div><h2>6. Nhật ký Admin</h2><p>Lưu người thay đổi, thời gian, lý do và dữ liệu trước/sau.</p></div></div>
+    <div class="lb-audit-list">
+      {% for log in audit_logs %}
+      <details>
+        <summary><strong>{{ log.action }}</strong><span>{{ (log.actor.display_name or log.actor.username) if log.actor else log.actor_user_id or 'Hệ thống' }}</span><time>{{ format_vn_datetime(log.created_at) }}</time></summary>
+        <p><b>Lý do:</b> {{ log.reason or '-' }}</p>
+        <div class="lb-audit-json"><pre>{{ log.before_data|tojson(indent=2) }}</pre><pre>{{ log.after_data|tojson(indent=2) }}</pre></div>
+      </details>
+      {% else %}<p>Chưa có nhật ký.</p>{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+<script>
+(function(){
+  const search=document.getElementById('lbRewardSearch');
+  const buttons=[...document.querySelectorAll('[data-lb-filter]')];
+  const cards=[...document.querySelectorAll('.lb-reward-card')];
+  let group='all';
+  function apply(){
+    const q=(search?.value||'').trim().toLowerCase();
+    cards.forEach(card=>{card.hidden=!((group==='all'||card.dataset.group===group)&&(!q||card.dataset.search.includes(q)));});
+  }
+  buttons.forEach(btn=>btn.addEventListener('click',()=>{buttons.forEach(x=>x.classList.remove('active'));btn.classList.add('active');group=btn.dataset.lbFilter;apply();}));
+  search?.addEventListener('input',apply);
+
+  const openingSearch=document.getElementById('lbOpeningSearch');
+  const openingRows=[...document.querySelectorAll('[data-lb-opening-row]')];
+  openingSearch?.addEventListener('input',()=>{
+    const q=(openingSearch.value||'').trim().toLowerCase();
+    openingRows.forEach(row=>{row.hidden=Boolean(q&&!row.dataset.search.includes(q));});
+  });
+})();
+</script>
+{% endblock %}

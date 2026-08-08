@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "PES Arena Black Box Debugger",
+  "version": "1.0.0",
+  "description": "Flight recorder bổ trợ cho PES Arena: lỗi JS, request, click, snapshot và báo cáo 60 giây gần nhất.",
+  "permissions": ["storage", "tabs", "activeTab", "scripting", "downloads"],
+  "host_permissions": ["http://localhost/*", "https://*.vercel.app/*"],
+  "action": {"default_popup": "popup.html", "default_title": "PES Arena Black Box"},
+  "background": {"service_worker": "service-worker.js"},
+  "content_scripts": [{
+    "matches": ["http://localhost/*", "https://*.vercel.app/*"],
+    "js": ["content.js"],
+    "run_at": "document_start"
+  }],
+  "web_accessible_resources": [{
+    "resources": ["page-hook.js"],
+    "matches": ["http://localhost/*", "https://*.vercel.app/*"]
+  }]
+}

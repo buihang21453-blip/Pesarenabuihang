@@ -1,0 +1,245 @@
+/* PES Arena V1.3.52 | Admin/system legacy | extracted from legacy style.css without reordering */
+/* PES Arena v1.13.0 - Admin governance */
+.brand-wordmark small{display:block;font-size:.55em;letter-spacing:.04em;opacity:.82}
+.admin-team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.admin-team-card{border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px;background:rgba(255,255,255,.025)}
+.admin-team-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.admin-team-card-head small{display:block;margin-top:3px;opacity:.72}
+.admin-team-card details summary{cursor:pointer;font-weight:700;padding:8px 0}
+.admin-permission-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.admin-permission-grid fieldset{border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px;min-width:0}
+.admin-permission-grid legend{font-weight:800;padding:0 6px}
+.system-toggle-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:760px}
+.admin-match-scroll{width:100%;max-height:610px;overflow:auto}
+.admin-match-table{min-width:1320px;width:100%}
+.admin-match-table thead th{position:sticky;top:0;z-index:3;background:var(--panel,#111923)}
+.score-pair{display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.score-pair .score-input{width:54px;min-width:54px;text-align:center}
+.match-note-input{min-width:210px}
+.match-actions{display:flex;gap:6px;align-items:center;white-space:nowrap}
+.rp-cell{font-weight:800;white-space:nowrap}
+.admin-manual-match-form{grid-template-columns:repeat(2,minmax(0,1fr));max-width:900px}
+.admin-manual-match-form .span-2{grid-column:1/-1}
+@media(max-width:760px){.admin-permission-grid,.system-toggle-grid,.admin-manual-match-form{grid-template-columns:1fr}.admin-manual-match-form .span-2{grid-column:auto}}
+.profile-admin-match-edit{margin-top:10px;padding-top:8px;border-top:1px dashed rgba(255,255,255,.12)}
+.profile-admin-match-edit summary{cursor:pointer;font-weight:700}
+.profile-admin-match-edit form{margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.profile-admin-match-edit input[name="note"]{min-width:220px;flex:1}
+
+
+/* PES Arena v1.13.3 - compact admin teams and match manager */
+.admin-team-grid{display:block;columns:2;column-gap:14px}
+.admin-team-card{display:inline-block;width:100%;margin:0 0 14px;break-inside:avoid;vertical-align:top;padding:12px}
+.admin-team-card details[open]{margin-top:4px}
+.admin-team-card .admin-permission-grid{gap:8px;margin:8px 0}
+.admin-team-card .admin-permission-grid fieldset{padding:8px}
+.admin-team-panel>.admin-section-heading{margin-bottom:10px}
+.admin-matches-panel{width:100%;max-width:none}
+.admin-match-scroll{max-height:620px;border:1px solid rgba(255,255,255,.08);border-radius:12px}
+.admin-match-table{min-width:1240px;border-collapse:separate;border-spacing:0}
+.admin-match-table th,.admin-match-table td{padding:10px 12px;vertical-align:middle}
+.admin-match-table tbody tr:nth-child(even){background:rgba(255,255,255,.018)}
+.admin-match-table tbody tr:hover{background:rgba(79,138,255,.055)}
+.admin-match-table thead th{top:0}
+.match-time-cell{min-width:155px;white-space:nowrap;font-size:13px}
+.match-player-cell{min-width:125px;white-space:nowrap}
+.match-note-input{width:175px;min-width:175px}
+.match-actions{display:flex;align-items:center;gap:7px;flex-wrap:nowrap}
+.match-actions form{margin:0}
+.match-actions .btn{min-width:56px;padding:9px 12px}
+.rp-positive{color:#58e18b}.rp-negative{color:#ff7f8a}
+.backup-howto{margin:14px 0;padding:14px 16px;border:1px solid rgba(238,190,74,.28);border-radius:12px;background:rgba(238,190,74,.06)}
+.backup-howto ol{margin:8px 0 8px 20px;padding:0}.backup-howto li{margin:5px 0}
+@media(max-width:900px){.admin-team-grid{columns:1}.admin-match-table{min-width:1160px}}
+
+/* V1.13.5 - Bộ Công Cụ RP */
+.admin-rp-tool-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}.admin-rp-tool-card{border:1px solid rgba(148,163,184,.22);border-radius:14px;padding:16px;background:rgba(15,23,42,.48)}.admin-rp-tool-card h3{margin-top:0}.admin-rp-tool-card form{display:grid;gap:9px}.admin-rp-recalculate-card{grid-column:1/-1}@media(max-width:900px){.admin-rp-tool-grid{grid-template-columns:1fr}.admin-rp-recalculate-card{grid-column:auto}}
+
+/* V1.13.10 — Return room + room-session head-to-head */
+.account-controls-heading-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 8px;
+}
+.account-controls-heading-row h2,
+.account-controls-heading-row p { margin-top: 0; }
+.return-room-button { white-space: nowrap; }
+.room-session-h2h {
+    margin: 0 0 22px;
+    padding: 18px;
+    border: 1px solid rgba(212, 175, 55, .28);
+    border-radius: 16px;
+    background: rgba(255,255,255,.025);
+}
+.room-session-h2h-heading,
+.room-session-scoreboard,
+.room-session-match-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+.room-session-h2h-heading h3 { margin: 3px 0 2px; }
+.room-session-total {
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(212, 175, 55, .13);
+    white-space: nowrap;
+}
+.room-session-scoreboard {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(0,0,0,.16);
+}
+.room-session-player,
+.room-session-draws { text-align: center; flex: 1; }
+.room-session-player span { display: block; font-weight: 700; }
+.room-session-player strong,
+.room-session-draws strong { display: block; font-size: 1.8rem; line-height: 1.1; }
+.room-session-player small,
+.room-session-draws small { opacity: .72; }
+.room-session-match-list { margin-top: 12px; max-height: 240px; overflow-y: auto; }
+.room-session-match-row {
+    padding: 10px 2px;
+    border-top: 1px solid rgba(255,255,255,.08);
+    font-size: .92rem;
+}
+.room-session-match-time { opacity: .7; min-width: 132px; }
+.room-session-match-rp { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.room-session-empty { margin: 14px 0 0; text-align: center; opacity: .72; }
+@media (max-width: 720px) {
+    .account-controls-heading-row,
+    .room-session-h2h-heading,
+    .room-session-match-row { align-items: stretch; flex-direction: column; }
+    .return-room-button { width: 100%; text-align: center; }
+    .room-session-match-time { min-width: 0; }
+    .room-session-match-rp { align-self: flex-start; }
+}
+
+/* V1.13.12 — Lịch sử đối đầu rõ ràng hơn */
+.room-session-h2h {
+    padding: 22px;
+    border-width: 2px;
+    background: linear-gradient(145deg, rgba(212,175,55,.08), rgba(255,255,255,.025));
+}
+.room-session-h2h .eyebrow {
+    font-size: .82rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+}
+.room-session-h2h-heading h3 {
+    margin: 5px 0 4px;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+.room-session-h2h-heading .small {
+    font-size: .96rem;
+    font-weight: 600;
+    opacity: .84;
+}
+.room-session-total {
+    padding: 9px 15px;
+    font-size: 1rem;
+    font-weight: 800;
+}
+.room-session-scoreboard {
+    margin-top: 18px;
+    padding: 18px;
+    border: 1px solid rgba(255,255,255,.1);
+}
+.room-session-player span {
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+.room-session-player strong,
+.room-session-draws strong {
+    margin-top: 5px;
+    font-size: 2.15rem;
+    font-weight: 900;
+}
+.room-session-player small,
+.room-session-draws small {
+    font-size: .9rem;
+    font-weight: 700;
+    opacity: .82;
+}
+.room-session-match-list {
+    margin-top: 16px;
+}
+.room-session-match-row {
+    min-height: 52px;
+    padding: 12px 8px;
+    font-size: 1rem;
+    font-weight: 700;
+}
+.room-session-match-row > strong {
+    font-size: 1.04rem;
+    font-weight: 800;
+}
+.room-session-match-time {
+    font-size: .92rem;
+    font-weight: 700;
+    opacity: .82;
+}
+.room-session-match-rp {
+    font-size: .98rem;
+    font-weight: 800;
+}
+.room-session-empty {
+    font-size: 1rem;
+    font-weight: 700;
+}
+@media (max-width: 720px) {
+    .room-session-h2h { padding: 17px; }
+    .room-session-scoreboard { padding: 14px 8px; gap: 8px; }
+    .room-session-player span { font-size: .94rem; }
+    .room-session-player strong,
+    .room-session-draws strong { font-size: 1.85rem; }
+    .room-session-match-row { gap: 5px; }
+}
+
+/* V1.13.13-v4.7 - Server maintenance */
+.server-transition-banner{position:sticky;top:0;z-index:100000;display:flex;justify-content:center;align-items:center;gap:16px;padding:10px 16px;font-weight:900;letter-spacing:.03em;box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.server-transition-banner span{font-size:1.15rem;font-variant-numeric:tabular-nums;padding:4px 12px;border-radius:999px;background:rgba(0,0,0,.25)}
+.server-transition-banner.server-closing{background:linear-gradient(90deg,#7a120e,#e53a27,#7a120e);color:#fff}
+.server-transition-banner.server-opening{background:linear-gradient(90deg,#075b3c,#0fb879,#075b3c);color:#fff}
+.maintenance-admin-form{display:grid;gap:14px}.maintenance-master-switch{border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:14px}.maintenance-master-switch small{display:block;margin-top:3px;opacity:.72}.maintenance-time-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.maintenance-time-grid label,.maintenance-admin-form>label{display:grid;gap:7px}.maintenance-time-grid input,.maintenance-admin-form textarea{width:100%}.maintenance-current-state{padding:11px 14px;border-radius:10px;font-weight:700}.maintenance-current-state.is-open{background:rgba(20,190,120,.13);border:1px solid rgba(20,190,120,.35)}.maintenance-current-state.is-closed{background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.38)}
+.maintenance-page{margin:0;min-height:100vh;overflow:hidden;background:radial-gradient(circle at 50% 20%,#15396a 0,#071426 45%,#030812 100%);color:#fff}.maintenance-screen{min-height:100vh;display:grid;place-items:center;padding:24px;position:relative}.maintenance-card{position:relative;z-index:2;width:min(620px,92vw);text-align:center;padding:48px 34px;border:1px solid rgba(255,255,255,.16);border-radius:26px;background:rgba(5,15,31,.82);box-shadow:0 28px 90px rgba(0,0,0,.55),inset 0 1px rgba(255,255,255,.08);backdrop-filter:blur(14px)}.maintenance-icon{font-size:64px;filter:drop-shadow(0 0 24px #36a9ff);animation:maintenanceFloat 2.4s ease-in-out infinite}.maintenance-eyebrow{font-weight:900;letter-spacing:.45em;color:#59c3ff;margin:18px 0 8px}.maintenance-card h1{font-size:clamp(2rem,7vw,4.3rem);margin:0 0 16px;background:linear-gradient(180deg,#fff,#85ceff);-webkit-background-clip:text;color:transparent;text-shadow:0 12px 50px rgba(53,168,255,.2)}.maintenance-card>p{line-height:1.7;color:#c7d9eb}.maintenance-countdown-box{margin:28px auto 18px;padding:18px;border-radius:16px;background:linear-gradient(135deg,rgba(21,137,230,.25),rgba(16,211,154,.18));border:1px solid rgba(89,195,255,.35)}.maintenance-countdown-box small{display:block;letter-spacing:.16em;font-weight:800;color:#a9ddff}.maintenance-countdown-box strong{display:block;font-size:3rem;margin-top:6px;font-variant-numeric:tabular-nums}.maintenance-schedule{font-weight:800;color:#77d6ff!important}.maintenance-note{font-size:.9rem;opacity:.72}.maintenance-orbit{position:absolute;width:min(720px,90vw);aspect-ratio:1;border:1px dashed rgba(89,195,255,.2);border-radius:50%;animation:maintenanceSpin 18s linear infinite}.maintenance-orbit span{position:absolute;left:50%;top:-23px;font-size:42px;filter:drop-shadow(0 0 18px #59c3ff)}.admin-auth-page{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at top,#173c66,#08111f 60%)}.admin-login-card{width:min(440px,92vw)}
+@keyframes maintenanceFloat{50%{transform:translateY(-10px) rotate(-4deg)}}@keyframes maintenanceSpin{to{transform:rotate(360deg)}}
+@media(max-width:700px){.maintenance-time-grid{grid-template-columns:1fr}.server-transition-banner{flex-direction:column;gap:5px;text-align:center}.maintenance-card{padding:38px 20px}}
+
+/* V4.8 - Admin chỉnh trực tiếp tỷ số */
+.admin-score-edit-cell { white-space: nowrap; }
+.admin-score-edit-cell input { width: 58px; text-align: center; padding: 7px 5px; }
+.admin-score-edit-cell span { margin: 0 4px; font-weight: 800; }
+
+/* V1.13.13-v4.9: cảnh báo tự đăng xuất do không hoạt động */
+.idle-timeout-backdrop{position:fixed;inset:0;z-index:20050;display:flex;align-items:center;justify-content:center;background:rgba(3,7,18,.82);backdrop-filter:blur(8px);padding:18px}
+.idle-timeout-backdrop[hidden]{display:none!important}
+.idle-timeout-card{width:min(430px,100%);padding:28px;border:1px solid rgba(250,204,21,.55);border-radius:20px;background:linear-gradient(145deg,#111827,#07111f);box-shadow:0 0 45px rgba(250,204,21,.18);text-align:center}
+.idle-timeout-card h3{margin:8px 0 10px;color:#fde047;font-size:1.45rem}
+.idle-timeout-card p{margin:7px 0;color:#dbeafe}
+.idle-timeout-card strong{color:#facc15;font-size:1.25rem;letter-spacing:.08em}
+.idle-timeout-icon{font-size:2.3rem;animation:idlePulse 1.4s ease-in-out infinite}
+@keyframes idlePulse{50%{transform:scale(1.12);filter:drop-shadow(0 0 12px #facc15)}}
+
+
+/* V1.13.13-v4.9 FIX - Lịch sử thông báo cá nhân */
+.notification-dropdown-footer{padding:10px 12px;border-top:1px solid var(--pes-border,#203043);text-align:center;background:rgba(15,23,42,.72)}
+.notification-dropdown-footer a{font-weight:800;font-size:12px;color:#7dd3fc;text-decoration:none}
+.notification-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+.notification-history-list{display:grid;gap:10px}
+.notification-history-card{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 16px;border:1px solid var(--pes-border,#24364b);border-radius:14px;background:var(--pes-panel,#0b1726)}
+.notification-history-card.is-unread{border-left:5px solid #38bdf8;background:linear-gradient(135deg,rgba(14,165,233,.13),rgba(11,23,38,.98))}
+.notification-history-card.is-read{opacity:.82}
+.notification-history-main{min-width:0;flex:1}
+.notification-history-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.notification-history-main p{margin:7px 0;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.notification-history-main small{color:var(--pes-muted,#94a3b8)}
+.notification-state{flex:0 0 auto;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900;text-transform:uppercase;background:rgba(148,163,184,.14);color:#cbd5e1}
+.is-unread .notification-state{background:rgba(56,189,248,.16);color:#7dd3fc}
+@media(max-width:700px){.notification-page-head,.notification-history-card{align-items:stretch;flex-direction:column}.notification-page-head form .btn,.notification-history-card .user-notification-actions,.notification-history-card .user-notification-actions form,.notification-history-card .user-notification-actions .btn{width:100%}.notification-history-title-row{align-items:flex-start}}
+

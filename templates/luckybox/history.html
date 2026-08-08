@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block head_extra %}<link rel="stylesheet" href="{{ static_asset('css/luckybox_user.css') }}">{% endblock %}
+{% block content %}
+<div class="lb3-history-page">
+  <div class="lb3-history-head">
+    <div><span class="lb3-kicker">LUCKY BOX</span><h1>Lịch sử mở hộp</h1></div>
+    <a class="btn gold" href="{{ url_for('luckybox_home') }}">← Về Lucky Box</a>
+  </div>
+  {% if openings %}
+  <div class="lb3-history-table">
+    {% for opening in openings %}
+    <article class="lb3-history-row">
+      <span><strong>Lucky Box PES Arena</strong><small>{{ format_vn_datetime(opening.opened_at) }}</small></span>
+      <span><strong>Version {{ opening.rate_version }}</strong><small>{{ opening.status|upper }}</small></span>
+      <span><strong>-{{ format_zcoin(opening.zcoin_cost) }} Zcoin</strong><small>Còn {{ format_zcoin(opening.balance_after) }}</small></span>
+      <a class="btn small gray" href="{{ url_for('luckybox_opening_detail', opening_id=opening.id) }}">Chi tiết</a>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}<div class="lb3-empty">Bạn chưa có lượt mở Lucky Box nào.</div>{% endif %}
+</div>
+{% endblock %}

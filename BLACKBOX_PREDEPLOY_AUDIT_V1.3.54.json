@@ -1,0 +1,101 @@
+{
+  "version": "1.3.54",
+  "baseline": "1.3.52",
+  "generated": "2026-08-08T01:05:00+07:00",
+  "source_isolation": [
+    {
+      "name": "modules/rp_engine.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "e6ffb2a8b1f1"
+    },
+    {
+      "name": "modules/rp_formula.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "659e3b9fdb07"
+    },
+    {
+      "name": "modules/match_result_service.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "4faf18ae3d3b"
+    },
+    {
+      "name": "modules/room_result_routes.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "487f372dfeaf"
+    },
+    {
+      "name": "modules/room_access_routes.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "40a69d569059"
+    },
+    {
+      "name": "modules/room_rematch_routes.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "dd85ef2379ef"
+    },
+    {
+      "name": "modules/core/room_runtime.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "22e80c030e77"
+    },
+    {
+      "name": "modules/core/matchmaking_runtime.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "36ce73e69484"
+    },
+    {
+      "name": "modules/core/match_repository.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "1b489d45856a"
+    },
+    {
+      "name": "modules/quick_match/service.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "ef29349a7bae"
+    },
+    {
+      "name": "modules/invites/service.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "de393156bc0e"
+    },
+    {
+      "name": "modules/presence/service.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "6fbb6ae6b759"
+    },
+    {
+      "name": "modules/rank_modes/service.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "8800421275a6"
+    },
+    {
+      "name": "modules/daily_rank_limit_service.py",
+      "status": "PASS",
+      "detail": "Không thay đổi so với V1.3.52.",
+      "hash": "6f0294043c7b"
+    }
+  ],
+  "summary": {
+    "PASS": 14
+  },
+  "local_tests": {
+    "pytest": "11/11 PASS",
+    "python_compile": "PASS",
+    "javascript_syntax": "PASS",
+    "forced_fail_open": "PASS"
+  },
+  "runtime_limit": "Full Flask runtime not executed in sandbox because Flask package is unavailable."
+}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block head_extra %}<link rel="stylesheet" href="{{ static_asset('css/shop_phase3.css') }}">{% endblock %}
+{% block content %}
+<div class="admin-dashboard-heading">
+    <div><span class="admin-kicker">ADMIN SHOP</span><h1 class="page-title">Quản trị Cửa hàng & Kho đồ</h1><p class="page-subtitle">Quản lý catalog, giá bán và cấp vật phẩm phần thưởng.</p></div>
+    <div class="admin-heading-actions"><a class="btn gray" href="{{ url_for('admin') }}">← Admin chính</a><a class="btn" href="{{ url_for('shop') }}">Xem Cửa hàng</a></div>
+</div>
+
+<div class="admin-shop3-metrics">
+    <article><span>Tổng vật phẩm</span><strong>{{ admin_shop_stats.item_count }}</strong></article>
+    <article><span>Đang bày bán</span><strong>{{ admin_shop_stats.listed_count }}</strong></article>
+    <article><span>Chỉ làm phần thưởng</span><strong>{{ admin_shop_stats.reward_only_count }}</strong></article>
+    <article><span>Zcoin đã thu gần đây</span><strong>{{ format_zcoin(admin_shop_stats.zcoin_spent) }}</strong></article>
+</div>
+
+{% if admin_shop_setup_required %}
+<section class="panel shop3-setup-warning"><strong>⚠ Chưa có dữ liệu Shop</strong><p>Chạy <code>project_docs/sql/update_shop_inventory_phase3_v1_14_40.sql</code> trên Supabase.</p></section>
+{% else %}
+<section class="panel admin-shop3-grant" id="grant-items">
+    <div class="shop3-section-head"><div><span class="eyebrow">TẶNG VẬT PHẨM</span><h2>Cấp phần thưởng cho người chơi</h2></div><p>Phiếu 20% và 30% được cấp tại đây, không xuất hiện trong Shop người chơi.</p></div>
+    <form class="admin-shop3-grant-form" method="post" action="{{ url_for('admin_shop_grant') }}" onsubmit="return confirm('Xác nhận cấp vật phẩm?');">
+        <label>Vật phẩm<select name="item_code" required>{% for item in admin_shop_items %}<option value="{{ item.code }}">{{ item.name }}{% if not item.is_listed %} · Phần thưởng{% endif %}</option>{% endfor %}</select></label>
+        <label>Số lượng<input type="number" name="quantity" value="1" min="1" max="100" required></label>
+        <label>Phạm vi<select name="target_mode" id="adminShopTargetMode"><option value="single">Một người chơi</option><option value="all">Tất cả người chơi</option></select></label>
+        <label>Người nhận<select name="target_user_id" id="adminShopTargetUser"><option value="">Chọn người chơi</option>{% for player in admin_shop_players %}<option value="{{ player.id }}">{{ player.display_name or player.username }} · @{{ player.username }}</option>{% endfor %}</select></label>
+        <label class="wide">Ghi chú<input type="text" name="note" maxlength="300" placeholder="Ví dụ: Quà sự kiện cuối tuần"></label>
+        <button class="btn gold" type="submit">Tặng vật phẩm</button>
+    </form>
+</section>
+
+<section class="panel" id="catalog">
+    <div class="shop3-section-head"><div><span class="eyebrow">CATALOG</span><h2>25 vật phẩm Giai đoạn 3</h2></div><p>Bỏ chọn “Bày bán” để vật phẩm chỉ dùng làm phần thưởng.</p></div>
+    <div class="admin-shop3-catalog">
+        {% for item in admin_shop_items %}
+        <article class="admin-shop3-item rarity-{{ item.rarity }}">
+            <img src="{{ item.image_url }}" alt="{{ item.name }}">
+            <div><small>{{ item.item_type_label }} · {{ item.rarity_label }}</small><h3>{{ item.name }}</h3><code>{{ item.code }}</code></div>
+            <form method="post" action="{{ url_for('admin_shop_update_item', item_id=item.id) }}">
+                <label>Giá<input type="number" name="price_zcoin" min="0" max="10000000" value="{{ item.price_zcoin }}"></label>
+                <label>Thứ tự<input type="number" name="sort_order" min="0" value="{{ item.sort_order or 0 }}"></label>
+                <label class="check"><input type="checkbox" name="is_active" value="1" {% if item.is_active %}checked{% endif %}> Hoạt động</label>
+                <label class="check"><input type="checkbox" name="is_listed" value="1" {% if item.is_listed %}checked{% endif %} {% if item.code in ['discount_coupon_20','discount_coupon_30'] %}disabled{% endif %}> {% if item.code in ['discount_coupon_20','discount_coupon_30'] %}Chỉ phần thưởng{% else %}Bày bán{% endif %}</label>
+                <label class="check"><input type="checkbox" name="is_featured" value="1" {% if item.is_featured %}checked{% endif %}> Nổi bật</label>
+                <button class="btn small" type="submit">Lưu</button>
+            </form>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel">
+    <div class="shop3-section-head"><div><span class="eyebrow">GIAO DỊCH</span><h2>100 lượt mua gần nhất</h2></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Người chơi</th><th>Vật phẩm</th><th>Giá gốc</th><th>Giảm</th><th>Đã trả</th><th>Thời gian</th></tr></thead><tbody>{% for row in admin_shop_purchases %}<tr><td>{{ row.user_name }}</td><td>{{ row.item_name }}</td><td>{{ format_zcoin(row.subtotal) }}</td><td>{{ format_zcoin(row.discount_amount) }}</td><td><strong>{{ format_zcoin(row.final_price) }}</strong></td><td>{{ format_vn_datetime(row.created_at) }}</td></tr>{% else %}<tr><td colspan="6">Chưa có giao dịch.</td></tr>{% endfor %}</tbody></table></div>
+</section>
+{% endif %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+ const mode=document.getElementById('adminShopTargetMode'); const user=document.getElementById('adminShopTargetUser');
+ function sync(){ if(!mode||!user)return; user.disabled=mode.value==='all'; user.required=mode.value!=='all'; }
+ if(mode){mode.addEventListener('change',sync);sync();}
+});
+</script>
+{% endblock %}

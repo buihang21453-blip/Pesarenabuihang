@@ -1,0 +1,136 @@
+/* PES Arena V1.3.106 — central match-stage rules moved to 17-center-match-stability.css. */
+/* PES Arena V1.3.104 — 08-action-layout-guard.css
+ * Room action-control rules moved to 15-room-actions-stability.css.
+ * Remaining rules keep this module's non-action responsibility.
+ */
+/* PES Arena V1.3.47 — Room CSS module: 08-action-layout-guard.css
+   Scope: final layout guard for center-stage controls only.
+   Purpose: keep action groups in normal document flow and prevent Quay quân / Thoát phòng /
+   result buttons from occupying the same coordinates after older CSS refinements. */
+
+
+
+
+
+/* Waiting-ready contains mode card + countdown + VS + random control + room actions.
+   Compact only this state so all controls fit inside the fixed desktop arena height. */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Playing/result states: score/result panel and exit actions must stack, never overlap. */
+
+
+
+
+
+/* V1.3.97 — removed old room-specific Mời đấu/Thoát styling; trio uses standard gold/green/red button variants. */
+
+/* V1.3.72 — Host/guest action visibility guard.
+   The center stage is fixed-height on desktop. Series HUD + countdown + VS can otherwise push
+   role-specific controls below the clipped viewport. Compact action-bearing states and reserve
+   a visible footer lane for both host and guest controls. */
+@media (min-width: 821px){
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  /* Host-only kick control belongs to the opponent card and must not be squeezed away by
+     long names, streak badges or ready state copy. */
+  .arena-room-v2 .room-guest-card-kick{
+    flex: 0 0 auto;
+    width: min(100%, 190px);
+    margin: 7px auto 0;
+    position: relative;
+    z-index: 5;
+  }
+  
+}
+
+/* V1.3.74 — definitive host/guest action dock.
+   Role/state actions must never depend on the vertical height of Mode/Series/VS content.
+   Desktop: pin direct action groups to a dedicated bottom lane and reserve space above it.
+   Host playing uses the score panel as its action dock. Mobile remains normal-flow. */
+@media (min-width: 821px){
+  
+
+  /* Sẵn sàng / Hủy sẵn sàng / Thoát phòng / Bỏ cuộc / Thoát an toàn /
+     Đá tiếp + Về sảnh always own the bottom action lane. */
+  
+
+  /* Reserve a guaranteed lane so normal content cannot sit under the dock. */
+  
+
+  /* Waiting-ready random/start control ends above the action dock. */
+  
+
+  /* Host playing: Gửi Kết Quả is itself the dock and needs a taller reserved area. */
+  
+  
+
+  /* Opponent-card host action is independent from readiness text and always stays above club area. */
+  .arena-room-v2[data-viewer-role="host"] .room-side-card.away .room-player-heading-plain{
+    position: relative;
+    z-index: 4;
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+  .arena-room-v2[data-viewer-role="host"] .room-side-card.away .room-guest-card-kick{
+    display: block;
+    position: relative;
+    z-index: 12;
+    width: min(100%, 190px);
+    margin: 7px auto 0;
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+
+
+/* V1.3.75 — unify every player-facing room action with the established V1.3.71 glass/neon language.
+   Scope is intentionally limited to Room action docks/result controls/opponent kick; Parsec is untouched. */
+
+
+/* Positive actions: Sẵn Sàng / Gửi Kết Quả / Xác nhận. */
+
+
+/* Neutral actions: Hủy Sẵn Sàng / secondary room controls. */
+
+
+/* Continue/rematch: gold remains warm but uses the same translucent glass depth. */
+
+
+/* Exit/destructive actions: Thoát Phòng / Bỏ cuộc / Thoát an toàn / Về sảnh / Đưa khỏi phòng. */
+
+
+

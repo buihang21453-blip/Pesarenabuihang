@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <div class="admin-dashboard-heading"><div><span class="admin-kicker">BLACK BOX INCIDENT</span><h1>{{ incident.incident_code }}</h1><p>{{ incident.title }}</p></div><a class="btn gray" href="{{ url_for('admin', tab='blackbox') }}#blackbox">← Black Box</a></div>
+  <section class="admin-section-card">
+    <p><b>Session:</b> <code>{{ incident.session_id }}</code> · <b>User:</b> {{ incident.user_id or '—' }} · <b>Version:</b> {{ incident.app_version or '—' }} · <b>Mức:</b> {{ incident.severity }}</p>
+    <div class="table-wrap"><table class="admin-table"><thead><tr><th>Thời gian</th><th>Event</th><th>Mức</th><th>Nội dung</th></tr></thead><tbody>
+    {% for event in incident.events %}<tr><td>{{ event.created_at }}</td><td><code>{{ event.event_type }}</code></td><td>{{ event.level }}</td><td><pre style="white-space:pre-wrap;max-width:720px">{{ event.message or event.payload|tojson(indent=2) }}</pre></td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+</div>
+{% endblock %}

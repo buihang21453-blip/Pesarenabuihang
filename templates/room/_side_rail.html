@@ -1,0 +1,26 @@
+        <aside class="room-side-rail room-arena-right-rail" aria-label="Thông tin bổ sung của phòng">
+            {% set side_active_rank_mode = (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | first) %}
+            <section class="panel room-side-info-panel">
+                <h3>Thông tin phòng đấu</h3>
+                <div class="room-side-info-list">
+                    <div><span>Mã phòng</span><strong>#{{ room.room_code }}</strong></div>
+                    <div><span>Loại trận</span><strong>{{ room.match_mode_label }}</strong></div>
+                    <div><span>Trạng thái phòng</span><strong>{% if not room.has_guest and room.status == 'waiting_ready' %}Chờ đối thủ{% elif room.status == 'waiting_ready' and not room.guest_ready %}Chờ sẵn sàng{% elif room.status == 'waiting_ready' and room.guest_ready %}Sẵn sàng bắt đầu trận{% elif room.status == 'playing' %}Đang thi đấu / Gửi kết quả{% elif room.status == 'waiting_result_confirm' %}Xác nhận kết quả{% elif room.status == 'confirmed' %}Đá tiếp{% elif room.status == 'disputed' %}Đang tranh chấp{% else %}{{ room.status|replace('_',' ')|title }}{% endif %}</strong></div>
+                    <div><span>Chế độ</span><strong>{{ side_active_rank_mode.label if side_active_rank_mode else 'Rank thường Random' }}</strong></div>
+                </div>
+            </section>
+
+            {% include "partials/parsec_room_panel.html" %}
+
+            {% if system_features.room_chat_enabled %}<section class="panel room-chat-side">
+                <h2>Chat phòng</h2>
+                <div id="roomChatBox" class="chat-box"></div>
+                <form method="post" action="{{ url_for('send_room_chat', room_id=room.id) }}" class="chat-form room-chat-form">
+                    <input id="roomChatInput" name="message" maxlength="200" placeholder="Nhắn với đối thủ trong phòng..." required autocomplete="off">
+                    <button class="btn arena-btn green" type="submit">Gửi</button>
+                </form>
+                <div id="roomChatStatus" class="chat-note">Chat phòng chỉ dành cho 2 người trong phòng. Chống spam: 1 tin nhắn / 5 giây.</div>
+            </section>{% endif %}
+        </aside>
+    </div>
+

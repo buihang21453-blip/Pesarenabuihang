@@ -1,0 +1,224 @@
+{% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}
+<section class="admin-tab-panel" data-admin-panel="system">
+    {% if can_admin('daily_rank_limits_manage') %}
+    <div class="panel">
+        <h2>🏆 Giới hạn RP theo số trận Rank mỗi ngày</h2>
+        <p class="muted">Mỗi người tối đa 10 trận Rank từ Thứ 2 đến Thứ 6; riêng Thứ 7 và Chủ nhật tối đa 15 trận. Mức cộng tối đa vẫn là 150 RP/ngày; RP bị trừ khi thua vẫn tính bình thường.</p>
+        <form method="post" action="{{ url_for('admin_update_rank_daily_limits') }}" class="system-toggle-grid">
+            <label class="admin-permission-option">
+                <span><strong>Bật giới hạn Rank ngày</strong><small style="display:block">Ngày thường 10 trận • Cuối tuần 15 trận • Làm mới lúc 00:00 giờ Việt Nam</small></span>
+                <span class="admin-switch"><input type="checkbox" name="enabled" value="1" {% if rank_daily_limits_enabled %}checked{% endif %}><span class="admin-switch-track"></span></span>
+            </label>
+            <button class="btn" type="submit">Lưu giới hạn Rank</button>
+        </form>
+        <hr style="margin:18px 0">
+        <h3>🔄 Reset lượt Rank của người chơi</h3>
+        <p class="muted">Tạo một mốc đếm mới cho hôm nay. Lịch sử trận cũ vẫn được giữ nguyên; người chơi được tính RP lại đủ 10 trận ngày thường hoặc 15 trận cuối tuần. Trần cộng tối đa +150 RP/ngày không bị reset.</p>
+        {% if rank_daily_limits_enabled %}
+        <form method="post" action="{{ url_for('admin_reset_user_rank_daily_games') }}" class="system-toggle-grid" onsubmit="return confirm('Reset toàn bộ lượt Rank hôm nay của người chơi này? Lịch sử trận không bị xóa.');">
+            <label><span>Chọn người chơi</span>
+                <select name="user_id" required>
+                    <option value="">-- Chọn tài khoản --</option>
+                    {% for player in players|sort(attribute='display_name') %}
+                    <option value="{{ player.id }}">{{ player.display_name }} — {{ player.rank_points|default(0) }} RP</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button class="btn red" type="submit">Reset lượt tính RP hôm nay</button>
+        </form>
+        {% else %}
+        <p class="small"><strong>Chức năng đang khóa:</strong> cần bật “Giới hạn Rank ngày” và lưu cài đặt trước.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if can_admin('system_features_manage') %}
+    <div class="panel admin-system-features-panel">
+        <div class="admin-section-heading">
+            <div><h2>🎛️ Bật/tắt tính năng hệ thống</h2><p class="small">Một nơi duy nhất để bật/tắt module và 6 chế độ Rank. Điều kiện mở khóa và RP vẫn chỉnh trong tab Quản lý chế độ Rank.</p></div>
+        </div>
+        <form method="post" action="{{ url_for('admin_update_system_features') }}" class="admin-feature-form">
+            <section class="admin-feature-group">
+                <h3>Chế độ Rank</h3>
+                <div class="system-toggle-grid compact">
+                {% for code in rank_mode_order %}
+                    {% set mode = rank_mode_configs.get(code, {}) %}
+                    <label class="admin-permission-option"><span>{{ mode.short_label or mode.label }}</span><span class="admin-switch"><input type="checkbox" name="rank_mode__{{ code }}" value="1" {% if mode.enabled %}checked{% endif %}><span class="admin-switch-track"></span></span></label>
+                {% endfor %}
+                </div>
+            </section>
+            <section class="admin-feature-group">
+                <h3>Tính năng phòng đấu và hệ thống</h3>
+                <div class="system-toggle-grid compact">
+                {% for key,label in {'friendly_enabled':'Giao hữu thường','lobby_chat_enabled':'Chat Sảnh','room_chat_enabled':'Chat Phòng','registration_codes_enabled':'Mã đăng ký','announcements_enabled':'Thông báo','quick_match_enabled':'Tìm Nhanh','repeat_opponent_rp_enabled':'Giảm RP khi gặp lại cùng đối thủ','match_history_all_enabled':'Xem lịch sử toàn hệ thống'}.items() %}
+                    <label class="admin-permission-option"><span>{{ label }}</span><span class="admin-switch"><input type="checkbox" name="{{ key }}" value="1" {% if system_features.get(key) %}checked{% endif %}><span class="admin-switch-track"></span></span></label>
+                {% endfor %}
+                </div>
+            </section>
+            <section class="admin-feature-group">
+                <h3>Hiển thị công khai</h3>
+                <div class="system-toggle-grid compact">
+<label class="admin-permission-option admin-public-ranking-option">
+    <span>BXH công khai (không cần đăng nhập)</span>
+    <span class="admin-switch">
+        <input type="checkbox" name="public_ranking_enabled" value="1" {% if system_features.get('public_ranking_enabled', true) %}checked{% endif %}>
+        <span class="admin-switch-track"></span>
+    </span>
+</label>
+                </div>
+            </section>
+            <div class="admin-feature-save"><button class="btn green" type="submit">Lưu toàn bộ công tắc</button></div>
+        </form>
+    </div>
+    <div class="panel">
+        <h2>🎯 Hệ số RP khi gặp lại đối thủ</h2>
+        <p class="muted">Điều chỉnh riêng phần RP người thắng được cộng và RP người thua bị trừ ở từng lần một người đánh bại cùng đối thủ trong ngày. Mỗi dãy hệ số phải giảm dần từ lần 1 đến lần 4.</p>
+        {% set winner_factors = repeat_opponent_rp_config.get('winner_factors', [100, 60, 30, 0]) %}
+        {% set loser_factors = repeat_opponent_rp_config.get('loser_factors', [100, 70, 40, 10]) %}
+        <form method="post" action="{{ url_for('admin_update_repeat_opponent_rp_config') }}">
+            <div class="repeat-rp-layout">
+                <section class="repeat-rp-card">
+                    <h3>🏆 Hệ số thắng</h3>
+                    <p>Phần trăm tổng RP thắng được cộng cho người chiến thắng ở mỗi lần gặp lại cùng đối thủ.</p>
+                    <div class="repeat-rp-grid">
+                        {% for index in range(4) %}
+                        <label><span>Người thắng — lần {{ index + 1 }}{% if index == 3 %} trở đi{% endif %}</span>
+                            <input type="number" name="winner_factor_{{ index + 1 }}" min="0" max="100" step="1" value="{{ winner_factors[index] }}" required>
+                            <small>Phần trăm tổng RP thắng được cộng</small>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </section>
+                <section class="repeat-rp-card">
+                    <h3>🛡️ Hệ số thua</h3>
+                    <p>Phần trăm RP thua thông thường bị trừ đối với người thua ở từng lần thua trước cùng đối thủ.</p>
+                    <div class="repeat-rp-grid">
+                        {% for index in range(4) %}
+                        <label><span>Người thua — lần {{ index + 1 }}{% if index == 3 %} trở đi{% endif %}</span>
+                            <input type="number" name="loser_factor_{{ index + 1 }}" min="0" max="100" step="1" value="{{ loser_factors[index] }}" required>
+                            <small>Phần trăm RP thua thông thường bị trừ</small>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+            <div class="repeat-rp-actions">
+                <button class="btn" type="submit">Lưu cả hai bộ hệ số</button>
+            </div>
+        </form>
+        <div class="repeat-rp-summary small">
+            <div class="repeat-rp-summary-row"><span class="repeat-rp-summary-label">Người thắng:</span><strong>{{ winner_factors|join('% → ') }}%</strong></div>
+            <div class="repeat-rp-summary-row"><span class="repeat-rp-summary-label">Người thua:</span><strong>{{ loser_factors|join('% → ') }}%</strong></div>
+            <div class="repeat-rp-summary-row"><span>Từ trận đối đầu thứ 7 vẫn không tính RP.</span></div>
+        </div>
+    </div>
+    <div class="panel weekly-rp-panel">
+        {% set weekly = weekly_rp_reward_config %}
+        {% set weekly_total = weekly.get('opponents_5_rp', 20) + weekly.get('opponents_10_rp', 30) + weekly.get('opponents_20_rp', 50) + weekly.get('matches_rp', 20) %}
+        <div class="weekly-rp-header">
+            <div>
+                <span class="weekly-rp-eyebrow">THIẾT LẬP PHẦN THƯỞNG</span>
+                <h2>🎁 Thưởng RP theo tuần</h2>
+                <p>Mỗi mốc chỉ nhận một lần trong tuần và được cộng dồn.</p>
+            </div>
+            <div class="weekly-rp-total">
+                <span>Tối đa mỗi tuần</span>
+                <strong>{{ weekly_total }} RP</strong>
+            </div>
+        </div>
+
+        <form method="post" action="{{ url_for('admin_update_weekly_rp_rewards') }}" class="weekly-rp-form">
+            <div class="weekly-rp-section-title">Đa dạng đối thủ</div>
+            <div class="weekly-rp-two-column">
+                <div class="weekly-rp-column-head">Số đối thủ</div>
+                <div class="weekly-rp-column-head">Thưởng RP</div>
+
+                <div class="weekly-rp-cell">
+                    <input type="number" name="opponents_5_threshold" min="1" max="500" value="{{ weekly.get('opponents_5_threshold', 5) }}" required>
+                </div>
+                <div class="weekly-rp-cell weekly-rp-reward-cell">
+                    <input type="number" name="opponents_5_rp" min="0" max="1000" value="{{ weekly.get('opponents_5_rp', 20) }}" required><b>RP</b>
+                </div>
+
+                <div class="weekly-rp-cell">
+                    <input type="number" name="opponents_10_threshold" min="1" max="500" value="{{ weekly.get('opponents_10_threshold', 10) }}" required>
+                </div>
+                <div class="weekly-rp-cell weekly-rp-reward-cell">
+                    <input type="number" name="opponents_10_rp" min="0" max="1000" value="{{ weekly.get('opponents_10_rp', 30) }}" required><b>RP</b>
+                </div>
+
+                <div class="weekly-rp-cell">
+                    <input type="number" name="opponents_20_threshold" min="1" max="500" value="{{ weekly.get('opponents_20_threshold', 20) }}" required>
+                </div>
+                <div class="weekly-rp-cell weekly-rp-reward-cell">
+                    <input type="number" name="opponents_20_rp" min="0" max="1000" value="{{ weekly.get('opponents_20_rp', 50) }}" required><b>RP</b>
+                </div>
+            </div>
+
+            <div class="weekly-rp-section-title">Mức độ hoạt động</div>
+            <div class="weekly-rp-two-column weekly-rp-activity-grid">
+                <div class="weekly-rp-column-head">Số trận</div>
+                <div class="weekly-rp-column-head">Thưởng RP</div>
+                <div class="weekly-rp-cell">
+                    <input type="number" name="matches_threshold" min="1" max="500" value="{{ weekly.get('matches_threshold', 10) }}" required>
+                </div>
+                <div class="weekly-rp-cell weekly-rp-reward-cell">
+                    <input type="number" name="matches_rp" min="0" max="1000" value="{{ weekly.get('matches_rp', 20) }}" required><b>RP</b>
+                </div>
+            </div>
+
+            <div class="weekly-rp-footer">
+                <div class="weekly-rp-note"><strong>Quy tắc áp dụng</strong><span>Tuần tính từ 00:00 Thứ Hai đến trước 00:00 Thứ Hai tuần sau.</span></div>
+                <button class="btn green" type="submit">Lưu cấu hình thưởng tuần</button>
+            </div>
+        </form>
+    </div>
+    <div class="panel">
+        <h2>🎮 Bộ màu nút Gaming Neon</h2>
+        <p class="muted">Đổi màu theo chức năng cho toàn bộ giao diện người chơi. Admin và Parsec không bị ảnh hưởng.</p>
+        {% set button_colors = {
+            'green':'🟢 Xanh lá', 'red':'🔴 Đỏ', 'gold':'🟡 Vàng',
+            'gray':'🔵 Xám xanh', 'blue':'🔷 Xanh dương', 'purple':'🟣 Tím'
+        } %}
+        {% set button_theme = button_theme_config or {} %}
+        <form method="post" action="{{ url_for('admin_update_button_theme') }}" class="grid-form">
+            {% for key,label,default_color in [
+                ('invite','Mời đấu','gold'),
+                ('quick','Tìm nhanh','green'),
+                ('success','Sẵn sàng / Xác nhận / Lưu','green'),
+                ('danger','Thoát / Bỏ cuộc / Từ chối / Xóa','red'),
+                ('primary','Đá tiếp / CTA chính','gold'),
+                ('secondary','Hủy / Phụ / Secondary','gray'),
+                ('default','Nút mặc định','blue'),
+                ('special','Random3 / Lucky Box','purple')
+            ] %}
+            <label><span>{{ label }}</span>
+                <select name="{{ key }}">
+                    {% for value,color_label in button_colors.items() %}
+                    <option value="{{ value }}" {% if button_theme.get(key, default_color) == value %}selected{% endif %}>{{ color_label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            {% endfor %}
+            <button class="btn green" type="submit">Lưu bộ màu nút</button>
+        </form>
+    </div>
+    {% endif %}
+    {% if can_admin('announcements_manage') %}
+    <div class="panel">
+        <h2>📢 Thông báo Admin chạy ngang</h2>
+        {% if active_announcement %}
+        <p>Đang bật: <strong>{{ active_announcement.title }}</strong> — {{ active_announcement.message }}</p>
+        <form method="post" action="{{ url_for('admin_clear_announcement') }}"><button class="btn red" type="submit">Tắt thông báo hiện tại</button></form>
+        {% endif %}
+        <form method="post" action="{{ url_for('admin_create_announcement') }}" class="grid-form admin-announcement-form">
+            <div><label>Tiêu đề ngắn</label><input name="title" maxlength="40" value="THÔNG BÁO"></div>
+            <div><label>Nội dung thông báo</label><input name="message" maxlength="220" placeholder="Ví dụ: Tối nay 20:00 mở giải..." required></div>
+            <button class="btn gold" type="submit">Đăng thông báo</button>
+        </form>
+    </div>
+    {% endif %}
+
+</section>
+{% endif %}
+

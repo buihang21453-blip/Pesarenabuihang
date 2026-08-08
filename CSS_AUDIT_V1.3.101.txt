@@ -1,0 +1,2 @@
+templates/_room_live_content.html:267:                    <button type="button" class="btn arena-btn green room-center-action-btn room-quick-flat"
+templates/room/_center_stage.html:234:                    <button type="button" class="btn arena-btn green room-center-action-btn room-quick-flat"

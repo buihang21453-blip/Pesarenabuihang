@@ -1,0 +1,48 @@
+/* PES Arena V1.3.106 — central match-stage rules moved to 17-center-match-stability.css. */
+/* PES Arena V1.3.105 — 06-responsive-performance.css
+ * Side rail / Parsec / room history rules moved to 16-side-rail-history-stability.css.
+ * Remaining rules keep this module's other responsibilities.
+ */
+/* PES Arena V1.3.104 — 06-responsive-performance.css
+ * Room action-control rules moved to 15-room-actions-stability.css.
+ * Remaining rules keep this module's non-action responsibility.
+ */
+/* PES Arena V1.3.38 — Room CSS module: 06-responsive-performance.css
+   Scope: Compact responsive behavior and performance/repaint reductions.
+   IMPORTANT: load order is defined in templates/room_detail.html. */
+/* V1.3.28 — Tinh gọn luồng thao tác, giữ lịch sử phòng và làm viền nút nhẹ hơn. */
+
+
+
+
+
+
+
+
+
+
+
+
+
+@media (max-width:1450px){
+  
+  
+}
+
+
+/* V1.3.29 — Performance pass: giảm hiệu ứng GPU nặng và repaint khi click. */
+.arena-room-v2 *, .arena-room-v2 *::before, .arena-room-v2 *::after{
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+
+
+@media (prefers-reduced-motion: reduce){
+  .arena-room-v2 *, .arena-room-v2 *::before, .arena-room-v2 *::after{
+    animation:none !important;
+    transition:none !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* V1.3.97 — removed duplicate three-button dock sizing; 01-shell-layout.css is the single layout owner. */
