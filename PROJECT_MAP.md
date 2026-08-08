@@ -76,6 +76,7 @@ Không sửa module khác nếu chưa chứng minh dependency liên quan.
 | Rail thông tin + Parsec + lịch sử phòng | `static/css/room/16-side-rail-history-stability.css` |
 | Khu vực giữa phòng / VS / tỷ số / HUD trạng thái | `static/css/room/17-center-match-stability.css` |
 | Chế độ đang chơi + trạng thái sẵn sàng/mở khóa | `static/css/room/18-active-mode-status-stability.css` |
+| Cầu nối tỷ lệ giao diện mẫu (khung/topbar/4 cột, không sở hữu logic/asset) | `static/css/room/19-target-layout-bridge.css` |
 
 ### Backend
 

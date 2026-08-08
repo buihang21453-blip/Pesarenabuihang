@@ -1,0 +1,83 @@
+/* PES Arena V1.3.116 — Kết nối layout giao diện mẫu, PHẦN 1
+ * Scope duy nhất: khung tổng thể + topbar + tỷ lệ 4 cột desktop.
+ * Không đổi ảnh/logo, không đổi nút, không đổi trạng thái, không đổi logic.
+ * Giao diện mẫu tham chiếu: index.html + styles.css người dùng cung cấp.
+ */
+
+/* Khung Room giữ trong vùng nhìn rộng, cân lề giống mockup. */
+.arena-room-v2{
+  width:min(1800px,100%);
+  margin-inline:auto;
+}
+
+/* TOPBAR: giữ nguyên dữ liệu động và asset dự án, chỉ nối tỷ lệ/khoảng cách. */
+.arena-room-v2 .room-stage-topbar{
+  min-height:96px!important;
+  height:96px!important;
+  grid-template-columns:minmax(260px,1fr) minmax(360px,1.2fr) minmax(260px,1fr)!important;
+  align-items:center!important;
+  padding:10px 22px!important;
+  margin-bottom:10px!important;
+}
+.arena-room-v2 .room-stage-title-wrap{justify-self:start!important;min-width:0}
+.arena-room-v2 .room-master-brand{
+  justify-self:center!important;
+  width:min(520px,82%)!important;
+  max-width:520px!important;
+  height:64px!important;
+}
+.arena-room-v2 .room-master-brand img{
+  width:100%!important;
+  height:64px!important;
+  max-width:100%!important;
+  max-height:64px!important;
+  object-fit:contain!important;
+  transform:none!important;
+}
+.arena-room-v2 .room-stage-share-wrap{justify-self:end!important;min-width:0!important}
+
+/* MAIN GRID desktop: Host | Center | Guest | Rail theo đúng tỷ lệ mockup. */
+@media (min-width:1281px){
+  .arena-room-v2 .room-arena-frame{
+    display:grid!important;
+    grid-template-columns:minmax(300px,1.03fr) minmax(360px,.90fr) minmax(300px,1.03fr) minmax(280px,.70fr)!important;
+    grid-template-areas:"home center away rail"!important;
+    gap:10px!important;
+    width:100%!important;
+    height:590px!important;
+    min-height:590px!important;
+    align-items:stretch!important;
+  }
+  .arena-room-v2 .room-side-card,
+  .arena-room-v2 .room-center-stage-plain,
+  .arena-room-v2 .room-arena-right-rail{
+    height:590px!important;
+    min-height:590px!important;
+  }
+}
+
+/* Khoảng 1181–1280: giữ 4 cột thêm một nhịp trước khi layout cũ tự xuống hàng. */
+@media (min-width:1181px) and (max-width:1280px){
+  .arena-room-v2 .room-stage-topbar{
+    grid-template-columns:minmax(235px,1fr) minmax(300px,1.08fr) minmax(220px,1fr)!important;
+  }
+  .arena-room-v2 .room-master-brand{width:min(420px,88%)!important}
+  .arena-room-v2 .room-arena-frame{
+    grid-template-columns:minmax(245px,1.03fr) minmax(275px,.90fr) minmax(245px,1.03fr) minmax(215px,.70fr)!important;
+    grid-template-areas:"home center away rail"!important;
+    gap:9px!important;
+    height:560px!important;
+    min-height:560px!important;
+  }
+  .arena-room-v2 .room-side-card,
+  .arena-room-v2 .room-center-stage-plain,
+  .arena-room-v2 .room-arena-right-rail{
+    height:560px!important;
+    min-height:560px!important;
+  }
+}
+
+/* Mobile/tablet: không ép mockup desktop; giữ responsive hiện tại của dự án. */
+@media (max-width:1180px){
+  .arena-room-v2 .room-stage-topbar{height:auto!important;min-height:96px!important}
+}

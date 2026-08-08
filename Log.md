@@ -1705,3 +1705,18 @@
 - Chỉ áp dụng ở trạng thái `waiting_ready`; các trạng thái đang thi đấu/gửi kết quả giữ kích thước gọn như trước.
 - Không đổi backend, route, RP, Series, Parsec hay luồng chọn chế độ.
 - Cập nhật APP_VERSION thành 1.3.113.
+
+## V1.3.116 - Ket_noi_layout_khung_phong_voi_giao_dien_mau_Phan_1 (2026-08-08)
+- Bắt đầu từ V1.3.115.
+- Thực hiện đúng yêu cầu làm từng phần để dễ kiểm soát; bản này chỉ là PHẦN 1.
+- Dùng `index.html` + `styles.css` người dùng cung cấp làm chuẩn tỷ lệ, không đưa asset demo của mockup vào dự án.
+- Giữ nguyên toàn bộ ảnh nền, logo PES ARENA, logo VS, logo chế độ, avatar, logo CLB/giải và URL Supabase hiện có.
+- Không sửa backend, route, JS, RP, Series, Parsec, Submit Result, Confirm Result, Rematch hay Invite/Quick Match.
+- Thêm `static/css/room/19-target-layout-bridge.css` làm cầu nối hình học duy nhất cho: khung Room, topbar và tỷ lệ 4 cột desktop.
+- Desktop >=1281px: tỷ lệ Host / Center / Guest / Rail = 1.03 / 0.90 / 1.03 / 0.70; gap 10px; chiều cao khung chính 590px.
+- Topbar: 96px; ba vùng trái / logo / phải = 1 / 1.2 / 1; logo dự án chỉ thay tỷ lệ hiển thị, không thay file ảnh.
+- 1181-1280px dùng cùng nguyên tắc nhưng thu nhỏ có kiểm soát; <=1180px giữ responsive cũ để không phát sinh regression.
+- Cập nhật `templates/room_detail.html` chỉ để nạp CSS bridge cuối chuỗi Room CSS.
+- APP_VERSION: 1.3.116.
+- Kiểm tra V1.3.116: `test_target_layout_bridge_v13116.py` 5/5 PASS; `python -m py_compile app.py` PASS.
+- Các test source lịch sử V1.3.114/V1.3.115 và test ownership cũ vẫn khóa version/cấu trúc CSS trước khi tách module nên không dùng làm tiêu chí regression của phần này.
