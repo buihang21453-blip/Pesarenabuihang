@@ -1,32 +1,15 @@
 {% extends "base.html" %}
 {% from "_avatar_macros.html" import player_avatar %}
 {% block head_extra %}
-{# V1.3.38: Room CSS is split by responsibility. Keep this order: later modules intentionally refine earlier ones. #}
+{# V1.3.122: one authoritative room presentation layer. Functional/base modules stay; old visual bridge layers are intentionally not loaded. #}
 <link rel="stylesheet" href="{{ static_asset('css/room/00-room-core.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/01-shell-layout.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/02-club-visuals.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/03-mode-selector.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/04-actions-history.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/05-action-states.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/06-responsive-performance.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/07-parsec-history-polish.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/08-action-layout-guard.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/09-series-orchestrator.css') }}">
 <link rel="stylesheet" href="{{ static_asset('css/room/10-prestart-flow.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/11-index-layout-reconnect.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/12-mockup-layout-lock.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/17-center-match-stability.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/18-active-mode-status-stability.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/13-mode-stability.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/14-shell-player-stability.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/15-room-actions-stability.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/16-side-rail-history-stability.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/19-target-layout-bridge.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/20-target-center-bridge.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/21-target-side-rail-bridge.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/22-target-mode-strip-bridge.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/23-target-action-states-bridge.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/24-real-layout-v121.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/25-full-mockup-v122.css') }}">
 <style>
 .arena-room-v2 {
   --arena-stadium-blue: url("{{ room_asset('stadium-blue.webp') }}");

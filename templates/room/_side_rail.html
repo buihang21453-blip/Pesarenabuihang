@@ -12,6 +12,10 @@
 
             {% include "partials/parsec_room_panel.html" %}
 
+            <div class="room-side-history-slot">
+                {% include "partials/room_history_panel.html" %}
+            </div>
+
             {% if system_features.room_chat_enabled %}<section class="panel room-chat-side">
                 <h2>Chat phòng</h2>
                 <div id="roomChatBox" class="chat-box"></div>

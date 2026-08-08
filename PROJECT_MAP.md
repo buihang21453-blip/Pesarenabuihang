@@ -320,3 +320,9 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 ## V1.3.84 Room template safety
 - Pre-start action markup phải được cập nhật đồng thời ở `templates/room/_center_stage.html` và `templates/_room_live_content.html`.
 - Sau mọi thay đổi Jinja Room, bắt buộc parse toàn bộ `templates/**/*.html` trước khi đóng ZIP.
+
+## V1.3.122 room UI render path
+- Initial room: `templates/room_detail.html` -> `_topbar.html` + `_host_card.html` + `_center_stage.html` + `_guest_card.html` + `_side_rail.html` + `_bottom_modes_history.html`.
+- Polling fragment: `templates/_room_live_content.html` is kept structurally aligned with the same Host / Center / Guest / Right rail / Modes layout.
+- Room visuals: `static/css/room/25-full-mockup-v122.css`.
+- Existing project room assets remain authoritative via `room_asset(...)`, `mode_asset(...)`, team logo URLs and rank/avatar assets.

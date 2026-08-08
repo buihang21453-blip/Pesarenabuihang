@@ -21,5 +21,8 @@ Mục tiêu: mỗi khu vực của phòng đấu chỉ có một nơi chính qu�
 5. `!important` chỉ giữ khi đang cần để bảo toàn giao diện; không dùng như cách mặc định để thắng CSS khác.
 6. Thay đổi giao diện mới phải tách khỏi đợt dọn CSS.
 
-## V1.3.121 final desktop shell owner
-- `static/css/room/24-real-layout-v121.css`: owner cuoi cho ty le topbar, 4 cot desktop, player-card sizing va responsive shell. File nay duoc nap cuoi de CSS legacy khong keo bo cuc ve ban cu. Khong so huu skin asset, route, JS hoac logic trang thai.
+## V1.3.122 room presentation authority
+- `static/css/room/25-full-mockup-v122.css` is the only loaded layout/presentation owner for `room_detail.html`.
+- Functional/base owners still loaded: `00`, `02`, `04`, `05`, `07`, `09`, `10`.
+- Old layout/bridge modules `01`, `03`, `06`, `08`, `11`–`24` are intentionally not loaded by `room_detail.html`.
+- Do not add a new bridge layer over `25`; edit `25` or replace it intentionally.
