@@ -1731,3 +1731,14 @@
 - 1181-1280px tự thu nhỏ có kiểm soát; mobile cho phép tên xuống dòng để không bị cắt.
 - Không sửa backend, route, JS, RP, Series, Parsec, Invite/Quick Match, Ready, Result, Confirm hoặc Rematch.
 - APP_VERSION: 1.3.117.
+
+## V1.3.118 - Ket_noi_khung_giua_che_do_VS_va_trang_thai_bat_dau_Phan_3 (2026-08-08)
+- Tiếp tục từ V1.3.117 theo yêu cầu làm từng phần để người dùng kiểm soát.
+- PHẦN 3 chỉ xử lý CSS + tỷ lệ của khung giữa ở giai đoạn chờ/sẵn sàng bắt đầu: active mode, logo chế độ đang chọn, VS, countdown/status và lane action pre-start.
+- Thêm `static/css/room/20-target-center-bridge.css` và nạp cuối chuỗi CSS Room để phần này có một điểm kiểm soát riêng, không đè ngược các owner cũ.
+- Desktop >=1281px: active-mode card 318px trong center 590px; VS 175x105; giữ vùng 78px cho action dock thật của dự án.
+- 1181-1280px co active-mode card còn 292px và VS 158x96 để không chồng nội dung.
+- Giữ nguyên hoàn toàn `mode_asset(...)`, `asset_url('vs.webp')`, ảnh nền, logo chế độ, route/Jinja/JS và các chức năng Sẵn Sàng / Quay Quân / Bắt Đầu Trận / Thoát Phòng.
+- Giữ độ phóng lớn của logo chế độ đang chọn đã chốt ở V1.3.113; chỉ cân vùng chứa và tỷ lệ với khung mới.
+- Không sửa Submit Result, Confirm Result, Dispute, Rematch, RP, Series, Parsec, Invite/Quick Match hay backend.
+- Cập nhật APP_VERSION thành 1.3.118.

@@ -1,0 +1,132 @@
+/* PES Arena V1.3.118 — Kết nối giao diện mẫu, PHẦN 3
+ * Scope duy nhất: khung giữa / chế độ đang chơi / VS / trạng thái pre-start.
+ * Chỉ nối CSS + tỷ lệ. Không thay asset, không thay HTML/Jinja, không thay route/JS/logic.
+ * Nạp sau 19-target-layout-bridge.css để phần tỷ lệ của bước này có một điểm kiểm soát riêng.
+ */
+
+/* Desktop chuẩn: giữ center cao 590px từ PHẦN 1, chia vùng theo mockup nhưng
+ * chừa dock action thật của dự án để Sẵn Sàng / Bắt đầu / Thoát không bị đè. */
+@media (min-width:1281px){
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready{
+    gap:4px!important;
+    padding-bottom:78px!important;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-master-active-mode{
+    width:calc(100% - 12px)!important;
+    min-height:318px!important;
+    height:318px!important;
+    margin:6px 6px 0!important;
+    padding:14px 14px 9px!important;
+    flex:0 0 318px!important;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-number{
+    width:54px!important;
+    height:54px!important;
+    font-size:22px!important;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-heading strong{
+    margin:3px 44px 5px!important;
+    font-size:19px!important;
+    line-height:1.18!important;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-heading small{
+    min-height:28px!important;
+    font-size:11px!important;
+    line-height:1.35!important;
+  }
+
+  /* Giữ đúng logo chế độ thật của dự án và độ phóng lớn đã chốt ở V1.3.113. */
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-emblem{
+    width:154px!important;
+    height:126px!important;
+    margin:3px auto 4px!important;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-emblem img{
+    width:124px!important;
+    height:124px!important;
+    max-width:124px!important;
+    max-height:124px!important;
+    transform:scale(2.45)!important;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-unlock-pill{
+    min-width:205px!important;
+    padding:7px 13px!important;
+    font-size:12px!important;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-room-ready{
+    min-height:38px!important;
+    margin-top:7px!important;
+    padding:7px 11px!important;
+    font-size:11px!important;
+  }
+
+  /* VS: tỷ lệ gần mockup 175x105, dùng nguyên asset vs.webp hiện có. */
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-center-vs-image{
+    width:175px!important;
+    height:105px!important;
+    max-height:105px!important;
+    margin:4px auto 1px!important;
+    object-fit:contain!important;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-center-countdown-label{
+    margin-top:1px!important;
+    font-size:10px!important;
+    line-height:1.2!important;
+  }
+
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-center-countdown{
+    margin:0!important;
+    font-size:34px!important;
+    line-height:1!important;
+  }
+
+  /* Các nút thật của dự án giữ nguyên skin/logic; chỉ giữ lane ở đáy rõ ràng. */
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-center-primary-actions,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-prestart-action-dock{
+    z-index:35!important;
+  }
+}
+
+/* 1181–1280: co cùng tỷ lệ với PHẦN 1, không làm nội dung chạm nhau. */
+@media (min-width:1181px) and (max-width:1280px){
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready{
+    padding-bottom:74px!important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-master-active-mode{
+    width:calc(100% - 10px)!important;
+    min-height:292px!important;
+    height:292px!important;
+    margin:5px 5px 0!important;
+    padding:12px 11px 8px!important;
+    flex:0 0 292px!important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-heading strong{
+    font-size:17px!important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-emblem{
+    width:142px!important;
+    height:116px!important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-master-mode-emblem img{
+    width:114px!important;
+    height:114px!important;
+    max-width:114px!important;
+    max-height:114px!important;
+    transform:scale(2.42)!important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready .room-center-vs-image{
+    width:158px!important;
+    height:96px!important;
+    max-height:96px!important;
+  }
+}
+
+/* <=1180px: không ép tỷ lệ desktop; responsive hiện tại của dự án tiếp tục sở hữu. */
