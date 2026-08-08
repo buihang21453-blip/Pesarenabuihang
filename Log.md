@@ -1716,13 +1716,15 @@
 - Không đổi backend, route, RP, Series, Parsec hay luồng chọn chế độ.
 - Cập nhật APP_VERSION thành 1.3.113.
 
-## V1.3.118 - Can chinh ty le khung Room theo anh mau 3
-- Giữ nguyên namespace `pes-room3-*`, không dựng lại HTML và không quay về layout cũ.
-- Thu chiều cao Host / Opponent khoảng 10% để giảm khoảng trống dọc.
-- Mở rộng cột Center và Sidebar nhẹ, giữ Host / Opponent đối xứng.
-- Tăng logo chế độ đang chọn và ảnh VS để Center trở thành trọng tâm.
-- Tăng chiều cao + kích thước logo 6 card chế độ.
-- Căn lại hàng nút Mời đấu / Tìm nhanh / Thoát phòng.
-- Chỉ áp dụng cho trạng thái Chờ đối thủ; không sửa Backend, API, RP hay logic phòng.
-- File chính: `static/css/room/19-room-v3-waiting.css`, `app.py`.
-
+## V1.3.119 - Lam_noi_that_room_sat_anh_mau_3 (2026-08-09)
+- Tiếp tục trực tiếp từ V1.3.118; không dựng lại grid và không thay backend/route/API/RP.
+- Chỉ áp dụng shell mới cho trạng thái `Chờ đối thủ`.
+- Làm đậm phần header: PES ARENA lớn hơn, mã phòng vàng hơn, nút Chia sẻ phòng lớn và rõ hơn.
+- Tăng chiều sâu card Chủ phòng/Đối thủ bằng background sân thật, lớp phủ xanh/đỏ, neon và shadow; tăng avatar, tên, rank và vùng CLB.
+- Tăng logo chế độ đang chọn lên 172x154, tăng VS và tăng trọng lượng thị giác của center column.
+- Làm sidebar Thông tin phòng/Parsec/Lịch sử gần phong cách khung vàng của ảnh mẫu hơn.
+- Làm lại 3 nút Mời đấu/Tìm nhanh/Thoát phòng lớn hơn, có icon, giữ màu vàng/xanh/đỏ và hook chức năng cũ.
+- Tăng 6 mode card lên 205px; logo 128px; thêm badge số góc và nền/glow theo từng chế độ.
+- Sửa đúng thứ tự hiển thị 6 chế độ theo ảnh mẫu: 1 Rank Random, 2 Random 3 chọn 1, 3 Chiến thuật BO3, 4 BO3, 5 Cấm chọn CLB, 6 Lượt đi - lượt về.
+- Đồng bộ số badge của chế độ đang chọn theo đúng thứ tự trên.
+- Cập nhật APP_VERSION từ 1.3.118 lên 1.3.119.

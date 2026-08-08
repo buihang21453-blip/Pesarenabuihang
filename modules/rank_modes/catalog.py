@@ -1,6 +1,6 @@
 from copy import deepcopy
 RANK_RANDOM='rank_random'; RANDOM3_PICK1='random3_pick1'; TACTICAL_BO3='tactical_bo3'; BO3='bo3'; BAN_PICK_BO3='ban_pick_bo3'; HOME_AWAY='home_away'
-MODE_ORDER=(RANK_RANDOM,RANDOM3_PICK1,HOME_AWAY,BO3,TACTICAL_BO3,BAN_PICK_BO3)
+MODE_ORDER=(RANK_RANDOM,RANDOM3_PICK1,TACTICAL_BO3,BO3,BAN_PICK_BO3,HOME_AWAY)
 DEFAULT_MODE_CONFIGS={
 RANK_RANDOM:{'code':RANK_RANDOM,'label':'Rank thường Random','short_label':'Random','enabled':True,'min_rp':0,'min_matches':0,'max_rp_gap':0,'series_type':'single','max_games':1,'club_method':'random_one','rp':{'formula':'rank_current'}},
 RANDOM3_PICK1:{'code':RANDOM3_PICK1,'label':'Random 3 chọn 1','short_label':'3 chọn 1','enabled':True,'min_rp':0,'min_matches':5,'max_rp_gap':0,'series_type':'single','max_games':1,'club_method':'secret_pick_three','rp':{'formula':'rank_current'}},
