@@ -39,7 +39,7 @@
             <div class="pes-room3-avatar-wrap">
                 {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='sm', frame=room.host_avatar_frame) }}
             </div>
-            <div class="pes-room3-player-name {{ room.host_name_style_class or '' }}">{{ room.host_name }}</div>
+            <div class="pes-room3-player-name"><span class="{{ room.host_name_style_class or '' }}">{{ room.host_name }}</span></div>
             <div class="pes-room3-rankline">
                 <img src="{{ asset_url('ranks/' ~ room.host_rank_info.slug ~ '.webp') }}" alt="{{ room.host_rank_info.name }}" loading="lazy">
                 <span>{{ room.host_rank_info.name }}</span>

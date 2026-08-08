@@ -1750,3 +1750,17 @@
 - Sua hien thi ten nguoi choi de khong bi che / cat nua ben duoi.
 - Tang manh logo che do o giua man hinh de chiem phan lon hon trong khung.
 - Tang manh logo cua 6 che do khac de logo chiem da so dien tich card.
+
+
+## V1.3.123 - thu_nho_header_va_sua_ten_nguoi_choi
+- Giam tiep co chu PHONG DAU va thu nho them anh PES ARENA theo phan hoi.
+- Sua template ten nguoi choi sang cau truc span ben trong de tranh bi cat / mat chu.
+- Tang them kich thuoc logo che do o giua man hinh.
+- Tang them kich thuoc logo cua cac che do khac de logo chiem phan lon hon trong card.
+
+
+## V1.3.123 - tinh_chinh_theo_anh_sau_deploy
+- Giam tiep co chu PHONG DAU va anh PES ARENA sau khi kiem tra anh deploy.
+- Sua lai CSS ten nguoi choi va template de tranh mat / cat chu.
+- Tang tiep kich thuoc logo che do o giua man hinh.
+- Tang tiep kich thuoc logo cac che do khac.
