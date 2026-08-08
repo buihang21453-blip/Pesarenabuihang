@@ -1,0 +1,99 @@
+/* PES Arena V1.3.120 — Target UI bridge PHẦN 6 / FINAL
+ * Scope: playing/result confirmation/dispute/completed visual proportions only.
+ * No endpoint, form action, field name or runtime state is changed here.
+ */
+.arena-room-v2 .room-center-stage-plain{
+  min-width:0;
+}
+.arena-room-v2 .room-center-score-panel,
+.arena-room-v2 .room-result-review{
+  width:min(calc(100% - 28px),420px);
+  margin-left:auto;
+  margin-right:auto;
+  padding:14px 16px;
+  border-radius:12px;
+  overflow:visible;
+}
+.arena-room-v2 .room-score-title{
+  margin:0 0 10px;
+  font-size:20px;
+  line-height:1.2;
+  text-align:center;
+}
+.arena-room-v2 .room-score-fields{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  align-items:end;
+}
+.arena-room-v2 .room-score-fields label{
+  min-width:0;
+  text-align:center;
+}
+.arena-room-v2 .room-score-fields label > span{
+  display:block;
+  margin-bottom:6px;
+  font-size:12px;
+  font-weight:800;
+}
+.arena-room-v2 .room-score-fields input{
+  width:100%;
+  min-width:0;
+  height:64px;
+  padding:6px 8px;
+  border-radius:9px;
+  font-size:34px;
+  line-height:1;
+  font-weight:900;
+  text-align:center;
+}
+.arena-room-v2 .room-submit-result-btn{
+  width:100%;
+  margin-top:12px;
+  min-height:46px;
+}
+.arena-room-v2 .room-result-score{
+  margin:2px 0 10px;
+  font-size:56px;
+  line-height:1;
+  font-weight:900;
+  text-align:center;
+}
+.arena-room-v2 .room-result-actions{
+  width:min(100%,320px);
+  margin:12px auto 0;
+  gap:10px;
+}
+.arena-room-v2 .room-result-btn.arena-btn{
+  min-height:48px;
+}
+.arena-room-v2 .room-result-waiting{
+  margin-top:10px;
+  text-align:center;
+}
+.arena-room-v2 .room-result-dispute-form{
+  width:min(340px,calc(100vw - 44px));
+  max-height:min(420px,70vh);
+  overflow:auto;
+}
+/* Reserve enough bottom breathing room for the real action dock in every match state. */
+@media (min-width:821px){
+  .arena-room-v2 .room-center-stage-plain.room-state-playing,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_result_confirm,
+  .arena-room-v2 .room-center-stage-plain.room-state-disputed,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed{
+    padding-bottom:84px;
+  }
+}
+@media (max-width:820px){
+  .arena-room-v2 .room-center-score-panel,
+  .arena-room-v2 .room-result-review{width:calc(100% - 16px);padding:12px}
+  .arena-room-v2 .room-score-fields{gap:10px}
+  .arena-room-v2 .room-score-fields input{height:56px;font-size:30px}
+  .arena-room-v2 .room-result-score{font-size:48px}
+}
+@media (max-width:520px){
+  .arena-room-v2 .room-score-fields{grid-template-columns:1fr 1fr;gap:8px}
+  .arena-room-v2 .room-score-fields input{height:52px;font-size:27px}
+  .arena-room-v2 .room-result-actions{grid-template-columns:1fr 1fr;width:100%}
+}

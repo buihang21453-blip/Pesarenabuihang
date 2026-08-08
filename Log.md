@@ -1749,3 +1749,9 @@
 - Cân tỷ lệ cột Thông tin phòng, Parsec và Lịch sử đấu theo giao diện mẫu.
 - Không đổi HTML/Jinja, ảnh/logo, dữ liệu động, route, RP, trạng thái phòng hay hành vi Parsec.
 - Giữ lịch sử ở đúng vị trí DOM hiện tại; chỉ chỉnh CSS/tỷ lệ để tránh xung đột luồng.
+
+## V1.3.120 — Hoan thanh ket noi giao dien voi chuc nang loi
+- PHAN 5: Can lai 6 the che do theo giao dien mau, giu nguyen mode_asset/logo that va form chon che do.
+- PHAN 6: Can lai form gui ket qua, xac nhan/tranh chap va cac trang thai sau tran bang CSS; khong doi endpoint/field/runtime state.
+- Them 22-target-mode-strip-bridge.css va 23-target-action-states-bridge.css o cuoi cascade de de kiem soat/rollback.
+- Khong thay anh/logo cua du an; khong sua route, RP, Series, Parsec hoac logic phong.
