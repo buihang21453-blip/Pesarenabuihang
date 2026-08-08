@@ -1,3 +1,12 @@
+## V1.3.121 — Lam lai bo cuc that theo giao dien mau - Phan 1
+- APP_VERSION: 1.3.120 -> 1.3.121.
+- Them `static/css/room/24-real-layout-v121.css` va nap CUOI cascade de giao dien thay doi ro rang thay vi chi bridge nhe.
+- Desktop >=1351px: dung dung ty le 4 cot 1.03 / 0.90 / 1.03 / 0.70; chieu cao khung chinh 590px.
+- Topbar: ty le 1 / 1.2 / 1; logo PES ARENA, anh nen, logo VS, logo che do, logo CLB va avatar van dung asset hien co.
+- Can lai player card: nhan CHU PHONG/DOI THU, avatar 92px, ten 27px, rank 18px, logo CLB 132px, Tong diem ro rang.
+- Khong doi route, form action, JS hook, backend, RP, Series, Parsec hay du lieu dong.
+- Responsive: tablet va mobile bo chieu cao cung de khong cat noi dung.
+
 ## V1.3.115 - Kiem_tra_va_on_dinh_hien_thi_6_trang_thai_phong (2026-08-08)
 - Giữ nguyên layout hiện tại; không đổi cấu trúc cột Chủ phòng / Trung tâm / Đối thủ / Thông tin + Parsec.
 - Rà soát 6 trạng thái: Chờ đối thủ; Đủ 2 người/Chờ sẵn sàng; Sẵn sàng bắt đầu; Gửi kết quả; Xác nhận kết quả; Đá tiếp.

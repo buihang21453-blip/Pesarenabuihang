@@ -20,3 +20,6 @@ Mục tiêu: mỗi khu vực của phòng đấu chỉ có một nơi chính qu�
 4. Không dùng file `11-index-layout-reconnect.css` hoặc `12-mockup-layout-lock.css` để vá giao diện mới. Hai file này chỉ giữ phần legacy chưa chuyển.
 5. `!important` chỉ giữ khi đang cần để bảo toàn giao diện; không dùng như cách mặc định để thắng CSS khác.
 6. Thay đổi giao diện mới phải tách khỏi đợt dọn CSS.
+
+## V1.3.121 final desktop shell owner
+- `static/css/room/24-real-layout-v121.css`: owner cuoi cho ty le topbar, 4 cot desktop, player-card sizing va responsive shell. File nay duoc nap cuoi de CSS legacy khong keo bo cuc ve ban cu. Khong so huu skin asset, route, JS hoac logic trang thai.
