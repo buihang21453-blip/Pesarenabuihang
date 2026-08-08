@@ -1,4 +1,11 @@
         <section class="room-side-card room-team-card away" aria-label="Khách">
+            {% if not room.has_guest %}
+            <div class="room-empty-opponent" aria-label="Chưa có đối thủ">
+                <div class="room-empty-opponent-avatar">?</div>
+                <strong>Chưa có đối thủ</strong>
+                <p>Đang chờ người chơi khác tham gia...</p>
+            </div>
+            {% else %}
             <div class="room-player-heading-plain">
                 {{ player_avatar(name=room.guest_name, avatar_url=room.guest_avatar_url, achievement=room.guest_achievement, size='sm', frame=room.guest_avatar_frame) }}
                 <div class="room-player-name {{ room.guest_name_style_class or '' }}"><span>{{ room.guest_name }}</span>{% if room.guest_profile_badge %}<img class="equipped-profile-badge room-equipped-profile-badge" src="{{ room.guest_profile_badge.image_url }}" alt="{{ room.guest_profile_badge.name }}" title="{{ room.guest_profile_badge.name }}" loading="lazy">{% endif %}</div>
@@ -51,5 +58,6 @@
                 {% endif %}
                 <div class="room-team-league-text">{% if room.guest_team_league_logo_url %}<img class="room-league-logo" src="{{ room.guest_team_league_logo_url }}" alt="Logo {{ room.guest_team_league }}" loading="lazy">{% endif %}<span>{{ room.guest_team_league or 'Chưa có giải' }}</span></div>
             </div>
+            {% endif %}
         </section>
 

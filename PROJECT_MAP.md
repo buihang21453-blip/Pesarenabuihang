@@ -326,3 +326,13 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 - Polling fragment: `templates/_room_live_content.html` is kept structurally aligned with the same Host / Center / Guest / Right rail / Modes layout.
 - Room visuals: `static/css/room/25-full-mockup-v122.css`.
 - Existing project room assets remain authoritative via `room_asset(...)`, `mode_asset(...)`, team logo URLs and rank/avatar assets.
+
+
+## V1.3.123 room reference shell — trạng thái 1
+- Mục tiêu ảnh chuẩn: bố cục ngang gọn; sidebar phải kéo dài cùng toàn bộ cụm phòng + nút + 6 mode.
+- Initial render: `templates/room_detail.html`.
+- Polling render: `templates/_room_live_content.html` tái sử dụng cùng partial với initial render.
+- Main waiting actions: `templates/room/_waiting_opponent_actions.html`.
+- Visual authority: `static/css/room/26-reference-layout-waiting-v123.css`.
+- Trạng thái `waiting_ready` + chưa có guest: Host chưa có CLB, không hiển thị team cũ/stale; Guest render empty opponent state.
+- Tất cả route/form/asset resolver hiện hữu được giữ nguyên.

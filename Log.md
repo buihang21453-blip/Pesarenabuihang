@@ -1765,3 +1765,14 @@
 - Bo cuc desktop 4 cot Host / Center / Guest / Sidebar, topbar 1/1.2/1.
 - 6 mode cards full width, mode dang chon glow va logo lon hon.
 - Can lai day du state waiting/ready/playing/result-confirm/confirmed/disputed va responsive.
+
+
+## V1.3.123 — Dung lai room_detail theo anh mau, Trang thai 1 Cho doi thu
+- Thời gian: 2026-08-09 00:21 (Asia/Bangkok).
+- Thay shell thật: sidebar phải nằm cạnh toàn bộ khu vực main; main gồm hàng Host/Center/Guest, hàng 3 action, hàng 6 mode.
+- Trạng thái đầu tiên: Host chưa có CLB và không hiển thị team stale; Guest là empty opponent.
+- Chuyển Mời đấu / Tìm nhanh / Thoát phòng ra hàng action ngang bên dưới 3 khung chính bằng đúng route/function cũ.
+- Center chỉ giữ active mode + VS khi chưa có đối thủ.
+- Polling `_room_live_content.html` tái sử dụng cùng partial như initial render để không quay lại layout cũ sau refresh state.
+- Không thay backend, RP, Series, Parsec, route chức năng, URL asset, logo hay ảnh dự án.
+- File chính: `templates/room_detail.html`, `templates/_room_live_content.html`, `templates/room/_host_card.html`, `templates/room/_guest_card.html`, `templates/room/_center_stage.html`, `templates/room/_bottom_modes_history.html`, `templates/room/_waiting_opponent_actions.html`, `static/css/room/26-reference-layout-waiting-v123.css`.
