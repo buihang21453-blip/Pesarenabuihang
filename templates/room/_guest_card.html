@@ -1,13 +1,7 @@
         <section class="room-side-card room-team-card away" aria-label="Khách">
-            <div class="room-player-panel-title">ĐỐI THỦ</div>
             <div class="room-player-heading-plain">
-                {% if room.has_guest %}
                 {{ player_avatar(name=room.guest_name, avatar_url=room.guest_avatar_url, achievement=room.guest_achievement, size='sm', frame=room.guest_avatar_frame) }}
                 <div class="room-player-name {{ room.guest_name_style_class or '' }}"><span>{{ room.guest_name }}</span>{% if room.guest_profile_badge %}<img class="equipped-profile-badge room-equipped-profile-badge" src="{{ room.guest_profile_badge.image_url }}" alt="{{ room.guest_profile_badge.name }}" title="{{ room.guest_profile_badge.name }}" loading="lazy">{% endif %}</div>
-                {% else %}
-                <div class="room-waiting-opponent-avatar" aria-hidden="true">?</div>
-                <div class="room-player-name room-waiting-opponent-name"><span>Đang chờ đối thủ</span></div>
-                {% endif %}
                 {% if room.has_guest and room.guest_rank_info %}
                 <div class="room-player-rankline">
                     <img src="{{ asset_url('ranks/' ~ room.guest_rank_info.slug ~ '.webp') }}" alt="{{ room.guest_rank_info.name }}" loading="lazy">

@@ -1,26 +1,3 @@
-## V1.3.116 - Dung_lai_khung_room_theo_anh_mau_3 (2026-08-09)
-
-- Dựng lại shell `room_detail` theo ảnh mẫu 3, ưu tiên trạng thái đầu tiên: Chờ đối thủ.
-- Tách giao diện phòng thành các vùng rõ ràng: Header / Chủ phòng / Trung tâm / Đối thủ / Sidebar; dải 6 chế độ nằm riêng bên dưới.
-- `Chủ phòng` và `Đối thủ` dùng cùng cấu trúc card, khác màu xanh/đỏ; đối thủ trống hiển thị dấu `?` và trạng thái chờ.
-- Trung tâm giữ dữ liệu thật, mode thật, logo thật, VS thật và toàn bộ hook/route/ID/JS cũ; chỉ đổi shell HTML/CSS.
-- Chuyển `Lịch sử đấu` vào sidebar dưới Parsec.
-- Tạo CSS riêng duy nhất cho giao diện mới: `static/css/room-detail-v3.css`; không còn nạp chuỗi CSS room legacy trong `room_detail.html`.
-- CSS mới chỉ chịu trách nhiệm khung, viền neon, ánh sáng, khoảng cách, bố cục, font, nút và overlay; không dựng lại logo bằng CSS.
-- Thêm `tail_styles` trong `base.html` để CSS trang phòng được nạp sau skin nút toàn cục, tránh phải dùng lớp override chồng chéo.
-- APP_VERSION: 1.3.115 -> 1.3.116.
-
-### File thay đổi
-- `app.py`
-- `templates/base.html`
-- `templates/room_detail.html`
-- `templates/room/_host_card.html`
-- `templates/room/_guest_card.html`
-- `templates/room/_side_rail.html`
-- `templates/room/_bottom_modes_history.html`
-- `static/css/room-detail-v3.css`
-- `test_room_all_states_visibility_v13115.py`
-
 ## V1.3.115 - Kiem_tra_va_on_dinh_hien_thi_6_trang_thai_phong (2026-08-08)
 - Giữ nguyên layout hiện tại; không đổi cấu trúc cột Chủ phòng / Trung tâm / Đối thủ / Thông tin + Parsec.
 - Rà soát 6 trạng thái: Chờ đối thủ; Đủ 2 người/Chờ sẵn sàng; Sẵn sàng bắt đầu; Gửi kết quả; Xác nhận kết quả; Đá tiếp.
@@ -1728,3 +1705,24 @@
 - Chỉ áp dụng ở trạng thái `waiting_ready`; các trạng thái đang thi đấu/gửi kết quả giữ kích thước gọn như trước.
 - Không đổi backend, route, RP, Series, Parsec hay luồng chọn chế độ.
 - Cập nhật APP_VERSION thành 1.3.113.
+
+## V1.3.116 — Dựng lại khung Room theo ảnh mẫu 3
+- Gốc: V1.3.115.
+- Phạm vi: Frontend `room_detail`, trạng thái đầu tiên **Chờ đối thủ**.
+- Thay đổi:
+  - Bỏ chuỗi 19 file CSS Room khỏi `room_detail.html`; Room mới chỉ nạp `static/css/room-v3.css` để tránh cascade chồng lớp.
+  - Dựng lại shell 4 cột: Chủ phòng / Trung tâm / Đối thủ / Sidebar, thêm hàng action riêng nằm dưới 3 cột trận đấu.
+  - Chuyển Lịch sử đấu vào sidebar dưới Thông tin phòng + Parsec.
+  - 6 chế độ dùng toàn chiều rộng ở hàng dưới.
+  - Chủ phòng / Đối thủ dùng cùng component và nền sân xanh/đỏ thật.
+  - Mode + logo thật + VS thật làm tâm điểm của cột giữa.
+  - Giữ nguyên route/API/JS hook, Parsec, Quick Match, leave room và dữ liệu runtime thật.
+- File:
+  - `templates/room_detail.html`
+  - `templates/room/_center_stage.html`
+  - `templates/room/_side_rail.html`
+  - `templates/room/_bottom_modes_history.html`
+  - `templates/room/_waiting_actions.html` (mới)
+  - `static/css/room-v3.css` (mới)
+  - `app.py` (APP_VERSION 1.3.116)
+- Không sửa Backend/DB/RP/gameplay.

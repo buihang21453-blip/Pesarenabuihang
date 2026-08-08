@@ -1,4 +1,4 @@
-    <div class="room-bottom-shell">
+    <div class="room-bottom-shell room-v3-modes-shell">
         <div class="room-bottom-main">
             {% set room_mode_switch_allowed = (room.status == "waiting_ready" and not room.friendly_random3_active and not (rank_series and rank_series.active)) %}
             <section class="room-master-mode-switcher{% if not room_mode_switch_allowed %} is-view-only{% endif %}" aria-label="Các chế độ thi đấu Rank">
