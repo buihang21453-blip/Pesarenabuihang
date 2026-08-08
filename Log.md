@@ -1,3 +1,26 @@
+## V1.3.116 - Dung_lai_khung_room_theo_anh_mau_3 (2026-08-09)
+
+- Dựng lại shell `room_detail` theo ảnh mẫu 3, ưu tiên trạng thái đầu tiên: Chờ đối thủ.
+- Tách giao diện phòng thành các vùng rõ ràng: Header / Chủ phòng / Trung tâm / Đối thủ / Sidebar; dải 6 chế độ nằm riêng bên dưới.
+- `Chủ phòng` và `Đối thủ` dùng cùng cấu trúc card, khác màu xanh/đỏ; đối thủ trống hiển thị dấu `?` và trạng thái chờ.
+- Trung tâm giữ dữ liệu thật, mode thật, logo thật, VS thật và toàn bộ hook/route/ID/JS cũ; chỉ đổi shell HTML/CSS.
+- Chuyển `Lịch sử đấu` vào sidebar dưới Parsec.
+- Tạo CSS riêng duy nhất cho giao diện mới: `static/css/room-detail-v3.css`; không còn nạp chuỗi CSS room legacy trong `room_detail.html`.
+- CSS mới chỉ chịu trách nhiệm khung, viền neon, ánh sáng, khoảng cách, bố cục, font, nút và overlay; không dựng lại logo bằng CSS.
+- Thêm `tail_styles` trong `base.html` để CSS trang phòng được nạp sau skin nút toàn cục, tránh phải dùng lớp override chồng chéo.
+- APP_VERSION: 1.3.115 -> 1.3.116.
+
+### File thay đổi
+- `app.py`
+- `templates/base.html`
+- `templates/room_detail.html`
+- `templates/room/_host_card.html`
+- `templates/room/_guest_card.html`
+- `templates/room/_side_rail.html`
+- `templates/room/_bottom_modes_history.html`
+- `static/css/room-detail-v3.css`
+- `test_room_all_states_visibility_v13115.py`
+
 ## V1.3.115 - Kiem_tra_va_on_dinh_hien_thi_6_trang_thai_phong (2026-08-08)
 - Giữ nguyên layout hiện tại; không đổi cấu trúc cột Chủ phòng / Trung tâm / Đối thủ / Thông tin + Parsec.
 - Rà soát 6 trạng thái: Chờ đối thủ; Đủ 2 người/Chờ sẵn sàng; Sẵn sàng bắt đầu; Gửi kết quả; Xác nhận kết quả; Đá tiếp.
@@ -1705,74 +1728,3 @@
 - Chỉ áp dụng ở trạng thái `waiting_ready`; các trạng thái đang thi đấu/gửi kết quả giữ kích thước gọn như trước.
 - Không đổi backend, route, RP, Series, Parsec hay luồng chọn chế độ.
 - Cập nhật APP_VERSION thành 1.3.113.
-
-## V1.3.116 - Ket_noi_layout_khung_phong_voi_giao_dien_mau_Phan_1 (2026-08-08)
-- Bắt đầu từ V1.3.115.
-- Thực hiện đúng yêu cầu làm từng phần để dễ kiểm soát; bản này chỉ là PHẦN 1.
-- Dùng `index.html` + `styles.css` người dùng cung cấp làm chuẩn tỷ lệ, không đưa asset demo của mockup vào dự án.
-- Giữ nguyên toàn bộ ảnh nền, logo PES ARENA, logo VS, logo chế độ, avatar, logo CLB/giải và URL Supabase hiện có.
-- Không sửa backend, route, JS, RP, Series, Parsec, Submit Result, Confirm Result, Rematch hay Invite/Quick Match.
-- Thêm `static/css/room/19-target-layout-bridge.css` làm cầu nối hình học duy nhất cho: khung Room, topbar và tỷ lệ 4 cột desktop.
-- Desktop >=1281px: tỷ lệ Host / Center / Guest / Rail = 1.03 / 0.90 / 1.03 / 0.70; gap 10px; chiều cao khung chính 590px.
-- Topbar: 96px; ba vùng trái / logo / phải = 1 / 1.2 / 1; logo dự án chỉ thay tỷ lệ hiển thị, không thay file ảnh.
-- 1181-1280px dùng cùng nguyên tắc nhưng thu nhỏ có kiểm soát; <=1180px giữ responsive cũ để không phát sinh regression.
-- Cập nhật `templates/room_detail.html` chỉ để nạp CSS bridge cuối chuỗi Room CSS.
-- APP_VERSION: 1.3.116.
-- Kiểm tra V1.3.116: `test_target_layout_bridge_v13116.py` 5/5 PASS; `python -m py_compile app.py` PASS.
-- Các test source lịch sử V1.3.114/V1.3.115 và test ownership cũ vẫn khóa version/cấu trúc CSS trước khi tách module nên không dùng làm tiêu chí regression của phần này.
-
-## V1.3.117 - Ket_noi_chu_phong_va_doi_thu_voi_giao_dien_mau_Phan_2 (2026-08-08)
-- Tiếp tục từ V1.3.116 theo đúng cách làm từng phần; bản này chỉ là PHẦN 2.
-- Phạm vi: hai cột Chủ phòng / Đối thủ. Không thay đổi layout tổng 4 cột đã chốt ở PHẦN 1.
-- Giữ nguyên toàn bộ binding dữ liệu thật trong `_host_card.html` và `_guest_card.html`: tên, avatar, rank, badge, trạng thái sẵn sàng, logo CLB, tên CLB và Tổng điểm.
-- Không đưa ảnh/logo demo từ `index.html` vào dự án; tiếp tục dùng asset/URL hiện có của dự án và Supabase.
-- Chỉ chỉnh CSS trong owner `14-shell-player-stability.css`: tỷ lệ avatar, tên, rank, badge chuỗi thắng, khu vực CLB, logo CLB, placeholder và Tổng điểm; thêm chống tràn tên dài.
-- Desktop >=1281px: avatar 94px, tên 27px, rank icon 25px, logo CLB 118px; vùng heading 250px để hai cột cân đối và không lấn khu vực CLB.
-- 1181-1280px tự thu nhỏ có kiểm soát; mobile cho phép tên xuống dòng để không bị cắt.
-- Không sửa backend, route, JS, RP, Series, Parsec, Invite/Quick Match, Ready, Result, Confirm hoặc Rematch.
-- APP_VERSION: 1.3.117.
-
-## V1.3.118 - Ket_noi_khung_giua_che_do_VS_va_trang_thai_bat_dau_Phan_3 (2026-08-08)
-- Tiếp tục từ V1.3.117 theo yêu cầu làm từng phần để người dùng kiểm soát.
-- PHẦN 3 chỉ xử lý CSS + tỷ lệ của khung giữa ở giai đoạn chờ/sẵn sàng bắt đầu: active mode, logo chế độ đang chọn, VS, countdown/status và lane action pre-start.
-- Thêm `static/css/room/20-target-center-bridge.css` và nạp cuối chuỗi CSS Room để phần này có một điểm kiểm soát riêng, không đè ngược các owner cũ.
-- Desktop >=1281px: active-mode card 318px trong center 590px; VS 175x105; giữ vùng 78px cho action dock thật của dự án.
-- 1181-1280px co active-mode card còn 292px và VS 158x96 để không chồng nội dung.
-- Giữ nguyên hoàn toàn `mode_asset(...)`, `asset_url('vs.webp')`, ảnh nền, logo chế độ, route/Jinja/JS và các chức năng Sẵn Sàng / Quay Quân / Bắt Đầu Trận / Thoát Phòng.
-- Giữ độ phóng lớn của logo chế độ đang chọn đã chốt ở V1.3.113; chỉ cân vùng chứa và tỷ lệ với khung mới.
-- Không sửa Submit Result, Confirm Result, Dispute, Rematch, RP, Series, Parsec, Invite/Quick Match hay backend.
-- Cập nhật APP_VERSION thành 1.3.118.
-
-
-## V1.3.119 — Ket noi cot thong tin, Parsec va lich su — Phan 4
-- Chỉ thêm `static/css/room/21-target-side-rail-bridge.css`.
-- Cân tỷ lệ cột Thông tin phòng, Parsec và Lịch sử đấu theo giao diện mẫu.
-- Không đổi HTML/Jinja, ảnh/logo, dữ liệu động, route, RP, trạng thái phòng hay hành vi Parsec.
-- Giữ lịch sử ở đúng vị trí DOM hiện tại; chỉ chỉnh CSS/tỷ lệ để tránh xung đột luồng.
-
-## V1.3.120 — Hoan thanh ket noi giao dien voi chuc nang loi
-- PHAN 5: Can lai 6 the che do theo giao dien mau, giu nguyen mode_asset/logo that va form chon che do.
-- PHAN 6: Can lai form gui ket qua, xac nhan/tranh chap va cac trang thai sau tran bang CSS; khong doi endpoint/field/runtime state.
-- Them 22-target-mode-strip-bridge.css va 23-target-action-states-bridge.css o cuoi cascade de de kiem soat/rollback.
-- Khong thay anh/logo cua du an; khong sua route, RP, Series, Parsec hoac logic phong.
-
-
-## V1.3.122 — Thay toan bo vo giao dien phong bang mockup that
-- Ngung nap 14 lop CSS layout/bridge cu 01,03,06,08,11-24 de tranh giao dien cu tiep tuc chi phoi.
-- Dung 25-full-mockup-v122.css lam lop trinh bay duy nhat cho room_detail.
-- Giu nguyen anh/logo, Jinja data, route, form action, JS hooks, RP/Series/Parsec.
-- Chuyen lich su dau tu khu vuc day len cot phai dung mockup.
-- Bo cuc desktop 4 cot Host / Center / Guest / Sidebar, topbar 1/1.2/1.
-- 6 mode cards full width, mode dang chon glow va logo lon hon.
-- Can lai day du state waiting/ready/playing/result-confirm/confirmed/disputed va responsive.
-
-
-## V1.3.123 — Dung lai room_detail theo anh mau, Trang thai 1 Cho doi thu
-- Thời gian: 2026-08-09 00:21 (Asia/Bangkok).
-- Thay shell thật: sidebar phải nằm cạnh toàn bộ khu vực main; main gồm hàng Host/Center/Guest, hàng 3 action, hàng 6 mode.
-- Trạng thái đầu tiên: Host chưa có CLB và không hiển thị team stale; Guest là empty opponent.
-- Chuyển Mời đấu / Tìm nhanh / Thoát phòng ra hàng action ngang bên dưới 3 khung chính bằng đúng route/function cũ.
-- Center chỉ giữ active mode + VS khi chưa có đối thủ.
-- Polling `_room_live_content.html` tái sử dụng cùng partial như initial render để không quay lại layout cũ sau refresh state.
-- Không thay backend, RP, Series, Parsec, route chức năng, URL asset, logo hay ảnh dự án.
-- File chính: `templates/room_detail.html`, `templates/_room_live_content.html`, `templates/room/_host_card.html`, `templates/room/_guest_card.html`, `templates/room/_center_stage.html`, `templates/room/_bottom_modes_history.html`, `templates/room/_waiting_opponent_actions.html`, `static/css/room/26-reference-layout-waiting-v123.css`.

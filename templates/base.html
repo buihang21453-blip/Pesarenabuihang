@@ -97,6 +97,7 @@ function toggleTheme(){
 <link rel="stylesheet" href="{{ static_asset('css/ui_dialog.css') }}">
 {% block page_styles %}{% endblock %}
 <link rel="stylesheet" href="{{ static_asset('css/gaming_neon_buttons.css') }}">
+{% block tail_styles %}{% endblock %}
 </head>
 {% set btn_theme = button_theme_config|default({}) %}
 <body data-page="{{ request.endpoint|default('unknown') }}" data-ui-scope="{{ 'admin' if (request.endpoint and (request.endpoint == 'admin' or request.endpoint.startswith('admin_') or request.endpoint == 'backup_preview')) else 'player' }}"

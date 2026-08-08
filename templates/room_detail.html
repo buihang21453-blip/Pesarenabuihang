@@ -1,17 +1,8 @@
 {% extends "base.html" %}
 {% from "_avatar_macros.html" import player_avatar %}
 {% block head_extra %}
-{# V1.3.123: reference shell rebuild. Functional data/routes/assets are preserved; only room shell/layout is replaced. #}
-<link rel="stylesheet" href="{{ static_asset('css/room/00-room-core.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/02-club-visuals.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/04-actions-history.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/05-action-states.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/07-parsec-history-polish.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/09-series-orchestrator.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/10-prestart-flow.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/room/26-reference-layout-waiting-v123.css') }}">
 <style>
-.arena-room-v2 {
+.arena-room-v3 {
   --arena-stadium-blue: url("{{ room_asset('stadium-blue.webp') }}");
   --arena-stadium-red: url("{{ room_asset('stadium-red.webp') }}");
   --arena-center-stadium: url("{{ room_asset('center-stadium.webp') }}");
@@ -19,31 +10,27 @@
 }
 </style>
 {% endblock %}
+{% block tail_styles %}
+<link rel="stylesheet" href="{{ static_asset('css/room-detail-v3.css') }}">
+{% endblock %}
 {% block content %}
 {% set room_room_viewer_is_host = (current_user.id|string == room.host_user_id|string) %}
 {% set room_viewer_is_guest = (room.guest_user_id and current_user.id|string == room.guest_user_id|string) %}
 {# Rank toggle compatibility: system_features.rank_standard_enabled #}
-<div id="roomLiveShell" class="room-view-shell arena-room-v2{% if room.status == 'waiting_ready' and not room.has_guest %} is-waiting-opponent{% endif %}" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}" data-room-mode="{{ selected_rank_mode|e }}" data-series-phase="{{ (rank_series.phase if rank_series else '')|e }}" data-viewer-role="{{ 'host' if room_room_viewer_is_host else 'guest' if room_viewer_is_guest else 'admin' if current_user.role == 'admin' else 'viewer' }}">
+<div id="roomLiveShell" class="room-view-shell arena-room-v3" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}" data-room-mode="{{ selected_rank_mode|e }}" data-series-phase="{{ (rank_series.phase if rank_series else '')|e }}" data-viewer-role="{{ 'host' if room_room_viewer_is_host else 'guest' if room_viewer_is_guest else 'admin' if current_user.role == 'admin' else 'viewer' }}">
 
 {% include "_streak_animation.html" %}
 
     {% include "room/_topbar.html" %}
 
-    <div class="room-reference-body">
-        <div class="room-reference-main">
-            <div class="room-match-shell room-arena-frame">
-                {% include "room/_host_card.html" %}
-                {% include "room/_center_stage.html" %}
-                {% include "room/_guest_card.html" %}
-            </div>{# /.room-arena-frame #}
-
-            {% include "room/_waiting_opponent_actions.html" %}
-            {% include "room/_bottom_modes_history.html" %}
-        </div>
-
+    <div class="room-match-shell room-arena-frame">
+        {% include "room/_host_card.html" %}
+        {% include "room/_center_stage.html" %}
+        {% include "room/_guest_card.html" %}
         {% include "room/_side_rail.html" %}
-    </div>
+    </div>{# /.room-arena-frame #}
 
+    {% include "room/_bottom_modes_history.html" %}
     {% include "room/_extra_controls.html" %}
 </div>{# /#roomLiveShell — parent owns its own boundary #}
 

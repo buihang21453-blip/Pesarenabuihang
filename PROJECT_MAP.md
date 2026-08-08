@@ -76,8 +76,6 @@ Không sửa module khác nếu chưa chứng minh dependency liên quan.
 | Rail thông tin + Parsec + lịch sử phòng | `static/css/room/16-side-rail-history-stability.css` |
 | Khu vực giữa phòng / VS / tỷ số / HUD trạng thái | `static/css/room/17-center-match-stability.css` |
 | Chế độ đang chơi + trạng thái sẵn sàng/mở khóa | `static/css/room/18-active-mode-status-stability.css` |
-| Cầu nối tỷ lệ giao diện mẫu (khung/topbar/4 cột, không sở hữu logic/asset) | `static/css/room/19-target-layout-bridge.css` |
-| Cầu nối giao diện mẫu PHẦN 3 (khung giữa / active mode / VS / pre-start; chỉ CSS + tỷ lệ) | `static/css/room/20-target-center-bridge.css` |
 
 ### Backend
 
@@ -320,19 +318,3 @@ Không chạy SQL thay đổi dữ liệu thật trong test nếu chưa có guar
 ## V1.3.84 Room template safety
 - Pre-start action markup phải được cập nhật đồng thời ở `templates/room/_center_stage.html` và `templates/_room_live_content.html`.
 - Sau mọi thay đổi Jinja Room, bắt buộc parse toàn bộ `templates/**/*.html` trước khi đóng ZIP.
-
-## V1.3.122 room UI render path
-- Initial room: `templates/room_detail.html` -> `_topbar.html` + `_host_card.html` + `_center_stage.html` + `_guest_card.html` + `_side_rail.html` + `_bottom_modes_history.html`.
-- Polling fragment: `templates/_room_live_content.html` is kept structurally aligned with the same Host / Center / Guest / Right rail / Modes layout.
-- Room visuals: `static/css/room/25-full-mockup-v122.css`.
-- Existing project room assets remain authoritative via `room_asset(...)`, `mode_asset(...)`, team logo URLs and rank/avatar assets.
-
-
-## V1.3.123 room reference shell — trạng thái 1
-- Mục tiêu ảnh chuẩn: bố cục ngang gọn; sidebar phải kéo dài cùng toàn bộ cụm phòng + nút + 6 mode.
-- Initial render: `templates/room_detail.html`.
-- Polling render: `templates/_room_live_content.html` tái sử dụng cùng partial với initial render.
-- Main waiting actions: `templates/room/_waiting_opponent_actions.html`.
-- Visual authority: `static/css/room/26-reference-layout-waiting-v123.css`.
-- Trạng thái `waiting_ready` + chưa có guest: Host chưa có CLB, không hiển thị team cũ/stale; Guest render empty opponent state.
-- Tất cả route/form/asset resolver hiện hữu được giữ nguyên.

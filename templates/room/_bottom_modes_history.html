@@ -1,4 +1,4 @@
-    <div class="room-bottom-shell room-bottom-shell-modes-only">
+    <div class="room-bottom-shell">
         <div class="room-bottom-main">
             {% set room_mode_switch_allowed = (room.status == "waiting_ready" and not room.friendly_random3_active and not (rank_series and rank_series.active)) %}
             <section class="room-master-mode-switcher{% if not room_mode_switch_allowed %} is-view-only{% endif %}" aria-label="Các chế độ thi đấu Rank">
@@ -10,7 +10,7 @@
                         <button class="room-master-mode-card {% if selected_rank_mode == mode.code %}is-selected{% endif %} {% if not mode.eligible %}is-locked{% endif %}" data-mode="{{ mode.code }}" type="submit" {% if not room_mode_switch_allowed or not mode.eligible or not (room_room_viewer_is_host or current_user.role == 'admin') %}disabled{% endif %} title="{{ mode.lock_reasons|join(' • ') if not mode.eligible else mode.label }}">
                             <span class="room-master-card-number">{{ loop.index }}</span>
                             <span class="room-master-card-icon" aria-hidden="true"><img src="{{ mode_asset(mode.code) }}?v={{ APP_VERSION|urlencode }}" alt=""></span>
-                            <strong>{% if mode.code == 'rank_random' %}Rank thường Random{% elif mode.code == 'random3_pick1' %}Random 3 chọn 1{% elif mode.code == 'tactical_bo3' %}Đấu chiến thuật BO3{% elif mode.code == 'ban_pick_bo3' %}Cấm chọn CLB{% elif mode.code == 'home_away' %}Lượt đi - Lượt về{% else %}{{ mode.label }}{% endif %}</strong>
+                            <strong>{% if mode.code == 'rank_random' %}Random{% elif mode.code == 'random3_pick1' %}3 chọn 1{% elif mode.code == 'tactical_bo3' %}Chiến thuật BO3{% elif mode.code == 'ban_pick_bo3' %}Cấm chọn BO3{% elif mode.code == 'home_away' %}Lượt đi/về{% else %}{{ mode.label }}{% endif %}</strong>
                             <small>{% if mode.eligible %}✓ Đã mở khóa{% else %}🔒 {{ mode.lock_reasons[0] }}{% endif %}</small>
                         </button>
                     </form>
@@ -18,7 +18,6 @@
                 </div>
             </section>
         </div>
-
     </div>
 
 

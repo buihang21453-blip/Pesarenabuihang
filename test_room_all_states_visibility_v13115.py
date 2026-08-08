@@ -3,11 +3,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 APP = (ROOT / "app.py").read_text(encoding="utf-8")
 TPL = (ROOT / "templates/room/_center_stage.html").read_text(encoding="utf-8")
-CSS = (ROOT / "static/css/room/17-center-match-stability.css").read_text(encoding="utf-8")
+CSS = (ROOT / "static/css/room-detail-v3.css").read_text(encoding="utf-8")
 
 
-def test_version_115():
-    assert 'APP_VERSION = "1.3.115"' in APP
+def test_version_116():
+    assert 'APP_VERSION = "1.3.116"' in APP
 
 
 def test_six_room_state_labels_and_actions_still_exist():
@@ -24,8 +24,13 @@ def test_six_room_state_labels_and_actions_still_exist():
         assert marker in TPL
 
 
-def test_visibility_guards_cover_post_match_states():
-    for state in ["waiting_ready", "playing", "waiting_result_confirm", "confirmed", "disputed"]:
-        assert f"room-state-{state}" in CSS
-    assert "bottom:82px !important" in CSS
-    assert "max-width:360px !important" in CSS
+def test_v3_shell_keeps_dynamic_state_controls_visible():
+    required = [
+        ".room-center-primary-actions",
+        ".room-result-review",
+        ".room-result-actions",
+        ".room-series-hud-slot",
+        ".room-center-random3-zone",
+    ]
+    for marker in required:
+        assert marker in CSS
