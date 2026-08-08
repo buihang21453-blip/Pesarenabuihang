@@ -194,3 +194,146 @@
   }}@media (max-width:820px){.arena-room-v2 .room-stage-topbar{grid-template-columns:1fr!important;text-align:center!important}.arena-room-v2 .room-arena-frame{display:flex!important;flex-direction:column!important}}
 /* V1.3.109 — share button interaction remains owned by shell/topbar module */
 .arena-room-v2 .room-share-button{transition:transform .12s ease,filter .12s ease,border-color .12s ease!important}
+
+/* PES Arena V1.3.117 — Kết nối Chủ phòng / Đối thủ với tỷ lệ giao diện mẫu, PHẦN 2
+ * Scope: chỉ hình học và khả năng đọc của hai thẻ người chơi.
+ * Giữ nguyên toàn bộ Jinja binding, avatar/logo/rank/team asset và luồng chức năng hiện có.
+ */
+.arena-room-v2 .room-team-card.home,
+.arena-room-v2 .room-team-card.away{
+  min-width:0!important;
+}
+.arena-room-v2 .room-player-heading-plain{
+  box-sizing:border-box;
+  width:100%;
+}
+.arena-room-v2 .room-player-name{
+  max-width:94%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.arena-room-v2 .room-player-rankline{
+  max-width:94%;
+  min-height:25px;
+}
+.arena-room-v2 .win-streak-badge{
+  max-width:94%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.arena-room-v2 .room-card-club-area{
+  width:100%;
+  min-width:0;
+}
+.arena-room-v2 .room-club-logo-large{
+  flex:0 0 auto;
+  object-fit:contain!important;
+}
+.arena-room-v2 .room-team-name-lg{
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.arena-room-v2 .room-team-points-block{
+  flex:0 0 auto;
+}
+
+@media (min-width:1281px){
+  .arena-room-v2 .room-side-card{
+    padding:8px 12px 12px!important;
+  }
+  .arena-room-v2 .room-player-heading-plain{
+    min-height:250px!important;
+    padding:0 6px 8px!important;
+  }
+  .arena-room-v2 .room-player-heading-plain::before{
+    min-width:44%!important;
+    min-height:36px!important;
+    margin:-8px 0 10px!important;
+    padding:8px 18px 6px!important;
+    font-size:14px!important;
+    line-height:1!important;
+  }
+  .arena-room-v2 .room-player-heading-plain .player-avatar{
+    width:94px!important;
+    height:94px!important;
+    flex:0 0 94px!important;
+  }
+  .arena-room-v2 .room-player-name{
+    margin-top:8px!important;
+    font-size:27px!important;
+    line-height:1.08!important;
+  }
+  .arena-room-v2 .room-player-rankline{
+    margin-top:8px!important;
+    gap:7px!important;
+    font-size:14px!important;
+  }
+  .arena-room-v2 .room-player-rankline img{
+    width:25px!important;
+    height:25px!important;
+  }
+  .arena-room-v2 .win-streak-badge{
+    margin-top:8px!important;
+    padding:7px 15px!important;
+    font-size:12px!important;
+  }
+  .arena-room-v2 .club-selection-title{
+    margin:0 0 3px!important;
+    font-size:14px!important;
+  }
+  .arena-room-v2 .room-card-club-area{
+    justify-content:center!important;
+    padding:9px 6px 6px!important;
+  }
+  .arena-room-v2 .room-club-logo-large{
+    width:118px!important;
+    height:118px!important;
+  }
+  .arena-room-v2 .room-team-placeholder-shield{
+    width:82px!important;
+    height:82px!important;
+    border-radius:20px!important;
+    font-size:42px!important;
+  }
+  .arena-room-v2 .room-team-name-lg{
+    margin-top:8px!important;
+    font-size:17px!important;
+  }
+  .arena-room-v2 .room-team-points-block{
+    margin-top:9px!important;
+    padding:7px 15px!important;
+  }
+  .arena-room-v2 .room-team-points-value{
+    font-size:18px!important;
+  }
+  .arena-room-v2 .room-team-points-value::before{
+    font-size:13px!important;
+  }
+}
+
+@media (min-width:1181px) and (max-width:1280px){
+  .arena-room-v2 .room-player-heading-plain{
+    min-height:232px!important;
+  }
+  .arena-room-v2 .room-player-heading-plain .player-avatar{
+    width:86px!important;
+    height:86px!important;
+  }
+  .arena-room-v2 .room-player-name{font-size:24px!important}
+  .arena-room-v2 .room-club-logo-large{
+    width:108px!important;
+    height:108px!important;
+  }
+}
+
+@media (max-width:820px){
+  .arena-room-v2 .room-player-name,
+  .arena-room-v2 .room-team-name-lg{
+    white-space:normal;
+  }
+}

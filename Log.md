@@ -1720,3 +1720,14 @@
 - APP_VERSION: 1.3.116.
 - Kiểm tra V1.3.116: `test_target_layout_bridge_v13116.py` 5/5 PASS; `python -m py_compile app.py` PASS.
 - Các test source lịch sử V1.3.114/V1.3.115 và test ownership cũ vẫn khóa version/cấu trúc CSS trước khi tách module nên không dùng làm tiêu chí regression của phần này.
+
+## V1.3.117 - Ket_noi_chu_phong_va_doi_thu_voi_giao_dien_mau_Phan_2 (2026-08-08)
+- Tiếp tục từ V1.3.116 theo đúng cách làm từng phần; bản này chỉ là PHẦN 2.
+- Phạm vi: hai cột Chủ phòng / Đối thủ. Không thay đổi layout tổng 4 cột đã chốt ở PHẦN 1.
+- Giữ nguyên toàn bộ binding dữ liệu thật trong `_host_card.html` và `_guest_card.html`: tên, avatar, rank, badge, trạng thái sẵn sàng, logo CLB, tên CLB và Tổng điểm.
+- Không đưa ảnh/logo demo từ `index.html` vào dự án; tiếp tục dùng asset/URL hiện có của dự án và Supabase.
+- Chỉ chỉnh CSS trong owner `14-shell-player-stability.css`: tỷ lệ avatar, tên, rank, badge chuỗi thắng, khu vực CLB, logo CLB, placeholder và Tổng điểm; thêm chống tràn tên dài.
+- Desktop >=1281px: avatar 94px, tên 27px, rank icon 25px, logo CLB 118px; vùng heading 250px để hai cột cân đối và không lấn khu vực CLB.
+- 1181-1280px tự thu nhỏ có kiểm soát; mobile cho phép tên xuống dòng để không bị cắt.
+- Không sửa backend, route, JS, RP, Series, Parsec, Invite/Quick Match, Ready, Result, Confirm hoặc Rematch.
+- APP_VERSION: 1.3.117.
