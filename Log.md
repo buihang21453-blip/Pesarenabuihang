@@ -1715,3 +1715,14 @@
 - Chỉ áp dụng ở trạng thái `waiting_ready`; các trạng thái đang thi đấu/gửi kết quả giữ kích thước gọn như trước.
 - Không đổi backend, route, RP, Series, Parsec hay luồng chọn chế độ.
 - Cập nhật APP_VERSION thành 1.3.113.
+
+## V1.3.118 - Can chinh ty le khung Room theo anh mau 3
+- Giữ nguyên namespace `pes-room3-*`, không dựng lại HTML và không quay về layout cũ.
+- Thu chiều cao Host / Opponent khoảng 10% để giảm khoảng trống dọc.
+- Mở rộng cột Center và Sidebar nhẹ, giữ Host / Opponent đối xứng.
+- Tăng logo chế độ đang chọn và ảnh VS để Center trở thành trọng tâm.
+- Tăng chiều cao + kích thước logo 6 card chế độ.
+- Căn lại hàng nút Mời đấu / Tìm nhanh / Thoát phòng.
+- Chỉ áp dụng cho trạng thái Chờ đối thủ; không sửa Backend, API, RP hay logic phòng.
+- File chính: `static/css/room/19-room-v3-waiting.css`, `app.py`.
+
