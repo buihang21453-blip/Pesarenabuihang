@@ -1,3 +1,11 @@
+## V1.3.114 - Fix_hien_thi_day_du_khu_vuc_dien_ket_qua (2026-08-08)
+- Sửa khu vực nhập tỷ số ở trạng thái `playing` bị cắt/thiếu phần hiển thị trong cột giữa.
+- Tăng vùng trống dành riêng cho form kết quả ở desktop, khóa form nằm gọn trong khung và luôn hiển thị đầy đủ 2 ô tỷ số + nút `Gửi Kết Quả`.
+- Chuẩn hóa `box-sizing`, chiều rộng form, input và nút gửi để không bị CSS cũ ép lệch hoặc tràn khỏi khung.
+- Mobile giữ form theo luồng dọc, không dùng absolute và không bị giới hạn chiều cao.
+- Không thay đổi backend, route submit kết quả, RP, Series, Parsec hay các trạng thái phòng khác.
+- APP_VERSION: 1.3.113 -> 1.3.114.
+
 # V1.3.112 — Don pycache va lam sang khung che do dang chon
 
 - Xoa toan bo thu muc `__pycache__` va file `.pyc` thua khoi goi du an.
