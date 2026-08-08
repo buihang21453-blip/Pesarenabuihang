@@ -16,11 +16,11 @@
 #roomLiveShell.pes-room3-live-shell .pes-room3-header{grid-area:head;min-height:82px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:8px 16px;border:1px solid rgba(214,164,40,.34);border-radius:16px;background:radial-gradient(circle at 50% 5%,rgba(160,97,13,.17),transparent 32%),linear-gradient(180deg,rgba(5,10,18,.96),rgba(4,10,18,.91));box-shadow:inset 0 0 0 1px rgba(255,214,117,.06),inset 0 -1px 0 rgba(255,214,117,.04),0 12px 24px rgba(0,0,0,.16);overflow:hidden;position:relative}
 #roomLiveShell.pes-room3-live-shell .pes-room3-header::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,205,94,.55),transparent)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-title-row{display:flex;align-items:center;gap:12px}
-#roomLiveShell.pes-room3-live-shell .pes-room3-title-row h1{margin:0;font-size:29px;line-height:1;font-weight:950;letter-spacing:.3px;text-shadow:0 2px 12px rgba(0,0,0,.8)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-title-row h1{margin:0;font-size:24px;line-height:1;font-weight:950;letter-spacing:.3px;text-shadow:0 2px 12px rgba(0,0,0,.8)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-code{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid #8b6a16;border-radius:8px;background:linear-gradient(180deg,rgba(86,62,5,.56),rgba(31,23,3,.76));font-size:16px;font-weight:850;color:#ffe780;box-shadow:inset 0 0 12px rgba(255,201,73,.08)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-subtitle{margin-top:6px;font-size:13px;color:#d8dce0}
-#roomLiveShell.pes-room3-live-shell .pes-room3-brand{display:flex;justify-content:center;align-items:center;min-width:340px}
-#roomLiveShell.pes-room3-live-shell .pes-room3-brand img{display:block;width:min(430px,31vw);height:66px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(255,191,37,.38)) drop-shadow(0 3px 8px rgba(0,0,0,.75))}
+#roomLiveShell.pes-room3-live-shell .pes-room3-brand{display:flex;justify-content:center;align-items:center;min-width:300px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-brand img{display:block;width:min(380px,28vw);height:58px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(255,191,37,.38)) drop-shadow(0 3px 8px rgba(0,0,0,.75))}
 #roomLiveShell.pes-room3-live-shell .pes-room3-share-wrap{justify-self:end;position:relative}
 #roomLiveShell.pes-room3-live-shell .pes-room3-share{height:58px;min-width:198px;padding:8px 16px;display:flex;align-items:center;justify-content:center;gap:12px;border:1px solid #d5a515;border-radius:10px;background:linear-gradient(180deg,rgba(74,54,8,.92),rgba(26,19,4,.9));color:#fff;box-shadow:inset 0 0 20px rgba(255,184,0,.1),0 0 15px rgba(255,179,0,.09);cursor:pointer}
 #roomLiveShell.pes-room3-live-shell .pes-room3-share img{width:28px;height:28px;object-fit:contain}
@@ -47,12 +47,12 @@
 #roomLiveShell.pes-room3-live-shell .pes-room3-panel-tab.is-away{border:1px solid #ff3b3b;border-top:0;background:linear-gradient(180deg,rgba(70,0,0,.92),rgba(50,0,0,.9));color:#ff5c5c;box-shadow:0 6px 16px rgba(255,20,20,.08)}
 
 /* host and away interior */
-#roomLiveShell.pes-room3-live-shell .pes-room3-player-top{height:222px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 14px 8px;text-align:center;position:relative}
+#roomLiveShell.pes-room3-live-shell .pes-room3-player-top{height:222px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:46px 14px 10px;text-align:center;position:relative}
 #roomLiveShell.pes-room3-live-shell .pes-room3-player-top::after,
 #roomLiveShell.pes-room3-live-shell .pes-room3-away-empty::after{content:"";position:absolute;left:24px;right:24px;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-avatar-wrap .avatar-shell,
 #roomLiveShell.pes-room3-live-shell .pes-room3-avatar-wrap .player-avatar{width:104px!important;height:104px!important;max-width:104px!important;max-height:104px!important}
-#roomLiveShell.pes-room3-live-shell .pes-room3-player-name{margin-top:10px;font-size:27px;font-weight:950;line-height:1.04;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis;text-shadow:0 3px 13px rgba(0,0,0,.82)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-player-name{margin-top:14px;padding-bottom:4px;font-size:28px;font-weight:950;line-height:1.14;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis;text-shadow:0 3px 13px rgba(0,0,0,.82);position:relative;z-index:2}
 #roomLiveShell.pes-room3-live-shell .pes-room3-rankline{margin-top:9px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:750}
 #roomLiveShell.pes-room3-live-shell .pes-room3-rankline img{width:26px;height:26px;object-fit:contain}
 #roomLiveShell.pes-room3-live-shell .pes-room3-streak{margin-top:9px;padding:8px 14px;border:1px solid rgba(67,177,255,.5);border-radius:9px;background:rgba(1,11,23,.7);font-size:12px;white-space:nowrap;box-shadow:inset 0 0 12px rgba(26,152,255,.05),0 0 14px rgba(0,0,0,.12)}
@@ -67,19 +67,19 @@
 #roomLiveShell.pes-room3-live-shell .pes-room3-league img{width:24px;height:24px;object-fit:contain}
 
 /* center — area 3 transparent + gold neon */
-#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode{position:relative;height:264px;padding:16px 14px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;background:linear-gradient(180deg,rgba(9,12,25,.22),rgba(9,12,25,.08));margin:12px;border:1px solid rgba(229,183,60,.82);border-radius:18px;box-shadow:inset 0 0 0 1px rgba(255,233,167,.08),inset 0 0 26px rgba(255,209,92,.08),0 0 16px rgba(255,181,43,.13)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode{position:relative;height:264px;padding:14px 12px 10px;display:flex;flex-direction:column;align-items:center;text-align:center;background:linear-gradient(180deg,rgba(9,12,25,.22),rgba(9,12,25,.08));margin:12px;border:1px solid rgba(229,183,60,.82);border-radius:18px;box-shadow:inset 0 0 0 1px rgba(255,233,167,.08),inset 0 0 26px rgba(255,209,92,.08),0 0 16px rgba(255,181,43,.13)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-active-mode::before{content:"";position:absolute;inset:8px;border-radius:12px;border:1px solid rgba(255,220,122,.24);pointer-events:none}
 #roomLiveShell.pes-room3-live-shell .pes-room3-active-mode::after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,225,145,.14),transparent)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-number{position:absolute;top:0;left:0;width:56px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:0 0 18px 0;background:linear-gradient(180deg,#9f6b13,#694108);font-size:22px;font-weight:950;color:#fff5c9;box-shadow:4px 5px 13px rgba(69,16,101,.18)}
-#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode h2{margin:3px 0 6px;padding-left:28px;font-size:21px;font-weight:950;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,.55)}
-#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode p{margin:0;min-height:32px;max-width:95%;font-size:11px;line-height:1.35;color:#ede8f2}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-logo{width:170px;height:150px;object-fit:contain;margin:2px auto 0;filter:drop-shadow(0 10px 16px rgba(0,0,0,.46)) drop-shadow(0 0 10px rgba(255,185,26,.18));background:transparent}
+#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode h2{margin:3px 0 6px;padding-left:28px;font-size:18px;line-height:1.1;font-weight:950;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,.55);max-width:96%;text-wrap:balance}
+#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode p{margin:0;min-height:28px;max-width:95%;font-size:10px;line-height:1.35;color:#ede8f2}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-logo{width:220px;height:188px;object-fit:contain;margin:2px auto 0;filter:drop-shadow(0 10px 16px rgba(0,0,0,.46)) drop-shadow(0 0 10px rgba(255,185,26,.18));background:transparent}
 #roomLiveShell.pes-room3-live-shell .pes-room3-unlocked{min-width:160px;padding:7px 14px;border:1px solid #16c45b;border-radius:8px;background:linear-gradient(180deg,rgba(7,83,37,.86),rgba(3,44,18,.82));font-size:12px;font-weight:850;color:#59ff8f;box-shadow:inset 0 0 10px rgba(23,255,104,.06)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-readyline{width:100%;margin-top:8px;padding:8px 10px;display:flex;justify-content:space-between;gap:8px;border:1px solid rgba(255,216,120,.18);border-radius:8px;background:rgba(2,11,21,.56);font-size:11px}
 #roomLiveShell.pes-room3-live-shell .pes-room3-readyline span{color:#35f49a}
 #roomLiveShell.pes-room3-live-shell .pes-room3-readyline strong{color:#ffd42c;font-size:16px}
 #roomLiveShell.pes-room3-live-shell .pes-room3-vs-zone{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:0 0 10px;background:linear-gradient(180deg,transparent,rgba(0,17,34,.04))}
-#roomLiveShell.pes-room3-live-shell .pes-room3-vs{width:min(250px,92%);height:206px;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(0,0,0,.56)) drop-shadow(0 0 10px rgba(255,191,37,.18));background:transparent}
+#roomLiveShell.pes-room3-live-shell .pes-room3-vs{width:min(252px,92%);height:198px;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(0,0,0,.56)) drop-shadow(0 0 10px rgba(255,191,37,.18));background:transparent}
 
 /* waiting opponent */
 #roomLiveShell.pes-room3-live-shell .pes-room3-away-empty{position:relative;height:222px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 18px 8px;text-align:center}
@@ -129,7 +129,7 @@
 #roomLiveShell.pes-room3-live-shell .pes-room3-modes h2{margin:0 0 10px;font-size:20px;font-weight:950;color:#ffc02d;text-align:center;letter-spacing:.18px;text-shadow:0 2px 10px rgba(0,0,0,.5)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-form{min-width:0;margin:0}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card{position:relative;width:100%;height:184px;padding:8px 8px 10px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;border:1px solid rgba(221,177,61,.84);border-radius:12px;background:linear-gradient(180deg,rgba(7,23,40,.48),rgba(3,16,28,.28));color:#fff;font:inherit;cursor:pointer;overflow:hidden;box-shadow:inset 0 0 22px rgba(255,197,63,.05),0 0 12px rgba(255,189,52,.06)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card{position:relative;width:100%;height:190px;padding:6px 6px 8px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;border:1px solid rgba(221,177,61,.84);border-radius:12px;background:linear-gradient(180deg,rgba(7,23,40,.48),rgba(3,16,28,.28));color:#fff;font:inherit;cursor:pointer;overflow:hidden;box-shadow:inset 0 0 22px rgba(255,197,63,.05),0 0 12px rgba(255,189,52,.06)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card::before{content:"";position:absolute;inset:8px;border-radius:9px;border:1px solid rgba(255,220,122,.16);pointer-events:none}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,219,128,.05),transparent 20%,transparent 75%,rgba(0,0,0,.08));pointer-events:none}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="random3_pick1"],
@@ -140,9 +140,9 @@
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card.is-selected{box-shadow:inset 0 0 24px rgba(255,213,102,.10),0 0 14px rgba(255,196,62,.18)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card:disabled{cursor:default}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-index{position:absolute;z-index:2;top:0;left:0;width:38px;height:38px;display:grid;place-items:center;border-radius:0 0 13px 0;background:linear-gradient(180deg,rgba(163,118,20,.95),rgba(98,63,8,.92));font-size:18px;font-weight:950;color:#fff3c8;text-shadow:0 2px 5px rgba(0,0,0,.5)}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card img{width:116px;height:104px;object-fit:contain;margin:6px 0 4px;filter:drop-shadow(0 8px 11px rgba(0,0,0,.4)) drop-shadow(0 0 8px rgba(255,197,63,.12));background:transparent}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card strong{min-height:30px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;line-height:1.14;font-weight:850;padding:0 4px}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card small{margin-top:auto;width:92%;padding:5px 6px;border:1px solid #14783c;border-radius:6px;background:linear-gradient(180deg,rgba(7,68,34,.92),rgba(5,45,23,.9));color:#5eff8a;font-size:9px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card img{width:156px;height:132px;object-fit:contain;margin:4px 0 2px;filter:drop-shadow(0 8px 11px rgba(0,0,0,.4)) drop-shadow(0 0 8px rgba(255,197,63,.12));background:transparent}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card strong{min-height:24px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;line-height:1.1;font-weight:850;padding:0 2px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card small{margin-top:auto;width:94%;padding:4px 6px;border:1px solid #14783c;border-radius:6px;background:linear-gradient(180deg,rgba(7,68,34,.92),rgba(5,45,23,.9));color:#5eff8a;font-size:9px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* responsiveness */
 @media (max-width:1320px){
@@ -151,7 +151,7 @@
   #roomLiveShell.pes-room3-live-shell .pes-room3-brand{min-width:280px}
   #roomLiveShell.pes-room3-live-shell .pes-room3-brand img{width:min(380px,30vw)}
   #roomLiveShell.pes-room3-live-shell .pes-room3-action{min-width:152px}
-  #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card img{width:104px;height:94px}
+  #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card img{width:144px;height:118px}
 }
 @media (max-width:1080px){
   #roomLiveShell.pes-room3-live-shell .pes-room3{grid-template-columns:1fr 1fr;grid-template-areas:"head head" "host away" "center center" "actions actions" "modes modes" "side side"}

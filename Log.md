@@ -1743,3 +1743,10 @@
 - 6 logo che do va card che do chuyen ve nen trong suot, vien vang anh kim va hieu ung chieu sau.
 - Thu gon chieu cao toan bo waiting shell de o tile 100% nhin thay day du host / center / opponent / sidebar / nut / 6 che do.
 - Giu nguyen logic phong dau, chi tinh chinh giao dien trang thai Cho doi thu.
+
+
+## V1.3.122 - giam_header_va_tang_logo_che_do
+- Giam co chu PHONG DAU va giam kich thuoc anh PES ARENA o header.
+- Sua hien thi ten nguoi choi de khong bi che / cat nua ben duoi.
+- Tang manh logo che do o giua man hinh de chiem phan lon hon trong khung.
+- Tang manh logo cua 6 che do khac de logo chiem da so dien tich card.
