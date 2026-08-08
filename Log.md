@@ -1728,3 +1728,11 @@
 - Sửa đúng thứ tự hiển thị 6 chế độ theo ảnh mẫu: 1 Rank Random, 2 Random 3 chọn 1, 3 Chiến thuật BO3, 4 BO3, 5 Cấm chọn CLB, 6 Lượt đi - lượt về.
 - Đồng bộ số badge của chế độ đang chọn theo đúng thứ tự trên.
 - Cập nhật APP_VERSION từ 1.3.118 lên 1.3.119.
+
+
+## V1.3.120 - so_khop_anh_mau_3_lan_cuoi
+- Chot lai shell phong dau trang thai Cho doi thu theo anh mau 3.
+- Them CSS moi `static/css/room/20-room-v3-waiting-final.css` de tang nen trong suot, chieu sau, glow va can chinh ty le.
+- Co dinh thu tu 6 che do: rank_random -> random3_pick1 -> tactical_bo3 -> bo3 -> ban_pick_bo3 -> home_away.
+- Dong bo so thu tu mode dang chon va mode card.
+- Wrapper cho waiting shell dung `pes-room3-live-shell arena-room-v2` de nhan bien nen san dau.

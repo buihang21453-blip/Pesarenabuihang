@@ -1,4 +1,14 @@
+{% set pes_room3_mode_order = ['rank_random', 'random3_pick1', 'tactical_bo3', 'bo3', 'ban_pick_bo3', 'home_away'] %}
+{% set mode_ns = namespace(items=[]) %}
+{% for code in pes_room3_mode_order %}
+    {% set found_mode = (rank_mode_catalog | selectattr('code', 'equalto', code) | first) %}
+    {% if found_mode %}{% set mode_ns.items = mode_ns.items + [found_mode] %}{% endif %}
+{% endfor %}
 {% set v3_active_mode = (rank_mode_catalog | selectattr('code', 'equalto', selected_rank_mode) | first) %}
+{% set active_ns = namespace(num=1) %}
+{% for code in pes_room3_mode_order %}
+    {% if code == selected_rank_mode %}{% set active_ns.num = loop.index %}{% endif %}
+{% endfor %}
 <div class="pes-room3" aria-label="Phòng đấu PES Arena - Chờ đối thủ">
     <header class="pes-room3-header">
         <div class="pes-room3-header-copy">
@@ -38,7 +48,7 @@
             <div class="pes-room3-streak"><span>{{ room.host_streak_badge.icon }}</span><strong>{{ room.host_streak_badge.title }}</strong><span>· {{ room.host_streak_badge.count }} trận thắng</span></div>
             {% endif %}
         </div>
-        <div class="pes-room3-club-zone">
+        <div class="pes-room3-club-zone {% if not room.host_team_logo_url %}is-empty{% endif %}">
             {% if room.host_team_logo_url %}
                 <img class="pes-room3-club-logo" src="{{ room.host_team_logo_url }}" alt="Logo {{ room.host_team or 'CLB' }}" loading="lazy">
             {% else %}
@@ -52,7 +62,7 @@
 
     <section class="pes-room3-center" aria-label="Chế độ đang chọn">
         <div class="pes-room3-active-mode" data-active-mode="{{ selected_rank_mode }}">
-            <span class="pes-room3-mode-number">{{ {'rank_random':1,'random3_pick1':2,'tactical_bo3':3,'bo3':4,'ban_pick_bo3':5,'home_away':6}.get(selected_rank_mode,1) }}</span>
+            <span class="pes-room3-mode-number">{{ active_ns.num }}</span>
             <h2>{{ v3_active_mode.label if v3_active_mode else 'Rank thường Random' }}</h2>
             <p>{% if selected_rank_mode == 'rank_random' %}Mỗi bên được random 1 CLB phù hợp để thi đấu.{% elif selected_rank_mode == 'random3_pick1' %}Mỗi người nhận 3 CLB và chọn 1 CLB để thi đấu.{% elif selected_rank_mode == 'tactical_bo3' %}Dùng 3 CLB khác nhau, ai thắng 2 trận trước sẽ thắng Series.{% elif selected_rank_mode == 'bo3' %}Thi đấu tối đa 3 trận, ai thắng 2 trận trước sẽ thắng Series.{% elif selected_rank_mode == 'ban_pick_bo3' %}Cấm và chọn CLB trong Pool chung trước khi đấu BO3.{% else %}Thi đấu đúng 2 lượt và xét tổng tỷ số chung cuộc.{% endif %}</p>
             <img class="pes-room3-mode-logo" src="{{ mode_asset(selected_rank_mode) }}?v={{ APP_VERSION|urlencode }}" alt="{{ v3_active_mode.label if v3_active_mode else 'Chế độ thi đấu' }}">
@@ -71,7 +81,7 @@
             <div class="pes-room3-away-title">Đang chờ đối thủ</div>
             <div class="pes-room3-away-note">Đang chờ người chơi khác tham gia...</div>
         </div>
-        <div class="pes-room3-club-zone">
+        <div class="pes-room3-club-zone is-empty">
             <div class="pes-room3-club-placeholder">?</div>
             <div class="pes-room3-club-name">CHƯA CHỌN ĐỘI</div>
             <div class="pes-room3-league"><span>Chưa có giải</span></div>
@@ -144,7 +154,7 @@
     <section class="pes-room3-modes" aria-label="Các chế độ thi đấu Rank">
         <h2>◇ CÁC CHẾ ĐỘ KHÁC ◇</h2>
         <div class="pes-room3-mode-grid">
-            {% for mode in rank_mode_catalog %}
+            {% for mode in mode_ns.items %}
             <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1" class="pes-room3-mode-form">
                 <input type="hidden" name="rank_mode" value="{{ mode.code }}">
                 <button class="pes-room3-mode-card {% if selected_rank_mode == mode.code %}is-selected{% endif %} {% if not mode.eligible %}is-locked{% endif %}" data-mode="{{ mode.code }}" type="submit" {% if not mode.eligible or not (room_room_viewer_is_host or current_user.role == 'admin') %}disabled{% endif %}>
