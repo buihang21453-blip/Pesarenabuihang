@@ -1,3 +1,14 @@
+## V1.3.115 - Kiem_tra_va_on_dinh_hien_thi_6_trang_thai_phong (2026-08-08)
+- Giữ nguyên layout hiện tại; không đổi cấu trúc cột Chủ phòng / Trung tâm / Đối thủ / Thông tin + Parsec.
+- Rà soát 6 trạng thái: Chờ đối thủ; Đủ 2 người/Chờ sẵn sàng; Sẵn sàng bắt đầu; Gửi kết quả; Xác nhận kết quả; Đá tiếp.
+- Bổ sung lớp an toàn hiển thị để dock nút ở các trạng thái chờ/playing/confirmed luôn nằm trọn trong cột giữa.
+- Trạng thái `waiting_result_confirm`: neo khung tỷ số + Xác nhận/Không đồng ý ngay phía trên dock, tránh bị che/cắt.
+- Trạng thái `confirmed`: đảm bảo 2 nút `Đá Tiếp` + `Về sảnh` luôn hiển thị đủ.
+- Trạng thái `disputed`: giữ nhãn trạng thái phía trên dock và không bị che.
+- Mobile giữ flow dọc, không dùng absolute để tránh cắt nội dung.
+- Không thay đổi backend, RP, Series, Parsec hoặc logic submit/xác nhận/rematch.
+- APP_VERSION: 1.3.114 -> 1.3.115.
+
 ## V1.3.114 - Fix_hien_thi_day_du_khu_vuc_dien_ket_qua (2026-08-08)
 - Sửa khu vực nhập tỷ số ở trạng thái `playing` bị cắt/thiếu phần hiển thị trong cột giữa.
 - Tăng vùng trống dành riêng cho form kết quả ở desktop, khóa form nằm gọn trong khung và luôn hiển thị đầy đủ 2 ô tỷ số + nút `Gửi Kết Quả`.
