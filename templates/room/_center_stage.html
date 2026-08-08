@@ -227,6 +227,26 @@
                 {% endif %}
             {% else %}
                 <img class="room-center-vs-image" src="{{ room_asset('vs-gold-emblem.webp') }}" alt="VS" loading="eager">
+                {% if room_room_viewer_is_host or current_user.role == 'admin' %}
+                <div class="room-center-primary-actions room-action-zone room-center-primary-actions-three">
+                    <a class="btn arena-btn gold room-center-action-btn" href="{{ url_for('players') }}">Mời đấu</a>
+                    {% if system_features.get('quick_match_enabled', true) %}
+                    <button type="button" class="btn arena-btn green room-center-action-btn room-quick-flat"
+                            data-quick-match-url="{{ url_for('quick_match_invite') }}">
+                        Tìm nhanh
+                    </button>
+                    {% endif %}
+                    <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
+                          data-modal-tone="warning"
+                          data-modal-icon="🚪"
+                          data-modal-title="Thoát an toàn"
+                          data-modal-message="Phòng hiện chưa có đối thủ. Khi bạn thoát, phòng này sẽ được đóng."
+                          data-modal-note="ĐÓNG PHÒNG"
+                          data-modal-confirm-label="Thoát và đóng phòng">
+                        <button class="btn arena-btn red room-center-action-btn" type="submit">Thoát phòng</button>
+                    </form>
+                </div>
+                {% endif %}
             {% endif %}
         </section>
 

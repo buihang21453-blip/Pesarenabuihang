@@ -1,3 +1,13 @@
+# V1.3.117 — Dựng lại khung Room ảnh mẫu 3 bằng namespace riêng
+
+- Gốc triển khai: V1.3.115. Không kế thừa bản V1.3.116 lỗi bố cục.
+- Chỉ áp dụng giao diện mới cho trạng thái `waiting_ready` khi phòng chưa có đối thủ.
+- Thêm `templates/room/_v3_waiting_shell.html` với namespace `pes-room3-*`, không dùng lại các class layout Room cũ.
+- Thêm `static/css/room/19-room-v3-waiting.css`; mọi selector layout đều scope dưới `#roomLiveShell.pes-room3-live-shell`.
+- Dựng lại 5 khu vực: header, Host/Center/Opponent, Sidebar, Action bar, Mode selector.
+- Giữ nguyên dữ liệu thật, route Mời đấu/Tìm nhanh/Thoát phòng, Parsec, chia sẻ phòng và chuyển chế độ.
+- Các trạng thái còn lại tiếp tục dùng giao diện V1.3.115 để không gây regression ngoài phạm vi.
+
 ## V1.3.115 - Kiem_tra_va_on_dinh_hien_thi_6_trang_thai_phong (2026-08-08)
 - Giữ nguyên layout hiện tại; không đổi cấu trúc cột Chủ phòng / Trung tâm / Đối thủ / Thông tin + Parsec.
 - Rà soát 6 trạng thái: Chờ đối thủ; Đủ 2 người/Chờ sẵn sàng; Sẵn sàng bắt đầu; Gửi kết quả; Xác nhận kết quả; Đá tiếp.
@@ -1705,24 +1715,3 @@
 - Chỉ áp dụng ở trạng thái `waiting_ready`; các trạng thái đang thi đấu/gửi kết quả giữ kích thước gọn như trước.
 - Không đổi backend, route, RP, Series, Parsec hay luồng chọn chế độ.
 - Cập nhật APP_VERSION thành 1.3.113.
-
-## V1.3.116 — Dựng lại khung Room theo ảnh mẫu 3
-- Gốc: V1.3.115.
-- Phạm vi: Frontend `room_detail`, trạng thái đầu tiên **Chờ đối thủ**.
-- Thay đổi:
-  - Bỏ chuỗi 19 file CSS Room khỏi `room_detail.html`; Room mới chỉ nạp `static/css/room-v3.css` để tránh cascade chồng lớp.
-  - Dựng lại shell 4 cột: Chủ phòng / Trung tâm / Đối thủ / Sidebar, thêm hàng action riêng nằm dưới 3 cột trận đấu.
-  - Chuyển Lịch sử đấu vào sidebar dưới Thông tin phòng + Parsec.
-  - 6 chế độ dùng toàn chiều rộng ở hàng dưới.
-  - Chủ phòng / Đối thủ dùng cùng component và nền sân xanh/đỏ thật.
-  - Mode + logo thật + VS thật làm tâm điểm của cột giữa.
-  - Giữ nguyên route/API/JS hook, Parsec, Quick Match, leave room và dữ liệu runtime thật.
-- File:
-  - `templates/room_detail.html`
-  - `templates/room/_center_stage.html`
-  - `templates/room/_side_rail.html`
-  - `templates/room/_bottom_modes_history.html`
-  - `templates/room/_waiting_actions.html` (mới)
-  - `static/css/room-v3.css` (mới)
-  - `app.py` (APP_VERSION 1.3.116)
-- Không sửa Backend/DB/RP/gameplay.

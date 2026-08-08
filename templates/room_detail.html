@@ -1,9 +1,29 @@
 {% extends "base.html" %}
 {% from "_avatar_macros.html" import player_avatar %}
 {% block head_extra %}
-<link rel="stylesheet" href="{{ static_asset('css/room-v3.css') }}?v={{ APP_VERSION|urlencode }}">
+{# V1.3.38: Room CSS is split by responsibility. Keep this order: later modules intentionally refine earlier ones. #}
+<link rel="stylesheet" href="{{ static_asset('css/room/00-room-core.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/01-shell-layout.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/02-club-visuals.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/03-mode-selector.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/04-actions-history.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/05-action-states.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/06-responsive-performance.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/07-parsec-history-polish.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/08-action-layout-guard.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/09-series-orchestrator.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/10-prestart-flow.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/11-index-layout-reconnect.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/12-mockup-layout-lock.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/17-center-match-stability.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/18-active-mode-status-stability.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/13-mode-stability.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/14-shell-player-stability.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/15-room-actions-stability.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/16-side-rail-history-stability.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/19-room-v3-waiting.css') }}">
 <style>
-.arena-room-v3 {
+.arena-room-v2 {
   --arena-stadium-blue: url("{{ room_asset('stadium-blue.webp') }}");
   --arena-stadium-red: url("{{ room_asset('stadium-red.webp') }}");
   --arena-center-stadium: url("{{ room_asset('center-stadium.webp') }}");
@@ -15,23 +35,22 @@
 {% set room_room_viewer_is_host = (current_user.id|string == room.host_user_id|string) %}
 {% set room_viewer_is_guest = (room.guest_user_id and current_user.id|string == room.guest_user_id|string) %}
 {# Rank toggle compatibility: system_features.rank_standard_enabled #}
-<div id="roomLiveShell" class="room-view-shell arena-room-v3" style="--arena-stadium-blue:url('{{ room_asset('stadium-blue.webp') }}');--arena-stadium-red:url('{{ room_asset('stadium-red.webp') }}');--arena-center-stadium:url('{{ room_asset('center-stadium.webp') }}');--arena-room-texture:url('{{ room_asset('room-texture-dark.webp') }}')" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}" data-room-mode="{{ selected_rank_mode|e }}" data-series-phase="{{ (rank_series.phase if rank_series else '')|e }}" data-viewer-role="{{ 'host' if room_room_viewer_is_host else 'guest' if room_viewer_is_guest else 'admin' if current_user.role == 'admin' else 'viewer' }}">
-
+<div id="roomLiveShell" class="{% if room.status == 'waiting_ready' and not room.has_guest %}pes-room3-live-shell{% else %}room-view-shell arena-room-v2{% endif %}" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}" data-room-mode="{{ selected_rank_mode|e }}" data-series-phase="{{ (rank_series.phase if rank_series else '')|e }}" data-viewer-role="{{ 'host' if room_room_viewer_is_host else 'guest' if room_viewer_is_guest else 'admin' if current_user.role == 'admin' else 'viewer' }}">
 {% include "_streak_animation.html" %}
-
+{% if room.status == 'waiting_ready' and not room.has_guest %}
+    {% include "room/_v3_waiting_shell.html" %}
+{% else %}
     {% include "room/_topbar.html" %}
-
     <div class="room-match-shell room-arena-frame">
         {% include "room/_host_card.html" %}
         {% include "room/_center_stage.html" %}
         {% include "room/_guest_card.html" %}
         {% include "room/_side_rail.html" %}
-        {% include "room/_waiting_actions.html" %}
-    </div>{# /.room-arena-frame #}
-
+    </div>
     {% include "room/_bottom_modes_history.html" %}
     {% include "room/_extra_controls.html" %}
-</div>{# /#roomLiveShell — parent owns its own boundary #}
+{% endif %}
+</div>{# /#roomLiveShell #}
 
 {% include "room/_action_modal.html" %}
 {% include "room/scripts/_room_runtime.html" %}
