@@ -194,3 +194,20 @@
   }}@media (max-width:820px){.arena-room-v2 .room-stage-topbar{grid-template-columns:1fr!important;text-align:center!important}.arena-room-v2 .room-arena-frame{display:flex!important;flex-direction:column!important}}
 /* V1.3.109 — share button interaction remains owned by shell/topbar module */
 .arena-room-v2 .room-share-button{transition:transform .12s ease,filter .12s ease,border-color .12s ease!important}
+
+
+/* V1.3.131 — Room UI Designer generic layout/position controls */
+@media (min-width:1281px){
+  #roomLiveShell.room-view-shell .room-arena-frame{
+    grid-template-columns:minmax(0,var(--rui-host,1.10fr)) minmax(0,var(--rui-center,.78fr)) minmax(0,var(--rui-away,1.10fr)) minmax(0,var(--rui-side,.82fr))!important;
+    gap:var(--rui-main-gap,12px)!important;
+    height:var(--rui-main-height,468px)!important;
+  }
+  #roomLiveShell.room-view-shell .room-arena-frame>.room-team-card.home{transform:translate(var(--rui-host-x,0px),var(--rui-host-y,0px))}
+  #roomLiveShell.room-view-shell .room-arena-frame>.room-center-stage-plain{transform:translate(var(--rui-center-x,0px),var(--rui-center-y,0px))}
+  #roomLiveShell.room-view-shell .room-arena-frame>.room-team-card.away{transform:translate(var(--rui-away-x,0px),var(--rui-away-y,0px))}
+  #roomLiveShell.room-view-shell .room-arena-frame>.room-arena-right-rail{transform:translate(var(--rui-side-x,0px),var(--rui-side-y,0px))}
+}
+#roomLiveShell .room-master-brand img{transform:translate(var(--rui-brand-x,0px),var(--rui-brand-y,0px)) scale(var(--rui-brand-scale,1));transform-origin:center!important}
+#roomLiveShell .room-team-card.home .room-player-heading-plain>.player-avatar{transform:translate(var(--rui-avatar-x,0px),var(--rui-avatar-y,0px)) scale(var(--rui-avatar-scale,1));transform-origin:center!important}
+#roomLiveShell .room-team-card.home .room-player-name{transform:translate(var(--rui-name-x,0px),var(--rui-name-y,0px)) scale(var(--rui-name-scale,1));transform-origin:center!important}

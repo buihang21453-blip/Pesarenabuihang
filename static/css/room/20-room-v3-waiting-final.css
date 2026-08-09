@@ -194,27 +194,41 @@
   #roomLiveShell.pes-room3-live-shell .pes-room3-title-row h1{font-size:18px}
 }
 
-
-/* V1.3.130 — Admin Room UI Designer runtime variables */
+/* V1.3.131 — Admin Room UI Designer live runtime variables */
 @media (min-width:1081px){
-#roomLiveShell.pes-room3-live-shell .pes-room3{
-  grid-template-columns:minmax(0,var(--rui-host,1.10fr)) minmax(0,var(--rui-center,.78fr)) minmax(0,var(--rui-away,1.10fr)) minmax(0,var(--rui-side,.82fr));
+  #roomLiveShell.pes-room3-live-shell .pes-room3{
+    --r3-gap:var(--rui-main-gap,12px);
+    grid-template-columns:minmax(0,var(--rui-host,1.10fr)) minmax(0,var(--rui-center,.78fr)) minmax(0,var(--rui-away,1.10fr)) minmax(0,var(--rui-side,.82fr));
+  }
 }
-}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-grid{gap:var(--rui-mode-gap,12px)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-host,
 #roomLiveShell.pes-room3-live-shell .pes-room3-center,
 #roomLiveShell.pes-room3-live-shell .pes-room3-away{height:var(--rui-main-height,468px)}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-logo{transform:scale(var(--rui-active-logo-scale,1));transform-origin:center}
-#roomLiveShell.pes-room3-live-shell .pes-room3-vs{transform:scale(var(--rui-vs-scale,1));transform-origin:center}
+
+/* Whole panel XY offsets */
+#roomLiveShell.pes-room3-live-shell .pes-room3-host{transform:translate(var(--rui-host-x,0px),var(--rui-host-y,0px))}
+#roomLiveShell.pes-room3-live-shell .pes-room3-center{transform:translate(var(--rui-center-x,0px),var(--rui-center-y,0px))}
+#roomLiveShell.pes-room3-live-shell .pes-room3-away{transform:translate(var(--rui-away-x,0px),var(--rui-away-y,0px))}
+#roomLiveShell.pes-room3-live-shell .pes-room3-sidebar{transform:translate(var(--rui-side-x,0px),var(--rui-side-y,0px))}
+
+/* Header PES ARENA */
+#roomLiveShell.pes-room3-live-shell .pes-room3-brand img{transform:translate(var(--rui-brand-x,0px),var(--rui-brand-y,0px)) scale(var(--rui-brand-scale,1));transform-origin:center}
+
+/* Host avatar + player name */
+#roomLiveShell.pes-room3-live-shell .pes-room3-avatar-wrap{transform:translate(var(--rui-avatar-x,0px),var(--rui-avatar-y,0px)) scale(var(--rui-avatar-scale,1));transform-origin:center}
+#roomLiveShell.pes-room3-live-shell .pes-room3-player-name{transform:translate(var(--rui-name-x,0px),var(--rui-name-y,0px)) scale(var(--rui-name-scale,1));transform-origin:center}
+
+/* Center mode logo + VS */
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-logo{transform:translate(var(--rui-active-logo-x,0px),var(--rui-active-logo-y,0px)) scale(var(--rui-active-logo-scale,1));transform-origin:center}
+#roomLiveShell.pes-room3-live-shell .pes-room3-vs{transform:translate(var(--rui-vs-x,0px),var(--rui-vs-y,0px)) scale(var(--rui-vs-scale,1));transform-origin:center}
+
+/* Lower six mode cards: one synchronized logo scale */
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card{height:var(--rui-mode-card-height,208px)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card small{width:var(--rui-mode-status-width,94%)}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card:nth-child(1) img{transform:scale(var(--rui-mode-1-scale,1));transform-origin:center}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form:nth-child(1) img{transform:scale(var(--rui-mode-1-scale,1));transform-origin:center}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form:nth-child(2) img{transform:scale(var(--rui-mode-2-scale,1));transform-origin:center}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form:nth-child(3) img{transform:scale(var(--rui-mode-3-scale,1));transform-origin:center}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form:nth-child(4) img{transform:scale(var(--rui-mode-4-scale,1));transform-origin:center}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form:nth-child(5) img{transform:scale(var(--rui-mode-5-scale,1));transform-origin:center}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form:nth-child(6) img{transform:scale(var(--rui-mode-6-scale,1));transform-origin:center}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form img{transform:scale(var(--rui-mode-logo-scale,1));transform-origin:center}
+
+/* Visual effects */
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card,
 #roomLiveShell.pes-room3-live-shell .pes-room3-side-card{background-color:rgba(4,14,28,var(--rui-panel-opacity,.72))}
 #roomLiveShell.pes-room3-live-shell .pes-room3-center,

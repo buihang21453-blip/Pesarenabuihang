@@ -1819,3 +1819,12 @@
 - Cấu hình lưu vào `system_settings.setting_key = room_ui_designer_config`, có validate giới hạn và cache.
 - `room_detail.html` truyền cấu hình xuống CSS variables; không sửa Backend gameplay, RP, matchmaking hay polling.
 - Room V3 chờ đối thủ nhận đầy đủ biến; các trạng thái Room cũ nhận tương thích cho mode card, logo active và VS.
+
+## V1.3.131 - Nang_cap_Room_UI_Designer_keo_XY_va_preview_khung
+- Sửa Preview tỷ lệ các khung chính: giá trị Host / Center / Opponent / Sidebar giờ dùng đúng đơn vị `fr`, kéo slider thấy thay đổi trực tiếp.
+- Thêm kéo trực tiếp X/Y trên Preview cho 4 khung chính: Chủ phòng, Center, Đối thủ, Sidebar.
+- Thêm chỉnh kích thước + X/Y cho Avatar chủ phòng, tên người chơi, ảnh PES ARENA, logo chế độ đang chọn và VS.
+- Thêm khoảng cách giữa 4 khung chính và khoảng cách giữa 6 card chế độ.
+- Bỏ 6 thanh tỷ lệ logo riêng; thay bằng 1 thanh `mode_logo_scale` đồng bộ cả 6 logo.
+- Tự chuyển cấu hình V1.3.130 cũ: lấy trung bình 6 tỷ lệ logo cũ làm tỷ lệ chung mới.
+- Các thông số mới được nối xuống giao diện Room thật; giữ breakpoint responsive để tránh phá bố cục mobile/tablet.

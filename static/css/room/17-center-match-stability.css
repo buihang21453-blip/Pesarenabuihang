@@ -386,5 +386,5 @@
 }
 
 
-/* V1.3.130 — Room UI Designer VS scaling */
-#roomLiveShell .room-center-vs-image{transform:scale(var(--rui-vs-scale,1));transform-origin:center}
+/* V1.3.131 — Room UI Designer VS scale + XY */
+#roomLiveShell .room-center-vs-image{transform:translate(var(--rui-vs-x,0px),var(--rui-vs-y,0px)) scale(var(--rui-vs-scale,1));transform-origin:center}

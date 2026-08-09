@@ -1,7 +1,7 @@
 """Room UI Designer settings stored in system_settings.
 
-The module intentionally owns only presentation controls. It does not change room
-state, gameplay, RP, matchmaking, or polling behavior.
+Presentation-only controls. No gameplay, RP, room-state, matchmaking or polling
+logic is changed by this module.
 """
 from __future__ import annotations
 
@@ -10,31 +10,40 @@ import json
 _CTX = {}
 SETTING_KEY = "room_ui_designer_config"
 
-MODE_CODES = (
-    "rank_random",
-    "random3_pick1",
-    "home_away",
-    "bo3",
-    "tactical_bo3",
-    "ban_pick_bo3",
-)
-
 DEFAULTS = {
+    # Main layout
     "host_width": 1.10,
     "center_width": 0.78,
     "opponent_width": 1.10,
     "sidebar_width": 0.82,
     "main_height": 468,
+    "main_gap": 12,
+    "mode_gap": 12,
+
+    # Main panel offsets (px)
+    "host_x": 0, "host_y": 0,
+    "center_x": 0, "center_y": 0,
+    "opponent_x": 0, "opponent_y": 0,
+    "sidebar_x": 0, "sidebar_y": 0,
+
+    # Header brand
+    "brand_scale": 1.00, "brand_x": 0, "brand_y": 0,
+
+    # Host avatar and player name
+    "avatar_scale": 1.00, "avatar_x": 0, "avatar_y": 0,
+    "player_name_scale": 1.00, "player_name_x": 0, "player_name_y": 0,
+
+    # Center contents
     "active_mode_logo_scale": 1.00,
-    "mode_1_logo_scale": 1.00,
-    "mode_2_logo_scale": 1.00,
-    "mode_3_logo_scale": 1.00,
-    "mode_4_logo_scale": 1.00,
-    "mode_5_logo_scale": 1.00,
-    "mode_6_logo_scale": 1.00,
+    "active_mode_logo_x": 0, "active_mode_logo_y": 0,
+    "vs_scale": 1.00, "vs_x": 0, "vs_y": 0,
+
+    # All six lower mode logos intentionally share ONE scale.
+    "mode_logo_scale": 1.00,
     "mode_card_height": 208,
     "mode_status_width": 94,
-    "vs_scale": 1.00,
+
+    # Effects
     "panel_opacity": 0.72,
     "gold_glow": 0.14,
 }
@@ -46,16 +55,26 @@ FIELD_SPECS = {
     "opponent_width": (float, 0.70, 1.60, 0.01),
     "sidebar_width": (float, 0.55, 1.30, 0.01),
     "main_height": (int, 400, 620, 1),
-    "active_mode_logo_scale": (float, 0.60, 2.20, 0.01),
-    "mode_1_logo_scale": (float, 0.60, 2.20, 0.01),
-    "mode_2_logo_scale": (float, 0.60, 2.20, 0.01),
-    "mode_3_logo_scale": (float, 0.60, 2.20, 0.01),
-    "mode_4_logo_scale": (float, 0.60, 2.20, 0.01),
-    "mode_5_logo_scale": (float, 0.60, 2.20, 0.01),
-    "mode_6_logo_scale": (float, 0.60, 2.20, 0.01),
+    "main_gap": (int, 0, 36, 1),
+    "mode_gap": (int, 0, 28, 1),
+
+    "host_x": (int, -80, 80, 1), "host_y": (int, -80, 80, 1),
+    "center_x": (int, -80, 80, 1), "center_y": (int, -80, 80, 1),
+    "opponent_x": (int, -80, 80, 1), "opponent_y": (int, -80, 80, 1),
+    "sidebar_x": (int, -80, 80, 1), "sidebar_y": (int, -80, 80, 1),
+
+    "brand_scale": (float, 0.50, 1.60, 0.01), "brand_x": (int, -160, 160, 1), "brand_y": (int, -60, 60, 1),
+    "avatar_scale": (float, 0.60, 1.80, 0.01), "avatar_x": (int, -100, 100, 1), "avatar_y": (int, -100, 100, 1),
+    "player_name_scale": (float, 0.70, 1.60, 0.01), "player_name_x": (int, -100, 100, 1), "player_name_y": (int, -100, 100, 1),
+
+    "active_mode_logo_scale": (float, 0.60, 2.50, 0.01),
+    "active_mode_logo_x": (int, -100, 100, 1), "active_mode_logo_y": (int, -100, 100, 1),
+    "vs_scale": (float, 0.60, 2.00, 0.01), "vs_x": (int, -120, 120, 1), "vs_y": (int, -100, 100, 1),
+
+    "mode_logo_scale": (float, 0.60, 2.20, 0.01),
     "mode_card_height": (int, 160, 280, 1),
     "mode_status_width": (int, 70, 100, 1),
-    "vs_scale": (float, 0.60, 1.80, 0.01),
+
     "panel_opacity": (float, 0.10, 1.00, 0.01),
     "gold_glow": (float, 0.00, 0.50, 0.01),
 }
@@ -74,7 +93,20 @@ def normalize_config(raw):
     config = dict(DEFAULTS)
     if not isinstance(raw, dict):
         return config
-    for key, default in DEFAULTS.items():
+
+    # V1.3.130 migration: six old per-mode scales become one common scale.
+    if "mode_logo_scale" not in raw:
+        legacy = []
+        for i in range(1, 7):
+            try:
+                legacy.append(float(raw.get(f"mode_{i}_logo_scale")))
+            except (TypeError, ValueError):
+                pass
+        if legacy:
+            raw = dict(raw)
+            raw["mode_logo_scale"] = round(sum(legacy) / len(legacy), 2)
+
+    for key in DEFAULTS:
         if key not in raw:
             continue
         cast, minimum, maximum, _step = FIELD_SPECS[key]
@@ -123,10 +155,7 @@ def get_room_ui_config(force=False):
 
 
 def parse_form_config(form):
-    raw = {}
-    for key in DEFAULTS:
-        if key in form:
-            raw[key] = form.get(key)
+    raw = {key: form.get(key) for key in DEFAULTS if key in form}
     return normalize_config(raw)
 
 
