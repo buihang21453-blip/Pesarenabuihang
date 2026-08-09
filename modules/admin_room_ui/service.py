@@ -1,7 +1,7 @@
-"""Room UI Designer settings stored in system_settings.
+"""Cấu hình trình thiết kế giao diện phòng đấu trong Admin.
 
-Presentation-only controls. No gameplay, RP, room-state, matchmaking or polling
-logic is changed by this module.
+Chỉ thay đổi phần hiển thị. Không sửa trạng thái phòng, RP, matchmaking,
+invite, polling hay dữ liệu trận đấu.
 """
 from __future__ import annotations
 
@@ -11,50 +11,50 @@ _CTX = {}
 SETTING_KEY = "room_ui_designer_config"
 
 DEFAULTS = {
-    # Main layout
-    "host_width": 1.10,
-    "center_width": 0.78,
-    "opponent_width": 1.10,
+    # Bố cục desktop của V1.2.15
+    "host_width": 1.00,
+    "center_width": 0.72,
+    "opponent_width": 1.00,
     "sidebar_width": 0.82,
-    "main_height": 468,
-    "main_gap": 12,
+    "main_height": 540,
+    "main_gap": 14,
     "mode_gap": 12,
 
-    # Main panel offsets (px)
+    # Dịch vị trí các vùng chính (px)
     "host_x": 0, "host_y": 0,
     "center_x": 0, "center_y": 0,
     "opponent_x": 0, "opponent_y": 0,
     "sidebar_x": 0, "sidebar_y": 0,
 
-    # Header brand
+    # Tiêu đề/nhận diện phòng
     "brand_scale": 1.00, "brand_x": 0, "brand_y": 0,
 
-    # Host avatar and player name
+    # Avatar + tên của cả hai người chơi
     "avatar_scale": 1.00, "avatar_x": 0, "avatar_y": 0,
     "player_name_scale": 1.00, "player_name_x": 0, "player_name_y": 0,
 
-    # Center contents
+    # Khu vực giữa
     "active_mode_logo_scale": 1.00,
     "active_mode_logo_x": 0, "active_mode_logo_y": 0,
     "vs_scale": 1.00, "vs_x": 0, "vs_y": 0,
 
-    # All six lower mode logos intentionally share ONE scale.
+    # Một tỷ lệ dùng chung cho toàn bộ thẻ/logo chế độ
     "mode_logo_scale": 1.00,
     "mode_card_height": 208,
     "mode_status_width": 94,
 
-    # Effects
-    "panel_opacity": 0.72,
+    # Hiệu ứng giao diện
+    "panel_opacity": 0.88,
     "gold_glow": 0.14,
 }
 
-# key -> (type, minimum, maximum, step)
+# key -> (type, min, max, step)
 FIELD_SPECS = {
     "host_width": (float, 0.70, 1.60, 0.01),
     "center_width": (float, 0.55, 1.30, 0.01),
     "opponent_width": (float, 0.70, 1.60, 0.01),
-    "sidebar_width": (float, 0.55, 1.30, 0.01),
-    "main_height": (int, 400, 620, 1),
+    "sidebar_width": (float, 0.70, 1.35, 0.01),
+    "main_height": (int, 400, 680, 1),
     "main_gap": (int, 0, 36, 1),
     "mode_gap": (int, 0, 28, 1),
 
@@ -63,11 +63,11 @@ FIELD_SPECS = {
     "opponent_x": (int, -80, 80, 1), "opponent_y": (int, -80, 80, 1),
     "sidebar_x": (int, -80, 80, 1), "sidebar_y": (int, -80, 80, 1),
 
-    "brand_scale": (float, 0.50, 1.60, 0.01), "brand_x": (int, -160, 160, 1), "brand_y": (int, -60, 60, 1),
+    "brand_scale": (float, 0.60, 1.70, 0.01), "brand_x": (int, -160, 160, 1), "brand_y": (int, -60, 60, 1),
     "avatar_scale": (float, 0.60, 1.80, 0.01), "avatar_x": (int, -100, 100, 1), "avatar_y": (int, -100, 100, 1),
     "player_name_scale": (float, 0.70, 1.60, 0.01), "player_name_x": (int, -100, 100, 1), "player_name_y": (int, -100, 100, 1),
 
-    "active_mode_logo_scale": (float, 0.60, 2.50, 0.01),
+    "active_mode_logo_scale": (float, 0.60, 1.70, 0.01),
     "active_mode_logo_x": (int, -100, 100, 1), "active_mode_logo_y": (int, -100, 100, 1),
     "vs_scale": (float, 0.60, 2.00, 0.01), "vs_x": (int, -120, 120, 1), "vs_y": (int, -100, 100, 1),
 
@@ -75,7 +75,7 @@ FIELD_SPECS = {
     "mode_card_height": (int, 160, 280, 1),
     "mode_status_width": (int, 70, 100, 1),
 
-    "panel_opacity": (float, 0.10, 1.00, 0.01),
+    "panel_opacity": (float, 0.45, 1.00, 0.01),
     "gold_glow": (float, 0.00, 0.50, 0.01),
 }
 
@@ -94,7 +94,7 @@ def normalize_config(raw):
     if not isinstance(raw, dict):
         return config
 
-    # V1.3.130 migration: six old per-mode scales become one common scale.
+    # Tương thích cấu hình cũ: 6 scale riêng -> 1 scale chung.
     if "mode_logo_scale" not in raw:
         legacy = []
         for i in range(1, 7):
@@ -120,38 +120,33 @@ def normalize_config(raw):
 
 
 def get_room_ui_config(force=False):
-    cache_get = _get("cache_get")
-    cache_set = _get("cache_set")
-    ttl_cache_get = _get("ttl_cache_get")
-    ttl_cache_set = _get("ttl_cache_set")
     request_key = "_room_ui_designer_config_cached"
-
     if not force:
-        cached = cache_get(request_key)
+        cached = _get("cache_get")(request_key)
         if isinstance(cached, dict):
             return dict(cached)
-        cached = ttl_cache_get("room_ui_designer_config")
+        cached = _get("ttl_cache_get")("room_ui_designer_config")
         if isinstance(cached, dict):
-            return cache_set(request_key, dict(cached))
+            return _get("cache_set")(request_key, dict(cached))
 
     config = dict(DEFAULTS)
     try:
         result = _get("execute_query")(
-            _get("db").table("system_settings").select("setting_value").eq("setting_key", SETTING_KEY).limit(1),
-            "get_room_ui_designer_config",
-            attempts=2,
+            _get("db").table("system_settings").select("setting_value")
+            .eq("setting_key", SETTING_KEY).limit(1),
+            "get_room_ui_designer_config", attempts=2,
         )
         raw = ((result.data or [{}])[0]).get("setting_value")
         if isinstance(raw, str):
             raw = json.loads(raw)
         config = normalize_config(raw)
     except Exception as exc:
-        logger = _CTX.get("log_system_event")
-        if callable(logger):
-            logger("room_ui_config_load_failed", level=30, error_type=type(exc).__name__, error=str(exc))
+        app = _CTX.get("app")
+        if app is not None:
+            app.logger.warning("Room UI config load failed: %s", exc)
 
-    ttl_cache_set("room_ui_designer_config", dict(config), 60)
-    return cache_set(request_key, dict(config))
+    _get("ttl_cache_set")("room_ui_designer_config", dict(config), 60)
+    return _get("cache_set")(request_key, dict(config))
 
 
 def parse_form_config(form):
@@ -167,8 +162,7 @@ def save_room_ui_config(config):
             "setting_value": config,
             "updated_at": _get("now_iso")(),
         }, on_conflict="setting_key"),
-        "save_room_ui_designer_config",
-        attempts=2,
+        "save_room_ui_designer_config", attempts=2,
     )
     _get("ttl_cache_delete")("room_ui_designer_config")
     _get("cache_delete")("_room_ui_designer_config_cached")

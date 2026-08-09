@@ -317,3 +317,11 @@
 - Test V1.2.15 Layout Sync: 4/4 PASS.
 - Test Confirmed flow V1.2.12: PASS.
 - CSS isolation V1.2.14: các kiểm tra cấu trúc chính PASS.
+
+
+## V1.2.16 - Thiet ke giao dien phong trong Admin
+- Thêm module `modules/admin_room_ui`.
+- Thêm tab Admin có preview trực tiếp, kéo X/Y, scale các vùng.
+- Cấu hình lưu vào `system_settings` key `room_ui_designer_config`.
+- Áp dụng cùng một cấu hình cho toàn bộ state layout phòng V1.2.15.
+- Không thay đổi logic trận đấu.

@@ -1,0 +1,21 @@
+V1.2.16 - Thiết kế giao diện phòng trong Admin
+
+- Thêm tab Admin: Thiết kế phòng.
+- Preview trực tiếp và kéo X/Y.
+- Chỉnh tỷ lệ Chủ phòng / Trung tâm / Đối thủ / Sidebar.
+- Chỉnh avatar, tên người chơi, tiêu đề phòng, khối chế độ, VS.
+- Một tỷ lệ chung cho các logo/card chế độ.
+- Lưu cấu hình vào system_settings (không cần bảng mới).
+- Áp dụng đồng bộ cho mọi trạng thái của layout V1.2.15.
+- Không thay đổi RP, match flow, invite, presence hay endpoint gameplay.
+
+KIEM TRA CUOI
+- Module Admin Room UI Designer: 6/6 PASS.
+- Regression Layout/CSS/Room Flow: 17/17 PASS (bo 4 assertion chi khoa so version cu).
+- Python AST: 161 file, 0 loi.
+- Jinja: PASS.
+- CSS parser: PASS.
+
+LUU Y
+- 4 test cu V1.2.12/V1.2.14/V1.2.15 co assertion cung APP_VERSION cu nen khong dung de danh gia V1.2.16.
+- Cac transform X/Y cua 4 khung chinh chi ap dung tren desktop; responsive nho hon 1181px tu dong ve vi tri an toan.

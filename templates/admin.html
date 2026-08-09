@@ -2,6 +2,7 @@
 {% extends "base.html" %}
 {% block page_styles %}
 <link rel="stylesheet" href="{{ static_asset('css/admin_dashboard.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/admin/room-ui-designer.css') }}">
 {% endblock %}
 {% block content %}
 
@@ -41,6 +42,7 @@
     {% if can_admin('matches_view') %}<button class="admin-tab-button" type="button" data-admin-tab="matches">🎮 Trận đấu</button><button class="admin-tab-button" type="button" data-admin-tab="match-report">📊 Báo cáo trận đấu</button>{% endif %}
 {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">🧪 Tài khoản test & Import</button>{% endif %}
     {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>{% endif %}
+    {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="room-ui">🎨 Thiết kế phòng</button>{% endif %}
     {% if can_admin('rp_view') %}<button class="admin-tab-button" type="button" data-admin-tab="rp-tools">📈 Công cụ RP</button>{% endif %}
     <button class="admin-tab-button" type="button" data-admin-tab="economy">🪙 Zcoin & Gift Code</button>
     {% if can_admin('admin_logs_view') %}<button class="admin-tab-button" type="button" data-admin-tab="logs">🧾 Nhật ký</button>{% endif %}
@@ -808,6 +810,12 @@
 </section>
 
 {% if current_user.admin_level == 'owner' %}
+{% if can_admin('system_features_manage') %}
+<section class="admin-tab-panel" data-admin-panel="room-ui" hidden>
+    {% include "admin/tabs/room-ui.html" %}
+</section>
+{% endif %}
+
 <section class="admin-tab-panel" data-admin-panel="rp-tools">
     <div class="panel">
         <h2>📈 Bộ Công Cụ Tính RP</h2>
@@ -887,4 +895,5 @@
 
 {% block page_scripts %}
 <script src="{{ static_asset('js/admin_dashboard.js') }}" defer></script>
+<script src="{{ static_asset('js/admin/room-ui-designer.js') }}" defer></script>
 {% endblock %}

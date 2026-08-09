@@ -2,11 +2,11 @@
   <div class="room-ui-head">
     <div>
       <span class="admin-kicker">ROOM UI DESIGNER</span>
-      <h2>Thiết kế phòng đấu</h2>
-      <p>Chỉnh tỷ lệ, kéo trực tiếp vị trí X/Y trên Preview rồi lưu. Các thiết lập này chỉ thay đổi giao diện, không chạm logic phòng đấu.</p>
+      <h2>🎨 Thiết kế giao diện phòng đấu</h2>
+      <p>Chỉnh tỷ lệ và kéo trực tiếp vị trí trên bản xem trước. Cấu hình áp dụng đồng bộ cho mọi trạng thái: Chờ đối thủ → Sẵn sàng → Thi đấu → Chờ xác nhận → Confirmed → Đá tiếp.</p>
     </div>
     <div class="room-ui-head-actions">
-      <button class="btn gray" type="button" data-room-ui-zero-offsets>Đưa vị trí về giữa</button>
+      <button class="btn gray" type="button" data-room-ui-zero-offsets>Đưa X/Y về giữa</button>
       <form method="post" action="{{ url_for('admin_room_ui_reset') }}" onsubmit="return confirm('Khôi phục toàn bộ thiết kế phòng đấu về mặc định?');">
         <button class="btn red" type="submit">Khôi phục mặc định</button>
       </form>
@@ -18,41 +18,29 @@
       <div class="room-ui-controls">
         <details open>
           <summary>1. Tỷ lệ các khung chính</summary>
-          <p class="room-ui-hint">Có xem trước trực tiếp ở bên phải. Kéo thanh là khung thay đổi ngay.</p>
+          <p class="room-ui-hint">Kéo thanh để xem ngay thay đổi. Sidebar là khung Thông tin / Lịch sử / Chat bên phải.</p>
           <div class="room-ui-control-grid">
             {% set layout_fields = [
               ('host_width','Chủ phòng','fr'), ('center_width','Trung tâm','fr'),
               ('opponent_width','Đối thủ','fr'), ('sidebar_width','Sidebar','fr'),
-              ('main_height','Chiều cao khu chính','px'), ('main_gap','Khoảng cách 4 khung','px'),
-              ('mode_gap','Khoảng cách 6 chế độ','px')
+              ('main_height','Chiều cao khu chính','px'), ('main_gap','Khoảng cách khung','px'),
+              ('mode_gap','Khoảng cách các chế độ','px')
             ] %}
             {% for key,label,unit in layout_fields %}
             {% set spec = room_ui_field_specs[key] %}
-            <label class="room-ui-control">
-              <span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span>
-              <input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}">
-            </label>
+            <label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
             {% endfor %}
           </div>
         </details>
 
         <details open>
-          <summary>2. Kéo vị trí từng khung X/Y</summary>
-          <p class="room-ui-hint">Có thể kéo trực tiếp các khung <strong>Chủ phòng / Center / Đối thủ / Sidebar</strong> trong Preview. Các thanh dưới đây sẽ tự cập nhật theo.</p>
+          <summary>2. Kéo vị trí X/Y từng khung</summary>
+          <p class="room-ui-hint">Bạn cũng có thể giữ chuột và kéo trực tiếp 4 khung trong Preview.</p>
           <div class="room-ui-control-grid">
-            {% set panel_pos = [
-              ('host','Chủ phòng'), ('center','Center'), ('opponent','Đối thủ'), ('sidebar','Sidebar')
-            ] %}
-            {% for prefix,label in panel_pos %}
-            <div class="room-ui-axis-card">
-              <b>{{ label }}</b>
-              {% for axis in ['x','y'] %}
-              {% set key = prefix ~ '_' ~ axis %}
-              {% set spec = room_ui_field_specs[key] %}
-              <label class="room-ui-control compact">
-                <span>{{ axis|upper }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> px</span>
-                <input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}">
-              </label>
+            {% for prefix,label in [('host','Chủ phòng'),('center','Trung tâm'),('opponent','Đối thủ'),('sidebar','Sidebar')] %}
+            <div class="room-ui-axis-card"><b>{{ label }}</b>
+              {% for axis in ['x','y'] %}{% set key = prefix ~ '_' ~ axis %}{% set spec = room_ui_field_specs[key] %}
+              <label class="room-ui-control compact"><span>{{ axis|upper }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> px</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
               {% endfor %}
             </div>
             {% endfor %}
@@ -60,129 +48,68 @@
         </details>
 
         <details open>
-          <summary>3. Avatar, tên người chơi & PES ARENA</summary>
-          {% set groups = [
-            ('avatar','Avatar chủ phòng'), ('player_name','Tên người chơi'), ('brand','PES ARENA')
-          ] %}
-          {% for prefix,label in groups %}
-          <div class="room-ui-object-row">
-            <h3>{{ label }}</h3>
-            <div class="room-ui-control-grid three">
-              {% for suffix,suffix_label,unit in [('scale','Kích thước','×'),('x','X','px'),('y','Y','px')] %}
-              {% set key = prefix ~ '_' ~ suffix %}
-              {% set spec = room_ui_field_specs[key] %}
-              <label class="room-ui-control compact">
-                <span>{{ suffix_label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span>
-                <input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}">
-              </label>
-              {% endfor %}
-            </div>
-          </div>
+          <summary>3. Avatar, tên người chơi & tiêu đề phòng</summary>
+          {% for prefix,label in [('avatar','Avatar hai người chơi'),('player_name','Tên hai người chơi'),('brand','Tiêu đề / PES ARENA')] %}
+          <div class="room-ui-object-row"><h3>{{ label }}</h3><div class="room-ui-control-grid three">
+            {% for suffix,suffix_label,unit in [('scale','Kích thước','×'),('x','X','px'),('y','Y','px')] %}{% set key = prefix ~ '_' ~ suffix %}{% set spec = room_ui_field_specs[key] %}
+            <label class="room-ui-control compact"><span>{{ suffix_label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
+            {% endfor %}
+          </div></div>
           {% endfor %}
         </details>
 
         <details open>
-          <summary>4. Center: Logo chế độ & VS</summary>
-          {% set groups = [
-            ('active_mode_logo','Logo chế độ đang chọn'), ('vs','Ảnh VS')
-          ] %}
-          {% for prefix,label in groups %}
-          <div class="room-ui-object-row">
-            <h3>{{ label }}</h3>
-            <div class="room-ui-control-grid three">
-              {% for suffix,suffix_label,unit in [('scale','Kích thước','×'),('x','X','px'),('y','Y','px')] %}
-              {% set key = prefix ~ '_' ~ suffix %}
-              {% set spec = room_ui_field_specs[key] %}
-              <label class="room-ui-control compact">
-                <span>{{ suffix_label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span>
-                <input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}">
-              </label>
-              {% endfor %}
-            </div>
-          </div>
+          <summary>4. Khu vực giữa: Chế độ & VS</summary>
+          {% for prefix,label in [('active_mode_logo','Khối chế độ đang chọn'),('vs','Ảnh VS')] %}
+          <div class="room-ui-object-row"><h3>{{ label }}</h3><div class="room-ui-control-grid three">
+            {% for suffix,suffix_label,unit in [('scale','Kích thước','×'),('x','X','px'),('y','Y','px')] %}{% set key = prefix ~ '_' ~ suffix %}{% set spec = room_ui_field_specs[key] %}
+            <label class="room-ui-control compact"><span>{{ suffix_label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
+            {% endfor %}
+          </div></div>
           {% endfor %}
         </details>
 
         <details open>
-          <summary>5. 6 chế độ bên dưới — luôn đồng bộ</summary>
-          <p class="room-ui-hint">Chỉ còn <strong>1 thanh kích thước chung</strong>. Cả 6 logo luôn phóng to/thu nhỏ cùng nhau.</p>
+          <summary>5. Các chế độ — luôn đồng bộ kích thước</summary>
+          <p class="room-ui-hint">Chỉ có <strong>1 thanh tỷ lệ chung</strong>. Khi dự án có đủ 6 chế độ, cả 6 logo/card sẽ phóng to hoặc thu nhỏ cùng nhau.</p>
           <div class="room-ui-control-grid">
-            {% set mode_fields = [
-              ('mode_logo_scale','Kích thước chung 6 logo','×'),
-              ('mode_card_height','Chiều cao card','px'),
-              ('mode_status_width','Độ rộng trạng thái','%')
-            ] %}
-            {% for key,label,unit in mode_fields %}
-            {% set spec = room_ui_field_specs[key] %}
-            <label class="room-ui-control">
-              <span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span>
-              <input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}">
-            </label>
+            {% for key,label,unit in [('mode_logo_scale','Tỷ lệ chung','×'),('mode_card_height','Chiều cao card','px'),('mode_status_width','Độ rộng trạng thái','%')] %}{% set spec = room_ui_field_specs[key] %}
+            <label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
             {% endfor %}
           </div>
         </details>
 
         <details>
-          <summary>6. Độ trong suốt & ánh sáng</summary>
+          <summary>6. Độ đậm nền & Glow vàng</summary>
           <div class="room-ui-control-grid">
-            {% set visual_fields = [('panel_opacity','Độ đậm nền',''),('gold_glow','Glow vàng','')] %}
-            {% for key,label,unit in visual_fields %}
-            {% set spec = room_ui_field_specs[key] %}
-            <label class="room-ui-control">
-              <span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span>
-              <input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}">
-            </label>
+            {% for key,label in [('panel_opacity','Độ đậm nền'),('gold_glow','Glow vàng')] %}{% set spec = room_ui_field_specs[key] %}
+            <label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output></span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
             {% endfor %}
           </div>
         </details>
 
-        <div class="room-ui-savebar">
-          <span>Preview thay đổi ngay. Phòng đấu thật chỉ thay đổi sau khi bấm lưu.</span>
-          <button class="btn green" type="submit">💾 Lưu cấu hình</button>
-        </div>
+        <div class="room-ui-savebar"><span>Preview thay đổi ngay; phòng thật chỉ đổi sau khi bấm lưu.</span><button class="btn green" type="submit">💾 Lưu cấu hình</button></div>
       </div>
 
       <div class="room-ui-preview-wrap">
-        <div class="room-ui-preview-title">XEM TRƯỚC TRỰC TIẾP <small>• kéo các vùng có biểu tượng ↕</small></div>
-        <div class="room-ui-preview" data-room-ui-preview>
-          <div class="rui-header">
-            <div class="rui-room-label">PHÒNG ĐẤU</div>
-            <img class="rui-brand" data-drag-object data-drag-x-key="brand_x" data-drag-y-key="brand_y" src="{{ room_asset('pes-arena-room-logo.webp') }}" alt="PES ARENA">
-            <div class="rui-share">Chia sẻ phòng</div>
-          </div>
-
-          <div class="rui-main-row">
-            <div class="rui-box rui-host" data-drag-object data-drag-x-key="host_x" data-drag-y-key="host_y">
-              <span class="rui-drag-badge">↕</span><b>CHỦ PHÒNG</b>
-              <div class="rui-avatar" data-drag-object data-drag-x-key="avatar_x" data-drag-y-key="avatar_y">A</div>
-              <div class="rui-player-name" data-drag-object data-drag-x-key="player_name_x" data-drag-y-key="player_name_y">Test Host</div>
-              <div class="rui-club-placeholder">?</div>
-            </div>
-            <div class="rui-box rui-center" data-drag-object data-drag-x-key="center_x" data-drag-y-key="center_y">
-              <span class="rui-drag-badge">↕</span><b>CHẾ ĐỘ</b>
-              <img class="rui-active-logo" data-drag-object data-drag-x-key="active_mode_logo_x" data-drag-y-key="active_mode_logo_y" src="{{ mode_asset('random3_pick1') }}?v={{ APP_VERSION|urlencode }}" alt="">
-              <div class="rui-unlock">🔓 Đã mở khóa</div>
-              <img class="rui-vs" data-drag-object data-drag-x-key="vs_x" data-drag-y-key="vs_y" src="{{ url_for('static', filename='assets/room_custom/vs-gold-v126.webp') }}?v={{ APP_VERSION }}" alt="VS">
-            </div>
-            <div class="rui-box rui-away" data-drag-object data-drag-x-key="opponent_x" data-drag-y-key="opponent_y"><span class="rui-drag-badge">↕</span><b>ĐỐI THỦ</b><div class="rui-away-q">?</div></div>
-            <div class="rui-box rui-side" data-drag-object data-drag-x-key="sidebar_x" data-drag-y-key="sidebar_y"><span class="rui-drag-badge">↕</span><b>SIDEBAR</b><i></i><i></i><i></i></div>
-          </div>
-
-          <div class="rui-mode-title">◇ CÁC CHẾ ĐỘ KHÁC ◇</div>
-          <div class="rui-mode-row">
-            {% set preview_modes = ['rank_random','random3_pick1','home_away','bo3','tactical_bo3','ban_pick_bo3'] %}
-            {% set preview_names = ['Rank Random','Random 3 chọn 1','Lượt đi/lượt về','BO3','Chiến thuật BO3','Cấm chọn CLB'] %}
-            {% for code in preview_modes %}
-            <div class="rui-mode-card">
-              <b>{{ loop.index }}</b>
-              <img src="{{ mode_asset(code) }}?v={{ APP_VERSION|urlencode }}" alt="">
-              <strong>{{ preview_names[loop.index0] }}</strong>
-              <small>🔓 Đã mở khóa</small>
-            </div>
-            {% endfor %}
-          </div>
+        <div class="room-ui-preview-title">XEM TRƯỚC TRỰC TIẾP <small>• kéo vùng có biểu tượng ↕</small></div>
+        <div class="room-ui-preview-states" aria-label="Chọn trạng thái xem trước">
+          {% for key,label in [('waiting','Chờ đối thủ'),('ready','Chờ sẵn sàng'),('playing','Thi đấu'),('confirm','Chờ xác nhận'),('confirmed','Confirmed'),('rematch','Đá tiếp')] %}
+          <button type="button" class="room-ui-preview-state{{ ' active' if loop.first else '' }}" data-room-ui-preview-state="{{ key }}">{{ label }}</button>
+          {% endfor %}
         </div>
-        <p class="room-ui-preview-help">Mẹo: kéo trực tiếp Avatar, tên người chơi, PES ARENA, logo chế độ, VS và 4 khung chính. Kéo trên Preview sẽ tự đổi giá trị X/Y ở bên trái.</p>
+        <div class="room-ui-preview" data-room-ui-preview>
+          <div class="rui-header"><div class="rui-room-label">PHÒNG ĐẤU</div><div class="rui-brand" data-drag-object data-drag-x-key="brand_x" data-drag-y-key="brand_y">PES ARENA</div><div class="rui-share">CHIA SẺ</div></div>
+          <div class="rui-main-row">
+            <div class="rui-box rui-host" data-drag-object data-drag-x-key="host_x" data-drag-y-key="host_y"><span class="rui-drag-badge">↕</span><b>CHỦ PHÒNG</b><div class="rui-avatar" data-drag-object data-drag-x-key="avatar_x" data-drag-y-key="avatar_y">H</div><div class="rui-player-name" data-drag-object data-drag-x-key="player_name_x" data-drag-y-key="player_name_y">Host Player</div><div class="rui-club-placeholder">?</div></div>
+            <div class="rui-box rui-center" data-drag-object data-drag-x-key="center_x" data-drag-y-key="center_y"><span class="rui-drag-badge">↕</span><b>TRUNG TÂM</b><div class="rui-active-mode" data-drag-object data-drag-x-key="active_mode_logo_x" data-drag-y-key="active_mode_logo_y">RANK RANDOM</div><div class="rui-unlock">✓ ĐÃ MỞ KHÓA</div><div class="rui-state-demo" data-rui-state-demo>CHỜ ĐỐI THỦ</div><div class="rui-vs" data-drag-object data-drag-x-key="vs_x" data-drag-y-key="vs_y">VS</div></div>
+            <div class="rui-box rui-away" data-drag-object data-drag-x-key="opponent_x" data-drag-y-key="opponent_y"><span class="rui-drag-badge">↕</span><b>ĐỐI THỦ</b><div class="rui-away-q">?</div></div>
+            <div class="rui-box rui-side" data-drag-object data-drag-x-key="sidebar_x" data-drag-y-key="sidebar_y"><span class="rui-drag-badge">↕</span><b>THÔNG TIN</b><i></i><i></i><i></i></div>
+          </div>
+          <div class="rui-mode-title">CÁC CHẾ ĐỘ</div>
+          <div class="rui-mode-row">{% for n in ['Random','3 chọn 1','Lượt đi/về','BO3','Chiến thuật','Cấm chọn'] %}<div class="rui-mode-card"><b>{{ loop.index }}</b><div class="rui-mode-icon">{{ loop.index }}</div><strong>{{ n }}</strong><small>ĐÃ MỞ KHÓA</small></div>{% endfor %}</div>
+        </div>
+        <p class="room-ui-preview-help">Preview chỉ mô phỏng tỷ lệ/vị trí. Dữ liệu thật, nút chức năng, RP và trạng thái trận đấu không bị thay đổi.</p>
       </div>
     </div>
   </form>

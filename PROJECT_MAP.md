@@ -64,3 +64,12 @@ Giao hữu: `waiting_ready -> friendly_playing -> waiting_ready`.
 - `templates/_room_live_content.html`: fragment trạng thái động; phải giữ đồng bộ với layout chính khi sửa nội dung trung tâm.
 - `static/css/room_detail.css`: owner của `room-layout-v1215` và toàn bộ geometry theo trạng thái.
 - Quy tắc: không tạo layout HTML riêng cho từng trạng thái; chỉ thay nội dung trong cột trung tâm.
+
+
+### Admin Room UI Designer (V1.2.16)
+- `modules/admin_room_ui/service.py`: đọc/lưu/chuẩn hóa cấu hình.
+- `modules/admin_room_ui/routes.py`: route Save/Reset + context template.
+- `templates/admin/tabs/room-ui.html`: tab thiết kế và Preview.
+- `static/js/admin/room-ui-designer.js`: cập nhật Preview + kéo X/Y.
+- `static/css/admin/room-ui-designer.css`: giao diện Designer.
+- `static/css/room_detail.css`: lớp áp dụng biến UI vào phòng thật.
