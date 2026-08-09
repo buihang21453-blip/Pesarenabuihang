@@ -1845,3 +1845,10 @@
 - Cache invalidation sau cap nhat user chuyen thanh fail-open, khong duoc phep lam hong viec xac nhan tran.
 - Ma loi CONFIRM moi duoc luu server-side vao Blackbox kem phase, room_id, match_id va loai exception de co the truy vet truc tiep.
 - Khong thay doi cong thuc RP, Series, giao dien Room UI Designer hay schema database.
+
+
+## V1.3.134_sua_triet_de_loi_CONFIRM_safe_int
+- Sua dung nguyen nhan Blackbox CONFIRM-E81965F2: `match_result_service.py` goi `_safe_int` nhung phu thuoc vao global configure/import order.
+- Dua `_safe_int` thanh helper cuc bo ngay trong module ket qua tran, khong con phu thuoc `app.py` hoac module khac.
+- Nang test xac nhan de KHONG inject `_safe_int` tu context; test phai tu chay bang helper cua chinh module.
+- Giu nguyen co che claim/idempotency/rollback cua V1.3.133 de tranh cong RP hai lan khi retry.

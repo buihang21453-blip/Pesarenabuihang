@@ -8,8 +8,9 @@ SERVICE_SOURCE = (ROOT / "modules" / "match_result_service.py").read_text(encodi
 
 
 def test_release_version_and_root_cause_fix_are_present():
-    assert 'APP_VERSION = "V1.2.9"' in APP_SOURCE
+    assert 'APP_VERSION = "1.3.134"' in APP_SOURCE
     assert "from modules.rp_engine import get_win_streak_bonus" in SERVICE_SOURCE
+    assert "def _safe_int(value, default=0):" in SERVICE_SOURCE
     assert SERVICE_SOURCE.count("get_win_streak_bonus(") >= 2
 
 
@@ -75,7 +76,6 @@ def build_service_context(labels):
         "get_user": lambda user_id: dict(players[user_id]),
         "calculate_deltas": lambda *_args, **_kwargs: (25, -15),
         "validate_ranked_deltas": lambda _s1, _s2, d1, d2: (int(d1), int(d2)),
-        "_safe_int": lambda value, default=0: int(default if value is None else value),
         "RP_RANDOM_SEED_NAMESPACE": "PES_ARENA_TEST",
         "now_iso": lambda: "2026-08-03T09:00:00+00:00",
         "get_match": lambda _match_id: None,

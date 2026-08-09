@@ -7,6 +7,24 @@ import random
 
 from modules.rp_engine import get_win_streak_bonus
 
+
+def _safe_int(value, default=0):
+    """Convert database/form values to int without depending on app.py globals.
+
+    This helper intentionally lives in this module because match confirmation is a
+    critical write path.  It must keep working even if service configure/import
+    order changes while app.py is being modularized.
+    """
+    try:
+        if value is None or value == "":
+            return int(default)
+        return int(value)
+    except (TypeError, ValueError, OverflowError):
+        try:
+            return int(default)
+        except (TypeError, ValueError, OverflowError):
+            return 0
+
 EXPORTED_NAMES = ['sync_room_after_admin_match_change', 'apply_match_result', 'resolve_match_dispute_with_result', 'cancel_match_dispute', 'update_player_after_match', 'reverse_player_match_stats', 'reverse_confirmed_match_result']
 
 def configure(context):
