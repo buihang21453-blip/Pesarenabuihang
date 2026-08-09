@@ -1,0 +1,121 @@
+<section id="room-ui" class="panel room-ui-designer" data-room-ui-designer>
+  <div class="room-ui-head">
+    <div>
+      <span class="admin-kicker">ROOM UI DESIGNER</span>
+      <h2>Thiết kế phòng đấu</h2>
+      <p>Kéo thanh để xem trước trực tiếp. Khi ưng ý, bấm <strong>Lưu cấu hình</strong>. Không cần sửa CSS hoặc deploy chỉ để phóng to/thu nhỏ logo.</p>
+    </div>
+    <div class="room-ui-head-actions">
+      <button class="btn gray" type="button" data-room-ui-sync>Đồng bộ 6 logo</button>
+      <form method="post" action="{{ url_for('admin_room_ui_reset') }}" onsubmit="return confirm('Khôi phục toàn bộ thiết kế phòng đấu về mặc định?');">
+        <button class="btn red" type="submit">Khôi phục mặc định</button>
+      </form>
+    </div>
+  </div>
+
+  <form method="post" action="{{ url_for('admin_room_ui_save') }}" class="room-ui-form" data-room-ui-form>
+    <div class="room-ui-workspace">
+      <div class="room-ui-controls">
+        <details open>
+          <summary>1. Tỷ lệ các khung chính</summary>
+          <div class="room-ui-control-grid">
+            {% set layout_fields = [
+              ('host_width','Chủ phòng','fr'), ('center_width','Trung tâm','fr'),
+              ('opponent_width','Đối thủ','fr'), ('sidebar_width','Sidebar','fr'),
+              ('main_height','Chiều cao khu chính','px')
+            ] %}
+            {% for key,label,unit in layout_fields %}
+            {% set spec = room_ui_field_specs[key] %}
+            <label class="room-ui-control">
+              <span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span>
+              <input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}">
+            </label>
+            {% endfor %}
+          </div>
+        </details>
+
+        <details open>
+          <summary>2. Logo & VS</summary>
+          <div class="room-ui-control-grid">
+            {% set logo_fields = [
+              ('active_mode_logo_scale','Logo chế độ đang chọn'),
+              ('vs_scale','Ảnh VS')
+            ] %}
+            {% for key,label in logo_fields %}
+            {% set spec = room_ui_field_specs[key] %}
+            <label class="room-ui-control">
+              <span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> ×</span>
+              <input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}">
+            </label>
+            {% endfor %}
+          </div>
+
+          <h3 class="room-ui-subtitle">Chỉnh riêng từng logo chế độ</h3>
+          <div class="room-ui-logo-controls">
+            {% set mode_labels = ['Rank Random','Random 3 chọn 1','Lượt đi/lượt về','BO3','Chiến thuật BO3','Cấm chọn CLB'] %}
+            {% for i in range(1,7) %}
+            {% set key = 'mode_' ~ i ~ '_logo_scale' %}
+            {% set spec = room_ui_field_specs[key] %}
+            <label class="room-ui-control compact">
+              <span>{{ i }}. {{ mode_labels[i-1] }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> ×</span>
+              <input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}" data-mode-scale>
+            </label>
+            {% endfor %}
+          </div>
+        </details>
+
+        <details open>
+          <summary>3. Card chế độ & hiệu ứng</summary>
+          <div class="room-ui-control-grid">
+            {% set visual_fields = [
+              ('mode_card_height','Chiều cao card','px'),
+              ('mode_status_width','Độ rộng trạng thái','%'),
+              ('panel_opacity','Độ đậm nền',''),
+              ('gold_glow','Glow vàng','')
+            ] %}
+            {% for key,label,unit in visual_fields %}
+            {% set spec = room_ui_field_specs[key] %}
+            <label class="room-ui-control">
+              <span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span>
+              <input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}">
+            </label>
+            {% endfor %}
+          </div>
+        </details>
+
+        <div class="room-ui-savebar">
+          <span>Preview chỉ ở Admin. Chỉ khi bấm lưu thì phòng đấu thật mới đổi.</span>
+          <button class="btn green" type="submit">💾 Lưu cấu hình</button>
+        </div>
+      </div>
+
+      <div class="room-ui-preview-wrap">
+        <div class="room-ui-preview-title">XEM TRƯỚC</div>
+        <div class="room-ui-preview" data-room-ui-preview>
+          <div class="rui-main-row">
+            <div class="rui-box rui-host">CHỦ PHÒNG</div>
+            <div class="rui-box rui-center">
+              <span>CHẾ ĐỘ ĐANG CHỌN</span>
+              <img class="rui-active-logo" src="{{ mode_asset('random3_pick1') }}?v={{ APP_VERSION|urlencode }}" alt="">
+              <img class="rui-vs" src="{{ url_for('static', filename='assets/room_custom/vs-gold-v126.webp') }}?v={{ APP_VERSION }}" alt="VS">
+            </div>
+            <div class="rui-box rui-away">ĐỐI THỦ</div>
+            <div class="rui-box rui-side">SIDEBAR</div>
+          </div>
+          <div class="rui-mode-row">
+            {% set preview_modes = ['rank_random','random3_pick1','home_away','bo3','tactical_bo3','ban_pick_bo3'] %}
+            {% set preview_names = ['Rank Random','Random 3 chọn 1','Lượt đi/lượt về','BO3','Chiến thuật BO3','Cấm chọn CLB'] %}
+            {% for code in preview_modes %}
+            <div class="rui-mode-card" data-preview-mode="{{ loop.index }}">
+              <b>{{ loop.index }}</b>
+              <img src="{{ mode_asset(code) }}?v={{ APP_VERSION|urlencode }}" alt="">
+              <strong>{{ preview_names[loop.index0] }}</strong>
+              <small>🔓 Đã mở khóa</small>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</section>

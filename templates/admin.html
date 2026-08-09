@@ -2,6 +2,7 @@
 {% extends "base.html" %}
 {% block page_styles %}
 <link rel="stylesheet" href="{{ static_asset('css/admin_dashboard.css') }}">
+{% if active_admin_tab == 'room-ui' %}<link rel="stylesheet" href="{{ static_asset('css/admin/room-ui-designer.css') }}">{% endif %}
 {% endblock %}
 {% block content %}
 
@@ -44,6 +45,7 @@
     <button class="admin-tab-button{{ ' active' if active_admin_tab == 'rank-modes' else '' }}" type="button" data-admin-tab="rank-modes" data-admin-url="{{ url_for('admin', tab='rank-modes') }}#rank-modes">🏆 Quản lý chế độ Rank</button>
 {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button{{ ' active' if active_admin_tab == 'test-data' else '' }}" type="button" data-admin-tab="test-data" data-admin-url="{{ url_for('admin', tab='test-data') }}#test-data">🧪 Tài khoản test & Import</button>{% endif %}
     {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button{{ ' active' if active_admin_tab == 'system' else '' }}" type="button" data-admin-tab="system" data-admin-url="{{ url_for('admin', tab='system') }}#system">⚙️ Hệ thống</button>{% endif %}
+    {% if can_admin('system_features_manage') %}<button class="admin-tab-button{{ ' active' if active_admin_tab == 'room-ui' else '' }}" type="button" data-admin-tab="room-ui" data-admin-url="{{ url_for('admin', tab='room-ui') }}#room-ui">🎨 Thiết kế phòng đấu</button>{% endif %}
     {% if can_admin('rp_view') %}<button class="admin-tab-button{{ ' active' if active_admin_tab == 'rp-tools' else '' }}" type="button" data-admin-tab="rp-tools" data-admin-url="{{ url_for('admin', tab='rp-tools') }}#rp-tools">📈 Công cụ RP</button>{% endif %}
     <button class="admin-tab-button{{ ' active' if active_admin_tab == 'economy' else '' }}" type="button" data-admin-tab="economy" data-admin-url="{{ url_for('admin', tab='economy') }}#economy">🪙 Zcoin & Gift Code</button>
     {% if can_admin('admin_logs_view') %}<button class="admin-tab-button{{ ' active' if active_admin_tab == 'logs' else '' }}" type="button" data-admin-tab="logs" data-admin-url="{{ url_for('admin', tab='logs') }}#logs">🧾 Nhật ký</button>{% endif %}
@@ -57,4 +59,5 @@
 
 {% block page_scripts %}
 <script src="{{ static_asset('js/admin_dashboard.js') }}" defer></script>
+{% if active_admin_tab == 'room-ui' %}<script src="{{ static_asset('js/admin/room-ui-designer.js') }}" defer></script>{% endif %}
 {% endblock %}

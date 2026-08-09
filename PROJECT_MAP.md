@@ -149,6 +149,7 @@ Khi sửa Invite/Quick Match: **không chuyển route sang file khác trong cùn
 |---|---|
 | Dashboard | `modules/admin_dashboard_routes.py` |
 | System | `modules/admin_system_routes.py` |
+| Thiết kế phòng đấu / Room UI Designer | `modules/admin_room_ui/` + `templates/admin/tabs/room-ui.html` + `static/css/admin/room-ui-designer.css` + `static/js/admin/room-ui-designer.js` |
 | Account | `modules/admin_account_routes.py` |
 | Match | `modules/admin_match_routes.py` |
 | Player | `modules/admin_player_routes.py` |
@@ -190,6 +191,7 @@ Khi sửa Invite/Quick Match: **không chuyển route sang file khác trong cùn
 | Compatibility CSS entry | `static/style.css` |
 | Legacy CSS đã prune | `static/css/legacy/` — chỉ giữ selector còn tồn tại trong runtime source |
 | Room CSS | `static/css/room/` |
+| Room UI Designer runtime | `modules/admin_room_ui/` lưu `room_ui_designer_config` trong `system_settings`; CSS variables được truyền tại `templates/room_detail.html` |
 | Admin CSS | `static/css/admin/` nếu có |
 | Asset helper | `modules/static_asset_service.py` |
 | Supabase manifest | `SUPABASE_ASSET_MANIFEST.csv` |

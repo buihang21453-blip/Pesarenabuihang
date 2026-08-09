@@ -66,7 +66,7 @@ def register_routes(context):
     @admin_required
     def admin():
         admin_started_at = time.perf_counter()
-        allowed_admin_tabs = {"overview", "users", "passwords", "rooms", "matches", "match-report", "rank-modes", "test-data", "system", "economy", "rp-tools", "logs", "blackbox"}
+        allowed_admin_tabs = {"overview", "users", "passwords", "rooms", "matches", "match-report", "rank-modes", "test-data", "system", "economy", "rp-tools", "logs", "blackbox", "room-ui"}
         active_admin_tab = str(request.args.get("tab") or "overview").strip().lower()
         if active_admin_tab not in allowed_admin_tabs:
             active_admin_tab = "overview"
@@ -245,6 +245,9 @@ def register_routes(context):
             rank_mode_configs=admin_safe_load("rank_mode_configs", get_rank_mode_configs, {}) if needs_rank_modes else {},
             rank_mode_order=MODE_ORDER,
             rank_mode_user_unlocks=admin_safe_load("rank_mode_user_unlocks", list_rank_mode_user_unlocks, {}) if active_admin_tab == "users" else {},
+            room_ui_config=admin_safe_load("room_ui_config", get_room_ui_config, dict(ROOM_UI_DEFAULTS)) if active_admin_tab == "room-ui" else get_room_ui_config(),
+            room_ui_defaults=dict(ROOM_UI_DEFAULTS),
+            room_ui_field_specs=ROOM_UI_FIELD_SPECS,
             active_admin_tab=active_admin_tab,
         )
         app.logger.info(

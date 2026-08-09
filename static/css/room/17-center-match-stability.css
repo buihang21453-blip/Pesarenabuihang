@@ -384,3 +384,7 @@
     box-sizing:border-box !important;
   }
 }
+
+
+/* V1.3.130 — Room UI Designer VS scaling */
+#roomLiveShell .room-center-vs-image{transform:scale(var(--rui-vs-scale,1));transform-origin:center}

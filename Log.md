@@ -1810,3 +1810,12 @@
 - Phong to tiep logo trong cac card che do ben duoi de sat hon anh mau nguoi dung gui.
 - Tang chieu cao the mode va mo rong be ngang dong trang thai de gan nhu an kin khung ben duoi.
 - Tang nhe co chu ten che do va can lai khoang trang giua logo / ten / trang thai.
+
+
+## V1.3.130 - Room UI Designer trong Admin
+- Thêm tab `🎨 Thiết kế phòng đấu` trong Admin, tách module `modules/admin_room_ui/`.
+- Cho phép kéo slider để chỉnh tỷ lệ Host / Center / Opponent / Sidebar, chiều cao khu chính, logo chế độ đang chọn, VS, chiều cao card, độ rộng trạng thái và 6 logo riêng biệt.
+- Có Preview trực tiếp trong Admin, nút đồng bộ 6 logo, lưu cấu hình và khôi phục mặc định.
+- Cấu hình lưu vào `system_settings.setting_key = room_ui_designer_config`, có validate giới hạn và cache.
+- `room_detail.html` truyền cấu hình xuống CSS variables; không sửa Backend gameplay, RP, matchmaking hay polling.
+- Room V3 chờ đối thủ nhận đầy đủ biến; các trạng thái Room cũ nhận tương thích cho mode card, logo active và VS.

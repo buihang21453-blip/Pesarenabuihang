@@ -193,3 +193,30 @@
   #roomLiveShell.pes-room3-live-shell .pes-room3-sidebar{display:flex}
   #roomLiveShell.pes-room3-live-shell .pes-room3-title-row h1{font-size:18px}
 }
+
+
+/* V1.3.130 — Admin Room UI Designer runtime variables */
+@media (min-width:1081px){
+#roomLiveShell.pes-room3-live-shell .pes-room3{
+  grid-template-columns:minmax(0,var(--rui-host,1.10fr)) minmax(0,var(--rui-center,.78fr)) minmax(0,var(--rui-away,1.10fr)) minmax(0,var(--rui-side,.82fr));
+}
+}
+#roomLiveShell.pes-room3-live-shell .pes-room3-host,
+#roomLiveShell.pes-room3-live-shell .pes-room3-center,
+#roomLiveShell.pes-room3-live-shell .pes-room3-away{height:var(--rui-main-height,468px)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-logo{transform:scale(var(--rui-active-logo-scale,1));transform-origin:center}
+#roomLiveShell.pes-room3-live-shell .pes-room3-vs{transform:scale(var(--rui-vs-scale,1));transform-origin:center}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card{height:var(--rui-mode-card-height,208px)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card small{width:var(--rui-mode-status-width,94%)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card:nth-child(1) img{transform:scale(var(--rui-mode-1-scale,1));transform-origin:center}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form:nth-child(1) img{transform:scale(var(--rui-mode-1-scale,1));transform-origin:center}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form:nth-child(2) img{transform:scale(var(--rui-mode-2-scale,1));transform-origin:center}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form:nth-child(3) img{transform:scale(var(--rui-mode-3-scale,1));transform-origin:center}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form:nth-child(4) img{transform:scale(var(--rui-mode-4-scale,1));transform-origin:center}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form:nth-child(5) img{transform:scale(var(--rui-mode-5-scale,1));transform-origin:center}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-form:nth-child(6) img{transform:scale(var(--rui-mode-6-scale,1));transform-origin:center}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card,
+#roomLiveShell.pes-room3-live-shell .pes-room3-side-card{background-color:rgba(4,14,28,var(--rui-panel-opacity,.72))}
+#roomLiveShell.pes-room3-live-shell .pes-room3-center,
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card,
+#roomLiveShell.pes-room3-live-shell .pes-room3-side-card{box-shadow:inset 0 0 24px rgba(255,197,63,.06),0 0 18px rgba(255,189,52,var(--rui-gold-glow,.14))}

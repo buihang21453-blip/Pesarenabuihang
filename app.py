@@ -69,7 +69,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.3.129"
+APP_VERSION = "1.3.130"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -3161,6 +3161,7 @@ from modules.blackbox import register_routes as _register_blackbox_routes
 
 # Route Admin.
 from modules.admin_system_routes import register_routes as _register_admin_system_routes
+from modules.admin_room_ui import register_routes as _register_admin_room_ui_routes
 from modules.admin_dashboard_routes import register_routes as _register_admin_dashboard_routes
 from modules.admin_account_routes import register_routes as _register_admin_account_routes
 from modules.admin_match_routes import register_routes as _register_admin_match_routes
@@ -3186,6 +3187,7 @@ for _route_registrar in (
     _register_luckybox_routes,
     _register_blackbox_routes,
     _register_admin_system_routes,
+    _register_admin_room_ui_routes,
     _register_admin_dashboard_routes,
     _register_admin_account_routes,
     _register_admin_match_routes,
