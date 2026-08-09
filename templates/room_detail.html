@@ -26,7 +26,7 @@
 .arena-room-v2 {
   --arena-stadium-blue: url("{{ room_asset('stadium-blue.webp') }}");
   --arena-stadium-red: url("{{ room_asset('stadium-red.webp') }}");
-  --arena-center-stadium: url("{{ room_asset('center-stadium.webp') }}");
+  --arena-center-stadium: url("{{ url_for('static', filename='assets/room_custom/center-stadium-v126.webp') }}?v={{ APP_VERSION }}");
   --arena-room-texture: url("{{ room_asset('room-texture-dark.webp') }}");
 }
 </style>

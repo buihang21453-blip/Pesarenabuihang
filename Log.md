@@ -1783,3 +1783,11 @@
 - Thu gon khu mode dang chon o center, giam do phong VS, can lai title / mo ta / logo / line trang thai.
 - Can lai khu vuc CAC CHE DO KHAC: dieu chinh chieu cao card, khoang cach, ty le logo va khung ten/nut.
 - Them tuning rieng theo tung che do de logo nhin can doi hon, tranh logo qua to hoac qua nho.
+
+
+## V1.3.126 - thay_anh_vs_va_nen_center
+- Thay ảnh nền phía sau khu VS bằng asset người dùng cung cấp: `static/assets/room_custom/center-stadium-v126.webp`.
+- Thay ảnh chữ VS bằng asset PNG/WebP nền trong suốt người dùng cung cấp: `static/assets/room_custom/vs-gold-v126.webp`.
+- Áp dụng ảnh nền center qua biến `--arena-center-stadium` cho toàn bộ giao diện Room.
+- Áp dụng ảnh VS mới cho cả trạng thái Chờ đối thủ và các trạng thái Room còn lại.
+- Không thay đổi Backend, RP, API hoặc luồng chức năng.

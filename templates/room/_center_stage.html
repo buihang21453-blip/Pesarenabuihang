@@ -102,7 +102,7 @@
                     </div>
                     {% endif %}
                 {% else %}
-                    <img class="room-center-vs-image" src="{{ room_asset('vs-gold-emblem.webp') }}" alt="VS" loading="eager">
+                    <img class="room-center-vs-image" src="{{ url_for('static', filename='assets/room_custom/vs-gold-v126.webp') }}?v={{ APP_VERSION }}" alt="VS" loading="eager">
                     {% if room.status == 'playing' and room.match_mode != 'friendly' and (room_room_viewer_is_host or current_user.role == 'admin') %}
                         <div class="room-center-score-panel">
                             <h3 class="room-score-title">Kết quả trận đấu</h3>
@@ -226,7 +226,7 @@
                     {% endif %}
                 {% endif %}
             {% else %}
-                <img class="room-center-vs-image" src="{{ room_asset('vs-gold-emblem.webp') }}" alt="VS" loading="eager">
+                <img class="room-center-vs-image" src="{{ url_for('static', filename='assets/room_custom/vs-gold-v126.webp') }}?v={{ APP_VERSION }}" alt="VS" loading="eager">
                 {% if room_room_viewer_is_host or current_user.role == 'admin' %}
                 <div class="room-center-primary-actions room-action-zone room-center-primary-actions-three">
                     <a class="btn arena-btn gold room-center-action-btn" href="{{ url_for('players') }}">Mời đấu</a>
