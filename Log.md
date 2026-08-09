@@ -1798,3 +1798,15 @@
 - Dieu chinh 3 thanh phan chinh cua card: ty le logo, ten che do, trang thai mo khoa / tam tat.
 - Tang chieu cao card, can giua logo, phong to ten che do va lam nut trang thai ro hon.
 - Giu tong the 6 card dong bo nhung van co tuning nhe theo tung logo de tranh lech ty le.
+
+
+## V1.3.128_trang_thai_3_muc_cho_cac_che_do
+- Chuan hoa trang thai card o phan CAC CHE DO KHAC thanh 3 muc ro rang: Da mo khoa / Chua mo khoa / Che do dang tam tat.
+- Ap dung cho giao dien room moi va giao dien room tong hop de hien thi dong bo.
+- Them class mau rieng cho tung trang thai de nguoi dung nhin vao la phan biet duoc ngay.
+
+
+## V1.3.129_phong_to_logo_va_tang_be_ngang_trang_thai_che_do
+- Phong to tiep logo trong cac card che do ben duoi de sat hon anh mau nguoi dung gui.
+- Tang chieu cao the mode va mo rong be ngang dong trang thai de gan nhu an kin khung ben duoi.
+- Tang nhe co chu ten che do va can lai khoang trang giua logo / ten / trang thai.

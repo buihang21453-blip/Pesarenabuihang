@@ -480,3 +480,9 @@
   }
 }
 
+
+
+/* V1.3.128 room mode status states */
+.room-master-mode-card > small.is-unlocked{border-color:#0a7430!important;background:#062313!important;color:#43f17c!important}
+.room-master-mode-card > small.is-locked{border-color:rgba(148,163,184,.35)!important;background:rgba(30,41,59,.46)!important;color:#d7e0ec!important}
+.room-master-mode-card > small.is-disabled{border-color:rgba(175,123,18,.45)!important;background:rgba(71,49,9,.56)!important;color:#ffd772!important}

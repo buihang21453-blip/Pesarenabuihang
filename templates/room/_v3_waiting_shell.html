@@ -161,7 +161,9 @@
                     <span class="pes-room3-mode-index">{{ loop.index }}</span>
                     <img src="{{ mode_asset(mode.code) }}?v={{ APP_VERSION|urlencode }}" alt="">
                     <strong>{% if mode.code == 'rank_random' %}Rank thường Random{% elif mode.code == 'random3_pick1' %}Random 3 chọn 1{% elif mode.code == 'tactical_bo3' %}Đấu chiến thuật BO3{% elif mode.code == 'ban_pick_bo3' %}Cấm chọn CLB{% elif mode.code == 'home_away' %}Lượt đi - lượt về{% else %}{{ mode.label }}{% endif %}</strong>
-                    <small>{% if mode.eligible %}🔒 Đã mở khóa{% else %}🔒 {{ mode.lock_reasons[0] }}{% endif %}</small>
+                    {% set mode_status = 'Đã mở khóa' if mode.eligible else ('Chế độ đang tạm tắt' if 'Chế độ đang tạm tắt' in mode.lock_reasons else 'Chưa mở khóa') %}
+                    {% set mode_status_class = 'is-unlocked' if mode.eligible else ('is-disabled' if 'Chế độ đang tạm tắt' in mode.lock_reasons else 'is-locked') %}
+                    <small class="{{ mode_status_class }}">{% if mode_status_class == 'is-unlocked' %}🔓 {% elif mode_status_class == 'is-disabled' %}⏸ {% else %}🔒 {% endif %}{{ mode_status }}</small>
                 </button>
             </form>
             {% endfor %}
