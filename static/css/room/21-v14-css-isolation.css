@@ -1,22 +1,14 @@
-/* PES Arena V1.4 — CSS isolation guard.
-   Purpose: prevent broad legacy/global button rules from changing the V3 waiting-room controls.
-   This file intentionally does not redesign the room. */
+/* PES Arena V1.4.1 — V3 CSS isolation guard.
+   Uses :is() so V3 controls do not duplicate exact selector ownership from file 20. */
 
-#roomLiveShell.pes-room3-live-shell .pes-room3-action,
-#roomLiveShell.pes-room3-live-shell .pes-room3-small-btn,
-#roomLiveShell.pes-room3-live-shell .pes-room3-share,
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card {
+#roomLiveShell.pes-room3-live-shell :is(.pes-room3-action, .pes-room3-small-btn, .pes-room3-share, .pes-room3-mode-card) {
   -webkit-appearance: none;
   appearance: none;
   font-family: inherit;
   text-decoration: none;
 }
 
-/* Global .btn/.arena-btn rules must not leak into the V3 shell. */
-#roomLiveShell.pes-room3-live-shell button.pes-room3-action,
-#roomLiveShell.pes-room3-live-shell button.pes-room3-small-btn,
-#roomLiveShell.pes-room3-live-shell button.pes-room3-share,
-#roomLiveShell.pes-room3-live-shell button.pes-room3-mode-card {
+#roomLiveShell.pes-room3-live-shell button:is(.pes-room3-action, .pes-room3-small-btn, .pes-room3-share, .pes-room3-mode-card) {
   transform: none;
   filter: none;
 }

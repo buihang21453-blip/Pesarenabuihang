@@ -1873,3 +1873,24 @@
 - Dua `_safe_int` thanh helper cuc bo ngay trong module ket qua tran, khong con phu thuoc `app.py` hoac module khac.
 - Nang test xac nhan de KHONG inject `_safe_int` tu context; test phai tu chay bang helper cua chinh module.
 - Giu nguyen co che claim/idempotency/rollback cua V1.3.133 de tranh cong RP hai lan khi retry.
+
+## V1.4.1 — 09/08/2026 13:17+07:00 — Don xung dot CSS Room + tu sua phong Series bi ket
+
+### Phat hien
+- CSS Room van con selector action/button bi so huu dong thoi boi `15-room-actions-stability.css` va `17-center-match-stability.css`.
+- `21-v14-css-isolation.css` lap selector chinh xac voi `20-room-v3-waiting-final.css`.
+- Luong Series co rui ro: match con da `confirmed` nhung reset phong tu `waiting_result_confirm` ve `waiting_ready` that bai; lan xac nhan lai chi thay match da confirmed va co the de phong bi ket.
+
+### Sua
+- `static/css/room/15-room-actions-stability.css`: gom toan bo selector nut/action ve dung owner.
+- `static/css/room/17-center-match-stability.css`: bo cac selector nut/action da chuyen sang file 15, giu nguyen gia tri hien thi.
+- `static/css/room/21-v14-css-isolation.css`: doi sang selector `:is()` de cach ly V3 ma khong trung exact selector voi file 20.
+- `modules/rank_series/service.py`: them `_reset_room_after_series_confirm()` co kiem tra ket qua update va tu repair khi retry neu match con da confirmed.
+- `app.py`: APP_VERSION 1.4 -> 1.4.1.
+
+### Kiem tra
+- Python compile: PASS.
+- JavaScript `node --check`: PASS.
+- CSS cross-module Room selector ownership conflicts: 0.
+- Regression quan trong Room/Confirm/Series/CSS/Quick Match/Presence: PASS.
+- Full pytest lich su van co nhieu test source/version cu; khong thay production code de ep cac test lich su nay pass.

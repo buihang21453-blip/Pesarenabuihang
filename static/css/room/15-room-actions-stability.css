@@ -928,3 +928,41 @@ body.room-action-modal-open{overflow:hidden}
     .room-action-modal-actions{grid-template-columns:1fr}
     .room-action-modal-button.primary{order:-1}
 }
+
+
+/* ===== V1.4.1 — action ownership consolidation =====
+ * These rules were moved from 17-center-match-stability.css so every action/button
+ * selector has one owner. Visual values are preserved. */
+@media (min-width:821px){
+  .arena-room-v2 .room-center-stage-plain.room-state-playing > .room-center-score-panel .room-submit-result-btn{
+    display:flex !important;align-items:center !important;justify-content:center !important;
+    width:100% !important;min-height:44px !important;height:44px !important;
+    margin:0 !important;box-sizing:border-box !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-center-primary-actions,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-action-zone,
+  .arena-room-v2 .room-center-stage-plain.room-state-waiting_ready > .room-prestart-launch{
+    visibility:visible !important;opacity:1 !important;max-width:calc(100% - 20px) !important;box-sizing:border-box !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed > .room-center-primary-actions,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed > .room-action-zone{
+    width:calc(100% - 20px) !important;max-width:360px !important;box-sizing:border-box !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed > .room-center-primary-actions form,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed > .room-action-zone form{min-width:0 !important;}
+  .arena-room-v2 .room-center-stage-plain.room-state-playing > .room-center-primary-actions,
+  .arena-room-v2 .room-center-stage-plain.room-state-playing > .room-action-zone{
+    visibility:visible !important;opacity:1 !important;box-sizing:border-box !important;
+  }
+}
+@media (max-width:820px){
+  .arena-room-v2 .room-center-stage-plain.room-state-playing > .room-center-score-panel .room-submit-result-btn{
+    width:100% !important;min-height:44px !important;
+  }
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed > .room-center-primary-actions,
+  .arena-room-v2 .room-center-stage-plain.room-state-confirmed > .room-action-zone{
+    position:relative !important;left:auto !important;right:auto !important;bottom:auto !important;
+    transform:none !important;width:calc(100% - 20px) !important;max-width:none !important;
+    margin:8px auto !important;box-sizing:border-box !important;
+  }
+}

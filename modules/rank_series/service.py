@@ -423,6 +423,45 @@ def _apply_series_rp(series, result):
     return d1, d2, rp
 
 
+def _reset_room_after_series_confirm(room, series, confirmer_id, *, completed, delta1=0, delta2=0, resolved=None):
+    """Reset the room after a confirmed Series child, with idempotent verification.
+
+    A child match may already be confirmed even when the room reset query was lost/failed.
+    Retrying confirmation must repair that room instead of leaving it stuck forever in
+    waiting_result_confirm.
+    """
+    if completed:
+        resolved = resolved or {}
+        room_note = f"Series hoàn tất: {resolved.get('aggregate_score') or resolved.get('score') or 'Hòa'} | RP {int(delta1):+d}/{int(delta2):+d}"
+        guest_ready = False
+    else:
+        meta = metadata(series)
+        next_game_no = int(meta.get("next_game_no") or 1)
+        room_note = f"__SERIES_ACTIVE__|{series['id']}|{series.get('mode_code')}|next:{next_game_no}"
+        guest_ready = True
+
+    room_update = {
+        "status": "waiting_ready", "guest_ready": guest_ready, "host_team": None, "guest_team": None,
+        "host_team_overall": None, "guest_team_overall": None, "host_team_logo_url": None, "guest_team_logo_url": None,
+        "host_team_league": None, "guest_team_league": None, "host_score": None, "guest_score": None, "match_id": None,
+        "submitted_by_id": None, "confirmed_by_id": confirmer_id, "team_tier": series.get("mode_code"),
+        "match_mode": _CONTEXT.get("MATCH_MODE_RANKED", "ranked"), "note": room_note,
+        "state_expires_at": None, "updated_at": _g("now_iso")(),
+    }
+    result = _g("execute_query")(
+        _g("db").table("match_rooms").update(room_update).eq("id", room["id"]).eq("status", "waiting_result_confirm"),
+        "series_reset_room", attempts=2,
+    )
+    if result.data or []:
+        return True
+
+    # Idempotent success: another request may already have repaired the room.
+    fresh_room = _g("get_room")(room["id"])
+    if fresh_room and fresh_room.get("status") == "waiting_ready" and not fresh_room.get("match_id"):
+        return True
+    raise ValueError("Kết quả Series đã được ghi nhận nhưng phòng chưa thể làm mới; hãy thử xác nhận lại.")
+
+
 def confirm_series_child_match(room, match, confirmer_id):
     game = repository.get_game_by_match(match.get("id"))
     if not game:
@@ -437,7 +476,15 @@ def confirm_series_child_match(room, match, confirmer_id):
     if not (claim.data or []):
         fresh = _g("get_match")(match["id"])
         if fresh and fresh.get("status") == "confirmed":
-            return {"series_completed": series.get("status") == "completed", "delta1": int(series.get("rp_player1") or 0), "delta2": int(series.get("rp_player2") or 0)}
+            latest = repository.get_series(series["id"]) or series
+            completed = latest.get("status") == "completed"
+            resolved = metadata(latest).get("resolved") or {}
+            d1 = int(latest.get("rp_player1") or 0)
+            d2 = int(latest.get("rp_player2") or 0)
+            _reset_room_after_series_confirm(
+                room, latest, confirmer_id, completed=completed, delta1=d1, delta2=d2, resolved=resolved
+            )
+            return {"series_completed": completed, "delta1": d1, "delta2": d2, "resolved": resolved}
         raise ValueError("Trận con đã được xử lý bởi yêu cầu khác.")
     p1, p2 = _g("get_user")(match.get("player1_id")), _g("get_user")(match.get("player2_id"))
     if not p1 or not p2: raise ValueError("Không tải được người chơi.")
@@ -491,12 +538,9 @@ def confirm_series_child_match(room, match, confirmer_id):
         repository.update_series(series["id"], {**base_update, "metadata": meta})
         room_note = f"__SERIES_ACTIVE__|{series['id']}|{series.get('mode_code')}|next:{meta['next_game_no']}"
         d1 = d2 = 0; guest_ready = True; completed = False
-    room_update = {"status": "waiting_ready", "guest_ready": guest_ready, "host_team": None, "guest_team": None,
-        "host_team_overall": None, "guest_team_overall": None, "host_team_logo_url": None, "guest_team_logo_url": None,
-        "host_team_league": None, "guest_team_league": None, "host_score": None, "guest_score": None, "match_id": None,
-        "submitted_by_id": None, "confirmed_by_id": confirmer_id, "team_tier": series.get("mode_code"), "match_mode": _CONTEXT.get("MATCH_MODE_RANKED", "ranked"),
-        "note": room_note, "state_expires_at": None, "updated_at": _g("now_iso")()}
-    _g("execute_query")(_g("db").table("match_rooms").update(room_update).eq("id", room["id"]).eq("status", "waiting_result_confirm"), "series_reset_room", attempts=2)
+    _reset_room_after_series_confirm(
+        room, series, confirmer_id, completed=completed, delta1=d1, delta2=d2, resolved=resolved
+    )
     for key in ("_rz_users_map", "_rz_players_all", "_rz_rooms_all"):
         try: _g("cache_delete")(key)
         except Exception: pass

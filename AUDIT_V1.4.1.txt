@@ -1,0 +1,28 @@
+PES ARENA V1.4.1 - KIEM TRA LOI CO THE ANH HUONG DU AN
+Ngay: 09/08/2026 (Asia/Bangkok)
+
+1. PYTHON
+- Toan bo file .py compile thanh cong.
+- Khong phat hien syntax error.
+
+2. JAVASCRIPT
+- Toan bo static/js/*.js qua node --check.
+
+3. CSS ROOM
+- Da xu ly ownership selector action/button bi chia giua file 15 va 17.
+- Da xu ly exact selector conflict giua file 20 va 21.
+- Cross-module Room selector ownership conflicts: 0.
+- Cac selector lap ben trong cung file 17/18/20 duoc giu nguyen vi la cascade lich su; khong gop khi chua co visual regression browser.
+
+4. NUT BAM / ROUTE
+- Cac endpoint chinh cua Room/Confirm/Dispute/Series/Quick Match/Presence co regression test dang dung va da PASS trong nhom kiem tra hien tai.
+- Mot so test lich su con doc room_detail.html monolith, trong khi UI hien da tach partial; duoc xac dinh la stale test.
+
+5. LOI SERIES DA SUA
+- Truoc day: match con co the confirmed nhung room reset fail -> phong ket o waiting_result_confirm.
+- V1.4.1: reset room duoc verify; retry confirmation se tu repair room neu match da confirmed.
+
+6. KHONG DONG VAO
+- Khong refactor cac selector lap noi bo file 17/18/20 de tranh doi giao dien.
+- Khong sua logic RP/gameplay ngoai loi idempotent reset Series.
+- Khong thay code production chi de lam cac test version/source lich su pass.
