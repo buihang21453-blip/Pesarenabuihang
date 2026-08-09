@@ -1917,3 +1917,12 @@
 - Don `invite_id` cu khi tu choi/huy loi moi.
 - Giu phong `confirmed` la busy cho den khi roi phong/het han/da tiep.
 - Them `test_v143_match_flow_integrity.py` va `AUDIT_V1.4.3_LUONG_TRAN_DAU.txt`.
+
+## V1.4.4 — Đồng bộ màu thông báo toàn hệ thống
+- Sửa Room modal: bỏ `is-success` cố định khỏi nút confirm/Đã hiểu.
+- Thêm `static/css/notification_tones.css` làm owner cuối cùng cho màu CTA popup.
+- Đồng bộ Room modal, App UI Dialog, Quick Match notice và Invite modal/banner.
+- Nút chính theo tone thông báo; nút phụ giữ màu trung tính.
+- Dialog chung không còn dùng class màu legacy để quyết định CTA.
+- Thêm `test_v144_notification_tone_integrity.py` chống tái phát CSS đè màu.
+- Python/JS syntax PASS; regression trọng tâm PASS.

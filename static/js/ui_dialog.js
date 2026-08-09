@@ -23,7 +23,7 @@
             </div>
             <div class="app-ui-dialog-actions">
               <button class="btn gray" type="button" data-ui-dialog-cancel>Hủy</button>
-              <button class="btn green" type="button" data-ui-dialog-confirm>Xác nhận</button>
+              <button class="btn app-ui-dialog-confirm" type="button" data-ui-dialog-confirm>Xác nhận</button>
             </div>
           </section>`;
         document.body.appendChild(root);
@@ -46,8 +46,8 @@
         const tone = ['success', 'danger', 'warning', 'info'].includes(item.options.tone) ? item.options.tone : 'success';
         root.classList.remove('tone-success', 'tone-danger', 'tone-warning', 'tone-info');
         root.classList.add('tone-' + tone);
-        // Keep legacy button classes for compatibility; ui_dialog.css owns the final tone.
-        confirmButton.className = 'btn ' + (tone === 'danger' ? 'red' : tone === 'warning' ? 'gold' : tone === 'info' ? 'blue' : 'green');
+        // V1.4.4: dialog tone owns CTA color; do not leak semantic gaming-button classes into modal.
+        confirmButton.className = 'btn app-ui-dialog-confirm';
         root.hidden = false;
         document.body.classList.add('app-ui-dialog-open');
 
