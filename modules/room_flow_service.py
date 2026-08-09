@@ -12,18 +12,36 @@ def configure(context):
     globals().update(context)
 
 EXPORTED_NAMES = [
-    "ROOM_FLOW_TRANSITIONS", "ROOM_ACTION_STATES", "room_flow_stage",
+    "ROOM_FLOW_TRANSITIONS", "ROOM_EVENT_TRANSITIONS", "ROOM_ACTION_STATES", "room_flow_stage",
     "room_action_allowed", "room_action_block_message", "require_room_action",
-    "room_transition_allowed", "describe_room_flow",
+    "room_transition_allowed", "room_event_target", "room_event_allowed",
+    "require_room_event", "describe_room_flow",
 ]
 
 ROOM_FLOW_TRANSITIONS = {
     "waiting_ready": {"playing", "friendly_playing", "cancelled"},
     "playing": {"waiting_result_confirm", "cancelled"},
     "friendly_playing": {"waiting_ready", "cancelled"},
-    "waiting_result_confirm": {"confirmed", "cancelled"},
+    "waiting_result_confirm": {"confirmed", "waiting_ready", "cancelled"},
     "confirmed": {"waiting_ready", "cancelled"},
     "cancelled": set(),
+}
+
+
+# Một nguồn duy nhất mô tả sự kiện nào được phép làm phòng đổi trạng thái.
+# Route có thể kiểm tra theo tên sự kiện thay vì tự hard-code cặp status ở nhiều nơi.
+ROOM_EVENT_TRANSITIONS = {
+    "rank_match_started": ("waiting_ready", "playing"),
+    "friendly_match_started": ("waiting_ready", "friendly_playing"),
+    "friendly_match_finished": ("friendly_playing", "waiting_ready"),
+    "result_submitted": ("playing", "waiting_result_confirm"),
+    "result_confirmed": ("waiting_result_confirm", "confirmed"),
+    "result_auto_confirmed": ("waiting_result_confirm", "confirmed"),
+    "result_disputed_release": ("waiting_result_confirm", "waiting_ready"),
+    "rematch_both_ready": ("confirmed", "waiting_ready"),
+    "room_cancelled_from_waiting": ("waiting_ready", "cancelled"),
+    "room_cancelled_from_playing": ("playing", "cancelled"),
+    "room_cancelled_from_result": ("waiting_result_confirm", "cancelled"),
 }
 
 ROOM_ACTION_STATES = {
@@ -76,6 +94,30 @@ def room_transition_allowed(current_status, target_status):
     if current_status == target_status:
         return True
     return target_status in ROOM_FLOW_TRANSITIONS.get(current_status, set())
+
+
+def room_event_target(event_name):
+    transition = ROOM_EVENT_TRANSITIONS.get(event_name)
+    return transition[1] if transition else None
+
+def room_event_allowed(room, event_name):
+    transition = ROOM_EVENT_TRANSITIONS.get(event_name)
+    if not transition:
+        return False
+    return (room or {}).get("status") == transition[0]
+
+def require_room_event(room, event_name):
+    transition = ROOM_EVENT_TRANSITIONS.get(event_name)
+    if not transition:
+        return False, f"Sự kiện phòng không hợp lệ: {event_name}."
+    current = (room or {}).get("status") or "không xác định"
+    expected, target = transition
+    if current != expected:
+        return False, f"Không thể xử lý sự kiện {event_name}: phòng đang ở {current}, yêu cầu {expected}."
+    if not room_transition_allowed(expected, target):
+        return False, f"Chuyển trạng thái {expected} → {target} chưa được khai báo trong luồng phòng."
+    return True, ""
+
 
 def describe_room_flow():
     return [

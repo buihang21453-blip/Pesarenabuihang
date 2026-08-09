@@ -229,18 +229,26 @@ def expire_room_if_needed(room):
         if status == "waiting_result_confirm" and mode == MATCH_MODE_RANKED:
             pending_match = get_match(room.get("match_id")) if room.get("match_id") else None
             if pending_match and pending_match.get("status") == "confirmed":
-                room.update({
-                    "status": "waiting_ready",
+                # Match đã chốt nhưng Room chưa kịp chuyển trạng thái (race/network/DB retry).
+                # Tuyệt đối không reset về waiting_ready ở đây: nếu reset, UI mất tỷ số,
+                # match_id và bước Đá tiếp trở nên không thể truy cập.
+                update_data = {
+                    "status": "confirmed",
                     "guest_ready": False,
-                    "host_score": None,
-                    "guest_score": None,
-                    "match_id": None,
-                    "submitted_by_id": None,
-                    "confirmed_by_id": None,
-                    "state_expires_at": None,
+                    "confirmed_by_id": room.get("guest_user_id") or room.get("host_user_id"),
+                    "note": "Kết quả đã được xác nhận. Chọn Đá tiếp hoặc Rời phòng.",
+                    "state_expires_at": future_iso(REMATCH_TIMEOUT_SECONDS),
                     "updated_at": now_iso(),
-                })
-            room["timeout_seconds"] = 0
+                }
+                repair = execute_query(
+                    db.table("match_rooms").update(update_data)
+                    .eq("id", room.get("id")).in_("status", ["waiting_result_confirm", "confirmed"]),
+                    "repair_room_after_confirmed_match_timeout",
+                    attempts=2,
+                )
+                if repair.data or []:
+                    room.update(update_data)
+            room["timeout_seconds"] = seconds_until(room.get("state_expires_at"))
             return room
 
         # Giao hữu hoặc phòng chưa bắt đầu: chỉ đóng, không trừ điểm.
@@ -277,14 +285,17 @@ def expire_room_if_needed(room):
             room["timeout_seconds"] = 0
             return room
 
-        if status == "confirmed" and note in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}:
+        if status == "confirmed" and note not in {REMATCH_HOST_DECLINED_NOTE, REMATCH_GUEST_DECLINED_NOTE, REMATCH_EXPIRED_NOTE}:
+            # Giai đoạn Confirmed có timeout riêng kể từ lúc xác nhận kết quả.
+            # Hết hạn chỉ kết thúc quyền Đá tiếp; không reset đội/tỷ số/match_id
+            # và tuyệt đối không tự bắt đầu một trận mới.
             update_data = {
                 "note": REMATCH_EXPIRED_NOTE,
                 "state_expires_at": None,
                 "updated_at": now_iso(),
             }
             execute_query(
-                db.table("match_rooms").update(update_data).eq("id", room.get("id")),
+                db.table("match_rooms").update(update_data).eq("id", room.get("id")).eq("status", "confirmed"),
                 "expire_rematch_request",
             )
             room.update(update_data)

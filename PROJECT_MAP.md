@@ -42,3 +42,11 @@ Giao hữu: `waiting_ready -> friendly_playing -> waiting_ready`.
 - `modules/match_result_service.py`: claim + snapshot + rollback khi xác nhận RP lỗi.
 - `modules/room_result_routes.py`: xác nhận kết thúc ở `confirmed`.
 - `modules/room_rematch_routes.py`: Đá tiếp cần cả hai đồng ý, có kiểm tra ghi trạng thái.
+
+
+### V1.2.12 event flow
+- `modules/room_flow_service.py`: nguồn chuẩn cho action + event + transition của phòng.
+- `modules/room_result_routes.py`: submit/confirm/dispute; confirm luôn vào `confirmed`.
+- `modules/core/room_runtime.py`: timeout/repair, không reset bỏ qua bước Confirmed.
+- `modules/core/match_repository.py`: auto-confirm đồng bộ Room sang Confirmed.
+- `modules/room_rematch_routes.py`: hai bên đồng ý Đá tiếp rồi mới `confirmed -> waiting_ready`.

@@ -233,3 +233,13 @@
 - Auto-confirm 60 giay cung chot `confirmed`, khong tu dong xoa ket qua.
 - Da tiep doi xung: ca hai nguoi deu phai dong y; update co dieu kien va kiem tra ket qua ghi.
 - Khong doi schema Supabase, khong thay giao dien.
+
+
+## V1.2.12 - Chuan hoa luong su kien + Confirmed -> Da tiep
+- Chuẩn hóa state machine theo sự kiện trong `modules/room_flow_service.py`.
+- Sửa lỗi `room_runtime.py` tự reset `waiting_result_confirm -> waiting_ready` khi Match đã confirmed.
+- Mọi xác nhận thủ công/tự động đều kết thúc ở `room.status = confirmed`.
+- Giữ nguyên tỷ số, CLB và `match_id` ở màn hình Confirmed.
+- Bổ sung tự repair Room nếu Match đã confirmed nhưng cập nhật Room thất bại/race.
+- Đá tiếp: người thứ nhất chỉ đánh dấu đồng ý; người thứ hai mới reset về `waiting_ready`.
+- Không đổi schema Supabase, không thêm Series/BlackBox/UI V1.4.5.

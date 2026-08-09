@@ -40,6 +40,18 @@ def _require_room_action_safe(room, action):
         return checker(room, action)
     return True, ""
 
+def _require_room_event_safe(room, event_name):
+    checker = globals().get("require_room_event")
+    if callable(checker):
+        return checker(room, event_name)
+    return True, ""
+
+def _rematch_timeout_seconds():
+    try:
+        return int(globals().get("REMATCH_TIMEOUT_SECONDS", 60) or 60)
+    except (TypeError, ValueError):
+        return 60
+
 def register_routes(context):
     """Đăng ký nhóm route vào Flask app hiện tại."""
     globals().update(context)
@@ -52,6 +64,10 @@ def register_routes(context):
         _flow_ok, _flow_message = _require_room_action_safe(room, "submit_result")
         if room and not _flow_ok:
             flash(_flow_message, "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        _event_ok, _event_message = _require_room_event_safe(room, "result_submitted")
+        if room and not _event_ok:
+            flash(_event_message, "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:
@@ -216,6 +232,10 @@ def register_routes(context):
         if room and not _flow_ok:
             flash(_flow_message, "warning")
             return redirect(url_for("room_detail", room_id=room_id))
+        _event_ok, _event_message = _require_room_event_safe(room, "result_confirmed")
+        if room and not _event_ok:
+            flash(_event_message, "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:
             flash("Không tìm thấy phòng.", "danger")
@@ -234,6 +254,7 @@ def register_routes(context):
             flash("Không tìm thấy trận.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
+        room_update = None
         try:
             try:
                 users_before_streak_event = users_map()
@@ -257,8 +278,8 @@ def register_routes(context):
                 "confirmed_by_id": user["id"],
                 "match_mode": MATCH_MODE_RANKED,
                 "team_tier": previous_mode,
-                "note": "Kết quả đã xác nhận. Chọn Đá tiếp hoặc rời phòng.",
-                "state_expires_at": None,
+                "note": "Kết quả đã xác nhận. Chọn Đá tiếp hoặc Rời phòng.",
+                "state_expires_at": future_iso(_rematch_timeout_seconds()),
                 "updated_at": now_iso(),
             }
             room_update_result = execute_query(
@@ -276,10 +297,23 @@ def register_routes(context):
             flash("Đã xác nhận kết quả. Hai người có thể chọn Đá tiếp hoặc rời phòng.", "success")
         except ValueError as exc:
             fresh_match = get_match(match.get("id"))
-            if fresh_match and fresh_match.get("status") == "confirmed":
+            if fresh_match and fresh_match.get("status") == "confirmed" and room_update:
                 error_id = _result_error_id("ROOM")
-                print(f"{error_id} confirmed but room finish pending room={room_id}: {exc}")
-                flash(f"Kết quả đã được ghi nhận, nhưng trạng thái phòng chưa chốt hoàn toàn. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
+                try:
+                    repair = execute_query(
+                        db.table("match_rooms").update(room_update)
+                        .eq("id", room_id).eq("status", "waiting_result_confirm"),
+                        "repair_confirmed_match_room_state",
+                        attempts=2,
+                    )
+                    if repair.data or []:
+                        _invalidate_room_cache_safe()
+                        flash("Kết quả đã được ghi nhận và phòng đã tự khôi phục sang bước Đá tiếp / Rời phòng.", "success")
+                        return redirect(url_for("room_detail", room_id=room_id))
+                except Exception as repair_exc:
+                    print(f"{error_id} room repair ERROR room={room_id}: {type(repair_exc).__name__}: {repair_exc}")
+                print(f"{error_id} confirmed but room state pending room={room_id}: {exc}")
+                flash(f"Kết quả đã được ghi nhận, nhưng phòng chưa chuyển sang bước Đá tiếp. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
             else:
                 print(f"room_confirm_result validation room={room_id} match={match.get('id')}: {exc}")
                 flash(str(exc), "warning")
@@ -287,9 +321,22 @@ def register_routes(context):
         except Exception as exc:
             error_id = _result_error_id("CONFIRM")
             fresh_match = get_match(match.get("id"))
-            if fresh_match and fresh_match.get("status") == "confirmed":
-                print(f"{error_id} confirm completed but room finish failed room={room_id}: {type(exc).__name__}: {exc}")
-                flash(f"Kết quả đã được ghi nhận, nhưng trạng thái phòng chưa chốt hoàn toàn. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
+            if fresh_match and fresh_match.get("status") == "confirmed" and room_update:
+                try:
+                    repair = execute_query(
+                        db.table("match_rooms").update(room_update)
+                        .eq("id", room_id).eq("status", "waiting_result_confirm"),
+                        "repair_confirmed_match_room_state_after_error",
+                        attempts=2,
+                    )
+                    if repair.data or []:
+                        _invalidate_room_cache_safe()
+                        flash("Kết quả đã được ghi nhận và phòng đã tự khôi phục sang bước Đá tiếp / Rời phòng.", "success")
+                        return redirect(url_for("room_detail", room_id=room_id))
+                except Exception as repair_exc:
+                    print(f"{error_id} room repair ERROR room={room_id}: {type(repair_exc).__name__}: {repair_exc}")
+                print(f"{error_id} confirm completed but room state update failed room={room_id}: {type(exc).__name__}: {exc}")
+                flash(f"Kết quả đã được ghi nhận, nhưng phòng chưa chuyển sang bước Đá tiếp. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
             else:
                 print(f"{error_id} room_confirm_result ERROR room={room_id} match={match.get('id')}: {type(exc).__name__}: {exc}")
                 flash(f"Không thể xác nhận kết quả. Mã lỗi {error_id}. Chưa ghi thêm điểm; hãy thử lại sau vài giây.", "danger")
@@ -306,6 +353,10 @@ def register_routes(context):
         _flow_ok, _flow_message = _require_room_action_safe(room, "dispute_result")
         if room and not _flow_ok:
             flash(_flow_message, "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        _event_ok, _event_message = _require_room_event_safe(room, "result_disputed_release")
+        if room and not _event_ok:
+            flash(_event_message, "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:

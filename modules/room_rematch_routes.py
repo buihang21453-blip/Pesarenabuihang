@@ -4,6 +4,12 @@ Module đăng ký route theo dependency của app.py để giữ nguyên endpoin
 """
 
 
+def _require_room_event_safe(room, event_name):
+    checker = globals().get("require_room_event")
+    if callable(checker):
+        return checker(room, event_name)
+    return True, ""
+
 def _invalidate_room_flow_cache_safe():
     calls = [
         ("cache_delete", ("_rz_rooms_all",)),
@@ -254,6 +260,10 @@ def register_routes(context):
 
         if room["status"] != "confirmed":
             flash("Chỉ có thể đá tiếp sau khi kết quả trận trước đã được xác nhận.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        _event_ok, _event_message = _require_room_event_safe(room, "rematch_both_ready")
+        if not _event_ok:
+            flash(_event_message, "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
         host_active_room = active_room_for_user(room["host_user_id"], exclude_room_id=room_id)

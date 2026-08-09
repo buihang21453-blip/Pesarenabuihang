@@ -68,8 +68,8 @@ def auto_confirm_expired_match_if_needed(match):
                 db.table("match_rooms").update({
                     "status": "confirmed",
                     "guest_ready": False,
-                    "note": "Kết quả đã tự xác nhận sau thời gian chờ. Chọn Đá tiếp hoặc rời phòng.",
-                    "state_expires_at": None,
+                    "note": "Kết quả đã tự xác nhận sau thời gian chờ. Chọn Đá tiếp hoặc Rời phòng.",
+                    "state_expires_at": future_iso(REMATCH_TIMEOUT_SECONDS),
                     "updated_at": now_iso(),
                 }).eq("id", linked_room.get("id")).eq("status", "waiting_result_confirm"),
                 "finish_room_after_auto_confirm",
