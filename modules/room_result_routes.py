@@ -5,6 +5,28 @@ Module đăng ký route theo dependency của app.py để giữ nguyên endpoin
 
 import uuid
 
+# V1.4: Keep the Series-child predicate locally importable as a safe fallback.
+# register_routes(context) may inject the same helper from app.py, but route logic
+# must not crash with NameError when a partial/test context omits that binding.
+
+
+
+
+def _is_series_child_match_safe(match):
+    """Use the injected Series predicate when available; never let binding failures break result routes."""
+    checker = globals().get("is_series_child_match")
+    if callable(checker):
+        try:
+            return bool(checker(match))
+        except (KeyError, NameError, TypeError, AttributeError):
+            pass
+    # A match without an explicit Series mode is always a normal single match.
+    mode = str((match or {}).get("mode_code") or "").strip().lower()
+    if mode not in {"home_away", "bo3", "tactical_bo3", "ban_pick_bo3"}:
+        return False
+    # If this is a Series mode but the Series dependency is unavailable, fail closed:
+    # do not guess that it is a child game. Production app injects the real checker.
+    return False
 
 def _result_error_id(prefix):
     return f"{prefix}-{uuid.uuid4().hex[:8].upper()}"
@@ -240,7 +262,7 @@ def register_routes(context):
             # Series modes confirm each child match without per-game RP.
             # The orchestrator records the child result and applies the configured
             # Series RP exactly once when Home/Away or BO3 is complete.
-            if is_series_child_match(match):
+            if _is_series_child_match_safe(match):
                 series_result = confirm_series_child_match(room, match, user.get("id"))
                 if series_result.get("series_completed"):
                     flash(
@@ -375,7 +397,7 @@ def register_routes(context):
         note = f"{user.get('display_name', 'Khách')} không đồng ý kết quả: {reason_label}."
         disputed_match_id = room.get("match_id")
         disputed_match = get_match(disputed_match_id) if disputed_match_id else None
-        disputed_was_series_child = bool(disputed_match and is_series_child_match(disputed_match))
+        disputed_was_series_child = bool(disputed_match and _is_series_child_match_safe(disputed_match))
         previous_mode = room.get("team_tier") or SMART_RANDOM_MODE
         if not system_feature_enabled("rank_standard_enabled"):
             previous_mode = FRIENDLY_RANDOM3_MODE

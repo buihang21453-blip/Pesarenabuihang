@@ -1,3 +1,24 @@
+# V1.4 - Kiem tra CSS HTML va noi nut bam
+
+**Ngày:** 2026-08-09 (Asia/Bangkok)
+
+## Nội dung
+- Kiểm tra lại CSS/HTML/JS của phòng đấu trước khi nâng phiên bản.
+- Xóa `static/css/room/19-room-v3-waiting.css` vì không còn được nạp và trùng lớn với bản final.
+- Thêm `static/css/room/21-v14-css-isolation.css` để cách ly nút/phần tử của giao diện chờ đối thủ V3 khỏi CSS nút legacy/global.
+- CSS audit: selector trùng toàn dự án 219 → 148; xung đột selector Room giữa module 82 → 11; `!important` 2357 → 2339.
+- Kiểm tra 27 endpoint được template Room gọi: các endpoint nghiệp vụ đều có Python handler.
+- Sửa dependency `is_series_child_match` trong `modules/room_result_routes.py` bằng `_is_series_child_match_safe()` để luồng Xác nhận/Tranh chấp không chết do binding Series thiếu.
+- Thêm `test_v14_room_integrity.py` kiểm tra version, CSS isolation, endpoint Room, Quick Match/Copy handler và result binding.
+- Tăng `APP_VERSION` từ `1.3.134` lên `1.4`.
+
+## Kiểm tra
+- Python compile: PASS.
+- Bộ test V1.4 + result routes + confirm safety: **8 passed**.
+- Full pytest còn bị chặn bởi 2 test legacy cũ đang kiểm tra cấu trúc monolithic `room_detail.html`; code hiện đã tách partial/module.
+
+---
+
 # V1.3.117 — Dựng lại khung Room ảnh mẫu 3 bằng namespace riêng
 
 - Gốc triển khai: V1.3.115. Không kế thừa bản V1.3.116 lỗi bố cục.

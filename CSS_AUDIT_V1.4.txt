@@ -1,0 +1,32 @@
+PES ARENA V1.4 - KIEM TRA CSS / HTML / NUT BAM
+Ngay: 2026-08-09 (Asia/Bangkok)
+
+1. KET QUA CSS
+- Truoc V1.4:
+  + Cross-file exact duplicate selectors: 219
+  + Room cross-module conflicts: 82
+  + !important: 2357
+- Sau V1.4:
+  + Cross-file exact duplicate selectors: 148
+  + Room cross-module conflicts: 11
+  + !important: 2339
+- Da xoa static/css/room/19-room-v3-waiting.css vi da khong con duoc room_detail.html nap va trung rat nhieu voi 20-room-v3-waiting-final.css.
+- Da them 21-v14-css-isolation.css de ngan style button legacy/global tac dong vao shell cho doi thu V3.
+- Khong xoa 11 conflict con lai vi day la cac stability rule cua trang thai playing/waiting/confirmed; can tach refactor rieng neu muon giam tiep, tranh lam hong hien thi.
+
+2. KIEM TRA HTML / NUT BAM
+- Quet 27 endpoint duoc room templates goi bang url_for: tat ca endpoint nghiep vu deu co handler Python.
+- Tim nhanh: data-quick-match-url co delegated click handler trong static/js/quick_match.js.
+- Copy Room Link: copyRoomShareLink co click handler trong room/scripts/_room_runtime.html.
+- Copy Parsec ID/Link: data-copy-text co delegated handler trong templates/base.html.
+- Form doi che do, san sang, huy san sang, gui ket qua, xac nhan, tranh chap, thoat, da tiep, kick, random deu co action route.
+
+3. LOI CHUC NANG PHAT HIEN VA SUA
+- modules/room_result_routes.py goi is_series_child_match trong confirm/dispute.
+- Khi dependency Series khong duoc binding day du, route co the loi NameError/KeyError va lam Xac nhan ket qua that bai.
+- V1.4 them _is_series_child_match_safe(): dung helper that khi co; neu dependency khong san sang thi khong de route ket qua chet vi binding error.
+
+4. KIEM TRA
+- py_compile app.py + modules/room_result_routes.py: PASS.
+- test_v14_room_integrity.py + test_room_result_routes_v1144179.py + test_v133_confirm_failure_safety.py: 8 PASSED.
+- Full pytest bi dung o 2 test legacy cu do chung van yeu cau code nut nam truc tiep trong room_detail.html, trong khi du an hien da tach sang partial/module. Khong phai regression cua V1.4.
