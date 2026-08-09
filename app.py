@@ -1,6 +1,7 @@
 import csv
 import json
 import hashlib
+import io
 import os
 import random
 import secrets
@@ -13,6 +14,7 @@ from functools import wraps
 from pathlib import Path
 
 from dotenv import load_dotenv
+from PIL import Image, ImageOps, UnidentifiedImageError
 from flask import (
     Flask,
     jsonify,
@@ -30,8 +32,6 @@ from flask import (
 from supabase import create_client
 
 from modules.quick_match.service import build_candidate_sort_key, quick_match_priority_group
-from modules.presence.service import is_online as presence_is_online
-from modules.invites.service import send_invite_blocker, SEND_INVITE_MESSAGES, accept_invite_blocker
 from modules.cache_utils import (
     cache_get, cache_set, cache_delete, ttl_cache_get, ttl_cache_set, ttl_cache_delete,
 )
@@ -53,12 +53,8 @@ from modules.system_feature_service import post_login_endpoint, dashboard_is_ena
 from modules.session_runtime_service import (
     IDLE_TIMEOUT_SECONDS, PROTECTED_ROOM_STATUSES, idle_decision, room_blocks_idle_logout, client_config as session_client_config,
 )
-from modules.static_asset_service import (
-    asset_url, asset_base_url, shop_asset_base_url, luckybox_asset_base_url,
-    room_asset_url, room_asset_base_url, mode_asset_url, mode_asset_base_url,
-)
+from modules.static_asset_service import asset_url, asset_base_url, shop_asset_base_url, luckybox_asset_base_url
 from modules.profile import equipment_service as profile_equipment_service
-from modules.observability import configure_app_logging, log_system_event
 from modules.win_streaks import (
     WIN_STREAK_TITLES, WIN_STREAK_EVENT_PREFIX, get_win_streak_title,
     get_win_streak_badge, build_win_streak_event, encode_win_streak_room_note,
@@ -69,11 +65,11 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.4.5"
+APP_VERSION = "V1.2.10"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
-ONLINE_TIMEOUT_SECONDS = 120
+ONLINE_TIMEOUT_SECONDS = 60
 CHAT_COOLDOWN_SECONDS = 5
 CHAT_MAX_LENGTH = 200
 DISPUTE_EVIDENCE_BUCKET = "dispute-evidence"
@@ -188,8 +184,6 @@ app.secret_key = _flask_secret_key
 app.permanent_session_lifetime = timedelta(days=30)
 del _flask_secret_key
 
-configure_app_logging(app, APP_VERSION)
-
 _STATIC_FINGERPRINT_CACHE = {}
 
 def static_asset(filename):
@@ -217,10 +211,6 @@ app.jinja_env.globals["static_asset"] = static_asset
 app.jinja_env.globals["asset_base_url"] = asset_base_url
 app.jinja_env.globals["shop_asset_base_url"] = shop_asset_base_url
 app.jinja_env.globals["luckybox_asset_base_url"] = luckybox_asset_base_url
-app.jinja_env.globals["room_asset"] = room_asset_url
-app.jinja_env.globals["room_asset_base_url"] = room_asset_base_url
-app.jinja_env.globals["mode_asset"] = mode_asset_url
-app.jinja_env.globals["mode_asset_base_url"] = mode_asset_base_url
 
 PES_ARENA_TEST_MODE = (os.getenv("PES_ARENA_TEST_MODE") or "false").strip().lower() in {"1", "true", "yes", "on"}
 ALLOW_SIMPLE_TEST_PASSWORDS = (os.getenv("ALLOW_SIMPLE_TEST_PASSWORDS") or "false").strip().lower() in {"1", "true", "yes", "on"}
@@ -282,25 +272,9 @@ def execute_query(query, label="Supabase", attempts=4, delay=0.25):
             ))
 
             if not transient or attempt >= max(1, attempts) - 1:
-                log_system_event(
-                    "database_query_failed",
-                    level=40,
-                    label=label,
-                    attempts=attempt + 1,
-                    transient=transient,
-                    error_type=type(exc).__name__,
-                    error=str(exc),
-                )
+                print(f"{label} failed after {attempt + 1} attempt(s): {exc}")
                 raise
 
-            log_system_event(
-                "database_query_retry",
-                level=30,
-                label=label,
-                attempt=attempt + 1,
-                max_attempts=max(1, attempts),
-                error_type=type(exc).__name__,
-            )
             # Backoff ngắn: 0.25s, 0.5s, 0.75s...
             time.sleep(delay * (attempt + 1))
 
@@ -316,11 +290,103 @@ _admin_checked = False
 # =========================
 # Tiện ích thời gian đã tách sang modules/datetime_utils.py
 
-# Dispute evidence helpers moved to modules/core/dispute_evidence.py (V1.3.61).
-from modules.core import dispute_evidence as _core_dispute_evidence
-_core_dispute_evidence.configure(globals())
-for _evidence_name in _core_dispute_evidence.EXPORTED_NAMES:
-    globals()[_evidence_name] = getattr(_core_dispute_evidence, _evidence_name)
+def _normalize_storage_public_url(value):
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        return value.get("publicUrl") or value.get("public_url") or value.get("signedURL") or value.get("signed_url")
+    return str(value or "")
+
+
+def prepare_dispute_evidence_bytes(file_storage):
+    if not file_storage or not getattr(file_storage, "filename", ""):
+        return None
+
+    raw = file_storage.read(DISPUTE_EVIDENCE_MAX_BYTES + 1)
+    if len(raw) > DISPUTE_EVIDENCE_MAX_BYTES:
+        raise ValueError("Ảnh bằng chứng không được vượt quá 4 MB.")
+    if not raw:
+        raise ValueError("File ảnh bằng chứng đang trống.")
+
+    try:
+        with Image.open(io.BytesIO(raw)) as probe:
+            image_format = (probe.format or "").upper()
+            width, height = probe.size
+            probe.verify()
+        if image_format not in DISPUTE_EVIDENCE_ALLOWED_FORMATS:
+            raise ValueError("Bằng chứng chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.")
+        if width < 100 or height < 100:
+            raise ValueError("Ảnh bằng chứng quá nhỏ. Vui lòng chọn ảnh từ 100×100 pixel trở lên.")
+        if width * height > 30_000_000:
+            raise ValueError("Ảnh bằng chứng có độ phân giải quá lớn.")
+
+        with Image.open(io.BytesIO(raw)) as source:
+            source = ImageOps.exif_transpose(source).convert("RGB")
+            source.thumbnail(
+                (DISPUTE_EVIDENCE_MAX_SIDE, DISPUTE_EVIDENCE_MAX_SIDE),
+                Image.Resampling.LANCZOS,
+            )
+            output = io.BytesIO()
+            source.save(output, format="WEBP", quality=86, method=6)
+            return output.getvalue()
+    except ValueError:
+        raise
+    except (UnidentifiedImageError, OSError, SyntaxError):
+        raise ValueError("File bằng chứng không phải ảnh hợp lệ hoặc đã bị lỗi.")
+
+
+def upload_dispute_evidence(match_id, user_id, evidence_bytes):
+    require_db()
+    object_path = f"{match_id}/{user_id}/{uuid.uuid4().hex}.webp"
+    bucket = db.storage.from_(DISPUTE_EVIDENCE_BUCKET)
+    bucket.upload(
+        object_path,
+        evidence_bytes,
+        {
+            "content-type": "image/webp",
+            "cache-control": "3600",
+            "upsert": "false",
+        },
+    )
+    return object_path
+
+
+def remove_dispute_evidence_object(object_path):
+    if not object_path or db is None:
+        return
+    try:
+        db.storage.from_(DISPUTE_EVIDENCE_BUCKET).remove([object_path])
+    except Exception as exc:
+        print(f"remove_dispute_evidence_object warning: {exc}")
+
+
+def get_dispute_evidence_signed_url(object_path, expires_in=3600):
+    if not object_path or db is None:
+        return None
+    try:
+        response = db.storage.from_(DISPUTE_EVIDENCE_BUCKET).create_signed_url(
+            object_path,
+            max(60, int(expires_in)),
+        )
+        return _normalize_storage_public_url(response)
+    except Exception as exc:
+        print(f"get_dispute_evidence_signed_url warning: {exc}")
+        return None
+
+
+# [MODULE HOA] achievement_progress -> modules/core/achievements.py
+
+
+# [MODULE HOA] eligible_achievement_codes -> modules/core/achievements.py
+
+
+# [MODULE HOA] list_user_achievement_map -> modules/core/achievements.py
+
+
+# [MODULE HOA] decorate_player_achievements -> modules/core/achievements.py
+
+
+# [MODULE HOA] sync_achievements_for_users -> modules/core/achievements.py
 
 
 def hash_password(password: str) -> str:
@@ -344,14 +410,274 @@ def is_owner_user(user) -> bool:
     )
 
 
-# Compatibility source marker for legacy static regression checks: "rank_standard_enabled": True
-# System settings / maintenance / permission helpers moved to
-# modules/core/system_settings_runtime.py (V1.3.61). Public names stay bound in
-# app.py for compatibility with existing route modules and tests.
-from modules.core import system_settings_runtime as _core_system_settings_runtime
-_core_system_settings_runtime.configure(globals())
-for _settings_name in _core_system_settings_runtime.EXPORTED_NAMES:
-    globals()[_settings_name] = getattr(_core_system_settings_runtime, _settings_name)
+ADMIN_PERMISSION_GROUPS = {
+    "users": ["users_view", "users_approve", "users_edit", "users_delete", "password_reset", "accounts_import"],
+    "matches": ["matches_view", "matches_confirm", "matches_cancel", "matches_delete"],
+    "operations": ["rooms_manage", "invites_manage", "announcements_manage"],
+    "system": ["system_features_manage", "chat_manage", "friendly_manage", "registration_codes_manage", "admin_logs_view"],
+    "rp": ["rp_view", "rp_simulate", "rp_backup_restore", "daily_rank_limits_manage"],
+    "economy": ["zcoin_view", "zcoin_manage"],
+    "permissions": ["permissions_manage"],
+}
+ADMIN_PERMISSION_LABELS = {
+    "users_view":"Xem người dùng", "users_approve":"Duyệt tài khoản", "users_edit":"Sửa tài khoản",
+    "users_delete":"Xóa tài khoản", "password_reset":"Xử lý quên mật khẩu", "accounts_import":"Import CSV",
+    "matches_view":"Xem trận",
+    "matches_confirm":"Xác nhận trận", "matches_cancel":"Hủy trận", "matches_delete":"Xóa trận",
+    "rooms_manage":"Quản lý phòng", "invites_manage":"Quản lý lời mời",
+    "announcements_manage":"Quản lý thông báo", "system_features_manage":"Bật/tắt tính năng hệ thống", "chat_manage":"Quản lý Chat", "friendly_manage":"Quản lý Giao hữu",
+    "registration_codes_manage":"Quản lý mã đăng ký", "admin_logs_view":"Xem nhật ký Admin",
+    "rp_view":"Xem công thức RP", "rp_simulate":"Tính thử RP",
+    "rp_backup_restore":"Backup/Khôi phục RP", "daily_rank_limits_manage":"Bật/tắt giới hạn Rank ngày",
+    "zcoin_view":"Xem ví và giao dịch Zcoin", "zcoin_manage":"Cộng/trừ Zcoin",
+    "permissions_manage":"Cấp/thu hồi quyền Admin",
+}
+LEGACY_ADMIN_PERMISSION_FIELDS = {
+    "create_test_account": "admin_can_create_test_account",
+    "import_accounts_csv": "admin_can_import_accounts_csv",
+    "accounts_import": "admin_can_import_accounts_csv",
+}
+SYSTEM_FEATURE_DEFAULTS = {
+    "dashboard_enabled": False,
+    "public_ranking_enabled": True,
+    "friendly_enabled": True, "rank_standard_enabled": True, "friendly_random3_enabled": True, "lobby_chat_enabled": True, "room_chat_enabled": True,
+    "registration_codes_enabled": True, "announcements_enabled": True, "quick_match_enabled": True,
+    "repeat_opponent_rp_enabled": True,
+}
+
+def _admin_permissions(user):
+    raw = (user or {}).get("admin_permissions") or {}
+    if isinstance(raw, str):
+        try: raw = json.loads(raw)
+        except Exception: raw = {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def has_admin_permission(user, permission_code: str) -> bool:
+    if is_owner_user(user): return True
+    if not is_admin_user(user): return False
+    permissions = _admin_permissions(user)
+    if permission_code in permissions: return permissions.get(permission_code) is True
+    legacy = LEGACY_ADMIN_PERMISSION_FIELDS.get(permission_code)
+    return bool(legacy and user.get(legacy) is True)
+
+
+def get_system_features():
+    request_key = "_system_features_cached"
+    cached = cache_get(request_key)
+    if isinstance(cached, dict):
+        return dict(cached)
+
+    cached = ttl_cache_get("system_features")
+    if isinstance(cached, dict):
+        return cache_set(request_key, dict(cached))
+
+    features = dict(SYSTEM_FEATURE_DEFAULTS)
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", "admin_system_features").limit(1),
+            "get_system_features", attempts=2,
+        )
+        row = (result.data or [{}])[0]
+        raw = row.get("setting_value")
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        if isinstance(raw, dict):
+            features.update({key: bool(value) for key, value in raw.items() if key in features})
+    except Exception as exc:
+        print(f"get_system_features warning: {exc}")
+
+    ttl_cache_set("system_features", dict(features), 45)
+    return cache_set(request_key, dict(features))
+
+
+def system_feature_enabled(key: str) -> bool:
+    return bool(get_system_features().get(key, SYSTEM_FEATURE_DEFAULTS.get(key, False)))
+
+
+QUICK_MATCH_SETTING_KEY = "quick_match_config"
+QUICK_MATCH_COLOR_DEFAULT = "blue"
+QUICK_MATCH_COLOR_VALUES = {"blue", "green"}
+
+def get_quick_match_config():
+    request_key = "_quick_match_config_cached"
+    cached = cache_get(request_key)
+    if isinstance(cached, dict):
+        return dict(cached)
+
+    cached = ttl_cache_get("quick_match_config")
+    if isinstance(cached, dict):
+        return cache_set(request_key, dict(cached))
+
+    config = {"color": QUICK_MATCH_COLOR_DEFAULT}
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", QUICK_MATCH_SETTING_KEY).limit(1),
+            "get_quick_match_config", attempts=2,
+        )
+        raw = ((result.data or [{}])[0]).get("setting_value")
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        if isinstance(raw, dict) and raw.get("color") in QUICK_MATCH_COLOR_VALUES:
+            config["color"] = raw["color"]
+    except Exception as exc:
+        print(f"get_quick_match_config warning: {exc}")
+
+    ttl_cache_set("quick_match_config", dict(config), 60)
+    return cache_set(request_key, dict(config))
+
+
+REPEAT_OPPONENT_CONFIG_SETTING_KEY = "repeat_opponent_rp_config"
+REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS = [100, 60, 30, 0]
+REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS = [100, 70, 40, 10]
+
+def get_repeat_opponent_rp_config():
+    request_key = "_repeat_opponent_rp_config_cached"
+    cached = cache_get(request_key)
+    if isinstance(cached, dict):
+        return {key: list(value) if isinstance(value, list) else value for key, value in cached.items()}
+
+    cached = ttl_cache_get("repeat_opponent_rp_config")
+    if isinstance(cached, dict):
+        copied = {key: list(value) if isinstance(value, list) else value for key, value in cached.items()}
+        return cache_set(request_key, copied)
+
+    config = {
+        "winner_factors": list(REPEAT_OPPONENT_WINNER_FACTOR_DEFAULTS),
+        "loser_factors": list(REPEAT_OPPONENT_LOSER_FACTOR_DEFAULTS),
+    }
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value").eq(
+                "setting_key", REPEAT_OPPONENT_CONFIG_SETTING_KEY
+            ).limit(1),
+            "get_repeat_opponent_rp_config", attempts=2,
+        )
+        raw = ((result.data or [{}])[0]).get("setting_value")
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        if isinstance(raw, dict):
+            for key in ("winner_factors", "loser_factors"):
+                values = raw.get(key)
+                if isinstance(values, list) and len(values) == 4:
+                    normalized = [max(0, min(100, int(value))) for value in values]
+                    if all(normalized[index] >= normalized[index + 1] for index in range(3)):
+                        config[key] = normalized
+    except Exception as exc:
+        print(f"get_repeat_opponent_rp_config warning: {exc}")
+
+    ttl_cache_set("repeat_opponent_rp_config", {
+        "winner_factors": list(config["winner_factors"]),
+        "loser_factors": list(config["loser_factors"]),
+    }, 60)
+    return cache_set(request_key, config)
+
+
+MAINTENANCE_SETTING_KEY = "server_maintenance_config"
+VN_TIMEZONE = timezone(timedelta(hours=7))
+_maintenance_cache = {"value": None, "expires_at": 0.0}
+
+
+def _maintenance_default_config():
+    return {
+        "manual_closed": False,
+        "close_at": "",
+        "open_at": "",
+        "message": "Hệ thống đang được bảo trì. Vui lòng quay lại sau.",
+        "updated_at": "",
+    }
+
+
+def _parse_maintenance_time(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=VN_TIMEZONE)
+        return parsed.astimezone(VN_TIMEZONE)
+    except (TypeError, ValueError):
+        return None
+
+
+def _normalize_maintenance_input(value):
+    parsed = _parse_maintenance_time(value)
+    return parsed.isoformat(timespec="minutes") if parsed else ""
+
+
+def get_maintenance_config(force=False):
+    now_ts = time.time()
+    if not force and _maintenance_cache.get("value") is not None and now_ts < _maintenance_cache.get("expires_at", 0):
+        return dict(_maintenance_cache["value"])
+
+    config = _maintenance_default_config()
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", MAINTENANCE_SETTING_KEY).limit(1),
+            "get_server_maintenance_config",
+            attempts=2,
+        )
+        row = (result.data or [{}])[0]
+        raw = row.get("setting_value")
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        if isinstance(raw, dict):
+            for key in config:
+                if key in raw:
+                    config[key] = raw[key]
+    except Exception as exc:
+        app.logger.warning("Maintenance config load failed: %s", exc)
+
+    config["manual_closed"] = bool(config.get("manual_closed"))
+    _maintenance_cache["value"] = dict(config)
+    _maintenance_cache["expires_at"] = now_ts + 15
+    return config
+
+
+def get_maintenance_status(config=None):
+    config = dict(config or get_maintenance_config())
+    now = datetime.now(VN_TIMEZONE)
+    close_at = _parse_maintenance_time(config.get("close_at"))
+    open_at = _parse_maintenance_time(config.get("open_at"))
+
+    closed = bool(config.get("manual_closed"))
+    # Lịch đóng có thể bật máy chủ tự động, lịch mở có thể mở lại kể cả khi
+    # công tắc đóng thủ công đang bật. Mốc thời gian đến sau có quyền ưu tiên.
+    transitions = []
+    if close_at:
+        transitions.append((close_at, True, "close"))
+    if open_at:
+        transitions.append((open_at, False, "open"))
+    for when, state, _kind in sorted(transitions, key=lambda item: item[0]):
+        if now >= when:
+            closed = state
+
+    future = [(when, state, kind) for when, state, kind in transitions if when > now]
+    next_transition = min(future, key=lambda item: item[0]) if future else None
+    countdown = None
+    if next_transition:
+        seconds = max(0, int((next_transition[0] - now).total_seconds()))
+        if seconds <= 30 * 60:
+            countdown = {
+                "kind": next_transition[2],
+                "target_iso": next_transition[0].isoformat(),
+                "seconds": seconds,
+                "label": "Máy chủ sẽ đóng để bảo trì" if next_transition[2] == "close" else "Máy chủ sẽ mở trở lại",
+            }
+
+    return {
+        "closed": closed,
+        "message": str(config.get("message") or _maintenance_default_config()["message"]),
+        "close_at": close_at.isoformat() if close_at else "",
+        "open_at": open_at.isoformat() if open_at else "",
+        "close_at_input": close_at.strftime("%Y-%m-%dT%H:%M") if close_at else "",
+        "open_at_input": open_at.strftime("%Y-%m-%dT%H:%M") if open_at else "",
+        "countdown": countdown,
+    }
 
 
 def _current_session_is_admin():
@@ -376,32 +702,48 @@ RANK_RANGE_SETTING_KEY = "rank_ranges"
 _rank_range_cache = {"value": None, "expires_at": 0.0}
 
 
+# [MODULE HOA] _validate_rank_ranges -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] load_rank_ranges -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_rank_ranges -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_rank_info -> modules/core/rank_team_service.py
+
+# [MODULE HOA] is_goat_player -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_player_rank_info -> modules/core/rank_team_service.py
+
+# [MODULE HOA] get_rank_name -> modules/core/rank_team_service.py
+# [MODULE HOA] get_rank_display -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_team_power_score -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_tier_strength -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_match_difficulty -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_difficulty_factor -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] _match_affects_streak -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_current_loss_streak -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_loss_recovery_win_step -> modules/core/rank_team_service.py
 
 
-
-
+# [MODULE HOA] calculate_deltas -> modules/core/rank_team_service.py
 
 TEAM_LOGO_BUCKET = "team-logos"
 LEAGUE_LOGO_FOLDER = "league-logos"
@@ -424,6 +766,7 @@ LEAGUE_LOGO_FILES = {
     "süper lig": "super-lig.png",
 }
 
+# [MODULE HOA] get_league_logo_url -> modules/core/rank_team_service.py
 
 SMART_RANDOM_MODE = "Smart Rank"
 
@@ -455,8 +798,10 @@ RANK_CLUB_TIER_WEIGHTS = {
 }
 
 
+# [MODULE HOA] power_score_to_tier -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] _normalize_team_row -> modules/core/rank_team_service.py
 
 
 _TEAM_CACHE = {"loaded_at": 0.0, "rows": [], "by_name": {}, "pools": {}}
@@ -464,16 +809,22 @@ _TEAM_CACHE_TTL_SECONDS = 30
 TEAM_COUNT = 0
 
 
+# [MODULE HOA] _load_teams_from_supabase -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_random_team_pools -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_db_team_info -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_team_info -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_team_overall -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_team_tier -> modules/core/rank_team_service.py
 
 
 SMART_RANDOM_MODE = "Smart Tier Random"
@@ -484,45 +835,107 @@ MATCH_MODE_FRIENDLY = "friendly"
 FRIENDLY_RANDOM3_MODE = "random3_pick1"
 FRIENDLY_RANDOM3_NOTE_PREFIX = "FRIENDLY_RANDOM3:"
 
+# [MODULE HOA] build_friendly_random3_state -> modules/core/rank_team_service.py
+
+# [MODULE HOA] encode_friendly_random3_state -> modules/core/rank_team_service.py
+
+# [MODULE HOA] decode_friendly_random3_state -> modules/core/rank_team_service.py
 
 
-
-
+# [MODULE HOA] get_rank_level -> modules/core/rank_team_service.py
 
 
 RANK_TIER_SETTING_KEY = "rank_club_tier_weights"
 _rank_tier_config_cache = {"value": None, "expires_at": 0.0}
 
 
+# [MODULE HOA] _validate_rank_tier_weights -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] load_rank_tier_weights -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_rank_tier_weights -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] _all_random_teams -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] _normalize_team_name -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] _is_random3_match -> modules/core/rank_team_service.py
 
 
+def _recent_pair_team_names(user_id, opponent_id, limit=RECENT_TEAM_EXCLUSION_COUNT):
+    """CLB người chơi đã dùng trong N trận confirmed gần nhất với đúng đối thủ.
+
+    Lịch sử dùng chung cho Rank thường và Random 3 chọn 1. Khi đổi đối thủ,
+    danh sách chống lặp tự tách theo cặp người chơi mới.
+    """
+    if not user_id or not opponent_id:
+        return []
+    names = []
+    try:
+        matches = sorted(
+            list_matches(),
+            key=lambda item: str(item.get("created_at") or item.get("updated_at") or ""),
+            reverse=True,
+        )
+        for match in matches:
+            if str(match.get("status") or "").lower() != "confirmed":
+                continue
+            p1 = match.get("player1_id")
+            p2 = match.get("player2_id")
+            if p1 == user_id and p2 == opponent_id:
+                name = match.get("team1")
+            elif p2 == user_id and p1 == opponent_id:
+                name = match.get("team2")
+            else:
+                continue
+            if name:
+                names.append(str(name).strip())
+            if len(names) >= limit:
+                break
+    except Exception as exc:
+        print(f"recent_pair_team_history warning: {exc}")
+    return names
 
 
+# [MODULE HOA] _teams_in_tiers -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] _weighted_tier_choice -> modules/core/rank_team_service.py
+
+# [MODULE HOA] _nearest_rank_tier_candidates -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] _pick_rank_team -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_smart_random_rule -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] smart_random_team_pair -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] get_available_team_tiers -> modules/core/rank_team_service.py
 
 
+# [MODULE HOA] friendly_random_team_pair -> modules/core/rank_team_service.py
 
 
-
+def apply_host_xp_factor(delta, factor=HOST_XP_FACTOR):
+    """Apply the room-host coefficient to the absolute RP change."""
+    try:
+        safe_factor = float(factor or HOST_XP_FACTOR)
+    except (TypeError, ValueError):
+        safe_factor = HOST_XP_FACTOR
+    value = int(delta or 0)
+    if value <= 0:
+        return value
+    adjusted = round(value * safe_factor)
+    return max(1, adjusted)
 
 
 def require_db():
@@ -581,141 +994,203 @@ def set_device_cookie(response):
 # Database helpers
 # =========================
 
+# [MODULE HOA] get_user_by_username -> modules/core/user_repository.py
 
 
+# [MODULE HOA] calculated_total_matches -> modules/core/user_repository.py
 
 
+# [MODULE HOA] normalize_player_match_totals -> modules/core/user_repository.py
 
 
+# [MODULE HOA] get_user -> modules/core/user_repository.py
 
 
+# [MODULE HOA] is_user_online_now -> modules/core/user_repository.py
 
 
+# [MODULE HOA] _player_ranking_sort_key -> modules/core/user_repository.py
 
 
+# [MODULE HOA] list_players -> modules/core/user_repository.py
 
 
+# [MODULE HOA] users_map -> modules/core/user_repository.py
 
 
+# [MODULE HOA] get_device_link -> modules/core/user_repository.py
 
 
+# [MODULE HOA] is_admin_managed_test_account -> modules/core/user_repository.py
 
 
 IP_WARNING_SETTING_KEY = "duplicate_ip_warning_config"
 _ip_warning_config_cache = {"value": None, "expires_at": 0.0}
 
 
+# [MODULE HOA] get_duplicate_ip_warning_config -> modules/core/user_repository.py
+
+
+# [MODULE HOA] user_ignored_for_duplicate_ip -> modules/core/user_repository.py
+
+
+# [MODULE HOA] link_device_to_user -> modules/core/user_repository.py
+
+
+# [MODULE HOA] device_can_register -> modules/core/user_repository.py
 
 
 
+# [MODULE HOA] list_all_users -> modules/core/user_repository.py
 
 
+# [MODULE HOA] log_admin_action -> modules/core/user_repository.py
 
 
+# [MODULE HOA] existing_user_id -> modules/core/user_repository.py
 
 
+# [MODULE HOA] create_admin_announcement -> modules/core/user_repository.py
 
 
+# [MODULE HOA] list_admin_activity_logs -> modules/core/user_repository.py
 
 
+# [MODULE HOA] get_password_reset_request -> modules/core/user_repository.py
 
 
+# [MODULE HOA] list_password_reset_requests -> modules/core/user_repository.py
 
 
+# [MODULE HOA] list_user_devices -> modules/core/user_repository.py
 
 
+list_user_devices.last_status = {"ok": None, "row_count": 0, "error": None, "source": "not_loaded"}
 
 
+# [MODULE HOA] decorate_admin_users -> modules/core/user_repository.py
+
+# [MODULE HOA] build_duplicate_ip_groups -> modules/core/user_repository.py
 
 
+# [MODULE HOA] get_invite_code_record -> modules/core/user_repository.py
 
 
+# [MODULE HOA] list_registration_invite_codes -> modules/core/user_repository.py
 
 
+# [MODULE HOA] auto_confirm_expired_match_if_needed -> modules/core/match_repository.py
 
 
+# [MODULE HOA] list_matches -> modules/core/match_repository.py
 
 
+# [MODULE HOA] match_status_label -> modules/core/match_repository.py
 
 
+# [MODULE HOA] _normalize_match_score -> modules/core/match_repository.py
 
 
+# [MODULE HOA] _same_user_id -> modules/core/match_repository.py
 
 
+# [MODULE HOA] _normalize_match_delta -> modules/core/match_repository.py
 
 
+# [MODULE HOA] decorate_match_for_view -> modules/core/match_repository.py
+
+# [MODULE HOA] build_player_activity_map -> modules/core/match_repository.py
 
 
+# [MODULE HOA] get_match -> modules/core/match_repository.py
 
 
+# [MODULE HOA] get_match_dispute -> modules/core/match_repository.py
 
 
+# [MODULE HOA] get_match_dispute_by_match -> modules/core/match_repository.py
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+# [MODULE HOA] list_match_disputes -> modules/core/match_repository.py
 
 
 # Dịch vụ thông báo cá nhân đã tách sang modules/notification_service.py.
 
+# [MODULE HOA] dispute_reason_label -> modules/core/match_repository.py
+
+
+# [MODULE HOA] create_or_update_match_dispute -> modules/core/match_repository.py
+
+
+# [MODULE HOA] decorate_match_dispute -> modules/core/match_repository.py
 
 
 
+# [MODULE HOA] invite_expiry_dt -> modules/core/match_repository.py
 
 
+# [MODULE HOA] expire_invite_if_needed -> modules/core/match_repository.py
 
 
+# [MODULE HOA] get_invite -> modules/core/match_repository.py
 
 
+# [MODULE HOA] list_invites -> modules/core/match_repository.py
 
 
+# [MODULE HOA] room_state_expiry_dt -> modules/core/room_runtime.py
 
 
+# [MODULE HOA] room_inactivity_expiry_dt -> modules/core/room_runtime.py
 
 
+# [MODULE HOA] room_expiry_dt -> modules/core/room_runtime.py
 
 
-
-
-
-
-
-
-SERIES_FORFEIT_RP = 20
-
-
+def apply_room_abandon_penalty(user_id, amount=ROOM_ABANDON_PENALTY):
+    """Trừ RP và tính một trận thua do bỏ trận, không cộng thắng cho đối thủ."""
+    if not user_id:
+        return None
+    player = get_user(user_id)
+    if not player:
+        return None
+    penalty = max(0, int(amount or 0))
+    old_points = int(player.get("rank_points", 0) or 0)
+    new_points = max(0, old_points - penalty)
+    execute_query(
+        db.table("users").update({
+            "rank_points": new_points,
+            "losses": int(player.get("losses", 0) or 0) + 1,
+            "total_matches": int(player.get("wins", 0) or 0) + int(player.get("draws", 0) or 0) + int(player.get("losses", 0) or 0) + 1,
+            "streak": 0,
+        }).eq("id", user_id),
+        "apply_room_abandon_penalty",
+    )
+    cache_delete("_rz_users_map")
+    cache_delete("_rz_players_all")
+    return -(old_points - new_points)
 
 
 HOST_BROWSER_OFFLINE_GRACE_SECONDS = 20
 HOST_BROWSER_OFFLINE_ROOM_STATUSES = {"playing", "friendly_playing"}
 
 
+# [MODULE HOA] close_room_if_host_browser_offline -> modules/core/room_runtime.py
 
 
+# [MODULE HOA] close_room_with_timeout_penalty -> modules/core/room_runtime.py
 
 
+# [MODULE HOA] expire_room_if_needed -> modules/core/room_runtime.py
 
 
+# [MODULE HOA] get_room -> modules/core/room_runtime.py
 
 
+# [MODULE HOA] enrich_room -> modules/core/room_runtime.py
 
 
-
-
-
-
-
-
+# [MODULE HOA] list_rooms -> modules/core/room_runtime.py
 
 
 
@@ -724,25 +1199,35 @@ GLOBAL_STREAK_EVENT_TTL_SECONDS = 24 * 60 * 60
 GLOBAL_STREAK_EVENT_MAX_ITEMS = 30
 
 
+# [MODULE HOA] _normalize_global_streak_events -> modules/core/social_runtime.py
+
+
+# [MODULE HOA] publish_global_streak_event -> modules/core/social_runtime.py
+
+
+# [MODULE HOA] get_active_global_streak_events -> modules/core/social_runtime.py
+
+
+# [MODULE HOA] get_active_global_streak_event -> modules/core/social_runtime.py
+
+
+# [MODULE HOA] get_active_announcement -> modules/core/social_runtime.py
+
+
+# [MODULE HOA] enrich_chat_message -> modules/core/social_runtime.py
+
+
+# [MODULE HOA] list_chat_messages -> modules/core/social_runtime.py
 
 
 
+# [MODULE HOA] user_can_chat -> modules/core/social_runtime.py
 
 
+# [MODULE HOA] touch_room_activity -> modules/core/social_runtime.py
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+# [MODULE HOA] create_chat_message -> modules/core/social_runtime.py
 
 
 
@@ -760,7 +1245,7 @@ def current_user():
         user = dict(shared_user) if shared_user is not None else get_user(user_id)
         if user:
             decorate_player_achievements(user)
-            ttl_cache_set(f"user:{user_id}", dict(user), 30)
+            ttl_cache_set(f"user:{user_id}", dict(user), 8)
             session["username"] = user.get("username", "")
             session["display_name"] = user.get("display_name", "")
             session["avatar_url"] = user.get("avatar_url")
@@ -789,15 +1274,20 @@ def current_user():
     return cache_set("_rz_current_user", fallback_user)
 
 
+# [MODULE HOA] is_player_in_cooldown -> modules/core/matchmaking_runtime.py
+
+
+# [MODULE HOA] cooldown_text -> modules/core/matchmaking_runtime.py
 
 
 
+# [MODULE HOA] current_pending_invites -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] current_pending_invite_count -> modules/core/matchmaking_runtime.py
 
 
-
-
+# [MODULE HOA] room_is_active -> modules/core/matchmaking_runtime.py
 
 
 ACTIVE_ROOM_STATUSES = {
@@ -806,35 +1296,47 @@ ACTIVE_ROOM_STATUSES = {
     "friendly_playing",
     "waiting_result_confirm",
     "waiting_confirm",
-    "confirmed",
     "disputed",
 }
 
 
+# [MODULE HOA] _direct_active_rooms_for_user -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] cleanup_duplicate_waiting_rooms -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] active_room_for_user -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] build_room_head_to_head -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] _room_by_match_id -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] match_blocks_new_room -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] active_match_for_user -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] busy_user_ids -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] has_active_room_between -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] has_active_match_between -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] has_pending_invite_between -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] is_solo_waiting_room -> modules/core/matchmaking_runtime.py
 
 
+# [MODULE HOA] matchmaking_snapshot -> modules/core/matchmaking_runtime.py
 
 
 def mark_current_user_active():
@@ -1075,12 +1577,11 @@ def before_request():
         # lại đọc + cập nhật bảng users trước khi tải /bxh, tạo thêm kết nối Supabase
         # và có thể gây [Errno 16] Device or resource busy.
         if db is not None and session.get("user_id"):
-            # Presence V1.3.36: route /heartbeat tự cập nhật presence, không UPDATE
-            # thêm một lần trong before_request. Các request thường chỉ là lớp
-            # dự phòng nếu heartbeat phía trình duyệt bị trì hoãn.
+            # Chỉ cập nhật online tối đa 1 lần/45 giây thay vì ở mọi request
+            # (HTML, API, ảnh, heartbeat đều từng tạo một lệnh UPDATE riêng).
             now_ts = int(time.time())
             last_touch = int(session.get("last_activity_touch", 0) or 0)
-            if request.endpoint != "heartbeat" and now_ts - last_touch >= 60:
+            if request.endpoint == "heartbeat" or now_ts - last_touch >= 45:
                 mark_current_user_active()
                 session["last_activity_touch"] = now_ts
 
@@ -1092,40 +1593,6 @@ def before_request():
     except Exception as exc:
         # Lỗi cập nhật online không được phép làm hỏng route chính.
         print(f"Before request warning: {exc}")
-
-
-def _safe_blackbox_runtime_config():
-    """Black Box must never make a normal page render fail.
-
-    Returns a fully disabled config if the module is unavailable or any environment
-    value is malformed. This is intentionally fail-open for PES Arena gameplay.
-    """
-    fallback = {
-        "enabled": False,
-        "client_enabled": False,
-        "capture_clicks": False,
-        "capture_network": False,
-        "capture_console": False,
-        "batch_size": 20,
-        "flush_ms": 10000,
-        "slow_api_ms": 2500,
-        "max_buffer": 200,
-        "app_version": APP_VERSION,
-    }
-    try:
-        fn = globals().get("blackbox_config")
-        if not callable(fn):
-            return fallback
-        cfg = fn() or {}
-        if not isinstance(cfg, dict):
-            return fallback
-        return {**fallback, **cfg}
-    except Exception as exc:
-        try:
-            app.logger.warning("Black Box config disabled after error: %s", exc)
-        except Exception:
-            pass
-        return fallback
 
 
 @app.context_processor
@@ -1160,7 +1627,6 @@ def inject_globals():
             "active_announcement": None,
             "bell_notifications": [],
             "unread_notification_count": 0,
-            "blackbox_runtime_config": _safe_blackbox_runtime_config(),
         }
 
     # Tối ưu phản hồi HTML: không chặn render để chờ phòng, lời mời và thông báo
@@ -1200,8 +1666,6 @@ def inject_globals():
         "bell_notifications": bell_notifications,
         "unread_notification_count": unread_notification_count,
         "quick_match_config": get_quick_match_config(),
-        "button_theme_config": get_button_theme_config(),
-        "blackbox_runtime_config": _safe_blackbox_runtime_config(),
     }
 
 
@@ -1292,18 +1756,15 @@ def api_session_timeout_check():
 @login_required
 def heartbeat():
     mark_current_user_active()
-    session["last_activity_touch"] = int(time.time())
     return jsonify({"ok": True})
 
 
 @app.route("/presence/offline", methods=["POST"])
 @login_required
 def presence_offline():
-    # V1.3.36: endpoint tương thích cho tab/client cũ. Không đánh dấu offline từ
-    # pagehide/sendBeacon vì refresh, back-forward cache và điều hướng có thể đến
-    # muộn hơn request của trang mới, làm user đang hoạt động bị Offline giả.
-    # Logout thật vẫn đánh dấu offline tại route logout; còn mất kết nối được xác
-    # định bằng ONLINE_TIMEOUT_SECONDS.
+    # sendBeacon không cần phản hồi JSON lớn. Khi chỉ chuyển trang nội bộ,
+    # before_request/heartbeat của trang mới sẽ đánh dấu online lại ngay.
+    mark_current_user_offline()
     return ("", 204)
 
 
@@ -1402,13 +1863,8 @@ def api_active_room():
         "auto_redirect": auto_redirect,
     })
 
-def build_room_state_key(room, series_version=None):
-    """Tạo khóa trạng thái nhẹ dùng chung cho HTML và API phòng đấu.
-
-    team_tier + updated_at fix the stale-mode bug. ``series_version`` lets the
-    opponent see Tactical/Ban-Pick actions even when the match_rooms row itself
-    did not change.
-    """
+def build_room_state_key(room):
+    """Tạo khóa trạng thái ổn định dùng chung cho HTML và API phòng đấu."""
     return "|".join([
         # Thành viên phòng phải nằm trong state key. Nếu khách vừa tham gia
         # nhưng status vẫn là waiting_ready và guest_ready vẫn False, thiếu
@@ -1416,10 +1872,6 @@ def build_room_state_key(room, series_version=None):
         str(room.get("host_user_id")),
         str(room.get("guest_user_id")),
         str(room.get("status")),
-        str(room.get("match_mode")),
-        str(room.get("team_tier")),
-        str(room.get("updated_at")),
-        str(series_version or ""),
         str(room.get("host_team")),
         str(room.get("guest_team")),
         str(room.get("guest_ready")),
@@ -1456,7 +1908,7 @@ def api_room_state(room_id):
     user = current_user()
 
     try:
-        room = get_room_poll_snapshot(room_id)
+        room = get_room(room_id)
     except Exception:
         return jsonify({"ok": False, "error": "temporary_db_error"}), 503
 
@@ -1469,17 +1921,7 @@ def api_room_state(room_id):
     if user["id"] not in [room["host_user_id"], room["guest_user_id"]] and not is_admin_user(user):
         return polling_stop_response("room_access_ended")
 
-    # Cấm/Chọn BO3: polling cũng là nhịp watchdog. Khi hết thời gian, server
-    # tự random đúng 1 CLB cho lượt hiện tại rồi cấp deadline mới cho lượt sau.
-    try:
-        timeout_result = process_series_timeouts(room)
-        if timeout_result.get("changed"):
-            room = get_room_poll_snapshot(room_id) or room
-    except ValueError:
-        pass
-
-    series_version = get_series_poll_version(room)
-    state_key = build_room_state_key(room, series_version)
+    state_key = build_room_state_key(room)
 
     # V4.1: nếu trạng thái chưa đổi, trả response rỗng để giảm dữ liệu truyền.
     # Client vẫn giữ polling nhưng không phải nhận/phân tích JSON lặp lại.
@@ -2084,8 +2526,7 @@ def dashboard():
     try:
         player_rows = list_players()
         presence_rows = list_players(include_admin=True)
-        # V1.3.34: Dashboard chỉ lấy trận của chính user, không list_matches() toàn hệ thống.
-        matches = load_user_matches(user.get("id"), limit=30)
+        matches = list_matches()
         rooms = list_rooms()
         invite_count = current_pending_invite_count()
     except Exception:
@@ -2115,7 +2556,7 @@ def dashboard():
         "disputed": len([m for m in matches if m.get("status") == "disputed" and user.get("id") in {m.get("player1_id"), m.get("player2_id")}]),
     }
 
-    activity_map = build_player_activity_map(rooms, [])
+    activity_map = build_player_activity_map(rooms, matches)
     online_players = [p for p in presence_rows if p.get("is_online") and p.get("id") != user.get("id")]
     solo_room_user_ids = {
         str(room.get("host_user_id"))
@@ -2165,7 +2606,7 @@ def create_open_room():
             "invite_id": None,
             "host_user_id": user["id"],
             "guest_user_id": None,
-            "team_tier": default_rank_room_team_tier(),
+            "team_tier": (SMART_RANDOM_MODE if system_feature_enabled("rank_standard_enabled") else FRIENDLY_RANDOM3_MODE),
             "match_mode": MATCH_MODE_RANKED,
             "friendly_tier": "A",
             "status": "waiting_ready",
@@ -2317,8 +2758,17 @@ def ranking():
         filtered = [player for player in filtered if player.get("rank_info", {}).get("slug") == rank_filter]
 
     top_players = filtered[:100]
-    # V1.3.34: phong độ 5 trận đã được trigger Supabase lưu sẵn. BXH chỉ SELECT cache.
-    recent_form_map = load_recent_form_map({player.get("id") for player in top_players})
+    try:
+        confirmed_matches = list_matches(status="confirmed")
+    except Exception as exc:
+        print(f"ranking list_matches warning: {exc}")
+        confirmed_matches = []
+
+    recent_form_map = _build_recent_form_map(
+        confirmed_matches,
+        player_ids={player.get("id") for player in top_players},
+        limit=5,
+    )
 
     for player in top_players:
         total_matches = calculated_total_matches(player)
@@ -2405,17 +2855,26 @@ def send_invite():
 
     sender_room = state.get("room_a")
     receiver_room = state.get("room_b")
-    blocker = send_invite_blocker(
-        state,
-        sender_id=user["id"],
-        receiver_id=to_user_id,
-        receiver_online=is_user_online_now(opponent),
-        is_solo_waiting_room=is_solo_waiting_room,
-    )
-    if blocker:
-        message, category, endpoint = SEND_INVITE_MESSAGES[blocker]
-        flash(message, category)
-        return redirect(url_for(endpoint))
+    if state.get("match_a"):
+        flash("Bạn đang có trận chưa hoàn tất nên chưa thể gửi lời mời.", "warning")
+        return redirect(url_for("dashboard"))
+    if sender_room and not is_solo_waiting_room(sender_room, user["id"]):
+        flash("Phòng của bạn đã có đủ 2 người hoặc đã bắt đầu. Bạn không thể gửi thêm lời mời.", "warning")
+        return redirect(url_for("dashboard"))
+    if state.get("match_b"):
+        flash("Người chơi này đang thi đấu hoặc còn trận chưa hoàn tất.", "warning")
+        return redirect(url_for("players"))
+    if receiver_room and not is_solo_waiting_room(receiver_room, to_user_id):
+        flash("Phòng của người chơi này đã có đủ 2 người hoặc đã bắt đầu.", "warning")
+        return redirect(url_for("players"))
+
+    if not is_user_online_now(opponent):
+        flash("Người chơi này vừa offline. Bạn hãy chọn một đối thủ đang online khác nhé.", "danger")
+        return redirect(url_for("players"))
+
+    if state.get("pair_pending"):
+        flash("Hai người đang có lời mời chờ xử lý.", "warning")
+        return redirect(url_for("players"))
 
     invite_result = execute_query(
         db.table("match_invites").insert({
@@ -2448,29 +2907,14 @@ def send_invite():
             }).eq("id", sender_room["id"]).eq("status", "waiting_ready"),
             "attach_invite_to_open_room",
         )
-        room = room_result.data[0] if room_result.data else None
-        if not room:
-            # Snapshot may have become stale between matchmaking check and write.
-            # Do not redirect to a room that was not actually linked to this invite.
-            fresh_sender_room = active_room_for_user(user["id"])
-            if fresh_sender_room and is_solo_waiting_room(fresh_sender_room, user["id"]):
-                retry_result = execute_query(
-                    db.table("match_rooms").update({
-                        "invite_id": invite["id"],
-                        "note": f'Đã mời {opponent["display_name"]}. Đang chờ đối thủ chấp nhận.',
-                        "updated_at": now_iso(),
-                    }).eq("id", fresh_sender_room["id"]).eq("status", "waiting_ready").is_("guest_user_id", "null"),
-                    "reattach_invite_to_fresh_open_room",
-                    attempts=2,
-                )
-                room = retry_result.data[0] if retry_result.data else None
+        room = room_result.data[0] if room_result.data else sender_room
     else:
         room_result = execute_query(
             db.table("match_rooms").insert({
                 "invite_id": invite["id"],
                 "host_user_id": user["id"],
                 "guest_user_id": None,
-                "team_tier": default_rank_room_team_tier(),
+                "team_tier": (SMART_RANDOM_MODE if system_feature_enabled("rank_standard_enabled") else FRIENDLY_RANDOM3_MODE),
                 "match_mode": MATCH_MODE_RANKED,
                 "friendly_tier": "A",
                 "status": "waiting_ready",
@@ -2570,7 +3014,7 @@ def quick_match_invite():
         print(f"quick_match players ERROR user={user.get('id')}: {type(exc).__name__}: {exc}")
         return jsonify({"ok": False, "message": "Không thể đọc danh sách người chơi online lúc này."}), 503
 
-    presence_cutoff = now_dt() - timedelta(seconds=ONLINE_TIMEOUT_SECONDS)
+    presence_cutoff = now_dt() - timedelta(seconds=max(ONLINE_TIMEOUT_SECONDS, 90))
     for opponent in quick_players:
         oid = str(opponent.get("id") or "")
         if not oid or oid == str(user["id"]) or oid in excluded_user_ids:
@@ -2759,7 +3203,7 @@ def quick_match_invite_status(invite_id):
             )
             opponent = dict(opponent_result.data[0]) if opponent_result.data else None
             seen = parse_dt((opponent or {}).get("last_seen_at"))
-            presence_cutoff = now - timedelta(seconds=ONLINE_TIMEOUT_SECONDS)
+            presence_cutoff = now - timedelta(seconds=max(ONLINE_TIMEOUT_SECONDS, 90))
             opponent_online = bool(
                 opponent
                 and (opponent.get("account_status", "approved") == "approved")
@@ -2844,37 +3288,9 @@ def respond_invite(invite_id):
         return redirect(url_for("invites"))
 
     if action == "reject":
-        reject_result = execute_query(
-            db.table("match_invites").update({"status": "rejected", "updated_at": now_iso()})
-            .eq("id", invite_id).eq("status", "pending"),
-            "reject_match_invite",
-            attempts=2,
-        )
-        if not (reject_result.data or []):
-            flash("Lời mời vừa thay đổi trạng thái. Hãy tải lại.", "warning")
-            return redirect(url_for("invites"))
-        # Remove the stale invite link from the sender's still-empty room so the
-        # next invite starts from clean room data instead of inheriting an old id.
-        try:
-            execute_query(
-                db.table("match_rooms").update({
-                    "invite_id": None,
-                    "note": "Đối thủ đã từ chối lời mời. Chủ phòng có thể mời người khác.",
-                    "updated_at": now_iso(),
-                }).eq("host_user_id", invite.get("from_user_id"))
-                  .eq("invite_id", invite_id)
-                  .eq("status", "waiting_ready")
-                  .is_("guest_user_id", "null"),
-                "clear_rejected_invite_from_solo_room",
-                attempts=1,
-            )
-        except Exception as cleanup_exc:
-            print(f"clear_rejected_invite_from_solo_room warning: {cleanup_exc}")
-        ttl_cache_delete("rooms_raw")
+        db.table("match_invites").update({"status": "rejected", "updated_at": now_iso()}).eq("id", invite_id).execute()
         ttl_cache_delete("invites_raw")
-        cache_delete("_rz_rooms_all")
         cache_delete("_rz_invites_all")
-        cache_delete("_rz_current_pending_invites")
         if is_quick_match_invite(invite):
             flash("Đã từ chối lời mời Tìm Nhanh.", "success")
         else:
@@ -2887,25 +3303,16 @@ def respond_invite(invite_id):
 
     receiver_match = active_match_for_user(user["id"])
     receiver_room = active_room_for_user(user["id"])
-    inviter_id = invite.get("from_user_id")
-    inviter_match = active_match_for_user(inviter_id)
-    inviter_room = active_room_for_user(inviter_id)
-    accept_blocker = accept_invite_blocker(
-        receiver_match=receiver_match,
-        receiver_room=receiver_room,
-        receiver_id=user["id"],
-        inviter_match=inviter_match,
-        inviter_room=inviter_room,
-        inviter_id=inviter_id,
-        is_solo_waiting_room=is_solo_waiting_room,
-    )
-    if accept_blocker == "receiver_active_match":
+    if receiver_match:
         flash("Bạn đang có trận chưa hoàn tất nên không thể nhận lời mời.", "warning")
         return redirect(url_for("dashboard"))
-    if accept_blocker == "receiver_room_busy":
+    if receiver_room and not is_solo_waiting_room(receiver_room, user["id"]):
         flash("Phòng của bạn đã có đủ 2 người hoặc đã bắt đầu nên không thể nhận lời mời khác.", "warning")
         return redirect(url_for("dashboard"))
-    if accept_blocker == "inviter_unavailable":
+
+    inviter_id = invite.get("from_user_id")
+    inviter_room = active_room_for_user(inviter_id)
+    if active_match_for_user(inviter_id) or (inviter_room and not is_solo_waiting_room(inviter_room, inviter_id)):
         execute_query(
             db.table("match_invites").update({
                 "status": "cancelled",
@@ -2941,7 +3348,7 @@ def respond_invite(invite_id):
                     "invite_id": invite_id,
                     "host_user_id": invite["from_user_id"],
                     "guest_user_id": invite["to_user_id"],
-                    "team_tier": default_rank_room_team_tier(),
+                    "team_tier": (SMART_RANDOM_MODE if system_feature_enabled("rank_standard_enabled") else FRIENDLY_RANDOM3_MODE),
                     "match_mode": MATCH_MODE_RANKED,
                     "friendly_tier": "A",
                     "status": "waiting_ready",
@@ -2959,20 +3366,8 @@ def respond_invite(invite_id):
             flash("Phòng của người mời vừa có người khác tham gia. Lời mời không còn hiệu lực.", "warning")
             return redirect(url_for("dashboard"))
 
-        # Claim the invite before deleting the receiver's old solo room.
-        # This prevents a failed/expired invite from destroying a valid room.
-        accept_result = execute_query(
-            db.table("match_invites").update({
-                "status": "accepted",
-                "updated_at": now_iso(),
-            }).eq("id", invite_id).eq("status", "pending"),
-            "accept_match_invite",
-        )
-        if not (accept_result.data or []):
-            raise RuntimeError("Lời mời đã thay đổi trạng thái trước khi hoàn tất nhận lời")
-
-        # Người nhận có thể đang làm chủ một phòng trống. Chỉ đóng phòng cũ
-        # sau khi lời mời đã được claim thành công.
+        # Người nhận có thể đang làm chủ một phòng trống. Khi nhận lời, đóng phòng cũ
+        # trước khi hoàn tất lời mời để mỗi tài khoản chỉ còn đúng một phòng active.
         if receiver_room and str(receiver_room.get("id")) != str(room.get("id")):
             old_invite_id = receiver_room.get("invite_id")
             delete_result = execute_query(
@@ -2984,54 +3379,53 @@ def respond_invite(invite_id):
                 "close_receiver_solo_room_on_accept",
             )
             if not delete_result.data:
-                # Compensate the invite claim so the user can safely retry.
-                execute_query(
-                    db.table("match_invites").update({
-                        "status": "pending",
-                        "updated_at": now_iso(),
-                    }).eq("id", invite_id).eq("status", "accepted"),
-                    "rollback_accept_invite_when_old_room_close_fails",
-                    attempts=1,
-                )
                 raise RuntimeError("Không thể đóng phòng cũ của người nhận")
             if old_invite_id and str(old_invite_id) != str(invite_id):
-                try:
-                    execute_query(
-                        db.table("match_invites").update({
-                            "status": "cancelled",
-                            "updated_at": now_iso(),
-                        }).eq("id", old_invite_id).eq("status", "pending"),
-                        "cancel_receiver_old_room_invite",
-                        attempts=1,
-                    )
-                except Exception as cleanup_exc:
-                    print(f"cancel_receiver_old_room_invite warning: {cleanup_exc}")
+                execute_query(
+                    db.table("match_invites").update({
+                        "status": "cancelled",
+                        "updated_at": now_iso(),
+                    }).eq("id", old_invite_id).eq("status", "pending"),
+                    "cancel_receiver_old_room_invite",
+                )
 
-        # Secondary invite cleanup must never undo a successfully joined room.
-        cleanup_queries = [
-            (db.table("match_invites").update({"status": "cancelled", "updated_at": now_iso()}).eq("to_user_id", user["id"]).eq("status", "pending").neq("id", invite_id), "cancel_other_incoming_invites_after_accept"),
-            (db.table("match_invites").update({"status": "cancelled", "updated_at": now_iso()}).eq("from_user_id", user["id"]).eq("status", "pending").neq("id", invite_id), "cancel_receiver_outgoing_invites_after_accept"),
-            (db.table("match_invites").update({"status": "cancelled", "updated_at": now_iso()}).eq("from_user_id", inviter_id).eq("status", "pending").neq("id", invite_id), "cancel_inviter_other_outgoing_after_accept"),
-        ]
-        for cleanup_query, cleanup_label in cleanup_queries:
-            try:
-                execute_query(cleanup_query, cleanup_label, attempts=1)
-            except Exception as cleanup_exc:
-                print(f"{cleanup_label} warning: {cleanup_exc}")
+        execute_query(
+            db.table("match_invites").update({
+                "status": "accepted",
+                "updated_at": now_iso(),
+            }).eq("id", invite_id).eq("status", "pending"),
+            "accept_match_invite",
+        )
+        # Hủy các lời mời chờ khác của người nhận để popup cũ không xuất hiện lại.
+        execute_query(
+            db.table("match_invites").update({
+                "status": "cancelled",
+                "updated_at": now_iso(),
+            }).eq("to_user_id", user["id"]).eq("status", "pending").neq("id", invite_id),
+            "cancel_other_incoming_invites_after_accept",
+            attempts=1,
+        )
+        execute_query(
+            db.table("match_invites").update({
+                "status": "cancelled",
+                "updated_at": now_iso(),
+            }).eq("from_user_id", user["id"]).eq("status", "pending").neq("id", invite_id),
+            "cancel_receiver_outgoing_invites_after_accept",
+            attempts=1,
+        )
+        # Khi phòng của người mời đã có khách, mọi lời mời khác do người
+        # mời gửi (bao gồm Tìm Nhanh) phải kết thúc để không còn trạng thái treo.
+        execute_query(
+            db.table("match_invites").update({
+                "status": "cancelled",
+                "updated_at": now_iso(),
+            }).eq("from_user_id", inviter_id).eq("status", "pending").neq("id", invite_id),
+            "cancel_inviter_other_outgoing_after_accept",
+            attempts=1,
+        )
     except Exception as exc:
         print(f"respond_invite accept ERROR invite={invite_id}: {type(exc).__name__}: {exc}")
-        # Best-effort compensation: if this request already claimed the invite,
-        # return it to pending before rolling back the target room.
-        try:
-            execute_query(
-                db.table("match_invites").update({"status": "pending", "updated_at": now_iso()})
-                .eq("id", invite_id).eq("status", "accepted"),
-                "rollback_accepted_invite_after_join_error",
-                attempts=1,
-            )
-        except Exception as invite_rollback_exc:
-            print(f"respond_invite invite rollback warning: {invite_rollback_exc}")
-        # Hoàn tác việc gắn khách nếu bước nhận lời chưa hoàn tất.
+        # Hoàn tác việc gắn khách nếu đóng phòng cũ thất bại.
         try:
             if room:
                 if target_room_created:
@@ -3084,35 +3478,7 @@ def cancel_invite(invite_id):
         flash("Lời mời này đã được xử lý.", "warning")
         return redirect(url_for("invites"))
 
-    cancel_result = execute_query(
-        db.table("match_invites").update({"status": "cancelled", "updated_at": now_iso()})
-        .eq("id", invite_id).eq("status", "pending"),
-        "cancel_match_invite",
-        attempts=2,
-    )
-    if not (cancel_result.data or []):
-        flash("Lời mời vừa thay đổi trạng thái. Hãy tải lại.", "warning")
-        return redirect(url_for("invites"))
-    try:
-        execute_query(
-            db.table("match_rooms").update({
-                "invite_id": None,
-                "note": "Lời mời đã được hủy. Chủ phòng có thể mời người khác.",
-                "updated_at": now_iso(),
-            }).eq("host_user_id", user["id"])
-              .eq("invite_id", invite_id)
-              .eq("status", "waiting_ready")
-              .is_("guest_user_id", "null"),
-            "clear_cancelled_invite_from_solo_room",
-            attempts=1,
-        )
-    except Exception as cleanup_exc:
-        print(f"clear_cancelled_invite_from_solo_room warning: {cleanup_exc}")
-    ttl_cache_delete("rooms_raw")
-    ttl_cache_delete("invites_raw")
-    cache_delete("_rz_rooms_all")
-    cache_delete("_rz_invites_all")
-    cache_delete("_rz_current_pending_invites")
+    db.table("match_invites").update({"status": "cancelled", "updated_at": now_iso()}).eq("id", invite_id).execute()
     flash("Đã hủy lời mời.", "success")
     return redirect(url_for("invites"))
 
@@ -3135,7 +3501,7 @@ def cancel_invite(invite_id):
 
 
 # =========================
-# Core modules extracted from legacy app.py (V1.3.52)
+# Core modules tách từ app.py - V1.2.10
 # =========================
 from modules.core import achievements as _core_achievements
 from modules.core import rank_team_service as _core_rank_team_service
@@ -3154,10 +3520,9 @@ for _core_module in _CORE_MODULES:
     _core_module.configure(globals())
     for _core_name in _core_module.EXPORTED_NAMES:
         globals()[_core_name] = getattr(_core_module, _core_name)
-# Second pass refreshes cross-module dependencies after every exported name exists.
+# Pass 2 để các module nhìn thấy export của nhau.
 for _core_module in _CORE_MODULES:
     _core_module.configure(globals())
-
 
 # =========================
 # Đăng ký module chức năng
@@ -3182,10 +3547,7 @@ from modules import zcoin as _zcoin_module
 from modules import daily_checkin as _daily_checkin_module
 from modules.parsec_room import service as _parsec_room_service
 from modules import gift_codes as _gift_codes_module
-from modules import rank_modes as _rank_modes_module
-from modules import rank_series as _rank_series_module
-from modules import read_model_service as _read_model_service
-from modules import blackbox as _blackbox_module
+from modules import room_flow_service as _room_flow_service
 
 for _service_module in (
     _notification_service,
@@ -3197,32 +3559,16 @@ for _service_module in (
     _zcoin_module,
     _daily_checkin_module,
     _gift_codes_module,
-    _rank_modes_module,
-    _rank_series_module,
+    _room_flow_service,
     _parsec_room_service,
     _match_result_service,
     _ranking_rebuild_service,
     _data_cleanup_service,
     _inactivity_rp_service,
-    _blackbox_module,
 ):
     _service_module.configure(globals())
     for _service_name in _service_module.EXPORTED_NAMES:
         globals()[_service_name] = getattr(_service_module, _service_name)
-
-# Core modules that depend on later service exports must be refreshed once
-# those helpers exist in app globals. Room needs Rank Mode helpers; Match
-# Repository needs forfeit/series helpers used by History and Profile decorators.
-_core_room_runtime.configure(globals())
-_core_match_repository.configure(globals())
-
-# Read-model V1.3.34 không export route; chỉ cung cấp các SELECT nhanh.
-_read_model_service.configure(globals())
-for _read_model_name in (
-    "load_match_report", "load_recent_form_map", "load_player_profile_summary",
-    "load_user_matches", "load_h2h_matches", "load_pair_stats", "load_user_ip_cache",
-):
-    globals()[_read_model_name] = getattr(_read_model_service, _read_model_name)
 
 
 # Route phòng đấu.
@@ -3230,7 +3576,6 @@ from modules.room_access_routes import register_routes as _register_room_access_
 from modules.room_rematch_routes import register_routes as _register_room_rematch_routes
 from modules.room_team_routes import register_routes as _register_room_team_routes
 from modules.room_result_routes import register_routes as _register_room_result_routes
-from modules.rank_series import register_routes as _register_rank_series_routes
 from modules.match_history_routes import register_routes as _register_match_history_routes
 from modules.zcoin import register_routes as _register_zcoin_routes
 from modules.profile import register_routes as _register_profile_routes
@@ -3242,11 +3587,9 @@ from modules.daily_checkin import register_routes as _register_daily_checkin_rou
 from modules.gift_codes import register_routes as _register_gift_code_routes
 from modules.admin_economy import register_routes as _register_admin_economy_routes
 from modules.luckybox import register_routes as _register_luckybox_routes
-from modules.blackbox import register_routes as _register_blackbox_routes
 
 # Route Admin.
 from modules.admin_system_routes import register_routes as _register_admin_system_routes
-from modules.admin_room_ui import register_routes as _register_admin_room_ui_routes
 from modules.admin_dashboard_routes import register_routes as _register_admin_dashboard_routes
 from modules.admin_account_routes import register_routes as _register_admin_account_routes
 from modules.admin_match_routes import register_routes as _register_admin_match_routes
@@ -3258,7 +3601,6 @@ for _route_registrar in (
     _register_room_rematch_routes,
     _register_room_team_routes,
     _register_room_result_routes,
-    _register_rank_series_routes,
     _register_match_history_routes,
     _register_zcoin_routes,
     _register_profile_routes,
@@ -3270,9 +3612,7 @@ for _route_registrar in (
     _register_gift_code_routes,
     _register_admin_economy_routes,
     _register_luckybox_routes,
-    _register_blackbox_routes,
     _register_admin_system_routes,
-    _register_admin_room_ui_routes,
     _register_admin_dashboard_routes,
     _register_admin_account_routes,
     _register_admin_match_routes,
@@ -3281,7 +3621,7 @@ for _route_registrar in (
 ):
     _route_registrar(globals())
 
-del _service_module, _service_name, _route_registrar, _read_model_name, _evidence_name, _settings_name
+del _service_module, _service_name, _route_registrar
 
 
 if __name__ == "__main__":

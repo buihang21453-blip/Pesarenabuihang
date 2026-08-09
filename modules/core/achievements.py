@@ -1,8 +1,6 @@
-"""Extracted core service module (PES Arena V1.3.52).
+"""Module hóa từ V1.2.9.
 
-This module intentionally uses the existing application context while the project
-transitions away from the historical monolithic app.py. New code should prefer
-explicit dependencies instead of adding more globals here.
+Giữ nguyên logic gốc; dependency được truyền từ app.py bằng configure() để tránh import vòng.
 """
 
 _CONTEXT = {}
@@ -12,13 +10,7 @@ def configure(context):
     _CONTEXT.update(context)
     globals().update(context)
 
-EXPORTED_NAMES = [
-    'achievement_progress',
-    'eligible_achievement_codes',
-    'list_user_achievement_map',
-    'decorate_player_achievements',
-    'sync_achievements_for_users'
-]
+EXPORTED_NAMES = ['achievement_progress', 'eligible_achievement_codes', 'list_user_achievement_map', 'decorate_player_achievements', 'sync_achievements_for_users']
 
 def achievement_progress(player, definition, position=None):
     metric = definition.get("metric")

@@ -1,4 +1,7 @@
-"""Extracted core module (PES Arena V1.3.52)."""
+"""Module hóa từ V1.2.9.
+
+Giữ nguyên logic gốc; dependency được truyền từ app.py bằng configure() để tránh import vòng.
+"""
 
 _CONTEXT = {}
 
@@ -7,29 +10,7 @@ def configure(context):
     _CONTEXT.update(context)
     globals().update(context)
 
-EXPORTED_NAMES = [
-    'auto_confirm_expired_match_if_needed',
-    '_safe_player_display_name',
-    'hydrate_match_player_fields',
-    'list_matches',
-    'match_status_label',
-    '_normalize_match_score',
-    '_same_user_id',
-    '_normalize_match_delta',
-    'decorate_match_for_view',
-    'build_player_activity_map',
-    'get_match',
-    'get_match_dispute',
-    'get_match_dispute_by_match',
-    'list_match_disputes',
-    'dispute_reason_label',
-    'create_or_update_match_dispute',
-    'decorate_match_dispute',
-    'invite_expiry_dt',
-    'expire_invite_if_needed',
-    'get_invite',
-    'list_invites'
-]
+EXPORTED_NAMES = ['auto_confirm_expired_match_if_needed', 'list_matches', 'match_status_label', '_normalize_match_score', '_same_user_id', '_normalize_match_delta', 'decorate_match_for_view', 'build_player_activity_map', 'get_match', 'get_match_dispute', 'get_match_dispute_by_match', 'list_match_disputes', 'dispute_reason_label', 'create_or_update_match_dispute', 'decorate_match_dispute', 'invite_expiry_dt', 'expire_invite_if_needed', 'get_invite', 'list_invites']
 
 def auto_confirm_expired_match_if_needed(match):
     """Tự xác nhận trận chờ quá 1 phút, độc lập với trạng thái phòng.
@@ -60,22 +41,12 @@ def auto_confirm_expired_match_if_needed(match):
                 f"{type(room_exc).__name__}: {room_exc}"
             )
 
-        # Series child matches must never pass through the single-match RP engine.
-        # V1.3.49 auto-confirmed an expired child with apply_match_result(), which
-        # could award per-game RP and leave match_series_games out of sync.
-        if is_series_child_match(match):
-            if not room_before_result:
-                raise ValueError("Không tìm thấy phòng của trận con Series để tự xác nhận.")
-            auto_confirmer = room_before_result.get("guest_user_id") or room_before_result.get("host_user_id")
-            confirm_series_child_match(room_before_result, dict(match), auto_confirmer)
-            streak_event = None
-        else:
-            apply_match_result(dict(match))
-            streak_event = build_win_streak_event(
-                match, room_before_result, users_before_streak_event
-            )
-            if streak_event:
-                publish_global_streak_event(streak_event)
+        apply_match_result(dict(match))
+        streak_event = build_win_streak_event(
+            match, room_before_result, users_before_streak_event
+        )
+        if streak_event:
+            publish_global_streak_event(streak_event)
 
         fresh_result = execute_query(
             db.table("matches").select("*").eq("id", match.get("id")).limit(1),
@@ -84,27 +55,28 @@ def auto_confirm_expired_match_if_needed(match):
         )
         fresh = dict(fresh_result.data[0]) if fresh_result.data else dict(match)
 
-        # Sau auto-confirm, giữ phòng ở bước confirmed để hai người vẫn phải
-        # chọn Đá tiếp hoặc Rời phòng. Không xóa tỷ số/đội/match_id trước khi
-        # quyết định sau trận, nếu không UI và route rematch bị đứt dữ liệu.
+        # Chỉ đưa phòng đang chờ kết quả về trạng thái sẵn sàng. Nếu Admin đã
+        # hủy phòng, giữ phòng cancelled nhưng kết quả vẫn được tính bình thường.
         room_result = execute_query(
-            db.table("match_rooms").select("*").eq("match_id", match.get("id")).limit(1),
+            db.table("match_rooms").select("id,status").eq("match_id", match.get("id")).limit(1),
             "load_room_for_auto_confirm",
             attempts=2,
         )
         linked_room = (room_result.data or [None])[0]
-        if linked_room and linked_room.get("status") == "waiting_result_confirm" and not is_series_child_match(fresh):
-            auto_confirmer = linked_room.get("guest_user_id") or linked_room.get("host_user_id")
+        if linked_room and linked_room.get("status") == "waiting_result_confirm":
             execute_query(
                 db.table("match_rooms").update({
-                    "status": "confirmed",
+                    "status": "waiting_ready",
                     "guest_ready": False,
-                    "confirmed_by_id": auto_confirmer,
-                    "note": "Kết quả đã tự động xác nhận. Chọn Đá tiếp hoặc Rời phòng.",
-                    "state_expires_at": future_iso(REMATCH_TIMEOUT_SECONDS),
+                    "host_score": None,
+                    "guest_score": None,
+                    "match_id": None,
+                    "submitted_by_id": None,
+                    "confirmed_by_id": None,
+                    "state_expires_at": None,
                     "updated_at": now_iso(),
                 }).eq("id", linked_room.get("id")).eq("status", "waiting_result_confirm"),
-                "finish_room_after_auto_confirm",
+                "release_room_after_auto_confirm",
                 attempts=2,
             )
         cache_delete("_rz_matches_all", "_rz_rooms_all")
@@ -114,41 +86,6 @@ def auto_confirm_expired_match_if_needed(match):
     except Exception as exc:
         print(f"auto_confirm_expired_match warning match={match.get('id')}: {type(exc).__name__}: {exc}")
         return match
-
-
-def _safe_player_display_name(player):
-    """Return a render-safe player name; never leak Python None into HTML."""
-    player = player or {}
-    value = player.get("display_name") or player.get("username") or "Unknown"
-    value = str(value).strip()
-    return value if value and value.lower() != "none" else "Unknown"
-
-
-def hydrate_match_player_fields(match):
-    """Attach player display/avatar fields to a raw matches row.
-
-    V1.3.34 introduced targeted read-model queries that return raw match rows.
-    This helper makes those rows safe for Dashboard/Profile/History without
-    reverting to a full-table match query or causing per-match user queries.
-    users_map() is request-cached, so multiple matches reuse one user snapshot.
-    """
-    item = match if isinstance(match, dict) else dict(match or {})
-    users = users_map()
-    for prefix in ("player1", "player2"):
-        user_id = item.get(f"{prefix}_id")
-        player = users.get(user_id) or users.get(str(user_id)) or {}
-        current_name = item.get(f"{prefix}_name")
-        if current_name is None or not str(current_name).strip() or str(current_name).strip().lower() == "none":
-            item[f"{prefix}_name"] = _safe_player_display_name(player)
-        for field, source in (
-            ("avatar_url", "avatar_url"),
-            ("avatar_frame", "avatar_frame"),
-            ("achievement", "featured_achievement"),
-        ):
-            key = f"{prefix}_{field}"
-            if not item.get(key):
-                item[key] = player.get(source)
-    return item
 
 
 def list_matches(status=None):
@@ -166,10 +103,19 @@ def list_matches(status=None):
     users = users_map()
 
     for match in matches:
-        hydrate_match_player_fields(match)
-        match["submitted_by_name"] = _safe_player_display_name(users.get(match.get("submitted_by_id"), {})) if match.get("submitted_by_id") else ""
-        match["winner_name"] = _safe_player_display_name(users.get(match.get("winner_id"), {})) if match.get("winner_id") else ""
-        match["loser_name"] = _safe_player_display_name(users.get(match.get("loser_id"), {})) if match.get("loser_id") else ""
+        player1 = users.get(match.get("player1_id"), {})
+        player2 = users.get(match.get("player2_id"), {})
+        match["player1_name"] = player1.get("display_name", "Unknown")
+        match["player2_name"] = player2.get("display_name", "Unknown")
+        match["player1_avatar_url"] = player1.get("avatar_url")
+        match["player2_avatar_url"] = player2.get("avatar_url")
+        match["player1_avatar_frame"] = player1.get("avatar_frame")
+        match["player2_avatar_frame"] = player2.get("avatar_frame")
+        match["player1_achievement"] = player1.get("featured_achievement")
+        match["player2_achievement"] = player2.get("featured_achievement")
+        match["submitted_by_name"] = users.get(match.get("submitted_by_id"), {}).get("display_name", "")
+        match["winner_name"] = users.get(match.get("winner_id"), {}).get("display_name", "")
+        match["loser_name"] = users.get(match.get("loser_id"), {}).get("display_name", "")
 
     return matches
 
@@ -212,7 +158,6 @@ def decorate_match_for_view(match, viewer_id=None):
     cannot make the UI show the wrong side.
     """
     item = dict(match or {})
-    hydrate_match_player_fields(item)
     item["is_forfeit"] = is_forfeit_match(item)
     item["forfeit_loser_id"] = forfeit_loser_id(item) if item["is_forfeit"] else None
     if item["is_forfeit"]:

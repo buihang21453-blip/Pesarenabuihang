@@ -1,8 +1,6 @@
-"""Extracted core service module (PES Arena V1.3.52).
+"""Module hóa từ V1.2.9.
 
-This module intentionally uses the existing application context while the project
-transitions away from the historical monolithic app.py. New code should prefer
-explicit dependencies instead of adding more globals here.
+Giữ nguyên logic gốc; dependency được truyền từ app.py bằng configure() để tránh import vòng.
 """
 
 _CONTEXT = {}
@@ -12,53 +10,7 @@ def configure(context):
     _CONTEXT.update(context)
     globals().update(context)
 
-EXPORTED_NAMES = [
-    '_validate_rank_ranges',
-    'load_rank_ranges',
-    'get_rank_ranges',
-    'get_rank_info',
-    'is_goat_player',
-    'get_player_rank_info',
-    'get_rank_name',
-    'get_rank_display',
-    'get_team_power_score',
-    'get_tier_strength',
-    'get_match_difficulty',
-    'get_difficulty_factor',
-    '_match_affects_streak',
-    'get_current_loss_streak',
-    'get_loss_recovery_win_step',
-    'calculate_deltas',
-    'get_league_logo_url',
-    'power_score_to_tier',
-    '_normalize_team_row',
-    '_load_teams_from_supabase',
-    'get_random_team_pools',
-    'get_db_team_info',
-    'get_team_info',
-    'get_team_overall',
-    'get_team_tier',
-    'build_friendly_random3_state',
-    'encode_friendly_random3_state',
-    'decode_friendly_random3_state',
-    'get_rank_level',
-    '_validate_rank_tier_weights',
-    'load_rank_tier_weights',
-    'get_rank_tier_weights',
-    '_all_random_teams',
-    '_normalize_team_name',
-    '_is_random3_match',
-    '_recent_pair_team_names',
-    '_teams_in_tiers',
-    '_weighted_tier_choice',
-    '_nearest_rank_tier_candidates',
-    '_pick_rank_team',
-    'get_smart_random_rule',
-    'smart_random_team_pair',
-    'get_available_team_tiers',
-    'friendly_random_team_pair',
-    'apply_host_xp_factor'
-]
+EXPORTED_NAMES = ['_validate_rank_ranges', 'load_rank_ranges', 'get_rank_ranges', 'get_rank_info', 'is_goat_player', 'get_player_rank_info', 'get_rank_name', 'get_rank_display', 'get_team_power_score', 'get_tier_strength', 'get_match_difficulty', 'get_difficulty_factor', '_match_affects_streak', 'get_current_loss_streak', 'get_loss_recovery_win_step', 'calculate_deltas', 'get_league_logo_url', 'power_score_to_tier', '_normalize_team_row', '_load_teams_from_supabase', 'get_random_team_pools', 'get_db_team_info', 'get_team_info', 'get_team_overall', 'get_team_tier', 'build_friendly_random3_state', 'encode_friendly_random3_state', 'decode_friendly_random3_state', 'get_rank_level', '_validate_rank_tier_weights', 'load_rank_tier_weights', 'get_rank_tier_weights', '_all_random_teams', '_normalize_team_name', '_is_random3_match', '_teams_in_tiers', '_weighted_tier_choice', '_nearest_rank_tier_candidates', '_pick_rank_team', 'get_smart_random_rule', 'smart_random_team_pair', 'get_available_team_tiers', 'friendly_random_team_pair']
 
 def _validate_rank_ranges(raw_ranges):
     """Validate the 10 rank definitions stored in system_settings."""
@@ -631,43 +583,6 @@ def _is_random3_match(match):
     return "random 3 chọn 1" in note or FRIENDLY_RANDOM3_MODE in note
 
 
-def _recent_pair_team_names(user_id, opponent_id, limit=None):
-    """CLB người chơi đã dùng trong N trận confirmed gần nhất với đúng đối thủ.
-
-    Lịch sử dùng chung cho Rank thường và Random 3 chọn 1. Khi đổi đối thủ,
-    danh sách chống lặp tự tách theo cặp người chơi mới.
-    """
-    if not user_id or not opponent_id:
-        return []
-    if limit is None:
-        limit = RECENT_TEAM_EXCLUSION_COUNT
-    names = []
-    try:
-        matches = sorted(
-            list_matches(),
-            key=lambda item: str(item.get("created_at") or item.get("updated_at") or ""),
-            reverse=True,
-        )
-        for match in matches:
-            if str(match.get("status") or "").lower() != "confirmed":
-                continue
-            p1 = match.get("player1_id")
-            p2 = match.get("player2_id")
-            if p1 == user_id and p2 == opponent_id:
-                name = match.get("team1")
-            elif p2 == user_id and p1 == opponent_id:
-                name = match.get("team2")
-            else:
-                continue
-            if name:
-                names.append(str(name).strip())
-            if len(names) >= limit:
-                break
-    except Exception as exc:
-        print(f"recent_pair_team_history warning: {exc}")
-    return names
-
-
 def _teams_in_tiers(teams, tiers, excluded_names=None):
     allowed = {str(tier).upper() for tier in (tiers or [])}
     excluded = {_normalize_team_name(name) for name in (excluded_names or []) if name}
@@ -897,17 +812,4 @@ def friendly_random_team_pair(tier, excluded_names=None):
         "league_a": team_a.get("league") or "",
         "league_b": team_b.get("league") or "",
     }
-
-
-def apply_host_xp_factor(delta, factor=None):
-    """Apply the room-host coefficient to the absolute RP change."""
-    try:
-        safe_factor = float(factor or HOST_XP_FACTOR)
-    except (TypeError, ValueError):
-        safe_factor = HOST_XP_FACTOR
-    value = int(delta or 0)
-    if value <= 0:
-        return value
-    adjusted = round(value * safe_factor)
-    return max(1, adjusted)
 

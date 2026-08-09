@@ -5,28 +5,6 @@ Module đăng ký route theo dependency của app.py để giữ nguyên endpoin
 
 import uuid
 
-# V1.4: Keep the Series-child predicate locally importable as a safe fallback.
-# register_routes(context) may inject the same helper from app.py, but route logic
-# must not crash with NameError when a partial/test context omits that binding.
-
-
-
-
-def _is_series_child_match_safe(match):
-    """Use the injected Series predicate when available; never let binding failures break result routes."""
-    checker = globals().get("is_series_child_match")
-    if callable(checker):
-        try:
-            return bool(checker(match))
-        except (KeyError, NameError, TypeError, AttributeError):
-            pass
-    # A match without an explicit Series mode is always a normal single match.
-    mode = str((match or {}).get("mode_code") or "").strip().lower()
-    if mode not in {"home_away", "bo3", "tactical_bo3", "ban_pick_bo3"}:
-        return False
-    # If this is a Series mode but the Series dependency is unavailable, fail closed:
-    # do not guess that it is a child game. Production app injects the real checker.
-    return False
 
 def _result_error_id(prefix):
     return f"{prefix}-{uuid.uuid4().hex[:8].upper()}"
@@ -45,43 +23,6 @@ def _parse_room_score(raw_value, label):
     return score
 
 
-def _persist_confirm_error(error_id, room_id, match_id, user_id, exc):
-    """Persist server-side confirm failures into Blackbox; must never break the route."""
-    store = globals().get("blackbox_store_batch")
-    if not callable(store):
-        return
-    try:
-        store(
-            user_id=user_id,
-            session_id=f"server-confirm-{error_id}",
-            page=f"/room/{room_id}",
-            request_id=error_id,
-            client={"source": "server", "app_version": globals().get("APP_VERSION")},
-            events=[{
-                "type": "server_confirm_error",
-                "level": "ERROR",
-                "message": f"{error_id} | {type(exc).__name__}: {str(exc)[:700]}",
-                "error_id": error_id,
-                "room_id": str(room_id),
-                "match_id": str(match_id or ""),
-                "error_type": type(exc).__name__,
-                "error": str(exc)[:1000],
-            }],
-        )
-    except Exception as log_exc:
-        print(f"{error_id} blackbox persist warning: {type(log_exc).__name__}: {log_exc}")
-
-
-def _invalidate_room_cache_safe():
-    for name, args in (("cache_delete", ("_rz_rooms_all",)), ("ttl_cache_delete", ("rooms_raw",))):
-        fn = globals().get(name)
-        if callable(fn):
-            try:
-                fn(*args)
-            except Exception:
-                pass
-
-
 def register_routes(context):
     """Đăng ký nhóm route vào Flask app hiện tại."""
     globals().update(context)
@@ -91,6 +32,10 @@ def register_routes(context):
     def room_submit_result(room_id):
         user = current_user()
         room = get_room(room_id)
+        _flow_ok, _flow_message = require_room_action(room, "submit_result")
+        if room and not _flow_ok:
+            flash(_flow_message, "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:
             flash("Không tìm thấy phòng.", "danger")
@@ -250,6 +195,10 @@ def register_routes(context):
     def room_confirm_result(room_id):
         user = current_user()
         room = get_room(room_id)
+        _flow_ok, _flow_message = require_room_action(room, "confirm_result")
+        if room and not _flow_ok:
+            flash(_flow_message, "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:
             flash("Không tìm thấy phòng.", "danger")
@@ -268,22 +217,7 @@ def register_routes(context):
             flash("Không tìm thấy trận.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        room_update = None
         try:
-            # Series modes confirm each child match without per-game RP.
-            # The orchestrator records the child result and applies the configured
-            # Series RP exactly once when Home/Away or BO3 is complete.
-            if _is_series_child_match_safe(match):
-                series_result = confirm_series_child_match(room, match, user.get("id"))
-                if series_result.get("series_completed"):
-                    flash(
-                        f"Đã xác nhận trận và hoàn tất Series. RP: {int(series_result.get('delta1') or 0):+d} / {int(series_result.get('delta2') or 0):+d}.",
-                        "success",
-                    )
-                else:
-                    flash("Đã xác nhận trận con. Series tiếp tục sang trận kế tiếp và chưa tính RP giữa chừng.", "success")
-                return redirect(url_for("room_detail", room_id=room_id))
-
             try:
                 users_before_streak_event = users_map()
             except Exception as exc:
@@ -298,24 +232,31 @@ def register_routes(context):
             previous_mode = room.get("team_tier") or SMART_RANDOM_MODE
             if not system_feature_enabled("rank_standard_enabled"):
                 previous_mode = FRIENDLY_RANDOM3_MODE
-            # V1.4.3: confirmation must finish the current match first.  Do not
-            # jump straight back to waiting_ready, otherwise the post-match
-            # Đá tiếp / Rời phòng routes (which intentionally require
-            # status=confirmed) become unreachable.  Keep the final teams,
-            # score and match_id visible until both players choose what to do.
             room_update = {
-                "status": "confirmed",
+                "status": "waiting_ready",
                 "guest_ready": False,
+                "host_team": None,
+                "guest_team": None,
+                "host_team_overall": None,
+                "guest_team_overall": None,
+                "host_team_logo_url": None,
+                "guest_team_logo_url": None,
+                "host_team_league": None,
+                "guest_team_league": None,
+                "host_score": None,
+                "guest_score": None,
+                "match_id": None,
+                "submitted_by_id": None,
                 "confirmed_by_id": user["id"],
                 "match_mode": MATCH_MODE_RANKED,
                 "team_tier": previous_mode,
-                "note": "Kết quả đã xác nhận. Chọn Đá tiếp hoặc Rời phòng.",
-                "state_expires_at": future_iso(REMATCH_TIMEOUT_SECONDS),
+                "note": f"__RANK_MODE_LOCKED__|{previous_mode}",
+                "state_expires_at": None,
                 "updated_at": now_iso(),
             }
             room_update_result = execute_query(
                 db.table("match_rooms").update(room_update).eq("id", room_id).eq("status", "waiting_result_confirm"),
-                "confirm_result_finish_room",
+                "confirm_result_reset_room_waiting_ready",
             )
             if not (room_update_result.data or []):
                 raise ValueError("Trạng thái phòng vừa thay đổi; vui lòng tải lại phòng.")
@@ -324,53 +265,23 @@ def register_routes(context):
                     publish_global_streak_event(streak_event)
                 except Exception as exc:
                     print(f"publish streak event warning room={room_id}: {type(exc).__name__}: {exc}")
-            _invalidate_room_cache_safe()
-            flash("Đã xác nhận kết quả. Hai người hãy chọn Đá tiếp hoặc Rời phòng.", "success")
+            flash("Đã xác nhận kết quả. Phòng đã trở về Chờ Sẵn Sàng và giữ nguyên chế độ thi đấu.", "success")
         except ValueError as exc:
             fresh_match = get_match(match.get("id"))
-            if fresh_match and fresh_match.get("status") == "confirmed" and room_update:
+            if fresh_match and fresh_match.get("status") == "confirmed":
                 error_id = _result_error_id("ROOM")
-                try:
-                    repair = execute_query(
-                        db.table("match_rooms").update(room_update)
-                        .eq("id", room_id)
-                        .eq("status", "waiting_result_confirm"),
-                        "repair_confirmed_match_room_state",
-                        attempts=2,
-                    )
-                    if repair.data or []:
-                        _invalidate_room_cache_safe()
-                        flash("Kết quả đã được ghi nhận và trạng thái phòng đã tự khôi phục. Hai người hãy chọn Đá tiếp hoặc Rời phòng.", "success")
-                        return redirect(url_for("room_detail", room_id=room_id))
-                except Exception as repair_exc:
-                    print(f"{error_id} room repair ERROR room={room_id}: {type(repair_exc).__name__}: {repair_exc}")
-                print(f"{error_id} confirmed but room state pending room={room_id}: {exc}")
-                flash(f"Kết quả đã được ghi nhận, nhưng phòng chưa chuyển sang bước Đá tiếp. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
+                print(f"{error_id} confirmed but room reset pending room={room_id}: {exc}")
+                flash(f"Kết quả đã được ghi nhận, nhưng phòng chưa làm mới. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
             else:
                 print(f"room_confirm_result validation room={room_id} match={match.get('id')}: {exc}")
                 flash(str(exc), "warning")
             return redirect(url_for("room_detail", room_id=room_id))
         except Exception as exc:
             error_id = _result_error_id("CONFIRM")
-            _persist_confirm_error(error_id, room_id, match.get("id"), user.get("id"), exc)
             fresh_match = get_match(match.get("id"))
-            if fresh_match and fresh_match.get("status") == "confirmed" and room_update:
-                try:
-                    repair = execute_query(
-                        db.table("match_rooms").update(room_update)
-                        .eq("id", room_id)
-                        .eq("status", "waiting_result_confirm"),
-                        "repair_confirmed_match_room_state_after_error",
-                        attempts=2,
-                    )
-                    if repair.data or []:
-                        _invalidate_room_cache_safe()
-                        flash("Kết quả đã được ghi nhận và phòng đã tự khôi phục sang bước Đá tiếp / Rời phòng.", "success")
-                        return redirect(url_for("room_detail", room_id=room_id))
-                except Exception as repair_exc:
-                    print(f"{error_id} room repair ERROR room={room_id}: {type(repair_exc).__name__}: {repair_exc}")
-                print(f"{error_id} confirm completed but room state update failed room={room_id}: {type(exc).__name__}: {exc}")
-                flash(f"Kết quả đã được ghi nhận, nhưng phòng chưa chuyển sang bước Đá tiếp. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
+            if fresh_match and fresh_match.get("status") == "confirmed":
+                print(f"{error_id} confirm completed but room reset failed room={room_id}: {type(exc).__name__}: {exc}")
+                flash(f"Kết quả đã được ghi nhận, nhưng phòng chưa làm mới. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
             else:
                 print(f"{error_id} room_confirm_result ERROR room={room_id} match={match.get('id')}: {type(exc).__name__}: {exc}")
                 flash(f"Không thể xác nhận kết quả. Mã lỗi {error_id}. Chưa ghi thêm điểm; hãy thử lại sau vài giây.", "danger")
@@ -384,6 +295,10 @@ def register_routes(context):
     def room_dispute_result(room_id):
         user = current_user()
         room = get_room(room_id)
+        _flow_ok, _flow_message = require_room_action(room, "dispute_result")
+        if room and not _flow_ok:
+            flash(_flow_message, "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:
             flash("Không tìm thấy phòng.", "danger")
@@ -429,8 +344,6 @@ def register_routes(context):
         reason_label = dispute_reason_label(reason_code)
         note = f"{user.get('display_name', 'Khách')} không đồng ý kết quả: {reason_label}."
         disputed_match_id = room.get("match_id")
-        disputed_match = get_match(disputed_match_id) if disputed_match_id else None
-        disputed_was_series_child = bool(disputed_match and _is_series_child_match_safe(disputed_match))
         previous_mode = room.get("team_tier") or SMART_RANDOM_MODE
         if not system_feature_enabled("rank_standard_enabled"):
             previous_mode = FRIENDLY_RANDOM3_MODE
@@ -485,11 +398,6 @@ def register_routes(context):
             )
             if not (room_update_result.data or []):
                 raise ValueError("Trạng thái phòng vừa thay đổi; chưa thể giải phóng phòng.")
-            if disputed_was_series_child:
-                # A disputed child cannot safely coexist with a continuing BO3/Home-Away
-                # because the winner/game count is unresolved. Cancel only this Series;
-                # the room remains on the same selected mode and can start a fresh Series.
-                cancel_active_series_for_room(room_id, reason="child_match_disputed")
             ttl_cache_delete("rooms_raw")
         except Exception as exc:
             if evidence_path:

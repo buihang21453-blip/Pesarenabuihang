@@ -1,8 +1,6 @@
-"""Extracted core service module (PES Arena V1.3.52).
+"""Module hóa từ V1.2.9.
 
-This module intentionally uses the existing application context while the project
-transitions away from the historical monolithic app.py. New code should prefer
-explicit dependencies instead of adding more globals here.
+Giữ nguyên logic gốc; dependency được truyền từ app.py bằng configure() để tránh import vòng.
 """
 
 _CONTEXT = {}
@@ -12,23 +10,7 @@ def configure(context):
     _CONTEXT.update(context)
     globals().update(context)
 
-EXPORTED_NAMES = [
-    'room_state_expiry_dt',
-    'room_inactivity_expiry_dt',
-    'room_expiry_dt',
-    'apply_room_abandon_penalty',
-    'room_uses_series_rank_mode',
-    'apply_series_forfeit_win_reward',
-    'close_room_if_host_browser_offline',
-    'close_room_with_timeout_penalty',
-    'expire_room_if_needed',
-    '_reconcile_waiting_rank_room_mode',
-    'get_room',
-    'get_room_poll_snapshot',
-    'get_series_poll_version',
-    'enrich_room',
-    'list_rooms'
-]
+EXPORTED_NAMES = ['room_state_expiry_dt', 'room_inactivity_expiry_dt', 'room_expiry_dt', 'close_room_if_host_browser_offline', 'close_room_with_timeout_penalty', 'expire_room_if_needed', 'get_room', 'enrich_room', 'list_rooms']
 
 def room_state_expiry_dt(room):
     """Short state-specific deadline such as ready/result/rematch timeout."""
@@ -47,7 +29,7 @@ def room_state_expiry_dt(room):
         return None
     if status == "waiting_result_confirm":
         return updated + timedelta(seconds=RESULT_CONFIRM_TIMEOUT_SECONDS)
-    if status == "confirmed" and note not in {REMATCH_HOST_DECLINED_NOTE, REMATCH_GUEST_DECLINED_NOTE, REMATCH_EXPIRED_NOTE}:
+    if status == "confirmed" and note in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}:
         return updated + timedelta(seconds=REMATCH_TIMEOUT_SECONDS)
     return None
 
@@ -57,7 +39,7 @@ def room_inactivity_expiry_dt(room):
     active_statuses = {"waiting_ready", "playing", "friendly_playing", "waiting_result_confirm"}
     status = room.get("status")
     note = room.get("note") or ""
-    if status == "confirmed" and note not in {REMATCH_HOST_DECLINED_NOTE, REMATCH_GUEST_DECLINED_NOTE, REMATCH_EXPIRED_NOTE}:
+    if status == "confirmed" and note in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}:
         active = True
     else:
         active = status in active_statuses
@@ -80,64 +62,6 @@ def room_expiry_dt(room):
     inactivity_expiry = room_inactivity_expiry_dt(room)
     candidates = [dt for dt in (state_expiry, inactivity_expiry) if dt]
     return min(candidates) if candidates else None
-
-
-def apply_room_abandon_penalty(user_id, amount=None):
-    """Trừ RP và tính một trận thua do bỏ trận, không cộng thắng cho đối thủ."""
-    if not user_id:
-        return None
-    if amount is None:
-        amount = ROOM_ABANDON_PENALTY
-    player = get_user(user_id)
-    if not player:
-        return None
-    penalty = max(0, int(amount or 0))
-    old_points = int(player.get("rank_points", 0) or 0)
-    new_points = max(0, old_points - penalty)
-    execute_query(
-        db.table("users").update({
-            "rank_points": new_points,
-            "losses": int(player.get("losses", 0) or 0) + 1,
-            "total_matches": int(player.get("wins", 0) or 0) + int(player.get("draws", 0) or 0) + int(player.get("losses", 0) or 0) + 1,
-            "streak": 0,
-        }).eq("id", user_id),
-        "apply_room_abandon_penalty",
-    )
-    cache_delete("_rz_users_map")
-    cache_delete("_rz_players_all")
-    return -(old_points - new_points)
-
-
-def room_uses_series_rank_mode(room):
-    """True chỉ cho 4 chế độ Rank Series; Rank đơn/giao hữu không dùng thưởng bỏ cuộc +20."""
-    if not isinstance(room, dict) or room.get("match_mode") == MATCH_MODE_FRIENDLY:
-        return False
-    try:
-        return bool(is_series_mode(room.get("team_tier") or SMART_RANDOM_MODE))
-    except Exception:
-        return False
-
-
-def apply_series_forfeit_win_reward(room, winner_id, amount=None):
-    """Cộng đúng +20 RP cho người còn lại khi đối thủ bỏ cuộc trong một Series."""
-    if not winner_id or not room_uses_series_rank_mode(room):
-        return 0
-    if amount is None:
-        amount = SERIES_FORFEIT_RP
-    player = get_user(winner_id)
-    if not player:
-        return 0
-    reward = max(0, int(amount or 0))
-    old_points = int(player.get("rank_points", 0) or 0)
-    new_points = old_points + reward
-    execute_query(
-        db.table("users").update({"rank_points": new_points}).eq("id", winner_id),
-        "apply_series_forfeit_win_reward",
-    )
-    cache_delete("_rz_users_map")
-    cache_delete("_rz_players_all")
-    ttl_cache_delete("players_raw")
-    return new_points - old_points
 
 
 def close_room_if_host_browser_offline(room):
@@ -192,15 +116,12 @@ def close_room_if_host_browser_offline(room):
 
     room.update(update_data)
     penalty_delta = apply_room_abandon_penalty(host_id, ROOM_ABANDON_PENALTY)
-    winner_delta = apply_series_forfeit_win_reward(room, guest_id)
-    finalize_series_forfeit(room, host_id, penalty_delta, winner_delta)
     record_room_forfeit_match(
         room,
         offender_role="host",
         penalty_delta=penalty_delta if penalty_delta is not None else -ROOM_ABANDON_PENALTY,
         reason=reason,
         event_type="host_browser_offline_forfeit",
-        winner_delta=winner_delta,
     )
 
     create_user_notification(
@@ -213,7 +134,7 @@ def close_room_if_host_browser_offline(room):
     create_user_notification(
         guest_id,
         "🚪 Chủ phòng đã Offline",
-        f"Phòng đã tự đóng. " + (f"Bạn được cộng {winner_delta} RP do đối thủ bỏ cuộc trong Series." if winner_delta else "Bạn không bị cộng hoặc trừ RP."),
+        "Phòng đã tự đóng. Bạn không bị cộng hoặc trừ RP và có thể tạo phòng mới ngay.",
         "/rooms",
         "host_browser_offline_room_closed",
     )
@@ -242,22 +163,18 @@ def close_room_with_timeout_penalty(room, offender_role, reason):
         return False
 
     room.update(update_data)
-    is_series = room_uses_series_rank_mode(room)
-    penalty_amount = SERIES_FORFEIT_RP if is_series else random.SystemRandom().randint(*ROOM_TIMEOUT_PENALTY_RANGE)
+    penalty_amount = random.SystemRandom().randint(*ROOM_TIMEOUT_PENALTY_RANGE)
     penalty_delta = apply_room_abandon_penalty(offender_id, penalty_amount)
-    offender_name = room.get("host_name") if offender_role == "host" else room.get("guest_name")
-    other_id = room.get("guest_user_id") if offender_role == "host" else room.get("host_user_id")
-    winner_delta = apply_series_forfeit_win_reward(room, other_id)
-    finalize_series_forfeit(room, offender_id, penalty_delta, winner_delta)
     record_room_forfeit_match(
         room,
         offender_role=offender_role,
         penalty_delta=penalty_delta if penalty_delta is not None else -penalty_amount,
         reason=reason,
         event_type="timeout_forfeit",
-        winner_delta=winner_delta,
     )
 
+    offender_name = room.get("host_name") if offender_role == "host" else room.get("guest_name")
+    other_id = room.get("guest_user_id") if offender_role == "host" else room.get("host_user_id")
     create_user_notification(
         offender_id,
         "⏱️ Trận bị tính là bỏ trận",
@@ -268,7 +185,7 @@ def close_room_with_timeout_penalty(room, offender_role, reason):
     create_user_notification(
         other_id,
         "⏱️ Phòng đấu đã tự đóng",
-        f"{offender_name or 'Đối thủ'} bị tính là bỏ trận. " + (f"Bạn được cộng {winner_delta} RP." if winner_delta else "Bạn không bị cộng hoặc trừ RP."),
+        f"{offender_name or 'Đối thủ'} bị tính là bỏ trận. Bạn không bị cộng hoặc trừ RP.",
         "/matches",
         "room_timeout",
     )
@@ -312,23 +229,18 @@ def expire_room_if_needed(room):
         if status == "waiting_result_confirm" and mode == MATCH_MODE_RANKED:
             pending_match = get_match(room.get("match_id")) if room.get("match_id") else None
             if pending_match and pending_match.get("status") == "confirmed":
-                update_data = {
-                    "status": "confirmed",
+                room.update({
+                    "status": "waiting_ready",
                     "guest_ready": False,
-                    "confirmed_by_id": room.get("guest_user_id") or room.get("host_user_id"),
-                    "note": "Kết quả đã được xác nhận. Chọn Đá tiếp hoặc Rời phòng.",
-                    "state_expires_at": future_iso(REMATCH_TIMEOUT_SECONDS),
+                    "host_score": None,
+                    "guest_score": None,
+                    "match_id": None,
+                    "submitted_by_id": None,
+                    "confirmed_by_id": None,
+                    "state_expires_at": None,
                     "updated_at": now_iso(),
-                }
-                repair = execute_query(
-                    db.table("match_rooms").update(update_data)
-                    .eq("id", room.get("id")).in_("status", ["waiting_result_confirm", "confirmed"]),
-                    "repair_room_after_confirmed_match_timeout",
-                    attempts=2,
-                )
-                if repair.data or []:
-                    room.update(update_data)
-            room["timeout_seconds"] = seconds_until(room.get("state_expires_at"))
+                })
+            room["timeout_seconds"] = 0
             return room
 
         # Giao hữu hoặc phòng chưa bắt đầu: chỉ đóng, không trừ điểm.
@@ -365,7 +277,7 @@ def expire_room_if_needed(room):
             room["timeout_seconds"] = 0
             return room
 
-        if status == "confirmed" and note not in {REMATCH_HOST_DECLINED_NOTE, REMATCH_GUEST_DECLINED_NOTE, REMATCH_EXPIRED_NOTE}:
+        if status == "confirmed" and note in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}:
             update_data = {
                 "note": REMATCH_EXPIRED_NOTE,
                 "state_expires_at": None,
@@ -383,52 +295,6 @@ def expire_room_if_needed(room):
     return room
 
 
-def _reconcile_waiting_rank_room_mode(room):
-    """Keep a waiting ranked room on an enabled Admin mode.
-
-    V1.3.49 used the legacy flag ``rank_standard_enabled`` as if it meant
-    "Rank Random is enabled". In reality that flag means "at least one ranked
-    mode is enabled", so a Home/Away-only setup still created smart_random rooms.
-    This conditional migration repairs old waiting rooms once and preserves an
-    active Series/match without changing its mode mid-flight.
-    """
-    if not room or room.get("status") != "waiting_ready":
-        return room
-    if (room.get("match_mode") or MATCH_MODE_RANKED) != MATCH_MODE_RANKED:
-        return room
-    note = str(room.get("note") or "")
-    if room.get("match_id") or decode_friendly_random3_state(note) or note.startswith("__SERIES_ACTIVE__"):
-        return room
-    try:
-        current = normalize_rank_mode_code(room.get("team_tier"))
-        resolved = resolve_enabled_rank_mode(current)
-    except Exception:
-        return room
-    if resolved == current:
-        return room
-    storage_mode = legacy_team_tier_for_mode(resolved)
-    try:
-        changed = execute_query(
-            db.table("match_rooms").update({
-                "team_tier": storage_mode,
-                "friendly_tier": None,
-                "note": f"Chế độ cũ đã bị Admin khóa. Phòng chuyển sang {get_rank_mode(resolved).get('label') or resolved}.",
-                "updated_at": now_iso(),
-            }).eq("id", room.get("id")).eq("status", "waiting_ready"),
-            "reconcile_waiting_rank_room_mode",
-            attempts=2,
-        )
-        if changed.data or []:
-            room.update(dict((changed.data or [{}])[0]))
-            cache_delete("_rz_rooms_all")
-            ttl_cache_delete("rooms_raw")
-        else:
-            room["team_tier"] = storage_mode
-    except Exception as exc:
-        app.logger.debug("Room mode reconcile skipped room=%s: %s", room.get("id"), exc)
-    return room
-
-
 def get_room(room_id):
     result = execute_query(
         db.table("match_rooms").select("*").eq("id", room_id).limit(1),
@@ -437,72 +303,14 @@ def get_room(room_id):
     room = dict(result.data[0]) if result.data else None
     if room:
         expire_room_if_needed(room)
-        _reconcile_waiting_rank_room_mode(room)
         enrich_room(room)
     return room
-
-
-def get_room_poll_snapshot(room_id):
-    """Lightweight room read for polling: no users_map, team hydration or cosmetics."""
-    result = execute_query(
-        db.table("match_rooms").select("*").eq("id", room_id).limit(1),
-        "get_room_poll_snapshot",
-        attempts=1,
-    )
-    room = dict(result.data[0]) if result.data else None
-    if not room:
-        return None
-    expire_room_if_needed(room)
-    _reconcile_waiting_rank_room_mode(room)
-    note = room.get("note") or ""
-    room["rematch_host_ready"] = note == REMATCH_HOST_READY_NOTE
-    room["rematch_guest_ready"] = note == REMATCH_GUEST_READY_NOTE
-    room["rematch_host_declined"] = note == REMATCH_HOST_DECLINED_NOTE
-    room["rematch_guest_declined"] = note == REMATCH_GUEST_DECLINED_NOTE
-    room["rematch_declined"] = room["rematch_host_declined"] or room["rematch_guest_declined"]
-    room["rematch_expired"] = note == REMATCH_EXPIRED_NOTE
-    room["timeout_seconds"] = seconds_until(room.get("state_expires_at"))
-    room["dispute"] = None
-    if room.get("status") == "disputed" and room.get("match_id"):
-        try:
-            dispute = get_match_dispute_by_match(room.get("match_id"), DISPUTE_PENDING_STATUSES)
-            if dispute:
-                room["dispute"] = decorate_match_dispute(dispute)
-        except Exception:
-            pass
-    return room
-
-
-def get_series_poll_version(room):
-    """Return one tiny version token for active Series so the opponent refreshes on picks/bans."""
-    if not room:
-        return ""
-    try:
-        mode = normalize_rank_mode_code(room.get("team_tier"))
-        if mode not in SERIES_MODES:
-            return ""
-        result = execute_query(
-            db.table("match_series").select("id,status,updated_at").eq("room_id", room.get("id"))
-              .in_("status", ["waiting", "playing", "processing_result"]).order("created_at", desc=True).limit(1),
-            "rank_series_poll_version",
-            attempts=1,
-        )
-        series = (result.data or [None])[0]
-        if not series:
-            return ""
-        return f"{series.get('id')}:{series.get('status')}:{series.get('updated_at')}"
-    except Exception:
-        return ""
 
 
 def enrich_room(room):
     users = users_map()
     host = users.get(room.get("host_user_id"), {})
     guest = users.get(room.get("guest_user_id"), {})
-    # Reuse these objects in the room template context. Previously the room page
-    # queried host/guest again after users_map() had already loaded them.
-    room["_host_player"] = host
-    room["_guest_player"] = guest if room.get("guest_user_id") else None
 
     raw_room_id = str(room.get("id") or "")
     compact_room_id = "".join(ch for ch in raw_room_id.upper() if ch.isalnum())
@@ -559,6 +367,9 @@ def enrich_room(room):
     room["rematch_guest_declined"] = room.get("note") == REMATCH_GUEST_DECLINED_NOTE
     room["rematch_declined"] = room["rematch_host_declined"] or room["rematch_guest_declined"]
     room["match_mode"] = room.get("match_mode") or MATCH_MODE_RANKED
+    if (not system_feature_enabled("rank_standard_enabled") and room.get("status") == "waiting_ready"
+            and room.get("match_mode") == MATCH_MODE_RANKED and not decode_friendly_random3_state(room.get("note"))):
+        room["team_tier"] = FRIENDLY_RANDOM3_MODE
     room["friendly_tier"] = room.get("friendly_tier") or "A"
     random3_state = decode_friendly_random3_state(room.get("note"))
     room["friendly_random3"] = random3_state
@@ -591,26 +402,13 @@ def enrich_room(room):
         room["timeout_label"] = "Phòng sẽ tự đóng nếu không có hoạt động trong"
     elif room.get("status") == "waiting_result_confirm":
         room["timeout_label"] = "Khách cần xác nhận hoặc tranh chấp trong"
-    elif room.get("status") == "confirmed" and not room.get("rematch_declined") and not room.get("rematch_expired"):
-        room["timeout_label"] = "Chọn Đá tiếp hoặc Rời phòng trong"
+    elif room.get("status") == "confirmed" and (room.get("rematch_host_ready") or room.get("rematch_guest_ready")):
+        room["timeout_label"] = "Yêu cầu đá tiếp sẽ hết hạn trong"
     else:
         room["timeout_label"] = ""
 
-    # V1.3.47: nhãn hiển thị phải lấy từ đúng mã chế độ Rank đang lưu trong phòng.
-    # Trước đây mọi mode ngoài random3 đều bị rút gọn thành "Xếp hạng (Rank)",
-    # khiến Lượt đi/về, BO3, Chiến thuật BO3 và Cấm chọn BO3 trông như Rank thường.
-    selected_rank_mode = normalize_rank_mode_code(room.get("team_tier") or RANK_RANDOM)
-    room["rank_mode_code"] = selected_rank_mode
-    if room.get("match_mode") == MATCH_MODE_FRIENDLY:
-        room["match_mode_label"] = f"Giao hữu Tier {room.get('friendly_tier') or ''}".strip()
-        room["battle_label"] = "Trận đấu giao hữu"
-    else:
-        try:
-            selected_mode_config = get_rank_mode(selected_rank_mode) or {}
-        except Exception:
-            selected_mode_config = {}
-        room["match_mode_label"] = selected_mode_config.get("label") or "Rank thường Random"
-        room["battle_label"] = f"Trận đấu {room['match_mode_label']}"
+    room["match_mode_label"] = ("Random 3 chọn 1" if room.get("team_tier") == FRIENDLY_RANDOM3_MODE else ("Xếp hạng (Rank)" if room.get("match_mode") != MATCH_MODE_FRIENDLY else f"Giao hữu Tier {room.get('friendly_tier') or ''}".strip()))
+    room["battle_label"] = "Trận đấu xếp hạng" if room.get("match_mode") != MATCH_MODE_FRIENDLY else "Trận đấu giao hữu"
     room["start_countdown_seconds"] = 0
     room["match_elapsed_seconds"] = 0
     if room.get("guest_user_id"):

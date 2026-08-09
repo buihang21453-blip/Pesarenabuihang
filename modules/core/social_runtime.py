@@ -1,4 +1,7 @@
-"""Extracted core module (PES Arena V1.3.52)."""
+"""Module hóa từ V1.2.9.
+
+Giữ nguyên logic gốc; dependency được truyền từ app.py bằng configure() để tránh import vòng.
+"""
 
 _CONTEXT = {}
 
@@ -7,18 +10,7 @@ def configure(context):
     _CONTEXT.update(context)
     globals().update(context)
 
-EXPORTED_NAMES = [
-    '_normalize_global_streak_events',
-    'publish_global_streak_event',
-    'get_active_global_streak_events',
-    'get_active_global_streak_event',
-    'get_active_announcement',
-    'enrich_chat_message',
-    'list_chat_messages',
-    'user_can_chat',
-    'touch_room_activity',
-    'create_chat_message'
-]
+EXPORTED_NAMES = ['_normalize_global_streak_events', 'publish_global_streak_event', 'get_active_global_streak_events', 'get_active_global_streak_event', 'get_active_announcement', 'enrich_chat_message', 'list_chat_messages', 'user_can_chat', 'touch_room_activity', 'create_chat_message']
 
 def _normalize_global_streak_events(raw):
     """Chuẩn hóa dữ liệu cũ (1 dict) và dữ liệu mới (danh sách sự kiện)."""

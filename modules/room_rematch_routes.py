@@ -3,22 +3,6 @@
 Module đăng ký route theo dependency của app.py để giữ nguyên endpoint và tránh import vòng.
 """
 
-def _invalidate_room_flow_cache_safe():
-    calls = [
-        ("cache_delete", ("_rz_rooms_all",)),
-        ("cache_delete", ("_rz_invites_all",)),
-        ("ttl_cache_delete", ("rooms_raw",)),
-        ("ttl_cache_delete", ("invites_raw",)),
-    ]
-    for name, args in calls:
-        fn = globals().get(name)
-        if callable(fn):
-            try:
-                fn(*args)
-            except Exception:
-                pass
-
-
 def register_routes(context):
     """Đăng ký nhóm route vào Flask app hiện tại."""
     globals().update(context)
@@ -114,21 +98,18 @@ def register_routes(context):
 
         penalty_delta = apply_room_abandon_penalty(user["id"])
         _award_forfeit_win(room.get("host_user_id"))
-        winner_delta = apply_series_forfeit_win_reward(room, room.get("host_user_id"))
-        finalize_series_forfeit(room, user.get("id"), penalty_delta, winner_delta)
         record_room_forfeit_match(
             room,
             offender_role="guest",
             penalty_delta=penalty_delta if penalty_delta is not None else -ROOM_ABANDON_PENALTY,
             reason=reason,
             event_type="guest_manual_forfeit",
-            winner_delta=winner_delta,
         )
 
         create_user_notification(
             room.get("host_user_id"),
             "🚪 Đối thủ đã bỏ cuộc",
-            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn được tính 1 trận thắng, tăng chuỗi thắng' + (f' và được cộng {winner_delta} RP.' if winner_delta else '.'),
+            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn được tính 1 trận thắng và tăng chuỗi thắng, nhưng không được cộng RP.',
             "/matches",
             "guest_forfeit",
         )
@@ -211,21 +192,18 @@ def register_routes(context):
 
         penalty_delta = apply_room_abandon_penalty(user["id"])
         _award_forfeit_win(room.get("guest_user_id"))
-        winner_delta = apply_series_forfeit_win_reward(room, room.get("guest_user_id"))
-        finalize_series_forfeit(room, user.get("id"), penalty_delta, winner_delta)
         record_room_forfeit_match(
             room,
             offender_role="host",
             penalty_delta=penalty_delta if penalty_delta is not None else -ROOM_ABANDON_PENALTY,
             reason=reason,
             event_type="host_manual_forfeit",
-            winner_delta=winner_delta,
         )
 
         create_user_notification(
             room.get("guest_user_id"),
             "🚪 Chủ phòng đã bỏ cuộc",
-            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn được tính 1 trận thắng, tăng chuỗi thắng' + (f' và được cộng {winner_delta} RP.' if winner_delta else '.'),
+            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn được tính 1 trận thắng và tăng chuỗi thắng, nhưng không được cộng RP.',
             "/matches",
             "host_forfeit",
         )
@@ -245,6 +223,10 @@ def register_routes(context):
     def room_rematch(room_id):
         user = current_user()
         room = get_room(room_id)
+        _flow_ok, _flow_message = require_room_action(room, "rematch")
+        if room and not _flow_ok:
+            flash(_flow_message, "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:
             flash("Không tìm thấy phòng.", "danger")
@@ -290,11 +272,39 @@ def register_routes(context):
         previous_mode_label = "Random 3 chọn 1" if previous_rank_mode == FRIENDLY_RANDOM3_MODE else "Rank thường"
         rematch_locked_note = f"__RANK_MODE_LOCKED__|{previous_rank_mode}"
 
-        # V1.4.3: Đá tiếp là quyết định của CẢ HAI người chơi, đối xứng cho
-        # Host và Guest. Người bấm đầu tiên chỉ ghi nhận lựa chọn. Chỉ người
-        # bấm thứ hai mới đưa phòng về waiting_ready để bắt đầu trận mới.
+        # Khách bấm Đá tiếp: khách được tính là sẵn sàng ngay, không cần chọn lại chế độ.
+        if not is_host:
+            execute_query(
+                db.table("match_rooms").update({
+                    "host_team": None,
+                    "guest_team": None,
+                    "host_team_overall": None,
+                    "guest_team_overall": None,
+                    "host_team_logo_url": None,
+                    "guest_team_logo_url": None,
+                    "host_team_league": None,
+                    "guest_team_league": None,
+                    "guest_ready": True,
+                    "status": "waiting_ready",
+                    "match_id": None,
+                    "host_score": None,
+                    "guest_score": None,
+                    "submitted_by_id": None,
+                    "confirmed_by_id": None,
+                    "match_mode": MATCH_MODE_RANKED,
+                    "team_tier": previous_rank_mode,
+                    "note": rematch_locked_note,
+                    "state_expires_at": None,
+                    "updated_at": now_iso(),
+                }).eq("id", room_id).eq("status", "confirmed"),
+                "room_guest_rematch_ready_for_ranked_random",
+            )
+            flash(f"Bạn đã chọn Đá tiếp. Giữ nguyên chế độ {previous_mode_label}; Chủ phòng có thể quay quân.", "success")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        # Người đầu tiên bấm Đá tiếp: ghi nhận ngay trong phòng, không tạo lời mời mới.
         if current_note != opponent_ready_note:
-            ready_result = execute_query(
+            execute_query(
                 db.table("match_rooms").update({
                     "note": my_ready_note,
                     "state_expires_at": future_iso(REMATCH_TIMEOUT_SECONDS),
@@ -302,23 +312,17 @@ def register_routes(context):
                 }).eq("id", room_id).eq("status", "confirmed"),
                 "room_rematch_first_ready",
             )
-            if not (ready_result.data or []):
-                fresh_room = get_room(room_id)
-                if not fresh_room or fresh_room.get("note") != my_ready_note:
-                    flash("Trạng thái phòng vừa thay đổi. Hãy tải lại trước khi chọn Đá tiếp.", "warning")
-                    return redirect(url_for("room_detail", room_id=room_id))
-            _invalidate_room_flow_cache_safe()
             flash("Bạn đã chọn Đá tiếp. Đang chờ đối thủ bấm Đá tiếp.", "success")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        # Người thứ hai đồng ý: dùng lại chính phòng hiện tại và đưa cả hai về
-        # bước quay quân. Giữ nguyên chế độ của trận vừa hoàn tất.
+        # Người thứ hai đồng ý: dùng lại chính phòng hiện tại và đưa cả hai về bước random đội.
         host_active_room = active_room_for_user(room["host_user_id"], exclude_room_id=room_id)
         guest_active_room = active_room_for_user(room["guest_user_id"], exclude_room_id=room_id)
         if host_active_room or guest_active_room:
             flash("Một trong hai người đang có phòng khác chưa hoàn tất nên chưa thể đá tiếp.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
+        # Hủy lời mời chờ cũ giữa hai người (nếu còn từ phiên bản trước), tránh hiện thông báo thừa.
         for from_user_id, to_user_id in [
             (room["host_user_id"], room["guest_user_id"]),
             (room["guest_user_id"], room["host_user_id"]),
@@ -331,16 +335,10 @@ def register_routes(context):
             except Exception as exc:
                 print(f"Rematch pending invite cleanup warning: {exc}")
 
-        reset_result = execute_query(
+        execute_query(
             db.table("match_rooms").update({
                 "host_team": None,
                 "guest_team": None,
-                "host_team_overall": None,
-                "guest_team_overall": None,
-                "host_team_logo_url": None,
-                "guest_team_logo_url": None,
-                "host_team_league": None,
-                "guest_team_league": None,
                 "guest_ready": True,
                 "status": "waiting_ready",
                 "match_id": None,
@@ -348,7 +346,6 @@ def register_routes(context):
                 "guest_score": None,
                 "submitted_by_id": None,
                 "confirmed_by_id": None,
-                "match_mode": MATCH_MODE_RANKED,
                 "team_tier": previous_rank_mode,
                 "note": rematch_locked_note,
                 "state_expires_at": None,
@@ -356,14 +353,8 @@ def register_routes(context):
             }).eq("id", room_id).eq("status", "confirmed"),
             "room_rematch_reset_same_room",
         )
-        if not (reset_result.data or []):
-            fresh_room = get_room(room_id)
-            if not fresh_room or fresh_room.get("status") != "waiting_ready":
-                flash("Không thể bắt đầu lượt đá tiếp vì trạng thái phòng vừa thay đổi. Hãy thử lại.", "warning")
-                return redirect(url_for("room_detail", room_id=room_id))
 
-        _invalidate_room_flow_cache_safe()
-        flash(f"Cả hai đã đồng ý đá tiếp. Giữ nguyên chế độ {previous_mode_label}; Chủ phòng có thể quay quân.", "success")
+        flash(f"Cả hai đã đồng ý đá tiếp. Giữ nguyên chế độ {previous_mode_label}; đang chờ Chủ phòng quay quân.", "success")
         return redirect(url_for("room_detail", room_id=room_id))
 
 
@@ -372,6 +363,10 @@ def register_routes(context):
     def room_rematch_decline(room_id):
         user = current_user()
         room = get_room(room_id)
+        _flow_ok, _flow_message = require_room_action(room, "rematch_decline")
+        if room and not _flow_ok:
+            flash(_flow_message, "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:
             flash("Không tìm thấy phòng.", "danger")

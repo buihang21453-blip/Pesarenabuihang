@@ -1,4 +1,7 @@
-"""Extracted core module (PES Arena V1.3.52)."""
+"""Module hóa từ V1.2.9.
+
+Giữ nguyên logic gốc; dependency được truyền từ app.py bằng configure() để tránh import vòng.
+"""
 
 _CONTEXT = {}
 
@@ -7,26 +10,7 @@ def configure(context):
     _CONTEXT.update(context)
     globals().update(context)
 
-EXPORTED_NAMES = [
-    'is_player_in_cooldown',
-    'cooldown_text',
-    'current_pending_invites',
-    'current_pending_invite_count',
-    'room_is_active',
-    '_direct_active_rooms_for_user',
-    'cleanup_duplicate_waiting_rooms',
-    'active_room_for_user',
-    'build_room_head_to_head',
-    '_room_by_match_id',
-    'match_blocks_new_room',
-    'active_match_for_user',
-    'busy_user_ids',
-    'has_active_room_between',
-    'has_active_match_between',
-    'has_pending_invite_between',
-    'is_solo_waiting_room',
-    'matchmaking_snapshot'
-]
+EXPORTED_NAMES = ['is_player_in_cooldown', 'cooldown_text', 'current_pending_invites', 'current_pending_invite_count', 'room_is_active', '_direct_active_rooms_for_user', 'cleanup_duplicate_waiting_rooms', 'active_room_for_user', 'build_room_head_to_head', '_room_by_match_id', 'match_blocks_new_room', 'active_match_for_user', 'busy_user_ids', 'has_active_room_between', 'has_active_match_between', 'has_pending_invite_between', 'is_solo_waiting_room', 'matchmaking_snapshot']
 
 def is_player_in_cooldown(user):
     cooldown = parse_dt(user.get("matchmaking_cooldown_until"))
@@ -65,17 +49,12 @@ def current_pending_invite_count():
 
 
 def room_is_active(room):
-    status = str(room.get("status") or "").lower()
-    if status in {"waiting_ready", "playing", "friendly_playing", "waiting_result_confirm", "disputed"}:
+    if room.get("status") in {"waiting_ready", "playing", "friendly_playing", "waiting_result_confirm"}:
         return True
-    if status == "confirmed":
-        # A confirmed room still belongs to both players until one explicitly
-        # leaves, the rematch request expires, or both agree to start again.
-        # Treating a neutral confirmed room as inactive allowed new invites to
-        # disconnect the post-match Đá tiếp / Rời phòng flow.
-        note = room.get("note") or ""
-        return note not in {REMATCH_HOST_DECLINED_NOTE, REMATCH_GUEST_DECLINED_NOTE, REMATCH_EXPIRED_NOTE}
-    return False
+    return (
+        room.get("status") == "confirmed"
+        and (room.get("note") or "") in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}
+    )
 
 
 def _direct_active_rooms_for_user(user_id, limit=20):
@@ -169,8 +148,7 @@ def active_room_for_user(user_id, exclude_room_id=None):
         for room in rooms:
             if exclude_room_id and str(room.get("id")) == str(exclude_room_id):
                 continue
-            if room_is_active(room):
-                return room
+            return room
     except Exception as exc:
         print(f"active_room_for_user direct warning: {exc}")
 

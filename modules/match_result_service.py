@@ -7,24 +7,6 @@ import random
 
 from modules.rp_engine import get_win_streak_bonus
 
-
-def _safe_int(value, default=0):
-    """Convert database/form values to int without depending on app.py globals.
-
-    This helper intentionally lives in this module because match confirmation is a
-    critical write path.  It must keep working even if service configure/import
-    order changes while app.py is being modularized.
-    """
-    try:
-        if value is None or value == "":
-            return int(default)
-        return int(value)
-    except (TypeError, ValueError, OverflowError):
-        try:
-            return int(default)
-        except (TypeError, ValueError, OverflowError):
-            return 0
-
 EXPORTED_NAMES = ['sync_room_after_admin_match_change', 'apply_match_result', 'resolve_match_dispute_with_result', 'cancel_match_dispute', 'update_player_after_match', 'reverse_player_match_stats', 'reverse_confirmed_match_result']
 
 def configure(context):
@@ -86,31 +68,6 @@ def sync_room_after_admin_match_change(match, target, actor_id=None):
     )
 
 
-def _restore_player_snapshot(player):
-    """Restore exactly the mutable ranked-stat fields from a pre-confirm snapshot."""
-    if not player or not player.get("id"):
-        return
-    payload = {
-        "rank_points": _safe_int(player.get("rank_points")),
-        "wins": _safe_int(player.get("wins")),
-        "draws": _safe_int(player.get("draws")),
-        "losses": _safe_int(player.get("losses")),
-        "total_matches": _safe_int(player.get("total_matches")),
-        "goals_for": _safe_int(player.get("goals_for")),
-        "goals_against": _safe_int(player.get("goals_against")),
-        "streak": _safe_int(player.get("streak")),
-    }
-    execute_query(
-        db.table("users").update(payload).eq("id", player["id"]),
-        f"restore_player_snapshot:{player.get('id')}",
-        attempts=2,
-    )
-    try:
-        ttl_cache_delete("players_raw", "achievement_map", f"user:{player.get('id')}")
-    except Exception:
-        pass
-
-
 def apply_match_result(match):
     """Apply one ranked result exactly once with clear validation and recovery.
 
@@ -153,9 +110,6 @@ def apply_match_result(match):
         raise ValueError("Tỉ số không hợp lệ.")
 
     original_status = str(match.get("status") or "waiting_confirm")
-    phase = "claim"
-    player1_applied = False
-    player2_applied = False
     try:
         claim = execute_query(
             db.table("matches").update({
@@ -174,7 +128,6 @@ def apply_match_result(match):
         # request này claim được dòng trận. Khi đó trả status về và dừng trước khi ghi RP.
         assert_ranking_rebuild_not_running()
 
-        phase = "calculate_deltas"
         delta1, delta2 = calculate_deltas(
             player1, player2, score1, score2,
             match.get("team1"), match.get("team2"),
@@ -219,7 +172,6 @@ def apply_match_result(match):
 
         # Giảm RP khi gặp lại cùng một đối thủ trong ngày. Quy tắc này được áp dụng
         # sau toàn bộ công thức thắng hiện tại/ưu đãi Chủ phòng và trước trần +150 RP.
-        phase = "repeat_opponent_context"
         repeat_context = repeat_opponent_context(match)
         delta1, delta2, repeat_details = apply_repeat_opponent_rules(
             match, player1, player2, score1, score2, delta1, delta2,
@@ -230,7 +182,6 @@ def apply_match_result(match):
 
         # Hết lượt Rank ngày vẫn được thi đấu và lưu lịch sử, nhưng trận vượt
         # lượt không cộng/trừ RP và không tác động chuỗi hoặc danh hiệu.
-        phase = "daily_rank_status"
         daily_game_status = daily_rank_match_rp_status(player1_id, player2_id)
         if not daily_game_status.get("rp_eligible", True):
             delta1 = 0
@@ -240,7 +191,6 @@ def apply_match_result(match):
 
         # Giới hạn RP dương theo ngày được áp dụng sau khi tính đủ công thức,
         # nhưng trước khi ghi điểm. RP âm khi thua không bị thay đổi.
-        phase = "daily_positive_cap"
         delta1, daily_cap1 = apply_daily_positive_rp_cap(
             player1_id, delta1, exclude_match_id=match.get("id")
         )
@@ -249,12 +199,8 @@ def apply_match_result(match):
         )
 
         affect_streak = bool(repeat_details.get("streak_eligible", True))
-        phase = "update_player1"
         update_player_after_match(player1, delta1, score1, score2, affect_streak=affect_streak)
-        player1_applied = True
-        phase = "update_player2"
         update_player_after_match(player2, delta2, score2, score1, affect_streak=affect_streak)
-        player2_applied = True
 
         original_note = str(match.get("note") or "")
         is_random3_pick1 = (
@@ -271,8 +217,7 @@ def apply_match_result(match):
         if is_random3_pick1:
             confirmed_note += " [MODE:random3_pick1]"
 
-        phase = "finalize_match"
-        finalize_result = execute_query(
+        execute_query(
             db.table("matches").update({
                 "delta1": int(delta1),
                 "delta2": int(delta2),
@@ -301,19 +246,8 @@ def apply_match_result(match):
             }).eq("id", match["id"]).eq("status", "processing_result"),
             "finalize_match_result",
         )
-        if not (finalize_result.data or []):
-            raise RuntimeError("Không thể chốt trạng thái confirmed cho trận đấu.")
     except Exception as exc:
-        print(f"apply_match_result ERROR match={match.get('id')} status={original_status} phase={phase}: {type(exc).__name__}: {exc}")
-        # Nếu lỗi xảy ra sau khi đã ghi thống kê người chơi, hoàn tác chính xác
-        # về snapshot trước xác nhận để một lần bấm lại không cộng/trừ trùng.
-        for applied, snapshot in ((player2_applied, player2), (player1_applied, player1)):
-            if not applied:
-                continue
-            try:
-                _restore_player_snapshot(snapshot)
-            except Exception as rollback_exc:
-                print(f"apply_match_result USER ROLLBACK ERROR match={match.get('id')} user={snapshot.get('id')}: {type(rollback_exc).__name__}: {rollback_exc}")
+        print(f"apply_match_result ERROR match={match.get('id')} status={original_status}: {type(exc).__name__}: {exc}")
         try:
             execute_query(
                 db.table("matches").update({"status": original_status, "updated_at": now_iso()})
@@ -323,7 +257,7 @@ def apply_match_result(match):
             )
         except Exception as restore_exc:
             print(f"apply_match_result RESTORE ERROR match={match.get('id')}: {type(restore_exc).__name__}: {restore_exc}")
-        raise RuntimeError(f"phase={phase}; {type(exc).__name__}: {exc}") from exc
+        raise
 
     # Thông báo riêng khi RP thắng bị chạm/trần giới hạn ngày.
     try:
@@ -515,10 +449,7 @@ def update_player_after_match(player, delta, goals_for, goals_against, affect_st
         }).eq("id", player["id"]),
         f"update_player_after_match:{player.get('id')}",
     )
-    try:
-        ttl_cache_delete("players_raw", "achievement_map", f"user:{player.get('id')}")
-    except Exception as exc:
-        print(f"update_player_after_match cache warning user={player.get('id')}: {type(exc).__name__}: {exc}")
+    ttl_cache_delete("players_raw", "achievement_map")
 
 
 

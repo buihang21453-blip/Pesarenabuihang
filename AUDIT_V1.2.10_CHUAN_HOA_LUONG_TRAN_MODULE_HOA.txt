@@ -1,0 +1,44 @@
+PES ARENA V1.2.10 - AUDIT
+
+MUC TIEU
+1. Chuan hoa toan bo luong tran dau.
+2. Module hoa cac chuc nang lon cua V1.2.9 ma khong doi endpoint/schema/UI.
+
+LUONG TRAN CHUAN
+- waiting_ready: cho doi thu / ready / chon mode / quay CLB
+- playing: tran Rank dang dien ra
+- friendly_playing: giao huu dang dien ra
+- waiting_result_confirm: da gui ket qua, cho xac nhan/tranh chap
+- confirmed: ket qua da chot, cho Da tiep/Roi phong
+- cancelled: phong da dong
+
+STATE FLOW RANK
+waiting_ready -> playing -> waiting_result_confirm -> confirmed -> waiting_ready (rematch)
+
+MODULE CORE MOI
+- modules/core/achievements.py
+- modules/core/rank_team_service.py
+- modules/core/room_runtime.py
+- modules/core/user_repository.py
+- modules/core/match_repository.py
+- modules/core/social_runtime.py
+- modules/core/matchmaking_runtime.py
+- modules/room_flow_service.py
+
+ROUTE CHUC NANG GIU NGUYEN
+- modules/room_access_routes.py
+- modules/room_team_routes.py
+- modules/room_result_routes.py
+- modules/room_rematch_routes.py
+
+BAO TOAN TUONG THICH
+- Khong doi schema Supabase.
+- Khong doi URL endpoint.
+- Khong thay giao dien/template/CSS.
+- Khong dua tinh nang Series/Admin UI/BlackBox cua V1.4.5 vao ban nay.
+- Logic helper duoc chuyen nguyen tu V1.2.9 sang module de giam nguy co regression.
+
+KIEM TRA
+- Python AST: PASS cho app.py va toan bo modules/*.py.
+- py_compile: PASS cho app.py, core modules, room flow va room route modules.
+- Runtime Flask import: chua chay duoc trong moi truong build nay vi container khong co package Flask.

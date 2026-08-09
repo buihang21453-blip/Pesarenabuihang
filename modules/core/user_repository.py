@@ -1,4 +1,7 @@
-"""Extracted core module (PES Arena V1.3.52)."""
+"""Module hóa từ V1.2.9.
+
+Giữ nguyên logic gốc; dependency được truyền từ app.py bằng configure() để tránh import vòng.
+"""
 
 _CONTEXT = {}
 
@@ -7,34 +10,7 @@ def configure(context):
     _CONTEXT.update(context)
     globals().update(context)
 
-EXPORTED_NAMES = [
-    'get_user_by_username',
-    'calculated_total_matches',
-    'normalize_player_match_totals',
-    'get_user',
-    'is_user_online_now',
-    '_player_ranking_sort_key',
-    'list_players',
-    'users_map',
-    'get_device_link',
-    'is_admin_managed_test_account',
-    'get_duplicate_ip_warning_config',
-    'user_ignored_for_duplicate_ip',
-    'link_device_to_user',
-    'device_can_register',
-    'list_all_users',
-    'log_admin_action',
-    'existing_user_id',
-    'create_admin_announcement',
-    'list_admin_activity_logs',
-    'get_password_reset_request',
-    'list_password_reset_requests',
-    'list_user_devices',
-    'decorate_admin_users',
-    'build_duplicate_ip_groups',
-    'get_invite_code_record',
-    'list_registration_invite_codes'
-]
+EXPORTED_NAMES = ['get_user_by_username', 'calculated_total_matches', 'normalize_player_match_totals', 'get_user', 'is_user_online_now', '_player_ranking_sort_key', 'list_players', 'users_map', 'get_device_link', 'is_admin_managed_test_account', 'get_duplicate_ip_warning_config', 'user_ignored_for_duplicate_ip', 'link_device_to_user', 'device_can_register', 'list_all_users', 'log_admin_action', 'existing_user_id', 'create_admin_announcement', 'list_admin_activity_logs', 'get_password_reset_request', 'list_password_reset_requests', 'list_user_devices', 'decorate_admin_users', 'build_duplicate_ip_groups', 'get_invite_code_record', 'list_registration_invite_codes']
 
 def get_user_by_username(username):
     """Find a user by username without creating extra Supabase clients."""
@@ -79,13 +55,9 @@ def get_user(user_id):
 
 
 def is_user_online_now(user):
-    """Nguồn chuẩn Online duy nhất cho Players, Invite và Quick Match."""
-    return presence_is_online(
-        user,
-        now=now_dt(),
-        parse_datetime=parse_dt,
-        timeout_seconds=ONLINE_TIMEOUT_SECONDS,
-    )
+    seen = parse_dt((user or {}).get("last_seen_at"))
+    cutoff = now_dt() - timedelta(seconds=ONLINE_TIMEOUT_SECONDS)
+    return bool((user or {}).get("is_online")) and bool(seen) and seen >= cutoff
 
 
 def _player_ranking_sort_key(player):
@@ -435,69 +407,31 @@ def list_user_devices():
         return []
 
 
-list_user_devices.last_status = {"ok": None, "row_count": 0, "error": None, "source": "not_loaded"}
-
 def decorate_admin_users(users):
-    """Bổ sung IP/trùng IP cho Admin bằng read-model nếu đã cài V1.3.34."""
+    """Bổ sung toàn bộ IP và trạng thái trùng IP cho danh sách Admin.
+
+    Tài khoản tin cậy/cấu hình tắt cảnh báo chỉ ảnh hưởng màu cảnh báo, không được
+    loại khỏi dữ liệu đối chiếu. Nhờ vậy bộ lọc "Chỉ hiện IP trùng" luôn thấy đủ.
+    """
     rows = [dict(user) for user in users]
     for row in rows:
         row["admin_permissions"] = _admin_permissions(row)
 
+    devices = list_user_devices()
     config = get_duplicate_ip_warning_config()
     warnings_enabled = bool(config.get("enabled", True))
-    username_by_id = {str(user.get("id")): user.get("username", "-") for user in rows}
-
-    # Fast path: một SELECT nhỏ, không quét user_devices rồi group lại mỗi lần mở tab.
-    ip_cache = None
-    try:
-        loader = globals().get("load_user_ip_cache")
-        if callable(loader):
-            ip_cache = loader()
-    except Exception:
-        ip_cache = None
-
-    if ip_cache is not None:
-        list_user_devices.last_status = {
-            "ok": True, "row_count": len(ip_cache), "error": None, "source": "read_model_ip_cache"
-        }
-        ip_owners = {}
-        for user_id, item in ip_cache.items():
-            for ip in (item.get("known_ips") or []):
-                if ip:
-                    ip_owners.setdefault(str(ip), set()).add(str(user_id))
-        for user in rows:
-            user_id = str(user.get("id") or "")
-            item = ip_cache.get(user_id) or {}
-            known_ips = [str(ip) for ip in (item.get("known_ips") or []) if ip]
-            duplicate_ips = [str(ip) for ip in (item.get("duplicate_ips") or []) if ip]
-            duplicate_accounts = sorted({
-                username_by_id.get(owner_id, "-")
-                for ip in duplicate_ips
-                for owner_id in ip_owners.get(ip, set())
-                if owner_id != user_id
-            })
-            trusted = user_ignored_for_duplicate_ip(user, config)
-            detected = bool(duplicate_ips)
-            user["latest_ip"] = item.get("latest_ip") or user.get("register_ip") or "-"
-            user["known_ips"] = known_ips
-            user["duplicate_ips"] = duplicate_ips
-            user["duplicate_ip_count"] = int(item.get("duplicate_ip_count") or 0)
-            user["duplicate_ip_accounts"] = duplicate_accounts
-            user["duplicate_ip_detected"] = detected
-            user["duplicate_ip_trusted"] = trusted
-            user["duplicate_ip_warning_visible"] = detected and warnings_enabled and not trusted
-        return rows
-
-    # Compatibility fallback trước khi chạy migration V1.3.34.
-    devices = list_user_devices()
     known_ips_by_user = {str(user.get("id")): set() for user in rows}
     latest_ip_by_user = {}
     row_by_id = {str(user.get("id")): user for user in rows}
+
+    # Luôn thu thập IP đăng ký, kể cả tài khoản được tin cậy/được Admin tạo.
     for user in rows:
         user_id = str(user.get("id") or "")
         register_ip = str(user.get("register_ip") or "").strip()
         if user_id and register_ip and not register_ip.upper().startswith(("ADMIN_TEST", "ADMIN_CREATED")):
             known_ips_by_user.setdefault(user_id, set()).add(register_ip)
+
+    # Luôn thu thập IP thiết bị. Dòng đầu tiên là IP mới nhất do truy vấn đã sort desc.
     for device in devices:
         user_id = str(device.get("user_id") or "")
         ip = str(device.get("ip_address") or "").strip()
@@ -505,17 +439,26 @@ def decorate_admin_users(users):
             continue
         known_ips_by_user.setdefault(user_id, set()).add(ip)
         latest_ip_by_user.setdefault(user_id, ip)
+
     ip_owners = {}
     for user_id, ip_values in known_ips_by_user.items():
         for ip in ip_values:
             ip_owners.setdefault(ip, set()).add(user_id)
+
+    username_by_id = {str(user.get("id")): user.get("username", "-") for user in rows}
     for user in rows:
         user_id = str(user.get("id") or "")
         known_ips = sorted(known_ips_by_user.get(user_id, set()))
         duplicate_ips = [ip for ip in known_ips if len(ip_owners.get(ip, set())) > 1]
-        duplicate_accounts = sorted({username_by_id.get(owner_id, "-") for ip in duplicate_ips for owner_id in ip_owners.get(ip, set()) if owner_id != user_id})
+        duplicate_accounts = sorted({
+            username_by_id.get(owner_id, "-")
+            for ip in duplicate_ips
+            for owner_id in ip_owners.get(ip, set())
+            if owner_id != user_id
+        })
         trusted = user_ignored_for_duplicate_ip(user, config)
         detected = bool(duplicate_accounts)
+
         user["latest_ip"] = latest_ip_by_user.get(user_id) or user.get("register_ip") or "-"
         user["known_ips"] = known_ips
         user["duplicate_ips"] = duplicate_ips
@@ -524,6 +467,7 @@ def decorate_admin_users(users):
         user["duplicate_ip_detected"] = detected
         user["duplicate_ip_trusted"] = trusted
         user["duplicate_ip_warning_visible"] = detected and warnings_enabled and not trusted
+
     return rows
 
 

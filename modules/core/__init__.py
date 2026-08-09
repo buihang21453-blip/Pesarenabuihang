@@ -1,1 +1,1 @@
-"""Core services extracted from the legacy application module."""
+"""Core modules extracted from V1.2.9 for safer incremental upgrades."""
