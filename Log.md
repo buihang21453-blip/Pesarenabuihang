@@ -1926,3 +1926,9 @@
 - Dialog chung không còn dùng class màu legacy để quyết định CTA.
 - Thêm `test_v144_notification_tone_integrity.py` chống tái phát CSS đè màu.
 - Python/JS syntax PASS; regression trọng tâm PASS.
+
+## V1.4.5 — Dong bo mau popup triet de
+- Tim ra specificity bug trong `gaming_neon_buttons.css`: `:not(#parsec-profile *)` lam selector global co ID specificity va de len CTA cua popup.
+- Loai `room-action-modal`, `app-ui-dialog`, `invite-modal`, `invite-banner`, `game-notice-modal` khoi Gaming Neon global.
+- Gia co CTA Room modal theo `data-tone`; danger/CONFIRM error dung mau hong-do thay vi xanh duong.
+- Them `test_v145_notification_tone_ownership.py` de khoa regression.

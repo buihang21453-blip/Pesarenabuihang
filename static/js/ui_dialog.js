@@ -46,7 +46,7 @@
         const tone = ['success', 'danger', 'warning', 'info'].includes(item.options.tone) ? item.options.tone : 'success';
         root.classList.remove('tone-success', 'tone-danger', 'tone-warning', 'tone-info');
         root.classList.add('tone-' + tone);
-        // V1.4.4: dialog tone owns CTA color; do not leak semantic gaming-button classes into modal.
+        // V1.4.5: dialog tone owns CTA color; global Gaming Neon excludes dialog-owned buttons.
         confirmButton.className = 'btn app-ui-dialog-confirm';
         root.hidden = false;
         document.body.classList.add('app-ui-dialog-open');

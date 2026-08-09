@@ -1,4 +1,4 @@
-/* V1.4.4 — CANONICAL NOTIFICATION TONE OWNERSHIP
+/* V1.4.5 — CANONICAL NOTIFICATION TONE OWNERSHIP
    Popup/dialog containers own their action colors. Global gaming button skins must
    never decide a modal CTA color from legacy classes such as .green/.is-success. */
 
@@ -45,3 +45,30 @@ body[data-ui-scope="player"] .invite-banner .invite-action-btn.is-reject,
 .game-notice-modal.tone-info .game-notice-card{border-color:rgba(74,169,255,.58)!important}
 .game-notice-modal.tone-warning .game-notice-card{border-color:rgba(240,189,50,.58)!important}
 .game-notice-modal.tone-warning .game-notice-button{border-color:#d5a72e!important;background:linear-gradient(180deg,#f2c84d,#c99720)!important;color:#161004!important}
+
+
+/* V1.4.5 — final modal owner guard.
+   The global Gaming Neon stylesheet now excludes notification-owned overlays.
+   These selectors are intentionally simple because there is no longer a specificity fight. */
+.room-action-modal[data-tone="danger"] .room-action-modal-button.primary{
+  border-color:#ff6870!important;
+  background:linear-gradient(180deg,#ff7880,#c83d4b)!important;
+  color:#fff!important;
+  box-shadow:0 0 18px rgba(255,104,112,.30),0 8px 18px rgba(0,0,0,.24)!important;
+}
+.room-action-modal[data-tone="warning"] .room-action-modal-button.primary{
+  border-color:#f5b928!important;
+  background:linear-gradient(180deg,#f5ce6a,#dba83e)!important;
+  color:#171006!important;
+}
+.room-action-modal[data-tone="success"] .room-action-modal-button.primary,
+.room-action-modal[data-tone="safe"] .room-action-modal-button.primary{
+  border-color:#45df87!important;
+  background:linear-gradient(180deg,#58df90,#21985a)!important;
+  color:#04170c!important;
+}
+.room-action-modal[data-tone="info"] .room-action-modal-button.primary{
+  border-color:#55b1ff!important;
+  background:linear-gradient(180deg,#55b1ff,#2879bd)!important;
+  color:#fff!important;
+}
