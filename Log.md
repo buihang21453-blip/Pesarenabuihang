@@ -1776,3 +1776,10 @@
   6. Cam chon CLB
 - So thu tu card va so mode o center dung chung danh sach nay nen duoc dong bo.
 - Khong thay doi logic / backend khac.
+
+
+## V1.3.125 - can_ty_le_logo_va_khu_vuc_che_do
+- Can lai ty le 4 khu vuc: host / center / opponent / sidebar de sat giao dien mau hon.
+- Thu gon khu mode dang chon o center, giam do phong VS, can lai title / mo ta / logo / line trang thai.
+- Can lai khu vuc CAC CHE DO KHAC: dieu chinh chieu cao card, khoang cach, ty le logo va khung ten/nut.
+- Them tuning rieng theo tung che do de logo nhin can doi hon, tranh logo qua to hoac qua nho.

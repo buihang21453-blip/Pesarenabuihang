@@ -1,6 +1,6 @@
 /* V1.3.121 — center transparency + gold neon mode frames + compact 100% viewport fit */
 #roomLiveShell.pes-room3-live-shell{padding:6px 16px 14px;max-width:none;width:100%;overflow-x:hidden}
-#roomLiveShell.pes-room3-live-shell .pes-room3{--r3-gap:10px;display:grid;grid-template-columns:minmax(320px,1.06fr) minmax(292px,.84fr) minmax(320px,1.06fr) minmax(286px,.82fr);grid-template-areas:"head head head head" "host center away side" "actions actions actions side" "modes modes modes side";gap:var(--r3-gap);width:100%;max-width:1600px;margin:0 auto;color:#f7f7fb;font-family:inherit;box-sizing:border-box}
+#roomLiveShell.pes-room3-live-shell .pes-room3{--r3-gap:12px;display:grid;grid-template-columns:minmax(330px,1.1fr) minmax(276px,.78fr) minmax(330px,1.1fr) minmax(286px,.82fr);grid-template-areas:"head head head head" "host center away side" "actions actions actions side" "modes modes modes side";gap:var(--r3-gap);width:100%;max-width:1600px;margin:0 auto;color:#f7f7fb;font-family:inherit;box-sizing:border-box}
 #roomLiveShell.pes-room3-live-shell .pes-room3 *{box-sizing:border-box}
 
 /* shared transparent / depth helpers */
@@ -68,19 +68,19 @@
 #roomLiveShell.pes-room3-live-shell .pes-room3-league img{width:24px;height:24px;object-fit:contain}
 
 /* center — area 3 transparent + gold neon */
-#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode{position:relative;height:264px;padding:10px 10px 8px;display:flex;flex-direction:column;align-items:center;text-align:center;background:linear-gradient(180deg,rgba(9,12,25,.22),rgba(9,12,25,.08));margin:12px;border:1px solid rgba(229,183,60,.82);border-radius:18px;box-shadow:inset 0 0 0 1px rgba(255,233,167,.08),inset 0 0 26px rgba(255,209,92,.08),0 0 16px rgba(255,181,43,.13)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode{position:relative;height:252px;padding:12px 12px 8px;display:flex;flex-direction:column;align-items:center;text-align:center;background:linear-gradient(180deg,rgba(9,12,25,.22),rgba(9,12,25,.08));margin:12px;border:1px solid rgba(229,183,60,.82);border-radius:18px;box-shadow:inset 0 0 0 1px rgba(255,233,167,.08),inset 0 0 26px rgba(255,209,92,.08),0 0 16px rgba(255,181,43,.13)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-active-mode::before{content:"";position:absolute;inset:8px;border-radius:12px;border:1px solid rgba(255,220,122,.24);pointer-events:none}
 #roomLiveShell.pes-room3-live-shell .pes-room3-active-mode::after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,225,145,.14),transparent)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-number{position:absolute;top:0;left:0;width:56px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:0 0 18px 0;background:linear-gradient(180deg,#9f6b13,#694108);font-size:22px;font-weight:950;color:#fff5c9;box-shadow:4px 5px 13px rgba(69,16,101,.18)}
-#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode h2{margin:3px 0 6px;padding-left:28px;font-size:17px;line-height:1.06;font-weight:950;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,.55);max-width:96%;text-wrap:balance}
-#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode p{margin:0;min-height:22px;max-width:95%;font-size:9px;line-height:1.35;color:#ede8f2}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-logo{width:266px;height:224px;object-fit:contain;margin:2px auto 0;filter:drop-shadow(0 10px 16px rgba(0,0,0,.46)) drop-shadow(0 0 10px rgba(255,185,26,.18));background:transparent}
-#roomLiveShell.pes-room3-live-shell .pes-room3-unlocked{min-width:160px;padding:7px 14px;border:1px solid #16c45b;border-radius:8px;background:linear-gradient(180deg,rgba(7,83,37,.86),rgba(3,44,18,.82));font-size:12px;font-weight:850;color:#59ff8f;box-shadow:inset 0 0 10px rgba(23,255,104,.06)}
-#roomLiveShell.pes-room3-live-shell .pes-room3-readyline{width:100%;margin-top:8px;padding:8px 10px;display:flex;justify-content:space-between;gap:8px;border:1px solid rgba(255,216,120,.18);border-radius:8px;background:rgba(2,11,21,.56);font-size:11px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode h2{margin:3px 0 5px;padding-left:28px;font-size:17px;line-height:1.08;font-weight:950;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,.55);max-width:96%;text-wrap:balance}
+#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode p{margin:0;min-height:24px;max-width:95%;font-size:9px;line-height:1.28;color:#ede8f2}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-logo{width:auto;height:auto;max-width:82%;max-height:120px;object-fit:contain;margin:12px auto 10px;filter:drop-shadow(0 10px 16px rgba(0,0,0,.46)) drop-shadow(0 0 10px rgba(255,185,26,.18));background:transparent}
+#roomLiveShell.pes-room3-live-shell .pes-room3-unlocked{min-width:160px;padding:6px 14px;border:1px solid #16c45b;border-radius:8px;background:linear-gradient(180deg,rgba(7,83,37,.86),rgba(3,44,18,.82));font-size:11px;font-weight:850;color:#59ff8f;box-shadow:inset 0 0 10px rgba(23,255,104,.06)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-readyline{width:100%;margin-top:8px;padding:7px 10px;display:flex;justify-content:space-between;gap:8px;border:1px solid rgba(255,216,120,.18);border-radius:8px;background:rgba(2,11,21,.56);font-size:11px}
 #roomLiveShell.pes-room3-live-shell .pes-room3-readyline span{color:#35f49a}
 #roomLiveShell.pes-room3-live-shell .pes-room3-readyline strong{color:#ffd42c;font-size:16px}
 #roomLiveShell.pes-room3-live-shell .pes-room3-vs-zone{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:0 0 10px;background:linear-gradient(180deg,transparent,rgba(0,17,34,.04))}
-#roomLiveShell.pes-room3-live-shell .pes-room3-vs{width:min(272px,95%);height:218px;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(0,0,0,.56)) drop-shadow(0 0 10px rgba(255,191,37,.18));background:transparent}
+#roomLiveShell.pes-room3-live-shell .pes-room3-vs{width:min(260px,92%);height:206px;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(0,0,0,.56)) drop-shadow(0 0 10px rgba(255,191,37,.18));background:transparent}
 
 /* waiting opponent */
 #roomLiveShell.pes-room3-live-shell .pes-room3-away-empty{position:relative;height:222px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 18px 8px;text-align:center}
@@ -127,10 +127,10 @@
 
 /* modes — transparent cards + gold metallic neon frame */
 #roomLiveShell.pes-room3-live-shell .pes-room3-modes{grid-area:modes;min-width:0;padding:4px 0 0}
-#roomLiveShell.pes-room3-live-shell .pes-room3-modes h2{margin:0 0 10px;font-size:20px;font-weight:950;color:#ffc02d;text-align:center;letter-spacing:.18px;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-modes h2{margin:2px 0 12px;font-size:18px;font-weight:950;color:#ffc02d;text-align:center;letter-spacing:.18px;text-shadow:0 2px 10px rgba(0,0,0,.5)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-form{min-width:0;margin:0}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card{position:relative;width:100%;height:194px;padding:5px 5px 7px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;border:1px solid rgba(221,177,61,.84);border-radius:12px;background:linear-gradient(180deg,rgba(7,23,40,.48),rgba(3,16,28,.28));color:#fff;font:inherit;cursor:pointer;overflow:hidden;box-shadow:inset 0 0 22px rgba(255,197,63,.05),0 0 12px rgba(255,189,52,.06)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card{position:relative;width:100%;height:188px;padding:8px 6px 8px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;border:1px solid rgba(221,177,61,.84);border-radius:12px;background:linear-gradient(180deg,rgba(7,23,40,.48),rgba(3,16,28,.28));color:#fff;font:inherit;cursor:pointer;overflow:hidden;box-shadow:inset 0 0 22px rgba(255,197,63,.05),0 0 12px rgba(255,189,52,.06)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card::before{content:"";position:absolute;inset:8px;border-radius:9px;border:1px solid rgba(255,220,122,.16);pointer-events:none}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,219,128,.05),transparent 20%,transparent 75%,rgba(0,0,0,.08));pointer-events:none}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="random3_pick1"],
@@ -141,18 +141,34 @@
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card.is-selected{box-shadow:inset 0 0 24px rgba(255,213,102,.10),0 0 14px rgba(255,196,62,.18)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card:disabled{cursor:default}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-index{position:absolute;z-index:2;top:0;left:0;width:38px;height:38px;display:grid;place-items:center;border-radius:0 0 13px 0;background:linear-gradient(180deg,rgba(163,118,20,.95),rgba(98,63,8,.92));font-size:18px;font-weight:950;color:#fff3c8;text-shadow:0 2px 5px rgba(0,0,0,.5)}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card img{width:176px;height:150px;object-fit:contain;margin:0;filter:drop-shadow(0 8px 11px rgba(0,0,0,.4)) drop-shadow(0 0 8px rgba(255,197,63,.12));background:transparent}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card strong{min-height:22px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;line-height:1.06;font-weight:850;padding:0 2px}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card small{margin-top:auto;width:94%;padding:3px 6px;border:1px solid #14783c;border-radius:6px;background:linear-gradient(180deg,rgba(7,68,34,.92),rgba(5,45,23,.9));color:#5eff8a;font-size:9px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card img{width:auto;height:auto;max-width:84%;max-height:104px;object-fit:contain;margin:18px auto 8px;filter:drop-shadow(0 8px 11px rgba(0,0,0,.4)) drop-shadow(0 0 8px rgba(255,197,63,.12));background:transparent}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card strong{min-height:28px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;line-height:1.12;font-weight:850;padding:0 6px;margin-top:2px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card small{margin-top:auto;width:90%;padding:4px 6px;border:1px solid #14783c;border-radius:6px;background:linear-gradient(180deg,rgba(7,68,34,.92),rgba(5,45,23,.9));color:#5eff8a;font-size:8px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+
+/* mode-specific logo tuning for better balance */
+#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode[data-active-mode="rank_random"] .pes-room3-mode-logo{max-width:70%;max-height:112px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode[data-active-mode="random3_pick1"] .pes-room3-mode-logo{max-width:72%;max-height:114px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode[data-active-mode="home_away"] .pes-room3-mode-logo{max-width:76%;max-height:126px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode[data-active-mode="bo3"] .pes-room3-mode-logo{max-width:68%;max-height:118px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode[data-active-mode="tactical_bo3"] .pes-room3-mode-logo{max-width:82%;max-height:112px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-active-mode[data-active-mode="ban_pick_bo3"] .pes-room3-mode-logo{max-width:70%;max-height:114px}
+
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="rank_random"] img{max-width:72%;max-height:94px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="random3_pick1"] img{max-width:74%;max-height:96px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="home_away"] img{max-width:76%;max-height:96px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="bo3"] img{max-width:70%;max-height:98px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="tactical_bo3"] img{max-width:82%;max-height:88px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="ban_pick_bo3"] img{max-width:72%;max-height:96px}
 
 /* responsiveness */
 @media (max-width:1320px){
   #roomLiveShell.pes-room3-live-shell{padding-left:10px;padding-right:10px}
-  #roomLiveShell.pes-room3-live-shell .pes-room3{grid-template-columns:minmax(280px,1.02fr) minmax(260px,.84fr) minmax(280px,1.02fr) minmax(262px,.84fr)}
+  #roomLiveShell.pes-room3-live-shell .pes-room3{grid-template-columns:minmax(292px,1.04fr) minmax(250px,.76fr) minmax(292px,1.04fr) minmax(258px,.82fr)}
   #roomLiveShell.pes-room3-live-shell .pes-room3-brand{min-width:280px}
   #roomLiveShell.pes-room3-live-shell .pes-room3-brand img{width:min(280px,24vw);height:42px}
   #roomLiveShell.pes-room3-live-shell .pes-room3-action{min-width:152px}
-  #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card img{width:164px;height:134px}
+  #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card img{max-width:82%;max-height:94px;margin-top:16px}
 }
 @media (max-width:1080px){
   #roomLiveShell.pes-room3-live-shell .pes-room3{grid-template-columns:1fr 1fr;grid-template-areas:"head head" "host away" "center center" "actions actions" "modes modes" "side side"}
