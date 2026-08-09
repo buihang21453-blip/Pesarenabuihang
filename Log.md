@@ -325,3 +325,11 @@
 - Cấu hình lưu vào `system_settings` key `room_ui_designer_config`.
 - Áp dụng cùng một cấu hình cho toàn bộ state layout phòng V1.2.15.
 - Không thay đổi logic trận đấu.
+
+## V1.2.17 - Sua loi Vercel FUNCTION_INVOCATION_FAILED
+- Ngay: 2026-08-09
+- Sua loi khoi dong Vercel: `NameError: list_user_devices is not defined` tai app.py.
+- Nguyen nhan: sau module hoa, dong khoi tao `list_user_devices.last_status` van nam o vi tri cu, truoc khi `modules/core/user_repository.py` duoc bind vao globals.
+- Xu ly: chuyen khoi tao `last_status` xuong sau buoc bind Core modules va bao ve bang `hasattr`.
+- Them `test_startup_name_order_v1217.py` de bat loi top-level dung ten truoc khi dinh nghia/bind.
+- Khong thay doi luong tran, RP, giao dien phong hay Admin Designer.

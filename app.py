@@ -67,7 +67,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.2.16"
+APP_VERSION = "V1.2.17"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1065,9 +1065,6 @@ _ip_warning_config_cache = {"value": None, "expires_at": 0.0}
 
 
 # [MODULE HOA] list_user_devices -> modules/core/user_repository.py
-
-
-list_user_devices.last_status = {"ok": None, "row_count": 0, "error": None, "source": "not_loaded"}
 
 
 # [MODULE HOA] decorate_admin_users -> modules/core/user_repository.py
@@ -3594,6 +3591,11 @@ for _core_module in _CORE_MODULES:
 # Pass 2 để các module nhìn thấy export của nhau.
 for _core_module in _CORE_MODULES:
     _core_module.configure(globals())
+
+# Khởi tạo metadata sau khi user_repository đã export hàm vào app globals.
+# Không đặt dòng này ở phần helper cũ phía trên vì lúc đó list_user_devices chưa tồn tại.
+if not hasattr(list_user_devices, "last_status"):
+    list_user_devices.last_status = {"ok": None, "row_count": 0, "error": None, "source": "not_loaded"}
 
 # =========================
 # Đăng ký module chức năng
