@@ -86,15 +86,26 @@ def auto_confirm_expired_match_if_needed(match):
         return match
 
 
-def list_matches(status=None):
+def list_matches(status=None, limit=None):
+    """Đọc trận đấu có lọc tại Supabase thay vì luôn tải toàn bộ bảng.
+
+    - Không truyền status/limit: giữ hành vi cũ và request-cache toàn bộ.
+    - Có status hoặc limit: SELECT đúng tập cần thiết, giảm dữ liệu truyền và CPU Python.
+    """
     require_db()
 
-    cached = cache_get("_rz_matches_all")
+    cache_key = f"_rz_matches_{status or 'all'}_{int(limit) if limit else 'all'}"
+    cached = cache_get(cache_key)
     if cached is None:
-        query = db.table("matches").select("*").order("created_at", desc=True)
-        result = execute_query(query, "list_matches")
+        query = db.table("matches").select("*")
+        if status:
+            query = query.eq("status", status)
+        query = query.order("created_at", desc=True)
+        if limit:
+            query = query.limit(max(1, int(limit)))
+        result = execute_query(query, f"list_matches:{status or 'all'}:{limit or 'all'}")
         cached = result.data or []
-        cache_set("_rz_matches_all", cached)
+        cache_set(cache_key, cached)
 
     processed_matches = [auto_confirm_expired_match_if_needed(dict(m)) for m in cached]
     matches = [m for m in processed_matches if not status or m.get("status") == status]
@@ -116,7 +127,6 @@ def list_matches(status=None):
         match["loser_name"] = users.get(match.get("loser_id"), {}).get("display_name", "")
 
     return matches
-
 
 def match_status_label(status):
     return MATCH_STATUS_LABELS.get(status, str(status or "-").replace("_", " ").title())

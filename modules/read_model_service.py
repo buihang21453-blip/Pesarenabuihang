@@ -19,6 +19,16 @@ def _db():
     return _CONTEXT.get("db")
 
 
+def _cache_get(key):
+    fn = _CONTEXT.get("ttl_cache_get")
+    return fn(key) if callable(fn) else None
+
+
+def _cache_set(key, value, ttl=15):
+    fn = _CONTEXT.get("ttl_cache_set")
+    return fn(key, value, ttl) if callable(fn) else value
+
+
 def _execute(query, label, attempts=1):
     fn = _CONTEXT.get("execute_query")
     if not fn:
@@ -217,9 +227,13 @@ def load_match_report(range_key="today"):
 
 
 def load_recent_form_map(player_ids):
-    ids = [str(x) for x in (player_ids or []) if x]
+    ids = sorted({str(x) for x in (player_ids or []) if x})
     if not ids:
         return {}
+    cache_key = "read_model:recent_form:" + ",".join(ids)
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
     db = _db()
     if db is None:
         return {}
@@ -233,12 +247,16 @@ def load_recent_form_map(player_ids):
         form = row.get("recent_form") or []
         if isinstance(form, list):
             out[str(row.get("user_id"))] = form[:5]
-    return out
+    return _cache_set(cache_key, out, 20)
 
 
 def load_player_profile_summary(user_id):
     if not user_id or _db() is None:
         return None
+    cache_key = f"read_model:profile:{user_id}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
     try:
         rows = _execute(
             _db().table("player_profile_stats_cache")
@@ -247,7 +265,7 @@ def load_player_profile_summary(user_id):
             "read_model_profile_summary",
             attempts=1,
         ).data or []
-        return rows[0] if rows else None
+        return _cache_set(cache_key, rows[0] if rows else None, 30)
     except Exception:
         return None
 
@@ -255,12 +273,18 @@ def load_player_profile_summary(user_id):
 def load_user_matches(user_id, limit=10, status=None):
     if not user_id or _db() is None:
         return []
+    limit = max(1, min(int(limit or 10), 100))
+    cache_key = f"read_model:user_matches:{user_id}:{status or 'all'}:{limit}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
     try:
         query = _db().table("matches").select("*").or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}")
         if status:
             query = query.eq("status", status)
-        query = query.order("created_at", desc=True).limit(int(limit))
-        return _execute(query, "read_model_user_matches", attempts=1).data or []
+        query = query.order("created_at", desc=True).limit(limit)
+        rows = _execute(query, "read_model_user_matches", attempts=1).data or []
+        return _cache_set(cache_key, rows, 10)
     except Exception:
         return []
 
@@ -268,6 +292,12 @@ def load_user_matches(user_id, limit=10, status=None):
 def load_h2h_matches(user_a, user_b, limit=10):
     if not user_a or not user_b or _db() is None:
         return []
+    limit = max(1, min(int(limit or 10), 50))
+    pair = sorted([str(user_a), str(user_b)])
+    cache_key = f"read_model:h2h:{pair[0]}:{pair[1]}:{limit}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
     try:
         # PostgREST AND groups avoid scanning unrelated users.
         expr = (
@@ -275,8 +305,9 @@ def load_h2h_matches(user_a, user_b, limit=10):
             f"and(player1_id.eq.{user_b},player2_id.eq.{user_a})"
         )
         query = (_db().table("matches").select("*").eq("status", "confirmed")
-                 .or_(expr).order("created_at", desc=True).limit(int(limit)))
-        return _execute(query, "read_model_h2h_matches", attempts=1).data or []
+                 .or_(expr).order("created_at", desc=True).limit(limit))
+        rows = _execute(query, "read_model_h2h_matches", attempts=1).data or []
+        return _cache_set(cache_key, rows, 15)
     except Exception:
         return []
 

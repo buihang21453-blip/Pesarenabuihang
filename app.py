@@ -36,6 +36,7 @@ from modules.invites.service import send_invite_blocker, SEND_INVITE_MESSAGES, a
 from modules.cache_utils import (
     cache_get, cache_set, cache_delete, ttl_cache_get, ttl_cache_set, ttl_cache_delete,
 )
+from modules import read_model_service as _read_model_service
 from modules.datetime_utils import (
     now_dt, now_iso, future_iso, aware_utc, seconds_until, parse_dt, format_vn_datetime,
 )
@@ -66,7 +67,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.2.12"
+APP_VERSION = "V1.2.13"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2527,7 +2528,7 @@ def dashboard():
     try:
         player_rows = list_players()
         presence_rows = list_players(include_admin=True)
-        matches = list_matches()
+        matches = load_user_matches(user.get("id"), limit=30)
         rooms = list_rooms()
         invite_count = current_pending_invite_count()
     except Exception:
@@ -2759,17 +2760,20 @@ def ranking():
         filtered = [player for player in filtered if player.get("rank_info", {}).get("slug") == rank_filter]
 
     top_players = filtered[:100]
-    try:
-        confirmed_matches = list_matches(status="confirmed")
-    except Exception as exc:
-        print(f"ranking list_matches warning: {exc}")
-        confirmed_matches = []
-
-    recent_form_map = _build_recent_form_map(
-        confirmed_matches,
-        player_ids={player.get("id") for player in top_players},
-        limit=5,
-    )
+    top_player_ids = {player.get("id") for player in top_players if player.get("id")}
+    recent_form_map = load_recent_form_map(top_player_ids)
+    # Nếu migration Read Model chưa được áp dụng, giữ fallback để BXH không mất phong độ.
+    if not recent_form_map and top_player_ids:
+        try:
+            confirmed_matches = list_matches(status="confirmed")
+        except Exception as exc:
+            print(f"ranking recent form fallback warning: {exc}")
+            confirmed_matches = []
+        recent_form_map = _build_recent_form_map(
+            confirmed_matches,
+            player_ids=top_player_ids,
+            limit=5,
+        )
 
     for player in top_players:
         total_matches = calculated_total_matches(player)
@@ -3554,6 +3558,18 @@ def cancel_invite(invite_id):
 
 
 
+
+# =========================
+# Read Model / truy vấn hiệu năng - V1.2.13
+# =========================
+_read_model_service.configure(globals())
+load_match_report = _read_model_service.load_match_report
+load_recent_form_map = _read_model_service.load_recent_form_map
+load_player_profile_summary = _read_model_service.load_player_profile_summary
+load_user_matches = _read_model_service.load_user_matches
+load_h2h_matches = _read_model_service.load_h2h_matches
+load_pair_stats = _read_model_service.load_pair_stats
+load_user_ip_cache = _read_model_service.load_user_ip_cache
 
 # =========================
 # Core modules tách từ app.py - V1.2.10

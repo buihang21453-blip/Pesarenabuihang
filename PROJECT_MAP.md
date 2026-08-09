@@ -50,3 +50,10 @@ Giao hữu: `waiting_ready -> friendly_playing -> waiting_ready`.
 - `modules/core/room_runtime.py`: timeout/repair, không reset bỏ qua bước Confirmed.
 - `modules/core/match_repository.py`: auto-confirm đồng bộ Room sang Confirmed.
 - `modules/room_rematch_routes.py`: hai bên đồng ý Đá tiếp rồi mới `confirmed -> waiting_ready`.
+
+## V1.2.13 — Read Model / Hiệu năng
+- `modules/read_model_service.py`: truy vấn đọc chuyên biệt, cache ngắn, lịch sử người dùng/H2H/phong độ/báo cáo.
+- `modules/core/match_repository.py`: `list_matches(status=None, limit=None)` lọc trực tiếp tại Supabase.
+- `modules/profile/service.py`: Hồ sơ chỉ đọc dữ liệu đúng người/cặp người chơi.
+- `modules/admin_dashboard_routes.py`: ưu tiên Read Model và truy vấn giới hạn.
+- `project_docs/sql/PES_ARENA_READ_MODEL_V1.3.34.sql`: migration tùy chọn cho các bảng cache/precompute.

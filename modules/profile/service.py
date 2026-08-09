@@ -112,11 +112,8 @@ def build_profile_context(user_id, viewer):
         return None
 
     user = dict(user)
-    all_matches = list_matches()
-    player_matches_raw = [
-        match for match in all_matches
-        if user_id in {match.get("player1_id"), match.get("player2_id")}
-    ]
+    # V1.2.13: chỉ đọc lịch sử của đúng người đang xem thay vì quét toàn bộ matches.
+    player_matches_raw = load_user_matches(user_id, limit=50)
     matches = [decorate_match_for_view(match, user_id) for match in player_matches_raw[:10]]
 
     form = []
@@ -143,6 +140,7 @@ def build_profile_context(user_id, viewer):
     user["is_online"] = is_user_online_now(user)
 
     confirmed = [match for match in player_matches_raw if match.get("status") == "confirmed"]
+    profile_cache = load_player_profile_summary(user_id) or {}
     teams = []
     opponents = []
     users = users_map()
@@ -151,24 +149,36 @@ def build_profile_context(user_id, viewer):
         teams.append(match.get("team1") if as_player1 else match.get("team2"))
         opponent_id = match.get("player2_id") if as_player1 else match.get("player1_id")
         opponents.append(users.get(opponent_id, {}).get("display_name", "Unknown"))
-    user["favorite_team"] = Counter([team for team in teams if team]).most_common(1)[0][0] if any(teams) else "Chưa có"
-    user["frequent_opponent"] = Counter([name for name in opponents if name]).most_common(1)[0][0] if opponents else "Chưa có"
+    user["favorite_team"] = profile_cache.get("favorite_team") or (Counter([team for team in teams if team]).most_common(1)[0][0] if any(teams) else "Chưa có")
+    frequent_opponent_id = profile_cache.get("frequent_opponent_id")
+    user["frequent_opponent"] = (users.get(frequent_opponent_id, {}).get("display_name") if frequent_opponent_id else None) or (Counter([name for name in opponents if name]).most_common(1)[0][0] if opponents else "Chưa có")
 
     h2h = None
     if viewer.get("id") != user_id:
+        pair_cache = load_pair_stats(viewer.get("id"), user_id)
         h2h_matches = [
             decorate_match_for_view(match, viewer.get("id"))
-            for match in all_matches
-            if match.get("status") == "confirmed"
-            and {match.get("player1_id"), match.get("player2_id")} == {viewer.get("id"), user_id}
+            for match in load_h2h_matches(viewer.get("id"), user_id, limit=10)
         ]
-        h2h = {
-            "total": len(h2h_matches),
-            "wins": len([m for m in h2h_matches if m.get("result_code") == "win"]),
-            "draws": len([m for m in h2h_matches if m.get("result_code") == "draw"]),
-            "losses": len([m for m in h2h_matches if m.get("result_code") == "loss"]),
-            "recent": h2h_matches[:5],
-        }
+        if pair_cache:
+            viewer_low = str(viewer.get("id")) == str(pair_cache.get("user_low_id"))
+            wins = int(pair_cache.get("user_low_wins") or 0) if viewer_low else int(pair_cache.get("user_high_wins") or 0)
+            losses = int(pair_cache.get("user_high_wins") or 0) if viewer_low else int(pair_cache.get("user_low_wins") or 0)
+            h2h = {
+                "total": int(pair_cache.get("total") or 0),
+                "wins": wins,
+                "draws": int(pair_cache.get("draws") or 0),
+                "losses": losses,
+                "recent": h2h_matches[:5],
+            }
+        else:
+            h2h = {
+                "total": len(h2h_matches),
+                "wins": len([m for m in h2h_matches if m.get("result_code") == "win"]),
+                "draws": len([m for m in h2h_matches if m.get("result_code") == "draw"]),
+                "losses": len([m for m in h2h_matches if m.get("result_code") == "loss"]),
+                "recent": h2h_matches[:5],
+            }
 
     room_rows = list_rooms()
     activity = build_player_activity_map(rooms=room_rows).get(user_id)

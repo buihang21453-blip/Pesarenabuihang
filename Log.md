@@ -243,3 +243,24 @@
 - Bổ sung tự repair Room nếu Match đã confirmed nhưng cập nhật Room thất bại/race.
 - Đá tiếp: người thứ nhất chỉ đánh dấu đồng ý; người thứ hai mới reset về `waiting_ready`.
 - Không đổi schema Supabase, không thêm Series/BlackBox/UI V1.4.5.
+
+## V1.2.13 — 09/08/2026 — Tối ưu đọc dữ liệu + Hiệu năng
+
+### Nội dung nâng cấp
+- Thêm `modules/read_model_service.py` làm lớp đọc dữ liệu chuyên biệt cho Dashboard, BXH, Hồ sơ và báo cáo Admin.
+- Dashboard không còn tải toàn bộ lịch sử trận; chỉ lấy tối đa 30 trận liên quan đúng người đang đăng nhập.
+- Hồ sơ người chơi không còn quét toàn bộ bảng `matches`; chỉ lấy tối đa 50 trận của người đó và H2H theo đúng cặp người chơi.
+- BXH ưu tiên `player_recent_form_cache` để lấy 5 trận phong độ gần nhất; nếu Supabase chưa có Read Model thì tự fallback sang cách cũ.
+- `list_matches(status=..., limit=...)` được đẩy bộ lọc xuống Supabase thay vì tải toàn bộ rồi lọc bằng Python.
+- Admin ưu tiên báo cáo Read Model. Khi Read Model có sẵn, bảng Admin chỉ tải 80 trận gần nhất; các nhóm disputed/playing được SELECT riêng theo trạng thái.
+- Thêm TTL RAM ngắn 10–30 giây cho các truy vấn đọc lặp lại trên warm instance Vercel.
+- Thêm migration tùy chọn `project_docs/sql/PES_ARENA_READ_MODEL_V1.3.34.sql`. Không chạy migration vẫn hoạt động nhờ fallback.
+
+### An toàn / tương thích
+- Không thay đổi schema bắt buộc.
+- Không thay đổi luồng trận đấu, RP, xác nhận, mời đấu hoặc giao diện.
+- Không bắt buộc chạy SQL để deploy phiên bản này.
+
+### Kiểm tra
+- AST: 154 file Python, 0 lỗi.
+- Test V1.2.13 Read Model/Performance: 7/7 PASS.

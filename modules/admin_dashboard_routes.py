@@ -43,7 +43,18 @@ def register_routes(context):
         if duplicate_cleanup_count:
             all_rooms = admin_safe_load("rooms_after_duplicate_cleanup", list_rooms, [])
 
-        all_matches = admin_safe_load("matches", list_matches, [])
+        # V1.2.13: nếu Read Model đã có trên Supabase, Admin chỉ cần tải 80 trận gần nhất
+        # cho bảng hiển thị. Nếu migration chưa có, tự fallback về toàn bộ lịch sử để
+        # báo cáo cũ vẫn chính xác.
+        report_range = str(request.args.get("match_report_range") or "today").strip().lower()
+        read_model_report_payload = admin_safe_load(
+            "match_report_read_model", lambda: load_match_report(report_range), None
+        )
+        all_matches = admin_safe_load(
+            "matches",
+            lambda: list_matches(limit=80) if read_model_report_payload else list_matches(),
+            [],
+        )
 
         # Báo cáo số trận theo múi giờ Việt Nam. Dùng dữ liệu matches đã tải để
         # tránh phát sinh thêm nhiều truy vấn và giữ kết quả thống nhất với tab Trận đấu.
@@ -215,6 +226,17 @@ def register_routes(context):
             ),
         }
 
+        if read_model_report_payload:
+            match_report, match_report_daily = read_model_report_payload
+
+        # Các tab trạng thái chỉ SELECT đúng trạng thái cần thiết, không quét cả bảng.
+        disputed_matches = admin_safe_load(
+            "matches_disputed", lambda: list_matches(status="disputed", limit=80), []
+        )
+        playing_matches = admin_safe_load(
+            "matches_playing", lambda: list_matches(status="playing", limit=80), []
+        )
+
         raw_users = admin_safe_load("users", list_all_users, [])
         admin_users = admin_safe_load(
             "decorate_users", lambda: decorate_admin_users(raw_users), []
@@ -269,8 +291,8 @@ def register_routes(context):
             admins=admins,
             pending_users=pending_users,
             all_matches=all_matches[:80],
-            disputed=[m for m in all_matches if m.get("status") == "disputed"],
-            playing=[m for m in all_matches if m.get("status") == "playing"],
+            disputed=disputed_matches,
+            playing=playing_matches,
             rooms=[r for r in all_rooms if r.get("status") in ["waiting_ready", "playing", "friendly_playing", "waiting_result_confirm", "waiting_confirm", "disputed"]],
             recent_closed_rooms=[
                 r for r in all_rooms
