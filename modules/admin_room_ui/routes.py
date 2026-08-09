@@ -13,7 +13,12 @@ def register_routes(context):
 
     @app.context_processor
     def inject_room_ui_designer_context():
-        return {"room_ui_config": service.get_room_ui_config()}
+        # Room UI settings are presentation-only. Do not hit Supabase for every
+        # gameplay POST/API/template render because that can interfere with the
+        # result/confirm/rematch/mode-switch hot paths.
+        if request.endpoint == "room_detail":
+            return {"room_ui_config": service.get_room_ui_config()}
+        return {}
 
     @app.route("/admin/room-ui/save", methods=["POST"])
     @login_required

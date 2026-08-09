@@ -1828,3 +1828,11 @@
 - Bỏ 6 thanh tỷ lệ logo riêng; thay bằng 1 thanh `mode_logo_scale` đồng bộ cả 6 logo.
 - Tự chuyển cấu hình V1.3.130 cũ: lấy trung bình 6 tỷ lệ logo cũ làm tỷ lệ chung mới.
 - Các thông số mới được nối xuống giao diện Room thật; giữ breakpoint responsive để tránh phá bố cục mobile/tablet.
+
+
+## V1.3.132 - Khoi_phuc_luong_tran_sau_Room_UI_Designer
+- Co lap Room UI Designer chi vao trang thai Cho doi thu (waiting_ready + chua co guest).
+- Khoi phuc CSS on dinh V1.3.129 cho cac trang thai co thao tac tran: san sang / playing / gui ket qua / xac nhan / da tiep / doi che do.
+- Bo viec doc cau hinh Room UI tu Supabase tren moi request/template; chi doc khi mo room_detail ban dau.
+- Bo viec doc Room UI config o cac tab Admin khong lien quan.
+- Muc tieu: Room UI Designer khong duoc cham vao backend, API, form submit, polling, result/confirm/rematch/mode switch.

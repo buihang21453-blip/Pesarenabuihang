@@ -486,10 +486,3 @@
 .room-master-mode-card > small.is-unlocked{border-color:#0a7430!important;background:#062313!important;color:#43f17c!important}
 .room-master-mode-card > small.is-locked{border-color:rgba(148,163,184,.35)!important;background:rgba(30,41,59,.46)!important;color:#d7e0ec!important}
 .room-master-mode-card > small.is-disabled{border-color:rgba(175,123,18,.45)!important;background:rgba(71,49,9,.56)!important;color:#ffd772!important}
-
-/* V1.3.131 — Room UI Designer compatibility for all lower mode cards */
-#roomLiveShell .room-master-mode-grid{gap:var(--rui-mode-gap,12px)!important}
-#roomLiveShell .room-master-mode-card{min-height:var(--rui-mode-card-height,208px)}
-#roomLiveShell .room-master-mode-card>small{width:var(--rui-mode-status-width,94%)!important}
-#roomLiveShell .room-master-mode-card .room-master-card-icon img{transform:scale(var(--rui-mode-logo-scale,1));transform-origin:center!important}
-#roomLiveShell .room-master-mode-emblem img{transform:translate(var(--rui-active-logo-x,0px),var(--rui-active-logo-y,0px)) scale(var(--rui-active-logo-scale,1));transform-origin:center!important}
