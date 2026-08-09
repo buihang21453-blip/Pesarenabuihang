@@ -1839,3 +1839,108 @@ html[data-theme="light"] .room-score-history-row{border-color:#edf0f3}
   .room-action-zone{padding:0}
 }
 
+
+/* ===== V1.2.15 - Toi uu layout va dong bo thiet ke cac trang thai ===== */
+.room-layout-v1215{
+  --room-layout-card-min-h:540px;
+  --room-layout-center-w:430px;
+  --room-layout-gap:14px;
+}
+.room-layout-v1215 .room-stage-topbar{min-height:78px}
+.room-layout-v1215 .room-stage-title-wrap{min-width:0;flex:1 1 auto}
+.room-layout-v1215 .room-stage-state-badge{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:36px;padding:8px 13px;border-radius:999px;
+  border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.72);
+  color:#dbe7f6;font-size:12px;font-weight:950;letter-spacing:.035em;white-space:nowrap;
+  box-shadow:0 7px 18px rgba(0,0,0,.18)
+}
+.room-layout-v1215 .room-stage-state-dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;box-shadow:0 0 10px currentColor}
+.room-layout-v1215.room-state-waiting-opponent .room-stage-state-badge,
+.room-layout-v1215.room-state-waiting-ready .room-stage-state-badge{color:#facc15;border-color:rgba(250,204,21,.34);background:rgba(113,63,18,.25)}
+.room-layout-v1215.room-state-playing .room-stage-state-badge,
+.room-layout-v1215.room-state-friendly-playing .room-stage-state-badge{color:#38bdf8;border-color:rgba(56,189,248,.34);background:rgba(7,89,133,.24)}
+.room-layout-v1215.room-state-waiting-confirm .room-stage-state-badge{color:#fb923c;border-color:rgba(251,146,60,.34);background:rgba(124,45,18,.25)}
+.room-layout-v1215.room-state-confirmed .room-stage-state-badge{color:#4ade80;border-color:rgba(74,222,128,.34);background:rgba(20,83,45,.26)}
+.room-layout-v1215.room-state-disputed .room-stage-state-badge{color:#f87171;border-color:rgba(248,113,113,.36);background:rgba(127,29,29,.26)}
+
+@media (min-width:1181px){
+  .room-layout-v1215 .room-arena-frame{
+    grid-template-columns:minmax(260px,1fr) minmax(250px,.78fr) minmax(260px,1fr) minmax(285px,320px);
+    gap:var(--room-layout-gap);align-items:stretch
+  }
+  .room-layout-v1215 .room-side-card,
+  .room-layout-v1215 .room-center-stage-plain{min-height:var(--room-layout-card-min-h);height:auto}
+}
+.room-layout-v1215 .room-team-card.home,
+.room-layout-v1215 .room-team-card.away{display:grid;grid-template-rows:auto 1fr;align-content:stretch}
+.room-layout-v1215 .room-player-heading-plain{align-self:start;width:100%}
+.room-layout-v1215 .room-card-club-area{width:100%;min-height:0;justify-content:center}
+.room-layout-v1215 .room-club-logo-large,
+.room-layout-v1215 .room-team-placeholder-shield{flex:0 0 auto}
+.room-layout-v1215 .room-team-name-lg{min-height:2.25em;display:flex;align-items:center;justify-content:center}
+
+.room-layout-v1215 .room-center-stage-plain{
+  width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-start!important;gap:12px;padding:20px 12px
+}
+.room-layout-v1215 .room-center-mode-zone,
+.room-layout-v1215 .room-center-random3-zone,
+.room-layout-v1215 .room-result-review,
+.room-layout-v1215 .room-center-score-panel,
+.room-layout-v1215 .room-center-primary-actions,
+.room-layout-v1215 .room-action-zone,
+.room-layout-v1215 .room-limit-warning{
+  width:min(100%,var(--room-layout-center-w));max-width:var(--room-layout-center-w);box-sizing:border-box;margin-left:auto;margin-right:auto
+}
+.room-layout-v1215 .room-center-countdown-label{margin-top:2px;min-height:18px}
+.room-layout-v1215 .room-center-countdown{min-height:50px;display:flex;align-items:center;justify-content:center}
+.room-layout-v1215 .room-center-vs-image{width:clamp(118px,10vw,150px);height:clamp(118px,10vw,150px);margin:2px auto;flex:0 0 auto}
+.room-layout-v1215 .room-center-random-trigger{width:min(100%,300px)!important;min-height:158px;justify-content:center}
+.room-layout-v1215 .room-center-primary-actions{margin-top:auto!important;padding-top:4px}
+.room-layout-v1215 .room-center-score-panel{min-height:190px;display:flex;flex-direction:column;justify-content:center}
+.room-layout-v1215 .room-result-review{min-height:250px;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.room-layout-v1215 .room-result-score{line-height:1;min-height:88px;display:flex;align-items:center;justify-content:center;gap:16px}
+.room-layout-v1215 .room-result-confirmed-badge{
+  display:flex;align-items:center;justify-content:center;min-height:38px;padding:8px 12px;border-radius:12px;
+  border:1px solid rgba(74,222,128,.38);background:rgba(20,83,45,.26);color:#86efac;
+  font-size:12px;font-weight:1000;letter-spacing:.06em;text-align:center
+}
+.room-layout-v1215 .room-result-review.is-confirmed{border-color:rgba(74,222,128,.32);box-shadow:0 14px 34px rgba(0,0,0,.34),0 0 26px rgba(34,197,94,.10)}
+.room-layout-v1215 .room-confirmed-actions{margin-top:4px!important;padding-top:0}
+.room-layout-v1215.room-state-confirmed .room-finished-summary{display:none}
+
+/* Cac trang thai dung chung cung mot truc can giua, khong thay doi kich thuoc cot. */
+.room-layout-v1215.room-state-waiting-opponent .room-center-stage-plain,
+.room-layout-v1215.room-state-waiting-ready .room-center-stage-plain,
+.room-layout-v1215.room-state-playing .room-center-stage-plain,
+.room-layout-v1215.room-state-waiting-confirm .room-center-stage-plain,
+.room-layout-v1215.room-state-confirmed .room-center-stage-plain{align-self:stretch}
+.room-layout-v1215.room-state-waiting-confirm .room-center-stage-plain,
+.room-layout-v1215.room-state-confirmed .room-center-stage-plain{justify-content:center!important}
+.room-layout-v1215.room-state-waiting-confirm .room-center-primary-actions,
+.room-layout-v1215.room-state-confirmed .room-center-primary-actions{margin-top:6px!important}
+
+.room-layout-v1215 .room-extra-controls{border-radius:18px;margin-top:0}
+.room-layout-v1215 .room-arena-right-rail{min-width:0}
+.room-layout-v1215 .room-arena-right-rail > .panel{width:100%;box-sizing:border-box}
+
+@media(max-width:1180px){
+  .room-layout-v1215{--room-layout-card-min-h:500px}
+  .room-layout-v1215 .room-stage-topbar{flex-wrap:wrap}
+  .room-layout-v1215 .room-stage-state-badge{order:2}
+}
+@media(max-width:900px){
+  .room-layout-v1215{--room-layout-center-w:520px}
+  .room-layout-v1215 .room-side-card{min-height:460px!important}
+  .room-layout-v1215 .room-center-stage-plain{min-height:420px!important}
+  .room-layout-v1215 .room-team-name-lg{min-height:auto}
+}
+@media(max-width:640px){
+  .room-layout-v1215 .room-stage-topbar{padding:14px}
+  .room-layout-v1215 .room-stage-state-badge{width:100%;white-space:normal}
+  .room-layout-v1215 .room-side-card{min-height:400px!important}
+  .room-layout-v1215 .room-center-stage-plain{min-height:380px!important;padding:16px 10px}
+  .room-layout-v1215 .room-result-review{min-height:220px}
+  .room-layout-v1215 .room-result-score{min-height:68px;gap:10px}
+}

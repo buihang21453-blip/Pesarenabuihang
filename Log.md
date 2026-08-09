@@ -264,3 +264,56 @@
 ### Kiểm tra
 - AST: 154 file Python, 0 lỗi.
 - Test V1.2.13 Read Model/Performance: 7/7 PASS.
+
+## V1.2.14 — 09/08/2026 — Dọn và cô lập CSS giảm đè giao diện
+
+### Mục tiêu
+- Tách CSS phòng đấu ra khỏi `static/style.css` chung.
+- Chỉ tải CSS phòng đấu tại endpoint `room_detail`.
+- Giữ nguyên logic/backend và không chủ động thay đổi thiết kế giao diện.
+- Thiết lập quy tắc ownership để các nâng cấp sau sửa đúng file.
+
+### Thay đổi
+- Tạo `static/css/room_detail.css` làm owner chính của CSS phòng đấu legacy.
+- `templates/base.html` chỉ nạp `room_detail.css` khi `request.endpoint == 'room_detail'`.
+- Giảm `static/style.css` từ khoảng 293.6 KB xuống 202.4 KB.
+- Di chuyển khoảng 91.3 KB CSS Room ra module riêng.
+- Số chuỗi selector `.room...` trong CSS toàn cục giảm từ 1.046 xuống 142 (~86%).
+- Giữ `quick_match.css`, `parsec_room.css`, `rank_mode_toggle.css` là các module riêng và tải sau CSS nền tảng.
+- Thêm `CSS_OWNERSHIP.md` và `scripts/audit_css_ownership.py`.
+
+### Không thay đổi
+- Không đổi HTML phòng đấu.
+- Không đổi luồng trận đấu, RP, Invite/Presence, Confirmed/Đá tiếp.
+- Không đổi Supabase schema.
+
+### Kiểm tra V1.2.14
+- CSS `static/style.css`: parse PASS.
+- CSS `static/css/room_detail.css`: parse PASS.
+- Audit CSS ownership: 8/8 PASS.
+- Test CSS isolation + Read Model V1.2.13: 12/12 PASS.
+- AST toàn bộ Python: 156 file, 0 lỗi.
+
+
+## V1.2.15 — 09/08/2026 — Tối ưu Layout và đồng bộ thiết kế trạng thái
+
+### Mục tiêu
+- Giữ một layout phòng đấu duy nhất cho toàn bộ vòng đời trận đấu.
+- Đồng bộ vị trí Chủ phòng / Trung tâm / Đối thủ / Thông tin, tránh nhảy bố cục khi đổi trạng thái.
+- Không thay đổi endpoint, RP, Invite/Presence hay state machine backend.
+
+### Thay đổi
+- Thêm lớp layout `room-layout-v1215` và các state class: `waiting-opponent`, `waiting-ready`, `playing`, `waiting-confirm`, `confirmed`, `disputed`.
+- Thêm badge trạng thái ở topbar để người chơi biết đang ở bước nào của phòng.
+- Chuẩn hóa chiều cao hai thẻ người chơi, cột trung tâm và kích thước vùng hành động.
+- Đồng bộ `waiting_result_confirm` và `confirmed` dùng cùng khung tỷ số trung tâm.
+- Ở Confirmed, giữ nguyên tỷ số và chỉ chuyển nhóm nút thành `Đá Tiếp / Thoát Phòng`; bỏ hiển thị summary tỷ số lặp phía dưới.
+- Đồng bộ template đầy đủ `room_detail.html` và fragment `_room_live_content.html` để AJAX refresh không đổi layout.
+- Responsive tiếp tục giữ cùng thứ tự nội dung trên tablet/mobile.
+
+### Kiểm tra
+- Jinja parse: PASS cho `room_detail.html` và `_room_live_content.html`.
+- Python AST: 156 file, 0 lỗi.
+- Test V1.2.15 Layout Sync: 4/4 PASS.
+- Test Confirmed flow V1.2.12: PASS.
+- CSS isolation V1.2.14: các kiểm tra cấu trúc chính PASS.

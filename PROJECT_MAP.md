@@ -57,3 +57,10 @@ Giao hữu: `waiting_ready -> friendly_playing -> waiting_ready`.
 - `modules/profile/service.py`: Hồ sơ chỉ đọc dữ liệu đúng người/cặp người chơi.
 - `modules/admin_dashboard_routes.py`: ưu tiên Read Model và truy vấn giới hạn.
 - `project_docs/sql/PES_ARENA_READ_MODEL_V1.3.34.sql`: migration tùy chọn cho các bảng cache/precompute.
+
+
+## V1.2.15 - Layout phòng đấu
+- `templates/room_detail.html`: shell đầy đủ, badge trạng thái và layout phòng chính.
+- `templates/_room_live_content.html`: fragment trạng thái động; phải giữ đồng bộ với layout chính khi sửa nội dung trung tâm.
+- `static/css/room_detail.css`: owner của `room-layout-v1215` và toàn bộ geometry theo trạng thái.
+- Quy tắc: không tạo layout HTML riêng cho từng trạng thái; chỉ thay nội dung trong cột trung tâm.
