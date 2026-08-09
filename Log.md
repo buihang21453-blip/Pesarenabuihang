@@ -221,3 +221,15 @@
 - Tách 7 nhóm helper lớn khỏi `app.py` sang `modules/core/` nhưng giữ nguyên logic V1.2.9.
 - Thêm `PROJECT_MAP.md` để xác định file chịu trách nhiệm từng chức năng.
 - Giữ nguyên endpoint, template, schema DB và giao diện V1.2.9.
+
+
+## V1.2.11 — Moi dau Online + Gui/Xac nhan ket qua an toan
+- Tach quy tac Invite va Presence thanh module doc lap.
+- Gui moi dung chung `send_invite_blocker`; nhan moi dung `accept_invite_blocker`.
+- Nhan loi moi claim `accepted` truoc khi dong phong cu; rollback ve `pending` neu chuyen phong loi.
+- Presence dung 1 quy tac timeout duy nhat cho Players/Invite/Quick Match.
+- `apply_match_result` co snapshot nguoi choi va rollback RP/thong ke neu loi giua chung.
+- Xac nhan ket qua chot phong o `confirmed`, giu ty so/CLB/match_id de quyet dinh Da tiep/Roi phong.
+- Auto-confirm 60 giay cung chot `confirmed`, khong tu dong xoa ket qua.
+- Da tiep doi xung: ca hai nguoi deu phai dong y; update co dieu kien va kiem tra ket qua ghi.
+- Khong doi schema Supabase, khong thay giao dien.

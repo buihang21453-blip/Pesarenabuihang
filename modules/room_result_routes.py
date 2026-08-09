@@ -23,6 +23,23 @@ def _parse_room_score(raw_value, label):
     return score
 
 
+
+def _invalidate_room_cache_safe():
+    for name, args in (("cache_delete", ("_rz_rooms_all",)), ("ttl_cache_delete", ("rooms_raw",))):
+        fn = globals().get(name)
+        if callable(fn):
+            try:
+                fn(*args)
+            except Exception:
+                pass
+
+
+def _require_room_action_safe(room, action):
+    checker = globals().get("require_room_action")
+    if callable(checker):
+        return checker(room, action)
+    return True, ""
+
 def register_routes(context):
     """Đăng ký nhóm route vào Flask app hiện tại."""
     globals().update(context)
@@ -32,7 +49,7 @@ def register_routes(context):
     def room_submit_result(room_id):
         user = current_user()
         room = get_room(room_id)
-        _flow_ok, _flow_message = require_room_action(room, "submit_result")
+        _flow_ok, _flow_message = _require_room_action_safe(room, "submit_result")
         if room and not _flow_ok:
             flash(_flow_message, "warning")
             return redirect(url_for("room_detail", room_id=room_id))
@@ -195,7 +212,7 @@ def register_routes(context):
     def room_confirm_result(room_id):
         user = current_user()
         room = get_room(room_id)
-        _flow_ok, _flow_message = require_room_action(room, "confirm_result")
+        _flow_ok, _flow_message = _require_room_action_safe(room, "confirm_result")
         if room and not _flow_ok:
             flash(_flow_message, "warning")
             return redirect(url_for("room_detail", room_id=room_id))
@@ -232,46 +249,37 @@ def register_routes(context):
             previous_mode = room.get("team_tier") or SMART_RANDOM_MODE
             if not system_feature_enabled("rank_standard_enabled"):
                 previous_mode = FRIENDLY_RANDOM3_MODE
+            # Kết thúc trận hiện tại trước, chưa xóa tỷ số/CLB/match_id.
+            # Hai người cần nhìn thấy kết quả đã chốt để chọn Đá tiếp hoặc Rời phòng.
             room_update = {
-                "status": "waiting_ready",
+                "status": "confirmed",
                 "guest_ready": False,
-                "host_team": None,
-                "guest_team": None,
-                "host_team_overall": None,
-                "guest_team_overall": None,
-                "host_team_logo_url": None,
-                "guest_team_logo_url": None,
-                "host_team_league": None,
-                "guest_team_league": None,
-                "host_score": None,
-                "guest_score": None,
-                "match_id": None,
-                "submitted_by_id": None,
                 "confirmed_by_id": user["id"],
                 "match_mode": MATCH_MODE_RANKED,
                 "team_tier": previous_mode,
-                "note": f"__RANK_MODE_LOCKED__|{previous_mode}",
+                "note": "Kết quả đã xác nhận. Chọn Đá tiếp hoặc rời phòng.",
                 "state_expires_at": None,
                 "updated_at": now_iso(),
             }
             room_update_result = execute_query(
                 db.table("match_rooms").update(room_update).eq("id", room_id).eq("status", "waiting_result_confirm"),
-                "confirm_result_reset_room_waiting_ready",
+                "confirm_result_finish_room",
             )
             if not (room_update_result.data or []):
                 raise ValueError("Trạng thái phòng vừa thay đổi; vui lòng tải lại phòng.")
+            _invalidate_room_cache_safe()
             if streak_event:
                 try:
                     publish_global_streak_event(streak_event)
                 except Exception as exc:
                     print(f"publish streak event warning room={room_id}: {type(exc).__name__}: {exc}")
-            flash("Đã xác nhận kết quả. Phòng đã trở về Chờ Sẵn Sàng và giữ nguyên chế độ thi đấu.", "success")
+            flash("Đã xác nhận kết quả. Hai người có thể chọn Đá tiếp hoặc rời phòng.", "success")
         except ValueError as exc:
             fresh_match = get_match(match.get("id"))
             if fresh_match and fresh_match.get("status") == "confirmed":
                 error_id = _result_error_id("ROOM")
-                print(f"{error_id} confirmed but room reset pending room={room_id}: {exc}")
-                flash(f"Kết quả đã được ghi nhận, nhưng phòng chưa làm mới. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
+                print(f"{error_id} confirmed but room finish pending room={room_id}: {exc}")
+                flash(f"Kết quả đã được ghi nhận, nhưng trạng thái phòng chưa chốt hoàn toàn. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
             else:
                 print(f"room_confirm_result validation room={room_id} match={match.get('id')}: {exc}")
                 flash(str(exc), "warning")
@@ -280,8 +288,8 @@ def register_routes(context):
             error_id = _result_error_id("CONFIRM")
             fresh_match = get_match(match.get("id"))
             if fresh_match and fresh_match.get("status") == "confirmed":
-                print(f"{error_id} confirm completed but room reset failed room={room_id}: {type(exc).__name__}: {exc}")
-                flash(f"Kết quả đã được ghi nhận, nhưng phòng chưa làm mới. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
+                print(f"{error_id} confirm completed but room finish failed room={room_id}: {type(exc).__name__}: {exc}")
+                flash(f"Kết quả đã được ghi nhận, nhưng trạng thái phòng chưa chốt hoàn toàn. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
             else:
                 print(f"{error_id} room_confirm_result ERROR room={room_id} match={match.get('id')}: {type(exc).__name__}: {exc}")
                 flash(f"Không thể xác nhận kết quả. Mã lỗi {error_id}. Chưa ghi thêm điểm; hãy thử lại sau vài giây.", "danger")
@@ -295,7 +303,7 @@ def register_routes(context):
     def room_dispute_result(room_id):
         user = current_user()
         room = get_room(room_id)
-        _flow_ok, _flow_message = require_room_action(room, "dispute_result")
+        _flow_ok, _flow_message = _require_room_action_safe(room, "dispute_result")
         if room and not _flow_ok:
             flash(_flow_message, "warning")
             return redirect(url_for("room_detail", room_id=room_id))

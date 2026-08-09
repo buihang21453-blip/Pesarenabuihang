@@ -3,6 +3,8 @@
 Giữ nguyên logic gốc; dependency được truyền từ app.py bằng configure() để tránh import vòng.
 """
 
+from modules.presence.service import is_online as presence_is_online
+
 _CONTEXT = {}
 
 def configure(context):
@@ -55,9 +57,13 @@ def get_user(user_id):
 
 
 def is_user_online_now(user):
-    seen = parse_dt((user or {}).get("last_seen_at"))
-    cutoff = now_dt() - timedelta(seconds=ONLINE_TIMEOUT_SECONDS)
-    return bool((user or {}).get("is_online")) and bool(seen) and seen >= cutoff
+    """Một nguồn quyết định Online dùng chung cho Players / Invite / Quick Match."""
+    return presence_is_online(
+        user,
+        now=now_dt(),
+        parse_datetime=parse_dt,
+        timeout_seconds=ONLINE_TIMEOUT_SECONDS,
+    )
 
 
 def _player_ranking_sort_key(player):

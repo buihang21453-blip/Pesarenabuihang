@@ -3,6 +3,22 @@
 Module đăng ký route theo dependency của app.py để giữ nguyên endpoint và tránh import vòng.
 """
 
+
+def _invalidate_room_flow_cache_safe():
+    calls = [
+        ("cache_delete", ("_rz_rooms_all",)),
+        ("cache_delete", ("_rz_invites_all",)),
+        ("ttl_cache_delete", ("rooms_raw",)),
+        ("ttl_cache_delete", ("invites_raw",)),
+    ]
+    for name, args in calls:
+        fn = globals().get(name)
+        if callable(fn):
+            try:
+                fn(*args)
+            except Exception:
+                pass
+
 def register_routes(context):
     """Đăng ký nhóm route vào Flask app hiện tại."""
     globals().update(context)
@@ -272,39 +288,10 @@ def register_routes(context):
         previous_mode_label = "Random 3 chọn 1" if previous_rank_mode == FRIENDLY_RANDOM3_MODE else "Rank thường"
         rematch_locked_note = f"__RANK_MODE_LOCKED__|{previous_rank_mode}"
 
-        # Khách bấm Đá tiếp: khách được tính là sẵn sàng ngay, không cần chọn lại chế độ.
-        if not is_host:
-            execute_query(
-                db.table("match_rooms").update({
-                    "host_team": None,
-                    "guest_team": None,
-                    "host_team_overall": None,
-                    "guest_team_overall": None,
-                    "host_team_logo_url": None,
-                    "guest_team_logo_url": None,
-                    "host_team_league": None,
-                    "guest_team_league": None,
-                    "guest_ready": True,
-                    "status": "waiting_ready",
-                    "match_id": None,
-                    "host_score": None,
-                    "guest_score": None,
-                    "submitted_by_id": None,
-                    "confirmed_by_id": None,
-                    "match_mode": MATCH_MODE_RANKED,
-                    "team_tier": previous_rank_mode,
-                    "note": rematch_locked_note,
-                    "state_expires_at": None,
-                    "updated_at": now_iso(),
-                }).eq("id", room_id).eq("status", "confirmed"),
-                "room_guest_rematch_ready_for_ranked_random",
-            )
-            flash(f"Bạn đã chọn Đá tiếp. Giữ nguyên chế độ {previous_mode_label}; Chủ phòng có thể quay quân.", "success")
-            return redirect(url_for("room_detail", room_id=room_id))
-
+        # Đá tiếp là quyết định đối xứng: người bấm đầu tiên chỉ ghi nhận lựa chọn.
         # Người đầu tiên bấm Đá tiếp: ghi nhận ngay trong phòng, không tạo lời mời mới.
         if current_note != opponent_ready_note:
-            execute_query(
+            ready_result = execute_query(
                 db.table("match_rooms").update({
                     "note": my_ready_note,
                     "state_expires_at": future_iso(REMATCH_TIMEOUT_SECONDS),
@@ -312,6 +299,12 @@ def register_routes(context):
                 }).eq("id", room_id).eq("status", "confirmed"),
                 "room_rematch_first_ready",
             )
+            if not (ready_result.data or []):
+                fresh_room = get_room(room_id)
+                if not fresh_room or fresh_room.get("note") != my_ready_note:
+                    flash("Trạng thái phòng vừa thay đổi. Hãy tải lại trước khi chọn Đá tiếp.", "warning")
+                    return redirect(url_for("room_detail", room_id=room_id))
+            _invalidate_room_flow_cache_safe()
             flash("Bạn đã chọn Đá tiếp. Đang chờ đối thủ bấm Đá tiếp.", "success")
             return redirect(url_for("room_detail", room_id=room_id))
 
@@ -335,10 +328,16 @@ def register_routes(context):
             except Exception as exc:
                 print(f"Rematch pending invite cleanup warning: {exc}")
 
-        execute_query(
+        reset_result = execute_query(
             db.table("match_rooms").update({
                 "host_team": None,
                 "guest_team": None,
+                "host_team_overall": None,
+                "guest_team_overall": None,
+                "host_team_logo_url": None,
+                "guest_team_logo_url": None,
+                "host_team_league": None,
+                "guest_team_league": None,
                 "guest_ready": True,
                 "status": "waiting_ready",
                 "match_id": None,
@@ -346,6 +345,7 @@ def register_routes(context):
                 "guest_score": None,
                 "submitted_by_id": None,
                 "confirmed_by_id": None,
+                "match_mode": MATCH_MODE_RANKED,
                 "team_tier": previous_rank_mode,
                 "note": rematch_locked_note,
                 "state_expires_at": None,
@@ -353,8 +353,14 @@ def register_routes(context):
             }).eq("id", room_id).eq("status", "confirmed"),
             "room_rematch_reset_same_room",
         )
+        if not (reset_result.data or []):
+            fresh_room = get_room(room_id)
+            if not fresh_room or fresh_room.get("status") != "waiting_ready":
+                flash("Không thể bắt đầu lượt đá tiếp vì trạng thái phòng vừa thay đổi. Hãy thử lại.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+        _invalidate_room_flow_cache_safe()
 
-        flash(f"Cả hai đã đồng ý đá tiếp. Giữ nguyên chế độ {previous_mode_label}; đang chờ Chủ phòng quay quân.", "success")
+        flash(f"Cả hai đã đồng ý đá tiếp. Giữ nguyên chế độ {previous_mode_label}; Chủ phòng có thể quay quân.", "success")
         return redirect(url_for("room_detail", room_id=room_id))
 
 

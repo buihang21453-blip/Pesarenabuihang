@@ -35,3 +35,10 @@ Giao hữu: `waiting_ready -> friendly_playing -> waiting_ready`.
 - Quy tắc trạng thái mới phải thêm vào `room_flow_service.py`.
 - DB update theo chức năng nằm trong route/service tương ứng.
 - Giữ endpoint cũ để không phá Front-end hiện tại.
+
+## V1.2.11 — Mời đấu / Online / Kết quả an toàn
+- `modules/invites/service.py`: quy tắc gửi và nhận lời mời dùng chung.
+- `modules/presence/service.py`: nguồn quyết định Online thống nhất.
+- `modules/match_result_service.py`: claim + snapshot + rollback khi xác nhận RP lỗi.
+- `modules/room_result_routes.py`: xác nhận kết thúc ở `confirmed`.
+- `modules/room_rematch_routes.py`: Đá tiếp cần cả hai đồng ý, có kiểm tra ghi trạng thái.

@@ -1013,11 +1013,11 @@ window.addEventListener("DOMContentLoaded", function () {
     const heartbeatPoller = PESNet.createPoller({
         key: "heartbeat",
         task: postHeartbeat,
-        visibleInterval: 60000,
-        hiddenInterval: 180000,
-        runWhenHidden: false,
-        immediate: false,
-        jitter: 5000
+        visibleInterval: 30000,
+        hiddenInterval: 60000,
+        runWhenHidden: true,
+        immediate: true,
+        jitter: 3000
     });
 
     let lastActivityHeartbeatAt = 0;

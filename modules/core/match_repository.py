@@ -55,8 +55,8 @@ def auto_confirm_expired_match_if_needed(match):
         )
         fresh = dict(fresh_result.data[0]) if fresh_result.data else dict(match)
 
-        # Chỉ đưa phòng đang chờ kết quả về trạng thái sẵn sàng. Nếu Admin đã
-        # hủy phòng, giữ phòng cancelled nhưng kết quả vẫn được tính bình thường.
+        # Auto-confirm chỉ chốt trận thành confirmed. Không xóa tỷ số/CLB/match_id
+        # để hai người còn nhìn thấy kết quả và quyết định Đá tiếp / Rời phòng.
         room_result = execute_query(
             db.table("match_rooms").select("id,status").eq("match_id", match.get("id")).limit(1),
             "load_room_for_auto_confirm",
@@ -64,21 +64,19 @@ def auto_confirm_expired_match_if_needed(match):
         )
         linked_room = (room_result.data or [None])[0]
         if linked_room and linked_room.get("status") == "waiting_result_confirm":
-            execute_query(
+            finish_result = execute_query(
                 db.table("match_rooms").update({
-                    "status": "waiting_ready",
+                    "status": "confirmed",
                     "guest_ready": False,
-                    "host_score": None,
-                    "guest_score": None,
-                    "match_id": None,
-                    "submitted_by_id": None,
-                    "confirmed_by_id": None,
+                    "note": "Kết quả đã tự xác nhận sau thời gian chờ. Chọn Đá tiếp hoặc rời phòng.",
                     "state_expires_at": None,
                     "updated_at": now_iso(),
                 }).eq("id", linked_room.get("id")).eq("status", "waiting_result_confirm"),
-                "release_room_after_auto_confirm",
+                "finish_room_after_auto_confirm",
                 attempts=2,
             )
+            if not (finish_result.data or []):
+                print(f"auto_confirm room state changed match={match.get('id')} room={linked_room.get('id')}")
         cache_delete("_rz_matches_all", "_rz_rooms_all")
         ttl_cache_delete("matches_raw")
         ttl_cache_delete("rooms_raw")
