@@ -1,4 +1,4 @@
-{% set pes_room3_mode_order = ['rank_random', 'random3_pick1', 'tactical_bo3', 'bo3', 'ban_pick_bo3', 'home_away'] %}
+{% set pes_room3_mode_order = ['rank_random', 'random3_pick1', 'home_away', 'bo3', 'tactical_bo3', 'ban_pick_bo3'] %}
 {% set mode_ns = namespace(items=[]) %}
 {% for code in pes_room3_mode_order %}
     {% set found_mode = (rank_mode_catalog | selectattr('code', 'equalto', code) | first) %}

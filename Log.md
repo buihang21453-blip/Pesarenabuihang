@@ -1764,3 +1764,15 @@
 - Sua lai CSS ten nguoi choi va template de tranh mat / cat chu.
 - Tang tiep kich thuoc logo che do o giua man hinh.
 - Tang tiep kich thuoc logo cac che do khac.
+
+
+## V1.3.124 - sap_xep_lai_thu_tu_6_che_do
+- Chinh thu tu 6 che do dung yeu cau:
+  1. Rank Random
+  2. Random 3 chon 1
+  3. Luot di / luot ve
+  4. BO3
+  5. Chien thuat BO3
+  6. Cam chon CLB
+- So thu tu card va so mode o center dung chung danh sach nay nen duoc dong bo.
+- Khong thay doi logic / backend khac.
