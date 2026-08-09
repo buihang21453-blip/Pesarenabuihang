@@ -1791,3 +1791,10 @@
 - Áp dụng ảnh nền center qua biến `--arena-center-stadium` cho toàn bộ giao diện Room.
 - Áp dụng ảnh VS mới cho cả trạng thái Chờ đối thủ và các trạng thái Room còn lại.
 - Không thay đổi Backend, RP, API hoặc luồng chức năng.
+
+
+## V1.3.127_can_lai_card_cac_che_do_theo_anh_mau
+- Can lai khu CAC CHE DO KHAC theo anh mau nguoi dung gui.
+- Dieu chinh 3 thanh phan chinh cua card: ty le logo, ten che do, trang thai mo khoa / tam tat.
+- Tang chieu cao card, can giua logo, phong to ten che do va lam nut trang thai ro hon.
+- Giu tong the 6 card dong bo nhung van co tuning nhe theo tung logo de tranh lech ty le.

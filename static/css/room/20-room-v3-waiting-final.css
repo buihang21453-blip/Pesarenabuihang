@@ -128,9 +128,9 @@
 /* modes — transparent cards + gold metallic neon frame */
 #roomLiveShell.pes-room3-live-shell .pes-room3-modes{grid-area:modes;min-width:0;padding:4px 0 0}
 #roomLiveShell.pes-room3-live-shell .pes-room3-modes h2{margin:2px 0 12px;font-size:18px;font-weight:950;color:#ffc02d;text-align:center;letter-spacing:.18px;text-shadow:0 2px 10px rgba(0,0,0,.5)}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-form{min-width:0;margin:0}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card{position:relative;width:100%;height:188px;padding:8px 6px 8px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;border:1px solid rgba(221,177,61,.84);border-radius:12px;background:linear-gradient(180deg,rgba(7,23,40,.48),rgba(3,16,28,.28));color:#fff;font:inherit;cursor:pointer;overflow:hidden;box-shadow:inset 0 0 22px rgba(255,197,63,.05),0 0 12px rgba(255,189,52,.06)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card{position:relative;width:100%;height:198px;padding:10px 8px 10px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;border:1px solid rgba(221,177,61,.84);border-radius:14px;background:linear-gradient(180deg,rgba(12,22,40,.56),rgba(4,14,28,.34));color:#fff;font:inherit;cursor:pointer;overflow:hidden;box-shadow:inset 0 0 24px rgba(255,197,63,.06),0 0 12px rgba(255,189,52,.06)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card::before{content:"";position:absolute;inset:8px;border-radius:9px;border:1px solid rgba(255,220,122,.16);pointer-events:none}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,219,128,.05),transparent 20%,transparent 75%,rgba(0,0,0,.08));pointer-events:none}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="random3_pick1"],
@@ -140,10 +140,10 @@
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="home_away"]{border-color:rgba(221,177,61,.84)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card.is-selected{box-shadow:inset 0 0 24px rgba(255,213,102,.10),0 0 14px rgba(255,196,62,.18)}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card:disabled{cursor:default}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-index{position:absolute;z-index:2;top:0;left:0;width:38px;height:38px;display:grid;place-items:center;border-radius:0 0 13px 0;background:linear-gradient(180deg,rgba(163,118,20,.95),rgba(98,63,8,.92));font-size:18px;font-weight:950;color:#fff3c8;text-shadow:0 2px 5px rgba(0,0,0,.5)}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card img{width:auto;height:auto;max-width:84%;max-height:104px;object-fit:contain;margin:18px auto 8px;filter:drop-shadow(0 8px 11px rgba(0,0,0,.4)) drop-shadow(0 0 8px rgba(255,197,63,.12));background:transparent}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card strong{min-height:28px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;line-height:1.12;font-weight:850;padding:0 6px;margin-top:2px}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card small{margin-top:auto;width:90%;padding:4px 6px;border:1px solid #14783c;border-radius:6px;background:linear-gradient(180deg,rgba(7,68,34,.92),rgba(5,45,23,.9));color:#5eff8a;font-size:8px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-index{position:absolute;z-index:2;top:0;left:0;width:40px;height:38px;display:grid;place-items:center;border-radius:0 0 13px 0;background:linear-gradient(180deg,rgba(163,118,20,.98),rgba(98,63,8,.95));font-size:16px;font-weight:950;color:#fff3c8;text-shadow:0 2px 5px rgba(0,0,0,.5)}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card img{width:auto;height:auto;max-width:76%;max-height:108px;object-fit:contain;margin:20px auto 10px;filter:drop-shadow(0 8px 11px rgba(0,0,0,.4)) drop-shadow(0 0 8px rgba(255,197,63,.12));background:transparent;flex:0 0 auto}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card strong{min-height:34px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;line-height:1.16;font-weight:850;padding:0 10px;margin-top:0;letter-spacing:.01em;flex:0 0 auto}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card small{margin-top:auto;width:86%;padding:6px 10px;border:1px solid #178342;border-radius:7px;background:linear-gradient(180deg,rgba(10,95,45,.94),rgba(6,62,29,.92));color:#76ff9d;font-size:10px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;box-shadow:inset 0 0 10px rgba(119,255,164,.08)}
 
 
 /* mode-specific logo tuning for better balance */
@@ -154,11 +154,11 @@
 #roomLiveShell.pes-room3-live-shell .pes-room3-active-mode[data-active-mode="tactical_bo3"] .pes-room3-mode-logo{max-width:82%;max-height:112px}
 #roomLiveShell.pes-room3-live-shell .pes-room3-active-mode[data-active-mode="ban_pick_bo3"] .pes-room3-mode-logo{max-width:70%;max-height:114px}
 
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="rank_random"] img{max-width:72%;max-height:94px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="rank_random"] img{max-width:72%;max-height:96px}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="random3_pick1"] img{max-width:74%;max-height:96px}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="home_away"] img{max-width:76%;max-height:96px}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="bo3"] img{max-width:70%;max-height:98px}
-#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="tactical_bo3"] img{max-width:82%;max-height:88px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="home_away"] img{max-width:74%;max-height:96px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="bo3"] img{max-width:68%;max-height:100px}
+#roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="tactical_bo3"] img{max-width:76%;max-height:88px}
 #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card[data-mode="ban_pick_bo3"] img{max-width:72%;max-height:96px}
 
 /* responsiveness */
@@ -168,7 +168,7 @@
   #roomLiveShell.pes-room3-live-shell .pes-room3-brand{min-width:280px}
   #roomLiveShell.pes-room3-live-shell .pes-room3-brand img{width:min(280px,24vw);height:42px}
   #roomLiveShell.pes-room3-live-shell .pes-room3-action{min-width:152px}
-  #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card img{max-width:82%;max-height:94px;margin-top:16px}
+  #roomLiveShell.pes-room3-live-shell .pes-room3-mode-card img{max-width:78%;max-height:88px;margin-top:18px}
 }
 @media (max-width:1080px){
   #roomLiveShell.pes-room3-live-shell .pes-room3{grid-template-columns:1fr 1fr;grid-template-areas:"head head" "host away" "center center" "actions actions" "modes modes" "side side"}
