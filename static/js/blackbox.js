@@ -16,6 +16,7 @@
   const flushMs = Number(cfg.flushMs || 10000);
   const slowApiMs = Number(cfg.slowApiMs || 2500);
   let flushing = false;
+  let pageLeaving = false;
 
   const redact = (value) => {
     if (value == null) return value;
@@ -104,7 +105,22 @@
   };
 
   window.addEventListener('error', function(e){
-    push('js_error', {message:e.message, source:e.filename, line:e.lineno, column:e.colno}, 'ERROR');
+    // Resource load failures (IMG/SCRIPT/LINK/VIDEO...) also reach the capture-phase
+    // error listener. Do not mislabel them as JavaScript exceptions.
+    const target = e && e.target;
+    if (target && target !== window && target.tagName) {
+      const tag = String(target.tagName || '').toLowerCase();
+      const source = target.currentSrc || target.src || target.href || null;
+      push('resource_error', {tag, source:source ? String(source).slice(0,500) : null}, 'WARNING');
+      return;
+    }
+    push('js_error', {
+      message:e && e.message ? e.message : 'Unknown JavaScript error',
+      source:e && e.filename || null,
+      line:e && e.lineno || null,
+      column:e && e.colno || null,
+      stack:e && e.error && e.error.stack ? String(e.error.stack).slice(0,1200) : null
+    }, 'ERROR');
   }, true);
   window.addEventListener('unhandledrejection', function(e){
     let msg = '';
@@ -138,7 +154,13 @@
         if (!res.ok || ms >= slowApiMs) push(ms >= slowApiMs ? 'api_slow' : 'api_error', {method,url:url.slice(0,500),status:res.status,duration_ms:ms}, !res.ok ? 'ERROR':'WARNING');
         return res;
       }).catch(function(err){
-        push('api_error', {method,url:url.slice(0,500),duration_ms:Math.round(performance.now()-started),message:String(err && err.message || err)}, 'ERROR');
+        const message = String(err && err.message || err);
+        const aborted = !!(err && err.name === 'AbortError');
+        const transient = pageLeaving || document.visibilityState === 'hidden' || !navigator.onLine || aborted;
+        push(transient ? 'network_cancelled' : 'api_error', {
+          method, url:url.slice(0,500), duration_ms:Math.round(performance.now()-started),
+          message, online:navigator.onLine, visibility:document.visibilityState, aborted
+        }, transient ? 'WARNING' : 'ERROR');
         throw err;
       });
     };
@@ -148,6 +170,7 @@
   window.addEventListener('online', function(){ push('network_online'); });
   window.addEventListener('offline', function(){ push('network_offline', {}, 'WARNING'); });
   document.addEventListener('visibilitychange', function(){ push('visibility_change', {state:document.visibilityState}); });
-  window.addEventListener('pagehide', function(){ push('page_hide'); flush(true); });
+  window.addEventListener('beforeunload', function(){ pageLeaving = true; });
+  window.addEventListener('pagehide', function(){ pageLeaving = true; push('page_hide'); flush(true); });
   setInterval(function(){ if (!document.hidden) flush(false); }, flushMs);
 })();

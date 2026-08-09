@@ -1894,3 +1894,12 @@
 - CSS cross-module Room selector ownership conflicts: 0.
 - Regression quan trong Room/Confirm/Series/CSS/Quick Match/Presence: PASS.
 - Full pytest lich su van co nhieu test source/version cu; khong thay production code de ep cac test lich su nay pass.
+
+## V1.4.2 — 09/08/2026 13:21+07:00 — Dong bo mau thong bao + giam loi BlackBox gia
+- `app.py`: APP_VERSION 1.4.1 -> 1.4.2.
+- `static/css/invite_center.css`: popup lời mời dùng tone hồng thống nhất; nút chính Chấp nhận/Vào phòng cùng tone hồng, nút Từ chối chuyển thành neutral secondary.
+- `static/css/quick_match.css`: nút trong thông báo Quick Match đi theo tone success/danger/info thay vì luôn màu vàng.
+- `static/css/ui_dialog.css` + `static/js/ui_dialog.js`: dialog warning/success/danger/info đồng bộ viền, icon, kicker và nút chính theo cùng tone.
+- `static/js/blackbox.js`: tách lỗi tải asset thành `resource_error` thay vì ghi nhầm `js_error`; fetch bị hủy khi rời trang/offline/AbortError ghi `network_cancelled` WARNING thay vì `api_error`; JS exception thật bổ sung stack.
+- `modules/match_result_service.py`: giữ helper `_safe_int` nội bộ của V1.4.1 và thêm regression test bảo vệ pha `calculate_deltas`.
+- Test: Python compile PASS; toàn bộ JS `node --check` PASS; regression trọng tâm 17/17 PASS (1 test version cũ được deselect).

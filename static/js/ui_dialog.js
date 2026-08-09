@@ -43,7 +43,11 @@
         message.textContent = item.message || '';
         icon.textContent = item.options.icon || '⚠';
         confirmButton.textContent = item.options.confirmLabel || 'Xác nhận';
-        confirmButton.className = 'btn ' + (item.options.tone === 'danger' ? 'red' : item.options.tone === 'warning' ? 'gold' : 'green');
+        const tone = ['success', 'danger', 'warning', 'info'].includes(item.options.tone) ? item.options.tone : 'success';
+        root.classList.remove('tone-success', 'tone-danger', 'tone-warning', 'tone-info');
+        root.classList.add('tone-' + tone);
+        // Keep legacy button classes for compatibility; ui_dialog.css owns the final tone.
+        confirmButton.className = 'btn ' + (tone === 'danger' ? 'red' : tone === 'warning' ? 'gold' : tone === 'info' ? 'blue' : 'green');
         root.hidden = false;
         document.body.classList.add('app-ui-dialog-open');
 
