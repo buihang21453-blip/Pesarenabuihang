@@ -424,41 +424,51 @@ def _apply_series_rp(series, result):
 
 
 def _reset_room_after_series_confirm(room, series, confirmer_id, *, completed, delta1=0, delta2=0, resolved=None):
-    """Reset the room after a confirmed Series child, with idempotent verification.
+    """Move a Series child to its next valid room state, idempotently.
 
-    A child match may already be confirmed even when the room reset query was lost/failed.
-    Retrying confirmation must repair that room instead of leaving it stuck forever in
-    waiting_result_confirm.
+    Intermediate child -> waiting_ready for the next child game.
+    Completed Series -> confirmed so Đá tiếp / Rời phòng remains reachable.
     """
     if completed:
         resolved = resolved or {}
         room_note = f"Series hoàn tất: {resolved.get('aggregate_score') or resolved.get('score') or 'Hòa'} | RP {int(delta1):+d}/{int(delta2):+d}"
-        guest_ready = False
+        room_update = {
+            "status": "confirmed",
+            "guest_ready": False,
+            "confirmed_by_id": confirmer_id,
+            "team_tier": series.get("mode_code"),
+            "match_mode": _CONTEXT.get("MATCH_MODE_RANKED", "ranked"),
+            "note": room_note,
+            "state_expires_at": _g("future_iso")(_g("REMATCH_TIMEOUT_SECONDS")),
+            "updated_at": _g("now_iso")(),
+        }
     else:
         meta = metadata(series)
         next_game_no = int(meta.get("next_game_no") or 1)
         room_note = f"__SERIES_ACTIVE__|{series['id']}|{series.get('mode_code')}|next:{next_game_no}"
-        guest_ready = True
+        room_update = {
+            "status": "waiting_ready", "guest_ready": True, "host_team": None, "guest_team": None,
+            "host_team_overall": None, "guest_team_overall": None, "host_team_logo_url": None, "guest_team_logo_url": None,
+            "host_team_league": None, "guest_team_league": None, "host_score": None, "guest_score": None, "match_id": None,
+            "submitted_by_id": None, "confirmed_by_id": confirmer_id, "team_tier": series.get("mode_code"),
+            "match_mode": _CONTEXT.get("MATCH_MODE_RANKED", "ranked"), "note": room_note,
+            "state_expires_at": None, "updated_at": _g("now_iso")(),
+        }
 
-    room_update = {
-        "status": "waiting_ready", "guest_ready": guest_ready, "host_team": None, "guest_team": None,
-        "host_team_overall": None, "guest_team_overall": None, "host_team_logo_url": None, "guest_team_logo_url": None,
-        "host_team_league": None, "guest_team_league": None, "host_score": None, "guest_score": None, "match_id": None,
-        "submitted_by_id": None, "confirmed_by_id": confirmer_id, "team_tier": series.get("mode_code"),
-        "match_mode": _CONTEXT.get("MATCH_MODE_RANKED", "ranked"), "note": room_note,
-        "state_expires_at": None, "updated_at": _g("now_iso")(),
-    }
     result = _g("execute_query")(
         _g("db").table("match_rooms").update(room_update).eq("id", room["id"]).eq("status", "waiting_result_confirm"),
-        "series_reset_room", attempts=2,
+        "series_finish_room" if completed else "series_reset_room", attempts=2,
     )
     if result.data or []:
         return True
 
-    # Idempotent success: another request may already have repaired the room.
     fresh_room = _g("get_room")(room["id"])
-    if fresh_room and fresh_room.get("status") == "waiting_ready" and not fresh_room.get("match_id"):
-        return True
+    expected_status = "confirmed" if completed else "waiting_ready"
+    if fresh_room and fresh_room.get("status") == expected_status:
+        if completed or not fresh_room.get("match_id"):
+            return True
+    if completed:
+        raise ValueError("Kết quả Series đã được ghi nhận nhưng phòng chưa chuyển sang bước Đá tiếp / Rời phòng; hãy thử lại.")
     raise ValueError("Kết quả Series đã được ghi nhận nhưng phòng chưa thể làm mới; hãy thử xác nhận lại.")
 
 

@@ -47,7 +47,7 @@ def room_state_expiry_dt(room):
         return None
     if status == "waiting_result_confirm":
         return updated + timedelta(seconds=RESULT_CONFIRM_TIMEOUT_SECONDS)
-    if status == "confirmed" and note in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}:
+    if status == "confirmed" and note not in {REMATCH_HOST_DECLINED_NOTE, REMATCH_GUEST_DECLINED_NOTE, REMATCH_EXPIRED_NOTE}:
         return updated + timedelta(seconds=REMATCH_TIMEOUT_SECONDS)
     return None
 
@@ -57,7 +57,7 @@ def room_inactivity_expiry_dt(room):
     active_statuses = {"waiting_ready", "playing", "friendly_playing", "waiting_result_confirm"}
     status = room.get("status")
     note = room.get("note") or ""
-    if status == "confirmed" and note in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}:
+    if status == "confirmed" and note not in {REMATCH_HOST_DECLINED_NOTE, REMATCH_GUEST_DECLINED_NOTE, REMATCH_EXPIRED_NOTE}:
         active = True
     else:
         active = status in active_statuses
@@ -312,18 +312,23 @@ def expire_room_if_needed(room):
         if status == "waiting_result_confirm" and mode == MATCH_MODE_RANKED:
             pending_match = get_match(room.get("match_id")) if room.get("match_id") else None
             if pending_match and pending_match.get("status") == "confirmed":
-                room.update({
-                    "status": "waiting_ready",
+                update_data = {
+                    "status": "confirmed",
                     "guest_ready": False,
-                    "host_score": None,
-                    "guest_score": None,
-                    "match_id": None,
-                    "submitted_by_id": None,
-                    "confirmed_by_id": None,
-                    "state_expires_at": None,
+                    "confirmed_by_id": room.get("guest_user_id") or room.get("host_user_id"),
+                    "note": "Kết quả đã được xác nhận. Chọn Đá tiếp hoặc Rời phòng.",
+                    "state_expires_at": future_iso(REMATCH_TIMEOUT_SECONDS),
                     "updated_at": now_iso(),
-                })
-            room["timeout_seconds"] = 0
+                }
+                repair = execute_query(
+                    db.table("match_rooms").update(update_data)
+                    .eq("id", room.get("id")).in_("status", ["waiting_result_confirm", "confirmed"]),
+                    "repair_room_after_confirmed_match_timeout",
+                    attempts=2,
+                )
+                if repair.data or []:
+                    room.update(update_data)
+            room["timeout_seconds"] = seconds_until(room.get("state_expires_at"))
             return room
 
         # Giao hữu hoặc phòng chưa bắt đầu: chỉ đóng, không trừ điểm.
@@ -360,7 +365,7 @@ def expire_room_if_needed(room):
             room["timeout_seconds"] = 0
             return room
 
-        if status == "confirmed" and note in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}:
+        if status == "confirmed" and note not in {REMATCH_HOST_DECLINED_NOTE, REMATCH_GUEST_DECLINED_NOTE, REMATCH_EXPIRED_NOTE}:
             update_data = {
                 "note": REMATCH_EXPIRED_NOTE,
                 "state_expires_at": None,
@@ -586,8 +591,8 @@ def enrich_room(room):
         room["timeout_label"] = "Phòng sẽ tự đóng nếu không có hoạt động trong"
     elif room.get("status") == "waiting_result_confirm":
         room["timeout_label"] = "Khách cần xác nhận hoặc tranh chấp trong"
-    elif room.get("status") == "confirmed" and (room.get("rematch_host_ready") or room.get("rematch_guest_ready")):
-        room["timeout_label"] = "Yêu cầu đá tiếp sẽ hết hạn trong"
+    elif room.get("status") == "confirmed" and not room.get("rematch_declined") and not room.get("rematch_expired"):
+        room["timeout_label"] = "Chọn Đá tiếp hoặc Rời phòng trong"
     else:
         room["timeout_label"] = ""
 

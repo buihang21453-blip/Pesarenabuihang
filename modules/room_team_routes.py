@@ -153,7 +153,7 @@ def register_routes(context):
                 flash("Không thể tạo trận sau khi quay đội. Vui lòng thử lại.", "danger")
                 return redirect(url_for("room_detail", room_id=room_id))
 
-            execute_query(
+            room_start_result = execute_query(
                 db.table("match_rooms").update({
                     "host_team": result["team_a"],
                     "guest_team": result["team_b"],
@@ -172,6 +172,19 @@ def register_routes(context):
                 }).eq("id", room_id).eq("status", "waiting_ready"),
                 "room_random_start_match",
             )
+            if not (room_start_result.data or []):
+                # The match row and room row are two separate Supabase writes.
+                # If the room changed between them, remove the freshly-created
+                # orphan match so users are never left with disconnected data.
+                execute_query(
+                    db.table("matches").delete().eq("id", match["id"]).eq("status", "playing"),
+                    "rollback_room_random_orphan_match",
+                    attempts=1,
+                )
+                flash("Trạng thái phòng vừa thay đổi. Trận chưa được bắt đầu; hãy quay quân lại.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+            cache_delete("_rz_rooms_all")
+            ttl_cache_delete("rooms_raw")
         except ValueError as exc:
             flash(str(exc), "warning")
             return redirect(url_for("room_detail", room_id=room_id))
@@ -431,13 +444,17 @@ def register_routes(context):
         if room.get("status") != "waiting_ready":
             flash("Không thể hủy sẵn sàng ở trạng thái hiện tại.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
-        execute_query(
+        ready_result = execute_query(
             db.table("match_rooms").update({
                 "guest_ready": False,
                 "note": "Khách đã hủy sẵn sàng.",
+                "updated_at": now_iso(),
             }).eq("id", room_id).eq("status", "waiting_ready"),
             "room_guest_unready",
         )
+        if not (ready_result.data or []):
+            flash("Trạng thái phòng vừa thay đổi; chưa thể hủy Sẵn sàng.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
         cache_delete("_rz_rooms_all")
         ttl_cache_delete("rooms_raw")
         flash("Đã hủy trạng thái sẵn sàng.", "success")
@@ -469,13 +486,17 @@ def register_routes(context):
             )
             flash(limit_message, "warning")
             return redirect(url_for("room_detail", room_id=room_id))
-        execute_query(
+        ready_result = execute_query(
             db.table("match_rooms").update({
                 "guest_ready": True,
                 "note": "Khách đã sẵn sàng. Chủ phòng có thể quay đội.",
+                "updated_at": now_iso(),
             }).eq("id", room_id).eq("status", "waiting_ready"),
             "room_guest_ready",
         )
+        if not (ready_result.data or []):
+            flash("Trạng thái phòng vừa thay đổi; Sẵn sàng chưa được ghi nhận.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
         cache_delete("_rz_rooms_all")
         ttl_cache_delete("rooms_raw")
         flash("Bạn đã sẵn sàng.", "success")

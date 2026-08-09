@@ -84,28 +84,27 @@ def auto_confirm_expired_match_if_needed(match):
         )
         fresh = dict(fresh_result.data[0]) if fresh_result.data else dict(match)
 
-        # Chỉ đưa phòng đang chờ kết quả về trạng thái sẵn sàng. Nếu Admin đã
-        # hủy phòng, giữ phòng cancelled nhưng kết quả vẫn được tính bình thường.
+        # Sau auto-confirm, giữ phòng ở bước confirmed để hai người vẫn phải
+        # chọn Đá tiếp hoặc Rời phòng. Không xóa tỷ số/đội/match_id trước khi
+        # quyết định sau trận, nếu không UI và route rematch bị đứt dữ liệu.
         room_result = execute_query(
-            db.table("match_rooms").select("id,status").eq("match_id", match.get("id")).limit(1),
+            db.table("match_rooms").select("*").eq("match_id", match.get("id")).limit(1),
             "load_room_for_auto_confirm",
             attempts=2,
         )
         linked_room = (room_result.data or [None])[0]
         if linked_room and linked_room.get("status") == "waiting_result_confirm" and not is_series_child_match(fresh):
+            auto_confirmer = linked_room.get("guest_user_id") or linked_room.get("host_user_id")
             execute_query(
                 db.table("match_rooms").update({
-                    "status": "waiting_ready",
+                    "status": "confirmed",
                     "guest_ready": False,
-                    "host_score": None,
-                    "guest_score": None,
-                    "match_id": None,
-                    "submitted_by_id": None,
-                    "confirmed_by_id": None,
-                    "state_expires_at": None,
+                    "confirmed_by_id": auto_confirmer,
+                    "note": "Kết quả đã tự động xác nhận. Chọn Đá tiếp hoặc Rời phòng.",
+                    "state_expires_at": future_iso(REMATCH_TIMEOUT_SECONDS),
                     "updated_at": now_iso(),
                 }).eq("id", linked_room.get("id")).eq("status", "waiting_result_confirm"),
-                "release_room_after_auto_confirm",
+                "finish_room_after_auto_confirm",
                 attempts=2,
             )
         cache_delete("_rz_matches_all", "_rz_rooms_all")

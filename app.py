@@ -69,7 +69,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "1.4.2"
+APP_VERSION = "1.4.3"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -806,6 +806,7 @@ ACTIVE_ROOM_STATUSES = {
     "friendly_playing",
     "waiting_result_confirm",
     "waiting_confirm",
+    "confirmed",
     "disputed",
 }
 
@@ -2447,7 +2448,22 @@ def send_invite():
             }).eq("id", sender_room["id"]).eq("status", "waiting_ready"),
             "attach_invite_to_open_room",
         )
-        room = room_result.data[0] if room_result.data else sender_room
+        room = room_result.data[0] if room_result.data else None
+        if not room:
+            # Snapshot may have become stale between matchmaking check and write.
+            # Do not redirect to a room that was not actually linked to this invite.
+            fresh_sender_room = active_room_for_user(user["id"])
+            if fresh_sender_room and is_solo_waiting_room(fresh_sender_room, user["id"]):
+                retry_result = execute_query(
+                    db.table("match_rooms").update({
+                        "invite_id": invite["id"],
+                        "note": f'Đã mời {opponent["display_name"]}. Đang chờ đối thủ chấp nhận.',
+                        "updated_at": now_iso(),
+                    }).eq("id", fresh_sender_room["id"]).eq("status", "waiting_ready").is_("guest_user_id", "null"),
+                    "reattach_invite_to_fresh_open_room",
+                    attempts=2,
+                )
+                room = retry_result.data[0] if retry_result.data else None
     else:
         room_result = execute_query(
             db.table("match_rooms").insert({
@@ -2828,9 +2844,37 @@ def respond_invite(invite_id):
         return redirect(url_for("invites"))
 
     if action == "reject":
-        db.table("match_invites").update({"status": "rejected", "updated_at": now_iso()}).eq("id", invite_id).execute()
+        reject_result = execute_query(
+            db.table("match_invites").update({"status": "rejected", "updated_at": now_iso()})
+            .eq("id", invite_id).eq("status", "pending"),
+            "reject_match_invite",
+            attempts=2,
+        )
+        if not (reject_result.data or []):
+            flash("Lời mời vừa thay đổi trạng thái. Hãy tải lại.", "warning")
+            return redirect(url_for("invites"))
+        # Remove the stale invite link from the sender's still-empty room so the
+        # next invite starts from clean room data instead of inheriting an old id.
+        try:
+            execute_query(
+                db.table("match_rooms").update({
+                    "invite_id": None,
+                    "note": "Đối thủ đã từ chối lời mời. Chủ phòng có thể mời người khác.",
+                    "updated_at": now_iso(),
+                }).eq("host_user_id", invite.get("from_user_id"))
+                  .eq("invite_id", invite_id)
+                  .eq("status", "waiting_ready")
+                  .is_("guest_user_id", "null"),
+                "clear_rejected_invite_from_solo_room",
+                attempts=1,
+            )
+        except Exception as cleanup_exc:
+            print(f"clear_rejected_invite_from_solo_room warning: {cleanup_exc}")
+        ttl_cache_delete("rooms_raw")
         ttl_cache_delete("invites_raw")
+        cache_delete("_rz_rooms_all")
         cache_delete("_rz_invites_all")
+        cache_delete("_rz_current_pending_invites")
         if is_quick_match_invite(invite):
             flash("Đã từ chối lời mời Tìm Nhanh.", "success")
         else:
@@ -2915,8 +2959,20 @@ def respond_invite(invite_id):
             flash("Phòng của người mời vừa có người khác tham gia. Lời mời không còn hiệu lực.", "warning")
             return redirect(url_for("dashboard"))
 
-        # Người nhận có thể đang làm chủ một phòng trống. Khi nhận lời, đóng phòng cũ
-        # trước khi hoàn tất lời mời để mỗi tài khoản chỉ còn đúng một phòng active.
+        # Claim the invite before deleting the receiver's old solo room.
+        # This prevents a failed/expired invite from destroying a valid room.
+        accept_result = execute_query(
+            db.table("match_invites").update({
+                "status": "accepted",
+                "updated_at": now_iso(),
+            }).eq("id", invite_id).eq("status", "pending"),
+            "accept_match_invite",
+        )
+        if not (accept_result.data or []):
+            raise RuntimeError("Lời mời đã thay đổi trạng thái trước khi hoàn tất nhận lời")
+
+        # Người nhận có thể đang làm chủ một phòng trống. Chỉ đóng phòng cũ
+        # sau khi lời mời đã được claim thành công.
         if receiver_room and str(receiver_room.get("id")) != str(room.get("id")):
             old_invite_id = receiver_room.get("invite_id")
             delete_result = execute_query(
@@ -2928,53 +2984,54 @@ def respond_invite(invite_id):
                 "close_receiver_solo_room_on_accept",
             )
             if not delete_result.data:
-                raise RuntimeError("Không thể đóng phòng cũ của người nhận")
-            if old_invite_id and str(old_invite_id) != str(invite_id):
+                # Compensate the invite claim so the user can safely retry.
                 execute_query(
                     db.table("match_invites").update({
-                        "status": "cancelled",
+                        "status": "pending",
                         "updated_at": now_iso(),
-                    }).eq("id", old_invite_id).eq("status", "pending"),
-                    "cancel_receiver_old_room_invite",
+                    }).eq("id", invite_id).eq("status", "accepted"),
+                    "rollback_accept_invite_when_old_room_close_fails",
+                    attempts=1,
                 )
+                raise RuntimeError("Không thể đóng phòng cũ của người nhận")
+            if old_invite_id and str(old_invite_id) != str(invite_id):
+                try:
+                    execute_query(
+                        db.table("match_invites").update({
+                            "status": "cancelled",
+                            "updated_at": now_iso(),
+                        }).eq("id", old_invite_id).eq("status", "pending"),
+                        "cancel_receiver_old_room_invite",
+                        attempts=1,
+                    )
+                except Exception as cleanup_exc:
+                    print(f"cancel_receiver_old_room_invite warning: {cleanup_exc}")
 
-        execute_query(
-            db.table("match_invites").update({
-                "status": "accepted",
-                "updated_at": now_iso(),
-            }).eq("id", invite_id).eq("status", "pending"),
-            "accept_match_invite",
-        )
-        # Hủy các lời mời chờ khác của người nhận để popup cũ không xuất hiện lại.
-        execute_query(
-            db.table("match_invites").update({
-                "status": "cancelled",
-                "updated_at": now_iso(),
-            }).eq("to_user_id", user["id"]).eq("status", "pending").neq("id", invite_id),
-            "cancel_other_incoming_invites_after_accept",
-            attempts=1,
-        )
-        execute_query(
-            db.table("match_invites").update({
-                "status": "cancelled",
-                "updated_at": now_iso(),
-            }).eq("from_user_id", user["id"]).eq("status", "pending").neq("id", invite_id),
-            "cancel_receiver_outgoing_invites_after_accept",
-            attempts=1,
-        )
-        # Khi phòng của người mời đã có khách, mọi lời mời khác do người
-        # mời gửi (bao gồm Tìm Nhanh) phải kết thúc để không còn trạng thái treo.
-        execute_query(
-            db.table("match_invites").update({
-                "status": "cancelled",
-                "updated_at": now_iso(),
-            }).eq("from_user_id", inviter_id).eq("status", "pending").neq("id", invite_id),
-            "cancel_inviter_other_outgoing_after_accept",
-            attempts=1,
-        )
+        # Secondary invite cleanup must never undo a successfully joined room.
+        cleanup_queries = [
+            (db.table("match_invites").update({"status": "cancelled", "updated_at": now_iso()}).eq("to_user_id", user["id"]).eq("status", "pending").neq("id", invite_id), "cancel_other_incoming_invites_after_accept"),
+            (db.table("match_invites").update({"status": "cancelled", "updated_at": now_iso()}).eq("from_user_id", user["id"]).eq("status", "pending").neq("id", invite_id), "cancel_receiver_outgoing_invites_after_accept"),
+            (db.table("match_invites").update({"status": "cancelled", "updated_at": now_iso()}).eq("from_user_id", inviter_id).eq("status", "pending").neq("id", invite_id), "cancel_inviter_other_outgoing_after_accept"),
+        ]
+        for cleanup_query, cleanup_label in cleanup_queries:
+            try:
+                execute_query(cleanup_query, cleanup_label, attempts=1)
+            except Exception as cleanup_exc:
+                print(f"{cleanup_label} warning: {cleanup_exc}")
     except Exception as exc:
         print(f"respond_invite accept ERROR invite={invite_id}: {type(exc).__name__}: {exc}")
-        # Hoàn tác việc gắn khách nếu đóng phòng cũ thất bại.
+        # Best-effort compensation: if this request already claimed the invite,
+        # return it to pending before rolling back the target room.
+        try:
+            execute_query(
+                db.table("match_invites").update({"status": "pending", "updated_at": now_iso()})
+                .eq("id", invite_id).eq("status", "accepted"),
+                "rollback_accepted_invite_after_join_error",
+                attempts=1,
+            )
+        except Exception as invite_rollback_exc:
+            print(f"respond_invite invite rollback warning: {invite_rollback_exc}")
+        # Hoàn tác việc gắn khách nếu bước nhận lời chưa hoàn tất.
         try:
             if room:
                 if target_room_created:
@@ -3027,7 +3084,35 @@ def cancel_invite(invite_id):
         flash("Lời mời này đã được xử lý.", "warning")
         return redirect(url_for("invites"))
 
-    db.table("match_invites").update({"status": "cancelled", "updated_at": now_iso()}).eq("id", invite_id).execute()
+    cancel_result = execute_query(
+        db.table("match_invites").update({"status": "cancelled", "updated_at": now_iso()})
+        .eq("id", invite_id).eq("status", "pending"),
+        "cancel_match_invite",
+        attempts=2,
+    )
+    if not (cancel_result.data or []):
+        flash("Lời mời vừa thay đổi trạng thái. Hãy tải lại.", "warning")
+        return redirect(url_for("invites"))
+    try:
+        execute_query(
+            db.table("match_rooms").update({
+                "invite_id": None,
+                "note": "Lời mời đã được hủy. Chủ phòng có thể mời người khác.",
+                "updated_at": now_iso(),
+            }).eq("host_user_id", user["id"])
+              .eq("invite_id", invite_id)
+              .eq("status", "waiting_ready")
+              .is_("guest_user_id", "null"),
+            "clear_cancelled_invite_from_solo_room",
+            attempts=1,
+        )
+    except Exception as cleanup_exc:
+        print(f"clear_cancelled_invite_from_solo_room warning: {cleanup_exc}")
+    ttl_cache_delete("rooms_raw")
+    ttl_cache_delete("invites_raw")
+    cache_delete("_rz_rooms_all")
+    cache_delete("_rz_invites_all")
+    cache_delete("_rz_current_pending_invites")
     flash("Đã hủy lời mời.", "success")
     return redirect(url_for("invites"))
 

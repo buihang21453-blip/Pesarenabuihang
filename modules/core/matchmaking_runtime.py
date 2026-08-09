@@ -65,12 +65,17 @@ def current_pending_invite_count():
 
 
 def room_is_active(room):
-    if room.get("status") in {"waiting_ready", "playing", "friendly_playing", "waiting_result_confirm"}:
+    status = str(room.get("status") or "").lower()
+    if status in {"waiting_ready", "playing", "friendly_playing", "waiting_result_confirm", "disputed"}:
         return True
-    return (
-        room.get("status") == "confirmed"
-        and (room.get("note") or "") in {REMATCH_HOST_READY_NOTE, REMATCH_GUEST_READY_NOTE}
-    )
+    if status == "confirmed":
+        # A confirmed room still belongs to both players until one explicitly
+        # leaves, the rematch request expires, or both agree to start again.
+        # Treating a neutral confirmed room as inactive allowed new invites to
+        # disconnect the post-match Đá tiếp / Rời phòng flow.
+        note = room.get("note") or ""
+        return note not in {REMATCH_HOST_DECLINED_NOTE, REMATCH_GUEST_DECLINED_NOTE, REMATCH_EXPIRED_NOTE}
+    return False
 
 
 def _direct_active_rooms_for_user(user_id, limit=20):
@@ -164,7 +169,8 @@ def active_room_for_user(user_id, exclude_room_id=None):
         for room in rooms:
             if exclude_room_id and str(room.get("id")) == str(exclude_room_id):
                 continue
-            return room
+            if room_is_active(room):
+                return room
     except Exception as exc:
         print(f"active_room_for_user direct warning: {exc}")
 

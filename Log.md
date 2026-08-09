@@ -1903,3 +1903,17 @@
 - `static/js/blackbox.js`: tách lỗi tải asset thành `resource_error` thay vì ghi nhầm `js_error`; fetch bị hủy khi rời trang/offline/AbortError ghi `network_cancelled` WARNING thay vì `api_error`; JS exception thật bổ sung stack.
 - `modules/match_result_service.py`: giữ helper `_safe_int` nội bộ của V1.4.1 và thêm regression test bảo vệ pha `calculate_deltas`.
 - Test: Python compile PASS; toàn bộ JS `node --check` PASS; regression trọng tâm 17/17 PASS (1 test version cũ được deselect).
+
+## V1.4.3 - Noi lai toan bo luong tran dau va du lieu
+- Ngay: 2026-08-09
+- Kiem tra state machine: Moi dau -> San sang -> Quay quan -> Gui ket qua -> Xac nhan -> Da tiep -> Thoat phong.
+- Sua Xac nhan de room dung o `confirmed`, khong nhay thang `waiting_ready`.
+- Sua Da tiep bat buoc ca hai nguoi dong y, doi xung Host/Guest.
+- Sua Series: chi tran con chua ket thuc moi quay ve `waiting_ready`; Series hoan tat vao `confirmed`.
+- Them rollback match mo coi neu tao `matches` thanh cong nhung cap nhat `match_rooms` that bai.
+- Kiem tra ket qua DB khi San sang/Huy san sang truoc khi bao thanh cong.
+- Sua Auto-confirm 60 giay dung cung state machine `confirmed -> Da tiep/Roi phong`.
+- Gia co luong nhan loi moi: claim invite truoc khi dong phong cu, cleanup phu khong rollback gameplay chinh.
+- Don `invite_id` cu khi tu choi/huy loi moi.
+- Giu phong `confirmed` la busy cho den khi roi phong/het han/da tiep.
+- Them `test_v143_match_flow_integrity.py` va `AUDIT_V1.4.3_LUONG_TRAN_DAU.txt`.
