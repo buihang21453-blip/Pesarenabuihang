@@ -8,9 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {# Thứ tự CSS: nền tảng trước, module sau; module ở sau chỉ được phép tác động trong phạm vi class riêng. #}
     <link rel="stylesheet" href="{{ static_asset('style.css') }}">
-    {% if request.endpoint == 'room_detail' %}
-    <link rel="stylesheet" href="{{ static_asset('css/room_detail.css') }}">
-    {% endif %}
     <link rel="stylesheet" href="{{ static_asset('css/zcoin.css') }}">
     {% if request.endpoint == 'admin' %}
     <link rel="stylesheet" href="{{ static_asset('css/admin_weekly_rewards.css') }}">
