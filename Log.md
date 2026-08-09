@@ -1836,3 +1836,12 @@
 - Bo viec doc cau hinh Room UI tu Supabase tren moi request/template; chi doc khi mo room_detail ban dau.
 - Bo viec doc Room UI config o cac tab Admin khong lien quan.
 - Muc tieu: Room UI Designer khong duoc cham vao backend, API, form submit, polling, result/confirm/rematch/mode switch.
+
+
+## V1.3.133_sua_xac_nhan_ket_qua_va_ghi_loi_server_vao_blackbox
+- Tang do tin cay luong Xac Nhan ket qua Rank thuong: theo doi phase xu ly claim / tinh RP / chong farm / gioi han ngay / cap RP / ghi user / chot match.
+- Neu loi sau khi da cap nhat mot nguoi choi, tu dong rollback chinh xac ve snapshot truoc khi xac nhan, tranh bam lai bi cong/tru RP va thong ke trung.
+- Kiem tra bat buoc ket qua PATCH finalize match phai tra ve row; neu khong se bao loi thay vi coi nhu thanh cong gia.
+- Cache invalidation sau cap nhat user chuyen thanh fail-open, khong duoc phep lam hong viec xac nhan tran.
+- Ma loi CONFIRM moi duoc luu server-side vao Blackbox kem phase, room_id, match_id va loai exception de co the truy vet truc tiep.
+- Khong thay doi cong thuc RP, Series, giao dien Room UI Designer hay schema database.

@@ -23,6 +23,33 @@ def _parse_room_score(raw_value, label):
     return score
 
 
+def _persist_confirm_error(error_id, room_id, match_id, user_id, exc):
+    """Persist server-side confirm failures into Blackbox; must never break the route."""
+    store = globals().get("blackbox_store_batch")
+    if not callable(store):
+        return
+    try:
+        store(
+            user_id=user_id,
+            session_id=f"server-confirm-{error_id}",
+            page=f"/room/{room_id}",
+            request_id=error_id,
+            client={"source": "server", "app_version": globals().get("APP_VERSION")},
+            events=[{
+                "type": "server_confirm_error",
+                "level": "ERROR",
+                "message": f"{error_id} | {type(exc).__name__}: {str(exc)[:700]}",
+                "error_id": error_id,
+                "room_id": str(room_id),
+                "match_id": str(match_id or ""),
+                "error_type": type(exc).__name__,
+                "error": str(exc)[:1000],
+            }],
+        )
+    except Exception as log_exc:
+        print(f"{error_id} blackbox persist warning: {type(log_exc).__name__}: {log_exc}")
+
+
 def register_routes(context):
     """Đăng ký nhóm route vào Flask app hiện tại."""
     globals().update(context)
@@ -284,6 +311,7 @@ def register_routes(context):
             return redirect(url_for("room_detail", room_id=room_id))
         except Exception as exc:
             error_id = _result_error_id("CONFIRM")
+            _persist_confirm_error(error_id, room_id, match.get("id"), user.get("id"), exc)
             fresh_match = get_match(match.get("id"))
             if fresh_match and fresh_match.get("status") == "confirmed":
                 print(f"{error_id} confirm completed but room reset failed room={room_id}: {type(exc).__name__}: {exc}")
