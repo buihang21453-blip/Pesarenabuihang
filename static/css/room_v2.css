@@ -119,3 +119,15 @@
 .room-v2-shell .room-v2-asset-tester__reset{margin-left:auto}
 .room-v2-shell .room-v2-asset-tester small{flex-basis:100%;font-size:10px;color:#8fa0ad}
 @media (max-width:720px){.room-v2-shell .room-v2-asset-tester__reset{margin-left:0}}
+
+
+/* V1.2.30 - do trong suot tung thanh phan Room UI. Chi doi lop nen, khong opacity noi dung. */
+.room-v2-shell:before{opacity:var(--rui-background-opacity,.72)}
+.room-v2-shell .room-stage-topbar{background:rgba(2,8,15,var(--rui-header-opacity,.72))}
+.room-v2-shell .room-team-card.home{background-image:linear-gradient(180deg,rgba(2,42,90,var(--rui-host-panel-opacity,.86)),rgba(0,10,25,var(--rui-host-panel-opacity,.86))),var(--room-v2-stadium-blue)}
+.room-v2-shell .room-team-card.away{background-image:linear-gradient(180deg,rgba(83,0,12,var(--rui-away-panel-opacity,.86)),rgba(22,0,5,var(--rui-away-panel-opacity,.86))),var(--room-v2-stadium-red)}
+.room-v2-shell .room-center-stage-plain{background-image:linear-gradient(180deg,rgba(7,10,18,var(--rui-center-panel-opacity,.86)),rgba(3,5,10,var(--rui-center-panel-opacity,.86))),var(--room-v2-center-bg)}
+.room-v2-shell .room-arena-right-rail>.panel{background:rgba(3,14,23,var(--rui-sidebar-panel-opacity,.93))}
+.room-v2-shell .room-v2-mode-card{background:linear-gradient(180deg,rgba(11,23,35,var(--rui-mode-card-opacity,.95)),rgba(4,11,17,var(--rui-mode-card-opacity,.95)))}
+.room-v2-shell .room-v2-mode-card.mode-2{background:linear-gradient(180deg,rgba(46,13,72,var(--rui-mode-card-opacity,.95)),rgba(14,8,23,var(--rui-mode-card-opacity,.95)))}
+.room-v2-shell .room-action-zone,.room-v2-shell .room-action-zone.is-post-result{background-color:rgba(3,10,24,var(--rui-action-zone-opacity,.72))}

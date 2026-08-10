@@ -207,3 +207,64 @@ def build_profile_context(user_id, viewer):
         "profile_equipment": build_equipment_state(user),
         "display_name_ticket_count": display_name_ticket_count,
     }
+
+
+def build_profile_context_fallback(user_id, viewer):
+    """Fallback an toan de trang profile van mo khi mot read-model/phu tro bi loi.
+
+    Chi doc du lieu user co ban; khong ghi DB va khong thay doi RP/room/matchmaking.
+    """
+    user = get_user(user_id)
+    if not user:
+        return None
+    user = dict(user)
+    total = sum(int(user.get(key, 0) or 0) for key in ("wins", "draws", "losses"))
+    user["total_matches"] = total
+    wins = int(user.get("wins", 0) or 0)
+    user["winrate"] = round((wins / total) * 100, 1) if total else 0
+    user["goal_diff"] = int(user.get("goals_for", 0) or 0) - int(user.get("goals_against", 0) or 0)
+    user.setdefault("streak", 0)
+    user.setdefault("favorite_team", "Chưa có")
+    user.setdefault("frequent_opponent", "Chưa có")
+    user.setdefault("achievements", [])
+    user.setdefault("achievement_count", 0)
+    user.setdefault("featured_achievement", None)
+    user.setdefault("is_online", False)
+    user["position"] = None
+    try:
+        ranking_players = list_players()
+        user["position"] = next((i for i, player in enumerate(ranking_players, 1) if str(player.get("id")) == str(user_id)), None)
+    except Exception:
+        pass
+    try:
+        user["rank_info"] = get_player_rank_info(user, user.get("position"))
+    except Exception:
+        user["rank_info"] = {
+            "name": "Chưa xếp hạng", "icon": "", "progress": 0,
+            "next_rank": None, "points_to_next": 0,
+        }
+    try:
+        decorate_player_achievements(user, user.get("position"))
+    except Exception:
+        pass
+    try:
+        user["is_online"] = is_user_online_now(user)
+    except Exception:
+        pass
+    profile_equipment = {}
+    try:
+        profile_equipment = build_equipment_state(user)
+    except Exception:
+        pass
+    return {
+        "player": user,
+        "matches": [],
+        "form": [],
+        "h2h": None,
+        "can_invite": False,
+        "activity": None,
+        "profile_active_room": None,
+        "profile_equipment": profile_equipment,
+        "display_name_ticket_count": 0,
+        "profile_degraded_mode": True,
+    }

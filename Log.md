@@ -442,3 +442,11 @@
 - Test trực tiếp 2 logo PES ARENA: `v1.3.40/pes-arena-logo.webp` và `v1.3.40/pes-arena-logoknen.webp`.
 - Lựa chọn chỉ lưu ở `localStorage` của trình duyệt Admin; không ghi DB, không gọi API, không sửa core/RP/matchmaking.
 - Mặc định dùng `center-stadium.webp` + `pes-arena-logoknen.webp`; có nút Khôi phục.
+
+
+## V1.2.30 - Sua loi xem ho so + dieu chinh do trong suot Room UI
+- Route `/profile/<user_id>` duoc boc lop an toan: neu read-model/cache/H2H/room phu tro loi, trang ho so chuyen sang du lieu co ban thay vi Internal Server Error.
+- Log loi co ma `PROFILE-XXXXXXXX` de truy vet tren Vercel Logs; fallback chi doc, khong ghi DB/RP/room.
+- Admin > Room UI them thanh dieu chinh rieng cho: nen tong, header, chu phong, trung tam, doi thu, sidebar, 6 card che do, khung thao tac.
+- Dieu chinh transparency bang alpha cua background, khong lam mo chu/logo/avatar/noi dung ben trong.
+- Khong thay core/API/RP/matchmaking/4 che do khoa.

@@ -79,10 +79,17 @@
           </div>
         </details>
 
-        <details>
-          <summary>6. Độ đậm nền & Glow vàng</summary>
+        <details open>
+          <summary>6. Độ trong suốt từng thành phần</summary>
+          <p class="room-ui-hint">Mỗi thanh chỉ đổi lớp nền của khu vực tương ứng, không làm mờ chữ, logo, avatar hay nút bên trong.</p>
           <div class="room-ui-control-grid">
-            {% for key,label in [('panel_opacity','Độ đậm nền'),('gold_glow','Glow vàng')] %}{% set spec = room_ui_field_specs[key] %}
+            {% for key,label in [
+              ('background_opacity','Nền tổng phòng'),('header_opacity','Thanh tiêu đề'),
+              ('host_panel_opacity','Khung Chủ phòng'),('center_panel_opacity','Khung Trung tâm'),
+              ('opponent_panel_opacity','Khung Đối thủ'),('sidebar_panel_opacity','Sidebar / Thông tin'),
+              ('mode_card_opacity','Card 6 chế độ'),('action_zone_opacity','Khung thao tác'),
+              ('panel_opacity','Độ đậm Preview chung'),('gold_glow','Glow vàng')
+            ] %}{% set spec = room_ui_field_specs[key] %}
             <label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output></span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
             {% endfor %}
           </div>

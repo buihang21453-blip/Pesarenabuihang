@@ -45,6 +45,14 @@ DEFAULTS = {
 
     # Hiệu ứng giao diện
     "panel_opacity": 0.88,
+    "header_opacity": 0.72,
+    "host_panel_opacity": 0.86,
+    "center_panel_opacity": 0.86,
+    "opponent_panel_opacity": 0.86,
+    "sidebar_panel_opacity": 0.93,
+    "mode_card_opacity": 0.95,
+    "action_zone_opacity": 0.72,
+    "background_opacity": 0.72,
     "gold_glow": 0.14,
 }
 
@@ -75,7 +83,15 @@ FIELD_SPECS = {
     "mode_card_height": (int, 160, 280, 1),
     "mode_status_width": (int, 70, 100, 1),
 
-    "panel_opacity": (float, 0.45, 1.00, 0.01),
+    "panel_opacity": (float, 0.20, 1.00, 0.01),
+    "header_opacity": (float, 0.00, 1.00, 0.01),
+    "host_panel_opacity": (float, 0.00, 1.00, 0.01),
+    "center_panel_opacity": (float, 0.00, 1.00, 0.01),
+    "opponent_panel_opacity": (float, 0.00, 1.00, 0.01),
+    "sidebar_panel_opacity": (float, 0.00, 1.00, 0.01),
+    "mode_card_opacity": (float, 0.00, 1.00, 0.01),
+    "action_zone_opacity": (float, 0.00, 1.00, 0.01),
+    "background_opacity": (float, 0.00, 1.00, 0.01),
     "gold_glow": (float, 0.00, 0.50, 0.01),
 }
 
