@@ -333,3 +333,19 @@
 - Xu ly: chuyen khoi tao `last_status` xuong sau buoc bind Core modules va bao ve bang `hasattr`.
 - Them `test_startup_name_order_v1217.py` de bat loi top-level dung ten truoc khi dinh nghia/bind.
 - Khong thay doi luong tran, RP, giao dien phong hay Admin Designer.
+
+## V1.2.18 - Toi uu Admin tai theo tab + phan trang
+- Ngay: 2026-08-10 09:01 (Asia/Bangkok)
+- `/admin` mặc định không còn tải toàn bộ Users, user_devices, Matches, Audit Log, Dispute và báo cáo trận.
+- Dữ liệu nặng chỉ tải khi mở đúng tab bằng `?tab=...`.
+- Tab Users phân trang 50 tài khoản/trang; chỉ tab này mới đọc `user_devices` để đối chiếu IP.
+- Tab Matches phân trang 50 trận/trang.
+- Tab Logs chỉ tải tối đa 100 bản ghi khi mở Nhật ký.
+- Tab Rooms chỉ tải tối đa 80 phòng/lời mời; cleanup phòng trùng chỉ chạy khi mở tab Phòng.
+- Trang Tổng quan dùng payload user chọn cột cần thiết, room/invite không enrich cosmetic để giảm truy vấn ẩn.
+- `list_password_reset_requests()` không còn gọi `users_map()` toàn hệ thống; chỉ lấy đúng user liên quan.
+- Admin Room Designer chỉ đọc cấu hình từ Supabase khi mở tab `room-ui`.
+- Context cấu hình hệ thống không tải đầy đủ trên mọi lần mở Admin.
+- Không đổi schema Supabase, RP, luồng trận đấu, Confirmed/Đá tiếp hay giao diện phòng.
+- Test mới `test_v1218_admin_lazy_loading.py`: 3/3 PASS.
+- Regression chức năng (bỏ test khóa cứng version cũ): 15/15 PASS.

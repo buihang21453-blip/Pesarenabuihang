@@ -1,4 +1,4 @@
-# PROJECT MAP - PES Arena V1.2.10
+# PROJECT MAP - PES Arena V1.2.18
 
 ## Lõi hệ thống đã module hóa
 
@@ -73,3 +73,19 @@ Giao hữu: `waiting_ready -> friendly_playing -> waiting_ready`.
 - `static/js/admin/room-ui-designer.js`: cập nhật Preview + kéo X/Y.
 - `static/css/admin/room-ui-designer.css`: giao diện Designer.
 - `static/css/room_detail.css`: lớp áp dụng biến UI vào phòng thật.
+
+## V1.2.18 — Admin tải dữ liệu theo tab
+
+| Khu vực | Cách tải |
+|---|---|
+| Tổng quan | Payload nhẹ: user chọn cột, room/invite không enrich |
+| Users | Chỉ tải khi mở `?tab=users`, 50 user/trang + IP thiết bị |
+| Password reset | Chỉ tải khi mở tab; chỉ query user liên quan |
+| Rooms | Chỉ tải khi mở tab, tối đa 80 phòng; cleanup chạy tại đây |
+| Matches | Chỉ tải khi mở tab, 50 trận/trang |
+| Match Report | Read Model ưu tiên; fallback chỉ chạy khi mở tab báo cáo |
+| Logs | Chỉ owner mở tab mới tải, tối đa 100 dòng |
+| Room UI Designer | Chỉ đọc cấu hình Supabase khi mở `?tab=room-ui` |
+| System Settings | Context đầy đủ chỉ tải ở tab system/rp-tools |
+
+Điều hướng Admin dùng query `?tab=<ten-tab>#<ten-tab>` để server biết chính xác dữ liệu nào cần tải.

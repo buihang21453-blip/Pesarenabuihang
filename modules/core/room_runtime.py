@@ -435,24 +435,27 @@ def enrich_room(room):
     return room
 
 
-def list_rooms(status=None):
-    cached = cache_get("_rz_rooms_all")
+def list_rooms(status=None, limit=None, enrich=True):
+    cache_key = f"_rz_rooms_{status or 'all'}_{int(limit) if limit else 'all'}"
+    cached = cache_get(cache_key)
     if cached is None:
-        shared = ttl_cache_get("rooms_raw")
-        if shared is None:
-            query = db.table("match_rooms").select("*").order("created_at", desc=True)
-            result = execute_query(query, "list_rooms")
-            shared = result.data or []
-            ttl_cache_set("rooms_raw", shared, 3)
-        cached = [dict(row) for row in shared]
-        cache_set("_rz_rooms_all", cached)
+        query = db.table("match_rooms").select("*")
+        if status:
+            query = query.eq("status", status)
+        query = query.order("created_at", desc=True)
+        if limit:
+            query = query.limit(max(1, int(limit)))
+        result = execute_query(query, f"list_rooms:{status or 'all'}:{limit or 'all'}")
+        cached = [dict(row) for row in (result.data or [])]
+        cache_set(cache_key, cached)
 
     rooms = []
     for raw in cached:
         room = expire_room_if_needed(dict(raw))
         if status and room.get("status") != status:
             continue
-        enrich_room(room)
+        if enrich:
+            enrich_room(room)
         rooms.append(room)
     return rooms
 

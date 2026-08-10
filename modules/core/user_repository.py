@@ -12,7 +12,7 @@ def configure(context):
     _CONTEXT.update(context)
     globals().update(context)
 
-EXPORTED_NAMES = ['get_user_by_username', 'calculated_total_matches', 'normalize_player_match_totals', 'get_user', 'is_user_online_now', '_player_ranking_sort_key', 'list_players', 'users_map', 'get_device_link', 'is_admin_managed_test_account', 'get_duplicate_ip_warning_config', 'user_ignored_for_duplicate_ip', 'link_device_to_user', 'device_can_register', 'list_all_users', 'log_admin_action', 'existing_user_id', 'create_admin_announcement', 'list_admin_activity_logs', 'get_password_reset_request', 'list_password_reset_requests', 'list_user_devices', 'decorate_admin_users', 'build_duplicate_ip_groups', 'get_invite_code_record', 'list_registration_invite_codes']
+EXPORTED_NAMES = ['list_admin_overview_users', 'get_user_by_username', 'calculated_total_matches', 'normalize_player_match_totals', 'get_user', 'is_user_online_now', '_player_ranking_sort_key', 'list_players', 'users_map', 'get_device_link', 'is_admin_managed_test_account', 'get_duplicate_ip_warning_config', 'user_ignored_for_duplicate_ip', 'link_device_to_user', 'device_can_register', 'list_all_users', 'log_admin_action', 'existing_user_id', 'create_admin_announcement', 'list_admin_activity_logs', 'get_password_reset_request', 'list_password_reset_requests', 'list_user_devices', 'decorate_admin_users', 'build_duplicate_ip_groups', 'get_invite_code_record', 'list_registration_invite_codes']
 
 def get_user_by_username(username):
     """Find a user by username without creating extra Supabase clients."""
@@ -256,13 +256,33 @@ def device_can_register():
     return True, ""
 
 
-def list_all_users():
+def list_all_users(limit=None, offset=0):
+    """Danh sách user cho Admin; hỗ trợ limit để tab không phải tải toàn bộ bảng."""
     require_db()
-    result = execute_query(
-        db.table("users").select("*").order("created_at", desc=True),
-        "list_all_users",
-    )
+    query = db.table("users").select("*").order("created_at", desc=True)
+    if limit:
+        limit = max(1, int(limit))
+        offset = max(0, int(offset or 0))
+        if offset:
+            query = query.range(offset, offset + limit - 1)
+        else:
+            query = query.limit(limit)
+    result = execute_query(query, f"list_all_users:{limit or 'all'}:{offset or 0}")
     return result.data or []
+
+
+def list_admin_overview_users(limit=120):
+    """Payload nhẹ cho trang /admin mặc định, không kéo IP thiết bị/cosmetic."""
+    require_db()
+    fields = "id,username,display_name,zalo_name,role,admin_level,account_status,register_ip,created_at,rank_points,wins,draws,losses"
+    result = execute_query(
+        db.table("users").select(fields).order("created_at", desc=True).limit(max(1, int(limit))),
+        f"list_admin_overview_users:{limit}",
+    )
+    rows = [normalize_player_match_totals(dict(row)) for row in (result.data or [])]
+    for row in rows:
+        row["admin_permissions"] = _admin_permissions(row)
+    return rows
 
 
 def log_admin_action(action, target_type="system", target_id=None, target_label="", details=""):
@@ -365,9 +385,21 @@ def list_password_reset_requests(status=None, limit=100):
             query = query.eq("status", status)
         result = execute_query(query, "list_password_reset_requests")
         rows = [dict(row) for row in (result.data or [])]
-        users = users_map()
+        # Không gọi users_map() ở Admin: hàm đó kéo toàn bộ player + cosmetic/achievement.
+        # Chỉ đọc đúng các user có yêu cầu quên mật khẩu.
+        user_ids = sorted({str(row.get("user_id")) for row in rows if row.get("user_id")})
+        users = {}
+        if user_ids:
+            try:
+                user_result = execute_query(
+                    db.table("users").select("id,username,zalo_name").in_("id", user_ids),
+                    "password_reset_users", attempts=2,
+                )
+                users = {str(item.get("id")): item for item in (user_result.data or [])}
+            except Exception as exc:
+                print(f"password_reset_users warning: {exc}")
         for row in rows:
-            user = users.get(row.get("user_id"), {})
+            user = users.get(str(row.get("user_id")), {})
             row["current_username"] = user.get("username") or row.get("username_snapshot") or "-"
             row["current_zalo_name"] = user.get("zalo_name") or row.get("zalo_name_snapshot") or "-"
         return rows
@@ -376,7 +408,7 @@ def list_password_reset_requests(status=None, limit=100):
         return []
 
 
-def list_user_devices():
+def list_user_devices(limit=500):
     """Lấy IP thiết bị và lưu trạng thái tải để Admin không hiểu nhầm dữ liệu rỗng."""
     require_db()
     list_user_devices.last_status = {
@@ -389,8 +421,8 @@ def list_user_devices():
         result = execute_query(
             db.table("user_devices")
             .select("user_id,ip_address,last_seen_at,created_at")
-            .order("last_seen_at", desc=True),
-            "list_user_devices",
+            .order("last_seen_at", desc=True).limit(max(1, int(limit))),
+            f"list_user_devices:{limit}",
         )
         rows = result.data or []
         list_user_devices.last_status = {

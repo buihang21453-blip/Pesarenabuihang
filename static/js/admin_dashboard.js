@@ -15,18 +15,27 @@
         });
     }
 
+    const tabShell = document.querySelector('.admin-tabs[data-admin-loaded-tab]');
+    const loadedTab = tabShell ? (tabShell.dataset.adminLoadedTab || 'overview') : 'overview';
+    const adminBaseUrl = tabShell ? (tabShell.dataset.adminBaseUrl || '/admin') : '/admin';
+    const serverTabs = new Set(['overview','users','passwords','rooms','matches','match-report','test-data','system','room-ui','rp-tools','logs']);
+
     buttons.forEach(function (button) {
         button.addEventListener('click', function () {
             const tabName = button.dataset.adminTab;
+            if (serverTabs.has(tabName) && tabName !== loadedTab) {
+                window.location.href = adminBaseUrl + '?tab=' + encodeURIComponent(tabName) + '#' + encodeURIComponent(tabName);
+                return;
+            }
             window.location.hash = tabName;
             activateAdminTab(tabName);
         });
     });
 
     window.addEventListener('hashchange', function () {
-        activateAdminTab(window.location.hash.replace('#', ''));
+        activateAdminTab(window.location.hash.replace('#', '') || loadedTab);
     });
-    activateAdminTab(window.location.hash.replace('#', ''));
+    activateAdminTab(window.location.hash.replace('#', '') || loadedTab);
 
     const searchInput = document.getElementById('adminUserSearch');
     const duplicateOnly = document.getElementById('adminDuplicateOnly');

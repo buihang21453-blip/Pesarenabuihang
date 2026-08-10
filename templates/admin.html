@@ -15,26 +15,26 @@
     <div class="admin-heading-actions">
         <a class="btn gray" href="{{ url_for('dashboard') }}">⌂ Trang người chơi</a>
         <a class="btn" href="{{ url_for('admin_luckybox') }}">🎁 Quản trị Lucky Box</a>
-        {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<a class="btn" href="#system">⚙ Cài đặt hệ thống</a>{% endif %}
+        {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<a class="btn" href="{{ url_for('admin', tab='system') }}#system">⚙ Cài đặt hệ thống</a>{% endif %}
     </div>
 </div>
 
 <section class="admin-metric-grid" aria-label="Thống kê nhanh">
     <article class="admin-metric-card metric-purple">
-        <div class="metric-icon">👥</div><div><span>Tổng người chơi</span><strong>{{ players|length }}</strong>{% if can_admin('users_approve') %}<small>{{ pending_users|length }} tài khoản chờ duyệt</small>{% endif %}</div>
+        <div class="metric-icon">👥</div><div><span>Tổng người chơi</span><strong>{{ players|length if admin_active_tab == 'overview' else '—' }}</strong>{% if can_admin('users_approve') %}<small>{{ pending_users|length }} tài khoản chờ duyệt</small>{% endif %}</div>
     </article>
     <article class="admin-metric-card metric-blue">
-        <div class="metric-icon">🎮</div><div><span>Trận đang diễn ra</span><strong>{{ playing|length }}</strong><small>{{ all_matches|length }} trận gần nhất đã tải</small></div>
+        <div class="metric-icon">🎮</div><div><span>Trận đang diễn ra</span><strong>{{ playing|length if admin_active_tab == 'overview' else '—' }}</strong><small>{{ all_matches|length }} trận gần nhất đã tải</small></div>
     </article>
     <article class="admin-metric-card metric-green">
-        <div class="metric-icon">🚪</div><div><span>Phòng đang mở</span><strong>{{ rooms|length }}</strong><small>{{ invites|length }} lời mời đang chờ</small></div>
+        <div class="metric-icon">🚪</div><div><span>Phòng đang mở</span><strong>{{ rooms|length if admin_active_tab == 'overview' else '—' }}</strong><small>{{ invites|length }} lời mời đang chờ</small></div>
     </article>
     <article class="admin-metric-card metric-orange">
-        <div class="metric-icon">🔑</div><div><span>Cần xử lý</span><strong>{{ password_reset_requests|length }}</strong><small>Yêu cầu quên mật khẩu</small></div>
+        <div class="metric-icon">🔑</div><div><span>Cần xử lý</span><strong>{{ password_reset_requests|length if admin_active_tab == 'overview' else '—' }}</strong><small>Yêu cầu quên mật khẩu</small></div>
     </article>
 </section>
 
-<div class="admin-tabs" role="tablist" aria-label="Khu vực quản trị">
+<div class="admin-tabs" role="tablist" aria-label="Khu vực quản trị" data-admin-loaded-tab="{{ admin_active_tab }}" data-admin-base-url="{{ url_for('admin') }}">
     <button class="admin-tab-button" type="button" data-admin-tab="overview">📌 Tổng quan</button>
     <button class="admin-tab-button" type="button" data-admin-tab="users">👥 Quản lý danh sách user{% if duplicate_ip_groups %} · ⚠️ {{ duplicate_ip_groups|length }} IP trùng{% endif %}</button>
     <button class="admin-tab-button" type="button" data-admin-tab="passwords">🔑 Quên mật khẩu{% if password_reset_requests %} ({{ password_reset_requests|length }}){% endif %}</button>
@@ -171,7 +171,7 @@
     <div class="panel">
         <div class="admin-section-heading admin-user-toolbar">
             <div>
-                <h2>👥 Quản lý danh sách user</h2>
+                <h2>👥 Quản lý danh sách user</h2><p class="small admin-load-note">⚡ Tải theo tab: tối đa 120 tài khoản gần nhất; dữ liệu IP chỉ được đọc khi mở tab này.</p>
                 <p class="small">Bảng gọn để đối chiếu nhanh tài khoản, trạng thái và IP. Bấm <strong>Quản lý</strong> để sửa thông tin hoặc reset mật khẩu.</p>
             </div>
             <div class="admin-toolbar-actions">
@@ -351,6 +351,11 @@
             </table>
         </div>
         <p id="adminUserEmpty" class="small" hidden>Không tìm thấy user phù hợp.</p>
+        <nav class="admin-pagination" aria-label="Phân trang người dùng">
+            {% if admin_page > 1 %}<a class="btn gray" href="{{ url_for('admin', tab='users', page=admin_page-1) }}#users">← Trang trước</a>{% endif %}
+            <span>Trang {{ admin_page }}</span>
+            {% if admin_users|length >= admin_page_size %}<a class="btn gray" href="{{ url_for('admin', tab='users', page=admin_page+1) }}#users">Trang sau →</a>{% endif %}
+        </nav>
     </div>
 </section>
 
@@ -564,6 +569,11 @@
                 </tbody>
             </table>
         </div>
+        <nav class="admin-pagination" aria-label="Phân trang trận đấu">
+            {% if admin_page > 1 %}<a class="btn gray" href="{{ url_for('admin', tab='matches', page=admin_page-1) }}#matches">← Trang trước</a>{% endif %}
+            <span>Trang {{ admin_page }}</span>
+            {% if all_matches|length >= admin_page_size %}<a class="btn gray" href="{{ url_for('admin', tab='matches', page=admin_page+1) }}#matches">Trang sau →</a>{% endif %}
+        </nav>
     </div>
 </section>
 

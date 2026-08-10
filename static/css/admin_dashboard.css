@@ -35,3 +35,7 @@ body[data-page="admin"] .admin-module-shell{padding:0;overflow:hidden}
 body[data-page="admin"] .admin-module-shell>.admin-section-heading{padding:18px 20px;margin:0;border-bottom:1px solid rgba(148,163,184,.18)}
 body[data-page="admin"] .admin-module-frame{display:block;width:100%;min-height:980px;border:0;background:transparent}
 @media(max-width:800px){body[data-page="admin"] .admin-module-frame{min-height:1200px}}
+
+/* V1.2.18 - phân trang dữ liệu Admin tải theo tab */
+.admin-pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:16px;flex-wrap:wrap}
+.admin-load-note{margin:.25rem 0 0;opacity:.8}

@@ -67,7 +67,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.2.17"
+APP_VERSION = "V1.2.18"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -3602,7 +3602,7 @@ if not hasattr(list_user_devices, "last_status"):
 # =========================
 def redirect_admin(tab="overview"):
     """Điểm điều hướng Admin dùng chung cho mọi module quản trị."""
-    return redirect(url_for("admin") + f"#{tab}")
+    return redirect(url_for("admin", tab=tab) + f"#{tab}")
 
 
 # Nạp dịch vụ theo thứ tự dependency: thông báo -> khóa -> kết quả -> phát lại -> xóa an toàn.

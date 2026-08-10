@@ -17,8 +17,14 @@ def register_routes(context):
         if endpoint == "room_detail":
             return {"room_ui_config": service.get_room_ui_config()}
         if endpoint == "admin":
+            admin_tab = str(request.args.get("tab") or "overview").strip().lower()
+            if admin_tab == "room-ui":
+                return {
+                    "room_ui_config": service.get_room_ui_config(),
+                    "room_ui_field_specs": service.FIELD_SPECS,
+                }
             return {
-                "room_ui_config": service.get_room_ui_config(),
+                "room_ui_config": dict(service.DEFAULTS),
                 "room_ui_field_specs": service.FIELD_SPECS,
             }
         return {}
@@ -32,7 +38,7 @@ def register_routes(context):
         service.save_room_ui_config(config)
         log_admin_action("Cập nhật thiết kế giao diện phòng", "system", details=config)
         flash("Đã lưu thiết kế giao diện phòng đấu.", "success")
-        return redirect(url_for("admin") + "#room-ui")
+        return redirect(url_for("admin", tab="room-ui") + "#room-ui")
 
     @app.route("/admin/room-ui/reset", methods=["POST"])
     @login_required
@@ -42,4 +48,4 @@ def register_routes(context):
         config = service.reset_room_ui_config()
         log_admin_action("Khôi phục thiết kế phòng mặc định", "system", details=config)
         flash("Đã khôi phục giao diện phòng đấu mặc định.", "success")
-        return redirect(url_for("admin") + "#room-ui")
+        return redirect(url_for("admin", tab="room-ui") + "#room-ui")

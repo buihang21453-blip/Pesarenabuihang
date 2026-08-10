@@ -12,21 +12,47 @@ def register_routes(context):
     @app.context_processor
     def inject_admin_feature_context():
         user = current_user()
-        return {
+        endpoint = request.endpoint or ""
+        admin_tab = str(request.args.get("tab") or "overview").strip().lower() if endpoint == "admin" else ""
+
+        base = {
             "app_name": APP_NAME, "app_version": APP_VERSION,
-            "system_features": get_system_features(),
             "can_admin": lambda code: has_admin_permission(user, code),
             "admin_display_role": "Admin" if is_admin_user(user) else "",
             "is_test_mode": is_test_mode(),
             "simple_test_passwords_enabled": simple_test_passwords_enabled(),
             "minimum_password_length": minimum_password_length(),
+        }
+
+        # /admin mặc định không được kéo hàng loạt system_settings. Chỉ tải đầy đủ
+        # khi mở đúng tab Hệ thống/RP. Các trang khác dùng giá trị mặc định nhẹ.
+        if endpoint == "admin" and admin_tab not in {"system", "rp-tools"}:
+            base.update({
+                "system_features": dict(SYSTEM_FEATURE_DEFAULTS),
+                "maintenance_status": {"closed": False, "countdown": None},
+                "rank_daily_limits_enabled": False,
+                "quick_match_config": {"color": QUICK_MATCH_COLOR_DEFAULT},
+                "repeat_opponent_rp_config": {"winner_factors": [100, 60, 30, 0], "loser_factors": [100, 70, 40, 10]},
+                "weekly_rp_reward_config": {
+                    "opponents_5_threshold": 5, "opponents_5_rp": 20,
+                    "opponents_10_threshold": 10, "opponents_10_rp": 30,
+                    "opponents_20_threshold": 20, "opponents_20_rp": 50,
+                    "matches_threshold": 10, "matches_rp": 20,
+                },
+                "duplicate_ip_warning_config": {"enabled": True, "ignore_admin_managed": True, "trusted_user_ids": []},
+            })
+            return base
+
+        base.update({
+            "system_features": get_system_features(),
             "maintenance_status": get_maintenance_status(),
             "rank_daily_limits_enabled": daily_rank_limits_enabled(),
             "quick_match_config": get_quick_match_config(),
             "repeat_opponent_rp_config": get_repeat_opponent_rp_config(),
             "weekly_rp_reward_config": get_weekly_rp_reward_config(),
             "duplicate_ip_warning_config": get_duplicate_ip_warning_config(),
-        }
+        })
+        return base
 
     @app.route("/admin/system/maintenance", methods=["POST"])
     @login_required

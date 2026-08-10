@@ -86,7 +86,7 @@ def auto_confirm_expired_match_if_needed(match):
         return match
 
 
-def list_matches(status=None, limit=None):
+def list_matches(status=None, limit=None, offset=0):
     """Đọc trận đấu có lọc tại Supabase thay vì luôn tải toàn bộ bảng.
 
     - Không truyền status/limit: giữ hành vi cũ và request-cache toàn bộ.
@@ -94,7 +94,7 @@ def list_matches(status=None, limit=None):
     """
     require_db()
 
-    cache_key = f"_rz_matches_{status or 'all'}_{int(limit) if limit else 'all'}"
+    cache_key = f"_rz_matches_{status or 'all'}_{int(limit) if limit else 'all'}_{int(offset or 0)}"
     cached = cache_get(cache_key)
     if cached is None:
         query = db.table("matches").select("*")
@@ -102,8 +102,13 @@ def list_matches(status=None, limit=None):
             query = query.eq("status", status)
         query = query.order("created_at", desc=True)
         if limit:
-            query = query.limit(max(1, int(limit)))
-        result = execute_query(query, f"list_matches:{status or 'all'}:{limit or 'all'}")
+            limit = max(1, int(limit))
+            offset = max(0, int(offset or 0))
+            if offset:
+                query = query.range(offset, offset + limit - 1)
+            else:
+                query = query.limit(limit)
+        result = execute_query(query, f"list_matches:{status or 'all'}:{limit or 'all'}:{offset or 0}")
         cached = result.data or []
         cache_set(cache_key, cached)
 
@@ -536,17 +541,19 @@ def get_invite(invite_id):
     return expire_invite_if_needed(invite) if invite else None
 
 
-def list_invites(status=None):
-    cached = cache_get("_rz_invites_all")
+def list_invites(status=None, limit=None, enrich=True):
+    cache_key = f"_rz_invites_{status or 'all'}_{int(limit) if limit else 'all'}"
+    cached = cache_get(cache_key)
     if cached is None:
-        shared = ttl_cache_get("invites_raw")
-        if shared is None:
-            query = db.table("match_invites").select("*").order("created_at", desc=True)
-            result = execute_query(query, "list_invites")
-            shared = result.data or []
-            ttl_cache_set("invites_raw", shared, 3)
-        cached = [dict(row) for row in shared]
-        cache_set("_rz_invites_all", cached)
+        query = db.table("match_invites").select("*")
+        if status:
+            query = query.eq("status", status)
+        query = query.order("created_at", desc=True)
+        if limit:
+            query = query.limit(max(1, int(limit)))
+        result = execute_query(query, f"list_invites:{status or 'all'}:{limit or 'all'}")
+        cached = [dict(row) for row in (result.data or [])]
+        cache_set(cache_key, cached)
 
     processed = []
     for raw in cached:
@@ -555,22 +562,23 @@ def list_invites(status=None):
             continue
         processed.append(invite)
 
-    users = users_map()
-    for invite in processed:
-        from_user = users.get(invite.get("from_user_id"), {})
-        to_user = users.get(invite.get("to_user_id"), {})
-        invite["from_name"] = from_user.get("display_name", "Unknown")
-        invite["from_avatar_url"] = from_user.get("avatar_url")
-        invite["from_avatar_frame"] = from_user.get("avatar_frame")
-        invite["from_achievement"] = from_user.get("featured_achievement")
-        invite["from_points"] = from_user.get("rank_points", 0)
-        invite["from_rank"] = get_rank_display(from_user.get("rank_points", 0))
-        invite["to_name"] = to_user.get("display_name", "Unknown")
-        invite["to_avatar_url"] = to_user.get("avatar_url")
-        invite["to_avatar_frame"] = to_user.get("avatar_frame")
-        invite["to_achievement"] = to_user.get("featured_achievement")
-        invite["to_points"] = to_user.get("rank_points", 0)
-        invite["to_rank"] = get_rank_display(to_user.get("rank_points", 0))
+    if enrich:
+        users = users_map()
+        for invite in processed:
+            from_user = users.get(invite.get("from_user_id"), {})
+            to_user = users.get(invite.get("to_user_id"), {})
+            invite["from_name"] = from_user.get("display_name", "Unknown")
+            invite["from_avatar_url"] = from_user.get("avatar_url")
+            invite["from_avatar_frame"] = from_user.get("avatar_frame")
+            invite["from_achievement"] = from_user.get("featured_achievement")
+            invite["from_points"] = from_user.get("rank_points", 0)
+            invite["from_rank"] = get_rank_display(from_user.get("rank_points", 0))
+            invite["to_name"] = to_user.get("display_name", "Unknown")
+            invite["to_avatar_url"] = to_user.get("avatar_url")
+            invite["to_avatar_frame"] = to_user.get("avatar_frame")
+            invite["to_achievement"] = to_user.get("featured_achievement")
+            invite["to_points"] = to_user.get("rank_points", 0)
+            invite["to_rank"] = get_rank_display(to_user.get("rank_points", 0))
 
     return processed
 
