@@ -34,6 +34,7 @@
         {% if room.status == "waiting_ready" and not room.friendly_random3_active %}
             <div class="room-center-mode-zone">
                 <div class="room-center-mode-title">CHẾ ĐỘ THI ĐẤU</div>
+                <img class="room-v2-active-mode-logo" src="{{ asset_url('v1.3.40/modes/2.webp' if room.team_tier == 'random3_pick1' else 'v1.3.40/modes/1.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Logo chế độ đang chọn">
                 {% set rematch_mode_locked = '__RANK_MODE_LOCKED__' in (room.note or '') %}
                 {% if rematch_mode_locked %}
                 <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>

@@ -5,7 +5,8 @@ Mục tiêu: mỗi khu vực giao diện có một nơi quản lý chính để 
 | Khu vực | File quản lý chính | Phạm vi |
 |---|---|---|
 | Nền tảng, layout chung, nút dùng chung | `static/style.css` | Toàn hệ thống |
-| Phòng đấu | `static/css/room_detail.css` | Chỉ `room_detail` |
+| Phòng đấu legacy/chức năng | `static/css/room_detail.css` | Chỉ `room_detail` |
+| Room V2 visual shell | `static/css/room_v2.css` | Chỉ `.room-v2-shell` trong `room_detail` |
 | Quick Match | `static/css/quick_match.css` | Chỉ `room_detail` |
 | Parsec | `static/css/parsec_room.css` | Room/Profile theo class riêng |
 | Chế độ Rank | `static/css/rank_mode_toggle.css` | Room/Admin theo class riêng |
@@ -20,7 +21,7 @@ Mục tiêu: mỗi khu vực giao diện có một nơi quản lý chính để 
 
 ## Quy tắc từ V1.2.14
 
-1. CSS mới của phòng đấu phải sửa trong `static/css/room_detail.css` hoặc đúng module con, không thêm lại vào `style.css`.
+1. CSS chức năng/legacy của phòng đấu giữ trong `static/css/room_detail.css`; lớp giao diện Room V2 mới nằm trong `static/css/room_v2.css`, scope bắt buộc bằng `.room-v2-shell`. Không thêm lại vào `style.css`.
 2. Không dùng selector chung như `.btn`, `.panel`, `button`, `input` trong module nếu có thể dùng class riêng của module.
 3. Module tải sau chỉ được ghi đè trong phạm vi class của module đó.
 4. Không dùng `!important` để giải quyết xung đột trừ khi cần giữ tương thích với CSS legacy và phải ghi chú lý do.

@@ -1,3 +1,12 @@
+# V1.2.24 - Giao dien phong 6 logo 4 che do khoa
+
+- Dựng lớp giao diện Room V2 riêng bằng `static/css/room_v2.css`, scope trong `.room-v2-shell` để tránh đè CSS trang khác.
+- Giữ nguyên core hiện tại của Rank thường Random và Random 3 chọn 1.
+- Thêm dải 6 logo chế độ bằng đường dẫn ảnh Supabase đã tham khảo từ V1.4.6: `v1.3.40/modes/1.webp` -> `6.webp`.
+- Chỉ 2 chế độ hiện tại có form chọn mode cũ; 4 chế độ Lượt đi/về, BO3, Chiến thuật BO3, Cấm chọn BO3 chỉ là card giao diện khóa, không form, không route, không API, không RP, không core.
+- Thêm logo PES ARENA và share icon bằng đường dẫn ảnh hiện có qua `asset_url`.
+- Giữ nguyên ảnh VS và toàn bộ luồng room/result/rematch/Parsec hiện tại.
+
 ## V1.2.6 — 05/08/2026 00:47 (GMT+7)
 - Sửa lỗi tài khoản vẫn bị báo còn trận chưa hoàn tất dù phòng đã bị đóng hoặc không còn tồn tại.
 - Chỉ khóa tạo phòng khi bản ghi trận còn liên kết với một phòng đang hoạt động.

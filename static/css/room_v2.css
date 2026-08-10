@@ -1,0 +1,105 @@
+/* PES ARENA V1.2.24 — Room V2 visual shell
+   Chỉ sở hữu .room-v2-shell; không thay core/API/RP/route. */
+
+.room-v2-shell{gap:12px;position:relative;isolation:isolate}
+.room-v2-shell:before{content:"";position:absolute;inset:68px 0 auto 0;height:640px;z-index:-1;pointer-events:none;background:radial-gradient(circle at 35% 65%,rgba(0,102,255,.19),transparent 38%),radial-gradient(circle at 68% 65%,rgba(255,35,35,.15),transparent 38%),var(--room-v2-texture);background-size:cover;background-position:center;opacity:.72}
+
+.room-v2-shell .room-stage-topbar{position:relative;display:grid;grid-template-columns:minmax(245px,1fr) minmax(300px,1.15fr) minmax(210px,1fr);align-items:center;min-height:88px;padding:8px 16px;border:0;border-bottom:1px solid rgba(233,183,42,.24);border-radius:0;background:rgba(2,8,15,.72);box-shadow:none}
+.room-v2-shell .room-stage-title-wrap{justify-self:start}
+.room-v2-shell .room-stage-title{font-size:30px;line-height:1;color:#fff;text-transform:uppercase;text-shadow:0 2px 0 #000}
+.room-v2-shell .room-code-badge{padding:7px 12px;border-radius:3px;border:1px solid #e4b51d;background:rgba(44,35,3,.72);font-size:16px;color:#ffe25b}
+.room-v2-shell .room-stage-subtitle{margin-top:8px;font-size:14px;font-weight:600;color:#d8d8d8}
+.room-v2-shell .room-v2-brand{grid-column:2;grid-row:1;display:flex;justify-content:center;pointer-events:none}
+.room-v2-shell .room-v2-brand img{width:min(390px,92%);height:72px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(255,187,24,.26))}
+.room-v2-shell .room-stage-state-badge{display:none}
+.room-v2-shell .room-stage-share-wrap{grid-column:3;grid-row:1;justify-self:end;align-items:flex-end}
+.room-v2-shell .room-share-button{min-width:190px;min-height:56px;border-radius:4px;border:1px solid #e0ad17;background:linear-gradient(180deg,rgba(87,66,1,.66),rgba(25,19,1,.78));box-shadow:inset 0 0 18px rgba(255,190,31,.07);transform:none}
+.room-v2-shell .room-share-button:hover{transform:none;border-color:#ffd84d;background:linear-gradient(180deg,rgba(105,80,1,.72),rgba(28,21,1,.82))}
+.room-v2-shell .room-share-icon{width:34px;height:34px;border:0;background:transparent}
+.room-v2-shell .room-share-icon img{width:30px;height:30px;object-fit:contain}
+.room-v2-shell .room-share-copy strong{font-size:15px;color:#ffe16a}
+.room-v2-shell .room-share-copy small{color:#fff1a9}
+
+.room-v2-shell .room-arena-frame{display:grid;grid-template-columns:minmax(300px,1.18fr) minmax(245px,.88fr) minmax(300px,1.18fr) minmax(245px,.86fr);gap:12px;padding:0;background:transparent;border:0;box-shadow:none}
+.room-v2-shell .room-side-card,.room-v2-shell .room-center-stage-plain{position:relative;min-height:500px;border-radius:8px;overflow:hidden;background-color:rgba(1,8,17,.86)}
+.room-v2-shell .room-team-card.home{border:1px solid #1598ff;background-image:linear-gradient(180deg,rgba(2,42,90,.55),rgba(0,10,25,.9)),var(--room-v2-stadium-blue);background-size:cover;background-position:center;box-shadow:inset 0 0 0 2px rgba(20,116,255,.17),0 0 20px rgba(0,100,255,.26)}
+.room-v2-shell .room-team-card.away{border:1px solid #ff3a45;background-image:linear-gradient(180deg,rgba(83,0,12,.52),rgba(22,0,5,.91)),var(--room-v2-stadium-red);background-size:cover;background-position:center;box-shadow:inset 0 0 0 2px rgba(255,38,58,.15),0 0 20px rgba(255,21,45,.22)}
+.room-v2-shell .room-team-card.home:before,.room-v2-shell .room-team-card.away:before{position:absolute;top:11px;left:24px;right:24px;z-index:3;height:34px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid currentColor;font-size:17px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;pointer-events:none}
+.room-v2-shell .room-team-card.home:before{content:"CHỦ PHÒNG";color:#39c7ff}
+.room-v2-shell .room-team-card.away:before{content:"ĐỐI THỦ";color:#ff706b}
+.room-v2-shell .room-player-heading-plain{padding-top:54px}
+.room-v2-shell .room-player-name{font-size:27px;font-weight:900}
+.room-v2-shell .room-player-rankline{background:rgba(0,0,0,.26);border:1px solid rgba(255,255,255,.13);border-radius:4px;padding:5px 10px}
+.room-v2-shell .room-card-club-area{padding-bottom:18px}
+.room-v2-shell .room-club-logo-large,.room-v2-shell .room-team-placeholder-shield{width:145px;height:145px}
+.room-v2-shell .room-team-placeholder-shield{border-radius:50%;border:1px dashed rgba(255,255,255,.35);background:rgba(0,0,0,.26)}
+.room-v2-shell .room-team-name-lg{font-size:24px;text-shadow:0 2px 3px #000}
+.room-v2-shell .room-team-points-value{font-size:28px;color:#fff}
+.room-v2-shell .room-team-league-text{font-size:14px;color:#e5e5e5}
+
+.room-v2-shell .room-center-stage-plain{padding:20px 12px 14px;border:1px solid rgba(206,154,32,.52);background:linear-gradient(180deg,rgba(21,8,39,.92),rgba(7,6,15,.93));box-shadow:inset 0 0 28px rgba(120,45,188,.16),0 0 16px rgba(230,170,36,.12)}
+.room-v2-shell .room-center-mode-zone{width:100%;max-width:none;padding:0;border:0;background:transparent;box-shadow:none}
+.room-v2-shell .room-center-mode-title{font-size:20px;color:#f2f2f2;letter-spacing:.06em}
+.room-v2-shell .room-v2-active-mode-logo{display:block;width:145px;height:145px;object-fit:contain;margin:5px auto 4px;filter:drop-shadow(0 0 12px rgba(255,194,33,.2))}
+.room-v2-shell .room-center-mode-actions{display:none!important}
+.room-v2-shell .room-center-mode-note{margin:5px auto 0;padding:8px 9px;border:1px solid rgba(55,220,68,.44);border-radius:4px;background:rgba(12,85,21,.44);color:#baf8a2;text-align:center;font-size:12px}
+.room-v2-shell .room-center-vs-image{width:128px;height:128px;margin:auto auto 8px;object-fit:contain}
+.room-v2-shell .room-quick-match-row{margin-top:auto}
+.room-v2-shell .room-center-primary-actions{gap:10px}
+.room-v2-shell .room-center-action-btn{min-height:42px;border-radius:4px;font-weight:900}
+
+.room-v2-shell .room-arena-right-rail{display:flex;flex-direction:column;gap:10px;min-height:500px}
+.room-v2-shell .room-arena-right-rail>.panel{border:1px solid #b98a16;border-radius:6px;background:rgba(3,14,23,.93);box-shadow:inset 0 0 0 1px rgba(255,211,82,.05)}
+.room-v2-shell .room-side-info-panel h3,.room-v2-shell .parsec-room-panel h3,.room-v2-shell .room-session-history h3,.room-v2-shell .room-chat-side h2{color:#ffd84a;text-transform:uppercase;font-size:16px}
+.room-v2-shell .room-side-info-list>div{border-bottom:1px solid rgba(255,206,67,.22);border-radius:0;background:transparent;padding:10px 2px}
+.room-v2-shell .room-side-info-list>div:last-child{border-bottom:0}
+.room-v2-shell .room-side-info-list span{color:#d0d0d0}
+.room-v2-shell .room-side-info-list strong{font-size:14px}
+
+.room-v2-shell .room-v2-modes{padding:0 0 4px}
+.room-v2-shell .room-v2-modes h2{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 7px;color:#e8b835;font-size:17px;letter-spacing:.04em;text-transform:uppercase}
+.room-v2-shell .room-v2-modes h2:before,.room-v2-shell .room-v2-modes h2:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,#8e6b15)}
+.room-v2-shell .room-v2-modes h2:after{background:linear-gradient(90deg,#8e6b15,transparent)}
+.room-v2-shell .room-v2-mode-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}
+.room-v2-shell .room-v2-mode-form{margin:0;min-width:0}
+.room-v2-shell .room-v2-mode-card{position:relative;width:100%;min-width:0;height:184px;display:grid;grid-template-rows:1fr auto auto;align-items:end;justify-items:center;gap:5px;padding:8px 7px 7px;border:1px solid rgba(208,166,50,.58);border-radius:6px;background:linear-gradient(180deg,rgba(11,23,35,.95),rgba(4,11,17,.97));color:#fff;overflow:hidden;box-shadow:inset 0 0 18px rgba(240,180,42,.04);font-family:inherit}
+.room-v2-shell button.room-v2-mode-card{cursor:pointer}
+.room-v2-shell .room-v2-mode-card:disabled{opacity:1;cursor:default}
+.room-v2-shell .room-v2-mode-card img{width:112px;height:112px;max-width:92%;object-fit:contain;align-self:center;filter:drop-shadow(0 5px 8px rgba(0,0,0,.42))}
+.room-v2-shell .room-v2-mode-card strong{display:block;width:100%;min-height:30px;font-size:13px;line-height:1.12;text-align:center;color:#fff}
+.room-v2-shell .room-v2-mode-card small{display:flex;align-items:center;justify-content:center;width:100%;min-height:26px;border:1px solid rgba(164,104,15,.55);border-radius:4px;background:rgba(79,49,8,.63);font-size:11px;font-weight:800;color:#efc668}
+.room-v2-shell .room-v2-mode-card small.is-open{border-color:#41a627;background:rgba(18,105,14,.72);color:#caff75}
+.room-v2-shell .room-v2-mode-index{position:absolute;top:5px;left:5px;z-index:2;display:grid;place-items:center;width:28px;height:28px;border:1px solid currentColor;clip-path:polygon(50% 0,100% 22%,100% 76%,50% 100%,0 76%,0 22%);background:#0b385d;color:#9fddff;font-size:15px;font-weight:900}
+.room-v2-shell .room-v2-mode-card.mode-2{border-color:rgba(190,77,255,.58);background:linear-gradient(180deg,rgba(46,13,72,.95),rgba(14,8,23,.98))}
+.room-v2-shell .room-v2-mode-card.mode-2 .room-v2-mode-index{background:#52206f;color:#f3baff}
+.room-v2-shell .room-v2-mode-card.mode-3 .room-v2-mode-index{background:#154c78;color:#9ddcff}
+.room-v2-shell .room-v2-mode-card.mode-4 .room-v2-mode-index{background:#4c3d1a;color:#ffe0a0}
+.room-v2-shell .room-v2-mode-card.mode-5 .room-v2-mode-index{background:#6f231f;color:#ffb0a7}
+.room-v2-shell .room-v2-mode-card.mode-6 .room-v2-mode-index{background:#0d5550;color:#8cf3e8}
+.room-v2-shell .room-v2-mode-card.is-selected{outline:2px solid #efe3bd;outline-offset:-3px;box-shadow:0 0 17px rgba(255,206,82,.23),inset 0 0 20px rgba(255,255,255,.05)}
+.room-v2-shell .room-v2-mode-card.is-locked{cursor:not-allowed;filter:saturate(.68);opacity:.8}
+.room-v2-shell .room-v2-mode-card.is-locked img{opacity:.72}
+
+/* Điều khiển cũ vẫn giữ nguyên core; chỉ thu gọn để không cạnh tranh với dải 6 mode. */
+.room-v2-shell .room-extra-controls{margin-top:6px}
+.room-v2-shell .room-extra-controls>.room-control-title{font-size:18px}
+
+@media(max-width:1250px){
+ .room-v2-shell .room-stage-topbar{grid-template-columns:1fr auto}
+ .room-v2-shell .room-v2-brand{grid-column:1/-1;grid-row:1;opacity:.25;z-index:-1}
+ .room-v2-shell .room-stage-title-wrap{grid-column:1;grid-row:1;z-index:1}
+ .room-v2-shell .room-stage-share-wrap{grid-column:2;grid-row:1;z-index:1}
+ .room-v2-shell .room-arena-frame{grid-template-columns:1fr minmax(230px,.75fr) 1fr}
+ .room-v2-shell .room-arena-right-rail{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));min-height:0}
+ .room-v2-shell .room-v2-mode-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:820px){
+ .room-v2-shell .room-stage-topbar{display:flex;flex-direction:column;align-items:stretch}
+ .room-v2-shell .room-v2-brand{position:absolute;inset:8px 25% auto;opacity:.18}
+ .room-v2-shell .room-stage-share-wrap{width:100%;align-items:stretch}
+ .room-v2-shell .room-share-button{width:100%}
+ .room-v2-shell .room-arena-frame{grid-template-columns:1fr}
+ .room-v2-shell .room-arena-right-rail{grid-column:auto;display:flex}
+ .room-v2-shell .room-v2-mode-grid{grid-template-columns:repeat(2,1fr)}
+ .room-v2-shell .room-v2-mode-card{height:170px}
+}

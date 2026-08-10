@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% from "_avatar_macros.html" import player_avatar %}
+{% block page_styles %}
+<link rel="stylesheet" href="{{ static_asset('css/room_v2.css') }}">
+{% endblock %}
 {% block content %}
 {% set room_room_viewer_is_host = (current_user.id|string == room.host_user_id|string) %}
 {% set room_viewer_is_guest = (room.guest_user_id and current_user.id|string == room.guest_user_id|string) %}
@@ -28,7 +31,7 @@
     {% set room_layout_state = room.status|replace('_','-') %}
     {% set room_layout_state_label = room.status|replace('_',' ')|title %}
 {% endif %}
-<div id="roomLiveShell" class="room-view-shell room-layout-v137 room-layout-v1215 room-state-{{ room_layout_state }} room-ui-configurable" style="--rui-host:{{ room_ui_config.host_width }}fr;--rui-center:{{ room_ui_config.center_width }}fr;--rui-away:{{ room_ui_config.opponent_width }}fr;--rui-side:{{ room_ui_config.sidebar_width }}fr;--rui-main-height:{{ room_ui_config.main_height }}px;--rui-main-gap:{{ room_ui_config.main_gap }}px;--rui-mode-gap:{{ room_ui_config.mode_gap }}px;--rui-host-x:{{ room_ui_config.host_x }}px;--rui-host-y:{{ room_ui_config.host_y }}px;--rui-center-x:{{ room_ui_config.center_x }}px;--rui-center-y:{{ room_ui_config.center_y }}px;--rui-away-x:{{ room_ui_config.opponent_x }}px;--rui-away-y:{{ room_ui_config.opponent_y }}px;--rui-side-x:{{ room_ui_config.sidebar_x }}px;--rui-side-y:{{ room_ui_config.sidebar_y }}px;--rui-brand-scale:{{ room_ui_config.brand_scale }};--rui-brand-x:{{ room_ui_config.brand_x }}px;--rui-brand-y:{{ room_ui_config.brand_y }}px;--rui-avatar-scale:{{ room_ui_config.avatar_scale }};--rui-avatar-x:{{ room_ui_config.avatar_x }}px;--rui-avatar-y:{{ room_ui_config.avatar_y }}px;--rui-name-scale:{{ room_ui_config.player_name_scale }};--rui-name-x:{{ room_ui_config.player_name_x }}px;--rui-name-y:{{ room_ui_config.player_name_y }}px;--rui-active-scale:{{ room_ui_config.active_mode_logo_scale }};--rui-active-x:{{ room_ui_config.active_mode_logo_x }}px;--rui-active-y:{{ room_ui_config.active_mode_logo_y }}px;--rui-vs-scale:{{ room_ui_config.vs_scale }};--rui-vs-x:{{ room_ui_config.vs_x }}px;--rui-vs-y:{{ room_ui_config.vs_y }}px;--rui-mode-scale:{{ room_ui_config.mode_logo_scale }};--rui-mode-card-height:{{ room_ui_config.mode_card_height }}px;--rui-mode-status-width:{{ room_ui_config.mode_status_width }}%;--rui-panel-opacity:{{ room_ui_config.panel_opacity }};--rui-gold-glow:{{ room_ui_config.gold_glow }};" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}">
+<div id="roomLiveShell" class="room-view-shell room-layout-v137 room-layout-v1215 room-v2-shell room-state-{{ room_layout_state }} room-ui-configurable" style="--room-v2-stadium-blue:url('{{ asset_url('stadium-blue.webp') }}');--room-v2-stadium-red:url('{{ asset_url('stadium-red.webp') }}');--room-v2-texture:url('{{ asset_url('room-texture-dark.webp') }}');--rui-host:{{ room_ui_config.host_width }}fr;--rui-center:{{ room_ui_config.center_width }}fr;--rui-away:{{ room_ui_config.opponent_width }}fr;--rui-side:{{ room_ui_config.sidebar_width }}fr;--rui-main-height:{{ room_ui_config.main_height }}px;--rui-main-gap:{{ room_ui_config.main_gap }}px;--rui-mode-gap:{{ room_ui_config.mode_gap }}px;--rui-host-x:{{ room_ui_config.host_x }}px;--rui-host-y:{{ room_ui_config.host_y }}px;--rui-center-x:{{ room_ui_config.center_x }}px;--rui-center-y:{{ room_ui_config.center_y }}px;--rui-away-x:{{ room_ui_config.opponent_x }}px;--rui-away-y:{{ room_ui_config.opponent_y }}px;--rui-side-x:{{ room_ui_config.sidebar_x }}px;--rui-side-y:{{ room_ui_config.sidebar_y }}px;--rui-brand-scale:{{ room_ui_config.brand_scale }};--rui-brand-x:{{ room_ui_config.brand_x }}px;--rui-brand-y:{{ room_ui_config.brand_y }}px;--rui-avatar-scale:{{ room_ui_config.avatar_scale }};--rui-avatar-x:{{ room_ui_config.avatar_x }}px;--rui-avatar-y:{{ room_ui_config.avatar_y }}px;--rui-name-scale:{{ room_ui_config.player_name_scale }};--rui-name-x:{{ room_ui_config.player_name_x }}px;--rui-name-y:{{ room_ui_config.player_name_y }}px;--rui-active-scale:{{ room_ui_config.active_mode_logo_scale }};--rui-active-x:{{ room_ui_config.active_mode_logo_x }}px;--rui-active-y:{{ room_ui_config.active_mode_logo_y }}px;--rui-vs-scale:{{ room_ui_config.vs_scale }};--rui-vs-x:{{ room_ui_config.vs_x }}px;--rui-vs-y:{{ room_ui_config.vs_y }}px;--rui-mode-scale:{{ room_ui_config.mode_logo_scale }};--rui-mode-card-height:{{ room_ui_config.mode_card_height }}px;--rui-mode-status-width:{{ room_ui_config.mode_status_width }}%;--rui-panel-opacity:{{ room_ui_config.panel_opacity }};--rui-gold-glow:{{ room_ui_config.gold_glow }};" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}">
 
 {% include "_streak_animation.html" %}
 
@@ -39,6 +42,9 @@
                 <p class="room-stage-subtitle">{{ room.match_mode_label }} • 1 vs 1</p>
             </div>
         </div>
+        <div class="room-v2-brand" aria-label="PES Arena">
+            <img src="{{ asset_url('pes-arena-room-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="PES ARENA">
+        </div>
         <div class="room-stage-state-badge room-stage-state-{{ room_layout_state }}"><span class="room-stage-state-dot"></span>{{ room_layout_state_label }}</div>
         {% if room.status == 'waiting_ready' and not room.has_guest and (room_room_viewer_is_host or current_user.role == 'admin') %}
         <div class="room-stage-share-wrap">
@@ -47,7 +53,7 @@
                     type="button"
                     data-share-path="{{ url_for('room_join_shared', room_id=room.id) }}"
                     aria-label="Copy link chia sẻ phòng đấu">
-                <span class="room-share-icon" aria-hidden="true">🔗</span>
+                <span class="room-share-icon" aria-hidden="true"><img src="{{ asset_url('share-link.webp') }}?v={{ APP_VERSION|urlencode }}" alt=""></span>
                 <span class="room-share-copy">
                     <strong>Chia sẻ phòng</strong>
                     <small>Copy link tham gia</small>
@@ -91,6 +97,7 @@
             {% if room.status == "waiting_ready" and not room.friendly_random3_active %}
             <div class="room-center-mode-zone">
                 <div class="room-center-mode-title">CHẾ ĐỘ THI ĐẤU</div>
+                <img class="room-v2-active-mode-logo" src="{{ asset_url('v1.3.40/modes/2.webp' if room.team_tier == 'random3_pick1' else 'v1.3.40/modes/1.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Logo chế độ đang chọn">
                 {% set rematch_mode_locked = '__RANK_MODE_LOCKED__' in (room.note or '') %}
                 {% if rematch_mode_locked %}
                 <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank thường{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
@@ -474,6 +481,58 @@
             </section>{% endif %}
         </aside>
     </div>
+
+    <section class="room-v2-modes" aria-label="Các chế độ thi đấu">
+        <h2><span>◇</span> CÁC CHẾ ĐỘ KHÁC <span>◇</span></h2>
+        <div class="room-v2-mode-grid">
+            {% set can_switch_ui_mode = room.status == 'waiting_ready' and not room.friendly_random3_active and (room_room_viewer_is_host or current_user.role == 'admin') %}
+
+            <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1" class="room-v2-mode-form">
+                <input type="hidden" name="rank_mode" value="smart_random">
+                <button class="room-v2-mode-card mode-1 {% if room.team_tier != 'random3_pick1' %}is-selected{% endif %}" type="submit" {% if not can_switch_ui_mode or not system_features.rank_standard_enabled %}disabled{% endif %}>
+                    <span class="room-v2-mode-index">1</span>
+                    <img src="{{ asset_url('v1.3.40/modes/1.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Rank thường Random">
+                    <strong>Rank thường Random</strong>
+                    <small class="is-open">🔓 Đã mở khóa</small>
+                </button>
+            </form>
+
+            <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1" class="room-v2-mode-form">
+                <input type="hidden" name="rank_mode" value="random3_pick1">
+                <button class="room-v2-mode-card mode-2 {% if room.team_tier == 'random3_pick1' %}is-selected{% endif %}" type="submit" {% if not can_switch_ui_mode or not system_features.friendly_random3_enabled %}disabled{% endif %}>
+                    <span class="room-v2-mode-index">2</span>
+                    <img src="{{ asset_url('v1.3.40/modes/2.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Random 3 chọn 1">
+                    <strong>Random 3 chọn 1</strong>
+                    <small class="is-open">🔓 Đã mở khóa</small>
+                </button>
+            </form>
+
+            <div class="room-v2-mode-card mode-3 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
+                <span class="room-v2-mode-index">3</span>
+                <img src="{{ asset_url('v1.3.40/modes/3.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Lượt đi - lượt về">
+                <strong>Lượt đi - lượt về</strong>
+                <small>🔒 Chưa mở khóa</small>
+            </div>
+            <div class="room-v2-mode-card mode-4 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
+                <span class="room-v2-mode-index">4</span>
+                <img src="{{ asset_url('v1.3.40/modes/4.webp') }}?v={{ APP_VERSION|urlencode }}" alt="BO3">
+                <strong>BO3</strong>
+                <small>🔒 Chưa mở khóa</small>
+            </div>
+            <div class="room-v2-mode-card mode-5 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
+                <span class="room-v2-mode-index">5</span>
+                <img src="{{ asset_url('v1.3.40/modes/5.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Chiến thuật BO3">
+                <strong>Chiến thuật BO3</strong>
+                <small>🔒 Chưa mở khóa</small>
+            </div>
+            <div class="room-v2-mode-card mode-6 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
+                <span class="room-v2-mode-index">6</span>
+                <img src="{{ asset_url('v1.3.40/modes/6.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Cấm chọn BO3">
+                <strong>Cấm chọn BO3</strong>
+                <small>🔒 Chưa mở khóa</small>
+            </div>
+        </div>
+    </section>
 
     <div class="panel room-extra-controls">
     <h2 class="room-control-title">Điều khiển phòng</h2>
