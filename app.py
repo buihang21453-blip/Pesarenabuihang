@@ -67,7 +67,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.2.18"
+APP_VERSION = "V1.2.19"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1244,7 +1244,7 @@ def current_user():
         user = dict(shared_user) if shared_user is not None else get_user(user_id)
         if user:
             decorate_player_achievements(user)
-            ttl_cache_set(f"user:{user_id}", dict(user), 8)
+            ttl_cache_set(f"user:{user_id}", dict(user), 15)
             session["username"] = user.get("username", "")
             session["display_name"] = user.get("display_name", "")
             session["avatar_url"] = user.get("avatar_url")

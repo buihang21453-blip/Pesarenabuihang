@@ -87,7 +87,7 @@ def list_players(include_admin=False):
                 "list_players",
             )
             shared = result.data or []
-            ttl_cache_set("players_raw", shared, 8)
+            ttl_cache_set("players_raw", shared, 20)
         cached = [dict(row) for row in shared]
         cache_set("_rz_players_all", cached)
 

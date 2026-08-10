@@ -4,6 +4,7 @@ Giữ nguyên logic gốc; dependency được truyền từ app.py bằng confi
 """
 
 _CONTEXT = {}
+_ROOM_READ_FALLBACK = {}
 
 def configure(context):
     _CONTEXT.clear()
@@ -437,25 +438,51 @@ def enrich_room(room):
 
 def list_rooms(status=None, limit=None, enrich=True):
     cache_key = f"_rz_rooms_{status or 'all'}_{int(limit) if limit else 'all'}"
+    shared_key = f"rooms_raw:{status or 'all'}:{int(limit) if limit else 'all'}"
     cached = cache_get(cache_key)
     if cached is None:
-        query = db.table("match_rooms").select("*")
-        if status:
-            query = query.eq("status", status)
-        query = query.order("created_at", desc=True)
-        if limit:
-            query = query.limit(max(1, int(limit)))
-        result = execute_query(query, f"list_rooms:{status or 'all'}:{limit or 'all'}")
-        cached = [dict(row) for row in (result.data or [])]
+        shared = ttl_cache_get(shared_key)
+        if isinstance(shared, list):
+            cached = [dict(row) for row in shared]
+        else:
+            try:
+                if db is None:
+                    raise RuntimeError("Supabase chưa được cấu hình")
+                query = db.table("match_rooms").select("*")
+                if status:
+                    query = query.eq("status", status)
+                query = query.order("created_at", desc=True)
+                if limit:
+                    query = query.limit(max(1, int(limit)))
+                result = execute_query(query, f"list_rooms:{status or 'all'}:{limit or 'all'}", attempts=1)
+                cached = [dict(row) for row in (result.data or [])]
+                ttl_cache_set(shared_key, [dict(row) for row in cached], 5)
+                _ROOM_READ_FALLBACK[shared_key] = [dict(row) for row in cached]
+            except Exception as exc:
+                # Danh sách phòng là dữ liệu đọc. Khi Supabase bị quota/gián đoạn,
+                # trả dữ liệu cache gần nhất (nếu có) hoặc danh sách rỗng để /rooms
+                # và Admin vẫn render thay vì HTTP 500.
+                print(f"list_rooms fallback warning: {exc}")
+                stale = _ROOM_READ_FALLBACK.get(shared_key)
+                cached = [dict(row) for row in stale] if isinstance(stale, list) else []
         cache_set(cache_key, cached)
 
     rooms = []
     for raw in cached:
-        room = expire_room_if_needed(dict(raw))
+        room = dict(raw)
+        # Chỉ thực thi logic expire có ghi DB khi Supabase đang hoạt động. Nếu DB
+        # đang lỗi, expire_room_if_needed tự có thể phát sinh lỗi và làm mất fallback.
+        try:
+            room = expire_room_if_needed(room)
+        except Exception as exc:
+            print(f"expire_room_if_needed fallback warning: {exc}")
         if status and room.get("status") != status:
             continue
         if enrich:
-            enrich_room(room)
+            try:
+                enrich_room(room)
+            except Exception as exc:
+                print(f"enrich_room fallback warning: {exc}")
         rooms.append(room)
     return rooms
 

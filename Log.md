@@ -349,3 +349,13 @@
 - Không đổi schema Supabase, RP, luồng trận đấu, Confirmed/Đá tiếp hay giao diện phòng.
 - Test mới `test_v1218_admin_lazy_loading.py`: 3/3 PASS.
 - Regression chức năng (bỏ test khóa cứng version cũ): 15/15 PASS.
+
+
+## V1.2.19 - Chong Supabase 402 lam sap trang + giam truy van doc
+- Sua `load_rank_ranges()` de khi Supabase bi 402/quota/giat ket noi se dung cache cu hoac `DEFAULT_RANKS`, khong lam `/login`, `/bxh`, `/admin` bi HTTP 500.
+- Giam retry cua truy van Rank trong duong render xuong 1 lan de khong lap lai request vo ich khi project dang bi restricted.
+- Them cache RAM ngan cho `list_rooms()`; khi Supabase loi se tra cache gan nhat hoac danh sach rong thay vi lam `/rooms` bi HTTP 500.
+- Bao ve `expire_room_if_needed()` va `enrich_room()` trong duong fallback de loi doc du lieu khong lam vo trang.
+- Tang cache user hien tai 8s -> 15s, danh sach BXH 8s -> 20s, chuong thong bao 8s -> 30s de giam Egress Supabase.
+- Khong thay doi UI, CSS, cong thuc RP, luong xac nhan ket qua hay logic ghi tran.
+- Luu y: ban nay chi chong sap web va giam request; Supabase van can duoc mo lai quota de cac chuc nang can ghi/du lieu thuc hoat dong day du.

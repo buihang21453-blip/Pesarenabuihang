@@ -51,37 +51,57 @@ def _validate_rank_ranges(raw_ranges):
 
 
 def load_rank_ranges(force=False):
-    """Always load active Rank ranges from Supabase system_settings."""
+    """Load Rank ranges, but never let a temporary Supabase outage break page render.
+
+    V1.2.19: use the last known value when available; otherwise fall back to
+    DEFAULT_RANKS. This is especially important because this function is called
+    from Flask's global template context on login/ranking/admin pages.
+    """
     now = time.time()
-    if not force and _rank_range_cache["value"] is not None and now < _rank_range_cache["expires_at"]:
-        return _rank_range_cache["value"]
+    cached_value = _rank_range_cache.get("value")
+    if not force and cached_value is not None and now < _rank_range_cache.get("expires_at", 0):
+        return cached_value
+
+    default_ranges = _validate_rank_ranges(DEFAULT_RANKS)
     if db is None:
-        raise RuntimeError("Chưa cấu hình kết nối Supabase để đọc khoảng điểm Rank.")
+        configured = cached_value or default_ranges
+        _rank_range_cache.update({"value": configured, "expires_at": now + 30})
+        return configured
 
-    result = execute_query(
-        db.table("system_settings").select("setting_value").eq("setting_key", RANK_RANGE_SETTING_KEY).limit(1),
-        "load_rank_ranges",
-        attempts=3,
-    )
-    if not result.data:
-        # Tự tạo cấu hình lần đầu để không cần chạy hoặc lưu file SQL trên GitHub.
-        execute_query(
-            db.table("system_settings").upsert({
-                "setting_key": RANK_RANGE_SETTING_KEY,
-                "setting_value": DEFAULT_RANKS,
-                "updated_at": now_iso(),
-            }, on_conflict="setting_key"),
-            "seed_rank_ranges",
-            attempts=3,
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value").eq("setting_key", RANK_RANGE_SETTING_KEY).limit(1),
+            "load_rank_ranges",
+            attempts=1,
         )
-        configured = _validate_rank_ranges(DEFAULT_RANKS)
-    else:
-        stored = result.data[0].get("setting_value")
-        if isinstance(stored, str):
-            stored = json.loads(stored)
-        configured = _validate_rank_ranges(stored)
+        if not result.data:
+            # Không seed trong đường render nếu Supabase đang lỗi/quota. Chỉ thử
+            # tạo cấu hình khi kết nối đọc đã thành công và bảng thực sự chưa có giá trị.
+            try:
+                execute_query(
+                    db.table("system_settings").upsert({
+                        "setting_key": RANK_RANGE_SETTING_KEY,
+                        "setting_value": DEFAULT_RANKS,
+                        "updated_at": now_iso(),
+                    }, on_conflict="setting_key"),
+                    "seed_rank_ranges",
+                    attempts=1,
+                )
+            except Exception as exc:
+                print(f"seed_rank_ranges warning: {exc}")
+            configured = default_ranges
+        else:
+            stored = result.data[0].get("setting_value")
+            if isinstance(stored, str):
+                stored = json.loads(stored)
+            configured = _validate_rank_ranges(stored)
+    except Exception as exc:
+        print(f"load_rank_ranges fallback warning: {exc}")
+        configured = cached_value or default_ranges
 
-    _rank_range_cache.update({"value": configured, "expires_at": now + 30})
+    # Rank config changes rarely; a one-minute warm-instance cache saves repeated
+    # system_settings reads while keeping Admin changes reasonably fresh.
+    _rank_range_cache.update({"value": configured, "expires_at": now + 60})
     return configured
 
 
