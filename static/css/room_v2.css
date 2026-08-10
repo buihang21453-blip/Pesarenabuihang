@@ -60,18 +60,20 @@
 .room-v2-shell .room-v2-modes h2{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 7px;color:#e8b835;font-size:17px;letter-spacing:.04em;text-transform:uppercase}
 .room-v2-shell .room-v2-modes h2:before,.room-v2-shell .room-v2-modes h2:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,#8e6b15)}
 .room-v2-shell .room-v2-modes h2:after{background:linear-gradient(90deg,#8e6b15,transparent)}
-.room-v2-shell .room-v2-mode-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}
+.room-v2-shell .room-v2-mode-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
 .room-v2-shell .room-v2-mode-form{margin:0;min-width:0}
-.room-v2-shell .room-v2-mode-card{position:relative;width:100%;min-width:0;height:184px;display:grid;grid-template-rows:1fr auto auto;align-items:end;justify-items:center;gap:5px;padding:8px 7px 7px;border:1px solid rgba(208,166,50,.58);border-radius:6px;background:linear-gradient(180deg,rgba(11,23,35,.95),rgba(4,11,17,.97));color:#fff;overflow:hidden;box-shadow:inset 0 0 18px rgba(240,180,42,.04);font-family:inherit}
+.room-v2-shell .room-v2-mode-card{position:relative;width:100%;min-width:0;height:174px;display:grid;grid-template-rows:1fr auto auto;align-items:end;justify-items:center;gap:5px;padding:8px 7px 7px;border:1px solid rgba(208,166,50,.58);border-radius:6px;background:linear-gradient(180deg,rgba(11,23,35,.95),rgba(4,11,17,.97));color:#fff;overflow:hidden;box-shadow:inset 0 0 18px rgba(240,180,42,.04);font-family:inherit}
 .room-v2-shell button.room-v2-mode-card{cursor:pointer}
 .room-v2-shell .room-v2-mode-card:disabled{opacity:1;cursor:default}
-.room-v2-shell .room-v2-mode-card img{width:112px;height:112px;max-width:92%;object-fit:contain;align-self:center;filter:drop-shadow(0 5px 8px rgba(0,0,0,.42))}
+.room-v2-shell .room-v2-mode-card img{width:100px;height:100px;max-width:92%;object-fit:contain;align-self:center;filter:drop-shadow(0 5px 8px rgba(0,0,0,.42))}
 .room-v2-shell .room-v2-mode-card strong{display:block;width:100%;min-height:30px;font-size:13px;line-height:1.12;text-align:center;color:#fff}
 .room-v2-shell .room-v2-mode-card small{display:flex;align-items:center;justify-content:center;width:100%;min-height:26px;border:1px solid rgba(164,104,15,.55);border-radius:4px;background:rgba(79,49,8,.63);font-size:11px;font-weight:800;color:#efc668}
 .room-v2-shell .room-v2-mode-card small.is-open{border-color:#41a627;background:rgba(18,105,14,.72);color:#caff75}
 .room-v2-shell .room-v2-mode-index{position:absolute;top:5px;left:5px;z-index:2;display:grid;place-items:center;width:28px;height:28px;border:1px solid currentColor;clip-path:polygon(50% 0,100% 22%,100% 76%,50% 100%,0 76%,0 22%);background:#0b385d;color:#9fddff;font-size:15px;font-weight:900}
 .room-v2-shell .room-v2-mode-card.mode-2{border-color:rgba(190,77,255,.58);background:linear-gradient(180deg,rgba(46,13,72,.95),rgba(14,8,23,.98))}
 .room-v2-shell .room-v2-mode-card.mode-2 .room-v2-mode-index{background:#52206f;color:#f3baff}
+.room-v2-shell .room-v2-mode-card.mode-7{border-color:rgba(244,193,47,.64);background:linear-gradient(180deg,rgba(46,35,10,var(--rui-mode-card-opacity,.95)),rgba(16,12,5,var(--rui-mode-card-opacity,.95)))}
+.room-v2-shell .room-v2-mode-card.mode-7 .room-v2-mode-index{background:#6a4b09;color:#ffe07b}
 .room-v2-shell .room-v2-mode-card.mode-3 .room-v2-mode-index{background:#154c78;color:#9ddcff}
 .room-v2-shell .room-v2-mode-card.mode-4 .room-v2-mode-index{background:#4c3d1a;color:#ffe0a0}
 .room-v2-shell .room-v2-mode-card.mode-5 .room-v2-mode-index{background:#6f231f;color:#ffb0a7}
@@ -229,3 +231,5 @@
 @media (max-width:1250px){
   .room-v2-shell .room-pair-history-panel{min-height:150px}
 }
+
+/* V1.2.35 - 7 mode cards: UI-only Random Selection Match at visual position 3. */

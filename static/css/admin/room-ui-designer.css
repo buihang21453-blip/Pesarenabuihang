@@ -12,3 +12,8 @@
 .room-ui-preview .rui-away{background:rgba(8,20,33,var(--p-away-opacity))}
 .room-ui-preview .rui-side{background:rgba(8,20,33,var(--p-side-opacity))}
 .room-ui-preview .rui-mode-card{background:rgba(8,20,33,var(--p-mode-opacity))}
+
+/* V1.2.35 - preview 7 mode cards */
+.room-ui-preview .rui-mode-row{grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.room-ui-preview .rui-mode-card{min-width:0}
+.room-ui-preview .rui-mode-card.is-locked{opacity:.72}

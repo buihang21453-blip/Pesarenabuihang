@@ -1,13 +1,11 @@
-# V1.2.34 - Bo cuc Room 1 man hinh + lich su doi dau 2 nguoi
+# V1.2.35 — 2026-08-10 16:05 (+07:00)
 
-- Ngay: 10/08/2026
-- Nen goc: V1.2.33.
-- Them lich su doi dau giua chu phong va doi thu (toan bo cac tran da xac nhan), tai su dung Read Model/cache hien co; khong tao API/route moi.
-- Giu rieng LICH SU PHONG: chi cac tran phat sinh tu luc mo phong hien tai.
-- Tach HTML lich su Room vao `templates/partials/room_history_rail.html` de tranh lap giua full page va polling fragment.
-- Desktop >=1251px: rail phai span ca khu san dau + 6 mode; 6 mode van chi rong den het khung doi thu.
-- Thu gon topbar, player/center, 6 mode va 4 panel rail phai de phan chinh Room nam trong mot viewport desktop thong thuong.
-- Khong thay doi core thi dau, RP, matchmaking hay 4 che do dang khoa.
+- Thêm card UI **Random Selection Match** dùng logo Supabase `v1.3.40/modes/7.webp`.
+- Vị trí hiển thị: thứ 3, ngay sau `Random 3 chọn 1` và trước `Lượt đi - lượt về`.
+- Chế độ mới **khóa giao diện**, không thêm core/module/API/RP/route/database logic.
+- Đổi tên hiển thị chế độ 1 từ `Rank thường Random` / `Rank thường` thành **Random** trong Room UI; backend identifier `smart_random` giữ nguyên.
+- Dải chế độ chuyển từ 6 thành 7 cột và thu nhẹ kích thước card/logo để giữ mục tiêu xem Room trong một màn hình desktop.
+- Preview Admin Room UI cập nhật đủ thứ tự 1, 2, 7, 3, 4, 5, 6.
 
 # V1.2.33 - Thu gon 6 che do va dua lich su phong xuong duoi Parsec
 
