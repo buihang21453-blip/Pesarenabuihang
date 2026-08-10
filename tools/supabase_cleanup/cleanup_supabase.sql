@@ -1,33 +1,8 @@
--- PES Arena - Don Supabase AN TOAN
--- Muc tieu: dọn CACHE + log cu. KHONG DROP bang, KHONG xoa user/RP/match.
--- Chay mot lan trong Supabase SQL Editor sau khi da doc cleanup_preview.py.
+-- PES Arena V1.2.22 - Don Supabase AN TOAN
+-- KHONG TRUNCATE cache/read-model. KHONG xoa user/RP/match/Zcoin/inventory.
+-- Chi trim cac bang LOG cu theo retention + ANALYZE.
 
--- 1) Clear cache/read-model data. Bang van duoc GIU NGUYEN.
-do $$
-declare
-  t text;
-  cache_tables text[] := array[
-    'player_pair_stats_cache',
-    'player_profile_stats_cache',
-    'player_recent_form_cache',
-    'admin_duplicate_ip_cache',
-    'admin_user_ip_summary_cache',
-    'admin_match_daily_stats',
-    'admin_match_mode_daily_stats',
-    'admin_match_player_daily_stats',
-    'admin_rank_mode_unlock_stats',
-    'admin_series_daily_stats'
-  ];
-begin
-  foreach t in array cache_tables loop
-    if to_regclass('public.' || t) is not null then
-      execute format('truncate table public.%I', t);
-      raise notice 'Cleared cache table: %', t;
-    end if;
-  end loop;
-end $$;
-
--- 2) Xoa log cu theo retention. Neu bang/cot created_at khong ton tai thi bo qua an toan.
+-- 1) Xoa log cu theo retention. Neu bang/cot created_at khong ton tai thi bo qua.
 do $$
 declare
   item record;
@@ -54,10 +29,10 @@ begin
   end loop;
 end $$;
 
--- 3) Refresh planner statistics.
+-- 2) Refresh planner statistics only.
 analyze;
 
--- KHONG tu dong DROP cac bang duoi day.
--- Chi review sau khi xac nhan khong co trigger/function/view phu thuoc:
---   clubs_import
---   match_series_club_actions
+-- TUYET DOI KHONG TRUNCATE cac bang read-model/cache:
+-- player_recent_form_cache, player_profile_stats_cache, player_pair_stats_cache,
+-- admin_*_stats, admin_*_cache.
+-- KHONG DROP clubs_import/match_series_club_actions tu dong.

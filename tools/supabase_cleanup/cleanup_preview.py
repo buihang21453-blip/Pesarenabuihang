@@ -14,9 +14,9 @@ MANIFEST = ROOT / "SUPABASE_ASSET_MANIFEST.csv"
 
 def main() -> int:
     print("=== PREVIEW DON SUPABASE - KHONG XOA DU LIEU ===\n")
-    print("1) CACHE/THONG KE: se clear DU LIEU, GIU NGUYEN BANG")
-    for table in PLAN["cache_tables_clear"]:
-        print(f"   TRUNCATE (neu bang ton tai): {table}")
+    print("1) CACHE/THONG KE: BAO VE - KHONG XOA / KHONG TRUNCATE")
+    for table in PLAN.get("protected_cache_tables_never_clear", []):
+        print(f"   GIU NGUYEN: {table}")
 
     print("\n2) LOG: chi xoa ban ghi cu hon moc giu lai")
     for table, days in PLAN["log_retention"].items():

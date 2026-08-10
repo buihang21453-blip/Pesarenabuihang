@@ -67,7 +67,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.2.21"
+APP_VERSION = "V1.2.22"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -2759,18 +2759,22 @@ def ranking():
     top_players = filtered[:100]
     top_player_ids = {player.get("id") for player in top_players if player.get("id")}
     recent_form_map = load_recent_form_map(top_player_ids)
-    # Nếu migration Read Model chưa được áp dụng, giữ fallback để BXH không mất phong độ.
-    if not recent_form_map and top_player_ids:
+    # Read Model có thể bị thiếu MỘT PHẦN (ví dụ cache từng bị clear rồi chỉ một số
+    # người chơi được trigger tạo lại). Luôn fallback cho chính các user còn thiếu,
+    # không chỉ khi toàn bộ cache rỗng. Nhờ vậy BXH không mất "5 trận gần nhất".
+    missing_recent_ids = top_player_ids - set(recent_form_map)
+    if missing_recent_ids:
         try:
             confirmed_matches = list_matches(status="confirmed")
         except Exception as exc:
             print(f"ranking recent form fallback warning: {exc}")
             confirmed_matches = []
-        recent_form_map = _build_recent_form_map(
+        fallback_form_map = _build_recent_form_map(
             confirmed_matches,
-            player_ids=top_player_ids,
+            player_ids=missing_recent_ids,
             limit=5,
         )
+        recent_form_map.update(fallback_form_map)
 
     for player in top_players:
         total_matches = calculated_total_matches(player)

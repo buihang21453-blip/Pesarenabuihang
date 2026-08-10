@@ -375,3 +375,12 @@
 - Them `cleanup_plan.json` va `HUONG_DAN_DON_SUPABASE_TU_DONG.md`.
 - Khong thay UI/CSS, khong thay luong tran/RP.
 
+
+
+## V1.2.22 - Khoi phuc cache va khoa don nham
+- Sua loi V1.2.21 da TRUNCATE read-model/cache qua manh.
+- `cleanup_supabase.sql`: bo toan bo TRUNCATE cache; chi trim log cu + ANALYZE.
+- Them `KHOI_PHUC_CACHE_SAU_DON_NHAM.sql` de rebuild toan bo cache tu du lieu goc.
+- BXH: fallback theo tung user con thieu cache, khong con chi fallback khi toan bo map rong.
+- `cleanup_preview.py`: danh dau cache la BAO VE/GIU NGUYEN.
+- Khong thay doi RP, matches, Zcoin, user_inventory, user_equipment.
