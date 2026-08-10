@@ -1,3 +1,13 @@
+# V1.2.44 - Thu gon chu PHONG DAU, can giua logo PES ARENA, dong bo 3 nut
+
+- Khong cho `brand_scale` lam phong to chu PHONG DAU nua.
+- Logo `pes-arena-room-logo.webp` luon can chinh giua header; Admin chi dieu chinh kich thuoc.
+- Cho phep scale logo tu 0.50 -> 2.00, mac dinh 1.00.
+- Dong bo Tìm Nhanh / Mời Đấu / Thoát Phòng: cung nen toi Neon, cung chieu cao, bo goc, font; an icon tia set o Tìm Nhanh.
+- Mau vien van giu theo chuc nang; chi phat glow khi nhan.
+- Preview Admin dung logo anh that va phan anh style nut moi.
+- Khong doi Core/API/RP/matchmaking/gameplay.
+
 # V1.2.43 - Thiet ke phong Preview phai + dieu khien tinh gon + nut Neon
 
 - Admin -> Thiet ke phong: dieu chinh ben trai, Preview co dinh ben phai va auto-fit toan bo.

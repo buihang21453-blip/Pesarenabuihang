@@ -34,7 +34,7 @@ DEFAULTS = {
     "sidebar_x": 0, "sidebar_y": 0,
 
     # Tiêu đề/nhận diện phòng
-    "brand_scale": 1.30, "brand_x": 0, "brand_y": 0,
+    "brand_scale": 1.00, "brand_x": 0, "brand_y": 0,
 
     # Avatar + tên của cả hai người chơi
     "avatar_scale": 1.00, "avatar_x": 0, "avatar_y": 0,
@@ -106,7 +106,7 @@ FIELD_SPECS = {
     "opponent_x": (int, -80, 80, 1), "opponent_y": (int, -80, 80, 1),
     "sidebar_x": (int, -80, 80, 1), "sidebar_y": (int, -80, 80, 1),
 
-    "brand_scale": (float, 0.90, 1.80, 0.01), "brand_x": (int, -160, 160, 1), "brand_y": (int, -60, 60, 1),
+    "brand_scale": (float, 0.50, 2.00, 0.01), "brand_x": (int, -160, 160, 1), "brand_y": (int, -60, 60, 1),
     "avatar_scale": (float, 0.60, 1.80, 0.01), "avatar_x": (int, -100, 100, 1), "avatar_y": (int, -100, 100, 1),
     "player_name_scale": (float, 0.70, 1.60, 0.01), "player_name_x": (int, -100, 100, 1), "player_name_y": (int, -100, 100, 1),
     "club_logo_scale": (float, 0.70, 1.55, 0.01),

@@ -150,3 +150,22 @@
 .room-ui-preview .rui-quick:active{box-shadow:0 0 7px #23e67d,0 0 17px rgba(35,230,125,.72)!important}
 .room-ui-preview .rui-actions button:first-child:active{box-shadow:0 0 7px #ffd24a,0 0 17px rgba(255,210,74,.72)!important}
 .room-ui-preview .rui-actions button:last-child:active{box-shadow:0 0 7px #ff5c68,0 0 17px rgba(255,92,104,.72)!important}
+
+
+/* ===== V1.2.44 - Preview trung thanh hon voi Room that ===== */
+.room-ui-preview .rui-room-label{font-size:8px!important;transform:none!important}
+.room-ui-preview .rui-brand{justify-self:center!important;display:flex!important;align-items:center!important;justify-content:center!important;transform:none!important}
+.room-ui-preview .rui-brand img{display:block;width:130px;height:28px;object-fit:contain;transform:scale(var(--p-brand-scale,1));transform-origin:center}
+.room-ui-preview .rui-quick,.room-ui-preview .rui-actions button{
+  min-height:var(--p-button-h)!important;
+  height:var(--p-button-h)!important;
+  border-radius:6px!important;
+  background:#071521!important;
+  color:#fff!important;
+  font-size:clamp(6px,calc(var(--p-button-font) * .5),10px)!important;
+  font-weight:950!important;
+  box-shadow:none!important;
+}
+.room-ui-preview .rui-quick{border:1px solid #23e67d!important}
+.room-ui-preview .rui-actions button:first-child{border:1px solid #ffd24a!important}
+.room-ui-preview .rui-actions button:last-child{border:1px solid #ff5c68!important}

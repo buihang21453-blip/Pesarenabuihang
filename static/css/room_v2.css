@@ -699,3 +699,99 @@
   .room-v2-shell .room-center-primary-actions .btn.blue:active,
   .room-v2-shell .room-post-result-actions .btn.blue:active{box-shadow:0 0 8px #43a9ff,0 0 20px rgba(67,169,255,.68)!important;filter:brightness(1.12)!important}
 }
+
+
+/* ===== V1.2.44 - Topbar gon, brand can giua, 3 nut dong bo ===== */
+@media (min-width:1251px){
+  /* PHONG DAU khong con bi phong theo brand_scale. */
+  .room-ui-configurable .room-stage-title-wrap{
+    transform:none!important;
+  }
+  .room-v2-shell .room-stage-title{
+    font-size:24px!important;
+    line-height:1!important;
+    letter-spacing:.01em!important;
+  }
+  .room-v2-shell .room-code-badge{
+    font-size:14px!important;
+    padding:5px 9px!important;
+  }
+  .room-v2-shell .room-stage-subtitle{
+    font-size:10px!important;
+    margin-top:4px!important;
+  }
+
+  /* Logo PES ARENA luon o chinh giua header; chi scale to/nho. */
+  .room-v2-shell .room-v2-brand{
+    position:absolute!important;
+    left:50%!important;
+    top:50%!important;
+    width:min(380px,34vw)!important;
+    height:100%!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    transform:translate(-50%,-50%)!important;
+    opacity:1!important;
+    z-index:2!important;
+    pointer-events:none!important;
+  }
+  .room-v2-shell .room-v2-brand img{
+    width:100%!important;
+    max-width:320px!important;
+    height:44px!important;
+    object-fit:contain!important;
+    transform:scale(var(--rui-brand-scale,1))!important;
+    transform-origin:center!important;
+  }
+
+  /* 3 nut dung cung mot ngon ngu thiet ke Neon: cung height/radius/font/background. */
+  .room-v2-shell .room-quick-match-row,
+  .room-v2-shell .room-center-primary-actions{
+    width:clamp(78%,var(--rui-center-action-width,88%),94%)!important;
+    max-width:290px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+  .room-v2-shell .room-center-primary-actions{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:var(--rui-center-action-gap,8px)!important;
+  }
+  .room-v2-shell .room-center-primary-actions>a,
+  .room-v2-shell .room-center-primary-actions>form{
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+  }
+  .room-v2-shell .room-center-primary-actions>form{display:block!important}
+  .room-v2-shell .room-quick-match-row .room-center-action-btn,
+  .room-v2-shell .room-center-primary-actions .room-center-action-btn{
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+    height:var(--rui-center-button-height,38px)!important;
+    min-height:var(--rui-center-button-height,38px)!important;
+    padding:0 10px!important;
+    border-radius:8px!important;
+    background:rgba(4,14,23,.90)!important;
+    color:#fff!important;
+    font-size:var(--rui-center-button-font-size,12px)!important;
+    font-weight:900!important;
+    line-height:1!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:0!important;
+    box-shadow:none!important;
+    text-shadow:none!important;
+    transform:none!important;
+  }
+  .room-v2-shell .quick-match-icon{display:none!important}
+  .room-v2-shell .room-quick-match-row .room-center-action-btn{border:1px solid #22e67d!important}
+  .room-v2-shell .room-center-primary-actions .btn.gold{border:1px solid #ffd24a!important}
+  .room-v2-shell .room-center-primary-actions .btn.red{border:1px solid #ff5c68!important}
+  .room-v2-shell .room-quick-match-row .room-center-action-btn:active{box-shadow:0 0 8px #22e67d,0 0 18px rgba(34,230,125,.58)!important}
+  .room-v2-shell .room-center-primary-actions .btn.gold:active{box-shadow:0 0 8px #ffd24a,0 0 18px rgba(255,210,74,.58)!important}
+  .room-v2-shell .room-center-primary-actions .btn.red:active{box-shadow:0 0 8px #ff5c68,0 0 18px rgba(255,92,104,.58)!important}
+}
