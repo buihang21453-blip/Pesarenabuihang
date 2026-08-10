@@ -111,9 +111,9 @@ def _confirmed_v1340_url(clean: str) -> str | None:
     return _join_public(supabase_asset_root(), relative)
 
 def _remote_url(clean: str) -> str | None:
-    # Logo 6 chế độ đã tồn tại ở nhánh riêng v1.3.40 của bucket.
+    # Logo 7 chế độ đã được chuẩn hóa ở nhánh riêng v1.3.40/Model của bucket.
     # Không ghép chúng vào STATIC_ASSET_BASE_URL=/v1.14.41 vì sẽ tạo URL sai
-    # .../v1.14.41/v1.3.40/modes/*.webp.
+    # .../v1.14.41/v1.3.40/Model/*.webp.
     if clean == "v1.3.40" or clean.startswith("v1.3.40/"):
         root = supabase_asset_root()
         direct = _join_public(root, clean)

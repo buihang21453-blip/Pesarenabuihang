@@ -100,7 +100,7 @@
             {% if room.status == "waiting_ready" and not room.friendly_random3_active %}
             <div class="room-center-mode-zone">
                 <div class="room-center-mode-title">CHẾ ĐỘ THI ĐẤU</div>
-                <img class="room-v2-active-mode-logo" src="{{ asset_url('v1.3.40/modes/2.webp' if room.team_tier == 'random3_pick1' else 'v1.3.40/modes/1.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Logo chế độ đang chọn">
+                <img class="room-v2-active-mode-logo" src="{{ asset_url('v1.3.40/Model/2.webp' if room.team_tier == 'random3_pick1' else 'v1.3.40/Model/1.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Logo chế độ đang chọn">
                 {% set rematch_mode_locked = '__RANK_MODE_LOCKED__' in (room.note or '') %}
                 {% if rematch_mode_locked %}
                 <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Random{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
@@ -458,7 +458,7 @@
                 <input type="hidden" name="rank_mode" value="smart_random">
                 <button class="room-v2-mode-card mode-1 {% if room.team_tier != 'random3_pick1' %}is-selected{% endif %}" type="submit" {% if not can_switch_ui_mode or not system_features.rank_standard_enabled %}disabled{% endif %}>
                     <span class="room-v2-mode-index">1</span>
-                    <img src="{{ asset_url('v1.3.40/modes/1.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Random">
+                    <img src="{{ asset_url('v1.3.40/Model/1.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Random">
                     <strong>Random</strong>
                     <small class="is-open">🔓 Đã mở khóa</small>
                 </button>
@@ -468,40 +468,40 @@
                 <input type="hidden" name="rank_mode" value="random3_pick1">
                 <button class="room-v2-mode-card mode-2 {% if room.team_tier == 'random3_pick1' %}is-selected{% endif %}" type="submit" {% if not can_switch_ui_mode or not system_features.friendly_random3_enabled %}disabled{% endif %}>
                     <span class="room-v2-mode-index">2</span>
-                    <img src="{{ asset_url('v1.3.40/modes/2.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Random 3 chọn 1">
+                    <img src="{{ asset_url('v1.3.40/Model/2.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Random 3 chọn 1">
                     <strong>Random 3 chọn 1</strong>
                     <small class="is-open">🔓 Đã mở khóa</small>
                 </button>
             </form>
 
-            <div class="room-v2-mode-card mode-7 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
+            <div class="room-v2-mode-card mode-3 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
                 <span class="room-v2-mode-index">3</span>
-                <img src="{{ asset_url('v1.3.40/modes/7.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Random Selection Match">
+                <img src="{{ asset_url('v1.3.40/Model/3.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Random Selection Match">
                 <strong>Random Selection Match</strong>
                 <small>🔒 Chưa mở khóa</small>
             </div>
 
-            <div class="room-v2-mode-card mode-3 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
+            <div class="room-v2-mode-card mode-4 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
                 <span class="room-v2-mode-index">4</span>
-                <img src="{{ asset_url('v1.3.40/modes/3.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Lượt đi - lượt về">
+                <img src="{{ asset_url('v1.3.40/Model/4.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Lượt đi - lượt về">
                 <strong>Lượt đi - lượt về</strong>
                 <small>🔒 Chưa mở khóa</small>
             </div>
-            <div class="room-v2-mode-card mode-4 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
+            <div class="room-v2-mode-card mode-5 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
                 <span class="room-v2-mode-index">5</span>
-                <img src="{{ asset_url('v1.3.40/modes/4.webp') }}?v={{ APP_VERSION|urlencode }}" alt="BO3">
+                <img src="{{ asset_url('v1.3.40/Model/5.webp') }}?v={{ APP_VERSION|urlencode }}" alt="BO3">
                 <strong>BO3</strong>
                 <small>🔒 Chưa mở khóa</small>
             </div>
-            <div class="room-v2-mode-card mode-5 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
+            <div class="room-v2-mode-card mode-6 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
                 <span class="room-v2-mode-index">6</span>
-                <img src="{{ asset_url('v1.3.40/modes/5.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Chiến thuật BO3">
+                <img src="{{ asset_url('v1.3.40/Model/6.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Chiến thuật BO3">
                 <strong>Chiến thuật BO3</strong>
                 <small>🔒 Chưa mở khóa</small>
             </div>
-            <div class="room-v2-mode-card mode-6 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
+            <div class="room-v2-mode-card mode-7 is-locked" aria-disabled="true" title="Chế độ chưa được triển khai">
                 <span class="room-v2-mode-index">7</span>
-                <img src="{{ asset_url('v1.3.40/modes/6.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Cấm chọn BO3">
+                <img src="{{ asset_url('v1.3.40/Model/7.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Cấm chọn BO3">
                 <strong>Cấm chọn BO3</strong>
                 <small>🔒 Chưa mở khóa</small>
             </div>

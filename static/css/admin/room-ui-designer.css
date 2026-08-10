@@ -39,7 +39,7 @@
 .room-ui-preview .rui-mode-row{height:clamp(92px,calc(var(--p-mode-cluster-h) * .72),150px)}
 .room-ui-preview .rui-mode-card{height:100%;display:grid;grid-template-rows:minmax(0,1fr) 17px 17px;padding:4px 3px}
 .room-ui-preview .rui-mode-icon{width:min(var(--p-mode-size),76%);height:min(var(--p-mode-size),58px);margin:auto;transform:none}
-.room-ui-preview .rui-mode-card:nth-child(3) .rui-mode-icon{transform:scale(.78)}
+
 .room-ui-preview .rui-mode-card strong{min-height:17px;height:17px;justify-content:center;overflow:hidden}.room-ui-preview .rui-mode-card small{min-height:17px;height:17px;display:flex;align-items:center;justify-content:center;overflow:visible}
 
 

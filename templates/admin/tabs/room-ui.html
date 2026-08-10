@@ -30,7 +30,7 @@
             <div class="rui-box rui-host"><b>CHỦ PHÒNG</b><div class="rui-avatar">H</div><div class="rui-player-name">Host Player</div><div class="rui-club-placeholder">?</div></div>
             <div class="rui-box rui-center">
               <b class="rui-center-title">CHẾ ĐỘ THI ĐẤU</b>
-              <img class="rui-active-mode-img" src="{{ asset_url('v1.3.40/modes/1.webp') }}" alt="Random">
+              <img class="rui-active-mode-img" src="{{ asset_url('v1.3.40/Model/1.webp') }}" alt="Random">
               <div class="rui-center-note">Đã chọn: Random • Mời đối thủ vào phòng</div>
               <img class="rui-vs-img" src="{{ asset_url('v1.3.40/VS.webp') }}" alt="VS">
               <div class="rui-center-buttons">
@@ -49,8 +49,8 @@
           </div>
           <div class="rui-mode-title">CÁC CHẾ ĐỘ</div>
           <div class="rui-mode-row">
-            {% for asset_idx,display_idx,n,status in [(1,1,'Random','ĐÃ MỞ KHÓA'),(2,2,'Random 3 chọn 1','ĐÃ MỞ KHÓA'),(7,3,'Random Selection Match','CHƯA MỞ KHÓA'),(3,4,'Lượt đi/về','CHƯA MỞ KHÓA'),(4,5,'BO3','CHƯA MỞ KHÓA'),(5,6,'Chiến thuật BO3','CHƯA MỞ KHÓA'),(6,7,'Cấm chọn BO3','CHƯA MỞ KHÓA')] %}
-            <div class="rui-mode-card{{ ' is-locked' if status != 'ĐÃ MỞ KHÓA' else '' }}"><b>{{ display_idx }}</b><img class="rui-mode-icon" src="{{ asset_url('v1.3.40/modes/' ~ asset_idx ~ '.webp') }}" alt="{{ n }}"><strong>{{ n }}</strong><small>{{ status }}</small></div>
+            {% for asset_idx,display_idx,n,status in [(1,1,'Random','ĐÃ MỞ KHÓA'),(2,2,'Random 3 chọn 1','ĐÃ MỞ KHÓA'),(3,3,'Random Selection Match','CHƯA MỞ KHÓA'),(4,4,'Lượt đi/về','CHƯA MỞ KHÓA'),(5,5,'BO3','CHƯA MỞ KHÓA'),(6,6,'Chiến thuật BO3','CHƯA MỞ KHÓA'),(7,7,'Cấm chọn BO3','CHƯA MỞ KHÓA')] %}
+            <div class="rui-mode-card{{ ' is-locked' if status != 'ĐÃ MỞ KHÓA' else '' }}"><b>{{ display_idx }}</b><img class="rui-mode-icon" src="{{ asset_url('v1.3.40/Model/' ~ asset_idx ~ '.webp') }}" alt="{{ n }}"><strong>{{ n }}</strong><small>{{ status }}</small></div>
             {% endfor %}
           </div>
         </div>
@@ -100,7 +100,7 @@
 
         <section class="room-ui-tab-panel" data-room-ui-panel="modes">
           <div class="room-ui-section-head"><h3>7 chế độ — logo lớn, đồng bộ</h3><p>Backend/asset: 1 → 2 → 7 → 3 → 4 → 5 → 6; số hiển thị luôn 1 → 7.</p></div>
-          <div class="room-ui-mode-order">{% for asset_idx,display_idx,n in [(1,1,'Random'),(2,2,'Random 3 chọn 1'),(7,3,'Random Selection Match'),(3,4,'Lượt đi/về'),(4,5,'BO3'),(5,6,'Chiến thuật BO3'),(6,7,'Cấm chọn BO3')] %}<div class="room-ui-mode-chip"><span>{{ display_idx }}</span><img src="{{ asset_url('v1.3.40/modes/' ~ asset_idx ~ '.webp') }}" alt=""><b>{{ n }}</b><small>asset {{ asset_idx }}.webp</small></div>{% endfor %}</div>
+          <div class="room-ui-mode-order">{% for asset_idx,display_idx,n in [(1,1,'Random'),(2,2,'Random 3 chọn 1'),(3,3,'Random Selection Match'),(4,4,'Lượt đi/về'),(5,5,'BO3'),(6,6,'Chiến thuật BO3'),(7,7,'Cấm chọn BO3')] %}<div class="room-ui-mode-chip"><span>{{ display_idx }}</span><img src="{{ asset_url('v1.3.40/Model/' ~ asset_idx ~ '.webp') }}" alt=""><b>{{ n }}</b><small>asset {{ asset_idx }}.webp</small></div>{% endfor %}</div>
           <div class="room-ui-control-grid room-ui-grid-3">
             {% for key,label,unit in [('mode_cluster_height','Chiều cao cả cụm 7 chế độ','px'),('mode_logo_size','Kích thước logo chung','px'),('mode_status_width','Độ rộng trạng thái','%')] %}{% set spec=room_ui_field_specs[key] %}<label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>{% endfor %}
           </div>

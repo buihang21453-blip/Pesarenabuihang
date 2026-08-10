@@ -72,12 +72,12 @@
 .room-v2-shell .room-v2-mode-index{position:absolute;top:5px;left:5px;z-index:2;display:grid;place-items:center;width:28px;height:28px;border:1px solid currentColor;clip-path:polygon(50% 0,100% 22%,100% 76%,50% 100%,0 76%,0 22%);background:#0b385d;color:#9fddff;font-size:15px;font-weight:900}
 .room-v2-shell .room-v2-mode-card.mode-2{border-color:rgba(190,77,255,.58);background:linear-gradient(180deg,rgba(46,13,72,.95),rgba(14,8,23,.98))}
 .room-v2-shell .room-v2-mode-card.mode-2 .room-v2-mode-index{background:#52206f;color:#f3baff}
-.room-v2-shell .room-v2-mode-card.mode-7{border-color:rgba(244,193,47,.64);background:linear-gradient(180deg,rgba(46,35,10,var(--rui-mode-card-opacity,.95)),rgba(16,12,5,var(--rui-mode-card-opacity,.95)))}
-.room-v2-shell .room-v2-mode-card.mode-7 .room-v2-mode-index{background:#6a4b09;color:#ffe07b}
-.room-v2-shell .room-v2-mode-card.mode-3 .room-v2-mode-index{background:#154c78;color:#9ddcff}
-.room-v2-shell .room-v2-mode-card.mode-4 .room-v2-mode-index{background:#4c3d1a;color:#ffe0a0}
-.room-v2-shell .room-v2-mode-card.mode-5 .room-v2-mode-index{background:#6f231f;color:#ffb0a7}
-.room-v2-shell .room-v2-mode-card.mode-6 .room-v2-mode-index{background:#0d5550;color:#8cf3e8}
+.room-v2-shell .room-v2-mode-card.mode-3{border-color:rgba(244,193,47,.64);background:linear-gradient(180deg,rgba(46,35,10,var(--rui-mode-card-opacity,.95)),rgba(16,12,5,var(--rui-mode-card-opacity,.95)))}
+.room-v2-shell .room-v2-mode-card.mode-3 .room-v2-mode-index{background:#6a4b09;color:#ffe07b}
+.room-v2-shell .room-v2-mode-card.mode-4 .room-v2-mode-index{background:#154c78;color:#9ddcff}
+.room-v2-shell .room-v2-mode-card.mode-5 .room-v2-mode-index{background:#4c3d1a;color:#ffe0a0}
+.room-v2-shell .room-v2-mode-card.mode-6 .room-v2-mode-index{background:#6f231f;color:#ffb0a7}
+.room-v2-shell .room-v2-mode-card.mode-7 .room-v2-mode-index{background:#0d5550;color:#8cf3e8}
 .room-v2-shell .room-v2-mode-card.is-selected{outline:2px solid #efe3bd;outline-offset:-3px;box-shadow:0 0 17px rgba(255,206,82,.23),inset 0 0 20px rgba(255,255,255,.05)}
 .room-v2-shell .room-v2-mode-card.is-locked{cursor:not-allowed;filter:saturate(.68);opacity:.8}
 .room-v2-shell .room-v2-mode-card.is-locked img{opacity:.72}

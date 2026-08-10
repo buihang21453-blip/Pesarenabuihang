@@ -1,3 +1,13 @@
+# V1.2.53 - Cap nhat bo 7 logo che do theo thu tu 1-7
+
+- Chuyen toan bo logo che do phong dau sang Supabase `v1.3.40/Model/1.webp` -> `7.webp`.
+- Map thang theo thu tu hien thi 1 -> 7; bo mapping cu Random Selection Match = `7.webp`.
+- Thu tu moi: 1 Random, 2 Random 3 chon 1, 3 Random Selection Match, 4 Luot di/ve, 5 BO3, 6 Chien thuat BO3, 7 Cam chon BO3.
+- Dong bo ca Room render dau, Room live/polling va Admin Room UI Preview.
+- Bo scale rieng logo thu 3 trong Admin Preview; bo logo da duoc quy chuan nen khong con xu ly suy doan kich thuoc tung anh.
+- Chuan hoa class mode-card theo dung so hien thi 1 -> 7 de tranh nham mapping trong cac lan nang cap sau.
+- Khong thay doi logic mode, RP, room state, API hay CSS kich thuoc logo da khoa o V1.2.50/V1.2.51.
+
 # V1.2.49 - Phan luong CSS va kiem soat cascade toan du an
 
 - Them `static/css/core/design_tokens.css`: mot noi doi mau he thong.
