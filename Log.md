@@ -1,5 +1,15 @@
 # Log
 
+## V1.2.47 - Kiem ke va can doi toan bo nut bam
+- Quet 44 template: 242 the button + 63 anchor dang button = 305 vi tri clickable.
+- Dong bo Neon Gaming giua `room_detail.html` (render dau) va `_room_live_content.html` (polling) de khong doi style sau khi cap nhat.
+- Tao `static/css/button_sizes.css` lam owner kich thuoc nut dung chung; khong quan ly mau/gradient/neon.
+- Chot size: nut thuong 40px, small 32px, CTA/auth 44px, filter 38px, admin action 38px, admin tab 40px, invite-mini 34px.
+- Bo kich thuoc khoi block `.btn` nen dau `style.css` de tranh 2 noi cung so huu kich thuoc co ban.
+- Giu style rieng theo module: Room Neon, Parsec compact, Profile, Lucky Box, Admin Designer.
+- Khong doi route, JS, Supabase, RP hay logic phong dau.
+- Kem `BAO_CAO_NUT_BAM_V1.2.47.md`.
+
 ## V1.2.46 - Thay cum nut Neon Gaming, don CSS cu
 - Thay giao dien nut trung tam phong dau sang Neon Gaming: nen toi, vien neon mong, glow nhe, chu trang.
 - Mau chuc nang: Moi dau vang, San sang/Tim nhanh xanh la, Thoat phong do, nut phu xam/xanh.

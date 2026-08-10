@@ -99,7 +99,7 @@
                         {% set current_has_rematch_ready = (room_room_viewer_is_host and room.rematch_host_ready) or (room_viewer_is_guest and room.rematch_guest_ready) %}
                         <div class="room-center-primary-actions room-action-zone room-confirmed-actions">
                             <form method="post" action="{{ url_for('room_rematch', room_id=room.id) }}">
-                                <button class="btn gold room-center-action-btn room-neon-btn room-neon-gold" type="submit" {% if current_has_rematch_ready %}disabled{% endif %}>{{ 'Đã Chọn Đá Tiếp' if current_has_rematch_ready else 'Đá Tiếp' }}</button>
+                                <button class="btn gold room-center-action-btn room-neon-btn room-neon-gold" type="submit" {% if current_has_rematch_ready %}disabled{% endif %}><span class="room-neon-icon" aria-hidden="true">↻</span><span class="room-neon-label">{{ 'Đã Chọn Đá Tiếp' if current_has_rematch_ready else 'Đá Tiếp' }}</span></button>
                             </form>
                             <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_rematch_decline', room_id=room.id) }}"
                                   data-modal-tone="warning"
@@ -215,7 +215,7 @@
                             </form>
                             {% else %}
                             <form method="post" action="{{ url_for('room_guest_unready', room_id=room.id) }}">
-                                <button class="btn gray room-center-action-btn room-neon-btn room-neon-gray" type="submit">Hủy Sẵn Sàng</button>
+                                <button class="btn gray room-center-action-btn room-neon-btn room-neon-gray" type="submit"><span class="room-neon-icon" aria-hidden="true">↶</span><span class="room-neon-label">Hủy Sẵn Sàng</span></button>
                             </form>
                             {% endif %}
                             {% if room.guest_ready and not daily_rank_limit_blocked %}

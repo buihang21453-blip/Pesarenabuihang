@@ -1,0 +1,93 @@
+/* ============================================================
+   V1.2.47 — Button size ownership
+   File nay CHI so huu kich thuoc/khoang cach cua cac nut dung chung.
+   Mau sac / gradient / neon van do style.css hoac CSS module so huu.
+   Muc tieu: 1 chuan kich thuoc, khong them lop giao dien de len nhau.
+   ============================================================ */
+
+/* Nut hanh dong mac dinh tren cac trang nguoi choi / he thong. */
+.btn,
+button.btn,
+a.btn{
+  min-height:40px;
+  padding:0 14px;
+  font-size:13px;
+  line-height:1.15;
+  gap:6px;
+}
+
+/* Nut nho trong bang, danh sach, pagination. */
+.btn.small,
+button.btn.small,
+a.btn.small{
+  min-height:32px;
+  padding:0 10px;
+  font-size:11px;
+}
+
+/* CTA rong: dashboard / auth / form chinh. */
+.btn.wide,
+.btn.full,
+.auth-card .btn.full{
+  min-height:44px;
+}
+
+/* Tim kiem / loc: thap hon CTA de khong chiem dien tich. */
+.filter-bar .btn,
+.ranking-search .btn,
+.grid-form .btn{
+  min-height:38px;
+  padding-inline:12px;
+  font-size:12px;
+}
+
+/* Admin: nut thao tac gon, tab du lon de bam. */
+.admin-tab-button{
+  min-height:40px;
+  padding:8px 12px;
+  font-size:12px;
+}
+.admin-tab-panel .btn:not(.wide):not(.full),
+.admin-heading-actions .btn{
+  min-height:38px;
+  padding-inline:12px;
+  font-size:12px;
+}
+
+/* Dashboard: nut moi dau mini dung trong card doi thu. */
+.invite-mini{
+  min-width:78px;
+  min-height:34px;
+  padding:0 10px;
+  font-size:11px;
+}
+
+/* Bang du lieu / dong tran: tranh nut cao hon dong. */
+.table-wrap .btn.small,
+.match-actions .btn,
+.admin-match-actions .btn{
+  min-height:32px;
+}
+
+/* Modal chung: nut ro rang hon nut trong bang. */
+.modal .btn,
+.dialog .btn{
+  min-height:42px;
+}
+
+@media (max-width:640px){
+  .btn,
+  button.btn,
+  a.btn{
+    min-height:40px;
+    padding-inline:12px;
+    font-size:12px;
+  }
+  .btn.small,
+  button.btn.small,
+  a.btn.small{
+    min-height:32px;
+    padding-inline:9px;
+    font-size:11px;
+  }
+}
