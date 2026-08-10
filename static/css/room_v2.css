@@ -648,3 +648,54 @@
     border-radius:4px!important;
   }
 }
+
+
+/* ===== V1.2.43 - Cum nut chinh Neon can doi ===== */
+@media (min-width:1251px){
+  .room-v2-shell .room-quick-match-row,
+  .room-v2-shell .room-center-primary-actions,
+  .room-v2-shell .room-post-result-actions{
+    width:clamp(76%,var(--rui-center-action-width,88%),94%)!important;
+    max-width:290px!important;
+    margin-left:auto!important;margin-right:auto!important;
+    gap:var(--rui-center-action-gap,8px)!important;
+  }
+  .room-v2-shell .room-center-primary-actions,
+  .room-v2-shell .room-post-result-actions{display:flex!important;align-items:stretch!important}
+  .room-v2-shell .room-center-primary-actions>a,
+  .room-v2-shell .room-center-primary-actions>form,
+  .room-v2-shell .room-post-result-actions>a,
+  .room-v2-shell .room-post-result-actions>form{flex:1 1 0!important;min-width:0!important;margin:0!important}
+  .room-v2-shell .room-center-primary-actions>form,
+  .room-v2-shell .room-post-result-actions>form{display:flex!important}
+  .room-v2-shell .room-center-primary-actions .room-center-action-btn,
+  .room-v2-shell .room-post-result-actions .room-center-action-btn,
+  .room-v2-shell .room-quick-match-row .room-center-action-btn{
+    width:100%!important;max-width:none!important;min-width:0!important;
+    min-height:var(--rui-center-button-height,38px)!important;
+    height:var(--rui-center-button-height,38px)!important;
+    padding:4px 10px!important;border-radius:8px!important;
+    background:rgba(3,13,22,.82)!important;color:#fff!important;
+    font-size:var(--rui-center-button-font-size,12px)!important;font-weight:900!important;
+    box-shadow:none!important;text-shadow:none!important;transform:none!important;
+    transition:box-shadow .08s ease,filter .08s ease,border-color .08s ease!important;
+  }
+  .room-v2-shell .room-quick-match-row .room-center-action-btn{border:1px solid #22e67d!important}
+  .room-v2-shell .room-center-primary-actions .btn.gold,
+  .room-v2-shell .room-post-result-actions .btn.gold{border:1px solid #ffd24a!important}
+  .room-v2-shell .room-center-primary-actions .btn.red,
+  .room-v2-shell .room-post-result-actions .btn.red{border:1px solid #ff5c68!important}
+  .room-v2-shell .room-center-primary-actions .btn.green,
+  .room-v2-shell .room-post-result-actions .btn.green{border:1px solid #22e67d!important}
+  .room-v2-shell .room-center-primary-actions .btn.blue,
+  .room-v2-shell .room-post-result-actions .btn.blue{border:1px solid #43a9ff!important}
+  .room-v2-shell .room-quick-match-row .room-center-action-btn:active,
+  .room-v2-shell .room-center-primary-actions .btn.green:active,
+  .room-v2-shell .room-post-result-actions .btn.green:active{box-shadow:0 0 8px #22e67d,0 0 20px rgba(34,230,125,.68)!important;filter:brightness(1.12)!important}
+  .room-v2-shell .room-center-primary-actions .btn.gold:active,
+  .room-v2-shell .room-post-result-actions .btn.gold:active{box-shadow:0 0 8px #ffd24a,0 0 20px rgba(255,210,74,.68)!important;filter:brightness(1.12)!important}
+  .room-v2-shell .room-center-primary-actions .btn.red:active,
+  .room-v2-shell .room-post-result-actions .btn.red:active{box-shadow:0 0 8px #ff5c68,0 0 20px rgba(255,92,104,.68)!important;filter:brightness(1.12)!important}
+  .room-v2-shell .room-center-primary-actions .btn.blue:active,
+  .room-v2-shell .room-post-result-actions .btn.blue:active{box-shadow:0 0 8px #43a9ff,0 0 20px rgba(67,169,255,.68)!important;filter:brightness(1.12)!important}
+}

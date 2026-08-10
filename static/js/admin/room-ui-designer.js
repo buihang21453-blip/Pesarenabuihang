@@ -15,9 +15,11 @@
       const naturalWidth = Math.max(preview.scrollWidth, 1180);
       const naturalHeight = Math.max(preview.scrollHeight, 1);
       const availableWidth = Math.max(previewViewport.clientWidth, 1);
-      const viewportCap = window.innerWidth > 760
-        ? Math.max(250, Math.min(window.innerHeight * 0.47, 500))
-        : Math.max(220, Math.min(window.innerHeight * 0.5, 420));
+      const viewportCap = window.innerWidth > 1280
+        ? Math.max(420, Math.min(window.innerHeight * 0.76, 760))
+        : window.innerWidth > 760
+          ? Math.max(320, Math.min(window.innerHeight * 0.58, 580))
+          : Math.max(220, Math.min(window.innerHeight * 0.5, 420));
       const scale = Math.min(1, availableWidth / naturalWidth, viewportCap / naturalHeight);
       preview.style.transform = `scale(${scale})`;
       previewViewport.style.height = `${Math.ceil(naturalHeight * scale)}px`;
@@ -45,7 +47,7 @@
     center_action_gap:'--p-action-gap', center_button_height:'--p-button-h', center_button_font_size:'--p-button-font', center_action_width:'--p-action-w',
     mode_logo_size:'--p-mode-size', mode_card_height:'--p-card-height', mode_cluster_height:'--p-mode-cluster-h', mode_status_width:'--p-status-width',
     rail_parsec_ratio:'--p-rail-parsec', rail_room_history_ratio:'--p-rail-history', rail_h2h_ratio:'--p-rail-h2h', rail_gap:'--p-rail-gap', right_rail_font_size:'--p-right-font',
-    panel_opacity:'--p-opacity', header_opacity:'--p-header-opacity', host_panel_opacity:'--p-host-opacity', center_panel_opacity:'--p-center-opacity', opponent_panel_opacity:'--p-away-opacity', sidebar_panel_opacity:'--p-side-opacity', mode_card_opacity:'--p-mode-opacity', action_zone_opacity:'--p-action-opacity', background_opacity:'--p-bg-opacity', gold_glow:'--p-glow'
+    panel_opacity:'--p-opacity', header_opacity:'--p-header-opacity', host_panel_opacity:'--p-host-opacity', center_panel_opacity:'--p-center-opacity', opponent_panel_opacity:'--p-away-opacity', sidebar_panel_opacity:'--p-side-opacity', mode_card_opacity:'--p-mode-opacity', action_zone_opacity:'--p-action-opacity', ui_opacity:'--p-opacity', background_opacity:'--p-bg-opacity', gold_glow:'--p-glow'
   };
   const pxUnits = new Set(['main_height','main_gap','mode_gap','header_height','share_button_width','share_button_height','share_button_font_size','player_panel_y','center_y','sidebar_y','brand_y','avatar_y','player_name_y','club_area_y','active_mode_logo_y','vs_y','center_gap','center_padding_y','center_action_gap','center_button_height','center_button_font_size','mode_logo_size','mode_card_height','mode_cluster_height','rail_gap','right_rail_font_size']);
   const frUnits = new Set(['player_width','center_width','sidebar_width','rail_parsec_ratio','rail_room_history_ratio','rail_h2h_ratio']);
@@ -59,6 +61,10 @@
     if (!preview || !cssMap[key]) return;
     let suffix = pxUnits.has(key) ? 'px' : frUnits.has(key) ? 'fr' : percentUnits.has(key) ? '%' : '';
     preview.style.setProperty(cssMap[key], `${value}${suffix}`);
+    if (key === 'ui_opacity') {
+      ['--p-opacity','--p-header-opacity','--p-host-opacity','--p-center-opacity','--p-away-opacity','--p-side-opacity','--p-mode-opacity','--p-action-opacity','--p-bg-opacity']
+        .forEach(variable => preview.style.setProperty(variable, value));
+    }
     fitWholePreview();
   }
   inputs.forEach(input => { apply(input); input.addEventListener('input', () => apply(input)); });
@@ -84,7 +90,7 @@
   fitWholePreview();
 
   root.querySelector('[data-room-ui-zero-y]')?.addEventListener('click', () => {
-    const yKeys = new Set(['player_panel_y','center_y','sidebar_y','brand_y','avatar_y','player_name_y','club_area_y','active_mode_logo_y','vs_y']);
+    const yKeys = new Set(['center_y','avatar_y','player_name_y','club_area_y','active_mode_logo_y','vs_y']);
     inputs.forEach(input => { if (yKeys.has(input.dataset.roomUiInput)) { input.value = '0'; apply(input); } });
   });
 })();

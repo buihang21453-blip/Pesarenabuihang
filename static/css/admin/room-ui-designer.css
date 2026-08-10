@@ -87,3 +87,66 @@
   .room-ui-preview-viewport{overflow:hidden!important}
   .room-ui-preview{min-width:0;width:1180px}
 }
+
+
+/* ===== V1.2.43 - Editor trai / Preview co dinh ben phai ===== */
+@media (min-width:1281px){
+  .room-ui-form{
+    display:grid!important;
+    grid-template-columns:minmax(430px,.86fr) minmax(560px,1.14fr);
+    grid-template-areas:"editor preview";
+    gap:14px;
+    align-items:start;
+  }
+  .room-ui-editor{grid-area:editor;min-width:0;margin:0!important}
+  .room-ui-preview-shell{
+    grid-area:preview;
+    position:sticky!important;
+    top:8px!important;
+    z-index:45;
+    margin:0!important;
+    max-height:calc(100vh - 16px)!important;
+    overflow:hidden!important;
+    box-shadow:0 14px 36px rgba(0,0,0,.34);
+  }
+  .room-ui-preview-head{align-items:flex-start;flex-direction:column;gap:7px}
+  .room-ui-preview-states{justify-content:flex-start;flex-wrap:wrap;overflow:visible}
+  .room-ui-tabs{position:sticky;top:8px;z-index:8;background:#0a1422;padding-top:4px}
+  .room-ui-control-grid.room-ui-grid-4,.room-ui-control-grid.room-ui-grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .room-ui-stadium-block{grid-template-columns:1fr}
+  .room-ui-mode-order{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (min-width:1600px){
+  .room-ui-form{grid-template-columns:minmax(500px,.78fr) minmax(680px,1.22fr)}
+}
+
+/* Preview trung tam phan anh day du cac dieu khien. */
+.room-ui-preview .rui-center{
+  padding:var(--p-center-pad-y,10px) 6px!important;
+  gap:var(--p-center-gap,7px)!important;
+}
+.room-ui-preview .rui-active-mode-img{
+  width:min(calc(var(--p-active-size,126px) * .55),96px)!important;
+  height:min(calc(var(--p-active-size,126px) * .55),96px)!important;
+  object-fit:contain;
+}
+.room-ui-preview .rui-vs{transform:translateY(var(--p-vs-y)) scale(var(--p-vs-scale))!important}
+.room-ui-preview .rui-quick,.room-ui-preview .rui-actions{width:var(--p-action-w,88%)!important;max-width:none!important}
+.room-ui-preview .rui-quick,.room-ui-preview .rui-actions button{
+  min-height:var(--p-button-h,38px)!important;
+  height:var(--p-button-h,38px)!important;
+  font-size:clamp(6px,calc(var(--p-button-font,12px) * .55),10px)!important;
+}
+.room-ui-preview .rui-actions{gap:var(--p-action-gap,8px)!important}
+
+/* Preview nut neon: binh thuong khong glow, bam moi phat sang. */
+.room-ui-preview .rui-quick,.room-ui-preview .rui-actions button{
+  background:rgba(5,16,25,.86)!important;color:#fff!important;box-shadow:none!important;
+  transition:box-shadow .08s ease,filter .08s ease,transform .08s ease;
+}
+.room-ui-preview .rui-quick{border-color:#23e67d!important}
+.room-ui-preview .rui-actions button:first-child{border-color:#ffd24a!important}
+.room-ui-preview .rui-actions button:last-child{border-color:#ff5c68!important}
+.room-ui-preview .rui-quick:active{box-shadow:0 0 7px #23e67d,0 0 17px rgba(35,230,125,.72)!important}
+.room-ui-preview .rui-actions button:first-child:active{box-shadow:0 0 7px #ffd24a,0 0 17px rgba(255,210,74,.72)!important}
+.room-ui-preview .rui-actions button:last-child:active{box-shadow:0 0 7px #ff5c68,0 0 17px rgba(255,92,104,.72)!important}

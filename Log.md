@@ -1,3 +1,13 @@
+# V1.2.43 - Thiet ke phong Preview phai + dieu khien tinh gon + nut Neon
+
+- Admin -> Thiet ke phong: dieu chinh ben trai, Preview co dinh ben phai va auto-fit toan bo.
+- Bo cac dieu chinh: Logo PES ARENA - Y, Ca hai khung - Y, Ca cot phai - Y.
+- Cot phai cho phep giam nho hon (min 0.42fr).
+- Trung tam Preview phan anh truc tiep logo mode, VS, kich thuoc/gap/width cua 3 nut.
+- Do trong suot gom thanh 1 thanh chung cho toan bo Room UI.
+- Cum nut chinh dong nhat kich thuoc, phong cach Neon; binh thuong khong glow, khi click (:active) moi phat sang.
+- Khong thay doi Core/API/RP/matchmaking/gameplay.
+
 # V1.2.42 - Preview toan bo trong Thiet ke phong
 
 - Admin → Thiết kế phòng: ghim Preview ở phía trên khi cuộn chỉnh thông số.

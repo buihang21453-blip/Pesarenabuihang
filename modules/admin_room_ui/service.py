@@ -17,7 +17,7 @@ DEFAULTS = {
     "host_width": 1.00,  # legacy, vẫn đọc cấu hình cũ
     "center_width": 0.74,
     "opponent_width": 1.00,  # legacy, luôn đồng bộ player_width
-    "sidebar_width": 0.82,
+    "sidebar_width": 0.78,
     "main_height": 438,
     "main_gap": 8,
     "mode_gap": 6,
@@ -68,16 +68,17 @@ DEFAULTS = {
     "rail_gap": 6,
     "right_rail_font_size": 12,
 
-    # Hiệu ứng giao diện
-    "panel_opacity": 0.88,
-    "header_opacity": 0.72,
-    "host_panel_opacity": 0.86,
-    "center_panel_opacity": 0.86,
-    "opponent_panel_opacity": 0.86,
-    "sidebar_panel_opacity": 0.93,
-    "mode_card_opacity": 0.72,
-    "action_zone_opacity": 0.72,
-    "background_opacity": 0.72,
+    # Hiệu ứng giao diện - V1.2.43 dùng 1 độ trong suốt chung cho toàn Room UI
+    "ui_opacity": 0.78,
+    "panel_opacity": 0.78,
+    "header_opacity": 0.78,
+    "host_panel_opacity": 0.78,
+    "center_panel_opacity": 0.78,
+    "opponent_panel_opacity": 0.78,
+    "sidebar_panel_opacity": 0.78,
+    "mode_card_opacity": 0.78,
+    "action_zone_opacity": 0.78,
+    "background_opacity": 0.78,
     "gold_glow": 0.14,
 
     # Ảnh nền khu trung tâm (chỉ UI)
@@ -90,7 +91,7 @@ FIELD_SPECS = {
     "host_width": (float, 0.70, 1.60, 0.01),
     "center_width": (float, 0.55, 1.35, 0.01),
     "opponent_width": (float, 0.70, 1.60, 0.01),
-    "sidebar_width": (float, 0.65, 1.35, 0.01),
+    "sidebar_width": (float, 0.42, 1.35, 0.01),
     "main_height": (int, 400, 560, 1),
     "main_gap": (int, 0, 36, 1),
     "mode_gap": (int, 0, 28, 1),
@@ -133,6 +134,7 @@ FIELD_SPECS = {
     "rail_gap": (int, 0, 18, 1),
     "right_rail_font_size": (int, 9, 18, 1),
 
+    "ui_opacity": (float, 0.20, 1.00, 0.01),
     "panel_opacity": (float, 0.20, 1.00, 0.01),
     "header_opacity": (float, 0.00, 1.00, 0.01),
     "host_panel_opacity": (float, 0.00, 1.00, 0.01),
@@ -181,6 +183,25 @@ def normalize_config(raw):
         except (TypeError, ValueError):
             pass
 
+    # V1.2.43: nếu cấu hình cũ chưa có ui_opacity thì lấy trung bình các opacity cũ,
+    # sau đó đồng bộ tất cả vùng về cùng một giá trị.
+    if "ui_opacity" not in raw:
+        legacy_opacity_keys = (
+            "header_opacity", "host_panel_opacity", "center_panel_opacity",
+            "opponent_panel_opacity", "sidebar_panel_opacity", "mode_card_opacity",
+            "action_zone_opacity", "background_opacity",
+        )
+        values = []
+        for opacity_key in legacy_opacity_keys:
+            try:
+                if opacity_key in raw:
+                    values.append(float(raw[opacity_key]))
+            except (TypeError, ValueError):
+                pass
+        if values:
+            raw = dict(raw)
+            raw["ui_opacity"] = round(sum(values) / len(values), 2)
+
     # center_stadium là lựa chọn UI, không phải thông số số học.
     center_stadium = str(raw.get("center_stadium") or "stadium1").strip().lower()
     config["center_stadium"] = center_stadium if center_stadium in {"stadium1", "stadium2"} else "stadium1"
@@ -201,6 +222,13 @@ def normalize_config(raw):
     config["opponent_width"] = config["player_width"]
     for key in ("host_x", "center_x", "opponent_x", "sidebar_x", "brand_x", "avatar_x", "player_name_x", "active_mode_logo_x", "vs_x"):
         config[key] = 0
+    common_opacity = config.get("ui_opacity", 0.78)
+    for opacity_key in (
+        "panel_opacity", "header_opacity", "host_panel_opacity", "center_panel_opacity",
+        "opponent_panel_opacity", "sidebar_panel_opacity", "mode_card_opacity",
+        "action_zone_opacity", "background_opacity",
+    ):
+        config[opacity_key] = common_opacity
     config["host_y"] = config["player_panel_y"]
     config["opponent_y"] = config["player_panel_y"]
     return config
