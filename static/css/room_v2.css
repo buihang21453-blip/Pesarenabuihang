@@ -650,56 +650,6 @@
 }
 
 
-/* ===== V1.2.43 - Cum nut chinh Neon can doi ===== */
-@media (min-width:1251px){
-  .room-v2-shell .room-quick-match-row,
-  .room-v2-shell .room-center-primary-actions,
-  .room-v2-shell .room-post-result-actions{
-    width:clamp(76%,var(--rui-center-action-width,88%),94%)!important;
-    max-width:290px!important;
-    margin-left:auto!important;margin-right:auto!important;
-    gap:var(--rui-center-action-gap,8px)!important;
-  }
-  .room-v2-shell .room-center-primary-actions,
-  .room-v2-shell .room-post-result-actions{display:flex!important;align-items:stretch!important}
-  .room-v2-shell .room-center-primary-actions>a,
-  .room-v2-shell .room-center-primary-actions>form,
-  .room-v2-shell .room-post-result-actions>a,
-  .room-v2-shell .room-post-result-actions>form{flex:1 1 0!important;min-width:0!important;margin:0!important}
-  .room-v2-shell .room-center-primary-actions>form,
-  .room-v2-shell .room-post-result-actions>form{display:flex!important}
-  .room-v2-shell .room-center-primary-actions .room-center-action-btn,
-  .room-v2-shell .room-post-result-actions .room-center-action-btn,
-  .room-v2-shell .room-quick-match-row .room-center-action-btn{
-    width:100%!important;max-width:none!important;min-width:0!important;
-    min-height:var(--rui-center-button-height,38px)!important;
-    height:var(--rui-center-button-height,38px)!important;
-    padding:4px 10px!important;border-radius:8px!important;
-    background:rgba(3,13,22,.82)!important;color:#fff!important;
-    font-size:var(--rui-center-button-font-size,12px)!important;font-weight:900!important;
-    box-shadow:none!important;text-shadow:none!important;transform:none!important;
-    transition:box-shadow .08s ease,filter .08s ease,border-color .08s ease!important;
-  }
-  .room-v2-shell .room-quick-match-row .room-center-action-btn{border:1px solid #22e67d!important}
-  .room-v2-shell .room-center-primary-actions .btn.gold,
-  .room-v2-shell .room-post-result-actions .btn.gold{border:1px solid #ffd24a!important}
-  .room-v2-shell .room-center-primary-actions .btn.red,
-  .room-v2-shell .room-post-result-actions .btn.red{border:1px solid #ff5c68!important}
-  .room-v2-shell .room-center-primary-actions .btn.green,
-  .room-v2-shell .room-post-result-actions .btn.green{border:1px solid #22e67d!important}
-  .room-v2-shell .room-center-primary-actions .btn.blue,
-  .room-v2-shell .room-post-result-actions .btn.blue{border:1px solid #43a9ff!important}
-  .room-v2-shell .room-quick-match-row .room-center-action-btn:active,
-  .room-v2-shell .room-center-primary-actions .btn.green:active,
-  .room-v2-shell .room-post-result-actions .btn.green:active{box-shadow:0 0 8px #22e67d,0 0 20px rgba(34,230,125,.68)!important;filter:brightness(1.12)!important}
-  .room-v2-shell .room-center-primary-actions .btn.gold:active,
-  .room-v2-shell .room-post-result-actions .btn.gold:active{box-shadow:0 0 8px #ffd24a,0 0 20px rgba(255,210,74,.68)!important;filter:brightness(1.12)!important}
-  .room-v2-shell .room-center-primary-actions .btn.red:active,
-  .room-v2-shell .room-post-result-actions .btn.red:active{box-shadow:0 0 8px #ff5c68,0 0 20px rgba(255,92,104,.68)!important;filter:brightness(1.12)!important}
-  .room-v2-shell .room-center-primary-actions .btn.blue:active,
-  .room-v2-shell .room-post-result-actions .btn.blue:active{box-shadow:0 0 8px #43a9ff,0 0 20px rgba(67,169,255,.68)!important;filter:brightness(1.12)!important}
-}
-
 
 /* ===== V1.2.44 - Topbar gon, brand can giua, 3 nut dong bo ===== */
 @media (min-width:1251px){
@@ -745,55 +695,6 @@
     transform-origin:center!important;
   }
 
-  /* 3 nut dung cung mot ngon ngu thiet ke Neon: cung height/radius/font/background. */
-  .room-v2-shell .room-quick-match-row,
-  .room-v2-shell .room-center-primary-actions{
-    width:clamp(78%,var(--rui-center-action-width,88%),94%)!important;
-    max-width:290px!important;
-    margin-left:auto!important;
-    margin-right:auto!important;
-  }
-  .room-v2-shell .room-center-primary-actions{
-    display:grid!important;
-    grid-template-columns:1fr 1fr!important;
-    gap:var(--rui-center-action-gap,8px)!important;
-  }
-  .room-v2-shell .room-center-primary-actions>a,
-  .room-v2-shell .room-center-primary-actions>form{
-    width:100%!important;
-    min-width:0!important;
-    margin:0!important;
-  }
-  .room-v2-shell .room-center-primary-actions>form{display:block!important}
-  .room-v2-shell .room-quick-match-row .room-center-action-btn,
-  .room-v2-shell .room-center-primary-actions .room-center-action-btn{
-    width:100%!important;
-    min-width:0!important;
-    max-width:none!important;
-    height:var(--rui-center-button-height,38px)!important;
-    min-height:var(--rui-center-button-height,38px)!important;
-    padding:0 10px!important;
-    border-radius:8px!important;
-    background:rgba(4,14,23,.90)!important;
-    color:#fff!important;
-    font-size:var(--rui-center-button-font-size,12px)!important;
-    font-weight:900!important;
-    line-height:1!important;
-    display:flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-    gap:0!important;
-    box-shadow:none!important;
-    text-shadow:none!important;
-    transform:none!important;
-  }
-  .room-v2-shell .quick-match-icon{display:none!important}
-  .room-v2-shell .room-quick-match-row .room-center-action-btn{border:1px solid #22e67d!important}
-  .room-v2-shell .room-center-primary-actions .btn.gold{border:1px solid #ffd24a!important}
-  .room-v2-shell .room-center-primary-actions .btn.red{border:1px solid #ff5c68!important}
-  .room-v2-shell .room-quick-match-row .room-center-action-btn:active{box-shadow:0 0 8px #22e67d,0 0 18px rgba(34,230,125,.58)!important}
-  .room-v2-shell .room-center-primary-actions .btn.gold:active{box-shadow:0 0 8px #ffd24a,0 0 18px rgba(255,210,74,.58)!important}
-  .room-v2-shell .room-center-primary-actions .btn.red:active{box-shadow:0 0 8px #ff5c68,0 0 18px rgba(255,92,104,.58)!important}
 }
 
 /* ===== V1.2.45 - Can giua brand, dong bo 3 nut, khong cat cum 7 mode ===== */
@@ -812,36 +713,6 @@
     transform:scale(var(--rui-brand-scale,1))!important;transform-origin:center center!important;
   }
 
-  /* 3 nut: cung nen, vien, bo goc, font, cao; chi khac mau vien theo chuc nang. */
-  .room-v2-shell .room-quick-match-row,
-  .room-v2-shell .room-center-primary-actions{
-    width:var(--rui-center-action-width,88%)!important;max-width:300px!important;
-    margin-left:auto!important;margin-right:auto!important;
-  }
-  .room-v2-shell .room-center-primary-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:var(--rui-center-action-gap,8px)!important}
-  .room-v2-shell .room-center-primary-actions>a,
-  .room-v2-shell .room-center-primary-actions>form{display:flex!important;width:100%!important;min-width:0!important;margin:0!important}
-  .room-v2-shell .room-quick-match-row .room-center-action-btn,
-  .room-v2-shell .room-center-primary-actions .room-center-action-btn,
-  .room-v2-shell .room-center-primary-actions .btn.gold,
-  .room-v2-shell .room-center-primary-actions .btn.red{
-    appearance:none!important;-webkit-appearance:none!important;
-    width:100%!important;max-width:none!important;min-width:0!important;
-    height:var(--rui-center-button-height,38px)!important;min-height:var(--rui-center-button-height,38px)!important;
-    padding:0 10px!important;border-radius:8px!important;
-    background:#071521!important;background-color:#071521!important;background-image:none!important;
-    color:#fff!important;font-size:var(--rui-center-button-font-size,12px)!important;font-weight:900!important;
-    line-height:1!important;text-align:center!important;text-decoration:none!important;
-    display:flex!important;align-items:center!important;justify-content:center!important;
-    box-shadow:none!important;text-shadow:none!important;filter:none!important;transform:none!important;
-  }
-  .room-v2-shell .room-quick-match-row .room-center-action-btn{border:1px solid #23e67d!important}
-  .room-v2-shell .room-center-primary-actions .btn.gold{border:1px solid #ffd24a!important}
-  .room-v2-shell .room-center-primary-actions .btn.red{border:1px solid #ff5c68!important}
-  .room-v2-shell .quick-match-icon{display:none!important}
-  .room-v2-shell .room-quick-match-row .room-center-action-btn:active{box-shadow:0 0 8px #23e67d,0 0 18px rgba(35,230,125,.58)!important}
-  .room-v2-shell .room-center-primary-actions .btn.gold:active{box-shadow:0 0 8px #ffd24a,0 0 18px rgba(255,210,74,.58)!important}
-  .room-v2-shell .room-center-primary-actions .btn.red:active{box-shadow:0 0 8px #ff5c68,0 0 18px rgba(255,92,104,.58)!important}
 
   /* Cum 7 mode luon co day du ten + status, khong bi cat me duoi. */
   .room-v2-shell{--room-v245-mode-h:clamp(168px,var(--rui-mode-cluster-height,176px),230px)}
@@ -863,3 +734,110 @@
   .room-v2-shell .room-v2-mode-card small{height:20px!important;min-height:20px!important;margin-bottom:0!important}
   .room-v2-shell .room-arena-right-rail{height:calc(var(--room-v239-main-h) + var(--room-v245-mode-h))!important}
 }
+
+/* ===== V1.2.46 - Neon Gaming Button: 1 owner, khong de CSS cu de len =====
+   Scope duy nhat: .room-v2-shell .room-neon-btn
+   Khong dung .btn/.green/.gold/.red de dinh nghia giao dien nua. */
+.room-v2-shell .room-neon-btn{
+  --room-neon-color:#43a9ff;
+  --room-neon-glow:rgba(67,169,255,.28);
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  min-height:var(--rui-center-button-height,40px)!important;
+  height:var(--rui-center-button-height,40px)!important;
+  padding:0 13px!important;
+  border:1px solid var(--room-neon-color)!important;
+  border-radius:9px!important;
+  background:rgba(3,10,16,.90)!important;
+  background-color:rgba(3,10,16,.90)!important;
+  background-image:none!important;
+  color:#fff!important;
+  font-size:var(--rui-center-button-font-size,12px)!important;
+  font-weight:850!important;
+  line-height:1!important;
+  text-align:center!important;
+  text-decoration:none!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  box-shadow:inset 0 0 10px color-mix(in srgb,var(--room-neon-color) 14%,transparent),0 0 7px var(--room-neon-glow)!important;
+  text-shadow:0 0 7px rgba(255,255,255,.12)!important;
+  filter:none!important;
+  transform:none!important;
+  transition:border-color .14s ease,box-shadow .14s ease,background-color .14s ease,filter .14s ease!important;
+  cursor:pointer;
+}
+.room-v2-shell .room-neon-btn:hover{
+  background:rgba(5,16,24,.96)!important;
+  background-image:none!important;
+  border-color:var(--room-neon-color)!important;
+  box-shadow:inset 0 0 13px color-mix(in srgb,var(--room-neon-color) 20%,transparent),0 0 10px var(--room-neon-glow)!important;
+  filter:brightness(1.06)!important;
+  transform:none!important;
+}
+.room-v2-shell .room-neon-btn:active{
+  box-shadow:inset 0 0 15px color-mix(in srgb,var(--room-neon-color) 24%,transparent),0 0 14px var(--room-neon-glow)!important;
+  filter:brightness(1.12)!important;
+  transform:none!important;
+}
+.room-v2-shell .room-neon-btn:disabled{
+  opacity:.52!important;
+  cursor:not-allowed!important;
+  filter:none!important;
+}
+.room-v2-shell .room-neon-btn.room-neon-gold{--room-neon-color:#f7b928;--room-neon-glow:rgba(247,185,40,.34)}
+.room-v2-shell .room-neon-btn.room-neon-green{--room-neon-color:#20dc65;--room-neon-glow:rgba(32,220,101,.34)}
+.room-v2-shell .room-neon-btn.room-neon-red{--room-neon-color:#f04438;--room-neon-glow:rgba(240,68,56,.34)}
+.room-v2-shell .room-neon-btn.room-neon-blue{--room-neon-color:#43a9ff;--room-neon-glow:rgba(67,169,255,.30)}
+.room-v2-shell .room-neon-btn.room-neon-gray{--room-neon-color:#73859a;--room-neon-glow:rgba(115,133,154,.22)}
+.room-v2-shell .room-neon-btn .room-neon-icon{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:16px;
+  color:var(--room-neon-color)!important;
+  font-size:1.14em;
+  line-height:1;
+  filter:drop-shadow(0 0 4px var(--room-neon-glow));
+}
+.room-v2-shell .room-neon-btn .room-neon-label{display:inline-block;line-height:1}
+
+/* Cum nut trung tam chi quan ly layout; style tung nut do room-neon-btn so huu. */
+.room-v2-shell .room-quick-match-row,
+.room-v2-shell .room-center-primary-actions,
+.room-v2-shell .room-post-result-actions{
+  width:var(--rui-center-action-width,88%)!important;
+  max-width:300px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.room-v2-shell .room-center-primary-actions,
+.room-v2-shell .room-post-result-actions{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:var(--rui-center-action-gap,8px)!important;
+}
+.room-v2-shell .room-center-primary-actions>a,
+.room-v2-shell .room-center-primary-actions>form,
+.room-v2-shell .room-post-result-actions>a,
+.room-v2-shell .room-post-result-actions>form{
+  display:flex!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+.room-v2-shell .room-quick-match-row .room-neon-btn{max-width:none!important;margin:0!important}
+
+@media (max-width:1250px){
+  .room-v2-shell .room-neon-btn{min-height:38px!important;height:38px!important;font-size:12px!important}
+}
+@media (max-width:700px){
+  .room-v2-shell .room-neon-btn{min-height:36px!important;height:36px!important;padding:0 10px!important;font-size:11px!important;gap:6px!important}
+}
+

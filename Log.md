@@ -1,3 +1,14 @@
+# Log
+
+## V1.2.46 - Thay cum nut Neon Gaming, don CSS cu
+- Thay giao dien nut trung tam phong dau sang Neon Gaming: nen toi, vien neon mong, glow nhe, chu trang.
+- Mau chuc nang: Moi dau vang, San sang/Tim nhanh xanh la, Thoat phong do, nut phu xam/xanh.
+- Them icon rieng cho Moi dau, San sang, Thoat phong; giu nguyen route/form/logic cu.
+- Xoa cac block CSS nut trung tam bi lap o V1.2.43, V1.2.44, V1.2.45.
+- Gom quyen so huu style vao mot selector rieng `.room-neon-btn`, tranh de `.btn` global de len.
+- Khong thay doi luong backend, Supabase, RP, room state hay JavaScript.
+- Don thu muc `__pycache__` khoi goi ban giao.
+
 
 ## V1.2.45 - Can giua PES ARENA, dong bo 3 nut, Preview trung tam day du
 - Can logo PES ARENA theo chinh thanh PHONG DAU (topbar position: relative), chi scale to/nho.
