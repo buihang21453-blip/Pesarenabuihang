@@ -1,3 +1,10 @@
+# V1.2.31 - Tra lai logo rieng trong phong dau
+
+- Khôi phục logo trong Room về đúng asset: `v1.3.40/pes-arena-room-logo.webp`.
+- `pes-arena-logo.webp` và `pes-arena-logoknen.webp` được xác định là logo dự án, không còn dùng để thay logo PES ARENA bên trong phòng đấu.
+- Bảng test trong Room chỉ còn test 2 ảnh nền giữa `center-stadium.webp` / `center-stadium2.webp`.
+- Không thay đổi Core/API/RP/DB/matchmaking hay 4 chế độ đang khóa.
+
 # V1.2.27 - Sua dung duong dan Room V2 Supabase v1.3.40
 
 - Xac nhan 6 logo che do chi lay tu `pes-assets/v1.3.40/modes/1.webp` -> `6.webp`.

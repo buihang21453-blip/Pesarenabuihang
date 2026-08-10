@@ -43,7 +43,7 @@
             </div>
         </div>
         <div class="room-v2-brand" aria-label="PES Arena">
-            <img id="roomV2BrandImage" src="{{ asset_url('v1.3.40/pes-arena-logoknen.webp') }}?v={{ APP_VERSION|urlencode }}" data-default-src="{{ asset_url('v1.3.40/pes-arena-logoknen.webp') }}?v={{ APP_VERSION|urlencode }}" alt="PES ARENA">
+            <img id="roomV2BrandImage" src="{{ asset_url('v1.3.40/pes-arena-room-logo.webp') }}?v={{ APP_VERSION|urlencode }}" data-default-src="{{ asset_url('v1.3.40/pes-arena-room-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="PES ARENA">
         </div>
         <div class="room-stage-state-badge room-stage-state-{{ room_layout_state }}"><span class="room-stage-state-dot"></span>{{ room_layout_state_label }}</div>
         {% if room.status == 'waiting_ready' and not room.has_guest and (room_room_viewer_is_host or current_user.role == 'admin') %}
@@ -66,16 +66,11 @@
 
     {% if current_user.role == "admin" %}
     <section class="room-v2-asset-tester" id="roomV2AssetTester" aria-label="Test ảnh giao diện phòng">
-        <div class="room-v2-asset-tester__title">TEST ẢNH GIAO DIỆN</div>
+        <div class="room-v2-asset-tester__title">TEST NỀN GIỮA PHÒNG</div>
         <div class="room-v2-asset-tester__group">
             <span>Nền giữa</span>
             <button type="button" data-center-src="{{ asset_url('v1.3.40/center-stadium.webp') }}">Sân 1</button>
             <button type="button" data-center-src="{{ asset_url('v1.3.40/center-stadium2.webp') }}">Sân 2</button>
-        </div>
-        <div class="room-v2-asset-tester__group">
-            <span>Logo PES ARENA</span>
-            <button type="button" data-brand-src="{{ asset_url('v1.3.40/pes-arena-logo.webp') }}">Có nền</button>
-            <button type="button" data-brand-src="{{ asset_url('v1.3.40/pes-arena-logoknen.webp') }}">Không nền</button>
         </div>
         <button type="button" class="room-v2-asset-tester__reset" data-room-ui-reset>Khôi phục</button>
         <small>Chỉ đổi hiển thị trên trình duyệt Admin, không lưu DB và không ảnh hưởng core.</small>
