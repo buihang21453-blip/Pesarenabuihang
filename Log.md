@@ -482,3 +482,14 @@
 - Admin > Room UI them thanh dieu chinh rieng cho: nen tong, header, chu phong, trung tam, doi thu, sidebar, 6 card che do, khung thao tac.
 - Dieu chinh transparency bang alpha cua background, khong lam mo chu/logo/avatar/noi dung ben trong.
 - Khong thay core/API/RP/matchmaking/4 che do khoa.
+
+
+## V1.2.36 - Can lai bo cuc Room va chuyen nen san vao Room UI Designer
+- Can lai desktop: khu chinh 468px + day 7 che do 158px; rail phai cao bang tong 2 khu, giam khoang trong duoi phong.
+- Tang kich thuoc card/logo vua du de khong che noi dung va van nam trong mot man hinh desktop.
+- Thu tu backend/asset giu nguyen: 1 -> 2 -> 7 -> 3 -> 4 -> 5 -> 6.
+- So thu tu hien thi doi thanh lien tuc: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7.
+- Nhan so 3 la Random Selection Match (asset 7.webp); cac mode sau chi doi so hien thi, khong doi core/code.
+- Dua lua chon Nen giua phong (San 1 / San 2) vao Admin -> Room UI Designer va luu trong system_settings.
+- Xoa thanh TEST GIAO DIEN trong phong; bo test Logo du an Co nen/Khong nen.
+- Khong them/sua core, API, RP hay module gameplay cho Random Selection Match.

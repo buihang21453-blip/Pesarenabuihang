@@ -16,9 +16,9 @@ DEFAULTS = {
     "center_width": 0.72,
     "opponent_width": 1.00,
     "sidebar_width": 0.82,
-    "main_height": 540,
-    "main_gap": 14,
-    "mode_gap": 12,
+    "main_height": 468,
+    "main_gap": 8,
+    "mode_gap": 6,
 
     # Dịch vị trí các vùng chính (px)
     "host_x": 0, "host_y": 0,
@@ -40,7 +40,7 @@ DEFAULTS = {
 
     # Một tỷ lệ dùng chung cho toàn bộ thẻ/logo chế độ
     "mode_logo_scale": 1.00,
-    "mode_card_height": 208,
+    "mode_card_height": 132,
     "mode_status_width": 94,
 
     # Hiệu ứng giao diện
@@ -54,6 +54,9 @@ DEFAULTS = {
     "action_zone_opacity": 0.72,
     "background_opacity": 0.72,
     "gold_glow": 0.14,
+
+    # Ảnh nền khu trung tâm (chỉ UI)
+    "center_stadium": "stadium1",
 }
 
 # key -> (type, min, max, step)
@@ -62,7 +65,7 @@ FIELD_SPECS = {
     "center_width": (float, 0.55, 1.30, 0.01),
     "opponent_width": (float, 0.70, 1.60, 0.01),
     "sidebar_width": (float, 0.70, 1.35, 0.01),
-    "main_height": (int, 400, 680, 1),
+    "main_height": (int, 420, 490, 1),
     "main_gap": (int, 0, 36, 1),
     "mode_gap": (int, 0, 28, 1),
 
@@ -80,7 +83,7 @@ FIELD_SPECS = {
     "vs_scale": (float, 0.60, 2.00, 0.01), "vs_x": (int, -120, 120, 1), "vs_y": (int, -100, 100, 1),
 
     "mode_logo_scale": (float, 0.60, 2.20, 0.01),
-    "mode_card_height": (int, 160, 280, 1),
+    "mode_card_height": (int, 105, 160, 1),
     "mode_status_width": (int, 70, 100, 1),
 
     "panel_opacity": (float, 0.20, 1.00, 0.01),
@@ -122,8 +125,12 @@ def normalize_config(raw):
             raw = dict(raw)
             raw["mode_logo_scale"] = round(sum(legacy) / len(legacy), 2)
 
+    # center_stadium là lựa chọn UI, không phải thông số số học.
+    center_stadium = str(raw.get("center_stadium") or "stadium1").strip().lower()
+    config["center_stadium"] = center_stadium if center_stadium in {"stadium1", "stadium2"} else "stadium1"
+
     for key in DEFAULTS:
-        if key not in raw:
+        if key == "center_stadium" or key not in raw:
             continue
         cast, minimum, maximum, _step = FIELD_SPECS[key]
         try:

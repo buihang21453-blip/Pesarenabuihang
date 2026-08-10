@@ -59,7 +59,14 @@
         </details>
 
         <details open>
-          <summary>4. Khu vực giữa: Chế độ & VS</summary>
+          <summary>4. Khu vực giữa: Chế độ, VS & nền sân</summary>
+          <div class="room-ui-object-row"><h3>Nền giữa phòng</h3>
+            <p class="room-ui-hint">Chọn ảnh nền dùng thật trong khu Trung tâm. Lưu cùng cấu hình Room UI.</p>
+            <div class="room-ui-stadium-options">
+              <label class="room-ui-stadium-option"><input type="radio" name="center_stadium" value="stadium1" {% if room_ui_config.center_stadium != 'stadium2' %}checked{% endif %}><img src="{{ asset_url('v1.3.40/center-stadium.webp') }}" alt="Sân 1"><span>Sân 1</span></label>
+              <label class="room-ui-stadium-option"><input type="radio" name="center_stadium" value="stadium2" {% if room_ui_config.center_stadium == 'stadium2' %}checked{% endif %}><img src="{{ asset_url('v1.3.40/center-stadium2.webp') }}" alt="Sân 2"><span>Sân 2</span></label>
+            </div>
+          </div>
           {% for prefix,label in [('active_mode_logo','Khối chế độ đang chọn'),('vs','Ảnh VS')] %}
           <div class="room-ui-object-row"><h3>{{ label }}</h3><div class="room-ui-control-grid three">
             {% for suffix,suffix_label,unit in [('scale','Kích thước','×'),('x','X','px'),('y','Y','px')] %}{% set key = prefix ~ '_' ~ suffix %}{% set spec = room_ui_field_specs[key] %}
@@ -71,7 +78,7 @@
 
         <details open>
           <summary>5. Các chế độ — luôn đồng bộ kích thước</summary>
-          <p class="room-ui-hint">Chỉ có <strong>1 thanh tỷ lệ chung</strong>. Khi dự án có đủ 6 chế độ, cả 6 logo/card sẽ phóng to hoặc thu nhỏ cùng nhau.</p>
+          <p class="room-ui-hint">Chỉ có <strong>1 thanh tỷ lệ chung</strong>. Cả 7 logo/card sẽ phóng to hoặc thu nhỏ cùng nhau.</p>
           <div class="room-ui-control-grid">
             {% for key,label,unit in [('mode_logo_scale','Tỷ lệ chung','×'),('mode_card_height','Chiều cao card','px'),('mode_status_width','Độ rộng trạng thái','%')] %}{% set spec = room_ui_field_specs[key] %}
             <label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
@@ -87,7 +94,7 @@
               ('background_opacity','Nền tổng phòng'),('header_opacity','Thanh tiêu đề'),
               ('host_panel_opacity','Khung Chủ phòng'),('center_panel_opacity','Khung Trung tâm'),
               ('opponent_panel_opacity','Khung Đối thủ'),('sidebar_panel_opacity','Sidebar / Thông tin'),
-              ('mode_card_opacity','Card 6 chế độ'),('action_zone_opacity','Khung thao tác'),
+              ('mode_card_opacity','Card 7 chế độ'),('action_zone_opacity','Khung thao tác'),
               ('panel_opacity','Độ đậm Preview chung'),('gold_glow','Glow vàng')
             ] %}{% set spec = room_ui_field_specs[key] %}
             <label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output></span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
@@ -114,7 +121,7 @@
             <div class="rui-box rui-side" data-drag-object data-drag-x-key="sidebar_x" data-drag-y-key="sidebar_y"><span class="rui-drag-badge">↕</span><b>THÔNG TIN</b><i></i><i></i><i></i></div>
           </div>
           <div class="rui-mode-title">CÁC CHẾ ĐỘ</div>
-          <div class="rui-mode-row">{% for idx,n,status in [(1,'Random','ĐÃ MỞ KHÓA'),(2,'Random 3 chọn 1','ĐÃ MỞ KHÓA'),(7,'Random Selection Match','CHƯA MỞ KHÓA'),(3,'Lượt đi/về','CHƯA MỞ KHÓA'),(4,'BO3','CHƯA MỞ KHÓA'),(5,'Chiến thuật BO3','CHƯA MỞ KHÓA'),(6,'Cấm chọn BO3','CHƯA MỞ KHÓA')] %}<div class="rui-mode-card{{ ' is-locked' if status != 'ĐÃ MỞ KHÓA' else '' }}"><b>{{ idx }}</b><div class="rui-mode-icon">{{ idx }}</div><strong>{{ n }}</strong><small>{{ status }}</small></div>{% endfor %}</div>
+          <div class="rui-mode-row">{% for asset_idx,display_idx,n,status in [(1,1,'Random','ĐÃ MỞ KHÓA'),(2,2,'Random 3 chọn 1','ĐÃ MỞ KHÓA'),(7,3,'Random Selection Match','CHƯA MỞ KHÓA'),(3,4,'Lượt đi/về','CHƯA MỞ KHÓA'),(4,5,'BO3','CHƯA MỞ KHÓA'),(5,6,'Chiến thuật BO3','CHƯA MỞ KHÓA'),(6,7,'Cấm chọn BO3','CHƯA MỞ KHÓA')] %}<div class="rui-mode-card{{ ' is-locked' if status != 'ĐÃ MỞ KHÓA' else '' }}"><b>{{ display_idx }}</b><div class="rui-mode-icon">{{ display_idx }}</div><strong>{{ n }}</strong><small>{{ status }}</small></div>{% endfor %}</div>
         </div>
         <p class="room-ui-preview-help">Preview chỉ mô phỏng tỷ lệ/vị trí. Dữ liệu thật, nút chức năng, RP và trạng thái trận đấu không bị thay đổi.</p>
       </div>
