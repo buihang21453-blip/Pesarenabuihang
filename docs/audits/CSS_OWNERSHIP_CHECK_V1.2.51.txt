@@ -1,0 +1,10 @@
+PASS - room_detail.css tồn tại
+PASS - room_detail.css chỉ được khai báo dưới endpoint room_detail
+PASS - style.css không còn khối Room redesign v1.10.0
+PASS - Room redesign đã chuyển sang module Room
+PASS - Arena V1.13.7 đã chuyển sang module Room
+PASS - Quick Match vẫn là module riêng
+PASS - Parsec vẫn là module riêng
+PASS - Rank Mode vẫn là module riêng
+
+Kết quả: 8/8 PASS

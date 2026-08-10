@@ -25,3 +25,10 @@
 4. Page module phải có scope riêng.
 5. `style.css` là legacy compatibility; không append fix mới vào cuối file.
 6. Chạy `python scripts/check_css_contract.py` trước khi đóng gói.
+
+## V1.2.51 — Room center ownership lock
+- `static/css/room/buttons.css`: owner duy nhất của visual skin `.room-neon-btn` (background/border/radius/glow/color/icon). Không dùng `!important`.
+- `static/css/room_v2.css`: owner layout/kích thước/vị trí cụm action Room; không đặt skin neon.
+- `static/css/quick_match.css`: chỉ hành vi/state Quick Match; mọi skin legacy phải dùng `:not(.room-neon-btn)`.
+- `static/css/room/mode_cards.css`: owner duy nhất kích thước/transform của `.room-v2-mode-card > img`.
+- Nút neon Room không được mang class toàn cục `.btn`, `.green`, `.red`, `.gold`, `.gray`, `.blue`.

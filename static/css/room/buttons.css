@@ -1,87 +1,113 @@
 /* ============================================================
-   V1.2.50 — ROOM BUTTONS: SINGLE VISUAL OWNER
-   Scope: only buttons inside .room-v2-shell carrying .room-neon-btn.
-   This file owns background, border, radius, shadow, icon tone and
-   room action sizing. quick_match.css must not restyle neon buttons.
-   No !important.
+   V1.2.51 — ROOM CENTER NEON BUTTONS: VISUAL OWNER ONLY
+
+   Scope: .room-v2-shell .room-neon-btn
+   OWNS: background, border, radius, glow/shadow, text/icon color,
+         internal alignment and visual interaction.
+   DOES NOT OWN: cluster width/position, responsive height/font-size.
+   Those remain in room_v2.css so changing the skin never moves layout.
+
+   Isolation rule:
+   - Room neon controls no longer carry global .btn/.green/.red/.gold classes.
+   - quick_match.css may own Quick Match behavior/state, but not this skin.
+   - No !important, no gradient, no 3D transform.
    ============================================================ */
-.room-v2-shell .room-action-zone .room-neon-btn,
-.room-v2-shell .room-center-primary-actions .room-neon-btn,
-.room-v2-shell .room-post-result-actions .room-neon-btn,
-.room-v2-shell .room-quick-match-row .room-neon-btn{
+.room-v2-shell .room-neon-btn{
   --room-neon-color:#43a9ff;
-  --room-neon-glow:rgba(67,169,255,.28);
+  --room-neon-rgb:67,169,255;
   appearance:none;
   -webkit-appearance:none;
   box-sizing:border-box;
-  width:100%;
-  min-width:0;
-  max-width:none;
-  min-height:40px;
-  height:40px;
-  padding:0 13px;
+  padding-inline:12px;
   border:1px solid var(--room-neon-color);
-  border-radius:9px;
-  background:rgba(3,10,16,.92);
+  border-radius:8px;
+  background:rgba(3,10,16,.82);
   background-image:none;
   color:#fff;
-  font-size:12px;
+  font-family:inherit;
   font-weight:850;
-  line-height:1;
   text-align:center;
   text-decoration:none;
   display:flex;
   align-items:center;
   justify-content:center;
   gap:8px;
-  box-shadow:inset 0 0 10px color-mix(in srgb,var(--room-neon-color) 14%,transparent),0 0 7px var(--room-neon-glow);
-  text-shadow:0 0 7px rgba(255,255,255,.12);
+  box-shadow:
+    inset 0 0 9px rgba(var(--room-neon-rgb),.10),
+    0 0 7px rgba(var(--room-neon-rgb),.28);
+  text-shadow:0 1px 2px rgba(0,0,0,.65);
   filter:none;
   transform:none;
-  transition:border-color .14s ease,box-shadow .14s ease,background-color .14s ease,filter .14s ease;
+  transition:background-color .14s ease,border-color .14s ease,box-shadow .14s ease,filter .14s ease;
   cursor:pointer;
 }
-.room-v2-shell .room-action-zone .room-neon-btn:hover,
-.room-v2-shell .room-center-primary-actions .room-neon-btn:hover,
-.room-v2-shell .room-post-result-actions .room-neon-btn:hover,
-.room-v2-shell .room-quick-match-row .room-neon-btn:hover{
-  background:rgba(5,16,24,.97);
+.room-v2-shell .room-neon-btn:hover{
+  background:rgba(5,14,21,.90);
   background-image:none;
   border-color:var(--room-neon-color);
-  box-shadow:inset 0 0 13px color-mix(in srgb,var(--room-neon-color) 20%,transparent),0 0 10px var(--room-neon-glow);
-  filter:brightness(1.06);
+  box-shadow:
+    inset 0 0 11px rgba(var(--room-neon-rgb),.14),
+    0 0 9px rgba(var(--room-neon-rgb),.36);
+  filter:brightness(1.04);
   transform:none;
 }
-.room-v2-shell .room-neon-btn.room-neon-gold{--room-neon-color:#f7b928;--room-neon-glow:rgba(247,185,40,.34)}
-.room-v2-shell .room-neon-btn.room-neon-green{--room-neon-color:#20dc65;--room-neon-glow:rgba(32,220,101,.34)}
-.room-v2-shell .room-neon-btn.room-neon-red{--room-neon-color:#f04438;--room-neon-glow:rgba(240,68,56,.34)}
-.room-v2-shell .room-neon-btn.room-neon-blue{--room-neon-color:#43a9ff;--room-neon-glow:rgba(67,169,255,.30)}
-.room-v2-shell .room-neon-btn.room-neon-gray{--room-neon-color:#73859a;--room-neon-glow:rgba(115,133,154,.22)}
+.room-v2-shell .room-neon-btn:active{
+  background:rgba(4,12,18,.94);
+  box-shadow:
+    inset 0 0 12px rgba(var(--room-neon-rgb),.16),
+    0 0 6px rgba(var(--room-neon-rgb),.30);
+  filter:none;
+  transform:none;
+}
+.room-v2-shell .room-neon-btn:focus-visible{
+  outline:2px solid rgba(var(--room-neon-rgb),.45);
+  outline-offset:2px;
+}
+.room-v2-shell .room-neon-btn:disabled,
+.room-v2-shell .room-neon-btn[aria-disabled="true"]{
+  opacity:.55;
+  cursor:not-allowed;
+  filter:saturate(.7);
+  transform:none;
+}
+
+.room-v2-shell .room-neon-btn.room-neon-gold{
+  --room-neon-color:#f7b928;
+  --room-neon-rgb:247,185,40;
+}
+.room-v2-shell .room-neon-btn.room-neon-green{
+  --room-neon-color:#20dc65;
+  --room-neon-rgb:32,220,101;
+}
+.room-v2-shell .room-neon-btn.room-neon-red{
+  --room-neon-color:#f04438;
+  --room-neon-rgb:240,68,56;
+}
+.room-v2-shell .room-neon-btn.room-neon-blue{
+  --room-neon-color:#43a9ff;
+  --room-neon-rgb:67,169,255;
+}
+.room-v2-shell .room-neon-btn.room-neon-gray{
+  --room-neon-color:#8293a6;
+  --room-neon-rgb:130,147,166;
+}
+
 .room-v2-shell .room-neon-btn .room-neon-icon{
-  flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-width:16px;
-  color:var(--room-neon-color);font-size:1.14em;line-height:1;filter:drop-shadow(0 0 4px var(--room-neon-glow));
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:16px;
+  color:var(--room-neon-color);
+  font-family:"Segoe UI Symbol","Noto Sans Symbols 2",Arial,sans-serif;
+  font-variant-emoji:text;
+  font-size:1.12em;
+  line-height:1;
+  text-shadow:0 0 6px rgba(var(--room-neon-rgb),.62);
+  filter:none;
 }
-.room-v2-shell .room-neon-btn .room-neon-label{display:inline-block;line-height:1}
-.room-v2-shell .room-quick-match-row,
-.room-v2-shell .room-center-primary-actions,
-.room-v2-shell .room-post-result-actions{
-  width:var(--rui-center-action-width,88%);max-width:300px;margin-left:auto;margin-right:auto;
-}
-.room-v2-shell .room-center-primary-actions,
-.room-v2-shell .room-post-result-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--rui-center-action-gap,8px)}
-.room-v2-shell .room-center-primary-actions>a,
-.room-v2-shell .room-center-primary-actions>form,
-.room-v2-shell .room-post-result-actions>a,
-.room-v2-shell .room-post-result-actions>form{display:flex;width:100%;min-width:0;margin:0}
-@media(max-width:1250px){
-  .room-v2-shell .room-action-zone .room-neon-btn,
-  .room-v2-shell .room-center-primary-actions .room-neon-btn,
-  .room-v2-shell .room-post-result-actions .room-neon-btn,
-  .room-v2-shell .room-quick-match-row .room-neon-btn{min-height:38px;height:38px;font-size:12px}
-}
-@media(max-width:700px){
-  .room-v2-shell .room-action-zone .room-neon-btn,
-  .room-v2-shell .room-center-primary-actions .room-neon-btn,
-  .room-v2-shell .room-post-result-actions .room-neon-btn,
-  .room-v2-shell .room-quick-match-row .room-neon-btn{min-height:36px;height:36px;padding:0 10px;font-size:11px;gap:6px}
+.room-v2-shell .room-neon-btn .room-neon-label{
+  display:inline-block;
+  color:#fff;
+  line-height:1;
 }

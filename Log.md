@@ -614,3 +614,12 @@
 - Xoa cac rule phan tan `room-v2-mode-card img` va scale rieng mode 7 trong `room_v2.css`.
 - Logo 7 che do dung cung mot image box: desktop 64x64, tablet 56x56, mobile 48x48.
 - Khong sua logic room/API/RP/Parsec.
+
+## V1.2.51 - Co lap CSS 3 nut trung tam va khoa owner 7 logo
+- Audit lai thu tu cascade cua Room: global legacy -> room legacy -> feature -> Room V2 -> owner buttons/mode logo.
+- Loai class `.btn` + class mau global khoi toan bo `room-neon-btn` o render dau va render polling, de global button CSS khong con match.
+- `quick_match.css`: legacy skin va pulse chi ap dung cho nut khong phai `.room-neon-btn`.
+- `room/buttons.css`: mot owner skin Neon Gaming/Cyberpunk; nen toi ban trong suot, vien neon 1px, glow nhe, radius 8px, chu trang, icon cung tone; khong gradient, khong 3D, khong !important.
+- `room_v2.css`: bo cac thuoc tinh visual radius/font-weight con trung voi owner nut; giu layout/kich thuoc/vi tri.
+- `room/mode_cards.css`: khoa 1 box chung cho 7 logo, khong scale rieng tung mode.
+- Them `BAO_CAO_CSS_2_KHU_V1.2.51.md` va test ownership.

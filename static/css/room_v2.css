@@ -46,7 +46,7 @@
 .room-v2-shell .room-center-vs-image{width:128px;height:128px;margin:auto auto 8px;object-fit:contain}
 .room-v2-shell .room-quick-match-row{margin-top:auto}
 .room-v2-shell .room-center-primary-actions{gap:10px}
-.room-v2-shell .room-center-action-btn{min-height:42px;border-radius:4px;font-weight:900}
+.room-v2-shell .room-center-action-btn{min-height:42px}
 
 .room-v2-shell .room-arena-right-rail{display:flex;flex-direction:column;gap:10px;min-height:500px}
 .room-v2-shell .room-arena-right-rail>.panel{border:1px solid #b98a16;border-radius:6px;background:rgba(3,14,23,.93);box-shadow:inset 0 0 0 1px rgba(255,211,82,.05)}
@@ -587,7 +587,7 @@
   .room-v2-shell .room-center-primary-actions .room-center-action-btn{
     min-height:clamp(32px,var(--rui-center-button-height,38px),48px);
     height:clamp(32px,var(--rui-center-button-height,38px),48px);
-    padding:4px 8px;border-radius:8px;
+    padding:4px 8px;
     font-size:clamp(10px,var(--rui-center-button-font-size,12px),15px);
     line-height:1;
   }

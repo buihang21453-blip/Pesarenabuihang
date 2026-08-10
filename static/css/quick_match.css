@@ -41,7 +41,7 @@
   border-color: rgba(134, 239, 172, .72) ;
 }
 
-.room-layout-v137 .room-quick-match-row .room-quick-match-btn.is-searching {
+.room-layout-v137 .room-quick-match-row .room-quick-match-btn:not(.room-neon-btn).is-searching {
   animation: quickMatchPulse 1s ease-in-out infinite;
 }
 
