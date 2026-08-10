@@ -1,3 +1,16 @@
+# V1.2.49 - Phan luong CSS va kiem soat cascade toan du an
+
+- Them `static/css/core/design_tokens.css`: mot noi doi mau he thong.
+- Them `static/css/components/buttons.css`: owner duy nhat mau/nen/vien/shadow `.btn`.
+- `button_sizes.css` chi con vai tro kich thuoc/khoang cach.
+- Loai cac block mau nut global chong cheo co `!important` khoi luong active trong `style.css`.
+- Tat ca CSS module trong `static/css/**` da bo `!important`; module duoc uu tien bang thu tu load + scope selector.
+- Chuan hoa thu tu load: tokens -> legacy -> shared components -> feature -> page.
+- Room V2 la owner cuoi giao dien phong dau; khong can dung `!important` de de CSS cu.
+- Them `scripts/check_css_contract.py` de chan `!important` va chan visual `.btn` sai owner.
+- Them `scripts/audit_css_cascade.py` de thong ke important, selector trung va button owner.
+- Bao cao chi tiet: `docs/CSS_ARCHITECTURE_V1.2.49.md`.
+
 # V1.2.48 - Can chinh logo PES ARENA phong dau
 - Kiem tra `static/css/room_v2.css`: phat hien nhieu block desktop cung so huu `.room-v2-brand` / `.room-v2-brand img` tu V1.2.41, V1.2.44 va V1.2.45.
 - Xoa cac rule trung lap chi lien quan den logo desktop; gom ve mot block `V1.2.48 - Single owner`.

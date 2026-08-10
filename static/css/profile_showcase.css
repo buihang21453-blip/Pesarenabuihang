@@ -143,9 +143,9 @@
 .profile-v2-summoner-identity{display:flex;align-items:flex-end;gap:24px;min-width:0}
 .profile-v2-avatar{
   position:relative;
-  flex:0 0 190px!important;
-  width:190px!important;
-  height:190px!important;
+  flex:0 0 190px;
+  width:190px;
+  height:190px;
   display:grid;
   place-items:center;
   filter:drop-shadow(0 20px 28px rgba(0,0,0,.55));
@@ -159,8 +159,8 @@
   box-shadow:0 0 38px rgba(241,200,90,.18);
 }
 .profile-v2-avatar>.player-avatar,.profile-v2-avatar-plain>.player-avatar{
-  width:126px!important;
-  height:126px!important;
+  width:126px;
+  height:126px;
   border:4px solid rgba(232,185,73,.9);
   box-shadow:0 0 0 7px rgba(4,13,23,.92),0 16px 36px rgba(0,0,0,.5);
 }
@@ -186,7 +186,7 @@
 .profile-v2-kicker{display:block;margin-bottom:5px;color:var(--p2-gold);font-size:10px;font-weight:950;letter-spacing:.19em}
 .profile-v2-name-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .profile-v2-name-row .page-title{margin:0;max-width:100%;font-size:clamp(38px,4.2vw,66px);line-height:.95;color:#fff;text-shadow:0 8px 26px rgba(0,0,0,.62);overflow-wrap:anywhere}
-.profile-v2-equipped-badge{width:48px!important;height:48px!important;filter:drop-shadow(0 7px 11px rgba(0,0,0,.55))}
+.profile-v2-equipped-badge{width:48px;height:48px;filter:drop-shadow(0 7px 11px rgba(0,0,0,.55))}
 .profile-v2-status{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid rgba(137,157,181,.26);border-radius:999px;background:rgba(5,15,27,.72);color:#a9bacb;font-size:11px;font-weight:850;backdrop-filter:blur(10px)}
 .profile-v2-status i{width:7px;height:7px;border-radius:50%;background:#65758a}.profile-v2-status.is-online{border-color:rgba(34,197,94,.38);color:#9af2b6}.profile-v2-status.is-online i{background:#22c55e;box-shadow:0 0 10px rgba(34,197,94,.85)}
 .profile-v2-crest-line{display:grid;grid-template-columns:minmax(30px,1fr) 14px minmax(30px,1fr);align-items:center;gap:8px;max-width:430px;margin:12px 0 9px}
@@ -232,7 +232,7 @@
 .profile-v2-tabs button:hover{color:#fff;background:rgba(42,69,98,.32)}
 .profile-v2-tabs button.is-active{color:#101725;background:linear-gradient(135deg,#f4d16b,#dca23a);box-shadow:0 8px 18px rgba(218,161,50,.16)}
 .profile-v2-tabs button.is-active span{background:rgba(10,21,35,.18);color:#172034}
-.profile-v2-panel[hidden]{display:none!important}
+.profile-v2-panel[hidden]{display:none}
 .profile-v2-panel{animation:profileV2Fade .24s ease}
 @keyframes profileV2Fade{from{opacity:.45;transform:translateY(5px)}to{opacity:1;transform:none}}
 
@@ -272,8 +272,8 @@
 
 /* ACHIEVEMENTS */
 .profile-v2-achievement-panel{padding:22px}
-.profile-v2-featured-pill{align-self:center;padding:8px 12px;border:1px solid rgba(241,200,90,.36);border-radius:999px;background:rgba(92,60,14,.22);color:var(--p2-gold)!important;font-size:12px!important}
-.profile-v2-achievement-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.profile-v2-featured-pill{align-self:center;padding:8px 12px;border:1px solid rgba(241,200,90,.36);border-radius:999px;background:rgba(92,60,14,.22);color:var(--p2-gold);font-size:12px}
+.profile-v2-achievement-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 .profile-v2-page .achievement-card{border-color:#27405c;background:linear-gradient(145deg,#0b1d31,#071522)}
 .profile-v2-page .achievement-card.is-unlocked{border-color:rgba(224,175,55,.5);background:linear-gradient(145deg,rgba(87,58,13,.34),#091a2b 62%);box-shadow:inset 0 1px 0 rgba(255,218,120,.08)}
 
@@ -317,14 +317,14 @@ html[data-theme="light"] .profile-v2-equipment-grid article,html[data-theme="lig
   .profile-v2-banner-stage{height:720px;margin:8px}
   .profile-v2-summoner-layout{inset:auto 18px 18px 18px}
   .profile-v2-summoner-identity{align-items:center}
-  .profile-v2-avatar{flex-basis:154px!important;width:154px!important;height:154px!important}
-  .profile-v2-avatar>.player-avatar,.profile-v2-avatar-plain>.player-avatar{width:104px!important;height:104px!important}
+  .profile-v2-avatar{flex-basis:154px;width:154px;height:154px}
+  .profile-v2-avatar>.player-avatar,.profile-v2-avatar-plain>.player-avatar{width:104px;height:104px}
   .profile-v2-honor-row{grid-template-columns:repeat(2,minmax(0,1fr))}
   .profile-v2-career-side{grid-template-columns:1fr}.profile-v2-stat-ribbon{justify-self:stretch}.profile-v2-stat-ribbon>div{flex:1;min-width:0}
   .profile-v2-actions{justify-content:flex-start}
   .profile-v2-overview-grid,.profile-v2-performance-grid,.profile-v2-settings-grid{grid-template-columns:1fr}
   .profile-v2-account-card,.profile-v2-avatar-manager{grid-column:auto}
-  .profile-v2-achievement-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .profile-v2-achievement-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:620px){
   .profile-v2-page{padding-inline:6px}
@@ -334,8 +334,8 @@ html[data-theme="light"] .profile-v2-equipment-grid article,html[data-theme="lig
   .profile-v2-banner-caption{top:9px;right:9px;padding:7px 9px}.profile-v2-banner-caption span{font-size:7px}.profile-v2-banner-caption strong{font-size:9px}
   .profile-v2-summoner-layout{inset:auto 12px 14px 12px}
   .profile-v2-summoner-identity{flex-direction:column;gap:4px;text-align:center}
-  .profile-v2-avatar{flex-basis:138px!important;width:138px!important;height:138px!important}
-  .profile-v2-avatar>.player-avatar,.profile-v2-avatar-plain>.player-avatar{width:92px!important;height:92px!important}
+  .profile-v2-avatar{flex-basis:138px;width:138px;height:138px}
+  .profile-v2-avatar>.player-avatar,.profile-v2-avatar-plain>.player-avatar{width:92px;height:92px}
   .profile-v2-player-copy{width:100%}.profile-v2-name-row{justify-content:center}.profile-v2-name-row .page-title{font-size:36px}
   .profile-v2-crest-line{margin-inline:auto}.profile-v2-mini-id-row{justify-content:center}.profile-v2-mini-id-row span+span{padding-left:0;border-left:0}
   .profile-v2-honor-row{grid-template-columns:1fr 1fr}.profile-v2-honor-chip{min-height:54px;text-align:left}
@@ -344,7 +344,7 @@ html[data-theme="light"] .profile-v2-equipment-grid article,html[data-theme="lig
   .profile-v2-tabs{top:0;margin:10px 0;padding:5px}.profile-v2-tabs button{min-height:38px;padding:7px 12px;font-size:12px}
   .profile-v2-rank-card,.profile-v2-showcase-card,.profile-v2-performance-grid>.profile-v2-card,.profile-v2-achievement-panel,.profile-v2-settings-grid>.profile-v2-card{padding:15px}
   .profile-v2-equipment-grid,.profile-v2-showcase-strip,.profile-v2-stat-grid,.profile-v2-info-grid{grid-template-columns:1fr}
-  .profile-v2-showcase-strip article{min-height:94px}.profile-v2-achievement-grid{grid-template-columns:1fr!important}.profile-v2-h2h-card{align-items:flex-start;flex-direction:column}
+  .profile-v2-showcase-strip article{min-height:94px}.profile-v2-achievement-grid{grid-template-columns:1fr}.profile-v2-h2h-card{align-items:flex-start;flex-direction:column}
 }
 
 /* V1.14.41.75 — Arena Overview composition
@@ -372,9 +372,9 @@ html[data-theme="light"] .profile-v2-equipment-grid article,html[data-theme="lig
 }
 .profile-v2-lol-avatar{
   position:relative;
-  flex:0 0 158px!important;
-  width:158px!important;
-  height:158px!important;
+  flex:0 0 158px;
+  width:158px;
+  height:158px;
   display:grid;
   place-items:center;
   filter:drop-shadow(0 22px 28px rgba(0,0,0,.65));
@@ -390,8 +390,8 @@ html[data-theme="light"] .profile-v2-equipment-grid article,html[data-theme="lig
 }
 .profile-v2-lol-avatar>.player-avatar,
 .profile-v2-lol-avatar-plain>.player-avatar{
-  width:108px!important;
-  height:108px!important;
+  width:108px;
+  height:108px;
   border:3px solid rgba(232,185,73,.92);
   box-shadow:0 0 0 7px rgba(3,10,18,.9),0 16px 34px rgba(0,0,0,.58);
 }
@@ -546,10 +546,10 @@ html[data-theme="light"] .profile-v2-equipment-grid article,html[data-theme="lig
 .profile-v2-lol-mastery-node strong{display:block;max-width:118px;color:#fff;font-size:11px;line-height:1.18;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .profile-v2-lol-mastery-node small{margin-top:3px;color:#a7b5c6;font-size:8px;font-weight:900;letter-spacing:.09em}
 .profile-v2-lol-rank-crest{display:grid;place-items:center;width:118px;height:112px;margin-bottom:3px}
-.profile-v2-lol-rank-crest .rank-badge{display:grid!important;place-items:center!important;width:118px!important;min-width:118px!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
-.profile-v2-lol-rank-crest .rank-icon-image-wrap{display:grid!important;place-items:center!important;width:112px!important;height:106px!important;margin:0!important}
-.profile-v2-lol-rank-crest .rank-icon-image{width:108px!important;height:108px!important;object-fit:contain!important;filter:drop-shadow(0 14px 18px rgba(0,0,0,.58))}
-.profile-v2-lol-rank-crest .rank-badge-copy{display:none!important}
+.profile-v2-lol-rank-crest .rank-badge{display:grid;place-items:center;width:118px;min-width:118px;padding:0;border:0;background:transparent;box-shadow:none}
+.profile-v2-lol-rank-crest .rank-icon-image-wrap{display:grid;place-items:center;width:112px;height:106px;margin:0}
+.profile-v2-lol-rank-crest .rank-icon-image{width:108px;height:108px;object-fit:contain;filter:drop-shadow(0 14px 18px rgba(0,0,0,.58))}
+.profile-v2-lol-rank-crest .rank-badge-copy{display:none}
 .profile-v2-lol-actions{
   position:absolute;
   z-index:8;
@@ -575,24 +575,24 @@ html[data-theme="light"] .profile-v2-equipment-grid article,html[data-theme="lig
 @media(max-width:900px){
   .profile-v2-banner-stage{height:800px}
   .profile-v2-lol-identity{left:24px;right:24px;top:110px;max-width:none}
-  .profile-v2-lol-avatar{flex-basis:142px!important;width:142px!important;height:142px!important}
-  .profile-v2-lol-avatar>.player-avatar,.profile-v2-lol-avatar-plain>.player-avatar{width:96px!important;height:96px!important}
+  .profile-v2-lol-avatar{flex-basis:142px;width:142px;height:142px}
+  .profile-v2-lol-avatar>.player-avatar,.profile-v2-lol-avatar-plain>.player-avatar{width:96px;height:96px}
   .profile-v2-lol-name-row .page-title{font-size:46px}
   .profile-v2-lol-showcase{left:22px;right:22px;bottom:18px;grid-template-columns:140px 1fr 150px;gap:12px}
   .profile-v2-lol-mastery-row{gap:10px}
   .profile-v2-lol-mastery-node{width:96px}.profile-v2-lol-mastery-node.is-primary{width:118px}
   .profile-v2-lol-node-ring{width:66px;height:66px}.profile-v2-lol-node-ring img{width:56px;height:56px}
   .profile-v2-lol-mastery-node.is-primary .profile-v2-lol-node-ring{width:88px;height:88px}
-  .profile-v2-lol-rank-crest,.profile-v2-lol-rank-crest .rank-badge{width:96px!important;height:94px;min-width:96px!important}
-  .profile-v2-lol-rank-crest .rank-icon-image-wrap{width:94px!important;height:92px!important}.profile-v2-lol-rank-crest .rank-icon-image{width:92px!important;height:92px!important}
+  .profile-v2-lol-rank-crest,.profile-v2-lol-rank-crest .rank-badge{width:96px;height:94px;min-width:96px}
+  .profile-v2-lol-rank-crest .rank-icon-image-wrap{width:94px;height:92px}.profile-v2-lol-rank-crest .rank-icon-image{width:92px;height:92px}
 }
 @media(max-width:680px){
   .profile-v2-banner-stage{height:940px}
   .profile-v2-banner-caption{display:none}
   .profile-v2-lol-actions{top:12px;left:12px;right:12px;justify-content:center;max-width:none}
   .profile-v2-lol-identity{top:98px;left:16px;right:16px;flex-direction:column;gap:4px;text-align:center}
-  .profile-v2-lol-avatar{flex-basis:130px!important;width:130px!important;height:130px!important}
-  .profile-v2-lol-avatar>.player-avatar,.profile-v2-lol-avatar-plain>.player-avatar{width:88px!important;height:88px!important}
+  .profile-v2-lol-avatar{flex-basis:130px;width:130px;height:130px}
+  .profile-v2-lol-avatar>.player-avatar,.profile-v2-lol-avatar-plain>.player-avatar{width:88px;height:88px}
   .profile-v2-lol-name-row{justify-content:center}.profile-v2-lol-name-row .page-title{font-size:40px}
   .profile-v2-lol-crest{margin-inline:auto}.profile-v2-lol-account-row{justify-content:center}
   .profile-v2-lol-account-row span+span{padding-left:0;border-left:0}
@@ -634,5 +634,5 @@ html[data-theme="light"] .profile-v2-equipment-grid article,html[data-theme="lig
 .profile-v2-hero.has-default-banner .profile-v2-default-mark,
 .profile-v2-hero.has-default-banner .profile-v2-default-banner>strong,
 .profile-v2-hero.has-default-banner .profile-v2-default-banner>small{
-  display:none!important;
+  display:none;
 }

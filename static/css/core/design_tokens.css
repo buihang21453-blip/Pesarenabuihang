@@ -1,0 +1,42 @@
+/* ============================================================
+   V1.2.49 — PES ARENA DESIGN TOKENS
+   Owner: mau nen tang / mau hanh dong / radius / transition.
+   Khong dat selector giao dien tai day.
+   Muon doi mau nut toan he thong: sua BIEN o file nay.
+   ============================================================ */
+:root{
+  --ui-action-gold:#d8ad4f;
+  --ui-action-gold-hover:#efd17f;
+  --ui-action-gold-border:#f2d88f;
+  --ui-action-gold-text:#17130b;
+
+  --ui-action-green:#2eaa7a;
+  --ui-action-green-hover:#3bc08c;
+  --ui-action-green-border:#65cfa7;
+  --ui-action-green-text:#071711;
+
+  --ui-action-red:#cf6269;
+  --ui-action-red-hover:#df747b;
+  --ui-action-red-border:#e58b90;
+  --ui-action-red-text:#1b090b;
+
+  --ui-action-blue:#2878b8;
+  --ui-action-blue-hover:#3d91d2;
+  --ui-action-blue-border:#65aee4;
+  --ui-action-blue-text:#f4f9ff;
+
+  --ui-action-neutral:#172330;
+  --ui-action-neutral-hover:#203040;
+  --ui-action-neutral-border:#34485b;
+  --ui-action-neutral-text:#e3e9ef;
+
+  --ui-button-radius:10px;
+  --ui-button-transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease,box-shadow .18s ease;
+}
+
+html[data-theme="light"]{
+  --ui-action-neutral:#31485f;
+  --ui-action-neutral-hover:#3b566f;
+  --ui-action-neutral-border:#263b50;
+  --ui-action-neutral-text:#eef5fb;
+}

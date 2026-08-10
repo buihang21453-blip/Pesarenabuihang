@@ -226,7 +226,7 @@
 
 /* V1.10.1 - dice image without purple layer */
 .room-center-random-trigger{max-width:240px;padding-top:4px}
-.room-center-random-glow,.room-center-random-icon{display:none!important}
+.room-center-random-glow,.room-center-random-icon{display:none}
 .room-center-random-image{display:block;width:150px;height:150px;object-fit:contain;background:transparent;border:0;filter:drop-shadow(0 16px 26px rgba(0,0,0,.34));transition:transform .18s ease,filter .18s ease}
 .room-center-random-trigger:not(.disabled):hover .room-center-random-image{transform:translateY(-3px) rotate(-3deg) scale(1.035);filter:drop-shadow(0 20px 32px rgba(0,0,0,.42))}
 .room-center-random-trigger:not(.disabled):active .room-center-random-image{transform:translateY(0) scale(.98)}
@@ -250,32 +250,32 @@
 .room-center-random-trigger:not(.disabled){border:1px solid rgba(246,190,39,.36);background:linear-gradient(180deg,rgba(246,190,39,.10),rgba(246,190,39,.035));box-shadow:0 12px 28px rgba(0,0,0,.20)}
 .room-center-random-trigger:not(.disabled):hover{background:linear-gradient(180deg,rgba(246,190,39,.16),rgba(246,190,39,.06));border-color:rgba(246,190,39,.58);transform:translateY(-2px)}
 .room-center-random-trigger.disabled{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);opacity:.68}
-.room-random-button-label{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border-radius:12px;background:linear-gradient(180deg,#ffe18a,#e7b844);color:#15100a!important;font-size:18px!important;box-shadow:0 8px 18px rgba(0,0,0,.22)}
-.room-center-random-trigger.disabled .room-random-button-label{background:rgba(255,255,255,.10);color:#c7d0df!important;box-shadow:none}
-.room-center-random-image{opacity:1!important;filter:contrast(1.08) brightness(1.08) drop-shadow(0 16px 26px rgba(0,0,0,.45))!important}
+.room-random-button-label{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border-radius:12px;background:linear-gradient(180deg,#ffe18a,#e7b844);color:#15100a;font-size:18px;box-shadow:0 8px 18px rgba(0,0,0,.22)}
+.room-center-random-trigger.disabled .room-random-button-label{background:rgba(255,255,255,.10);color:#c7d0df;box-shadow:none}
+.room-center-random-image{opacity:1;filter:contrast(1.08) brightness(1.08) drop-shadow(0 16px 26px rgba(0,0,0,.45))}
 @media(max-width:640px){
   .room-guest-control-actions{display:grid;grid-template-columns:1fr}
   .room-guest-control-actions .btn{width:100%;min-width:0}
-  .room-random-button-label{font-size:16px!important;min-height:38px;padding:7px 12px}
+  .room-random-button-label{font-size:16px;min-height:38px;padding:7px 12px}
 }
 
 /* V1.10.3 - custom VS/dice assets and larger league name */
 .room-center-vs-image{display:block;width:150px;height:150px;object-fit:contain;filter:drop-shadow(0 12px 26px rgba(0,0,0,.38));}
 .room-center-random-image{display:block;width:138px;height:138px;object-fit:contain;filter:contrast(1.16) saturate(1.08) drop-shadow(0 12px 24px rgba(0,0,0,.30));}
-.room-team-league-text{font-size:20px!important;font-weight:800!important;}
+.room-team-league-text{font-size:20px;font-weight:800;}
 @media(max-width:640px){
   .room-center-vs-image{width:112px;height:112px}
   .room-center-random-image{width:112px;height:112px}
-  .room-team-league-text{font-size:17px!important}
+  .room-team-league-text{font-size:17px}
 }
 
 /* V1.10.4 - bỏ khung riêng tên người chơi và Rank */
 .room-player-rankframe{
-  padding:10px 8px 14px !important;
-  border:none !important;
-  border-radius:0 !important;
-  background:transparent !important;
-  box-shadow:none !important;
+  padding:10px 8px 14px ;
+  border:none ;
+  border-radius:0 ;
+  background:transparent ;
+  box-shadow:none ;
 }
 
 
@@ -301,81 +301,81 @@
 
 /* ===== Random dice button polish v1.10.6 ===== */
 .room-center-random-trigger{
-  max-width:244px!important;
-  gap:9px!important;
-  padding:16px 16px 17px!important;
-  border-radius:18px!important;
-  border:1px solid rgba(245,190,39,.30)!important;
-  background:linear-gradient(180deg,rgba(245,190,39,.075),rgba(255,255,255,.018))!important;
-  box-shadow:0 12px 30px rgba(0,0,0,.22)!important;
+  max-width:244px;
+  gap:9px;
+  padding:16px 16px 17px;
+  border-radius:18px;
+  border:1px solid rgba(245,190,39,.30);
+  background:linear-gradient(180deg,rgba(245,190,39,.075),rgba(255,255,255,.018));
+  box-shadow:0 12px 30px rgba(0,0,0,.22);
   overflow:hidden;
 }
 .room-center-random-trigger:not(.disabled):hover{
-  border-color:rgba(245,190,39,.62)!important;
-  background:linear-gradient(180deg,rgba(245,190,39,.14),rgba(245,190,39,.035))!important;
-  transform:translateY(-2px)!important;
+  border-color:rgba(245,190,39,.62);
+  background:linear-gradient(180deg,rgba(245,190,39,.14),rgba(245,190,39,.035));
+  transform:translateY(-2px);
 }
 .room-center-random-trigger:not(.disabled):active{
-  transform:translateY(0) scale(.985)!important;
+  transform:translateY(0) scale(.985);
 }
 .room-center-random-image{
-  width:92px!important;
-  height:92px!important;
-  margin:0 auto 2px!important;
-  object-fit:contain!important;
-  background:transparent!important;
-  border:0!important;
-  opacity:1!important;
-  filter:drop-shadow(0 10px 18px rgba(0,0,0,.34))!important;
-  transition:transform .18s ease,filter .18s ease!important;
+  width:92px;
+  height:92px;
+  margin:0 auto 2px;
+  object-fit:contain;
+  background:transparent;
+  border:0;
+  opacity:1;
+  filter:drop-shadow(0 10px 18px rgba(0,0,0,.34));
+  transition:transform .18s ease,filter .18s ease;
 }
 .room-center-random-trigger:not(.disabled):hover .room-center-random-image{
-  transform:translateY(-2px) rotate(-4deg) scale(1.045)!important;
-  filter:drop-shadow(0 13px 22px rgba(0,0,0,.42))!important;
+  transform:translateY(-2px) rotate(-4deg) scale(1.045);
+  filter:drop-shadow(0 13px 22px rgba(0,0,0,.42));
 }
 .room-random-button-label{
   width:100%;
-  margin:0!important;
-  padding:10px 12px!important;
-  border-radius:11px!important;
-  background:linear-gradient(180deg,#f6cf6f,#d9a62f)!important;
-  color:#171006!important;
-  font-size:18px!important;
-  font-weight:950!important;
-  line-height:1.1!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.52),0 7px 15px rgba(0,0,0,.18)!important;
+  margin:0;
+  padding:10px 12px;
+  border-radius:11px;
+  background:linear-gradient(180deg,#f6cf6f,#d9a62f);
+  color:#171006;
+  font-size:18px;
+  font-weight:950;
+  line-height:1.1;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.52),0 7px 15px rgba(0,0,0,.18);
 }
 .room-center-random-sub{
-  max-width:210px!important;
-  margin-top:1px!important;
-  font-size:12px!important;
-  line-height:1.4!important;
-  color:#aeb9c9!important;
+  max-width:210px;
+  margin-top:1px;
+  font-size:12px;
+  line-height:1.4;
+  color:#aeb9c9;
 }
 .room-center-random-trigger.disabled{
-  border-color:rgba(255,255,255,.07)!important;
-  background:rgba(255,255,255,.022)!important;
-  box-shadow:none!important;
-  opacity:.65!important;
+  border-color:rgba(255,255,255,.07);
+  background:rgba(255,255,255,.022);
+  box-shadow:none;
+  opacity:.65;
 }
 .room-center-random-trigger.disabled .room-random-button-label{
-  background:rgba(255,255,255,.10)!important;
-  color:#c5cfdd!important;
-  box-shadow:none!important;
+  background:rgba(255,255,255,.10);
+  color:#c5cfdd;
+  box-shadow:none;
 }
 @media(max-width:640px){
-  .room-center-random-trigger{max-width:220px!important;padding:13px 13px 14px!important}
-  .room-center-random-image{width:76px!important;height:76px!important}
-  .room-random-button-label{font-size:16px!important;padding:9px 10px!important}
-  .room-center-random-sub{font-size:11px!important;max-width:185px!important}
+  .room-center-random-trigger{max-width:220px;padding:13px 13px 14px}
+  .room-center-random-image{width:76px;height:76px}
+  .room-random-button-label{font-size:16px;padding:9px 10px}
+  .room-center-random-sub{font-size:11px;max-width:185px}
 }
 
 /* ===== V1.10.7: VS lớn + xúc xắc không khung ===== */
 .room-center-vs-image{
-    width: 230px !important;
-    height: 230px !important;
-    object-fit: contain !important;
-    filter: drop-shadow(0 18px 34px rgba(0,0,0,.46)) !important;
+    width: 230px ;
+    height: 230px ;
+    object-fit: contain ;
+    filter: drop-shadow(0 18px 34px rgba(0,0,0,.46)) ;
 }
 
 .room-center-random-form{
@@ -387,65 +387,65 @@
 .room-center-random-trigger,
 .room-center-random-trigger:not(.disabled),
 .room-center-random-trigger.disabled{
-    max-width: 250px !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    transform: none !important;
+    max-width: 250px ;
+    padding: 0 ;
+    border: 0 ;
+    border-radius: 0 ;
+    background: transparent ;
+    box-shadow: none ;
+    transform: none ;
 }
 
 .room-center-random-trigger:not(.disabled):hover,
 .room-center-random-trigger:not(.disabled):active{
-    background: transparent !important;
-    border: 0 !important;
-    box-shadow: none !important;
-    transform: none !important;
+    background: transparent ;
+    border: 0 ;
+    box-shadow: none ;
+    transform: none ;
 }
 
 .room-center-random-image{
-    width: 126px !important;
-    height: 126px !important;
-    object-fit: contain !important;
-    opacity: 1 !important;
-    filter: drop-shadow(0 14px 24px rgba(0,0,0,.38)) !important;
+    width: 126px ;
+    height: 126px ;
+    object-fit: contain ;
+    opacity: 1 ;
+    filter: drop-shadow(0 14px 24px rgba(0,0,0,.38)) ;
 }
 
 .room-center-random-trigger:not(.disabled):hover .room-center-random-image{
-    transform: translateY(-2px) scale(1.04) !important;
+    transform: translateY(-2px) scale(1.04) ;
 }
 
 .room-random-button-label{
-    margin-top: 8px !important;
+    margin-top: 8px ;
 }
 
 @media (max-width: 760px){
     .room-center-vs-image{
-        width: 170px !important;
-        height: 170px !important;
+        width: 170px ;
+        height: 170px ;
     }
     .room-center-random-image{
-        width: 98px !important;
-        height: 98px !important;
+        width: 98px ;
+        height: 98px ;
     }
 }
 
 @media (max-width: 520px){
     .room-center-vs-image{
-        width: 138px !important;
-        height: 138px !important;
+        width: 138px ;
+        height: 138px ;
     }
     .room-center-random-image{
-        width: 84px !important;
-        height: 84px !important;
+        width: 84px ;
+        height: 84px ;
     }
 }
 
 
 /* V1.10.8 - keep waiting dice fully visible */
-.room-center-random-trigger.disabled{opacity:1!important;}
-.room-center-random-trigger.disabled .room-center-random-image{opacity:1!important;filter:contrast(1.04) saturate(1.04) drop-shadow(0 14px 24px rgba(0,0,0,.38))!important;}
+.room-center-random-trigger.disabled{opacity:1;}
+.room-center-random-trigger.disabled .room-center-random-image{opacity:1;filter:contrast(1.04) saturate(1.04) drop-shadow(0 14px 24px rgba(0,0,0,.38));}
 
 /* V1.10.10 - hiển thị tỷ số và xác nhận trực tiếp tại vị trí VS */
 .room-result-review{
@@ -660,9 +660,9 @@
 
 /* V1.12.1 - Điều khiển phòng đấu gọn trên một hàng */
 .room-center-primary-actions{
-  display:flex !important;
-  flex-direction:row !important;
-  flex-wrap:nowrap !important;
+  display:flex ;
+  flex-direction:row ;
+  flex-wrap:nowrap ;
   align-items:center;
   justify-content:center;
   gap:10px;
@@ -675,7 +675,7 @@
 }
 .room-center-primary-actions .room-center-action-btn{
   white-space:nowrap;
-  width:auto !important;
+  width:auto ;
   min-width:128px;
 }
 .room-center-score-panel{
@@ -732,7 +732,7 @@
 
 /* ===== Collap V1.13.3c: modal xác nhận thoát phòng đồng bộ giao diện game ===== */
 body.room-action-modal-open{overflow:hidden}
-.room-action-modal[hidden]{display:none!important}
+.room-action-modal[hidden]{display:none}
 .room-action-modal{
     position:fixed;
     inset:0;
@@ -1195,7 +1195,7 @@ html[data-theme="light"] .room-score-history-row{border-color:#edf0f3}
 @keyframes pesEventCardPulse{0%,100%{filter:brightness(1);transform:scale(1)}50%{filter:brightness(1.14);transform:scale(1.018)}}
 @keyframes pesEventIcon{from{transform:translateY(0) scale(1)}to{transform:translateY(-7px) scale(1.09)}}
 @media(max-width:560px){.global-system-event-card{padding:25px 16px 23px;border-radius:18px}.global-system-event-icon{font-size:46px}}
-@media(prefers-reduced-motion:reduce){.global-system-event-overlay *{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+@media(prefers-reduced-motion:reduce){.global-system-event-overlay *{animation-duration:.01ms;animation-iteration-count:1}}
 
 /* ===== Collap_V1.13.7 - khung giao diện phòng đấu mới (giữ nguyên logic) ===== */
 .room-layout-v137{
@@ -1496,8 +1496,8 @@ html[data-theme="light"] .room-score-history-row{border-color:#edf0f3}
 .room-action-zone.is-post-result::before{content:"ĐÃ HOÀN TẤT GỬI KẾT QUẢ • KHÔNG TRỪ RP";color:#bbf7d0;background:#064e3b}
 .room-action-zone .btn{min-height:48px;border-radius:12px;font-weight:950;letter-spacing:.2px}
 .room-action-zone .btn:disabled{opacity:.58;cursor:not-allowed}
-.room-post-result-actions{display:grid!important;grid-template-columns:1fr 1fr!important}
-@media(max-width:760px){.room-action-zone{padding:10px}.room-post-result-actions{grid-template-columns:1fr!important}.room-action-zone::before{max-width:calc(100% - 28px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.room-post-result-actions{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:760px){.room-action-zone{padding:10px}.room-post-result-actions{grid-template-columns:1fr}.room-action-zone::before{max-width:calc(100% - 28px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 
 
 /* === Collap_V1.13.10: trophy and shutdown presentation === */
@@ -1512,7 +1512,7 @@ html[data-theme="light"] .room-score-history-row{border-color:#edf0f3}
 .win-streak-announcement.is-visible .win-streak-announcement-inner{animation:pesAchievementImpact .55s cubic-bezier(.2,.9,.2,1.25)}
 @keyframes pesAchievementImpact{0%{transform:scale(.7);filter:blur(8px)}65%{transform:scale(1.045);filter:blur(0)}100%{transform:scale(1)}}
 @keyframes pesAchievementSpin{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){.win-streak-announcement::after,.win-streak-announcement.is-visible .win-streak-announcement-inner{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.win-streak-announcement::after,.win-streak-announcement.is-visible .win-streak-announcement-inner{animation:none}}
 
 
 /* === Collap_V1.13.11: responsive room polish === */
@@ -1755,7 +1755,7 @@ html[data-theme="light"] .room-score-history-row{border-color:#edf0f3}
 .friendly-random3-card img,.friendly-random3-placeholder{width:84px;height:84px;object-fit:contain}.friendly-random3-placeholder{display:grid;place-items:center;border-radius:50%;background:#1c3049;font-size:34px;font-weight:800}
 .friendly-random3-card strong{font-size:17px;color:#fff}.friendly-random3-card span,.friendly-random3-card small{color:#aebdd0}.friendly-random3-card .btn{margin-top:auto;width:100%}
 .friendly-random3-waiting{padding:18px;border-radius:12px;background:rgba(37,170,105,.13);color:#8af0b9;font-weight:700}
-.random3-mode-card{border-color:rgba(255,197,61,.42)!important}
+.random3-mode-card{border-color:rgba(255,197,61,.42)}
 @media(max-width:760px){.friendly-random3-grid{grid-template-columns:1fr}.friendly-random3-card{display:grid;grid-template-columns:72px 1fr;grid-template-areas:'logo name' 'logo league' 'logo stats' 'button button';text-align:left}.friendly-random3-card img,.friendly-random3-placeholder{grid-area:logo;width:68px;height:68px}.friendly-random3-card strong{grid-area:name}.friendly-random3-card span{grid-area:league}.friendly-random3-card small{grid-area:stats}.friendly-random3-card .btn{grid-area:button}}
 
 /* v1.14.13 - Chọn chế độ Rank trong khung Thông tin phòng đấu */
@@ -1779,42 +1779,42 @@ html[data-theme="light"] .room-score-history-row{border-color:#edf0f3}
 .room-center-random3-card{margin:0;padding:7px 5px;border:1px solid rgba(160,188,230,.28);border-radius:10px;background:rgba(2,12,27,.82);display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
 .room-center-random3-card img,.room-center-random3-card .friendly-random3-placeholder{width:42px;height:42px;object-fit:contain}.room-center-random3-card strong{width:100%;font-size:9px;line-height:1.15;text-align:center;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.room-center-random3-card small{font-size:9px;color:#ffd76a;font-weight:900}
 .room-center-random3-card button{width:100%;border:0;border-radius:7px;padding:5px 3px;background:linear-gradient(135deg,#8b35ff,#f02fb6);color:#fff;font-size:9px;font-weight:1000;cursor:pointer}.room-center-random3-locked{padding:13px;border-radius:10px;background:rgba(33,190,111,.15);border:1px solid rgba(54,227,139,.26);color:#8ff0bc;text-align:center;font-size:12px;font-weight:900}
-.room-layout-v137 .room-center-stage-plain{justify-content:flex-start!important}
+.room-layout-v137 .room-center-stage-plain{justify-content:flex-start}
 @media(max-width:760px){.room-center-mode-zone{width:min(100%,360px)}.room-mode-select-btn{min-height:58px}}
 
 /* PES Arena V1.14.16 - Luồng chọn chế độ trước Sẵn sàng và thẻ Random 3 cỡ lớn */
 .room-mode-select-btn.selected{outline:3px solid #fff;outline-offset:2px;filter:brightness(1.14);transform:translateY(-2px)}
-.room-center-random-trigger.random3-trigger{background:linear-gradient(135deg,#6f27ff,#f42fba)!important;box-shadow:0 0 28px rgba(207,48,255,.38)!important}
+.room-center-random-trigger.random3-trigger{background:linear-gradient(135deg,#6f27ff,#f42fba);box-shadow:0 0 28px rgba(207,48,255,.38)}
 .room-center-random3-zone{width:min(100%,760px);margin:0 auto 12px;padding:18px;border:1px solid rgba(215,83,255,.5);border-radius:20px;background:radial-gradient(circle at 50% 0,rgba(145,46,255,.22),transparent 52%),linear-gradient(145deg,rgba(5,17,34,.98),rgba(29,10,43,.97));box-shadow:0 18px 45px rgba(0,0,0,.48),0 0 34px rgba(194,47,255,.15)}
 .room-center-random3-zone .room-center-mode-title{font-size:18px;color:#fff2ff;text-shadow:0 0 18px rgba(239,76,255,.65);margin-bottom:15px}
-.room-center-random3-grid{gap:14px!important}
-.room-center-random3-card{padding:16px 10px!important;border-radius:16px!important;border:1px solid rgba(223,115,255,.42)!important;background:linear-gradient(160deg,rgba(19,35,63,.97),rgba(38,13,55,.96))!important;box-shadow:0 10px 24px rgba(0,0,0,.32);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
-.room-center-random3-card:hover{transform:translateY(-5px) scale(1.02);border-color:#ef75ff!important;box-shadow:0 17px 34px rgba(116,30,166,.4)}
-.room-center-random3-card img,.room-center-random3-card .friendly-random3-placeholder{width:94px!important;height:94px!important;filter:drop-shadow(0 8px 12px rgba(0,0,0,.42))}
-.room-center-random3-card strong{font-size:15px!important;line-height:1.25!important;white-space:normal!important;min-height:38px;display:flex;align-items:center;justify-content:center}
-.room-center-random3-card small{font-size:12px!important}
-.room-center-random3-card button{padding:10px 7px!important;font-size:12px!important;border-radius:10px!important;box-shadow:0 7px 18px rgba(197,46,244,.3)}
-@media(max-width:760px){.room-center-random3-zone{padding:12px}.room-center-random3-grid{grid-template-columns:1fr!important}.room-center-random3-card{display:grid!important;grid-template-columns:84px 1fr;grid-template-areas:'logo name' 'logo tier' 'button button';text-align:left}.room-center-random3-card img,.room-center-random3-card .friendly-random3-placeholder{grid-area:logo;width:78px!important;height:78px!important}.room-center-random3-card strong{grid-area:name;justify-content:flex-start;text-align:left!important;min-height:0}.room-center-random3-card small{grid-area:tier}.room-center-random3-card button{grid-area:button}}
+.room-center-random3-grid{gap:14px}
+.room-center-random3-card{padding:16px 10px;border-radius:16px;border:1px solid rgba(223,115,255,.42);background:linear-gradient(160deg,rgba(19,35,63,.97),rgba(38,13,55,.96));box-shadow:0 10px 24px rgba(0,0,0,.32);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.room-center-random3-card:hover{transform:translateY(-5px) scale(1.02);border-color:#ef75ff;box-shadow:0 17px 34px rgba(116,30,166,.4)}
+.room-center-random3-card img,.room-center-random3-card .friendly-random3-placeholder{width:94px;height:94px;filter:drop-shadow(0 8px 12px rgba(0,0,0,.42))}
+.room-center-random3-card strong{font-size:15px;line-height:1.25;white-space:normal;min-height:38px;display:flex;align-items:center;justify-content:center}
+.room-center-random3-card small{font-size:12px}
+.room-center-random3-card button{padding:10px 7px;font-size:12px;border-radius:10px;box-shadow:0 7px 18px rgba(197,46,244,.3)}
+@media(max-width:760px){.room-center-random3-zone{padding:12px}.room-center-random3-grid{grid-template-columns:1fr}.room-center-random3-card{display:grid;grid-template-columns:84px 1fr;grid-template-areas:'logo name' 'logo tier' 'button button';text-align:left}.room-center-random3-card img,.room-center-random3-card .friendly-random3-placeholder{grid-area:logo;width:78px;height:78px}.room-center-random3-card strong{grid-area:name;justify-content:flex-start;text-align:left;min-height:0}.room-center-random3-card small{grid-area:tier}.room-center-random3-card button{grid-area:button}}
 
 
 /* === Collap_V1.14.17: safe host exit after result submission === */
 .room-layout-v137 .room-post-result-actions{
-  position:relative;z-index:8;display:grid!important;grid-template-columns:1fr 1fr!important;
-  width:min(100%,430px)!important;margin:16px auto 0!important;padding:14px!important;
-  border:1px solid rgba(34,197,94,.58)!important;border-radius:16px!important;
-  background:linear-gradient(180deg,rgba(5,54,37,.94),rgba(3,16,27,.96))!important;
-  box-shadow:0 14px 34px rgba(0,0,0,.38),0 0 28px rgba(34,197,94,.16)!important;
+  position:relative;z-index:8;display:grid;grid-template-columns:1fr 1fr;
+  width:min(100%,430px);margin:16px auto 0;padding:14px;
+  border:1px solid rgba(34,197,94,.58);border-radius:16px;
+  background:linear-gradient(180deg,rgba(5,54,37,.94),rgba(3,16,27,.96));
+  box-shadow:0 14px 34px rgba(0,0,0,.38),0 0 28px rgba(34,197,94,.16);
 }
 .room-layout-v137 .room-post-result-actions::before{
-  content:"CHỦ PHÒNG ĐÃ HOÀN TẤT • THOÁT KHÔNG TRỪ RP"!important;
-  color:#dcfce7!important;background:#065f46!important;border:1px solid rgba(134,239,172,.38);
+  content:"CHỦ PHÒNG ĐÃ HOÀN TẤT • THOÁT KHÔNG TRỪ RP";
+  color:#dcfce7;background:#065f46;border:1px solid rgba(134,239,172,.38);
 }
-.room-layout-v137 .room-post-result-actions form,.room-layout-v137 .room-post-result-actions .btn{width:100%!important}
+.room-layout-v137 .room-post-result-actions form,.room-layout-v137 .room-post-result-actions .btn{width:100%}
 .room-layout-v137 .room-post-result-actions .btn.red{
-  background:linear-gradient(135deg,#ef4444,#be123c)!important;color:#fff!important;
-  box-shadow:0 8px 22px rgba(225,29,72,.28)!important;
+  background:linear-gradient(135deg,#ef4444,#be123c);color:#fff;
+  box-shadow:0 8px 22px rgba(225,29,72,.28);
 }
-@media(max-width:760px){.room-layout-v137 .room-post-result-actions{grid-template-columns:1fr!important}}
+@media(max-width:760px){.room-layout-v137 .room-post-result-actions{grid-template-columns:1fr}}
 
 /* v1.14.18 - Giữ nguyên chế độ khi đá tiếp */
 .room-center-mode-locked{display:flex;flex-direction:column;align-items:center;gap:5px;padding:13px 16px;border:1px solid rgba(250,204,21,.55);border-radius:14px;background:linear-gradient(135deg,rgba(250,204,21,.14),rgba(168,85,247,.13));box-shadow:0 0 22px rgba(250,204,21,.12);text-align:center}.room-center-mode-locked-label{font-size:10px;font-weight:900;letter-spacing:1.4px;color:#facc15}.room-center-mode-locked strong{font-size:17px;color:#fff}.room-center-mode-locked small{font-size:11px;color:#cbd5e1}
@@ -1882,7 +1882,7 @@ html[data-theme="light"] .room-score-history-row{border-color:#edf0f3}
 
 .room-layout-v1215 .room-center-stage-plain{
   width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;
-  justify-content:flex-start!important;gap:12px;padding:20px 12px
+  justify-content:flex-start;gap:12px;padding:20px 12px
 }
 .room-layout-v1215 .room-center-mode-zone,
 .room-layout-v1215 .room-center-random3-zone,
@@ -1896,8 +1896,8 @@ html[data-theme="light"] .room-score-history-row{border-color:#edf0f3}
 .room-layout-v1215 .room-center-countdown-label{margin-top:2px;min-height:18px}
 .room-layout-v1215 .room-center-countdown{min-height:50px;display:flex;align-items:center;justify-content:center}
 .room-layout-v1215 .room-center-vs-image{width:clamp(118px,10vw,150px);height:clamp(118px,10vw,150px);margin:2px auto;flex:0 0 auto}
-.room-layout-v1215 .room-center-random-trigger{width:min(100%,300px)!important;min-height:158px;justify-content:center}
-.room-layout-v1215 .room-center-primary-actions{margin-top:auto!important;padding-top:4px}
+.room-layout-v1215 .room-center-random-trigger{width:min(100%,300px);min-height:158px;justify-content:center}
+.room-layout-v1215 .room-center-primary-actions{margin-top:auto;padding-top:4px}
 .room-layout-v1215 .room-center-score-panel{min-height:190px;display:flex;flex-direction:column;justify-content:center}
 .room-layout-v1215 .room-result-review{min-height:250px;display:flex;flex-direction:column;justify-content:center;gap:12px}
 .room-layout-v1215 .room-result-score{line-height:1;min-height:88px;display:flex;align-items:center;justify-content:center;gap:16px}
@@ -1907,7 +1907,7 @@ html[data-theme="light"] .room-score-history-row{border-color:#edf0f3}
   font-size:12px;font-weight:1000;letter-spacing:.06em;text-align:center
 }
 .room-layout-v1215 .room-result-review.is-confirmed{border-color:rgba(74,222,128,.32);box-shadow:0 14px 34px rgba(0,0,0,.34),0 0 26px rgba(34,197,94,.10)}
-.room-layout-v1215 .room-confirmed-actions{margin-top:4px!important;padding-top:0}
+.room-layout-v1215 .room-confirmed-actions{margin-top:4px;padding-top:0}
 .room-layout-v1215.room-state-confirmed .room-finished-summary{display:none}
 
 /* Cac trang thai dung chung cung mot truc can giua, khong thay doi kich thuoc cot. */
@@ -1917,9 +1917,9 @@ html[data-theme="light"] .room-score-history-row{border-color:#edf0f3}
 .room-layout-v1215.room-state-waiting-confirm .room-center-stage-plain,
 .room-layout-v1215.room-state-confirmed .room-center-stage-plain{align-self:stretch}
 .room-layout-v1215.room-state-waiting-confirm .room-center-stage-plain,
-.room-layout-v1215.room-state-confirmed .room-center-stage-plain{justify-content:center!important}
+.room-layout-v1215.room-state-confirmed .room-center-stage-plain{justify-content:center}
 .room-layout-v1215.room-state-waiting-confirm .room-center-primary-actions,
-.room-layout-v1215.room-state-confirmed .room-center-primary-actions{margin-top:6px!important}
+.room-layout-v1215.room-state-confirmed .room-center-primary-actions{margin-top:6px}
 
 .room-layout-v1215 .room-extra-controls{border-radius:18px;margin-top:0}
 .room-layout-v1215 .room-arena-right-rail{min-width:0}
@@ -1932,15 +1932,15 @@ html[data-theme="light"] .room-score-history-row{border-color:#edf0f3}
 }
 @media(max-width:900px){
   .room-layout-v1215{--room-layout-center-w:520px}
-  .room-layout-v1215 .room-side-card{min-height:460px!important}
-  .room-layout-v1215 .room-center-stage-plain{min-height:420px!important}
+  .room-layout-v1215 .room-side-card{min-height:460px}
+  .room-layout-v1215 .room-center-stage-plain{min-height:420px}
   .room-layout-v1215 .room-team-name-lg{min-height:auto}
 }
 @media(max-width:640px){
   .room-layout-v1215 .room-stage-topbar{padding:14px}
   .room-layout-v1215 .room-stage-state-badge{width:100%;white-space:normal}
-  .room-layout-v1215 .room-side-card{min-height:400px!important}
-  .room-layout-v1215 .room-center-stage-plain{min-height:380px!important;padding:16px 10px}
+  .room-layout-v1215 .room-side-card{min-height:400px}
+  .room-layout-v1215 .room-center-stage-plain{min-height:380px;padding:16px 10px}
   .room-layout-v1215 .room-result-review{min-height:220px}
   .room-layout-v1215 .room-result-score{min-height:68px;gap:10px}
 }

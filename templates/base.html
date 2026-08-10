@@ -6,8 +6,13 @@
     <meta charset="UTF-8">
     <title>{{ APP_NAME }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {# Thứ tự CSS: nền tảng trước, module sau; module ở sau chỉ được phép tác động trong phạm vi class riêng. #}
+    {# V1.2.49 CSS cascade contract:
+       1 tokens -> 2 legacy foundation -> 3 shared components/sizes -> 4 feature modules -> 5 page module.
+       Page/module CSS must scope selectors and must not use !important. #}
+    <link rel="stylesheet" href="{{ static_asset('css/core/design_tokens.css') }}">
     <link rel="stylesheet" href="{{ static_asset('style.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/components/buttons.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/button_sizes.css') }}">
     {% if request.endpoint == 'room_detail' %}
     <link rel="stylesheet" href="{{ static_asset('css/room_detail.css') }}">
     {% endif %}
@@ -26,7 +31,6 @@
     {% endif %}
     {% if request.endpoint == 'room_detail' %}
     <link rel="stylesheet" href="{{ static_asset('css/quick_match.css') }}">
-    <link rel="stylesheet" href="{{ static_asset('css/button_sizes.css') }}">
     <script src="{{ static_asset('js/quick_match.js') }}" defer></script>
     {% endif %}
     <script src="{{ static_asset('js/pes_polling.js') }}" defer></script>

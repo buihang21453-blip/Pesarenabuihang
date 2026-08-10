@@ -1,29 +1,27 @@
-# PES Arena CSS Ownership — V1.2.14
+# CSS OWNERSHIP — V1.2.49
 
-Mục tiêu: mỗi khu vực giao diện có một nơi quản lý chính để tránh CSS ở trang này đè sang trang khác.
+## Cascade chuẩn
+`design_tokens.css` → `style.css` (legacy) → `components/buttons.css` → `button_sizes.css` → feature modules → page module.
 
-| Khu vực | File quản lý chính | Phạm vi |
-|---|---|---|
-| Nền tảng, layout chung, nút dùng chung | `static/style.css` | Toàn hệ thống |
-| Phòng đấu legacy/chức năng | `static/css/room_detail.css` | Chỉ `room_detail` |
-| Room V2 visual shell | `static/css/room_v2.css` | Chỉ `.room-v2-shell` trong `room_detail` |
-| Quick Match | `static/css/quick_match.css` | Chỉ `room_detail` |
-| Parsec | `static/css/parsec_room.css` | Room/Profile theo class riêng |
-| Chế độ Rank | `static/css/rank_mode_toggle.css` | Room/Admin theo class riêng |
-| Admin Dashboard | `static/css/admin_dashboard.css` | Admin |
-| Admin thưởng tuần | `static/css/admin_weekly_rewards.css` | Admin, đã scope `body[data-page="admin"]` |
-| Hồ sơ Showcase | `static/css/profile_showcase.css` | `.profile-v2-page` |
-| Shop | `static/css/shop_phase3.css` | Các trang Shop/Inventory/Profile/Admin Shop |
-| Lucky Box người chơi | `static/css/luckybox_user.css` | Các trang Lucky Box |
-| Lucky Box Admin | `static/css/luckybox_admin.css` | Admin Lucky Box |
-| Zcoin | `static/css/zcoin.css` | Thành phần Zcoin/topbar dùng chung |
-| Zcoin Rewards | `static/css/zcoin_rewards.css` | Trang rewards |
+## Chủ sở hữu
+| Thành phần | Owner |
+|---|---|
+| Biến màu dùng chung | `static/css/core/design_tokens.css` |
+| Màu/nền/viền/shadow `.btn` | `static/css/components/buttons.css` |
+| Kích thước `.btn` | `static/css/button_sizes.css` |
+| Room legacy/compat | `static/css/room_detail.css` |
+| Room V2 hiện hành | `static/css/room_v2.css` |
+| Parsec | `static/css/parsec_room.css` |
+| Quick Match | `static/css/quick_match.css` |
+| Profile | `static/css/profile_showcase.css` |
+| Shop/Inventory | `static/css/shop_phase3.css` |
+| Admin | `static/css/admin_dashboard.css` + module admin tương ứng |
+| Legacy chung | `static/style.css` |
 
-## Quy tắc từ V1.2.14
-
-1. CSS chức năng/legacy của phòng đấu giữ trong `static/css/room_detail.css`; lớp giao diện Room V2 mới nằm trong `static/css/room_v2.css`, scope bắt buộc bằng `.room-v2-shell`. Không thêm lại vào `style.css`.
-2. Không dùng selector chung như `.btn`, `.panel`, `button`, `input` trong module nếu có thể dùng class riêng của module.
-3. Module tải sau chỉ được ghi đè trong phạm vi class của module đó.
-4. Không dùng `!important` để giải quyết xung đột trừ khi cần giữ tương thích với CSS legacy và phải ghi chú lý do.
-5. Dọn CSS và thay thiết kế giao diện là hai công việc riêng; V1.2.14 chỉ dọn/cô lập, không cố tình đổi thiết kế.
-6. Khi thêm module mới, ưu tiên tải CSS theo `request.endpoint` thay vì nạp toàn hệ thống.
+## Luật bắt buộc
+1. `static/css/**` không dùng `!important`.
+2. Không tạo thêm visual rule generic `.btn` ngoài `components/buttons.css`.
+3. `button_sizes.css` chỉ điều khiển kích thước/khoảng cách.
+4. Page module phải có scope riêng.
+5. `style.css` là legacy compatibility; không append fix mới vào cuối file.
+6. Chạy `python scripts/check_css_contract.py` trước khi đóng gói.

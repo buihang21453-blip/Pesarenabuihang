@@ -10,17 +10,17 @@
 }
 
 .room-layout-v137 .room-quick-match-row .room-quick-match-btn {
-  width: calc((100% - 12px) / 2) !important;
-  min-width: 0 !important;
-  min-height: 54px !important;
-  padding: 0 14px !important;
-  border: 1px solid rgba(255, 255, 255, .26) !important;
-  border-radius: 13px !important;
-  color: #fff !important;
-  font-size: 15px !important;
-  font-weight: 950 !important;
+  width: calc((100% - 12px) / 2) ;
+  min-width: 0 ;
+  min-height: 54px ;
+  padding: 0 14px ;
+  border: 1px solid rgba(255, 255, 255, .26) ;
+  border-radius: 13px ;
+  color: #fff ;
+  font-size: 15px ;
+  font-weight: 950 ;
   letter-spacing: .5px;
-  flex: 0 0 calc((100% - 12px) / 2) !important;
+  flex: 0 0 calc((100% - 12px) / 2) ;
   box-shadow: 0 8px 22px rgba(0, 0, 0, .24);
   transition: transform .16s ease, filter .16s ease, opacity .16s ease;
 }
@@ -31,14 +31,14 @@
 }
 
 .room-layout-v137 .room-quick-match-row .room-quick-match-btn.room-quick-match-blue {
-  background: linear-gradient(135deg, #19a7ff, #006eff) !important;
-  border-color: rgba(125, 211, 252, .72) !important;
+  background: linear-gradient(135deg, #19a7ff, #006eff) ;
+  border-color: rgba(125, 211, 252, .72) ;
 }
 
 .room-layout-v137 .room-quick-match-row .room-quick-match-btn.room-quick-match-green,
 .room-layout-v137 .room-quick-match-row .room-quick-match-btn.is-sent {
-  background: linear-gradient(135deg, #2bdc78, #079447) !important;
-  border-color: rgba(134, 239, 172, .72) !important;
+  background: linear-gradient(135deg, #2bdc78, #079447) ;
+  border-color: rgba(134, 239, 172, .72) ;
 }
 
 .room-layout-v137 .room-quick-match-row .room-quick-match-btn.is-searching {
@@ -56,7 +56,7 @@
 }
 
 .game-notice-open { overflow: hidden; }
-.game-notice-modal[hidden] { display: none !important; }
+.game-notice-modal[hidden] { display: none ; }
 .game-notice-modal {
   position: fixed;
   inset: 0;
@@ -136,10 +136,10 @@
 
 @media (max-width: 640px) {
   .room-layout-v137 .room-quick-match-row .room-quick-match-btn {
-    width: calc((100% - 12px) / 2) !important;
-    flex-basis: calc((100% - 12px) / 2) !important;
-    padding-inline: 8px !important;
-    font-size: 13px !important;
+    width: calc((100% - 12px) / 2) ;
+    flex-basis: calc((100% - 12px) / 2) ;
+    padding-inline: 8px ;
+    font-size: 13px ;
   }
 }
 

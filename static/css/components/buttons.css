@@ -1,0 +1,143 @@
+/* ============================================================
+   V1.2.49 — AUTHORITATIVE GLOBAL BUTTON VISUALS
+   Owner duy nhat cho MAU / VIEN / NEN / SHADOW cua .btn dung chung.
+   KHONG so huu kich thuoc (button_sizes.css so huu).
+   KHONG so huu nut dac thu cua phong dau (.room-neon-btn), Parsec,
+   Lucky Box hay preview Admin — cac module do tu so huu trong scope rieng.
+   Khong dung !important.
+   ============================================================ */
+
+.btn,
+button.btn,
+a.btn,
+.admin-primary-action{
+  appearance:none;
+  border:1px solid var(--ui-action-gold-border);
+  border-radius:var(--ui-button-radius);
+  background:linear-gradient(180deg,var(--ui-action-gold-hover),var(--ui-action-gold));
+  color:var(--ui-action-gold-text);
+  box-shadow:0 8px 22px rgba(197,151,51,.14);
+  font-weight:800;
+  text-decoration:none;
+  cursor:pointer;
+  transition:var(--ui-button-transition);
+}
+.btn:hover,
+button.btn:hover,
+a.btn:hover,
+.admin-primary-action:hover{
+  background:linear-gradient(180deg,#f5dda0,var(--ui-action-gold-hover));
+  border-color:#f6dfa0;
+  transform:translateY(-1px);
+}
+
+.btn.gold{--btn-bg:var(--ui-action-gold);}
+
+.btn.green,
+button.btn.green,
+a.btn.green{
+  background:linear-gradient(180deg,var(--ui-action-green-hover),var(--ui-action-green));
+  border-color:var(--ui-action-green-border);
+  color:var(--ui-action-green-text);
+  box-shadow:0 8px 22px rgba(46,170,122,.14);
+}
+.btn.green:hover,
+button.btn.green:hover,
+a.btn.green:hover{
+  background:linear-gradient(180deg,#52cc9b,var(--ui-action-green-hover));
+  border-color:#78d8b5;
+}
+
+.btn.red,
+button.btn.red,
+a.btn.red{
+  background:linear-gradient(180deg,var(--ui-action-red-hover),var(--ui-action-red));
+  border-color:var(--ui-action-red-border);
+  color:var(--ui-action-red-text);
+  box-shadow:0 8px 22px rgba(207,98,105,.12);
+}
+.btn.red:hover,
+button.btn.red:hover,
+a.btn.red:hover{
+  background:linear-gradient(180deg,#e9868c,var(--ui-action-red-hover));
+  border-color:#ef9ca1;
+}
+
+.btn.gray,
+button.btn.gray,
+a.btn.gray{
+  background:linear-gradient(180deg,var(--ui-action-neutral-hover),var(--ui-action-neutral));
+  border-color:var(--ui-action-neutral-border);
+  color:var(--ui-action-neutral-text);
+  box-shadow:none;
+}
+.btn.gray:hover,
+button.btn.gray:hover,
+a.btn.gray:hover{
+  background:linear-gradient(180deg,#293b4c,var(--ui-action-neutral-hover));
+  border-color:#486078;
+}
+
+.btn.blue,
+button.btn.blue,
+a.btn.blue{
+  background:linear-gradient(180deg,var(--ui-action-blue-hover),var(--ui-action-blue));
+  border-color:var(--ui-action-blue-border);
+  color:var(--ui-action-blue-text);
+}
+
+.btn.danger-outline{
+  background:rgba(207,98,105,.055);
+  border-color:rgba(223,116,123,.38);
+  color:#e79aa0;
+  box-shadow:none;
+}
+.btn.danger-outline:hover{
+  background:rgba(207,98,105,.12);
+  border-color:rgba(235,139,145,.62);
+  color:#f3b0b5;
+}
+
+.btn:disabled,
+button.btn:disabled,
+a.btn[aria-disabled="true"]{
+  opacity:.55;
+  cursor:not-allowed;
+  transform:none;
+}
+
+html[data-theme="light"] .btn,
+html[data-theme="light"] button.btn,
+html[data-theme="light"] a.btn,
+html[data-theme="light"] .admin-primary-action{
+  color:#342600;
+  background:linear-gradient(180deg,#f1cf77,#d9aa3e);
+  border-color:#c59223;
+  box-shadow:0 6px 14px rgba(181,132,24,.14);
+}
+html[data-theme="light"] .btn.green,
+html[data-theme="light"] button.btn.green,
+html[data-theme="light"] a.btn.green{
+  color:#fff;
+  background:linear-gradient(180deg,#2aad73,#198a58);
+  border-color:#18784f;
+}
+html[data-theme="light"] .btn.red,
+html[data-theme="light"] button.btn.red,
+html[data-theme="light"] a.btn.red{
+  color:#fff;
+  background:linear-gradient(180deg,#d86068,#b8444d);
+  border-color:#a83b44;
+}
+html[data-theme="light"] .btn.gray,
+html[data-theme="light"] button.btn.gray,
+html[data-theme="light"] a.btn.gray{
+  color:var(--ui-action-neutral-text);
+  background:linear-gradient(180deg,var(--ui-action-neutral-hover),var(--ui-action-neutral));
+  border-color:var(--ui-action-neutral-border);
+}
+html[data-theme="light"] .btn.danger-outline{
+  color:#a83c45;
+  background:#fff7f7;
+  border-color:#df9ba0;
+}
