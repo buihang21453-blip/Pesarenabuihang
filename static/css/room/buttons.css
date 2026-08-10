@@ -1,0 +1,87 @@
+/* ============================================================
+   V1.2.50 — ROOM BUTTONS: SINGLE VISUAL OWNER
+   Scope: only buttons inside .room-v2-shell carrying .room-neon-btn.
+   This file owns background, border, radius, shadow, icon tone and
+   room action sizing. quick_match.css must not restyle neon buttons.
+   No !important.
+   ============================================================ */
+.room-v2-shell .room-action-zone .room-neon-btn,
+.room-v2-shell .room-center-primary-actions .room-neon-btn,
+.room-v2-shell .room-post-result-actions .room-neon-btn,
+.room-v2-shell .room-quick-match-row .room-neon-btn{
+  --room-neon-color:#43a9ff;
+  --room-neon-glow:rgba(67,169,255,.28);
+  appearance:none;
+  -webkit-appearance:none;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  max-width:none;
+  min-height:40px;
+  height:40px;
+  padding:0 13px;
+  border:1px solid var(--room-neon-color);
+  border-radius:9px;
+  background:rgba(3,10,16,.92);
+  background-image:none;
+  color:#fff;
+  font-size:12px;
+  font-weight:850;
+  line-height:1;
+  text-align:center;
+  text-decoration:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  box-shadow:inset 0 0 10px color-mix(in srgb,var(--room-neon-color) 14%,transparent),0 0 7px var(--room-neon-glow);
+  text-shadow:0 0 7px rgba(255,255,255,.12);
+  filter:none;
+  transform:none;
+  transition:border-color .14s ease,box-shadow .14s ease,background-color .14s ease,filter .14s ease;
+  cursor:pointer;
+}
+.room-v2-shell .room-action-zone .room-neon-btn:hover,
+.room-v2-shell .room-center-primary-actions .room-neon-btn:hover,
+.room-v2-shell .room-post-result-actions .room-neon-btn:hover,
+.room-v2-shell .room-quick-match-row .room-neon-btn:hover{
+  background:rgba(5,16,24,.97);
+  background-image:none;
+  border-color:var(--room-neon-color);
+  box-shadow:inset 0 0 13px color-mix(in srgb,var(--room-neon-color) 20%,transparent),0 0 10px var(--room-neon-glow);
+  filter:brightness(1.06);
+  transform:none;
+}
+.room-v2-shell .room-neon-btn.room-neon-gold{--room-neon-color:#f7b928;--room-neon-glow:rgba(247,185,40,.34)}
+.room-v2-shell .room-neon-btn.room-neon-green{--room-neon-color:#20dc65;--room-neon-glow:rgba(32,220,101,.34)}
+.room-v2-shell .room-neon-btn.room-neon-red{--room-neon-color:#f04438;--room-neon-glow:rgba(240,68,56,.34)}
+.room-v2-shell .room-neon-btn.room-neon-blue{--room-neon-color:#43a9ff;--room-neon-glow:rgba(67,169,255,.30)}
+.room-v2-shell .room-neon-btn.room-neon-gray{--room-neon-color:#73859a;--room-neon-glow:rgba(115,133,154,.22)}
+.room-v2-shell .room-neon-btn .room-neon-icon{
+  flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-width:16px;
+  color:var(--room-neon-color);font-size:1.14em;line-height:1;filter:drop-shadow(0 0 4px var(--room-neon-glow));
+}
+.room-v2-shell .room-neon-btn .room-neon-label{display:inline-block;line-height:1}
+.room-v2-shell .room-quick-match-row,
+.room-v2-shell .room-center-primary-actions,
+.room-v2-shell .room-post-result-actions{
+  width:var(--rui-center-action-width,88%);max-width:300px;margin-left:auto;margin-right:auto;
+}
+.room-v2-shell .room-center-primary-actions,
+.room-v2-shell .room-post-result-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--rui-center-action-gap,8px)}
+.room-v2-shell .room-center-primary-actions>a,
+.room-v2-shell .room-center-primary-actions>form,
+.room-v2-shell .room-post-result-actions>a,
+.room-v2-shell .room-post-result-actions>form{display:flex;width:100%;min-width:0;margin:0}
+@media(max-width:1250px){
+  .room-v2-shell .room-action-zone .room-neon-btn,
+  .room-v2-shell .room-center-primary-actions .room-neon-btn,
+  .room-v2-shell .room-post-result-actions .room-neon-btn,
+  .room-v2-shell .room-quick-match-row .room-neon-btn{min-height:38px;height:38px;font-size:12px}
+}
+@media(max-width:700px){
+  .room-v2-shell .room-action-zone .room-neon-btn,
+  .room-v2-shell .room-center-primary-actions .room-neon-btn,
+  .room-v2-shell .room-post-result-actions .room-neon-btn,
+  .room-v2-shell .room-quick-match-row .room-neon-btn{min-height:36px;height:36px;padding:0 10px;font-size:11px;gap:6px}
+}

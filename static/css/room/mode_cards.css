@@ -1,0 +1,31 @@
+/* ============================================================
+   V1.2.50 — ROOM MODE LOGOS: FIXED COMMON BOX
+   Single owner for the 7 mode-card logo dimensions.
+   Every asset gets the exact same image box. No per-logo scale,
+   no guessing based on artwork, no special mode-7 transform.
+   ============================================================ */
+.room-v2-shell{
+  --room-mode-logo-fixed-size:64px;
+}
+.room-v2-shell .room-v2-mode-grid .room-v2-mode-card > img{
+  box-sizing:border-box;
+  width:var(--room-mode-logo-fixed-size);
+  height:var(--room-mode-logo-fixed-size);
+  min-width:var(--room-mode-logo-fixed-size);
+  min-height:var(--room-mode-logo-fixed-size);
+  max-width:var(--room-mode-logo-fixed-size);
+  max-height:var(--room-mode-logo-fixed-size);
+  margin:auto;
+  align-self:center;
+  justify-self:center;
+  object-fit:contain;
+  object-position:center;
+  transform:none;
+  filter:drop-shadow(0 5px 8px rgba(0,0,0,.42));
+}
+@media(max-width:1250px){
+  .room-v2-shell{--room-mode-logo-fixed-size:56px}
+}
+@media(max-width:700px){
+  .room-v2-shell{--room-mode-logo-fixed-size:48px}
+}

@@ -606,3 +606,11 @@
 - 7 che do hien thi lien tuc 1..7, trong khi asset/backend van giu 1 -> 2 -> 7 -> 3 -> 4 -> 5 -> 6.
 - Preview dung logo that tu Supabase `v1.3.40/modes/*.webp` thay vi o so gia lap.
 - Khong thay core/API/RP/matchmaking/gameplay.
+
+## V1.2.50 - Dong bo cum nut phong dau va ep 7 logo cung kich thuoc
+- Tach owner giao dien nut phong dau sang `static/css/room/buttons.css`.
+- `quick_match.css` khong con duoc phep doi nen/vien/kich thuoc cua `.room-neon-btn`.
+- Tach owner kich thuoc logo 7 che do sang `static/css/room/mode_cards.css`.
+- Xoa cac rule phan tan `room-v2-mode-card img` va scale rieng mode 7 trong `room_v2.css`.
+- Logo 7 che do dung cung mot image box: desktop 64x64, tablet 56x56, mobile 48x48.
+- Khong sua logic room/API/RP/Parsec.

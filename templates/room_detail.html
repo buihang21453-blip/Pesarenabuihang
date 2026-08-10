@@ -2,6 +2,8 @@
 {% from "_avatar_macros.html" import player_avatar %}
 {% block page_styles %}
 <link rel="stylesheet" href="{{ static_asset('css/room_v2.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/buttons.css') }}">
+<link rel="stylesheet" href="{{ static_asset('css/room/mode_cards.css') }}">
 {% endblock %}
 {% block content %}
 {% set room_room_viewer_is_host = (current_user.id|string == room.host_user_id|string) %}

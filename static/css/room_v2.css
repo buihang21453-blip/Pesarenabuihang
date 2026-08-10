@@ -65,7 +65,7 @@
 .room-v2-shell .room-v2-mode-card{position:relative;width:100%;min-width:0;height:174px;display:grid;grid-template-rows:1fr auto auto;align-items:end;justify-items:center;gap:5px;padding:8px 7px 7px;border:1px solid rgba(208,166,50,.58);border-radius:6px;background:linear-gradient(180deg,rgba(11,23,35,.95),rgba(4,11,17,.97));color:#fff;overflow:hidden;box-shadow:inset 0 0 18px rgba(240,180,42,.04);font-family:inherit}
 .room-v2-shell button.room-v2-mode-card{cursor:pointer}
 .room-v2-shell .room-v2-mode-card:disabled{opacity:1;cursor:default}
-.room-v2-shell .room-v2-mode-card img{width:100px;height:100px;max-width:92%;object-fit:contain;align-self:center;filter:drop-shadow(0 5px 8px rgba(0,0,0,.42))}
+/* V1.2.50: mode logo sizing owned by css/room/mode_cards.css */
 .room-v2-shell .room-v2-mode-card strong{display:block;width:100%;min-height:30px;font-size:13px;line-height:1.12;text-align:center;color:#fff}
 .room-v2-shell .room-v2-mode-card small{display:flex;align-items:center;justify-content:center;width:100%;min-height:26px;border:1px solid rgba(164,104,15,.55);border-radius:4px;background:rgba(79,49,8,.63);font-size:11px;font-weight:800;color:#efc668}
 .room-v2-shell .room-v2-mode-card small.is-open{border-color:#41a627;background:rgba(18,105,14,.72);color:#caff75}
@@ -180,7 +180,7 @@
   .room-v2-shell .room-v2-modes h2{height:20px;margin:0 0 4px;font-size:12px}
   .room-v2-shell .room-v2-mode-grid{gap:6px;height:108px}
   .room-v2-shell .room-v2-mode-card{height:108px;padding:4px;grid-template-rows:1fr auto auto;gap:1px}
-  .room-v2-shell .room-v2-mode-card img{width:61px;height:61px}
+  /* V1.2.50: mode logo sizing owned by css/room/mode_cards.css */
   .room-v2-shell .room-v2-mode-card strong{min-height:18px;font-size:10px;line-height:1.05}
   .room-v2-shell .room-v2-mode-card small{min-height:17px;font-size:8px}
   .room-v2-shell .room-v2-mode-index{width:21px;height:21px;font-size:11px}
@@ -297,7 +297,7 @@
   .room-v2-shell .room-v2-modes h2{height:19px;margin:0 0 4px;font-size:11px}
   .room-v2-shell .room-v2-mode-grid{height:var(--room-v237-mode-h);gap:var(--rui-mode-gap,6px)}
   .room-v2-shell .room-v2-mode-card{height:var(--room-v237-mode-h);padding:3px 4px;gap:1px}
-  .room-v2-shell .room-v2-mode-card img{width:56px;height:56px}
+  /* V1.2.50: mode logo sizing owned by css/room/mode_cards.css */
   .room-v2-shell .room-v2-mode-card strong{min-height:16px;font-size:9px;line-height:1.03}
   .room-v2-shell .room-v2-mode-card small{min-height:16px;font-size:7.5px}
   .room-v2-shell .room-v2-mode-index{width:20px;height:20px;font-size:10px}
@@ -426,13 +426,7 @@
   .room-v2-shell .room-v2-modes{height:calc(var(--room-v239-mode-h) + 23px)}
   .room-v2-shell .room-v2-mode-grid{height:var(--room-v239-mode-h);gap:var(--rui-mode-gap,6px)}
   .room-v2-shell .room-v2-mode-card{height:var(--room-v239-mode-h);padding:3px 4px;gap:1px}
-  .room-v2-shell .room-v2-mode-card img{
-    width:min(var(--rui-mode-logo-size,82px),92%);
-    height:min(var(--rui-mode-logo-size,82px),92px);
-    max-width:92%;
-    transform:none;
-    margin:4px auto 0;
-  }
+  /* V1.2.50: mode logo sizing owned by css/room/mode_cards.css */
   .room-v2-shell .room-v2-mode-card strong{min-height:17px;font-size:9px;line-height:1.05}
   .room-v2-shell .room-v2-mode-card small{min-height:17px;font-size:7.5px}
 
@@ -508,15 +502,9 @@
     grid-template-rows:minmax(0,1fr) 22px 22px;
     padding:3px 4px 4px;gap:1px;overflow:hidden;
   }
-  .room-v2-shell .room-v2-mode-card img{
-    width:min(var(--rui-mode-logo-size,82px),84%);
-    height:min(var(--rui-mode-logo-size,82px),84px);
-    max-width:84%;max-height:84px;
-    align-self:center;margin:auto;object-fit:contain;
-    transform:scale(1);transform-origin:center;
-  }
+  /* V1.2.50: mode logo sizing owned by css/room/mode_cards.css */
   /* Asset 7 co artboard lap day hon, can quang hoc ve cung mat bang voi 6 logo con lai. */
-  .room-v2-shell .room-v2-mode-card.mode-7 img{transform:scale(.78)}
+  /* V1.2.50: mode logo sizing owned by css/room/mode_cards.css */
   .room-v2-shell .room-v2-mode-card strong{
     min-height:22px;height:22px;display:flex;align-items:center;justify-content:center;
     overflow:hidden;font-size:9px;line-height:1.05;
@@ -627,13 +615,8 @@
     background:linear-gradient(180deg,rgba(11,23,35,var(--rui-mode-card-opacity,.72)),rgba(4,11,17,var(--rui-mode-card-opacity,.72)));
   }
   .room-v2-shell .room-v2-mode-card.mode-2{background:linear-gradient(180deg,rgba(46,13,72,var(--rui-mode-card-opacity,.72)),rgba(14,8,23,var(--rui-mode-card-opacity,.72)))}
-  .room-v2-shell .room-v2-mode-card img{
-    width:min(var(--rui-mode-logo-size,96px),88%);
-    height:min(var(--rui-mode-logo-size,96px),96px);
-    max-width:88%;max-height:96px;
-    object-fit:contain;transform:scale(.94);
-  }
-  .room-v2-shell .room-v2-mode-card.mode-7 img{transform:scale(.72)}
+  /* V1.2.50: mode logo sizing owned by css/room/mode_cards.css */
+  /* V1.2.50: mode logo sizing owned by css/room/mode_cards.css */
   .room-v2-shell .room-v2-mode-card small{
     width:clamp(58%,var(--rui-mode-status-width,78%),90%);
     max-width:145px;margin:0 auto;padding:0 6px;
@@ -688,111 +671,7 @@
   .room-v2-shell .room-arena-right-rail{height:calc(var(--room-v239-main-h) + var(--room-v245-mode-h))}
 }
 
-/* ===== V1.2.46 - Neon Gaming Button: 1 owner, khong de CSS cu de len =====
-   Scope duy nhat: .room-v2-shell .room-neon-btn
-   Khong dung .btn/.green/.gold/.red de dinh nghia giao dien nua. */
-.room-v2-shell .room-neon-btn{
-  --room-neon-color:#43a9ff;
-  --room-neon-glow:rgba(67,169,255,.28);
-  appearance:none;
-  -webkit-appearance:none;
-  box-sizing:border-box;
-  width:100%;
-  min-width:0;
-  max-width:none;
-  min-height:var(--rui-center-button-height,40px);
-  height:var(--rui-center-button-height,40px);
-  padding:0 13px;
-  border:1px solid var(--room-neon-color);
-  border-radius:9px;
-  background:rgba(3,10,16,.90);
-  background-color:rgba(3,10,16,.90);
-  background-image:none;
-  color:#fff;
-  font-size:var(--rui-center-button-font-size,12px);
-  font-weight:850;
-  line-height:1;
-  text-align:center;
-  text-decoration:none;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  box-shadow:inset 0 0 10px color-mix(in srgb,var(--room-neon-color) 14%,transparent),0 0 7px var(--room-neon-glow);
-  text-shadow:0 0 7px rgba(255,255,255,.12);
-  filter:none;
-  transform:none;
-  transition:border-color .14s ease,box-shadow .14s ease,background-color .14s ease,filter .14s ease;
-  cursor:pointer;
-}
-.room-v2-shell .room-neon-btn:hover{
-  background:rgba(5,16,24,.96);
-  background-image:none;
-  border-color:var(--room-neon-color);
-  box-shadow:inset 0 0 13px color-mix(in srgb,var(--room-neon-color) 20%,transparent),0 0 10px var(--room-neon-glow);
-  filter:brightness(1.06);
-  transform:none;
-}
-.room-v2-shell .room-neon-btn:active{
-  box-shadow:inset 0 0 15px color-mix(in srgb,var(--room-neon-color) 24%,transparent),0 0 14px var(--room-neon-glow);
-  filter:brightness(1.12);
-  transform:none;
-}
-.room-v2-shell .room-neon-btn:disabled{
-  opacity:.52;
-  cursor:not-allowed;
-  filter:none;
-}
-.room-v2-shell .room-neon-btn.room-neon-gold{--room-neon-color:#f7b928;--room-neon-glow:rgba(247,185,40,.34)}
-.room-v2-shell .room-neon-btn.room-neon-green{--room-neon-color:#20dc65;--room-neon-glow:rgba(32,220,101,.34)}
-.room-v2-shell .room-neon-btn.room-neon-red{--room-neon-color:#f04438;--room-neon-glow:rgba(240,68,56,.34)}
-.room-v2-shell .room-neon-btn.room-neon-blue{--room-neon-color:#43a9ff;--room-neon-glow:rgba(67,169,255,.30)}
-.room-v2-shell .room-neon-btn.room-neon-gray{--room-neon-color:#73859a;--room-neon-glow:rgba(115,133,154,.22)}
-.room-v2-shell .room-neon-btn .room-neon-icon{
-  flex:0 0 auto;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:16px;
-  color:var(--room-neon-color);
-  font-size:1.14em;
-  line-height:1;
-  filter:drop-shadow(0 0 4px var(--room-neon-glow));
-}
-.room-v2-shell .room-neon-btn .room-neon-label{display:inline-block;line-height:1}
-
-/* Cum nut trung tam chi quan ly layout; style tung nut do room-neon-btn so huu. */
-.room-v2-shell .room-quick-match-row,
-.room-v2-shell .room-center-primary-actions,
-.room-v2-shell .room-post-result-actions{
-  width:var(--rui-center-action-width,88%);
-  max-width:300px;
-  margin-left:auto;
-  margin-right:auto;
-}
-.room-v2-shell .room-center-primary-actions,
-.room-v2-shell .room-post-result-actions{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:var(--rui-center-action-gap,8px);
-}
-.room-v2-shell .room-center-primary-actions>a,
-.room-v2-shell .room-center-primary-actions>form,
-.room-v2-shell .room-post-result-actions>a,
-.room-v2-shell .room-post-result-actions>form{
-  display:flex;
-  width:100%;
-  min-width:0;
-  margin:0;
-}
-.room-v2-shell .room-quick-match-row .room-neon-btn{max-width:none;margin:0}
-
-@media (max-width:1250px){
-  .room-v2-shell .room-neon-btn{min-height:38px;height:38px;font-size:12px}
-}
-@media (max-width:700px){
-  .room-v2-shell .room-neon-btn{min-height:36px;height:36px;padding:0 10px;font-size:11px;gap:6px}
-}
+/* V1.2.50: button visuals moved to css/room/buttons.css */
 
 /* ===== V1.2.48 - Single owner: PES ARENA brand trong topbar phong dau =====
    Muc tieu: can giua theo TOAN BO topbar, khong phu thuoc grid-column hay CSS legacy.
