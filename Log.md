@@ -401,3 +401,21 @@
 - Giữ kiểm tra quyền thật: khi database đọc được user đã bị hạ quyền, route Admin vẫn từ chối.
 - Thêm test hồi quy mobile/Vercel: `test_v1223_admin_mobile_login.py`.
 - Không thay UI, RP, lịch sử, Zcoin, kho đồ hay dữ liệu Supabase.
+
+## V1.2.24 - Giao dien phong 6 logo, 4 che do khoa
+- Dung Room UI V2 tach rieng bang `static/css/room_v2.css`.
+- Chi 2 che do hien tai hoat dong: Rank thuong Random va Random 3 chon 1.
+- 4 che do con lai chi hien logo/ten/trang thai khoa, khong them core/API/RP/module nghiep vu.
+- Logo 6 che do dung duong dan asset Supabase `v1.3.40/modes/1.webp` -> `6.webp`.
+
+## V1.2.25 - Tich hop RP hoa random + Read Model/Cache + giu kien truc tach Core/Room UI
+- Ngay: 2026-08-10 14:43 (Asia/Bangkok)
+- RP hoa chenh < 500: moi nguoi random doc lap +1..+6 RP.
+- RP hoa chenh >= 500: nguoi RP thap random +1..+6, nguoi RP cao +0.
+- Nang `RP_FORMULA_VERSION` len `RP_V1.15.0`; RNG van seed theo match id de Admin rebuild co the tai lap ket qua.
+- Sua lop repeat-opponent va Admin ranking rebuild de KHONG ghi de ket qua hoa random thanh +3/+3 hoac +6/+0 co dinh.
+- Read Model/Admin: them TTL cache 20 giay cho bao cao tran theo tung khoang thoi gian; giu cache BXH/profile da co.
+- Giu kien truc Core da tach khoi app.py: `modules/core/room_runtime.py`, `matchmaking_runtime.py`, `user_repository.py`, `match_repository.py` va cac service lien quan.
+- Giu Room UI tach rieng: `static/css/room_v2.css`; khong tron CSS V2 vao legacy `room_detail.css`.
+- Khong them 4 core che do Series/BO3; 4 che do moi van chi la logo + khoa giao dien.
+- Test RP/Read Model/total matches/daily limit: 25 PASS. Mot so test cu trong project van khoa cung version cu nen khong dung lam regression version moi.

@@ -12,7 +12,7 @@ import random
 from modules.rp_engine import calculate_deltas, validate_deltas
 from modules.rp_formula import RP_FORMULA_VERSION
 
-EXPECTED_RP_FORMULA_VERSION = "RP_V1.14.5"
+EXPECTED_RP_FORMULA_VERSION = "RP_V1.15.0"
 
 
 def rank_level(points):
@@ -82,9 +82,23 @@ def test_loss_recovery_win_steps():
 
 
 def test_draw_points_by_rp_gap():
-    assert calculate({"rank_points": 900}, {"rank_points": 1200}, 0, 0) == (3, 3)
-    assert calculate({"rank_points": 900}, {"rank_points": 1400}, 0, 0) == (6, 0)
-    assert calculate({"rank_points": 1400}, {"rank_points": 900}, 0, 0) == (0, 6)
+    # Chênh < 500: mỗi người random độc lập trong +1..+6.
+    same_band = [calculate({"rank_points": 900}, {"rank_points": 1200}, 0, 0, seed) for seed in range(200)]
+    assert all(1 <= a <= 6 and 1 <= b <= 6 for a, b in same_band)
+    assert len({a for a, _ in same_band}) > 1
+    assert len({b for _, b in same_band}) > 1
+
+    # Chênh >= 500: chỉ người RP thấp được random +1..+6.
+    low_left = [calculate({"rank_points": 900}, {"rank_points": 1400}, 0, 0, seed) for seed in range(100)]
+    assert all(1 <= a <= 6 and b == 0 for a, b in low_left)
+    assert len({a for a, _ in low_left}) > 1
+
+    low_right = [calculate({"rank_points": 1400}, {"rank_points": 900}, 0, 0, seed) for seed in range(100)]
+    assert all(a == 0 and 1 <= b <= 6 for a, b in low_right)
+    assert len({b for _, b in low_right}) > 1
+
+    # Cùng seed + cùng dữ liệu phải cho cùng kết quả để rebuild có thể tái lập.
+    assert calculate({"rank_points": 1000}, {"rank_points": 1000}, 0, 0, 777) == calculate({"rank_points": 1000}, {"rank_points": 1000}, 0, 0, 777)
 
 
 def test_invalid_zero_loss_delta_is_rejected():

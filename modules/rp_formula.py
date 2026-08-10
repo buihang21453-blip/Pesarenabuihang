@@ -6,12 +6,16 @@ Supabase hoặc dữ liệu người dùng. Mọi thay đổi công thức RP ph
 """
 from __future__ import annotations
 
-RP_FORMULA_VERSION = "RP_V1.14.5"
-RP_FORMULA_NAME = "PES Arena RP – Tách thưởng chuỗi khỏi hệ số gặp lại"
+RP_FORMULA_VERSION = "RP_V1.15.0"
+RP_FORMULA_NAME = "PES Arena RP – Hòa random 1-6"
 RP_RANDOM_SEED_NAMESPACE = f"PES_ARENA|{RP_FORMULA_VERSION}"
 
 PLACEMENT_MATCHES = 10
 MAX_POSITIVE_POINTS_PER_MATCH = 50
+
+# Trận hòa
+DRAW_POINTS_RANGE = (1, 6)
+DRAW_GAP_THRESHOLD = 500
 
 # Người thắng
 WIN_BASE_RANGE = (21, 23)
@@ -70,8 +74,9 @@ def formula_summary() -> dict:
             "pair_rp_match_limit": 6,
             "streak_bonus_scaled_by_repeat_factor": False,
             "streak_bonus_scaled_by_host_factor": False,
-            "draw_equal_points": 3,
-            "draw_gap_bonus": 6,
-            "draw_gap_threshold": 500,
+            "draw_points_range": list(DRAW_POINTS_RANGE),
+            "draw_gap_low_player_range": list(DRAW_POINTS_RANGE),
+            "draw_gap_high_player_points": 0,
+            "draw_gap_threshold": DRAW_GAP_THRESHOLD,
         },
     }

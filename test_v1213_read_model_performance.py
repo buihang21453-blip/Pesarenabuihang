@@ -9,7 +9,7 @@ ADMIN = (ROOT / 'modules/admin_dashboard_routes.py').read_text(encoding='utf-8')
 SQL = (ROOT / 'project_docs/sql/PES_ARENA_READ_MODEL_V1.3.34.sql').read_text(encoding='utf-8')
 
 def test_version():
-    assert 'APP_VERSION = "V1.2.14"' in APP
+    assert 'APP_VERSION = "V1.2.25"' in APP
 
 def test_dashboard_only_loads_current_users_matches():
     block = APP[APP.index('def dashboard():'):APP.index('@app.route("/rooms/create"')]
@@ -19,7 +19,8 @@ def test_dashboard_only_loads_current_users_matches():
 def test_match_repository_filters_on_supabase():
     block = MATCH_REPO[MATCH_REPO.index('def list_matches'):MATCH_REPO.index('def match_status_label')]
     assert '.eq("status", status)' in block
-    assert '.limit(max(1, int(limit)))' in block
+    assert 'limit = max(1, int(limit))' in block
+    assert 'query = query.limit(limit)' in block
 
 def test_profile_does_not_scan_all_matches():
     block = PROFILE[PROFILE.index('def build_profile_context'):]
@@ -33,11 +34,19 @@ def test_ranking_prefers_recent_form_read_model():
 
 def test_admin_uses_read_model_when_available():
     assert 'load_match_report(report_range)' in ADMIN
-    assert 'list_matches(limit=80) if read_model_report_payload else list_matches()' in ADMIN
-    assert 'list_matches(status="disputed", limit=80)' in ADMIN
-    assert 'list_matches(status="playing", limit=80)' in ADMIN
+    assert 'load_match_report(report_range)' in ADMIN
+    assert 'list_matches(limit=500)' in ADMIN
+    assert 'list_matches(status="disputed", limit=50)' in ADMIN
+    assert 'list_matches(status="playing", limit=50)' in ADMIN
 
 def test_read_model_sql_is_optional_but_complete():
     low = SQL.lower()
     for table in ('player_recent_form_cache','player_profile_stats_cache','player_pair_stats_cache','admin_match_daily_stats'):
         assert f'create table if not exists public.{table}' in low
+
+
+def test_admin_report_has_short_ttl_cache():
+    block = READ[READ.index('def load_match_report'):READ.index('def load_recent_form_map')]
+    assert 'read_model:admin_match_report:' in block
+    assert '_cache_get(cache_key)' in block
+    assert '_cache_set(cache_key, (report, daily_output), 20)' in block

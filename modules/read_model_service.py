@@ -90,10 +90,15 @@ def resolve_report_range(range_key, today=None):
 def load_match_report(range_key="today"):
     """Load admin match report from tiny precomputed Supabase tables.
 
-    Returns ``None`` when the V1.3.34 SQL migration has not been applied, so the
-    caller may temporarily fall back to legacy logic instead of returning HTTP 500.
+    Kết quả được cache ngắn hạn theo khoảng thời gian để tab Admin không phải
+    đọc lại cùng một read-model ở mỗi lần click. Returns ``None`` khi migration
+    read-model chưa có để caller có thể fallback an toàn.
     """
     range_key, labels, start, end = resolve_report_range(range_key)
+    cache_key = f"read_model:admin_match_report:{range_key}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
     try:
         daily_rows = _query_rows(
             "admin_match_daily_stats",
@@ -223,7 +228,7 @@ def load_match_report(range_key="today"):
         for code in _mode_order():
             item[code] = daily_mode.get(day, {}).get(code, 0)
         daily_output.append(item)
-    return report, daily_output
+    return _cache_set(cache_key, (report, daily_output), 20)
 
 
 def load_recent_form_map(player_ids):
