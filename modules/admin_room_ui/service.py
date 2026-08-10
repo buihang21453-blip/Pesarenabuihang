@@ -21,10 +21,10 @@ DEFAULTS = {
     "main_height": 438,
     "main_gap": 8,
     "mode_gap": 6,
-    "header_height": 88,
-    "share_button_width": 150,
-    "share_button_height": 44,
-    "share_button_font_size": 13,
+    "header_height": 64,
+    "share_button_width": 118,
+    "share_button_height": 36,
+    "share_button_font_size": 12,
 
     # Chỉ cho dịch dọc những phần thật sự cần căn. Trục X được khóa giữa.
     "player_panel_y": 0,
@@ -34,7 +34,7 @@ DEFAULTS = {
     "sidebar_x": 0, "sidebar_y": 0,
 
     # Tiêu đề/nhận diện phòng
-    "brand_scale": 1.00, "brand_x": 0, "brand_y": 0,
+    "brand_scale": 1.30, "brand_x": 0, "brand_y": 0,
 
     # Avatar + tên của cả hai người chơi
     "avatar_scale": 1.00, "avatar_x": 0, "avatar_y": 0,
@@ -44,22 +44,22 @@ DEFAULTS = {
 
     # Khu vực giữa
     "active_mode_logo_scale": 1.00,
-    "active_mode_logo_size": 110,
+    "active_mode_logo_size": 126,
     "active_mode_logo_x": 0, "active_mode_logo_y": 0,
     "vs_scale": 1.00, "vs_x": 0, "vs_y": 0,
     "center_gap": 7,
     "center_padding_y": 10,
     "center_action_gap": 8,
-    "center_button_height": 40,
+    "center_button_height": 38,
     "center_button_font_size": 12,
-    "center_action_width": 94,
+    "center_action_width": 88,
 
     # 7 chế độ dùng chung kích thước, logo ưu tiên lớn và dễ nhìn.
     "mode_logo_scale": 1.00,  # legacy
-    "mode_logo_size": 82,
+    "mode_logo_size": 96,
     "mode_card_height": 132,  # legacy: card bên trong cụm
-    "mode_cluster_height": 154,
-    "mode_status_width": 94,
+    "mode_cluster_height": 166,
+    "mode_status_width": 78,
 
     # Tỷ lệ chiều cao ba khối cột phải.
     "rail_parsec_ratio": 1.15,
@@ -75,7 +75,7 @@ DEFAULTS = {
     "center_panel_opacity": 0.86,
     "opponent_panel_opacity": 0.86,
     "sidebar_panel_opacity": 0.93,
-    "mode_card_opacity": 0.95,
+    "mode_card_opacity": 0.72,
     "action_zone_opacity": 0.72,
     "background_opacity": 0.72,
     "gold_glow": 0.14,
@@ -94,10 +94,10 @@ FIELD_SPECS = {
     "main_height": (int, 400, 560, 1),
     "main_gap": (int, 0, 36, 1),
     "mode_gap": (int, 0, 28, 1),
-    "header_height": (int, 64, 150, 1),
-    "share_button_width": (int, 105, 210, 1),
-    "share_button_height": (int, 32, 64, 1),
-    "share_button_font_size": (int, 10, 18, 1),
+    "header_height": (int, 54, 72, 1),
+    "share_button_width": (int, 92, 150, 1),
+    "share_button_height": (int, 30, 44, 1),
+    "share_button_font_size": (int, 9, 14, 1),
 
     "player_panel_y": (int, -50, 50, 1),
     "host_x": (int, -80, 80, 1), "host_y": (int, -80, 80, 1),
@@ -105,28 +105,28 @@ FIELD_SPECS = {
     "opponent_x": (int, -80, 80, 1), "opponent_y": (int, -80, 80, 1),
     "sidebar_x": (int, -80, 80, 1), "sidebar_y": (int, -80, 80, 1),
 
-    "brand_scale": (float, 0.60, 1.70, 0.01), "brand_x": (int, -160, 160, 1), "brand_y": (int, -60, 60, 1),
+    "brand_scale": (float, 0.90, 1.80, 0.01), "brand_x": (int, -160, 160, 1), "brand_y": (int, -60, 60, 1),
     "avatar_scale": (float, 0.60, 1.80, 0.01), "avatar_x": (int, -100, 100, 1), "avatar_y": (int, -100, 100, 1),
     "player_name_scale": (float, 0.70, 1.60, 0.01), "player_name_x": (int, -100, 100, 1), "player_name_y": (int, -100, 100, 1),
     "club_logo_scale": (float, 0.70, 1.55, 0.01),
     "club_area_y": (int, -60, 60, 1),
 
     "active_mode_logo_scale": (float, 0.60, 1.90, 0.01),
-    "active_mode_logo_size": (int, 60, 180, 1),
+    "active_mode_logo_size": (int, 84, 180, 1),
     "active_mode_logo_x": (int, -100, 100, 1), "active_mode_logo_y": (int, -100, 100, 1),
     "vs_scale": (float, 0.60, 2.00, 0.01), "vs_x": (int, -120, 120, 1), "vs_y": (int, -100, 100, 1),
     "center_gap": (int, 2, 18, 1),
     "center_padding_y": (int, 4, 24, 1),
     "center_action_gap": (int, 2, 18, 1),
-    "center_button_height": (int, 30, 64, 1),
+    "center_button_height": (int, 32, 48, 1),
     "center_button_font_size": (int, 9, 18, 1),
     "center_action_width": (int, 70, 100, 1),
 
     "mode_logo_scale": (float, 0.60, 2.20, 0.01),
-    "mode_logo_size": (int, 52, 118, 1),
+    "mode_logo_size": (int, 72, 118, 1),
     "mode_card_height": (int, 110, 178, 1),
-    "mode_cluster_height": (int, 128, 220, 1),
-    "mode_status_width": (int, 70, 100, 1),
+    "mode_cluster_height": (int, 150, 220, 1),
+    "mode_status_width": (int, 58, 90, 1),
     "rail_parsec_ratio": (float, 0.70, 1.80, 0.01),
     "rail_room_history_ratio": (float, 0.50, 1.50, 0.01),
     "rail_h2h_ratio": (float, 0.60, 1.80, 0.01),

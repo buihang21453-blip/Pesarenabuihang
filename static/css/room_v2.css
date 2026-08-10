@@ -531,3 +531,120 @@
     height:calc(var(--room-v239-main-h) + var(--room-v240-mode-cluster-h))!important;
   }
 }
+
+/* ===== V1.2.41 - Room polish theo feedback truc tiep =====
+   Gon topbar, huong dan CLB thay vach mo, logo lon hon, nut dong bo,
+   Parsec hien tron noi dung va 7 mode co trang thai gon. */
+@media (min-width:1251px){
+  /* 1. Topbar gon lai, config cu cung duoc clamp ve muc hop ly. */
+  .room-v2-shell .room-stage-topbar{
+    min-height:clamp(54px,var(--rui-header-height,64px),72px)!important;
+    height:clamp(54px,var(--rui-header-height,64px),72px)!important;
+    padding:5px 12px!important;
+  }
+  .room-v2-shell .room-stage-title{font-size:27px!important}
+  .room-v2-shell .room-code-badge{padding:5px 10px!important;font-size:15px!important}
+  .room-v2-shell .room-stage-subtitle{margin-top:4px!important;font-size:11px!important}
+
+  /* 2. Logo PES ARENA tren thanh phong: lon ro hon nhung khong lam day header. */
+  .room-v2-shell .room-v2-brand img{
+    width:min(330px,94%)!important;height:48px!important;
+    transform:scale(max(1,var(--rui-brand-scale,1.3)))!important;
+    transform-origin:center!important;
+  }
+
+  /* 3. Chia se phong gon, khong icon. */
+  .room-v2-shell .room-share-button{
+    width:clamp(92px,var(--rui-share-width,118px),150px)!important;
+    height:clamp(30px,var(--rui-share-height,36px),44px)!important;
+    padding:3px 8px!important;border-radius:4px!important;
+  }
+  .room-v2-shell .room-share-copy strong{font-size:clamp(9px,var(--rui-share-font-size,12px),14px)!important}
+  .room-v2-shell .room-share-copy small{font-size:9px!important}
+
+  /* 4. Bo vach chia mo cu; thay bang nhan huong dan CLB o giua. */
+  .room-v2-shell .room-player-heading-plain{
+    border-bottom:0!important;box-shadow:none!important;
+  }
+  .room-v2-shell .room-team-guide{
+    position:relative;z-index:4;display:flex;align-items:center;justify-content:center;
+    width:calc(100% - 34px);margin:-2px auto 2px;gap:8px;
+    color:#dce9f6;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .room-v2-shell .room-team-guide:before,.room-v2-shell .room-team-guide:after{
+    content:"";height:1px;flex:1;opacity:.5;
+  }
+  .room-v2-shell .room-team-card.home .room-team-guide:before,
+  .room-v2-shell .room-team-card.home .room-team-guide:after{background:linear-gradient(90deg,transparent,#2b9fff)}
+  .room-v2-shell .room-team-card.home .room-team-guide:after{background:linear-gradient(90deg,#2b9fff,transparent)}
+  .room-v2-shell .room-team-card.away .room-team-guide:before,
+  .room-v2-shell .room-team-card.away .room-team-guide:after{background:linear-gradient(90deg,transparent,#ff4b57)}
+  .room-v2-shell .room-team-card.away .room-team-guide:after{background:linear-gradient(90deg,#ff4b57,transparent)}
+
+  /* 5. Cum trung tam: logo mode lon, nen logo thoang, status ngan. */
+  .room-v2-shell .room-center-mode-zone,
+  .room-v2-shell .room-center-random3-zone{
+    background:rgba(3,7,14,.18)!important;border-radius:7px!important;
+  }
+  .room-v2-shell .room-v2-active-mode-logo{
+    width:clamp(100px,var(--rui-active-size,126px),160px)!important;
+    height:clamp(100px,var(--rui-active-size,126px),160px)!important;
+    max-width:86%!important;max-height:160px!important;
+  }
+  .room-v2-shell .room-center-mode-note{
+    width:auto!important;max-width:84%!important;padding:4px 12px!important;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+
+  /* 6. Ba nut trung tam: chung chieu cao/font va cung mot khung rong. */
+  .room-v2-shell .room-quick-match-row,
+  .room-v2-shell .room-center-primary-actions{
+    width:clamp(76%,var(--rui-center-action-width,88%),94%)!important;
+    max-width:290px!important;margin-left:auto!important;margin-right:auto!important;
+  }
+  .room-v2-shell .room-quick-match-row .room-center-action-btn,
+  .room-v2-shell .room-center-primary-actions .room-center-action-btn{
+    min-height:clamp(32px,var(--rui-center-button-height,38px),48px)!important;
+    height:clamp(32px,var(--rui-center-button-height,38px),48px)!important;
+    padding:4px 8px!important;border-radius:8px!important;
+    font-size:clamp(10px,var(--rui-center-button-font-size,12px),15px)!important;
+    line-height:1!important;
+  }
+  .room-v2-shell .room-quick-match-row .room-center-action-btn{width:100%!important;max-width:none!important}
+
+  /* 7. Parsec khong tu cuon; cho panel tu cao theo noi dung. */
+  .room-v2-shell .room-arena-right-rail{
+    grid-template-rows:auto minmax(105px,.72fr) minmax(130px,1fr)!important;
+    align-content:stretch!important;
+  }
+  .room-v2-shell .room-arena-right-rail>.parsec-room-panel{
+    overflow:visible!important;height:auto!important;min-height:max-content!important;
+  }
+  .room-v2-shell .room-arena-right-rail>.room-session-h2h-rail,
+  .room-v2-shell .room-arena-right-rail>.room-pair-history-panel{overflow:auto!important}
+  .room-v2-shell .parsec-room-panel{padding:9px 10px!important}
+  .room-v2-shell .parsec-room-heading{margin-bottom:7px!important;padding-bottom:7px!important}
+  .room-v2-shell .parsec-room-block+.parsec-room-block{margin-top:7px!important}
+  .room-v2-shell .parsec-room-note{margin-top:6px!important}
+
+  .room-v2-shell{--room-v240-mode-cluster-h:clamp(160px,var(--rui-mode-cluster-height,166px),220px)}
+
+  /* 8. 7 logo deu mat bang quang hoc; status ngan, card nen mo hon. */
+  .room-v2-shell .room-v2-mode-card{
+    background:linear-gradient(180deg,rgba(11,23,35,var(--rui-mode-card-opacity,.72)),rgba(4,11,17,var(--rui-mode-card-opacity,.72)))!important;
+  }
+  .room-v2-shell .room-v2-mode-card.mode-2{background:linear-gradient(180deg,rgba(46,13,72,var(--rui-mode-card-opacity,.72)),rgba(14,8,23,var(--rui-mode-card-opacity,.72)))!important}
+  .room-v2-shell .room-v2-mode-card img{
+    width:min(var(--rui-mode-logo-size,96px),88%)!important;
+    height:min(var(--rui-mode-logo-size,96px),96px)!important;
+    max-width:88%!important;max-height:96px!important;
+    object-fit:contain!important;transform:scale(.94)!important;
+  }
+  .room-v2-shell .room-v2-mode-card.mode-7 img{transform:scale(.72)!important}
+  .room-v2-shell .room-v2-mode-card small{
+    width:clamp(58%,var(--rui-mode-status-width,78%),90%)!important;
+    max-width:145px!important;margin:0 auto!important;padding:0 6px!important;
+    border-radius:4px!important;
+  }
+}

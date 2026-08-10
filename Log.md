@@ -1,3 +1,12 @@
+## V1.2.41 - Can chinh Room UI theo 8 khu vuc feedback
+- Thu gon thanh PHONG DAU va nut Chia se phong; tang logo PES ARENA tren topbar.
+- Bo vach mo o hai panel nguoi choi, thay bang huong dan CLB theo mode: CHON 1 CLB / CHON 1 TRONG 3 CLB.
+- Tang logo che do dang chon, lam nen khu mode trung tam thoang hon, rut gon thanh trang thai.
+- Dong bo chieu cao/font/cum rong 3 nut trung tam de khong con nut lech kich thuoc.
+- Parsec hien tron noi dung, khong con scrollbar rieng; lich su moi duoc cuon khi dai.
+- Dong bo mat bang quang hoc logo 7 che do, nen card mo hon, status ngan gon va tang chieu cao cum de khong bi cat.
+- Khong thay doi Core/API/RP/matchmaking/gameplay.
+
 ## V1.2.40 - Nang cap dieu khien kich thuoc Room UI
 
 - Them dieu chinh chieu cao thanh PHONG DAU.
