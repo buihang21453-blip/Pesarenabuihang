@@ -623,3 +623,10 @@
 - `room_v2.css`: bo cac thuoc tinh visual radius/font-weight con trung voi owner nut; giu layout/kich thuoc/vi tri.
 - `room/mode_cards.css`: khoa 1 box chung cho 7 logo, khong scale rieng tung mode.
 - Them `BAO_CAO_CSS_2_KHU_V1.2.51.md` va test ownership.
+
+
+## V1.2.52 - Can doi chieu rong nut Tim Nhanh
+- Giu nguyen phong cach Neon Gaming/Cyberpunk va toan bo logic Quick Match.
+- Sua layout trong `static/css/room_v2.css`: nut Tim Nhanh khong con rong bang ca cum 2 nut ben duoi.
+- Hang Tim Nhanh duoc can giua, rong 132-145px, tuong duong mot nut Moi Dau/Thoat Phong.
+- Khong them `!important`, khong sua `quick_match.css`, khong doi HTML/JS/API.

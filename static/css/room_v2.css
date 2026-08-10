@@ -578,10 +578,17 @@
   }
 
   /* 6. Ba nut trung tam: chung chieu cao/font va cung mot khung rong. */
-  .room-v2-shell .room-quick-match-row,
   .room-v2-shell .room-center-primary-actions{
     width:clamp(76%,var(--rui-center-action-width,88%),94%);
     max-width:290px;margin-left:auto;margin-right:auto;
+  }
+  /* V1.2.52: Tim Nhanh la mot CTA don, khong keo dai bang ca cum 2 nut ben duoi.
+     Can giua va gioi han rong xap xi mot nut Moi Dau/Thoat Phong. */
+  .room-v2-shell .room-quick-match-row{
+    width:clamp(132px,44%,145px);
+    max-width:145px;
+    margin-left:auto;
+    margin-right:auto;
   }
   .room-v2-shell .room-quick-match-row .room-center-action-btn,
   .room-v2-shell .room-center-primary-actions .room-center-action-btn{
@@ -591,6 +598,7 @@
     font-size:clamp(10px,var(--rui-center-button-font-size,12px),15px);
     line-height:1;
   }
+  /* Nut chi fill hang compact 132-145px, khong fill cum action 290px. */
   .room-v2-shell .room-quick-match-row .room-center-action-btn{width:100%;max-width:none}
 
   /* 7. Parsec khong tu cuon; cho panel tu cao theo noi dung. */
