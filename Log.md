@@ -384,3 +384,11 @@
 - BXH: fallback theo tung user con thieu cache, khong con chi fallback khi toan bo map rong.
 - `cleanup_preview.py`: danh dau cache la BAO VE/GIU NGUYEN.
 - Khong thay doi RP, matches, Zcoin, user_inventory, user_equipment.
+
+## V1.2.23 — 10/08/2026 (Asia/Bangkok)
+- Sửa luồng đăng nhập Admin trên mobile/Vercel: route `/admin*` khi hết phiên luôn quay về `/admin-login`, không rơi sang login người chơi.
+- `admin_required` không còn query Supabase lần thứ hai rồi xóa session ngay sau khi Admin vừa đăng nhập; dùng `current_user()` với DB/cache/session fallback đã có.
+- Cập nhật trạng thái Online sau Admin login thành best-effort: Supabase chập chờn không còn biến một lần đăng nhập đúng thành lỗi 500/vòng lặp login.
+- Giữ kiểm tra quyền thật: khi database đọc được user đã bị hạ quyền, route Admin vẫn từ chối.
+- Thêm test hồi quy mobile/Vercel: `test_v1223_admin_mobile_login.py`.
+- Không thay UI, RP, lịch sử, Zcoin, kho đồ hay dữ liệu Supabase.

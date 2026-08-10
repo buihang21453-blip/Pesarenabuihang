@@ -67,7 +67,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.2.22"
+APP_VERSION = "V1.2.23"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1408,18 +1408,33 @@ def ensure_admin():
     _admin_checked = True
 
 
+def _login_redirect_endpoint():
+    """Đưa route quản trị về đúng màn hình Admin login.
+
+    Trên mobile người dùng thường mở /admin trực tiếp từ menu/tab mới. Nếu cookie
+    phiên chưa có hoặc đã hết hạn thì không được đẩy sang /login thường vì dễ tạo
+    vòng lặp đăng nhập sai màn hình.
+    """
+    path = str(request.path or "")
+    endpoint = str(request.endpoint or "")
+    if path.startswith("/admin") or endpoint.startswith("admin"):
+        return "admin_login"
+    return "login"
+
+
 def login_required(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
+        redirect_endpoint = _login_redirect_endpoint()
         if not session.get("user_id"):
             flash("Bạn cần đăng nhập trước.", "warning")
-            return redirect(url_for("login"))
+            return redirect(url_for(redirect_endpoint))
 
         user = current_user()
         if not user:
             session.clear()
             flash("Phiên đăng nhập không hợp lệ.", "warning")
-            return redirect(url_for("login"))
+            return redirect(url_for(redirect_endpoint))
 
         status = user.get("account_status", "approved")
         if status != "approved":
@@ -1430,7 +1445,7 @@ def login_required(view):
                 "banned": "Tài khoản đã bị khóa.",
             }
             flash(messages.get(status, "Tài khoản chưa được phép sử dụng."), "danger")
-            return redirect(url_for("login"))
+            return redirect(url_for(redirect_endpoint))
 
         return view(*args, **kwargs)
     return wrapped
@@ -1439,23 +1454,12 @@ def login_required(view):
 def admin_required(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
-        user_id = session.get("user_id")
-        user = None
-        if user_id:
-            try:
-                user = get_user(user_id)
-                if user:
-                    decorate_player_achievements(user)
-                    session["username"] = user.get("username", "")
-                    session["display_name"] = user.get("display_name", "")
-                    session["avatar_url"] = user.get("avatar_url")
-                    session["role"] = user.get("role", "player")
-                    session["account_status"] = user.get("account_status", "approved")
-                    session["admin_level"] = user.get("admin_level", "none")
-                    session["zcoin_balance"] = int(user.get("zcoin_balance") or 0)
-                    cache_set("_rz_current_user", user)
-            except Exception as exc:
-                print(f"admin_required warning: {exc}")
+        # Không query Supabase lần thứ hai ngay sau POST /admin-login. Trên Vercel,
+        # redirect có thể sang một instance khác; nếu Supabase chập chờn, code cũ
+        # xóa luôn session vừa đăng nhập và mobile bị đá ngược về /admin-login.
+        # current_user() đã có cơ chế: DB -> TTL cache -> session fallback có chữ ký
+        # Flask, nhưng vẫn cập nhật role thật khi database trả lời bình thường.
+        user = current_user()
 
         if not user:
             session.clear()
@@ -1993,11 +1997,16 @@ def admin_login():
         session["zcoin_balance"] = int(user.get("zcoin_balance") or 0)
         session["last_real_activity"] = int(time.time())
         session["last_activity_touch"] = int(time.time())
-        execute_query(
-            db.table("users").update({"is_online": True, "last_seen_at": now_iso()}).eq("id", user["id"]),
-            "admin_login_mark_online",
-            attempts=2,
-        )
+        # Đánh dấu Online chỉ là tác vụ phụ. Không được làm hỏng đăng nhập Admin
+        # nếu Supabase vừa chập chờn sau khi đã xác thực đúng tài khoản/mật khẩu.
+        try:
+            execute_query(
+                db.table("users").update({"is_online": True, "last_seen_at": now_iso()}).eq("id", user["id"]),
+                "admin_login_mark_online",
+                attempts=2,
+            )
+        except Exception as exc:
+            app.logger.warning("Admin login presence update skipped: %s", exc)
         return redirect(url_for("admin"))
 
     return render_template("admin_login.html", auth_only=True)
