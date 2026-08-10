@@ -41,3 +41,49 @@
 .room-ui-preview .rui-mode-icon{width:min(var(--p-mode-size),76%);height:min(var(--p-mode-size),58px);margin:auto;transform:none!important}
 .room-ui-preview .rui-mode-card:nth-child(3) .rui-mode-icon{transform:scale(.78)!important}
 .room-ui-preview .rui-mode-card strong{min-height:17px;height:17px;justify-content:center;overflow:hidden}.room-ui-preview .rui-mode-card small{min-height:17px;height:17px;display:flex;align-items:center;justify-content:center;overflow:visible}
+
+
+/* V1.2.42 - Preview luon nhin thay toan bo khi thiet ke */
+.room-ui-preview-shell{
+  position:sticky;
+  top:8px;
+  z-index:40;
+  box-shadow:0 12px 28px rgba(0,0,0,.28);
+}
+.room-ui-preview-head{
+  min-height:34px;
+  margin-bottom:6px;
+}
+.room-ui-preview-viewport{
+  width:100%;
+  max-width:none;
+  margin:0;
+  overflow:hidden!important;
+  position:relative;
+  border-radius:10px;
+  background:#07111d;
+}
+.room-ui-preview{
+  width:1180px;
+  max-width:none;
+  margin:0;
+  transform-origin:top left;
+  will-change:transform;
+}
+.room-ui-preview.is-auto-fit{
+  transition:transform .12s ease;
+}
+.room-ui-editor{
+  position:relative;
+  z-index:1;
+}
+@media (min-width:761px){
+  .room-ui-preview-shell{max-height:58vh;overflow:hidden}
+  .room-ui-preview-head{flex-wrap:nowrap}
+  .room-ui-preview-states{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:1px}
+}
+@media (max-width:760px){
+  .room-ui-preview-shell{position:relative;top:auto;max-height:none;box-shadow:none}
+  .room-ui-preview-viewport{overflow:hidden!important}
+  .room-ui-preview{min-width:0;width:1180px}
+}

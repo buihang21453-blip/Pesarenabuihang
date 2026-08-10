@@ -2,6 +2,34 @@
   const root = document.querySelector('[data-room-ui-designer]');
   if (!root) return;
   const preview = root.querySelector('[data-room-ui-preview]');
+  const previewViewport = root.querySelector('[data-room-ui-preview-viewport]');
+  const previewShell = root.querySelector('[data-room-ui-preview-shell]');
+
+  let fitFrame = 0;
+  function fitWholePreview() {
+    if (!preview || !previewViewport) return;
+    cancelAnimationFrame(fitFrame);
+    fitFrame = requestAnimationFrame(() => {
+      preview.style.transform = 'none';
+      preview.classList.remove('is-auto-fit');
+      const naturalWidth = Math.max(preview.scrollWidth, 1180);
+      const naturalHeight = Math.max(preview.scrollHeight, 1);
+      const availableWidth = Math.max(previewViewport.clientWidth, 1);
+      const viewportCap = window.innerWidth > 760
+        ? Math.max(250, Math.min(window.innerHeight * 0.47, 500))
+        : Math.max(220, Math.min(window.innerHeight * 0.5, 420));
+      const scale = Math.min(1, availableWidth / naturalWidth, viewportCap / naturalHeight);
+      preview.style.transform = `scale(${scale})`;
+      previewViewport.style.height = `${Math.ceil(naturalHeight * scale)}px`;
+      preview.classList.add('is-auto-fit');
+      if (previewShell && window.innerWidth > 760) {
+        const headH = previewShell.querySelector('.room-ui-preview-head')?.offsetHeight || 0;
+        previewShell.style.maxHeight = `${Math.ceil(naturalHeight * scale + headH + 28)}px`;
+      } else if (previewShell) {
+        previewShell.style.maxHeight = '';
+      }
+    });
+  }
   const inputs = [...root.querySelectorAll('[data-room-ui-input]')];
   const cssMap = {
     player_width:'--p-player', center_width:'--p-center', sidebar_width:'--p-side',
@@ -31,6 +59,7 @@
     if (!preview || !cssMap[key]) return;
     let suffix = pxUnits.has(key) ? 'px' : frUnits.has(key) ? 'fr' : percentUnits.has(key) ? '%' : '';
     preview.style.setProperty(cssMap[key], `${value}${suffix}`);
+    fitWholePreview();
   }
   inputs.forEach(input => { apply(input); input.addEventListener('input', () => apply(input)); });
 
@@ -38,6 +67,7 @@
     const key = button.dataset.roomUiTab;
     root.querySelectorAll('[data-room-ui-tab]').forEach(b => b.classList.toggle('active', b === button));
     root.querySelectorAll('[data-room-ui-panel]').forEach(panel => panel.classList.toggle('active', panel.dataset.roomUiPanel === key));
+    fitWholePreview();
   }));
 
   const stateLabels = {waiting:'CHỜ ĐỐI THỦ',ready:'CHỜ SẴN SÀNG',playing:'ĐANG THI ĐẤU',confirm:'CHỜ XÁC NHẬN',confirmed:'ĐÃ XÁC NHẬN',rematch:'ĐÁ TIẾP'};
@@ -46,7 +76,12 @@
     preview.dataset.previewState = button.dataset.roomUiPreviewState;
     const demo = preview.querySelector('[data-rui-state-demo]');
     if (demo) demo.textContent = stateLabels[button.dataset.roomUiPreviewState] || 'CHỜ ĐỐI THỦ';
+    fitWholePreview();
   }));
+
+  window.addEventListener('resize', fitWholePreview);
+  if ('ResizeObserver' in window && preview) new ResizeObserver(fitWholePreview).observe(preview);
+  fitWholePreview();
 
   root.querySelector('[data-room-ui-zero-y]')?.addEventListener('click', () => {
     const yKeys = new Set(['player_panel_y','center_y','sidebar_y','brand_y','avatar_y','player_name_y','club_area_y','active_mode_logo_y','vs_y']);

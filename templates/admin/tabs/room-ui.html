@@ -14,16 +14,16 @@
   </div>
 
   <form method="post" action="{{ url_for('admin_room_ui_save') }}" class="room-ui-form" data-room-ui-form>
-    <div class="room-ui-preview-shell">
+    <div class="room-ui-preview-shell" data-room-ui-preview-shell>
       <div class="room-ui-preview-head">
-        <div><b>XEM TRƯỚC PHÒNG ĐẤU</b><span>Preview cố định. Các nút trung tâm và 7 logo được mô phỏng đúng tỷ lệ.</span></div>
+        <div><b>XEM TRƯỚC TOÀN BỘ PHÒNG ĐẤU</b><span>Preview được ghim và tự co vừa màn hình để bạn luôn nhìn thấy toàn bộ phòng trong lúc chỉnh.</span></div>
         <div class="room-ui-preview-states" aria-label="Chọn trạng thái xem trước">
           {% for key,label in [('waiting','Chờ đối thủ'),('ready','Chờ sẵn sàng'),('playing','Thi đấu'),('confirm','Chờ xác nhận'),('confirmed','Confirmed'),('rematch','Đá tiếp')] %}
           <button type="button" class="room-ui-preview-state{{ ' active' if loop.first else '' }}" data-room-ui-preview-state="{{ key }}">{{ label }}</button>
           {% endfor %}
         </div>
       </div>
-      <div class="room-ui-preview-viewport">
+      <div class="room-ui-preview-viewport" data-room-ui-preview-viewport>
         <div class="room-ui-preview" data-room-ui-preview>
           <div class="rui-header"><div class="rui-room-label">PHÒNG ĐẤU</div><div class="rui-brand">PES ARENA</div><div class="rui-share">CHIA SẺ</div></div>
           <div class="rui-main-row">

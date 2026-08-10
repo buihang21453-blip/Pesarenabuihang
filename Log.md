@@ -1,3 +1,11 @@
+# V1.2.42 - Preview toan bo trong Thiet ke phong
+
+- Admin → Thiết kế phòng: ghim Preview ở phía trên khi cuộn chỉnh thông số.
+- Preview tự co theo cả chiều rộng và chiều cao màn hình, luôn hiển thị toàn bộ Header + 4 cột + 7 chế độ.
+- Không còn thanh cuộn ngang trong Preview desktop; kích thước khung Preview được tính lại khi kéo slider, đổi tab, đổi trạng thái hoặc resize trình duyệt.
+- Mobile không dùng sticky để tránh chiếm toàn màn hình.
+- Không thay đổi Core/API/RP/gameplay.
+
 ## V1.2.41 - Can chinh Room UI theo 8 khu vuc feedback
 - Thu gon thanh PHONG DAU va nut Chia se phong; tang logo PES ARENA tren topbar.
 - Bo vach mo o hai panel nguoi choi, thay bang huong dan CLB theo mode: CHON 1 CLB / CHON 1 TRONG 3 CLB.
