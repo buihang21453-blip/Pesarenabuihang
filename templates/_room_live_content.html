@@ -369,32 +369,7 @@
 
             {% include "partials/parsec_room_panel.html" %}
 
-            <section class="panel room-session-h2h room-session-h2h-rail room-score-history-panel" aria-label="Lịch sử đối đầu trong phòng đấu">
-                <div class="room-score-history-title">
-                    <h3>LỊCH SỬ PHÒNG</h3>
-                </div>
-
-                {% if room_head_to_head and room_head_to_head.available and room_head_to_head.matches %}
-                <div class="room-score-history-board">
-                    <div class="room-score-history-head">
-                        <span class="{{ room.host_name_style_class or '' }}" title="{{ room.host_name }}">{{ room.host_name }}</span>
-                        <strong>TỶ SỐ</strong>
-                        <span class="is-right {{ room.guest_name_style_class or '' }}" title="{{ room.guest_name or 'Đối thủ' }}">{{ room.guest_name or 'Đối thủ' }}</span>
-                    </div>
-                    <div class="room-score-history-list">
-                        {% for match in room_head_to_head.matches %}
-                        <div class="room-score-history-row" aria-label="Tỷ số {{ match.host_score }} - {{ match.guest_score }}">
-                            <span class="room-score-value{% if match.host_score|int > match.guest_score|int %} is-winner{% endif %}">{{ match.host_score }}</span>
-                            <span class="room-score-separator">-</span>
-                            <span class="room-score-value{% if match.guest_score|int > match.host_score|int %} is-winner{% endif %}">{{ match.guest_score }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% else %}
-                <p class="room-session-empty">Chưa có lịch sử đối đầu trong phòng đấu.</p>
-                {% endif %}
-            </section>
+            {% include "partials/room_history_rail.html" %}
 
             {% if system_features.room_chat_enabled %}<section class="panel room-chat-side">
                 <h2>Chat phòng</h2>

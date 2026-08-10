@@ -1,3 +1,14 @@
+# V1.2.34 - Bo cuc Room 1 man hinh + lich su doi dau 2 nguoi
+
+- Ngay: 10/08/2026
+- Nen goc: V1.2.33.
+- Them lich su doi dau giua chu phong va doi thu (toan bo cac tran da xac nhan), tai su dung Read Model/cache hien co; khong tao API/route moi.
+- Giu rieng LICH SU PHONG: chi cac tran phat sinh tu luc mo phong hien tai.
+- Tach HTML lich su Room vao `templates/partials/room_history_rail.html` de tranh lap giua full page va polling fragment.
+- Desktop >=1251px: rail phai span ca khu san dau + 6 mode; 6 mode van chi rong den het khung doi thu.
+- Thu gon topbar, player/center, 6 mode va 4 panel rail phai de phan chinh Room nam trong mot viewport desktop thong thuong.
+- Khong thay doi core thi dau, RP, matchmaking hay 4 che do dang khoa.
+
 # V1.2.33 - Thu gon 6 che do va dua lich su phong xuong duoi Parsec
 
 - Dải 6 chế độ chỉ chiếm đúng chiều rộng từ Chủ phòng → Trung tâm → hết khung Đối thủ; không kéo sang cột thông tin bên phải.

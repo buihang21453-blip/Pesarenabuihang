@@ -138,3 +138,94 @@
 .room-v2-shell .room-session-h2h-rail{order:initial;margin:0;min-height:150px}
 .room-v2-shell .room-session-h2h-rail .room-score-history-title{margin-bottom:8px}
 .room-v2-shell .room-session-h2h-rail .room-session-empty{margin:12px 0 4px;text-align:center;color:#8f9daa;font-size:12px;line-height:1.45}
+
+/* V1.2.34 - desktop one-screen layout + hai lop lich su ben phai.
+   Rail phai span ca hang san dau va hang 6 che do; khong lam dai trang chi vi history. */
+@media (min-width:1251px){
+  .room-v2-shell{gap:8px}
+  .room-v2-shell .room-stage-topbar{min-height:64px;padding:5px 12px}
+  .room-v2-shell .room-stage-title{font-size:23px}
+  .room-v2-shell .room-stage-subtitle{margin-top:4px;font-size:11px}
+  .room-v2-shell .room-v2-brand img{height:54px;width:min(330px,90%)}
+  .room-v2-shell .room-share-button{min-width:160px;min-height:44px}
+  .room-v2-shell .room-share-icon{width:28px;height:28px}
+  .room-v2-shell .room-share-icon img{width:25px;height:25px}
+
+  .room-v2-shell .room-v2-asset-tester{min-height:32px;padding:4px 8px;gap:5px 8px}
+  .room-v2-shell .room-v2-asset-tester small{display:none}
+  .room-v2-shell .room-v2-asset-tester button{min-height:24px;padding:2px 7px}
+
+  .room-v2-shell .room-arena-frame{
+    grid-template-columns:minmax(255px,1.18fr) minmax(215px,.84fr) minmax(255px,1.18fr) minmax(235px,.88fr);
+    grid-template-rows:390px 132px;
+    gap:8px;
+    align-items:stretch;
+  }
+  .room-v2-shell .room-team-card.home{grid-column:1;grid-row:1}
+  .room-v2-shell .room-center-stage-plain{grid-column:2;grid-row:1}
+  .room-v2-shell .room-team-card.away{grid-column:3;grid-row:1}
+  .room-v2-shell .room-side-card,.room-v2-shell .room-center-stage-plain{min-height:0;height:390px}
+  .room-v2-shell .room-player-heading-plain{padding-top:43px}
+  .room-v2-shell .room-player-name{font-size:21px}
+  .room-v2-shell .room-club-logo-large,.room-v2-shell .room-team-placeholder-shield{width:112px;height:112px}
+  .room-v2-shell .room-team-name-lg{font-size:20px}
+  .room-v2-shell .room-v2-active-mode-logo{width:106px;height:106px;margin:2px auto}
+  .room-v2-shell .room-center-mode-title{font-size:16px}
+  .room-v2-shell .room-center-mode-note{padding:5px 7px;font-size:11px}
+  .room-v2-shell .room-center-vs-image{width:82px;height:82px;margin-bottom:4px}
+  .room-v2-shell .room-center-action-btn{min-height:36px;font-size:12px}
+
+  .room-v2-shell .room-v2-modes{grid-column:1/4;grid-row:2;padding:0;align-self:stretch}
+  .room-v2-shell .room-v2-modes h2{height:20px;margin:0 0 4px;font-size:12px}
+  .room-v2-shell .room-v2-mode-grid{gap:6px;height:108px}
+  .room-v2-shell .room-v2-mode-card{height:108px;padding:4px;grid-template-rows:1fr auto auto;gap:1px}
+  .room-v2-shell .room-v2-mode-card img{width:61px;height:61px}
+  .room-v2-shell .room-v2-mode-card strong{min-height:18px;font-size:10px;line-height:1.05}
+  .room-v2-shell .room-v2-mode-card small{min-height:17px;font-size:8px}
+  .room-v2-shell .room-v2-mode-index{width:21px;height:21px;font-size:11px}
+
+  .room-v2-shell .room-arena-right-rail{
+    grid-column:4;grid-row:1/3;
+    display:grid;
+    grid-template-rows:auto auto minmax(82px,.8fr) minmax(118px,1.1fr);
+    gap:6px;
+    height:530px;
+    min-height:0;
+    overflow:hidden;
+  }
+  .room-v2-shell .room-arena-right-rail>.panel{min-height:0;margin:0;padding:9px 10px;overflow:hidden}
+  .room-v2-shell .room-side-info-panel h3,.room-v2-shell .parsec-room-panel h3,.room-v2-shell .room-session-history h3,.room-v2-shell .room-chat-side h2,.room-v2-shell .room-score-history-title h3,.room-v2-shell .room-pair-history-title h3{font-size:12px;margin:0}
+  .room-v2-shell .room-side-info-list>div{padding:5px 1px}
+  .room-v2-shell .room-side-info-list span{font-size:9px}
+  .room-v2-shell .room-side-info-list strong{font-size:11px}
+  .room-v2-shell .parsec-room-panel{font-size:10px}
+  .room-v2-shell .parsec-room-block+.parsec-room-block{margin-top:6px}
+  .room-v2-shell .parsec-room-label{font-size:9px;margin-bottom:3px}
+  .room-v2-shell .parsec-room-input,.room-v2-shell .parsec-room-link-form input{min-height:30px;font-size:10px}
+  .room-v2-shell .parsec-room-panel .btn{min-height:29px;padding:4px 7px;font-size:9px}
+  .room-v2-shell .parsec-room-note{font-size:8px;margin-top:5px}
+
+  .room-v2-shell .room-extra-controls>.room-control-title{display:none}
+}
+
+.room-v2-shell .room-score-history-title,.room-v2-shell .room-pair-history-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.room-v2-shell .room-score-history-title small,.room-v2-shell .room-pair-history-title small{font-size:9px;font-weight:800;color:#8ca1b3;white-space:nowrap}
+.room-v2-shell .room-pair-history-panel{order:4}
+.room-v2-shell .room-pair-summary{display:grid;grid-template-columns:1fr .72fr 1fr;gap:4px;margin-bottom:6px}
+.room-v2-shell .room-pair-summary>div{min-width:0;padding:5px 3px;border:1px solid rgba(255,205,63,.16);border-radius:4px;background:rgba(255,255,255,.025);text-align:center}
+.room-v2-shell .room-pair-summary strong{display:block;font-size:15px;line-height:1;color:#fff}
+.room-v2-shell .room-pair-summary span{display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px;color:#9cafbd}
+.room-v2-shell .room-pair-summary .is-host strong{color:#5ab8ff}
+.room-v2-shell .room-pair-summary .is-draw strong{color:#f1c94f}
+.room-v2-shell .room-pair-summary .is-guest strong{color:#ff6d77}
+.room-v2-shell .room-pair-recent-list{display:grid;gap:2px;overflow:auto;scrollbar-width:thin}
+.room-v2-shell .room-pair-recent-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;min-height:20px;padding:2px 3px;border-top:1px solid rgba(255,255,255,.055)}
+.room-v2-shell .room-pair-date{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px;color:#8293a2}
+.room-v2-shell .room-pair-recent-row strong{font-size:10px;color:#dbe5ed}
+.room-v2-shell .room-pair-recent-row strong.is-host-win{color:#65c1ff}
+.room-v2-shell .room-pair-recent-row strong.is-guest-win{color:#ff7882}
+.room-v2-shell .room-pair-recent-row strong.is-draw{color:#e8c65c}
+
+@media (max-width:1250px){
+  .room-v2-shell .room-pair-history-panel{min-height:150px}
+}
