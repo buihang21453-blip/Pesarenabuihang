@@ -1,3 +1,11 @@
+# V1.2.27 - Sua dung duong dan Room V2 Supabase v1.3.40
+
+- Xac nhan 6 logo che do chi lay tu `pes-assets/v1.3.40/modes/1.webp` -> `6.webp`.
+- Asset Room V2 `pes-arena-room-logo.webp`, `stadium-blue.webp`, `stadium-red.webp`, `room-texture-dark.webp` chi lay tu `pes-assets/v1.3.40/`.
+- Sua ten file VS dung chinh xac chu hoa: `pes-assets/v1.3.40/VS.webp`.
+- Cac asset v1.3.40 bo qua `STATIC_ASSET_MODE=local` de khong bi roi ve `/static/...` hoac ghep nham vao `v1.14.41`.
+- Khong thay doi Core/API/RP/DB hay logic cua 4 che do dang khoa.
+
 # V1.2.26 - Sua duong dan anh Supabase bi 404
 
 - Sửa `modules/static_asset_service.py`: khi Vercel chưa có `STATIC_ASSET_BASE_URL`, `SHOP_ASSET_BASE_URL` hoặc `LUCKYBOX_ASSET_BASE_URL`, hệ thống tự suy ra URL public từ `SUPABASE_URL`.

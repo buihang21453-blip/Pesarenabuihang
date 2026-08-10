@@ -85,6 +85,31 @@ def _join_public(base: str, relative: str) -> str | None:
     return f"{base}/{quote(relative, safe='/')}" if relative else base
 
 
+
+
+_ROOM_V1340_ASSETS = {
+    "pes-arena-room-logo.webp",
+    "room-texture-dark.webp",
+    "stadium-blue.webp",
+    "stadium-red.webp",
+    "VS.webp",
+}
+
+def _confirmed_v1340_url(clean: str) -> str | None:
+    """URL Supabase cho asset Room V2 đã xác nhận trực tiếp trên bucket.
+
+    Các file này cố ý bỏ qua STATIC_ASSET_MODE/local để tránh production
+    ghép về /static hoặc nhánh v1.14.41. Chỉ dùng public bucket pes-assets.
+    """
+    clean = str(clean or "").strip().lstrip("/")
+    if clean == "v1.3.40" or clean.startswith("v1.3.40/"):
+        relative = clean
+    elif clean in _ROOM_V1340_ASSETS:
+        relative = f"v1.3.40/{clean}"
+    else:
+        return None
+    return _join_public(supabase_asset_root(), relative)
+
 def _remote_url(clean: str) -> str | None:
     # Logo 6 chế độ đã tồn tại ở nhánh riêng v1.3.40 của bucket.
     # Không ghép chúng vào STATIC_ASSET_BASE_URL=/v1.14.41 vì sẽ tạo URL sai
@@ -115,6 +140,13 @@ def _remote_url(clean: str) -> str | None:
 
 def asset_url(filename: str) -> str:
     clean = str(filename or "").strip().lstrip("/")
+
+    # Asset Room V2 / 6 logo đã được xác nhận nằm ở pes-assets/v1.3.40.
+    # Luôn ưu tiên URL Supabase chính xác, kể cả khi STATIC_ASSET_MODE=local.
+    confirmed = _confirmed_v1340_url(clean)
+    if confirmed:
+        return confirmed
+
     mode = asset_mode()
 
     # Vercel-first: file đã nằm trong project thì để Vercel CDN phục vụ trực tiếp.

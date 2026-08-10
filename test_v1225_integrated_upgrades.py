@@ -10,7 +10,7 @@ REBUILD = (ROOT / "modules/admin_ranking_rebuild.py").read_text(encoding="utf-8"
 
 
 def test_release_version():
-    assert 'APP_VERSION = "V1.2.26"' in APP
+    assert 'APP_VERSION = "V1.2.27"' in APP
     assert 'RP_FORMULA_VERSION = "RP_V1.15.0"' in FORMULA
 
 

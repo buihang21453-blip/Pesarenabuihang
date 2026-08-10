@@ -203,7 +203,7 @@
                 {% elif room.status == 'confirmed' %}
                     <div class="room-center-state-pill">Đang đồng bộ phòng...</div>
                 {% else %}
-                    <img class="room-center-vs-image" src="{{ asset_url('vs.webp') }}" alt="VS" loading="eager">
+                    <img class="room-center-vs-image" src="{{ asset_url('VS.webp') }}" alt="VS" loading="eager">
                     {% if room.status == 'waiting_ready' %}
                         {% if (room_room_viewer_is_host or current_user.role == 'admin') and room.guest_ready and not daily_rank_limit_blocked %}
                         <form class="room-center-random-form" method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" data-room-async="1" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
@@ -224,7 +224,7 @@
                     {% endif %}
                 {% endif %}
             {% else %}
-                <img class="room-center-vs-image" src="{{ asset_url('vs.webp') }}" alt="VS" loading="eager">
+                <img class="room-center-vs-image" src="{{ asset_url('VS.webp') }}" alt="VS" loading="eager">
                 <div class="room-center-empty-note">Đang chờ đủ 2 người trong phòng</div>
             {% endif %}
         </section>
