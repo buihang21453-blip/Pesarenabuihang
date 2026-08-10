@@ -60,25 +60,57 @@ def _local_asset_exists(filename: str) -> bool:
         return False
 
 
-def _remote_url(clean: str) -> str | None:
-    if clean == "luckybox" or clean.startswith("luckybox/"):
-        base = luckybox_asset_base_url()
-        if base:
-            relative = clean[9:] if clean.startswith("luckybox/") else ""
-            return f"{base}/{quote(relative, safe='/')}" if relative else base
+def supabase_asset_root() -> str:
+    """Public root của bucket pes-assets, suy ra trực tiếp từ SUPABASE_URL.
+
+    Đây là fallback an toàn khi Production chưa khai báo các *_ASSET_BASE_URL.
+    Không chứa service-role key và chỉ trỏ tới bucket public.
+    """
+    supabase_url = _clean_base(os.getenv("SUPABASE_URL"))
+    if not supabase_url:
+        return ""
+    return f"{supabase_url}/storage/v1/object/public/pes-assets"
+
+
+def _derived_version_base() -> str:
+    root = supabase_asset_root()
+    return f"{root}/v1.14.41" if root else ""
+
+
+def _join_public(base: str, relative: str) -> str | None:
+    base = _clean_base(base)
+    relative = str(relative or "").strip().lstrip("/")
+    if not base:
         return None
+    return f"{base}/{quote(relative, safe='/')}" if relative else base
+
+
+def _remote_url(clean: str) -> str | None:
+    # Logo 6 chế độ đã tồn tại ở nhánh riêng v1.3.40 của bucket.
+    # Không ghép chúng vào STATIC_ASSET_BASE_URL=/v1.14.41 vì sẽ tạo URL sai
+    # .../v1.14.41/v1.3.40/modes/*.webp.
+    if clean == "v1.3.40" or clean.startswith("v1.3.40/"):
+        root = supabase_asset_root()
+        direct = _join_public(root, clean)
+        if direct:
+            return direct
+
+    if clean == "luckybox" or clean.startswith("luckybox/"):
+        relative = clean[9:] if clean.startswith("luckybox/") else ""
+        # Ưu tiên biến cấu hình cũ; nếu Vercel chưa khai báo thì tự suy ra
+        # từ SUPABASE_URL để ảnh Lucky Box không rơi về /static và bị 404.
+        base = luckybox_asset_base_url() or (f"{_derived_version_base()}/luckybox" if _derived_version_base() else "")
+        return _join_public(base, relative)
 
     if clean == "shop" or clean.startswith("shop/"):
-        base = shop_asset_base_url()
-        if base:
-            relative = clean[5:] if clean.startswith("shop/") else ""
-            return f"{base}/{quote(relative, safe='/')}" if relative else base
-        return None
+        relative = clean[5:] if clean.startswith("shop/") else ""
+        base = shop_asset_base_url() or (f"{_derived_version_base()}/shop" if _derived_version_base() else "")
+        return _join_public(base, relative)
 
-    base = asset_base_url()
-    if base:
-        return f"{base}/{quote(clean, safe='/')}"
-    return None
+    # Tài nguyên chung: vẫn ưu tiên STATIC_ASSET_BASE_URL nếu có. Nếu chưa có
+    # thì suy ra nhánh asset hiện hành từ SUPABASE_URL.
+    base = asset_base_url() or _derived_version_base()
+    return _join_public(base, clean)
 
 
 def asset_url(filename: str) -> str:

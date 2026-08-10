@@ -1,3 +1,11 @@
+# V1.2.26 - Sua duong dan anh Supabase bi 404
+
+- Sửa `modules/static_asset_service.py`: khi Vercel chưa có `STATIC_ASSET_BASE_URL`, `SHOP_ASSET_BASE_URL` hoặc `LUCKYBOX_ASSET_BASE_URL`, hệ thống tự suy ra URL public từ `SUPABASE_URL`.
+- Logo 6 chế độ `v1.3.40/modes/1.webp` -> `6.webp` được nối thẳng vào root bucket `pes-assets`, không còn bị ghép nhầm dưới `v1.14.41`.
+- Ảnh vật phẩm Lucky Box `luckybox/exclusive/...` fallback đúng về `pes-assets/v1.14.41/luckybox/...`.
+- Ảnh Shop `shop/...` fallback đúng về `pes-assets/v1.14.41/shop/...`.
+- Không thay đổi module/core/API/RP của các chế độ thi đấu. Không thay dữ liệu shop/luckybox. Chỉ sửa bộ phân giải đường dẫn ảnh.
+
 # V1.2.24 - Giao dien phong 6 logo 4 che do khoa
 
 - Dựng lớp giao diện Room V2 riêng bằng `static/css/room_v2.css`, scope trong `.room-v2-shell` để tránh đè CSS trang khác.
@@ -408,7 +416,7 @@
 - 4 che do con lai chi hien logo/ten/trang thai khoa, khong them core/API/RP/module nghiep vu.
 - Logo 6 che do dung duong dan asset Supabase `v1.3.40/modes/1.webp` -> `6.webp`.
 
-## V1.2.25 - Tich hop RP hoa random + Read Model/Cache + giu kien truc tach Core/Room UI
+## V1.2.26 - Tich hop RP hoa random + Read Model/Cache + giu kien truc tach Core/Room UI
 - Ngay: 2026-08-10 14:43 (Asia/Bangkok)
 - RP hoa chenh < 500: moi nguoi random doc lap +1..+6 RP.
 - RP hoa chenh >= 500: nguoi RP thap random +1..+6, nguoi RP cao +0.

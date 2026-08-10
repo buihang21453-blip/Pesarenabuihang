@@ -9,7 +9,7 @@ ADMIN = (ROOT / 'modules/admin_dashboard_routes.py').read_text(encoding='utf-8')
 SQL = (ROOT / 'project_docs/sql/PES_ARENA_READ_MODEL_V1.3.34.sql').read_text(encoding='utf-8')
 
 def test_version():
-    assert 'APP_VERSION = "V1.2.25"' in APP
+    assert 'APP_VERSION = "V1.2.26"' in APP
 
 def test_dashboard_only_loads_current_users_matches():
     block = APP[APP.index('def dashboard():'):APP.index('@app.route("/rooms/create"')]
