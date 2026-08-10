@@ -1,5 +1,5 @@
 /* ============================================================
-   V1.2.54 — ROOM CENTER BUTTONS / NEON GAMING REFERENCE
+   V1.2.55 — ROOM CENTER BUTTONS / TINTED NEON GAMING
 
    VISUAL OWNER DUY NHAT cua nut chuc nang trung tam phong dau.
    Anh mau: nen toi ban trong suot, vien neon mong, glow nhe,
@@ -30,14 +30,9 @@
   border:1px solid var(--room-neon-color);
   border-radius:8px;
 
-  /* Anh mau co lop mau rat nhe o nua tren, nhung tong the van la nen den. */
-  background-color:rgba(3,7,10,.94);
-  background-image:linear-gradient(
-    180deg,
-    rgba(var(--room-neon-rgb),.14) 0%,
-    rgba(4,8,10,.93) 43%,
-    rgba(2,5,7,.96) 100%
-  );
+  /* V1.2.55: bỏ nền đen. Nền lấy chính màu viền nhưng hạ sáng/độ đậm bằng alpha thấp. */
+  background-color:rgba(var(--room-neon-rgb),.16);
+  background-image:none;
 
   color:#fff;
   font-family:inherit;
@@ -63,13 +58,8 @@
 }
 
 .room-v2-shell .room-neon-btn:hover{
-  background-color:rgba(4,9,12,.97);
-  background-image:linear-gradient(
-    180deg,
-    rgba(var(--room-neon-rgb),.18) 0%,
-    rgba(5,10,12,.95) 44%,
-    rgba(2,5,7,.98) 100%
-  );
+  background-color:rgba(var(--room-neon-rgb),.22);
+  background-image:none;
   border-color:var(--room-neon-color);
   box-shadow:
     inset 0 0 12px rgba(var(--room-neon-rgb),.18),
@@ -81,12 +71,8 @@
 }
 
 .room-v2-shell .room-neon-btn:active{
-  background-color:rgba(2,6,8,.99);
-  background-image:linear-gradient(
-    180deg,
-    rgba(var(--room-neon-rgb),.10),
-    rgba(2,5,7,.99)
-  );
+  background-color:rgba(var(--room-neon-rgb),.12);
+  background-image:none;
   box-shadow:
     inset 0 0 13px rgba(var(--room-neon-rgb),.20),
     0 0 5px rgba(var(--room-neon-rgb),.38);

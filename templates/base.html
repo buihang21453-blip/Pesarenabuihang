@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="{{ static_asset('css/core/design_tokens.css') }}">
     <link rel="stylesheet" href="{{ static_asset('style.css') }}">
     <link rel="stylesheet" href="{{ static_asset('css/components/buttons.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/components/invites.css') }}">
     <link rel="stylesheet" href="{{ static_asset('css/button_sizes.css') }}">
     {% if request.endpoint == 'room_detail' %}
     <link rel="stylesheet" href="{{ static_asset('css/room_detail.css') }}">
@@ -239,7 +240,7 @@ function toggleTheme(){
                         <span class="small">Rank: {{ inv.from_rank }} • Điểm: {{ inv.from_points }} • Tier: {{ inv.tier }}</span>
                     </div>
                 </div>
-                <form method="post" action="{{ url_for('respond_invite', invite_id=inv.id) }}">
+                <form class="invite-response-actions" method="post" action="{{ url_for('respond_invite', invite_id=inv.id) }}">
                     <button class="btn green" name="action" value="accept" type="submit">Chấp nhận</button>
                     <button class="btn red" name="action" value="reject" type="submit">Từ chối</button>
                 </form>

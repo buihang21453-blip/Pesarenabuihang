@@ -651,3 +651,10 @@
 - Sua layout trong `static/css/room_v2.css`: nut Tim Nhanh khong con rong bang ca cum 2 nut ben duoi.
 - Hang Tim Nhanh duoc can giua, rong 132-145px, tuong duong mot nut Moi Dau/Thoat Phong.
 - Khong them `!important`, khong sua `quick_match.css`, khong doi HTML/JS/API.
+
+## V1.2.55 - Khoi phuc luong San sang doi thu + can giua Loi moi + doi nen nut Neon am mau
+- Khoi phuc/kiem tra dong bo luong Khach `San Sang` / `Huy San Sang` o render phong dau; route backend `room_guest_ready` va `room_guest_unready` giu nguyen.
+- Bo sung fallback render trong `templates/partials/room_dynamic_state.html` de khong mat nut San Sang neu partial cu duoc dung lai.
+- Them `static/css/components/invites.css` lam owner rieng cho bo cuc nut Loi moi; can giua `Chap nhan` / `Tu choi` trong popup, banner va trang Loi moi, khong doi skin nut global.
+- `static/css/room/buttons.css`: bo nen den va bo background gradient; nen moi lay chinh mau neon cua vien voi alpha thap de am mau nhe. Hover/active chi tang-giam do dam, khong 3D.
+- Giu nguyen kich thuoc, vi tri, route, JS, RP, API va logic phong dau.

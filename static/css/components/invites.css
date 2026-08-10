@@ -1,0 +1,40 @@
+/* ============================================================
+   V1.2.55 — INVITE ACTION LAYOUT
+   Owner duy nhất cho việc căn cụm nút Chấp nhận / Từ chối.
+   Không đổi màu/skin của .btn; buttons.css vẫn là visual owner.
+   ============================================================ */
+
+/* Popup lời mời xuất hiện trên mọi trang. */
+.invite-modal-actions{
+  justify-content:center;
+  align-items:center;
+}
+.invite-modal-actions form{
+  margin:0;
+}
+
+/* Banner lời mời trên layout chính. */
+.invite-item > form,
+.invite-item .invite-response-actions{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-inline:auto;
+}
+
+/* Trang /invites: căn 2 nút giữa đúng ô Hành động. */
+body[data-page="invites"] td .invite-response-actions{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  width:100%;
+  margin:0;
+}
+body[data-page="invites"] th:last-child,
+body[data-page="invites"] td:last-child{
+  text-align:center;
+}

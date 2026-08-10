@@ -157,7 +157,7 @@
                               data-modal-message="Bạn đã hoàn tất việc gửi kết quả. Trận vẫn được giữ để khách xác nhận."
                               data-modal-note="KHÔNG TRỪ RP"
                               data-modal-confirm-label="Thoát và về sảnh">
-                            <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            <button class="room-center-action-btn room-neon-btn room-neon-red" type="submit"><span class="room-neon-icon" aria-hidden="true">⇥</span><span class="room-neon-label">Thoát Phòng</span></button>
                         </form>
 
                     </div>
@@ -175,7 +175,7 @@
                               data-modal-message="Bạn đã hoàn tất việc gửi kết quả. Tranh chấp vẫn được giữ để Admin xử lý."
                               data-modal-note="KHÔNG TRỪ RP"
                               data-modal-confirm-label="Thoát và về sảnh">
-                            <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            <button class="room-center-action-btn room-neon-btn room-neon-red" type="submit"><span class="room-neon-icon" aria-hidden="true">⇥</span><span class="room-neon-label">Thoát Phòng</span></button>
                         </form>
 
                     </div>
@@ -196,7 +196,7 @@
                               data-modal-message="Trận đấu chưa kết thúc. Thoát phòng lúc này sẽ bị tính là bỏ cuộc và hệ thống trừ 20 RP."
                               data-modal-note="−20 RP"
                               data-modal-confirm-label="Bỏ cuộc và thoát">
-                            <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            <button class="room-center-action-btn room-neon-btn room-neon-red" type="submit"><span class="room-neon-icon" aria-hidden="true">⇥</span><span class="room-neon-label">Thoát Phòng</span></button>
                         </form>
                     </div>
                     {% endif %}
@@ -217,6 +217,19 @@
                         <div class="room-center-random-trigger disabled">
                             <span class="room-center-random-title room-random-button-label">{% if room_viewer_is_guest %}ĐỢI QUAY RANDOM ĐỘI{% elif not room.guest_ready %}ĐỢI KHÁCH SẴN SÀNG{% else %}QUAY RANDOM ĐỘI{% endif %}</span>
                             <span class="room-center-random-sub">{% if room_viewer_is_guest %}Đang chờ chủ phòng quay đội{% elif not room.guest_ready %}Khách chưa sẵn sàng{% else %}Đang chờ chủ phòng quay đội{% endif %}</span>
+                        </div>
+                        {% endif %}
+                        {% if room_viewer_is_guest %}
+                        <div class="room-center-primary-actions room-action-zone">
+                            {% if not room.guest_ready and not daily_rank_limit_blocked %}
+                            <form method="post" action="{{ url_for('room_guest_ready', room_id=room.id) }}">
+                                <button class="room-center-action-btn room-neon-btn room-neon-green" type="submit"><span class="room-neon-icon" aria-hidden="true">⚡</span><span class="room-neon-label">Sẵn Sàng</span></button>
+                            </form>
+                            {% else %}
+                            <form method="post" action="{{ url_for('room_guest_unready', room_id=room.id) }}">
+                                <button class="room-center-action-btn room-neon-btn room-neon-gray" type="submit"><span class="room-neon-icon" aria-hidden="true">↶</span><span class="room-neon-label">Hủy Sẵn Sàng</span></button>
+                            </form>
+                            {% endif %}
                         </div>
                         {% endif %}
                     {% else %}
