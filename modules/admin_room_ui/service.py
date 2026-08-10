@@ -21,6 +21,10 @@ DEFAULTS = {
     "main_height": 438,
     "main_gap": 8,
     "mode_gap": 6,
+    "header_height": 88,
+    "share_button_width": 150,
+    "share_button_height": 44,
+    "share_button_font_size": 13,
 
     # Chỉ cho dịch dọc những phần thật sự cần căn. Trục X được khóa giữa.
     "player_panel_y": 0,
@@ -40,18 +44,21 @@ DEFAULTS = {
 
     # Khu vực giữa
     "active_mode_logo_scale": 1.00,
+    "active_mode_logo_size": 110,
     "active_mode_logo_x": 0, "active_mode_logo_y": 0,
     "vs_scale": 1.00, "vs_x": 0, "vs_y": 0,
     "center_gap": 7,
     "center_padding_y": 10,
     "center_action_gap": 8,
     "center_button_height": 40,
+    "center_button_font_size": 12,
     "center_action_width": 94,
 
     # 7 chế độ dùng chung kích thước, logo ưu tiên lớn và dễ nhìn.
     "mode_logo_scale": 1.00,  # legacy
     "mode_logo_size": 82,
-    "mode_card_height": 132,
+    "mode_card_height": 132,  # legacy: card bên trong cụm
+    "mode_cluster_height": 154,
     "mode_status_width": 94,
 
     # Tỷ lệ chiều cao ba khối cột phải.
@@ -59,6 +66,7 @@ DEFAULTS = {
     "rail_room_history_ratio": 0.78,
     "rail_h2h_ratio": 1.00,
     "rail_gap": 6,
+    "right_rail_font_size": 12,
 
     # Hiệu ứng giao diện
     "panel_opacity": 0.88,
@@ -86,6 +94,10 @@ FIELD_SPECS = {
     "main_height": (int, 400, 560, 1),
     "main_gap": (int, 0, 36, 1),
     "mode_gap": (int, 0, 28, 1),
+    "header_height": (int, 64, 150, 1),
+    "share_button_width": (int, 105, 210, 1),
+    "share_button_height": (int, 32, 64, 1),
+    "share_button_font_size": (int, 10, 18, 1),
 
     "player_panel_y": (int, -50, 50, 1),
     "host_x": (int, -80, 80, 1), "host_y": (int, -80, 80, 1),
@@ -100,22 +112,26 @@ FIELD_SPECS = {
     "club_area_y": (int, -60, 60, 1),
 
     "active_mode_logo_scale": (float, 0.60, 1.90, 0.01),
+    "active_mode_logo_size": (int, 60, 180, 1),
     "active_mode_logo_x": (int, -100, 100, 1), "active_mode_logo_y": (int, -100, 100, 1),
     "vs_scale": (float, 0.60, 2.00, 0.01), "vs_x": (int, -120, 120, 1), "vs_y": (int, -100, 100, 1),
     "center_gap": (int, 2, 18, 1),
     "center_padding_y": (int, 4, 24, 1),
     "center_action_gap": (int, 2, 18, 1),
-    "center_button_height": (int, 30, 56, 1),
+    "center_button_height": (int, 30, 64, 1),
+    "center_button_font_size": (int, 9, 18, 1),
     "center_action_width": (int, 70, 100, 1),
 
     "mode_logo_scale": (float, 0.60, 2.20, 0.01),
     "mode_logo_size": (int, 52, 118, 1),
     "mode_card_height": (int, 110, 178, 1),
+    "mode_cluster_height": (int, 128, 220, 1),
     "mode_status_width": (int, 70, 100, 1),
     "rail_parsec_ratio": (float, 0.70, 1.80, 0.01),
     "rail_room_history_ratio": (float, 0.50, 1.50, 0.01),
     "rail_h2h_ratio": (float, 0.60, 1.80, 0.01),
     "rail_gap": (int, 0, 18, 1),
+    "right_rail_font_size": (int, 9, 18, 1),
 
     "panel_opacity": (float, 0.20, 1.00, 0.01),
     "header_opacity": (float, 0.00, 1.00, 0.01),

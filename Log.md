@@ -1,3 +1,13 @@
+## V1.2.40 - Nang cap dieu khien kich thuoc Room UI
+
+- Them dieu chinh chieu cao thanh PHONG DAU.
+- Nut Chia se phong bo icon, them dieu chinh rong/cao/co chu.
+- Cum trung tam: them kich thuoc px logo che do dang chon va co chu 3 nut; 3 nut dung chung chieu cao.
+- Cot phai: them Size Font chung.
+- 7 che do: them chieu cao ca cum; giu trang thai luon nam gon trong card.
+- Chuan hoa khung logo 7 che do; asset 7.webp duoc can quang hoc nho hon de khong to hon 6 logo con lai.
+- Khong thay doi Core/API/RP/matchmaking/gameplay.
+
 
 ## V1.2.39 - Nang cap Thiet ke phong Pro
 - Khoa doi xung hai cot Chu phong/Doi thu: dung chung `player_width`, khong con chinh X rieng.

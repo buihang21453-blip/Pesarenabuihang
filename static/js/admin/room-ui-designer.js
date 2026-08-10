@@ -5,21 +5,21 @@
   const inputs = [...root.querySelectorAll('[data-room-ui-input]')];
   const cssMap = {
     player_width:'--p-player', center_width:'--p-center', sidebar_width:'--p-side',
-    main_height:'--p-height', main_gap:'--p-main-gap', mode_gap:'--p-mode-gap',
+    main_height:'--p-height', main_gap:'--p-main-gap', mode_gap:'--p-mode-gap', header_height:'--p-header-h', share_button_width:'--p-share-w', share_button_height:'--p-share-h', share_button_font_size:'--p-share-font',
     player_panel_y:'--p-player-y', center_y:'--p-center-y', sidebar_y:'--p-side-y',
     brand_scale:'--p-brand-scale', brand_y:'--p-brand-y',
     avatar_scale:'--p-avatar-scale', avatar_y:'--p-avatar-y',
     player_name_scale:'--p-name-scale', player_name_y:'--p-name-y',
     club_logo_scale:'--p-club-scale', club_area_y:'--p-club-y',
-    active_mode_logo_scale:'--p-active-scale', active_mode_logo_y:'--p-active-y',
+    active_mode_logo_scale:'--p-active-scale', active_mode_logo_size:'--p-active-size', active_mode_logo_y:'--p-active-y',
     vs_scale:'--p-vs-scale', vs_y:'--p-vs-y',
     center_gap:'--p-center-gap', center_padding_y:'--p-center-pad-y',
-    center_action_gap:'--p-action-gap', center_button_height:'--p-button-h', center_action_width:'--p-action-w',
-    mode_logo_size:'--p-mode-size', mode_card_height:'--p-card-height', mode_status_width:'--p-status-width',
-    rail_parsec_ratio:'--p-rail-parsec', rail_room_history_ratio:'--p-rail-history', rail_h2h_ratio:'--p-rail-h2h', rail_gap:'--p-rail-gap',
+    center_action_gap:'--p-action-gap', center_button_height:'--p-button-h', center_button_font_size:'--p-button-font', center_action_width:'--p-action-w',
+    mode_logo_size:'--p-mode-size', mode_card_height:'--p-card-height', mode_cluster_height:'--p-mode-cluster-h', mode_status_width:'--p-status-width',
+    rail_parsec_ratio:'--p-rail-parsec', rail_room_history_ratio:'--p-rail-history', rail_h2h_ratio:'--p-rail-h2h', rail_gap:'--p-rail-gap', right_rail_font_size:'--p-right-font',
     panel_opacity:'--p-opacity', header_opacity:'--p-header-opacity', host_panel_opacity:'--p-host-opacity', center_panel_opacity:'--p-center-opacity', opponent_panel_opacity:'--p-away-opacity', sidebar_panel_opacity:'--p-side-opacity', mode_card_opacity:'--p-mode-opacity', action_zone_opacity:'--p-action-opacity', background_opacity:'--p-bg-opacity', gold_glow:'--p-glow'
   };
-  const pxUnits = new Set(['main_height','main_gap','mode_gap','player_panel_y','center_y','sidebar_y','brand_y','avatar_y','player_name_y','club_area_y','active_mode_logo_y','vs_y','center_gap','center_padding_y','center_action_gap','center_button_height','mode_logo_size','mode_card_height','rail_gap']);
+  const pxUnits = new Set(['main_height','main_gap','mode_gap','header_height','share_button_width','share_button_height','share_button_font_size','player_panel_y','center_y','sidebar_y','brand_y','avatar_y','player_name_y','club_area_y','active_mode_logo_y','vs_y','center_gap','center_padding_y','center_action_gap','center_button_height','center_button_font_size','mode_logo_size','mode_card_height','mode_cluster_height','rail_gap','right_rail_font_size']);
   const frUnits = new Set(['player_width','center_width','sidebar_width','rail_parsec_ratio','rail_room_history_ratio','rail_h2h_ratio']);
   const percentUnits = new Set(['center_action_width','mode_status_width']);
 

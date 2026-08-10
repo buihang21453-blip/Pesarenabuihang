@@ -26,3 +26,18 @@
 .room-ui-control-grid.room-ui-grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}.room-ui-control-grid.room-ui-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:1100px){.room-ui-control-grid.room-ui-grid-4,.room-ui-control-grid.room-ui-grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.room-ui-control-grid.room-ui-grid-4,.room-ui-control-grid.room-ui-grid-3{grid-template-columns:1fr}.room-ui-preview .rui-actions{grid-template-columns:1fr}}
+
+
+/* V1.2.40 - preview dong bo cac dieu khien moi */
+.room-ui-preview{--p-header-h:88px;--p-share-w:150px;--p-share-h:44px;--p-share-font:13px;--p-active-size:110px;--p-button-font:12px;--p-mode-cluster-h:154px;--p-right-font:12px}
+.room-ui-preview .rui-header{height:clamp(34px,calc(var(--p-header-h) * .48),72px)}
+.room-ui-preview .rui-share{width:clamp(60px,calc(var(--p-share-w) * .48),110px);min-height:clamp(20px,calc(var(--p-share-h) * .48),42px);display:grid;place-items:center;padding:3px 5px;font-size:clamp(6px,calc(var(--p-share-font) * .48),10px)}
+.room-ui-preview .rui-active-mode-img{width:min(calc(var(--p-active-size) * .55),82px);height:min(calc(var(--p-active-size) * .55),82px);transform:translateY(var(--p-active-y))}
+.room-ui-preview .rui-quick,.room-ui-preview .rui-actions button{font-size:clamp(6px,calc(var(--p-button-font) * .5),10px)}
+.room-ui-preview .rui-right-rail{font-size:clamp(6px,calc(var(--p-right-font) * .55),10px)}
+.room-ui-preview .rui-side-panel>b{font-size:1em}.room-ui-preview .rui-side-panel em{font-size:.85em}
+.room-ui-preview .rui-mode-row{height:clamp(92px,calc(var(--p-mode-cluster-h) * .72),150px)}
+.room-ui-preview .rui-mode-card{height:100%!important;display:grid;grid-template-rows:minmax(0,1fr) 17px 17px;padding:4px 3px}
+.room-ui-preview .rui-mode-icon{width:min(var(--p-mode-size),76%);height:min(var(--p-mode-size),58px);margin:auto;transform:none!important}
+.room-ui-preview .rui-mode-card:nth-child(3) .rui-mode-icon{transform:scale(.78)!important}
+.room-ui-preview .rui-mode-card strong{min-height:17px;height:17px;justify-content:center;overflow:hidden}.room-ui-preview .rui-mode-card small{min-height:17px;height:17px;display:flex;align-items:center;justify-content:center;overflow:visible}
