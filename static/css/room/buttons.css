@@ -1,95 +1,132 @@
 /* ============================================================
-   V1.2.51 — ROOM CENTER NEON BUTTONS: VISUAL OWNER ONLY
+   V1.2.54 — ROOM CENTER BUTTONS / NEON GAMING REFERENCE
 
-   Scope: .room-v2-shell .room-neon-btn
-   OWNS: background, border, radius, glow/shadow, text/icon color,
-         internal alignment and visual interaction.
-   DOES NOT OWN: cluster width/position, responsive height/font-size.
-   Those remain in room_v2.css so changing the skin never moves layout.
+   VISUAL OWNER DUY NHAT cua nut chuc nang trung tam phong dau.
+   Anh mau: nen toi ban trong suot, vien neon mong, glow nhe,
+   bo goc 8px, chu trang, icon cung tong mau vien.
 
-   Isolation rule:
-   - Room neon controls no longer carry global .btn/.green/.red/.gold classes.
-   - quick_match.css may own Quick Match behavior/state, but not this skin.
-   - No !important, no gradient, no 3D transform.
+   OWNS:
+   - background / border / radius / glow / shadow
+   - text + icon color
+   - hover / active / focus / disabled visual state
+
+   DOES NOT OWN:
+   - vi tri cum nut
+   - grid/flex cua khu trung tam
+   - responsive width/height cua cum action
+
+   CSS cu khong duoc skin cac nut co class .room-neon-btn.
+   Khong dung force override. Khong transform 3D. Khong gradient manh.
    ============================================================ */
 .room-v2-shell .room-neon-btn{
-  --room-neon-color:#43a9ff;
-  --room-neon-rgb:67,169,255;
+  --room-neon-color:#48a9ff;
+  --room-neon-rgb:72,169,255;
+  --room-neon-tint:rgba(var(--room-neon-rgb),.13);
+
   appearance:none;
   -webkit-appearance:none;
   box-sizing:border-box;
   padding-inline:12px;
   border:1px solid var(--room-neon-color);
   border-radius:8px;
-  background:rgba(3,10,16,.82);
-  background-image:none;
+
+  /* Anh mau co lop mau rat nhe o nua tren, nhung tong the van la nen den. */
+  background-color:rgba(3,7,10,.94);
+  background-image:linear-gradient(
+    180deg,
+    rgba(var(--room-neon-rgb),.14) 0%,
+    rgba(4,8,10,.93) 43%,
+    rgba(2,5,7,.96) 100%
+  );
+
   color:#fff;
   font-family:inherit;
-  font-weight:850;
+  font-weight:800;
   text-align:center;
   text-decoration:none;
   display:flex;
   align-items:center;
   justify-content:center;
   gap:8px;
+
   box-shadow:
-    inset 0 0 9px rgba(var(--room-neon-rgb),.10),
-    0 0 7px rgba(var(--room-neon-rgb),.28);
-  text-shadow:0 1px 2px rgba(0,0,0,.65);
+    inset 0 0 10px rgba(var(--room-neon-rgb),.14),
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 0 5px rgba(var(--room-neon-rgb),.42),
+    0 0 12px rgba(var(--room-neon-rgb),.16);
+  text-shadow:0 1px 2px rgba(0,0,0,.82);
+
   filter:none;
   transform:none;
-  transition:background-color .14s ease,border-color .14s ease,box-shadow .14s ease,filter .14s ease;
+  transition:background-color .13s ease,border-color .13s ease,box-shadow .13s ease,filter .13s ease;
   cursor:pointer;
 }
+
 .room-v2-shell .room-neon-btn:hover{
-  background:rgba(5,14,21,.90);
-  background-image:none;
+  background-color:rgba(4,9,12,.97);
+  background-image:linear-gradient(
+    180deg,
+    rgba(var(--room-neon-rgb),.18) 0%,
+    rgba(5,10,12,.95) 44%,
+    rgba(2,5,7,.98) 100%
+  );
   border-color:var(--room-neon-color);
   box-shadow:
-    inset 0 0 11px rgba(var(--room-neon-rgb),.14),
-    0 0 9px rgba(var(--room-neon-rgb),.36);
-  filter:brightness(1.04);
-  transform:none;
-}
-.room-v2-shell .room-neon-btn:active{
-  background:rgba(4,12,18,.94);
-  box-shadow:
-    inset 0 0 12px rgba(var(--room-neon-rgb),.16),
-    0 0 6px rgba(var(--room-neon-rgb),.30);
-  filter:none;
-  transform:none;
-}
-.room-v2-shell .room-neon-btn:focus-visible{
-  outline:2px solid rgba(var(--room-neon-rgb),.45);
-  outline-offset:2px;
-}
-.room-v2-shell .room-neon-btn:disabled,
-.room-v2-shell .room-neon-btn[aria-disabled="true"]{
-  opacity:.55;
-  cursor:not-allowed;
-  filter:saturate(.7);
+    inset 0 0 12px rgba(var(--room-neon-rgb),.18),
+    inset 0 1px 0 rgba(255,255,255,.10),
+    0 0 7px rgba(var(--room-neon-rgb),.52),
+    0 0 14px rgba(var(--room-neon-rgb),.20);
+  filter:brightness(1.035);
   transform:none;
 }
 
+.room-v2-shell .room-neon-btn:active{
+  background-color:rgba(2,6,8,.99);
+  background-image:linear-gradient(
+    180deg,
+    rgba(var(--room-neon-rgb),.10),
+    rgba(2,5,7,.99)
+  );
+  box-shadow:
+    inset 0 0 13px rgba(var(--room-neon-rgb),.20),
+    0 0 5px rgba(var(--room-neon-rgb),.38);
+  filter:none;
+  transform:none;
+}
+
+.room-v2-shell .room-neon-btn:focus-visible{
+  outline:2px solid rgba(var(--room-neon-rgb),.48);
+  outline-offset:2px;
+}
+
+.room-v2-shell .room-neon-btn:disabled,
+.room-v2-shell .room-neon-btn[aria-disabled="true"]{
+  opacity:.54;
+  cursor:not-allowed;
+  filter:saturate(.68);
+  transform:none;
+}
+
+/* Mau chuc nang theo anh mau. */
 .room-v2-shell .room-neon-btn.room-neon-gold{
-  --room-neon-color:#f7b928;
-  --room-neon-rgb:247,185,40;
+  --room-neon-color:#d59a17;
+  --room-neon-rgb:213,154,23;
 }
 .room-v2-shell .room-neon-btn.room-neon-green{
-  --room-neon-color:#20dc65;
-  --room-neon-rgb:32,220,101;
+  --room-neon-color:#17d85a;
+  --room-neon-rgb:23,216,90;
 }
 .room-v2-shell .room-neon-btn.room-neon-red{
-  --room-neon-color:#f04438;
-  --room-neon-rgb:240,68,56;
+  --room-neon-color:#e52d24;
+  --room-neon-rgb:229,45,36;
 }
 .room-v2-shell .room-neon-btn.room-neon-blue{
-  --room-neon-color:#43a9ff;
-  --room-neon-rgb:67,169,255;
+  --room-neon-color:#48a9ff;
+  --room-neon-rgb:72,169,255;
 }
 .room-v2-shell .room-neon-btn.room-neon-gray{
-  --room-neon-color:#8293a6;
-  --room-neon-rgb:130,147,166;
+  --room-neon-color:#8495a8;
+  --room-neon-rgb:132,149,168;
 }
 
 .room-v2-shell .room-neon-btn .room-neon-icon{
@@ -103,11 +140,15 @@
   font-variant-emoji:text;
   font-size:1.12em;
   line-height:1;
-  text-shadow:0 0 6px rgba(var(--room-neon-rgb),.62);
+  text-shadow:
+    0 0 4px rgba(var(--room-neon-rgb),.75),
+    0 0 8px rgba(var(--room-neon-rgb),.30);
   filter:none;
 }
+
 .room-v2-shell .room-neon-btn .room-neon-label{
   display:inline-block;
   color:#fff;
   line-height:1;
+  letter-spacing:.005em;
 }

@@ -640,7 +640,7 @@
     margin: 18px auto 0;
 }
 .room-center-primary-actions form { margin: 0; }
-.room-center-action-btn {
+.room-center-action-btn:not(.room-neon-btn) {
     min-width: 128px;
     min-height: 46px;
     display: inline-flex;
@@ -654,7 +654,7 @@
 }
 @media (max-width: 760px) {
     .room-center-primary-actions { gap: 8px; }
-    .room-center-action-btn { min-width: 118px; }
+    .room-center-action-btn:not(.room-neon-btn) { min-width: 118px; }
 }
 
 
@@ -673,7 +673,7 @@
   margin:0;
   flex:0 1 auto;
 }
-.room-center-primary-actions .room-center-action-btn{
+.room-center-primary-actions .room-center-action-btn:not(.room-neon-btn){
   white-space:nowrap;
   width:auto ;
   min-width:128px;
@@ -726,7 +726,7 @@
 }
 @media (max-width:560px){
   .room-center-primary-actions{gap:7px;}
-  .room-center-primary-actions .room-center-action-btn{min-width:0;padding-left:12px;padding-right:12px;font-size:12px;}
+  .room-center-primary-actions .room-center-action-btn:not(.room-neon-btn){min-width:0;padding-left:12px;padding-right:12px;font-size:12px;}
   .room-center-score-panel{width:min(100%,300px);padding:12px;}
 }
 

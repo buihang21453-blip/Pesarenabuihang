@@ -1,3 +1,14 @@
+# V1.2.54 - Tai tao nut Neon Gaming theo anh mau va don CSS trung
+
+## Noi dung
+- Phan tich lai anh mau 3 nut: nen den co tint mau rat nhe, vien neon 1px, glow nhe, bo goc 8px, chu trang, icon cung tong mau vien.
+- Tai tao skin nut trung tam trong `static/css/room/buttons.css`.
+- Mau chuc nang: Moi Dau vang, San Sang/Tim Nhanh xanh la, Thoat/Bỏ Cuoc do.
+- Khong dung hieu ung 3D, khong translate/scale khi hover, khong `!important`.
+- Giu nguyen HTML, route, JS, API, RP va logic phong.
+- Co lap CSS legacy trong `room_detail.css`: rule kich thuoc cu khong con match `.room-neon-btn`.
+- `quick_match.css` tiep tuc chi quan ly trang thai/logic Quick Match, khong co quyen skin nut Neon.
+- Giu layout hien tai: Tim Nhanh o hang tren, Moi Dau + Thoat Phong o hang duoi; nut Tim Nhanh van co chieu rong xap xi mot nut don, khong dai bang ca cum.
 # V1.2.53 - Cap nhat bo 7 logo che do theo thu tu 1-7
 
 - Chuyen toan bo logo che do phong dau sang Supabase `v1.3.40/Model/1.webp` -> `7.webp`.
