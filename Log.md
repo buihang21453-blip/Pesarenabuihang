@@ -435,3 +435,10 @@
 - Giu Room UI tach rieng: `static/css/room_v2.css`; khong tron CSS V2 vao legacy `room_detail.css`.
 - Khong them 4 core che do Series/BO3; 4 che do moi van chi la logo + khoa giao dien.
 - Test RP/Read Model/total matches/daily limit: 25 PASS. Mot so test cu trong project van khoa cung version cu nen khong dung lam regression version moi.
+
+## V1.2.29 - Test 4 phương án ảnh Room UI
+- Thêm bộ test chỉ hiển thị cho Admin trong phòng đấu.
+- Test trực tiếp 2 nền giữa: `v1.3.40/center-stadium.webp` và `v1.3.40/center-stadium2.webp`.
+- Test trực tiếp 2 logo PES ARENA: `v1.3.40/pes-arena-logo.webp` và `v1.3.40/pes-arena-logoknen.webp`.
+- Lựa chọn chỉ lưu ở `localStorage` của trình duyệt Admin; không ghi DB, không gọi API, không sửa core/RP/matchmaking.
+- Mặc định dùng `center-stadium.webp` + `pes-arena-logoknen.webp`; có nút Khôi phục.

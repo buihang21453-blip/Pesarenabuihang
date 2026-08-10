@@ -103,3 +103,19 @@
  .room-v2-shell .room-v2-mode-grid{grid-template-columns:repeat(2,1fr)}
  .room-v2-shell .room-v2-mode-card{height:170px}
 }
+
+/* V1.2.29 - Admin-only visual asset tester. UI only; no API/DB/core. */
+.room-v2-shell .room-center-stage-plain{
+ background-image:linear-gradient(180deg,rgba(7,10,18,.30),rgba(3,5,10,.56)),var(--room-v2-center-bg);
+ background-size:cover;
+ background-position:center;
+}
+.room-v2-shell .room-v2-asset-tester{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;padding:8px 10px;border:1px solid rgba(255,203,63,.34);border-radius:6px;background:rgba(3,11,18,.88);box-shadow:inset 0 0 14px rgba(255,204,67,.04)}
+.room-v2-shell .room-v2-asset-tester__title{font-size:12px;font-weight:900;color:#ffd758;letter-spacing:.06em}
+.room-v2-shell .room-v2-asset-tester__group{display:flex;align-items:center;gap:5px}
+.room-v2-shell .room-v2-asset-tester__group>span{font-size:11px;color:#bfc7cf}
+.room-v2-shell .room-v2-asset-tester button{min-height:28px;padding:4px 9px;border:1px solid rgba(255,255,255,.2);border-radius:4px;background:#101b25;color:#fff;font:700 11px/1 inherit;cursor:pointer}
+.room-v2-shell .room-v2-asset-tester button:hover,.room-v2-shell .room-v2-asset-tester button.is-active{border-color:#ffd04a;background:#3a2a07;color:#ffe785}
+.room-v2-shell .room-v2-asset-tester__reset{margin-left:auto}
+.room-v2-shell .room-v2-asset-tester small{flex-basis:100%;font-size:10px;color:#8fa0ad}
+@media (max-width:720px){.room-v2-shell .room-v2-asset-tester__reset{margin-left:0}}
