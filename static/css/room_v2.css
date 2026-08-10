@@ -795,3 +795,71 @@
   .room-v2-shell .room-center-primary-actions .btn.gold:active{box-shadow:0 0 8px #ffd24a,0 0 18px rgba(255,210,74,.58)!important}
   .room-v2-shell .room-center-primary-actions .btn.red:active{box-shadow:0 0 8px #ff5c68,0 0 18px rgba(255,92,104,.58)!important}
 }
+
+/* ===== V1.2.45 - Can giua brand, dong bo 3 nut, khong cat cum 7 mode ===== */
+@media (min-width:1251px){
+  /* Brand can theo chinh topbar, khong theo shell. */
+  .room-v2-shell .room-stage-topbar{position:relative!important;overflow:visible!important}
+  .room-v2-shell .room-v2-brand{
+    position:absolute!important;left:50%!important;right:auto!important;top:50%!important;
+    width:240px!important;height:52px!important;margin:0!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    transform:translate(-50%,-50%)!important;z-index:3!important;pointer-events:none!important;
+  }
+  .room-v2-shell .room-v2-brand img{
+    display:block!important;width:220px!important;max-width:220px!important;height:46px!important;
+    object-fit:contain!important;object-position:center!important;margin:0 auto!important;
+    transform:scale(var(--rui-brand-scale,1))!important;transform-origin:center center!important;
+  }
+
+  /* 3 nut: cung nen, vien, bo goc, font, cao; chi khac mau vien theo chuc nang. */
+  .room-v2-shell .room-quick-match-row,
+  .room-v2-shell .room-center-primary-actions{
+    width:var(--rui-center-action-width,88%)!important;max-width:300px!important;
+    margin-left:auto!important;margin-right:auto!important;
+  }
+  .room-v2-shell .room-center-primary-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:var(--rui-center-action-gap,8px)!important}
+  .room-v2-shell .room-center-primary-actions>a,
+  .room-v2-shell .room-center-primary-actions>form{display:flex!important;width:100%!important;min-width:0!important;margin:0!important}
+  .room-v2-shell .room-quick-match-row .room-center-action-btn,
+  .room-v2-shell .room-center-primary-actions .room-center-action-btn,
+  .room-v2-shell .room-center-primary-actions .btn.gold,
+  .room-v2-shell .room-center-primary-actions .btn.red{
+    appearance:none!important;-webkit-appearance:none!important;
+    width:100%!important;max-width:none!important;min-width:0!important;
+    height:var(--rui-center-button-height,38px)!important;min-height:var(--rui-center-button-height,38px)!important;
+    padding:0 10px!important;border-radius:8px!important;
+    background:#071521!important;background-color:#071521!important;background-image:none!important;
+    color:#fff!important;font-size:var(--rui-center-button-font-size,12px)!important;font-weight:900!important;
+    line-height:1!important;text-align:center!important;text-decoration:none!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    box-shadow:none!important;text-shadow:none!important;filter:none!important;transform:none!important;
+  }
+  .room-v2-shell .room-quick-match-row .room-center-action-btn{border:1px solid #23e67d!important}
+  .room-v2-shell .room-center-primary-actions .btn.gold{border:1px solid #ffd24a!important}
+  .room-v2-shell .room-center-primary-actions .btn.red{border:1px solid #ff5c68!important}
+  .room-v2-shell .quick-match-icon{display:none!important}
+  .room-v2-shell .room-quick-match-row .room-center-action-btn:active{box-shadow:0 0 8px #23e67d,0 0 18px rgba(35,230,125,.58)!important}
+  .room-v2-shell .room-center-primary-actions .btn.gold:active{box-shadow:0 0 8px #ffd24a,0 0 18px rgba(255,210,74,.58)!important}
+  .room-v2-shell .room-center-primary-actions .btn.red:active{box-shadow:0 0 8px #ff5c68,0 0 18px rgba(255,92,104,.58)!important}
+
+  /* Cum 7 mode luon co day du ten + status, khong bi cat me duoi. */
+  .room-v2-shell{--room-v245-mode-h:clamp(168px,var(--rui-mode-cluster-height,176px),230px)}
+  .room-v2-shell .room-arena-frame{grid-template-rows:var(--room-v239-main-h) var(--room-v245-mode-h)!important;overflow:visible!important}
+  .room-v2-shell .room-v2-modes{
+    height:var(--room-v245-mode-h)!important;min-height:var(--room-v245-mode-h)!important;
+    box-sizing:border-box!important;display:grid!important;grid-template-rows:24px minmax(0,1fr)!important;
+    padding:0 0 8px!important;overflow:visible!important;
+  }
+  .room-v2-shell .room-v2-modes h2{height:24px!important;margin:0!important;line-height:24px!important}
+  .room-v2-shell .room-v2-mode-grid{height:100%!important;min-height:0!important;align-items:stretch!important;overflow:visible!important}
+  .room-v2-shell .room-v2-mode-form{height:100%!important;min-height:0!important}
+  .room-v2-shell .room-v2-mode-card{
+    height:100%!important;min-height:0!important;box-sizing:border-box!important;
+    display:grid!important;grid-template-rows:minmax(0,1fr) 24px 22px!important;
+    padding:5px 4px 6px!important;overflow:hidden!important;
+  }
+  .room-v2-shell .room-v2-mode-card strong{height:24px!important;min-height:24px!important}
+  .room-v2-shell .room-v2-mode-card small{height:20px!important;min-height:20px!important;margin-bottom:0!important}
+  .room-v2-shell .room-arena-right-rail{height:calc(var(--room-v239-main-h) + var(--room-v245-mode-h))!important}
+}

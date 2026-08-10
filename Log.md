@@ -1,3 +1,10 @@
+
+## V1.2.45 - Can giua PES ARENA, dong bo 3 nut, Preview trung tam day du
+- Can logo PES ARENA theo chinh thanh PHONG DAU (topbar position: relative), chi scale to/nho.
+- Ep Tìm nhanh / Mời đấu / Thoát phòng dùng cùng nền Neon tối, cùng chiều cao/font/bo góc; chỉ khác màu viền và glow khi click.
+- Tăng vùng an toàn của cụm 7 chế độ, tách title/card/status để không cắt mép dưới.
+- Preview Admin mô phỏng đầy đủ khu trung tâm: title, logo chế độ, trạng thái lựa chọn, VS thật, đủ 3 nút và trạng thái phòng.
+- Preview 7 chế độ có chiều cao an toàn và không cắt thanh trạng thái.
 # V1.2.44 - Thu gon chu PHONG DAU, can giua logo PES ARENA, dong bo 3 nut
 
 - Khong cho `brand_scale` lam phong to chu PHONG DAU nua.

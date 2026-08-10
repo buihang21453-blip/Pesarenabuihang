@@ -169,3 +169,55 @@
 .room-ui-preview .rui-quick{border:1px solid #23e67d!important}
 .room-ui-preview .rui-actions button:first-child{border:1px solid #ffd24a!important}
 .room-ui-preview .rui-actions button:last-child{border:1px solid #ff5c68!important}
+
+/* ===== V1.2.45 - Preview trung thanh: brand giua, trung tam day du, 7 mode khong cat ===== */
+.room-ui-preview .rui-header{position:relative!important;grid-template-columns:1fr 1fr!important}
+.room-ui-preview .rui-brand{
+  position:absolute!important;left:50%!important;top:50%!important;width:220px!important;height:34px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  transform:translate(-50%,-50%)!important;pointer-events:none!important;
+}
+.room-ui-preview .rui-brand img{width:190px!important;height:30px!important;object-fit:contain!important;object-position:center!important;transform:scale(var(--p-brand-scale,1))!important;transform-origin:center!important}
+.room-ui-preview .rui-share{grid-column:2!important;justify-self:end!important}
+
+.room-ui-preview .rui-center{
+  display:grid!important;grid-template-rows:20px auto 24px minmax(72px,1fr) auto 20px!important;
+  align-items:center!important;justify-items:center!important;align-content:stretch!important;
+  padding:var(--p-center-pad-y,8px) 7px!important;gap:var(--p-center-gap,5px)!important;overflow:hidden!important;
+}
+.room-ui-preview .rui-center-title{margin:0!important;font-size:9px!important;color:#fff!important}
+.room-ui-preview .rui-active-mode-img{
+  width:min(calc(var(--p-active-size,126px) * .58),104px)!important;height:min(calc(var(--p-active-size,126px) * .58),104px)!important;
+  margin:0 auto!important;object-fit:contain!important;transform:translateY(var(--p-active-y,0px))!important;
+}
+.room-ui-preview .rui-center-note{
+  width:88%;height:20px;display:flex;align-items:center;justify-content:center;padding:2px 6px;
+  border:1px solid #168b45;border-radius:5px;background:rgba(5,68,34,.72);color:#9bf7b7;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:6px;font-weight:900;
+}
+.room-ui-preview .rui-vs-img{
+  display:block;width:74px;height:74px;max-height:100%;object-fit:contain;margin:auto;
+  transform:translateY(var(--p-vs-y,0px)) scale(var(--p-vs-scale,1));transform-origin:center;
+}
+.room-ui-preview .rui-center-buttons{
+  width:var(--p-action-w,88%);display:grid;grid-template-columns:1fr 1fr;gap:var(--p-action-gap,8px);
+}
+.room-ui-preview .rui-action{
+  height:var(--p-button-h,38px);min-height:var(--p-button-h,38px);padding:0 6px;border-radius:7px;
+  background:#071521!important;background-image:none!important;color:#fff!important;
+  font-size:clamp(6px,calc(var(--p-button-font,12px) * .52),10px);font-weight:950;box-shadow:none;
+}
+.room-ui-preview .rui-action-quick{grid-column:1/-1;width:58%;justify-self:center;border:1px solid #23e67d}
+.room-ui-preview .rui-action-invite{border:1px solid #ffd24a}.room-ui-preview .rui-action-exit{border:1px solid #ff5c68}
+.room-ui-preview .rui-state-demo{width:78%;height:20px;margin:0;padding:3px;font-size:6px}
+
+.room-ui-preview .rui-mode-row{
+  height:clamp(108px,calc(var(--p-mode-cluster-h,176px) * .76),158px)!important;
+  padding-bottom:6px!important;box-sizing:border-box!important;overflow:visible!important;
+}
+.room-ui-preview .rui-mode-card{
+  height:100%!important;box-sizing:border-box!important;display:grid!important;
+  grid-template-rows:minmax(0,1fr) 19px 19px!important;padding:4px 3px 5px!important;overflow:hidden!important;
+}
+.room-ui-preview .rui-mode-card strong{height:19px!important;min-height:19px!important;display:flex!important;align-items:center!important;justify-content:center!important}
+.room-ui-preview .rui-mode-card small{height:18px!important;min-height:18px!important;margin:0 auto!important;display:flex!important;align-items:center!important;justify-content:center!important}
