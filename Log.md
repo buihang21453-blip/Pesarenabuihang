@@ -359,3 +359,11 @@
 - Tang cache user hien tai 8s -> 15s, danh sach BXH 8s -> 20s, chuong thong bao 8s -> 30s de giam Egress Supabase.
 - Khong thay doi UI, CSS, cong thuc RP, luong xac nhan ket qua hay logic ghi tran.
 - Luu y: ban nay chi chong sap web va giam request; Supabase van can duoc mo lai quota de cac chuc nang can ghi/du lieu thuc hoat dong day du.
+
+## V1.2.20 - Vercel-first asset + chuan bi chuyen Supabase moi
+- `APP_VERSION` -> `V1.2.20`.
+- `modules/static_asset_service.py`: thêm `STATIC_ASSET_MODE=auto|local|remote`.
+- Chế độ `auto` ưu tiên file có thật trong `/static` để Vercel CDN phục vụ; asset chưa migrate vẫn fallback URL Supabase Storage cũ, tránh mất ảnh khi chuyển dần.
+- Thêm `tools/migrate_supabase_assets_to_vercel_static.py` để tải asset public theo manifest về đúng cấu trúc `/static`, kiểm tra dung lượng/SHA256 khi có dữ liệu đối chiếu.
+- Thêm `HUONG_DAN_CHUYEN_SUPABASE_MOI.md`: quy trình Database/Auth/Storage/env + checklist cutover sang project Supabase mới.
+- Không thay UI/CSS, không thay RP, không thay luồng trận/confirm.
