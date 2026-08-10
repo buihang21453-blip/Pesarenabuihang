@@ -56,7 +56,7 @@
 .room-v2-shell .room-side-info-list span{color:#d0d0d0}
 .room-v2-shell .room-side-info-list strong{font-size:14px}
 
-.room-v2-shell .room-v2-modes{padding:0 0 4px}
+.room-v2-shell .room-v2-modes{grid-column:1/4;min-width:0;width:100%;padding:0 0 4px}
 .room-v2-shell .room-v2-modes h2{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 7px;color:#e8b835;font-size:17px;letter-spacing:.04em;text-transform:uppercase}
 .room-v2-shell .room-v2-modes h2:before,.room-v2-shell .room-v2-modes h2:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,#8e6b15)}
 .room-v2-shell .room-v2-modes h2:after{background:linear-gradient(90deg,#8e6b15,transparent)}
@@ -85,6 +85,7 @@
 .room-v2-shell .room-extra-controls>.room-control-title{font-size:18px}
 
 @media(max-width:1250px){
+ .room-v2-shell .room-v2-modes{grid-column:1/-1}
  .room-v2-shell .room-stage-topbar{grid-template-columns:1fr auto}
  .room-v2-shell .room-v2-brand{grid-column:1/-1;grid-row:1;opacity:.25;z-index:-1}
  .room-v2-shell .room-stage-title-wrap{grid-column:1;grid-row:1;z-index:1}
@@ -131,3 +132,9 @@
 .room-v2-shell .room-v2-mode-card{background:linear-gradient(180deg,rgba(11,23,35,var(--rui-mode-card-opacity,.95)),rgba(4,11,17,var(--rui-mode-card-opacity,.95)))}
 .room-v2-shell .room-v2-mode-card.mode-2{background:linear-gradient(180deg,rgba(46,13,72,var(--rui-mode-card-opacity,.95)),rgba(14,8,23,var(--rui-mode-card-opacity,.95)))}
 .room-v2-shell .room-action-zone,.room-v2-shell .room-action-zone.is-post-result{background-color:rgba(3,10,24,var(--rui-action-zone-opacity,.72))}
+
+
+/* V1.2.33 - 6 mode chi rong den het khung doi thu; lich su phong nam ngay duoi Parsec. */
+.room-v2-shell .room-session-h2h-rail{order:initial;margin:0;min-height:150px}
+.room-v2-shell .room-session-h2h-rail .room-score-history-title{margin-bottom:8px}
+.room-v2-shell .room-session-h2h-rail .room-session-empty{margin:12px 0 4px;text-align:center;color:#8f9daa;font-size:12px;line-height:1.45}

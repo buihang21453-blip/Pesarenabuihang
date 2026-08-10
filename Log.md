@@ -1,3 +1,12 @@
+# V1.2.33 - Thu gon 6 che do va dua lich su phong xuong duoi Parsec
+
+- Dải 6 chế độ chỉ chiếm đúng chiều rộng từ Chủ phòng → Trung tâm → hết khung Đối thủ; không kéo sang cột thông tin bên phải.
+- Trên màn hình hẹp, dải chế độ tự full width để không vỡ bố cục.
+- Lịch sử phòng luôn nằm ngay dưới Kết nối Parsec trong cột phải.
+- Đổi tiêu đề thành `LỊCH SỬ PHÒNG`; khi chưa có trận vẫn giữ khung và hiển thị trạng thái trống.
+- Đồng bộ trạng thái lịch sử trong `_room_live_content.html`.
+- Chỉ sửa Room UI/HTML/CSS; không đổi Core, API, RP, matchmaking hay 4 chế độ đang khóa.
+
 # V1.2.32 - Test logo du an rieng voi logo phong dau
 - Ngay: 2026-08-10 15:42 (Asia/Bangkok)
 - Khoi phuc test 2 logo du an: `v1.3.40/pes-arena-logo.webp` (co nen) va `v1.3.40/pes-arena-logoknen.webp` (khong nen).

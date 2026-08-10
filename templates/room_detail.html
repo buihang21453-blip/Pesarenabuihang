@@ -459,13 +459,12 @@
 
             {% include "partials/parsec_room_panel.html" %}
 
-            {% if room_head_to_head and room_head_to_head.available %}
-            <section class="panel room-session-h2h room-session-h2h-rail room-score-history-panel" aria-label="Lịch sử tỷ số trong phòng">
+            <section class="panel room-session-h2h room-session-h2h-rail room-score-history-panel" aria-label="Lịch sử đối đầu trong phòng đấu">
                 <div class="room-score-history-title">
-                    <h3>LỊCH SỬ ĐẤU</h3>
+                    <h3>LỊCH SỬ PHÒNG</h3>
                 </div>
 
-                {% if room_head_to_head.matches %}
+                {% if room_head_to_head and room_head_to_head.available and room_head_to_head.matches %}
                 <div class="room-score-history-board">
                     <div class="room-score-history-head">
                         <span class="{{ room.host_name_style_class or '' }}" title="{{ room.host_name }}">{{ room.host_name }}</span>
@@ -483,10 +482,9 @@
                     </div>
                 </div>
                 {% else %}
-                <p class="room-session-empty">Chưa có tỷ số nào trong phòng này.</p>
+                <p class="room-session-empty">Chưa có lịch sử đối đầu trong phòng đấu.</p>
                 {% endif %}
             </section>
-            {% endif %}
 
             {% if system_features.room_chat_enabled %}<section class="panel room-chat-side">
                 <h2>Chat phòng</h2>
@@ -498,7 +496,6 @@
                 <div id="roomChatStatus" class="chat-note">Chat phòng chỉ dành cho 2 người trong phòng. Chống spam: 1 tin nhắn / 5 giây.</div>
             </section>{% endif %}
         </aside>
-    </div>
 
     <section class="room-v2-modes" aria-label="Các chế độ thi đấu">
         <h2><span>◇</span> CÁC CHẾ ĐỘ KHÁC <span>◇</span></h2>
@@ -551,6 +548,7 @@
             </div>
         </div>
     </section>
+    </div>
 
     <div class="panel room-extra-controls">
     <h2 class="room-control-title">Điều khiển phòng</h2>
