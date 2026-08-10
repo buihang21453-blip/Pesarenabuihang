@@ -78,6 +78,16 @@ function toggleTheme(){
     <aside class="sidebar player-sidebar">
         <div class="brand-lockup">
             <img class="sidebar-brand-logo" src="{{ asset_url('pes-arena-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="PES Arena – Bản Lĩnh Sân Cỏ">
+            {% if current_user.role == "admin" or current_user.admin_level in ["owner", "admin"] %}
+            <script>
+            (function(){
+              try {
+                var src = localStorage.getItem('pesArenaProjectLogoTest.v132');
+                if (src) document.currentScript.previousElementSibling.setAttribute('src', src);
+              } catch (e) {}
+            })();
+            </script>
+            {% endif %}
         </div>
 
         <nav class="nav player-nav">

@@ -65,15 +65,20 @@
     </div>
 
     {% if current_user.role == "admin" %}
-    <section class="room-v2-asset-tester" id="roomV2AssetTester" aria-label="Test ảnh giao diện phòng">
-        <div class="room-v2-asset-tester__title">TEST NỀN GIỮA PHÒNG</div>
+    <section class="room-v2-asset-tester" id="roomV2AssetTester" aria-label="Test ảnh giao diện phòng và logo dự án">
+        <div class="room-v2-asset-tester__title">TEST GIAO DIỆN</div>
         <div class="room-v2-asset-tester__group">
-            <span>Nền giữa</span>
+            <span>Nền giữa phòng</span>
             <button type="button" data-center-src="{{ asset_url('v1.3.40/center-stadium.webp') }}">Sân 1</button>
             <button type="button" data-center-src="{{ asset_url('v1.3.40/center-stadium2.webp') }}">Sân 2</button>
         </div>
+        <div class="room-v2-asset-tester__group">
+            <span>Logo dự án</span>
+            <button type="button" data-project-logo-src="{{ asset_url('v1.3.40/pes-arena-logo.webp') }}">Có nền</button>
+            <button type="button" data-project-logo-src="{{ asset_url('v1.3.40/pes-arena-logoknen.webp') }}">Không nền</button>
+        </div>
         <button type="button" class="room-v2-asset-tester__reset" data-room-ui-reset>Khôi phục</button>
-        <small>Chỉ đổi hiển thị trên trình duyệt Admin, không lưu DB và không ảnh hưởng core.</small>
+        <small>Logo PES ARENA bên trong phòng vẫn cố định bằng <code>pes-arena-room-logo.webp</code>. Các lựa chọn test chỉ lưu trên trình duyệt Admin, không ghi DB và không ảnh hưởng core.</small>
     </section>
     {% endif %}
 

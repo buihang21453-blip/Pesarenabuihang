@@ -1,3 +1,10 @@
+# V1.2.32 - Test logo du an rieng voi logo phong dau
+- Ngay: 2026-08-10 15:42 (Asia/Bangkok)
+- Khoi phuc test 2 logo du an: `v1.3.40/pes-arena-logo.webp` (co nen) va `v1.3.40/pes-arena-logoknen.webp` (khong nen).
+- Logo PES ARENA ben trong phong dau van co dinh `v1.3.40/pes-arena-room-logo.webp`, khong bi thay doi boi bo test.
+- Giu test 2 nen trung tam: `center-stadium.webp` va `center-stadium2.webp`.
+- Lua chon logo du an luu localStorage cua Admin va duoc ap dung lai o sidebar khi chuyen trang; khong ghi DB, khong goi API, khong thay core/RP/matchmaking.
+
 # V1.2.31 - Tra lai logo rieng trong phong dau
 
 - Khôi phục logo trong Room về đúng asset: `v1.3.40/pes-arena-room-logo.webp`.
