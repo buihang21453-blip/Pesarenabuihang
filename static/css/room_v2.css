@@ -346,3 +346,101 @@
 .room-v2-shell .parsec-room-panel{order:1}
 .room-v2-shell .room-session-h2h-rail{order:2}
 .room-v2-shell .room-pair-history-panel{order:3}
+
+/* ===== V1.2.39 - Room UI Designer Pro =====
+   - Hai cot nguoi choi luon doi xung.
+   - Khoa truc X cua cac thanh phan can giua.
+   - Logo 7 che do co kich thuoc px rieng.
+   - Cum nut trung tam luon du cho va khong bi cat. */
+.room-ui-configurable .room-team-card.home,
+.room-ui-configurable .room-team-card.away{transform:translateY(var(--rui-player-panel-y,0px))!important}
+.room-ui-configurable .room-center-stage-plain{transform:translateY(var(--rui-center-y,0px))!important}
+.room-ui-configurable .room-arena-right-rail{transform:translateY(var(--rui-side-y,0px))!important}
+.room-ui-configurable .room-stage-title-wrap{transform:translateY(var(--rui-brand-y,0px)) scale(var(--rui-brand-scale,1))!important;transform-origin:left center}
+.room-ui-configurable .room-player-heading-plain .player-avatar{transform:translateY(var(--rui-avatar-y,0px)) scale(var(--rui-avatar-scale,1))!important;transform-origin:center}
+.room-ui-configurable .room-player-name{transform:translateY(var(--rui-name-y,0px)) scale(var(--rui-name-scale,1))!important;transform-origin:center}
+.room-ui-configurable .room-card-club-area{transform:translateY(var(--rui-club-y,0px))}
+.room-ui-configurable .room-club-logo-large,
+.room-ui-configurable .room-team-placeholder-shield{transform:scale(var(--rui-club-scale,1));transform-origin:center}
+.room-ui-configurable .room-center-mode-zone,
+.room-ui-configurable .room-center-random3-zone{transform:translateY(var(--rui-active-y,0px)) scale(var(--rui-active-scale,1))!important;transform-origin:center top}
+.room-ui-configurable .room-center-vs-image{transform:translateY(var(--rui-vs-y,0px)) scale(var(--rui-vs-scale,1))!important;transform-origin:center}
+
+@media (min-width:1251px){
+  .room-v2-shell{
+    --room-v239-main-h:clamp(400px,var(--rui-main-height,438px),560px);
+    --room-v239-mode-h:clamp(110px,var(--rui-mode-card-height,132px),178px);
+  }
+  .room-v2-shell .room-arena-frame{
+    grid-template-columns:minmax(255px,var(--rui-host,1fr)) minmax(220px,var(--rui-center,.74fr)) minmax(255px,var(--rui-away,1fr)) minmax(235px,var(--rui-side,.82fr));
+    grid-template-rows:var(--room-v239-main-h) calc(var(--room-v239-mode-h) + 23px);
+    gap:var(--rui-main-gap,8px);
+  }
+  .room-v2-shell .room-side-card,
+  .room-v2-shell .room-center-stage-plain{height:var(--room-v239-main-h);min-height:0}
+
+  /* Trung tam: khong de margin-auto cua CSS cu day nut xuong duoi. */
+  .room-v2-shell .room-center-stage-plain{
+    box-sizing:border-box;
+    padding:var(--rui-center-padding-y,10px) 10px;
+    gap:var(--rui-center-gap,7px);
+    justify-content:flex-start!important;
+    overflow:hidden;
+  }
+  .room-v2-shell .room-center-mode-zone,
+  .room-v2-shell .room-center-random3-zone{flex:0 0 auto;max-width:100%}
+  .room-v2-shell .room-v2-active-mode-logo{width:88px;height:88px;margin:0 auto 1px}
+  .room-v2-shell .room-center-mode-note{margin:1px auto 0;padding:4px 6px;font-size:9px;line-height:1.2}
+  .room-v2-shell .room-center-vs-image{width:96px;height:96px;margin:0 auto;flex:0 1 auto}
+  .room-v2-shell .room-quick-match-row{
+    width:var(--rui-center-action-width,94%)!important;
+    max-width:none!important;
+    margin:0 auto!important;
+    flex:0 0 auto;
+  }
+  .room-v2-shell .room-center-primary-actions,
+  .room-v2-shell .room-post-result-actions{
+    width:var(--rui-center-action-width,94%)!important;
+    max-width:none!important;
+    margin:0 auto!important;
+    padding-top:0!important;
+    gap:var(--rui-center-action-gap,8px)!important;
+    flex:0 0 auto;
+  }
+  .room-v2-shell .room-center-primary-actions form,
+  .room-v2-shell .room-post-result-actions form{flex:1 1 0;min-width:0;display:flex}
+  .room-v2-shell .room-center-primary-actions .room-center-action-btn,
+  .room-v2-shell .room-post-result-actions .room-center-action-btn,
+  .room-v2-shell .room-quick-match-row .room-center-action-btn{
+    width:100%!important;
+    min-width:0!important;
+    min-height:var(--rui-center-button-height,40px)!important;
+    height:auto;
+    padding:5px 8px!important;
+    font-size:11px;
+    line-height:1.1;
+    white-space:normal;
+  }
+  .room-v2-shell .room-quick-match-row .room-center-action-btn{max-width:190px;margin:0 auto}
+
+  /* 7 che do: logo dung kich thuoc that, khong bi CSS 56px cu ep nho. */
+  .room-v2-shell .room-v2-modes{height:calc(var(--room-v239-mode-h) + 23px)}
+  .room-v2-shell .room-v2-mode-grid{height:var(--room-v239-mode-h);gap:var(--rui-mode-gap,6px)}
+  .room-v2-shell .room-v2-mode-card{height:var(--room-v239-mode-h);padding:3px 4px;gap:1px}
+  .room-v2-shell .room-v2-mode-card img{
+    width:min(var(--rui-mode-logo-size,82px),92%)!important;
+    height:min(var(--rui-mode-logo-size,82px),92px)!important;
+    max-width:92%;
+    transform:none!important;
+    margin:4px auto 0;
+  }
+  .room-v2-shell .room-v2-mode-card strong{min-height:17px;font-size:9px;line-height:1.05}
+  .room-v2-shell .room-v2-mode-card small{min-height:17px;font-size:7.5px}
+
+  /* Cot phai co ty le doc tuy chinh, khong can truc X. */
+  .room-v2-shell .room-arena-right-rail{
+    height:calc(var(--room-v239-main-h) + var(--room-v239-mode-h) + 23px);
+    grid-template-rows:minmax(0,var(--rui-rail-parsec,1.15fr)) minmax(0,var(--rui-rail-history,.78fr)) minmax(0,var(--rui-rail-h2h,1fr));
+    gap:var(--rui-rail-gap,6px);
+  }
+}

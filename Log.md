@@ -1,3 +1,14 @@
+
+## V1.2.39 - Nang cap Thiet ke phong Pro
+- Khoa doi xung hai cot Chu phong/Doi thu: dung chung `player_width`, khong con chinh X rieng.
+- Bo tab Vi tri X/Y; chi giu cac dieu chinh Y that su can thiet.
+- Them dieu khien nang cao cho nguoi choi: avatar, ten, logo CLB, khu CLB.
+- Them dieu khien nang cao cho Trung tam: khoang cach doc, padding, chieu cao nut, khoang cach nut, do rong cum nut.
+- Sua CSS de Tim nhanh / Moi dau / Thoat phong khong bi cat o cuoi khung Trung tam.
+- Them `mode_logo_size` theo px; mac dinh 82px de 7 logo che do hien lon va ro hon.
+- Them dieu khien ty le doc cot phai: Parsec / Lich su phong / Doi dau 2 nguoi.
+- Preview Admin co mo phong day du nut Trung tam va khoa truc X de khong chay lung tung.
+- Khong thay doi core/API/RP/matchmaking/gameplay.
 # V1.2.35 — 2026-08-10 16:05 (+07:00)
 
 - Thêm card UI **Random Selection Match** dùng logo Supabase `v1.3.40/modes/7.webp`.

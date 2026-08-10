@@ -1,12 +1,12 @@
 <section id="room-ui" class="panel room-ui-designer" data-room-ui-designer>
   <div class="room-ui-head">
     <div>
-      <span class="admin-kicker">ROOM UI DESIGNER</span>
-      <h2>🎨 Thiết kế phòng đấu</h2>
-      <p>Một cụm duy nhất để chỉnh toàn bộ phần hiển thị phòng. Preview được khóa trong khung riêng, không kéo trực tiếp để tránh chạy lệch; vị trí X/Y vẫn chỉnh đầy đủ bằng thanh điều khiển.</p>
+      <span class="admin-kicker">ROOM UI DESIGNER PRO</span>
+      <h2>🎨 Thiết kế phòng đấu nâng cao</h2>
+      <p>Khóa đối xứng Chủ phòng/Đối thủ và khóa toàn bộ trục X của các thành phần đặt giữa. Chỉ chỉnh những thông số thực sự cần thiết để phòng không bị lệch hoặc Preview chạy lung tung.</p>
     </div>
     <div class="room-ui-head-actions">
-      <button class="btn gray" type="button" data-room-ui-zero-offsets>Đưa toàn bộ X/Y về 0</button>
+      <button class="btn gray" type="button" data-room-ui-zero-y>Đưa toàn bộ Y về 0</button>
       <form method="post" action="{{ url_for('admin_room_ui_reset') }}" onsubmit="return confirm('Khôi phục toàn bộ thiết kế phòng đấu về mặc định?');">
         <button class="btn red" type="submit">Khôi phục mặc định</button>
       </form>
@@ -16,62 +16,37 @@
   <form method="post" action="{{ url_for('admin_room_ui_save') }}" class="room-ui-form" data-room-ui-form>
     <div class="room-ui-preview-shell">
       <div class="room-ui-preview-head">
-        <div>
-          <b>XEM TRƯỚC PHÒNG ĐẤU</b>
-          <span>Preview cố định trong khung — không còn trôi/đè lên thanh chỉnh.</span>
-        </div>
+        <div><b>XEM TRƯỚC PHÒNG ĐẤU</b><span>Preview cố định. Các nút trung tâm và 7 logo được mô phỏng đúng tỷ lệ.</span></div>
         <div class="room-ui-preview-states" aria-label="Chọn trạng thái xem trước">
           {% for key,label in [('waiting','Chờ đối thủ'),('ready','Chờ sẵn sàng'),('playing','Thi đấu'),('confirm','Chờ xác nhận'),('confirmed','Confirmed'),('rematch','Đá tiếp')] %}
           <button type="button" class="room-ui-preview-state{{ ' active' if loop.first else '' }}" data-room-ui-preview-state="{{ key }}">{{ label }}</button>
           {% endfor %}
         </div>
       </div>
-
       <div class="room-ui-preview-viewport">
         <div class="room-ui-preview" data-room-ui-preview>
-          <div class="rui-header">
-            <div class="rui-room-label">PHÒNG ĐẤU</div>
-            <div class="rui-brand">PES ARENA</div>
-            <div class="rui-share">CHIA SẺ</div>
-          </div>
-
+          <div class="rui-header"><div class="rui-room-label">PHÒNG ĐẤU</div><div class="rui-brand">PES ARENA</div><div class="rui-share">CHIA SẺ</div></div>
           <div class="rui-main-row">
-            <div class="rui-box rui-host">
-              <b>CHỦ PHÒNG</b>
-              <div class="rui-avatar">H</div>
-              <div class="rui-player-name">Host Player</div>
-              <div class="rui-club-placeholder">?</div>
-            </div>
-
+            <div class="rui-box rui-host"><b>CHỦ PHÒNG</b><div class="rui-avatar">H</div><div class="rui-player-name">Host Player</div><div class="rui-club-placeholder">?</div></div>
             <div class="rui-box rui-center">
               <b>TRUNG TÂM</b>
-              <div class="rui-active-mode">RANDOM</div>
-              <div class="rui-unlock">✓ ĐÃ MỞ KHÓA</div>
+              <img class="rui-active-mode-img" src="{{ asset_url('v1.3.40/modes/1.webp') }}" alt="Random">
               <div class="rui-state-demo" data-rui-state-demo>CHỜ ĐỐI THỦ</div>
               <div class="rui-vs">VS</div>
+              <button class="rui-quick" type="button">TÌM NHANH</button>
+              <div class="rui-actions"><button type="button">Mời đấu</button><button type="button">Thoát phòng</button></div>
             </div>
-
-            <div class="rui-box rui-away">
-              <b>ĐỐI THỦ</b>
-              <div class="rui-away-q">?</div>
-            </div>
-
+            <div class="rui-box rui-away"><b>ĐỐI THỦ</b><div class="rui-away-q">?</div></div>
             <div class="rui-right-rail">
               <div class="rui-side-panel rui-parsec"><b>KẾT NỐI PARSEC</b><i></i><i></i><span></span></div>
               <div class="rui-side-panel"><b>LỊCH SỬ PHÒNG</b><em>Chưa có trận nào trong phòng này.</em></div>
               <div class="rui-side-panel rui-h2h"><b>ĐỐI ĐẦU 2 NGƯỜI</b><em>Chờ đủ 2 người để tải lịch sử.</em></div>
             </div>
           </div>
-
           <div class="rui-mode-title">CÁC CHẾ ĐỘ</div>
           <div class="rui-mode-row">
             {% for asset_idx,display_idx,n,status in [(1,1,'Random','ĐÃ MỞ KHÓA'),(2,2,'Random 3 chọn 1','ĐÃ MỞ KHÓA'),(7,3,'Random Selection Match','CHƯA MỞ KHÓA'),(3,4,'Lượt đi/về','CHƯA MỞ KHÓA'),(4,5,'BO3','CHƯA MỞ KHÓA'),(5,6,'Chiến thuật BO3','CHƯA MỞ KHÓA'),(6,7,'Cấm chọn BO3','CHƯA MỞ KHÓA')] %}
-            <div class="rui-mode-card{{ ' is-locked' if status != 'ĐÃ MỞ KHÓA' else '' }}">
-              <b>{{ display_idx }}</b>
-              <img class="rui-mode-icon" src="{{ asset_url('v1.3.40/modes/' ~ asset_idx ~ '.webp') }}" alt="{{ n }}">
-              <strong>{{ n }}</strong>
-              <small>{{ status }}</small>
-            </div>
+            <div class="rui-mode-card{{ ' is-locked' if status != 'ĐÃ MỞ KHÓA' else '' }}"><b>{{ display_idx }}</b><img class="rui-mode-icon" src="{{ asset_url('v1.3.40/modes/' ~ asset_idx ~ '.webp') }}" alt="{{ n }}"><strong>{{ n }}</strong><small>{{ status }}</small></div>
             {% endfor %}
           </div>
         </div>
@@ -79,94 +54,68 @@
     </div>
 
     <div class="room-ui-editor">
-      <div class="room-ui-tabs" role="tablist" aria-label="Nhóm cài đặt phòng">
+      <div class="room-ui-tabs" role="tablist">
         <button type="button" class="room-ui-tab active" data-room-ui-tab="layout">Bố cục</button>
-        <button type="button" class="room-ui-tab" data-room-ui-tab="objects">Thành phần</button>
-        <button type="button" class="room-ui-tab" data-room-ui-tab="position">Vị trí X/Y</button>
+        <button type="button" class="room-ui-tab" data-room-ui-tab="players">Người chơi</button>
+        <button type="button" class="room-ui-tab" data-room-ui-tab="center">Trung tâm</button>
         <button type="button" class="room-ui-tab" data-room-ui-tab="modes">7 chế độ</button>
-        <button type="button" class="room-ui-tab" data-room-ui-tab="effects">Độ trong suốt</button>
+        <button type="button" class="room-ui-tab" data-room-ui-tab="rail">Cột phải</button>
+        <button type="button" class="room-ui-tab" data-room-ui-tab="effects">Hiệu ứng</button>
       </div>
-
       <div class="room-ui-tab-panels">
         <section class="room-ui-tab-panel active" data-room-ui-panel="layout">
-          <div class="room-ui-section-head"><h3>Bố cục tổng thể</h3><p>Chỉnh tỷ lệ 4 cột, chiều cao và khoảng cách. Cột phải là Parsec → Lịch sử phòng → Đối đầu 2 người.</p></div>
+          <div class="room-ui-section-head"><h3>Bố cục tổng thể</h3><p>Chủ phòng và Đối thủ dùng chung một chiều rộng để luôn đối xứng.</p></div>
           <div class="room-ui-control-grid room-ui-grid-4">
-            {% set layout_fields = [
-              ('host_width','Chủ phòng','fr'), ('center_width','Trung tâm','fr'),
-              ('opponent_width','Đối thủ','fr'), ('sidebar_width','Cột phải','fr'),
-              ('main_height','Chiều cao khu chính','px'), ('main_gap','Khoảng cách 4 cột','px'),
-              ('mode_gap','Khoảng cách 7 chế độ','px')
-            ] %}
-            {% for key,label,unit in layout_fields %}{% set spec = room_ui_field_specs[key] %}
-            <label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
+            {% for key,label,unit in [('player_width','Hai cột người chơi','fr'),('center_width','Cột trung tâm','fr'),('sidebar_width','Cột phải','fr'),('main_height','Chiều cao khu chính','px'),('main_gap','Khoảng cách 4 cột','px'),('mode_gap','Khoảng cách 7 chế độ','px'),('brand_scale','Logo PES ARENA','×'),('brand_y','Logo PES ARENA - Y','px')] %}
+            {% set spec = room_ui_field_specs[key] %}<label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
             {% endfor %}
           </div>
-          <div class="room-ui-stadium-block">
-            <div><h3>Nền giữa phòng</h3><p>Chọn ảnh nền thực tế cho khu Trung tâm.</p></div>
-            <div class="room-ui-stadium-options">
-              <label class="room-ui-stadium-option"><input type="radio" name="center_stadium" value="stadium1" {% if room_ui_config.center_stadium != 'stadium2' %}checked{% endif %}><img src="{{ asset_url('v1.3.40/center-stadium.webp') }}" alt="Sân 1"><span>Sân 1</span></label>
-              <label class="room-ui-stadium-option"><input type="radio" name="center_stadium" value="stadium2" {% if room_ui_config.center_stadium == 'stadium2' %}checked{% endif %}><img src="{{ asset_url('v1.3.40/center-stadium2.webp') }}" alt="Sân 2"><span>Sân 2</span></label>
-            </div>
-          </div>
+          <div class="room-ui-stadium-block"><div><h3>Nền giữa phòng</h3><p>Chọn ảnh nền khu Trung tâm.</p></div><div class="room-ui-stadium-options">
+            <label class="room-ui-stadium-option"><input type="radio" name="center_stadium" value="stadium1" {% if room_ui_config.center_stadium != 'stadium2' %}checked{% endif %}><img src="{{ asset_url('v1.3.40/center-stadium.webp') }}" alt="Sân 1"><span>Sân 1</span></label>
+            <label class="room-ui-stadium-option"><input type="radio" name="center_stadium" value="stadium2" {% if room_ui_config.center_stadium == 'stadium2' %}checked{% endif %}><img src="{{ asset_url('v1.3.40/center-stadium2.webp') }}" alt="Sân 2"><span>Sân 2</span></label>
+          </div></div>
         </section>
 
-        <section class="room-ui-tab-panel" data-room-ui-panel="objects">
-          <div class="room-ui-section-head"><h3>Kích thước thành phần</h3><p>Chỉnh kích thước avatar, tên, logo chế độ đang chọn, VS và thương hiệu phòng.</p></div>
-          <div class="room-ui-object-grid">
-            {% for prefix,label in [('avatar','Avatar hai người chơi'),('player_name','Tên hai người chơi'),('brand','PES ARENA'),('active_mode_logo','Chế độ đang chọn'),('vs','Ảnh VS')] %}
-            <div class="room-ui-object-card"><b>{{ label }}</b>
-              {% set key = prefix ~ '_scale' %}{% set spec = room_ui_field_specs[key] %}
-              <label class="room-ui-control compact"><span>Kích thước <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> ×</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
-            </div>
+        <section class="room-ui-tab-panel" data-room-ui-panel="players">
+          <div class="room-ui-section-head"><h3>Hai người chơi — chỉnh đối xứng</h3><p>Một thay đổi áp dụng đồng thời cho Chủ phòng và Đối thủ; không có trục X.</p></div>
+          <div class="room-ui-control-grid room-ui-grid-3">
+            {% for key,label,unit in [('player_panel_y','Cả hai khung - Y','px'),('avatar_scale','Avatar','×'),('avatar_y','Avatar - Y','px'),('player_name_scale','Tên người chơi','×'),('player_name_y','Tên - Y','px'),('club_logo_scale','Logo CLB','×'),('club_area_y','Khu CLB - Y','px')] %}
+            {% set spec=room_ui_field_specs[key] %}<label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
             {% endfor %}
           </div>
         </section>
 
-        <section class="room-ui-tab-panel" data-room-ui-panel="position">
-          <div class="room-ui-section-head"><h3>Vị trí X/Y</h3><p>Không kéo trực tiếp trên Preview nữa. Điều chỉnh bằng thanh X/Y để ổn định và dễ đưa về 0.</p></div>
-          <div class="room-ui-position-grid">
-            {% for prefix,label in [('host','Khung Chủ phòng'),('center','Khung Trung tâm'),('opponent','Khung Đối thủ'),('sidebar','Cột phải'),('brand','PES ARENA'),('avatar','Avatar'),('player_name','Tên người chơi'),('active_mode_logo','Logo chế độ'),('vs','VS')] %}
-            <div class="room-ui-axis-card"><b>{{ label }}</b>
-              <div class="room-ui-axis-pair">
-              {% for axis in ['x','y'] %}{% set key = prefix ~ '_' ~ axis %}{% set spec = room_ui_field_specs[key] %}
-              <label class="room-ui-control compact"><span>{{ axis|upper }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> px</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
-              {% endfor %}
-              </div>
-            </div>
+        <section class="room-ui-tab-panel" data-room-ui-panel="center">
+          <div class="room-ui-section-head"><h3>Khu Trung tâm</h3><p>Ưu tiên nhìn đủ logo, VS, Tìm nhanh và hàng nút chức năng trong mọi trạng thái.</p></div>
+          <div class="room-ui-control-grid room-ui-grid-4">
+            {% for key,label,unit in [('center_y','Cả khung - Y','px'),('active_mode_logo_scale','Logo chế độ đang chọn','×'),('active_mode_logo_y','Logo chế độ - Y','px'),('vs_scale','VS','×'),('vs_y','VS - Y','px'),('center_gap','Khoảng cách dọc','px'),('center_padding_y','Lề trên/dưới','px'),('center_action_gap','Khoảng cách nút','px'),('center_button_height','Chiều cao nút','px'),('center_action_width','Độ rộng cụm nút','%')] %}
+            {% set spec=room_ui_field_specs[key] %}<label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
             {% endfor %}
           </div>
         </section>
 
         <section class="room-ui-tab-panel" data-room-ui-panel="modes">
-          <div class="room-ui-section-head"><h3>7 chế độ — đồng bộ một lần</h3><p>Backend/asset giữ thứ tự 1 → 2 → 7 → 3 → 4 → 5 → 6; số người dùng nhìn thấy luôn là 1 → 2 → 3 → 4 → 5 → 6 → 7.</p></div>
-          <div class="room-ui-mode-order">
-            {% for asset_idx,display_idx,n in [(1,1,'Random'),(2,2,'Random 3 chọn 1'),(7,3,'Random Selection Match'),(3,4,'Lượt đi/về'),(4,5,'BO3'),(5,6,'Chiến thuật BO3'),(6,7,'Cấm chọn BO3')] %}
-            <div class="room-ui-mode-chip"><span>{{ display_idx }}</span><img src="{{ asset_url('v1.3.40/modes/' ~ asset_idx ~ '.webp') }}" alt=""><b>{{ n }}</b><small>asset {{ asset_idx }}.webp</small></div>
-            {% endfor %}
-          </div>
+          <div class="room-ui-section-head"><h3>7 chế độ — logo lớn, đồng bộ</h3><p>Backend/asset: 1 → 2 → 7 → 3 → 4 → 5 → 6; số hiển thị luôn 1 → 7.</p></div>
+          <div class="room-ui-mode-order">{% for asset_idx,display_idx,n in [(1,1,'Random'),(2,2,'Random 3 chọn 1'),(7,3,'Random Selection Match'),(3,4,'Lượt đi/về'),(4,5,'BO3'),(5,6,'Chiến thuật BO3'),(6,7,'Cấm chọn BO3')] %}<div class="room-ui-mode-chip"><span>{{ display_idx }}</span><img src="{{ asset_url('v1.3.40/modes/' ~ asset_idx ~ '.webp') }}" alt=""><b>{{ n }}</b><small>asset {{ asset_idx }}.webp</small></div>{% endfor %}</div>
           <div class="room-ui-control-grid room-ui-grid-3">
-            {% for key,label,unit in [('mode_logo_scale','Tỷ lệ logo chung','×'),('mode_card_height','Chiều cao card','px'),('mode_status_width','Độ rộng trạng thái','%')] %}{% set spec = room_ui_field_specs[key] %}
-            <label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
-            {% endfor %}
+            {% for key,label,unit in [('mode_logo_size','Kích thước logo','px'),('mode_card_height','Chiều cao card','px'),('mode_status_width','Độ rộng trạng thái','%')] %}{% set spec=room_ui_field_specs[key] %}<label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>{% endfor %}
+          </div>
+        </section>
+
+        <section class="room-ui-tab-panel" data-room-ui-panel="rail">
+          <div class="room-ui-section-head"><h3>Cột phải</h3><p>Parsec → Lịch sử phòng → Đối đầu 2 người. Chỉnh tỷ lệ chiều cao mà không di chuyển ngang.</p></div>
+          <div class="room-ui-control-grid room-ui-grid-4">
+            {% for key,label,unit in [('sidebar_y','Cả cột - Y','px'),('rail_parsec_ratio','Parsec','fr'),('rail_room_history_ratio','Lịch sử phòng','fr'),('rail_h2h_ratio','Đối đầu 2 người','fr'),('rail_gap','Khoảng cách panel','px')] %}{% set spec=room_ui_field_specs[key] %}<label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output> {{ unit }}</span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>{% endfor %}
           </div>
         </section>
 
         <section class="room-ui-tab-panel" data-room-ui-panel="effects">
-          <div class="room-ui-section-head"><h3>Độ trong suốt & hiệu ứng</h3><p>Chỉ đổi nền, không làm mờ chữ, logo, avatar hoặc nút.</p></div>
+          <div class="room-ui-section-head"><h3>Độ trong suốt & hiệu ứng</h3><p>Chỉ đổi nền, không làm mờ chữ, avatar, logo hoặc nút.</p></div>
           <div class="room-ui-control-grid room-ui-grid-4">
-            {% for key,label in [
-              ('background_opacity','Nền tổng phòng'),('header_opacity','Thanh tiêu đề'),
-              ('host_panel_opacity','Chủ phòng'),('center_panel_opacity','Trung tâm'),
-              ('opponent_panel_opacity','Đối thủ'),('sidebar_panel_opacity','Cột phải'),
-              ('mode_card_opacity','Card 7 chế độ'),('action_zone_opacity','Khung thao tác'),
-              ('panel_opacity','Độ đậm Preview'),('gold_glow','Glow vàng')
-            ] %}{% set spec = room_ui_field_specs[key] %}
-            <label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output></span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>
-            {% endfor %}
+            {% for key,label in [('background_opacity','Nền tổng phòng'),('header_opacity','Thanh tiêu đề'),('host_panel_opacity','Chủ phòng'),('center_panel_opacity','Trung tâm'),('opponent_panel_opacity','Đối thủ'),('sidebar_panel_opacity','Cột phải'),('mode_card_opacity','Card 7 chế độ'),('action_zone_opacity','Khung thao tác'),('panel_opacity','Độ đậm Preview'),('gold_glow','Glow vàng')] %}{% set spec=room_ui_field_specs[key] %}<label class="room-ui-control"><span>{{ label }} <output data-output-for="{{ key }}">{{ room_ui_config[key] }}</output></span><input type="range" name="{{ key }}" value="{{ room_ui_config[key] }}" min="{{ spec[1] }}" max="{{ spec[2] }}" step="{{ spec[3] }}" data-room-ui-input="{{ key }}"></label>{% endfor %}
           </div>
         </section>
       </div>
-
       <div class="room-ui-savebar"><span>Preview thay đổi ngay. Phòng thật chỉ áp dụng sau khi lưu.</span><button class="btn green" type="submit">💾 Lưu cấu hình phòng</button></div>
     </div>
   </form>
