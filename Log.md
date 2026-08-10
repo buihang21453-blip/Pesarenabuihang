@@ -493,3 +493,11 @@
 - Dua lua chon Nen giua phong (San 1 / San 2) vao Admin -> Room UI Designer va luu trong system_settings.
 - Xoa thanh TEST GIAO DIEN trong phong; bo test Logo du an Co nen/Khong nen.
 - Khong them/sua core, API, RP hay module gameplay cho Random Selection Match.
+
+
+## V1.2.37 - Can lai Room va sap xep cot phai
+- Bo hien thi khung "Thong tin phong dau" khoi Room UI; du lieu/trang thai backend van giu nguyen.
+- Cot phai theo thu tu: Ket noi Parsec -> Lich su phong -> Doi dau 2 nguoi.
+- Can lai chieu cao khu dau va 7 mode de giam khoang trong, tranh cat ten CLB/nut.
+- Khong render panel Dieu khien phong rong khi trang thai hien tai khong co dieu khien phu.
+- Khong thay doi core/API/RP/matchmaking.

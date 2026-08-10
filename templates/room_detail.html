@@ -431,15 +431,6 @@
         </section>
 
         <aside class="room-side-rail room-arena-right-rail" aria-label="Thông tin bổ sung của phòng">
-            <section class="panel room-side-info-panel">
-                <h3>Thông tin phòng đấu</h3>
-                <div class="room-side-info-list">
-                    <div><span>Mã phòng</span><strong>#{{ room.room_code }}</strong></div>
-                    <div><span>Loại trận</span><strong>{{ room.match_mode_label }}</strong></div>
-                    <div><span>Trạng thái phòng</span><strong>{{ room.status|replace('_',' ')|title }}</strong></div>
-                </div>
-            </section>
-
             {% include "partials/parsec_room_panel.html" %}
 
             {% include "partials/room_history_rail.html" %}
