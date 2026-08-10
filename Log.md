@@ -1,14 +1,10 @@
-# Log
+# V1.2.48 - Can chinh logo PES ARENA phong dau
+- Kiem tra `static/css/room_v2.css`: phat hien nhieu block desktop cung so huu `.room-v2-brand` / `.room-v2-brand img` tu V1.2.41, V1.2.44 va V1.2.45.
+- Xoa cac rule trung lap chi lien quan den logo desktop; gom ve mot block `V1.2.48 - Single owner`.
+- Logo duoc absolute theo chinh `.room-stage-topbar`, `left:50%`, `top:50%`, `translate(-50%,-50%)`; bo anh huong cua `grid-column` va `brand_x`.
+- Khong thay doi Room logic, API, RP, mode, Parsec hay nut bam.
 
-## V1.2.47 - Kiem ke va can doi toan bo nut bam
-- Quet 44 template: 242 the button + 63 anchor dang button = 305 vi tri clickable.
-- Dong bo Neon Gaming giua `room_detail.html` (render dau) va `_room_live_content.html` (polling) de khong doi style sau khi cap nhat.
-- Tao `static/css/button_sizes.css` lam owner kich thuoc nut dung chung; khong quan ly mau/gradient/neon.
-- Chot size: nut thuong 40px, small 32px, CTA/auth 44px, filter 38px, admin action 38px, admin tab 40px, invite-mini 34px.
-- Bo kich thuoc khoi block `.btn` nen dau `style.css` de tranh 2 noi cung so huu kich thuoc co ban.
-- Giu style rieng theo module: Room Neon, Parsec compact, Profile, Lucky Box, Admin Designer.
-- Khong doi route, JS, Supabase, RP hay logic phong dau.
-- Kem `BAO_CAO_NUT_BAM_V1.2.47.md`.
+# Log
 
 ## V1.2.46 - Thay cum nut Neon Gaming, don CSS cu
 - Thay giao dien nut trung tam phong dau sang Neon Gaming: nen toi, vien neon mong, glow nhe, chu trang.

@@ -148,7 +148,6 @@
   .room-v2-shell .room-stage-topbar{min-height:64px;padding:5px 12px}
   .room-v2-shell .room-stage-title{font-size:23px}
   .room-v2-shell .room-stage-subtitle{margin-top:4px;font-size:11px}
-  .room-v2-shell .room-v2-brand img{height:54px;width:min(330px,90%)}
   .room-v2-shell .room-share-button{min-width:160px;min-height:44px}
   .room-v2-shell .room-share-icon{width:28px;height:28px}
   .room-v2-shell .room-share-icon img{width:25px;height:25px}
@@ -546,13 +545,6 @@
   .room-v2-shell .room-code-badge{padding:5px 10px!important;font-size:15px!important}
   .room-v2-shell .room-stage-subtitle{margin-top:4px!important;font-size:11px!important}
 
-  /* 2. Logo PES ARENA tren thanh phong: lon ro hon nhung khong lam day header. */
-  .room-v2-shell .room-v2-brand img{
-    width:min(330px,94%)!important;height:48px!important;
-    transform:scale(max(1,var(--rui-brand-scale,1.3)))!important;
-    transform-origin:center!important;
-  }
-
   /* 3. Chia se phong gon, khong icon. */
   .room-v2-shell .room-share-button{
     width:clamp(92px,var(--rui-share-width,118px),150px)!important;
@@ -671,49 +663,10 @@
     margin-top:4px!important;
   }
 
-  /* Logo PES ARENA luon o chinh giua header; chi scale to/nho. */
-  .room-v2-shell .room-v2-brand{
-    position:absolute!important;
-    left:50%!important;
-    top:50%!important;
-    width:min(380px,34vw)!important;
-    height:100%!important;
-    display:flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-    transform:translate(-50%,-50%)!important;
-    opacity:1!important;
-    z-index:2!important;
-    pointer-events:none!important;
-  }
-  .room-v2-shell .room-v2-brand img{
-    width:100%!important;
-    max-width:320px!important;
-    height:44px!important;
-    object-fit:contain!important;
-    transform:scale(var(--rui-brand-scale,1))!important;
-    transform-origin:center!important;
-  }
-
 }
 
 /* ===== V1.2.45 - Can giua brand, dong bo 3 nut, khong cat cum 7 mode ===== */
 @media (min-width:1251px){
-  /* Brand can theo chinh topbar, khong theo shell. */
-  .room-v2-shell .room-stage-topbar{position:relative!important;overflow:visible!important}
-  .room-v2-shell .room-v2-brand{
-    position:absolute!important;left:50%!important;right:auto!important;top:50%!important;
-    width:240px!important;height:52px!important;margin:0!important;
-    display:flex!important;align-items:center!important;justify-content:center!important;
-    transform:translate(-50%,-50%)!important;z-index:3!important;pointer-events:none!important;
-  }
-  .room-v2-shell .room-v2-brand img{
-    display:block!important;width:220px!important;max-width:220px!important;height:46px!important;
-    object-fit:contain!important;object-position:center!important;margin:0 auto!important;
-    transform:scale(var(--rui-brand-scale,1))!important;transform-origin:center center!important;
-  }
-
-
   /* Cum 7 mode luon co day du ten + status, khong bi cat me duoi. */
   .room-v2-shell{--room-v245-mode-h:clamp(168px,var(--rui-mode-cluster-height,176px),230px)}
   .room-v2-shell .room-arena-frame{grid-template-rows:var(--room-v239-main-h) var(--room-v245-mode-h)!important;overflow:visible!important}
@@ -841,3 +794,45 @@
   .room-v2-shell .room-neon-btn{min-height:36px!important;height:36px!important;padding:0 10px!important;font-size:11px!important;gap:6px!important}
 }
 
+/* ===== V1.2.48 - Single owner: PES ARENA brand trong topbar phong dau =====
+   Muc tieu: can giua theo TOAN BO topbar, khong phu thuoc grid-column hay CSS legacy.
+   Khong dung brand_x de tranh Admin/legacy day logo lech trai-phai. */
+@media (min-width:1251px){
+  .room-v2-shell .room-stage-topbar{
+    position:relative!important;
+    overflow:visible!important;
+  }
+  .room-v2-shell .room-v2-brand{
+    position:absolute!important;
+    inset:auto!important;
+    left:50%!important;
+    top:50%!important;
+    right:auto!important;
+    bottom:auto!important;
+    width:260px!important;
+    height:52px!important;
+    margin:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    justify-self:auto!important;
+    grid-column:auto!important;
+    grid-row:auto!important;
+    transform:translate(-50%,-50%)!important;
+    opacity:1!important;
+    z-index:3!important;
+    pointer-events:none!important;
+  }
+  .room-v2-shell .room-v2-brand img{
+    position:static!important;
+    display:block!important;
+    width:230px!important;
+    max-width:230px!important;
+    height:46px!important;
+    margin:0!important;
+    object-fit:contain!important;
+    object-position:50% 50%!important;
+    transform:scale(var(--rui-brand-scale,1))!important;
+    transform-origin:50% 50%!important;
+  }
+}
