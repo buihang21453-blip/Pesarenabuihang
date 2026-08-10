@@ -38,3 +38,25 @@ body[data-page="invites"] th:last-child,
 body[data-page="invites"] td:last-child{
   text-align:center;
 }
+
+
+/* V1.2.56 — Force the modal action row to own its centering.
+   style.css provides the base display:flex; this module owns only layout. */
+.invite-modal-actions{
+  display:flex;
+  width:100%;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-inline:auto;
+  text-align:center;
+}
+.invite-modal-actions form{
+  display:flex;
+  flex:0 0 auto;
+  margin:0;
+}
+.invite-modal-actions .btn{
+  min-width:96px;
+}

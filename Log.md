@@ -1,3 +1,9 @@
+# V1.2.56
+
+- Khôi phục luồng Sẵn Sàng của khách trong HTML polling: chuẩn hóa alias `viewer_is_guest`/`viewer_is_host` cho `_room_live_content.html` và `room_dynamic_state.html`.
+- Không thay đổi route/action: `room_guest_ready` và `room_guest_unready` vẫn giữ nguyên.
+- Căn giữa cụm nút Chấp nhận/Từ chối trong modal lời mời bằng `components/invites.css`; module chỉ quản lý layout, không đổi skin nút.
+- Không dùng `!important`, không sửa JS/API/RP.
 # V1.2.54 - Tai tao nut Neon Gaming theo anh mau va don CSS trung
 
 ## Noi dung

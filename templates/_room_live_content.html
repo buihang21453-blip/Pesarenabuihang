@@ -1,6 +1,10 @@
 {% set room_room_viewer_is_host = (current_user.id|string == room.host_user_id|string) %}
 {% set room_viewer_is_guest = (room.guest_user_id and current_user.id|string == room.guest_user_id|string) %}
 {% from "_avatar_macros.html" import player_avatar %}
+{# V1.2.56: polling fragment receives normalized viewer flags from build_room_template_context.
+   Keep local aliases identical to room_detail.html so guest-only Ready flow survives live refresh. #}
+{% set room_room_viewer_is_host = viewer_is_host|default(false) %}
+{% set room_viewer_is_guest = viewer_is_guest|default(false) %}
 {# Nội dung động của phòng. API state render lại riêng fragment này. #}
         <section class="room-side-card room-team-card home">
             <div class="room-player-heading-plain">
