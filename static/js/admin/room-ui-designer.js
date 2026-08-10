@@ -18,7 +18,6 @@
   };
   const pxUnits = new Set(['main_height','main_gap','mode_gap','host_x','host_y','center_x','center_y','opponent_x','opponent_y','sidebar_x','sidebar_y','brand_x','brand_y','avatar_x','avatar_y','player_name_x','player_name_y','active_mode_logo_x','active_mode_logo_y','vs_x','vs_y','mode_card_height']);
   const frUnits = new Set(['host_width','center_width','opponent_width','sidebar_width']);
-  const byKey = key => root.querySelector(`[data-room-ui-input="${key}"]`);
 
   function apply(input) {
     const key = input.dataset.roomUiInput;
@@ -31,24 +30,17 @@
     if (key === 'mode_status_width') suffix = '%';
     preview.style.setProperty(cssMap[key], `${value}${suffix}`);
   }
-  inputs.forEach(input => { apply(input); input.addEventListener('input', () => apply(input)); });
 
-  [...root.querySelectorAll('[data-drag-object]')].forEach(el => {
-    el.addEventListener('pointerdown', event => {
-      const xInput = byKey(el.dataset.dragXKey), yInput = byKey(el.dataset.dragYKey);
-      if (!xInput || !yInput) return;
-      event.preventDefault(); event.stopPropagation();
-      el.setPointerCapture?.(event.pointerId); el.classList.add('is-dragging');
-      const startX = event.clientX, startY = event.clientY;
-      const baseX = Number(xInput.value || 0), baseY = Number(yInput.value || 0), factor = 1.6;
-      const clamp = (value, input) => Math.max(Number(input.min), Math.min(Number(input.max), value));
-      const move = ev => {
-        xInput.value = Math.round(clamp(baseX + (ev.clientX-startX)*factor, xInput));
-        yInput.value = Math.round(clamp(baseY + (ev.clientY-startY)*factor, yInput));
-        apply(xInput); apply(yInput);
-      };
-      const up = () => { el.classList.remove('is-dragging'); window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
-      window.addEventListener('pointermove', move); window.addEventListener('pointerup', up, {once:true});
+  inputs.forEach(input => {
+    apply(input);
+    input.addEventListener('input', () => apply(input));
+  });
+
+  root.querySelectorAll('[data-room-ui-tab]').forEach(button => {
+    button.addEventListener('click', () => {
+      const key = button.dataset.roomUiTab;
+      root.querySelectorAll('[data-room-ui-tab]').forEach(b => b.classList.toggle('active', b === button));
+      root.querySelectorAll('[data-room-ui-panel]').forEach(panel => panel.classList.toggle('active', panel.dataset.roomUiPanel === key));
     });
   });
 
@@ -67,6 +59,9 @@
   });
 
   root.querySelector('[data-room-ui-zero-offsets]')?.addEventListener('click', () => {
-    inputs.filter(i => /_(x|y)$/.test(i.dataset.roomUiInput || '')).forEach(i => { i.value=0; apply(i); });
+    inputs.filter(i => /_(x|y)$/.test(i.dataset.roomUiInput || '')).forEach(i => {
+      i.value = 0;
+      apply(i);
+    });
   });
 })();

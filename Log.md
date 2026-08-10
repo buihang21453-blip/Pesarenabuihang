@@ -501,3 +501,13 @@
 - Can lai chieu cao khu dau va 7 mode de giam khoang trong, tranh cat ten CLB/nut.
 - Khong render panel Dieu khien phong rong khi trang thai hien tai khong co dieu khien phu.
 - Khong thay doi core/API/RP/matchmaking.
+
+## V1.2.38 - Don gian hoa Room UI Designer va khoa Preview on dinh
+- Gom toan bo chuc nang thiet ke phong vao 5 nhom trong cung mot cum Admin: Bo cuc, Thanh phan, Vi tri X/Y, 7 che do, Do trong suot.
+- Dua lua chon San 1/San 2 vao nhom Bo cuc; giu luu cau hinh `center_stadium` nhu cu.
+- Preview chuyen len mot khung rieng full-width, bo sticky va bo keo truc tiep tren Preview de tranh hien tuong preview/slider chay de len nhau.
+- Van giu day du thanh X/Y va nut dua toan bo X/Y ve 0.
+- Preview cot phai cap nhat dung UI hien tai: Ket noi Parsec -> Lich su phong -> Doi dau 2 nguoi; khong hien Thong tin phong dau.
+- 7 che do hien thi lien tuc 1..7, trong khi asset/backend van giu 1 -> 2 -> 7 -> 3 -> 4 -> 5 -> 6.
+- Preview dung logo that tu Supabase `v1.3.40/modes/*.webp` thay vi o so gia lap.
+- Khong thay core/API/RP/matchmaking/gameplay.
