@@ -367,3 +367,11 @@
 - Thêm `tools/migrate_supabase_assets_to_vercel_static.py` để tải asset public theo manifest về đúng cấu trúc `/static`, kiểm tra dung lượng/SHA256 khi có dữ liệu đối chiếu.
 - Thêm `HUONG_DAN_CHUYEN_SUPABASE_MOI.md`: quy trình Database/Auth/Storage/env + checklist cutover sang project Supabase mới.
 - Không thay UI/CSS, không thay RP, không thay luồng trận/confirm.
+## V1.2.21 - Bo cong cu don Supabase tu dong an toan
+- Them `tools/supabase_cleanup/audit_supabase.py`: audit read-only bang/code/asset.
+- Them `cleanup_preview.py`: preview, khong xoa.
+- Them `cleanup_storage.py`: dry-run mac dinh, chi cho phep xoa asset UI khi 100% da co local + STATIC_ASSET_MODE=local + khoa execute.
+- Them `cleanup_supabase.sql`: clear cache va log cu, khong drop bang/khong dong user-RP-match.
+- Them `cleanup_plan.json` va `HUONG_DAN_DON_SUPABASE_TU_DONG.md`.
+- Khong thay UI/CSS, khong thay luong tran/RP.
+
