@@ -1,0 +1,13 @@
+V1.2.64 - XAY DUNG LAI LUONG XAC NHAN KET QUA CO BAN
+
+1. Bo hoan toan ma loi CONFIRM-XXXXXXXX khoi route xac nhan ket qua.
+2. Bo retry/resilient/recovery nhieu tang cua V1.2.62-V1.2.63.
+3. Luong moi: doc match -> claim 1 lan -> tinh RP -> cap nhat 2 user -> confirmed match -> confirmed room.
+4. Match da confirmed co delta1/delta2 thi tra lai ket qua cu, khong cong RP lan hai.
+5. Neu write chinh that bai: rollback snapshot 2 user va dua match ve trang thai truoc, khong sinh ma CONFIRM.
+6. Bo repeat-opponent va daily-positive-cap khoi duong ghi diem chinh de giam diem loi. Cong thuc thang/thua/hoa co ban van dung engine RP hien tai.
+7. Cac tac vu phu nhu weekly reward / achievement chay sau confirmed va khong lam hong xac nhan.
+8. APP_VERSION = V1.2.64.
+
+Khong can SQL moi.
+ZIP khong boc thu muc ngoai.

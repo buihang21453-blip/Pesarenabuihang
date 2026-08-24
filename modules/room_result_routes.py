@@ -4,76 +4,10 @@ Module đăng ký route theo dependency của app.py để giữ nguyên endpoin
 """
 
 import uuid
-import time
 
 
 def _result_error_id(prefix):
     return f"{prefix}-{uuid.uuid4().hex[:8].upper()}"
-
-
-def _persist_confirm_error(error_id, room_id, match_id, exc, phase="confirm"):
-    """Ghi log có cấu trúc cho lỗi xác nhận mà không làm hỏng request chính."""
-    try:
-        print(
-            "server_confirm_error "
-            f"error_id={error_id} room={room_id} match={match_id} "
-            f"phase={phase} error={type(exc).__name__}: {exc}"
-        )
-    except Exception:
-        pass
-
-
-def _confirmed_match_result(match):
-    return bool(
-        match
-        and match.get("status") == "confirmed"
-        and match.get("delta1") is not None
-        and match.get("delta2") is not None
-    )
-
-
-def _get_match_safe(match_id, *, error_id=None, phase="reload"):
-    """Đọc lại match trong nhánh recovery mà không để lỗi phụ biến thành HTTP 500."""
-    if not match_id:
-        return None
-    try:
-        return get_match(match_id)
-    except Exception as exc:
-        prefix = f"{error_id} " if error_id else ""
-        print(f"{prefix}confirm recovery reload ERROR match={match_id} phase={phase}: {type(exc).__name__}: {exc}")
-        return None
-
-
-def _apply_match_result_resilient(match, attempts=2):
-    """Xác nhận với một lần retry an toàn sau khi service đã rollback đầy đủ.
-
-    Không retry khi một request khác đang giữ ``processing_result`` và không bao
-    giờ ghi lại RP khi match đã ``confirmed``.
-    """
-    last_exc = None
-    current = match
-    for index in range(max(1, int(attempts or 1))):
-        try:
-            return apply_match_result(current)
-        except ValueError:
-            # ValueError là lỗi trạng thái/validation, không retry mù.
-            raise
-        except Exception as exc:
-            last_exc = exc
-            fresh = _get_match_safe(match.get("id"), phase="resilient_retry") if match and match.get("id") else None
-            if _confirmed_match_result(fresh):
-                return int(fresh.get("delta1") or 0), int(fresh.get("delta2") or 0)
-            if not fresh or fresh.get("status") == "processing_result":
-                raise
-            # apply_match_result chỉ trả status về waiting_confirm sau khi rollback.
-            # Khi đó retry đúng một lần giúp hấp thụ lỗi mạng/Supabase thoáng qua.
-            if index + 1 >= max(1, int(attempts or 1)):
-                raise
-            if fresh.get("status") not in {"waiting_confirm", "waiting_result_confirm"}:
-                raise
-            current = fresh
-            time.sleep(0.18)
-    raise last_exc
 
 
 def _parse_room_score(raw_value, label):
@@ -329,7 +263,7 @@ def register_routes(context):
             except Exception as exc:
                 print(f"confirm streak snapshot warning room={room_id}: {type(exc).__name__}: {exc}")
                 users_before_streak_event = {}
-            delta1, delta2 = _apply_match_result_resilient(match, attempts=2)
+            delta1, delta2 = apply_match_result(match)
             try:
                 streak_event = build_win_streak_event(match, room, users_before_streak_event)
             except Exception as exc:
@@ -364,62 +298,14 @@ def register_routes(context):
                     print(f"publish streak event warning room={room_id}: {type(exc).__name__}: {exc}")
             flash("Đã xác nhận kết quả. Hai người có thể chọn Đá tiếp hoặc rời phòng.", "success")
         except ValueError as exc:
-            fresh_match = _get_match_safe(match.get("id"), phase="value_error_recovery")
-            if fresh_match and fresh_match.get("status") == "confirmed" and room_update:
-                error_id = _result_error_id("ROOM")
-                try:
-                    repair = execute_query(
-                        db.table("match_rooms").update(room_update)
-                        .eq("id", room_id).eq("status", "waiting_result_confirm"),
-                        "repair_confirmed_match_room_state",
-                        attempts=2,
-                    )
-                    if repair.data or []:
-                        _invalidate_room_cache_safe()
-                        flash("Kết quả đã được ghi nhận và phòng đã tự khôi phục sang bước Đá tiếp / Rời phòng.", "success")
-                        return redirect(url_for("room_detail", room_id=room_id))
-                except Exception as repair_exc:
-                    print(f"{error_id} room repair ERROR room={room_id}: {type(repair_exc).__name__}: {repair_exc}")
-                print(f"{error_id} confirmed but room state pending room={room_id}: {exc}")
-                flash(f"Kết quả đã được ghi nhận, nhưng phòng chưa chuyển sang bước Đá tiếp. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
-            else:
-                print(f"room_confirm_result validation room={room_id} match={match.get('id')}: {exc}")
-                flash(str(exc), "warning")
+            print(f"room_confirm_result validation room={room_id} match={match.get('id')}: {exc}")
+            flash(str(exc), "warning")
             return redirect(url_for("room_detail", room_id=room_id))
         except Exception as exc:
-            error_id = _result_error_id("CONFIRM")
-            _persist_confirm_error(error_id, room_id, match.get("id"), exc, phase="apply_or_finish")
-            fresh_match = _get_match_safe(match.get("id"), error_id=error_id, phase="exception_recovery")
-            if fresh_match and fresh_match.get("status") == "confirmed" and room_update:
-                try:
-                    repair = execute_query(
-                        db.table("match_rooms").update(room_update)
-                        .eq("id", room_id).eq("status", "waiting_result_confirm"),
-                        "repair_confirmed_match_room_state_after_error",
-                        attempts=2,
-                    )
-                    if repair.data or []:
-                        _invalidate_room_cache_safe()
-                        flash("Kết quả đã được ghi nhận và phòng đã tự khôi phục sang bước Đá tiếp / Rời phòng.", "success")
-                        return redirect(url_for("room_detail", room_id=room_id))
-                except Exception as repair_exc:
-                    print(f"{error_id} room repair ERROR room={room_id}: {type(repair_exc).__name__}: {repair_exc}")
-                print(f"{error_id} confirm completed but room state update failed room={room_id}: {type(exc).__name__}: {exc}")
-                flash(f"Kết quả đã được ghi nhận, nhưng phòng chưa chuyển sang bước Đá tiếp. Mã lỗi {error_id}. Hãy tải lại phòng.", "warning")
-            else:
-                print(f"{error_id} room_confirm_result ERROR room={room_id} match={match.get('id')}: {type(exc).__name__}: {exc}")
-                if fresh_match and fresh_match.get("status") == "processing_result":
-                    flash(
-                        f"Kết quả đang được hệ thống xử lý. Mã theo dõi {error_id}. "
-                        "Không cần bấm xác nhận thêm; hãy tải lại phòng sau vài giây.",
-                        "warning",
-                    )
-                else:
-                    flash(
-                        f"Chưa thể hoàn tất xác nhận. Mã lỗi {error_id}. "
-                        "Hệ thống đã tự rollback để không cộng/trừ RP sai hoặc trùng; bạn có thể thử lại.",
-                        "danger",
-                    )
+            # Không sinh/hiển thị mã CONFIRM nữa. Luồng ghi điểm cơ bản đã tự trả
+            # snapshot nếu write chính thất bại; người dùng chỉ cần thử lại.
+            print(f"room_confirm_result ERROR room={room_id} match={match.get('id')}: {type(exc).__name__}: {exc}")
+            flash("Chưa thể lưu kết quả lúc này. Hãy thử xác nhận lại.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
         return redirect(url_for("room_detail", room_id=room_id))
