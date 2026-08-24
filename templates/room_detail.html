@@ -3,7 +3,7 @@
 {% block content %}
 {% set room_room_viewer_is_host = (current_user.id|string == room.host_user_id|string) %}
 {% set room_viewer_is_guest = (room.guest_user_id and current_user.id|string == room.guest_user_id|string) %}
-<div id="roomLiveShell" class="room-view-shell room-layout-v137" data-room-style="{{ room_visual_style|default('champions-night') }}" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}">
+<div id="roomLiveShell" class="room-view-shell room-layout-v137" data-room-style="{{ room_visual_style|default('default') }}" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}">
 
 {% include "_streak_animation.html" %}
 
@@ -50,15 +50,39 @@
                 </div>
                 {% endif %}
             </div>
-            <div class="room-card-club-area">
-                {% if room.host_team_logo_url %}<img class="room-club-logo-large" src="{{ room.host_team_logo_url }}" alt="Logo {{ room.host_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
-                <div class="room-team-name-lg">{{ room.host_team or 'CHƯA CHỌN ĐỘI' }}</div>
-                {% if room.host_team_total_stats %}
-                <div class="room-team-points-block">
-                    <div class="room-team-points-value">{{ room.host_team_total_stats }}</div>
-                </div>
+            <div class="room-card-club-area{% if room.status == 'waiting_ready' and room.friendly_random3_active %} room-card-club-area--random3{% endif %}">
+                {% if room.status == 'waiting_ready' and room.friendly_random3_active %}
+                    {% set host_random3_choice = room.friendly_random3.host_choice %}
+                    {% if room_room_viewer_is_host or current_user.role == 'admin' %}
+                        <div class="room-side-random3-selector room-side-random3-selector--home">
+                            <div class="room-side-random3-title">3 CLB CỦA CHỦ NHÀ</div>
+                            {% if host_random3_choice is none %}
+                            <div class="room-side-random3-grid">
+                                {% for team in room.friendly_random3.host_options %}
+                                <form method="post" action="{{ url_for('room_choose_random3_friendly', room_id=room.id) }}" class="room-side-random3-card" data-room-async="1">
+                                    <input type="hidden" name="choice_index" value="{{ loop.index0 }}">
+                                    {% if current_user.role == 'admin' %}<input type="hidden" name="side" value="host">{% endif %}
+                                    {% if team.logo %}<img src="{{ team.logo }}" alt="Logo {{ team.name }}" loading="lazy">{% else %}<div class="friendly-random3-placeholder">?</div>{% endif %}
+                                    <strong title="{{ team.name }}">{{ team.name }}</strong>
+                                    <button type="submit">CHỌN CLB</button>
+                                </form>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="room-side-random3-picked">✓ BẠN ĐÃ CHỌN CLB<br><small>Chờ đối thủ hoàn tất lựa chọn</small></div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="room-side-random3-opponent-state">{% if host_random3_choice is none %}<strong>CHỦ NHÀ ĐANG CHỌN CLB</strong><small>3 lựa chọn được hiển thị ở phía Chủ nhà</small>{% else %}<strong>✓ CHỦ NHÀ ĐÃ CHỌN</strong><small>Chờ phía Khách hoàn tất</small>{% endif %}</div>
+                    {% endif %}
+                {% else %}
+                    {% if room.host_team_logo_url %}<img class="room-club-logo-large" src="{{ room.host_team_logo_url }}" alt="Logo {{ room.host_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
+                    <div class="room-team-name-lg">{{ room.host_team or 'CHƯA CHỌN ĐỘI' }}</div>
+                    {% if room.host_team_total_stats %}
+                    <div class="room-team-points-block"><div class="room-team-points-value">{{ room.host_team_total_stats }}</div></div>
+                    {% endif %}
+                    <div class="room-team-league-text">{% if room.host_team_league_logo_url %}<img class="room-league-logo" src="{{ room.host_team_league_logo_url }}" alt="Logo {{ room.host_team_league }}" loading="lazy">{% endif %}<span>{{ room.host_team_league or 'Chưa có giải' }}</span></div>
                 {% endif %}
-                <div class="room-team-league-text">{% if room.host_team_league_logo_url %}<img class="room-league-logo" src="{{ room.host_team_league_logo_url }}" alt="Logo {{ room.host_team_league }}" loading="lazy">{% endif %}<span>{{ room.host_team_league or 'Chưa có giải' }}</span></div>
             </div>
         </section>
 
@@ -94,21 +118,13 @@
                 {% endif %}
             </div>
             {% elif room.status == "waiting_ready" and room.friendly_random3_active %}
-            <div class="room-center-random3-zone">
+            <div class="room-center-random3-status" aria-label="Trạng thái Random 3 chọn 1">
                 <div class="room-center-mode-title">RANDOM 3 CHỌN 1</div>
-                {% set my_options = room.friendly_random3.host_options if room_room_viewer_is_host else room.friendly_random3.guest_options %}
-                {% set my_choice = room.friendly_random3.host_choice if room_room_viewer_is_host else room.friendly_random3.guest_choice %}
-                {% if my_choice is none %}
-                <div class="room-center-random3-grid">
-                    {% for team in my_options %}
-                    <form method="post" action="{{ url_for('room_choose_random3_friendly', room_id=room.id) }}" class="room-center-random3-card" data-room-async="1">
-                        <input type="hidden" name="choice_index" value="{{ loop.index0 }}">
-                        {% if team.logo %}<img src="{{ team.logo }}" alt="Logo {{ team.name }}">{% else %}<div class="friendly-random3-placeholder">?</div>{% endif %}
-                        <strong>{{ team.name }}</strong><button type="submit">CHỌN CLB</button>
-                    </form>
-                    {% endfor %}
+                <div class="room-center-random3-status-row">
+                    <span class="home">CHỦ NHÀ <strong>{% if room.friendly_random3.host_choice is none %}ĐANG CHỌN{% else %}✓ ĐÃ CHỌN{% endif %}</strong></span>
+                    <span class="away">ĐỘI KHÁCH <strong>{% if room.friendly_random3.guest_choice is none %}ĐANG CHỌN{% else %}✓ ĐÃ CHỌN{% endif %}</strong></span>
                 </div>
-                {% else %}<div class="room-center-random3-locked">✓ Đã chọn đội — chờ đối thủ</div>{% endif %}
+                <small>Hãy chọn CLB trong khung của bạn</small>
             </div>
             {% endif %}
 
@@ -382,68 +398,46 @@
                 {% endif %}
                 {% endif %}
             </div>
-            <div class="room-card-club-area">
-                {% if room.guest_team_logo_url %}<img class="room-club-logo-large" src="{{ room.guest_team_logo_url }}" alt="Logo {{ room.guest_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
-                <div class="room-team-name-lg">{{ room.guest_team or 'CHƯA CHỌN ĐỘI' }}</div>
-                {% if room.guest_team_total_stats %}
-                <div class="room-team-points-block">
-                    <div class="room-team-points-value">{{ room.guest_team_total_stats }}</div>
-                </div>
+            <div class="room-card-club-area{% if room.status == 'waiting_ready' and room.friendly_random3_active %} room-card-club-area--random3{% endif %}">
+                {% if room.status == 'waiting_ready' and room.friendly_random3_active and room.has_guest %}
+                    {% set guest_random3_choice = room.friendly_random3.guest_choice %}
+                    {% if room_viewer_is_guest or current_user.role == 'admin' %}
+                        <div class="room-side-random3-selector room-side-random3-selector--away">
+                            <div class="room-side-random3-title">3 CLB CỦA ĐỘI KHÁCH</div>
+                            {% if guest_random3_choice is none %}
+                            <div class="room-side-random3-grid">
+                                {% for team in room.friendly_random3.guest_options %}
+                                <form method="post" action="{{ url_for('room_choose_random3_friendly', room_id=room.id) }}" class="room-side-random3-card" data-room-async="1">
+                                    <input type="hidden" name="choice_index" value="{{ loop.index0 }}">
+                                    {% if current_user.role == 'admin' %}<input type="hidden" name="side" value="guest">{% endif %}
+                                    {% if team.logo %}<img src="{{ team.logo }}" alt="Logo {{ team.name }}" loading="lazy">{% else %}<div class="friendly-random3-placeholder">?</div>{% endif %}
+                                    <strong title="{{ team.name }}">{{ team.name }}</strong>
+                                    <button type="submit">CHỌN CLB</button>
+                                </form>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="room-side-random3-picked">✓ BẠN ĐÃ CHỌN CLB<br><small>Chờ đối thủ hoàn tất lựa chọn</small></div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="room-side-random3-opponent-state">{% if guest_random3_choice is none %}<strong>ĐỘI KHÁCH ĐANG CHỌN CLB</strong><small>3 lựa chọn được hiển thị ở phía Đội khách</small>{% else %}<strong>✓ ĐỘI KHÁCH ĐÃ CHỌN</strong><small>Chờ phía Chủ nhà hoàn tất</small>{% endif %}</div>
+                    {% endif %}
+                {% else %}
+                    {% if room.guest_team_logo_url %}<img class="room-club-logo-large" src="{{ room.guest_team_logo_url }}" alt="Logo {{ room.guest_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
+                    <div class="room-team-name-lg">{{ room.guest_team or 'CHƯA CHỌN ĐỘI' }}</div>
+                    {% if room.guest_team_total_stats %}
+                    <div class="room-team-points-block"><div class="room-team-points-value">{{ room.guest_team_total_stats }}</div></div>
+                    {% endif %}
+                    <div class="room-team-league-text">{% if room.guest_team_league_logo_url %}<img class="room-league-logo" src="{{ room.guest_team_league_logo_url }}" alt="Logo {{ room.guest_team_league }}" loading="lazy">{% endif %}<span>{{ room.guest_team_league or 'Chưa có giải' }}</span></div>
                 {% endif %}
-                <div class="room-team-league-text">{% if room.guest_team_league_logo_url %}<img class="room-league-logo" src="{{ room.guest_team_league_logo_url }}" alt="Logo {{ room.guest_team_league }}" loading="lazy">{% endif %}<span>{{ room.guest_team_league or 'Chưa có giải' }}</span></div>
             </div>
         </section>
 
         <aside class="room-side-rail room-arena-right-rail" aria-label="Thông tin bổ sung của phòng">
-            <section class="panel room-side-info-panel">
-                <h3>Thông tin phòng đấu</h3>
-                <div class="room-side-info-list">
-                    <div><span>Mã phòng</span><strong>#{{ room.room_code }}</strong></div>
-                    <div><span>Loại trận</span><strong>{{ room.match_mode_label }}</strong></div>
-                    <div><span>Trạng thái phòng</span><strong>{{ room.status|replace('_',' ')|title }}</strong></div>
-                </div>
-            </section>
-
             {% include "partials/parsec_room_panel.html" %}
-
-            {% if room_head_to_head and room_head_to_head.available %}
-            <section class="panel room-session-h2h room-session-h2h-rail room-score-history-panel" aria-label="Lịch sử tỷ số trong phòng">
-                <div class="room-score-history-title">
-                    <h3>LỊCH SỬ ĐẤU</h3>
-                </div>
-
-                {% if room_head_to_head.matches %}
-                <div class="room-score-history-board">
-                    <div class="room-score-history-head">
-                        <span class="{{ room.host_name_style_class or '' }}" title="{{ room.host_name }}">{{ room.host_name }}</span>
-                        <strong>TỶ SỐ</strong>
-                        <span class="is-right {{ room.guest_name_style_class or '' }}" title="{{ room.guest_name or 'Đối thủ' }}">{{ room.guest_name or 'Đối thủ' }}</span>
-                    </div>
-                    <div class="room-score-history-list">
-                        {% for match in room_head_to_head.matches %}
-                        <div class="room-score-history-row" aria-label="Tỷ số {{ match.host_score }} - {{ match.guest_score }}">
-                            <span class="room-score-value{% if match.host_score|int > match.guest_score|int %} is-winner{% endif %}">{{ match.host_score }}</span>
-                            <span class="room-score-separator">-</span>
-                            <span class="room-score-value{% if match.guest_score|int > match.host_score|int %} is-winner{% endif %}">{{ match.guest_score }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% else %}
-                <p class="room-session-empty">Chưa có tỷ số nào trong phòng này.</p>
-                {% endif %}
-            </section>
-            {% endif %}
-
-            {% if system_features.room_chat_enabled %}<section class="panel room-chat-side">
-                <h2>Chat phòng</h2>
-                <div id="roomChatBox" class="chat-box"></div>
-                <form method="post" action="{{ url_for('send_room_chat', room_id=room.id) }}" class="chat-form room-chat-form">
-                    <input id="roomChatInput" name="message" maxlength="200" placeholder="Nhắn với đối thủ trong phòng..." required autocomplete="off">
-                    <button class="btn green" type="submit">Gửi</button>
-                </form>
-                <div id="roomChatStatus" class="chat-note">Chat phòng chỉ dành cho 2 người trong phòng. Chống spam: 1 tin nhắn / 5 giây.</div>
-            </section>{% endif %}
+            {% include "partials/room_history_panel.html" %}
+            {% include "partials/player_h2h_panel.html" %}
         </aside>
     </div>
 

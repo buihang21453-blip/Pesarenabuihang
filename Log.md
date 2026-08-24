@@ -211,3 +211,57 @@
 - Polling và watchdog lời mời tiếp tục chạy trên trang `/room/...`.
 - Không thay đổi điều kiện backend: phòng đủ hai người hoặc đã thi đấu vẫn không nhận lời mời mới.
 - Kiểm tra hồi quy toàn bộ: 166/166 test đạt.
+
+## V1.2.9.11 - Add host/away frames and club frames to room 3 chọn 1 layout
+- Applied Fhome.webp to host side panel and FAway.webp to away side panel.
+- Applied CLBH.webp to host club area and CLBA.webp to away club area.
+- Tuned spacing for random 3 chọn 1 cards and normal club display so the new frames fit cleanly.
+
+## V1.2.9.12 - Zcoin top-up table 3 columns
+- Converted top-up packages to 3 columns: Số tiền / Bonus / Tổng nhận.
+- Updated rates to 1,000 / 2,200 / 4,600 / 7,800 / 13,500 / 28,000 Zcoin.
+- Highlighted the 300,000đ package with star/fire markers.
+- Forced one inherited font, uniform size and weight across all table cells.
+- Default selected package is now 300,000đ.
+
+## V1.2.9.14 - Remove away outer frame and both club frames
+- Removed FAway outer frame from the guest panel.
+- Removed both inner club frames (CLBH/CLBA).
+- Restored cleaner club-area spacing so random 3 cards sit naturally without framed overlays.
+
+## V1.2.9.16 - Remove host outer frame too
+- Removed the remaining Fhome outer frame from the host panel.
+- Kept both club frames disabled so neither side shows the inner frame overlay.
+
+## V1.2.9.18 - Parsec link actions and Admin Discord link
+- Guest Parsec panel now shows the saved URL directly.
+- Mở Parsec is red; Copy Link is yellow and appears to its right.
+- Added a Discord link below Parsec for room members.
+- Admin can configure or remove the Discord URL from the System tab.
+
+## V1.2.9.19 - Remove QUAY QUAN wrapper outlines
+- Identified .room-center-random-trigger and .random3-trigger as the purple/yellow wrapper layers.
+- Removed wrapper border, background and box-shadow in every room skin/state.
+- Preserved the original yellow QUAY QUAN button face.
+
+## V1.2.9.20 - Make QUAY QUAN button thicker
+- Increased the yellow QUAY QUAN button face height and padding.
+- Kept the no-outline/no-wrapper style from V1.2.9.19 unchanged.
+
+## V1.2.9.21 - Right rail relayout
+- Removed the 'Thông tin phòng đấu' panel from the right column.
+- Right rail now contains exactly 3 panels: Kết Nối Parsec, Lịch Sử Phòng, Lịch Sử Đối Đầu.
+- Added all-time head-to-head stats between the two players and the 5 most recent scores.
+- Kept room history as the match results recorded inside the current room session.
+
+## V1.2.9.22 - Lock right rail panel order
+- Forced the right rail display order via CSS.
+- Order is now always: Kết Nối Parsec -> Lịch Sử Phòng -> Lịch Sử Đối Đầu.
+
+## V1.2.9.23 - Keep player cards at default height
+- Prevented Host and Away cards from stretching to match the tall right rail.
+- Player cards now keep their normal responsive min-height while the right rail can grow independently.
+
+## V1.2.9.24 - Center height matches player cards
+- Center battle column now uses the same responsive height as Host/Away cards.
+- Right rail remains independent and can extend lower for Parsec/room history/head-to-head.

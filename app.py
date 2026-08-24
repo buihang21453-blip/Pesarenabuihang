@@ -613,13 +613,14 @@ def system_feature_enabled(key: str) -> bool:
 
 
 ROOM_STYLE_SETTING_KEY = "room_visual_style"
-ROOM_STYLE_DEFAULT = "champions-night"
+ROOM_STYLE_DEFAULT = "default"
 ROOM_STYLE_OPTIONS = {
-    "champions-night": "Champions Night",
-    "frozen-tech": "Frozen Tech",
-    "ember-rivalry": "Ember Rivalry",
-    "royal-gold": "Royal Gold",
-    "mono-tactical": "Mono Tactical",
+    "default": "Mặc định",
+    "champions-night": "Hoàng Gia",
+    "frozen-tech": "Cyber Neon",
+    "ember-rivalry": "Sân Cỏ Năng Lượng",
+    "royal-gold": "Khung Năng Lượng",
+    "mono-tactical": "Thiết Giáp",
 }
 
 
@@ -680,6 +681,34 @@ def get_quick_match_config():
 
     ttl_cache_set("quick_match_config", dict(config), 60)
     return cache_set(request_key, dict(config))
+
+
+DISCORD_ROOM_LINK_SETTING_KEY = "room_discord_link"
+
+def get_room_discord_link():
+    request_key = "_room_discord_link_cached"
+    cached = cache_get(request_key)
+    if isinstance(cached, str):
+        return cached
+    cached = ttl_cache_get("room_discord_link")
+    if isinstance(cached, str):
+        return cache_set(request_key, cached)
+    value = ""
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", DISCORD_ROOM_LINK_SETTING_KEY).limit(1),
+            "get_room_discord_link", attempts=2,
+        )
+        raw = ((result.data or [{}])[0]).get("setting_value")
+        if isinstance(raw, dict):
+            value = str(raw.get("url") or "").strip()
+        elif isinstance(raw, str):
+            value = raw.strip()
+    except Exception as exc:
+        print(f"get_room_discord_link warning: {exc}")
+    ttl_cache_set("room_discord_link", value, 60)
+    return cache_set(request_key, value)
 
 
 REPEAT_OPPONENT_CONFIG_SETTING_KEY = "repeat_opponent_rp_config"
@@ -3915,6 +3944,91 @@ def build_room_head_to_head(room):
     # Cột phải chỉ cần các trận mới nhất; tổng W-D-L vẫn tính trên toàn phiên.
     empty["matches"] = selected[:8]
     return empty
+
+
+
+
+def build_player_head_to_head(room):
+    """Thống kê đối đầu toàn bộ giữa 2 game thủ trong phòng.
+
+    Dùng cho panel cột phải: tổng số lần gặp và 5 tỷ số gần nhất.
+    """
+    host_id = room.get("host_user_id")
+    guest_id = room.get("guest_user_id")
+
+    result_data = {
+        "available": bool(host_id and guest_id),
+        "total": 0,
+        "host_wins": 0,
+        "guest_wins": 0,
+        "draws": 0,
+        "host_goals": 0,
+        "guest_goals": 0,
+        "matches": [],
+    }
+    if not host_id or not guest_id:
+        return result_data
+
+    raw_matches = None
+    try:
+        pair_filter = (
+            f"and(player1_id.eq.{host_id},player2_id.eq.{guest_id}),"
+            f"and(player1_id.eq.{guest_id},player2_id.eq.{host_id})"
+        )
+        query = (
+            db.table("matches")
+            .select("id,player1_id,player2_id,score1,score2,delta1,delta2,created_at,status")
+            .eq("status", "confirmed")
+            .or_(pair_filter)
+            .order("created_at", desc=True)
+            .limit(200)
+        )
+        result = execute_query(query, "player_head_to_head_pair", attempts=2)
+        raw_matches = result.data or []
+    except Exception as exc:
+        app.logger.warning("Player head-to-head optimized query failed; using cache fallback: %s", exc)
+
+    pair = {str(host_id), str(guest_id)}
+    if raw_matches is None:
+        raw_matches = []
+        for match in list_matches("confirmed"):
+            if {str(match.get("player1_id")), str(match.get("player2_id"))} != pair:
+                continue
+            raw_matches.append(match)
+
+    selected = []
+    for match in raw_matches:
+        if {str(match.get("player1_id")), str(match.get("player2_id"))} != pair:
+            continue
+        try:
+            score1 = int(match.get("score1") or 0)
+            score2 = int(match.get("score2") or 0)
+        except (TypeError, ValueError):
+            continue
+
+        host_is_player1 = str(match.get("player1_id")) == str(host_id)
+        host_score = score1 if host_is_player1 else score2
+        guest_score = score2 if host_is_player1 else score1
+        item = {
+            "id": match.get("id"),
+            "created_at_display": format_vn_datetime(match.get("created_at")),
+            "host_score": host_score,
+            "guest_score": guest_score,
+        }
+        selected.append(item)
+
+        result_data["host_goals"] += host_score
+        result_data["guest_goals"] += guest_score
+        if host_score > guest_score:
+            result_data["host_wins"] += 1
+        elif guest_score > host_score:
+            result_data["guest_wins"] += 1
+        else:
+            result_data["draws"] += 1
+
+    result_data["total"] = len(selected)
+    result_data["matches"] = selected[:5]
+    return result_data
 
 
 def _room_by_match_id(rooms):
