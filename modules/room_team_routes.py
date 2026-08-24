@@ -12,10 +12,6 @@ def register_routes(context):
     def room_random_teams(room_id):
         user = current_user()
         room = get_room(room_id)
-        _flow_ok, _flow_message = require_room_action(room, "random_team")
-        if room and not _flow_ok:
-            flash(_flow_message, "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:
             flash("Không tìm thấy phòng.", "danger")
@@ -160,10 +156,6 @@ def register_routes(context):
     def room_select_ranked_mode(room_id):
         user = current_user()
         room = get_room(room_id)
-        _flow_ok, _flow_message = require_room_action(room, "select_mode")
-        if room and not _flow_ok:
-            flash(_flow_message, "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
         if not room or (user["id"] != room.get("host_user_id") and not is_admin_user(user)):
             flash("Chỉ chủ phòng mới được chọn chế độ thi đấu.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
@@ -202,10 +194,6 @@ def register_routes(context):
     def room_start_random3_friendly(room_id):
         user = current_user()
         room = get_room(room_id)
-        _flow_ok, _flow_message = require_room_action(room, "random_team")
-        if room and not _flow_ok:
-            flash(_flow_message, "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
         if not room or (user["id"] != room.get("host_user_id") and not is_admin_user(user)):
             flash("Chỉ chủ phòng mới được mở chế độ này.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
@@ -236,10 +224,6 @@ def register_routes(context):
     def room_choose_random3_friendly(room_id):
         user = current_user()
         room = get_room(room_id)
-        _flow_ok, _flow_message = require_room_action(room, "random_team")
-        if room and not _flow_ok:
-            flash(_flow_message, "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
         state = decode_friendly_random3_state(room.get("note") if room else None)
         if not system_feature_enabled("friendly_random3_enabled"):
             flash("Chế độ Random 3 chọn 1 đang tạm tắt.", "warning")
@@ -363,10 +347,6 @@ def register_routes(context):
     def room_finish_friendly(room_id):
         user = current_user()
         room = get_room(room_id)
-        _flow_ok, _flow_message = require_room_action(room, "finish_friendly")
-        if room and not _flow_ok:
-            flash(_flow_message, "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
         if not room:
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("dashboard"))
@@ -407,10 +387,6 @@ def register_routes(context):
     def room_guest_unready(room_id):
         user = current_user()
         room = get_room(room_id)
-        _flow_ok, _flow_message = require_room_action(room, "unready")
-        if room and not _flow_ok:
-            flash(_flow_message, "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
         if not room or user.get("id") != room.get("guest_user_id"):
             flash("Bạn không thuộc phòng đấu này.", "danger")
             return redirect(url_for("dashboard"))
@@ -435,10 +411,6 @@ def register_routes(context):
     def room_guest_ready(room_id):
         user = current_user()
         room = get_room(room_id)
-        _flow_ok, _flow_message = require_room_action(room, "ready")
-        if room and not _flow_ok:
-            flash(_flow_message, "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
         if not room or user.get("id") != room.get("guest_user_id"):
             flash("Bạn không thuộc phòng đấu này.", "danger")
             return redirect(url_for("dashboard"))

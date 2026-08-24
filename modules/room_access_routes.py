@@ -143,97 +143,6 @@ def register_routes(context):
         return redirect(url_for("room_detail", room_id=room_id))
 
 
-    def build_room_pair_history(room, limit=5):
-        """Lich su doi dau gan day cua hai nguoi choi, khong gioi han trong phong hien tai.
-
-        Tai su dung Read Model/cache hien co; khong tao API/route moi. Neu chua co khach
-        hoac cache/Supabase tam loi thi tra ve context rong de Room van tai binh thuong.
-        """
-        host_id = room.get("host_user_id")
-        guest_id = room.get("guest_user_id")
-        empty = {
-            "available": bool(host_id and guest_id),
-            "total": 0,
-            "host_wins": 0,
-            "guest_wins": 0,
-            "draws": 0,
-            "matches": [],
-        }
-        if not host_id or not guest_id:
-            return empty
-
-        try:
-            pair_cache = load_pair_stats(host_id, guest_id) or {}
-            rows = load_h2h_matches(host_id, guest_id, limit=max(5, int(limit or 5))) or []
-        except Exception as exc:
-            app.logger.warning("Room pair history read-model failed room=%s: %s", room.get("id"), exc)
-            return empty
-
-        matches = []
-        host_wins = guest_wins = draws = 0
-        for raw in rows[:limit]:
-            try:
-                p1 = str(raw.get("player1_id"))
-                p2 = str(raw.get("player2_id"))
-                score1 = int(raw.get("score1") or 0)
-                score2 = int(raw.get("score2") or 0)
-            except (TypeError, ValueError):
-                continue
-            if str(host_id) == p1:
-                hs, gs = score1, score2
-            elif str(host_id) == p2:
-                hs, gs = score2, score1
-            else:
-                continue
-            if hs > gs:
-                host_wins += 1
-                result = "host"
-            elif gs > hs:
-                guest_wins += 1
-                result = "guest"
-            else:
-                draws += 1
-                result = "draw"
-            matches.append({
-                "host_score": hs,
-                "guest_score": gs,
-                "result": result,
-                "created_at": format_vn_datetime(raw.get("created_at")),
-            })
-
-        # Neu co bang pair stats cache thi dung tong all-time; danh sach ben duoi van chi la gan nhat.
-        total = int(pair_cache.get("total") or 0) if pair_cache else len(rows)
-        if pair_cache:
-            low_id = str(pair_cache.get("user_low_id"))
-            host_is_low = str(host_id) == low_id
-            host_wins_all = int(pair_cache.get("user_low_wins") or 0) if host_is_low else int(pair_cache.get("user_high_wins") or 0)
-            guest_wins_all = int(pair_cache.get("user_high_wins") or 0) if host_is_low else int(pair_cache.get("user_low_wins") or 0)
-            draws_all = int(pair_cache.get("draws") or 0)
-        else:
-            # Read model tra toi da 50; neu chua co pair cache thi day la thong ke tren tap doc duoc.
-            host_wins_all = guest_wins_all = draws_all = 0
-            for raw in rows:
-                try:
-                    p1 = str(raw.get("player1_id")); p2 = str(raw.get("player2_id"))
-                    s1 = int(raw.get("score1") or 0); s2 = int(raw.get("score2") or 0)
-                except (TypeError, ValueError):
-                    continue
-                hs, gs = (s1, s2) if str(host_id) == p1 else (s2, s1) if str(host_id) == p2 else (None, None)
-                if hs is None: continue
-                if hs > gs: host_wins_all += 1
-                elif gs > hs: guest_wins_all += 1
-                else: draws_all += 1
-
-        return {
-            "available": True,
-            "total": total,
-            "host_wins": host_wins_all,
-            "guest_wins": guest_wins_all,
-            "draws": draws_all,
-            "matches": matches,
-        }
-
-
     def build_room_template_context(room):
         viewer = current_user() or {}
         daily_limit_message = None
@@ -246,10 +155,11 @@ def register_routes(context):
             "initial_room_state_key": build_room_state_key(room),
             "friendly_tiers": get_available_team_tiers(),
             "room_head_to_head": build_room_head_to_head(room),
-            "room_pair_history": build_room_pair_history(room, limit=4),
+            "player_head_to_head": build_player_head_to_head(room),
             # Luôn truyền cấu hình Tìm Nhanh vào cả trang đầy đủ và HTML polling.
             # Nếu thiếu, Jinja dùng màu mặc định và có thể không phản ánh lựa chọn Admin.
             "quick_match_config": get_quick_match_config(),
+            "room_visual_style": get_room_visual_style(),
             "daily_rank_limit_blocked": bool(daily_limit_message),
             "daily_rank_limit_message": daily_limit_message,
             # Supabase có thể trả ID ở kiểu khác session. Dùng so sánh chuẩn hóa
@@ -495,4 +405,3 @@ def register_routes(context):
         )
         flash("Bạn đã thoát và đóng phòng đấu.", "success")
         return redirect(url_for("dashboard"))
-

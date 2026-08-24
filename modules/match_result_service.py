@@ -7,8 +7,8 @@ import random
 
 from modules.rp_engine import get_win_streak_bonus
 
-
 def _safe_int(value, default=0):
+    """Chuyển số an toàn cục bộ để module không phụ thuộc helper trong app.py."""
     try:
         if value is None or value == "":
             return int(default)
@@ -18,6 +18,7 @@ def _safe_int(value, default=0):
             return int(default)
         except (TypeError, ValueError, OverflowError):
             return 0
+
 
 EXPORTED_NAMES = ['sync_room_after_admin_match_change', 'apply_match_result', 'resolve_match_dispute_with_result', 'cancel_match_dispute', 'update_player_after_match', 'reverse_player_match_stats', 'reverse_confirmed_match_result']
 
