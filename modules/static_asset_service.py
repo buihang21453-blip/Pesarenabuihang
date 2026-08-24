@@ -34,10 +34,8 @@ def shop_asset_base_url() -> str:
     explicit = _clean_base(os.getenv("SHOP_ASSET_BASE_URL"))
     if explicit:
         return explicit
-    static_base = asset_base_url()
-    if static_base:
-        return f"{static_base}/shop"
-    # Bản Clean không còn static/shop local. Dùng public Storage đã chứa catalog Shop.
+    # Shop là namespace asset riêng. Không kế thừa STATIC_ASSET_BASE_URL vì
+    # asset chung của site có thể đang ở /v1, trong khi Shop nằm ở /v1.14.41/shop.
     return DEFAULT_SHOP_ASSET_BASE_URL
 
 
@@ -45,10 +43,8 @@ def luckybox_asset_base_url() -> str:
     explicit = _clean_base(os.getenv("LUCKYBOX_ASSET_BASE_URL"))
     if explicit:
         return explicit
-    static_base = asset_base_url()
-    if static_base:
-        return f"{static_base}/luckybox"
-    # Bản Clean không còn static/luckybox local. Dùng đúng public Storage v1.14.41.
+    # Lucky Box dùng cùng bộ vật phẩm/trang bị version v1.14.41 và phải tách
+    # khỏi STATIC_ASSET_BASE_URL chung của website.
     return DEFAULT_LUCKYBOX_ASSET_BASE_URL
 
 

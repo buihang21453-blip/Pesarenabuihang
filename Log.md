@@ -279,3 +279,9 @@
 - Lucky Box default base: /pes-assets/v1.14.41/luckybox.
 - Verified path patterns for shop/items, luckybox/exclusive and luckybox/rewards.
 - asset_url now passes through full http/https URLs from DB/Admin without corrupting them.
+
+## V1.2.9.27 - Scope v1.14.41 to Shop/Lucky Box assets only
+- Shop and Lucky Box no longer inherit STATIC_ASSET_BASE_URL.
+- Shop items/equipment always fall back to pes-assets/v1.14.41/shop.
+- Lucky Box reward/exclusive assets always fall back to pes-assets/v1.14.41/luckybox.
+- All other website assets keep using the existing general STATIC_ASSET_BASE_URL (for example /v1).
