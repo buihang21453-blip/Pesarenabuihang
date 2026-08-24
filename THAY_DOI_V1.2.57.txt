@@ -1,0 +1,21 @@
+V1.2.57 - Nâng cấp Parsec + Discord Admin
+
+1. Phần Link Parsec
+- Giữ link dạng https://parsec.gg/g/...
+- Thêm nút Mở Parsec màu đỏ.
+- Nút Copy Link màu vàng.
+- Cả chủ phòng và khách đều có nút thao tác khi link đã tồn tại.
+
+2. Discord
+- Admin > Hệ thống có mục "Link Discord phòng đấu".
+- Admin nhập/lưu/xóa link Discord tại đây.
+- Hỗ trợ https://discord.gg/... và https://discord.com/invite/...
+- Người chơi thấy Discord bên dưới phần Parsec và bấm là mở ngay.
+- Người chơi không thể sửa link Discord.
+
+3. Database
+- Không cần SQL mới.
+- Link Discord dùng bảng system_settings hiện có, key admin_discord_link.
+
+4. Cài nâng cấp
+- Chép đè đúng các file trong gói này theo nguyên cấu trúc thư mục.

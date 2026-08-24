@@ -189,3 +189,68 @@ html[data-theme="light"] .parsec-room-panel button.parsec-action-btn:hover{
   .parsec-room-inline{grid-template-columns:minmax(0,1fr) auto}
   .parsec-room-actions{justify-content:flex-start}
 }
+
+/* V1.2.57 — Parsec Open/Copy + Discord do Admin cấu hình */
+.parsec-room-link-display{margin-bottom:9px}
+.parsec-link-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:9px;
+}
+.parsec-link-actions .parsec-action-btn{width:100%;min-height:36px;text-decoration:none}
+.parsec-open-btn,
+html[data-theme="light"] .parsec-room-panel .parsec-open-btn{
+  background:linear-gradient(180deg,#ef2a3c 0%,#c8162d 100%);
+  border-color:#ff4b5d;
+  color:#fff;
+}
+.parsec-open-btn:hover,
+html[data-theme="light"] .parsec-room-panel .parsec-open-btn:hover{
+  background:linear-gradient(180deg,#fa3548 0%,#d71b34 100%);
+  border-color:#ff6877;
+  color:#fff;
+}
+.parsec-copy-link-btn,
+html[data-theme="light"] .parsec-room-panel .parsec-copy-link-btn{
+  background:linear-gradient(180deg,#ffd84a 0%,#e8ad12 100%);
+  border-color:#ffe36b;
+  color:#251b00;
+}
+.parsec-copy-link-btn:hover,
+html[data-theme="light"] .parsec-room-panel .parsec-copy-link-btn:hover{
+  background:linear-gradient(180deg,#ffe05d 0%,#f2bb19 100%);
+  border-color:#ffea84;
+  color:#1d1600;
+}
+.parsec-discord-section{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(115,137,255,.22);
+}
+.parsec-discord-link{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:8px;
+  min-height:40px;
+  padding:7px 9px;
+  border:1px solid rgba(88,101,242,.72);
+  border-radius:9px;
+  background:linear-gradient(180deg,rgba(88,101,242,.20),rgba(62,72,190,.15));
+  color:#f4f6ff;
+  text-decoration:none;
+  transition:border-color .15s ease,background .15s ease;
+}
+.parsec-discord-link:hover{
+  border-color:#7d89ff;
+  background:linear-gradient(180deg,rgba(88,101,242,.32),rgba(62,72,190,.23));
+  color:#fff;
+}
+.parsec-discord-icon{font-size:16px;color:#8f9aff;line-height:1}
+.parsec-discord-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#bfc6e8}
+.parsec-discord-open{font-size:11px;font-weight:800;color:#fff;white-space:nowrap}
+@media(max-width:700px){
+  .parsec-link-actions{grid-template-columns:1fr 1fr}
+  .parsec-discord-text{display:none}
+}

@@ -40,6 +40,7 @@ def register_routes(context):
                     "matches_threshold": 10, "matches_rp": 20,
                 },
                 "duplicate_ip_warning_config": {"enabled": True, "ignore_admin_managed": True, "trusted_user_ids": []},
+                "admin_discord_link": None,
             })
             return base
 
@@ -51,6 +52,7 @@ def register_routes(context):
             "repeat_opponent_rp_config": get_repeat_opponent_rp_config(),
             "weekly_rp_reward_config": get_weekly_rp_reward_config(),
             "duplicate_ip_warning_config": get_duplicate_ip_warning_config(),
+            "admin_discord_link": get_admin_discord_link(),
         })
         return base
 
@@ -115,6 +117,34 @@ def register_routes(context):
         flash("Đã lưu thiết lập cảnh báo IP.", "success")
         return redirect_admin("users")
 
+
+
+    @app.route("/admin/system/discord-link", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_update_discord_link():
+        try:
+            discord_link = validate_discord_link(request.form.get("discord_link"))
+        except ValueError as exc:
+            flash(str(exc), "danger")
+            return redirect_admin("system")
+
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": "admin_discord_link",
+                "setting_value": {"url": discord_link},
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "update_admin_discord_link", attempts=2,
+        )
+        ttl_cache_delete("admin_discord_link")
+        log_admin_action(
+            "Cập nhật link Discord phòng đấu", "system",
+            details={"discord_link": discord_link},
+        )
+        flash("Đã lưu link Discord." if discord_link else "Đã xóa link Discord.", "success")
+        return redirect_admin("system")
 
     @app.route("/admin/system/quick-match", methods=["POST"])
     @login_required
