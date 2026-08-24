@@ -9,12 +9,6 @@ from modules.rp_engine import get_win_streak_bonus
 
 
 def _safe_int(value, default=0):
-    """Convert database/form values to int without depending on app.py globals.
-
-    This helper intentionally lives in this module because match confirmation is a
-    critical write path.  It must keep working even if service configure/import
-    order changes while app.py is being modularized.
-    """
     try:
         if value is None or value == "":
             return int(default)
@@ -86,156 +80,227 @@ def sync_room_after_admin_match_change(match, target, actor_id=None):
     )
 
 
-def _restore_player_snapshot(player):
-    """Restore exactly the mutable ranked-stat fields from a pre-confirm snapshot."""
-    if not player or not player.get("id"):
-        return
-    payload = {
-        "rank_points": _safe_int(player.get("rank_points")),
-        "wins": _safe_int(player.get("wins")),
-        "draws": _safe_int(player.get("draws")),
-        "losses": _safe_int(player.get("losses")),
-        "total_matches": _safe_int(player.get("total_matches")),
-        "goals_for": _safe_int(player.get("goals_for")),
-        "goals_against": _safe_int(player.get("goals_against")),
-        "streak": _safe_int(player.get("streak")),
-    }
-    execute_query(
-        db.table("users").update(payload).eq("id", player["id"]),
-        f"restore_player_snapshot:{player.get('id')}",
-        attempts=2,
-    )
-    try:
-        ttl_cache_delete("players_raw", "achievement_map", f"user:{player.get('id')}")
-    except Exception:
-        pass
-
-
 def apply_match_result(match):
-    """Luồng xác nhận RP cơ bản, dễ kiểm soát và idempotent theo trạng thái match.
+    """Apply one ranked result exactly once with clear validation and recovery.
 
-    Chỉ làm 4 việc: đọc dữ liệu -> tính delta -> cập nhật 2 user -> chốt match.
-    Không retry nhiều tầng, không sinh mã CONFIRM và không chạy các rule phụ trong
-    đường ghi điểm chính. Các tác vụ phụ (thưởng tuần/badge) chỉ chạy sau khi chốt.
+    The match row is claimed by changing its status to ``processing_result``.
+    A repeated click cannot apply RP twice, even when requests overlap.
     """
     if not match or not match.get("id"):
         raise ValueError("Thiếu dữ liệu trận đấu.")
-
-    fresh = get_match(match.get("id")) or match
-    if fresh.get("status") == "confirmed" and fresh.get("delta1") is not None and fresh.get("delta2") is not None:
-        return _safe_int(fresh.get("delta1")), _safe_int(fresh.get("delta2"))
-    if fresh.get("status") == "processing_result":
-        raise ValueError("Kết quả đang được xử lý. Hãy tải lại phòng sau vài giây.")
-    if fresh.get("score1") is None or fresh.get("score2") is None:
+    # Không cho request người chơi ghi RP trong lúc Admin đang phát lại lịch sử.
+    # Trận confirmed đã có delta vẫn được trả idempotent phía dưới.
+    if match.get("status") != "confirmed":
+        assert_ranking_rebuild_not_running()
+    if match.get("score1") is None or match.get("score2") is None:
         raise ValueError("Trận chưa có tỉ số.")
 
-    assert_ranking_rebuild_not_running()
+    # Idempotency: a confirmed match with stored deltas was already applied.
+    if match.get("status") == "confirmed" and match.get("delta1") is not None and match.get("delta2") is not None:
+        return _safe_int(match.get("delta1")), _safe_int(match.get("delta2"))
+    if match.get("status") == "processing_result":
+        raise ValueError("Kết quả đang được xử lý. Không cần nhấn xác nhận lần nữa.")
 
-    player1_id = fresh.get("player1_id")
-    player2_id = fresh.get("player2_id")
+    player1_id = match.get("player1_id")
+    player2_id = match.get("player2_id")
     if not player1_id or not player2_id:
-        raise ValueError("Trận đấu thiếu người chơi.")
+        raise ValueError("Trận đấu thiếu ID của một trong hai người chơi.")
 
     player1 = get_user(player1_id)
     player2 = get_user(player2_id)
     if not player1 or not player2:
-        raise ValueError("Không tìm thấy đủ dữ liệu hai người chơi.")
+        missing = []
+        if not player1:
+            missing.append("người chơi 1")
+        if not player2:
+            missing.append("người chơi 2")
+        raise ValueError("Không tìm thấy dữ liệu " + " và ".join(missing) + ". Chưa cập nhật RP.")
 
-    score1 = _safe_int(fresh.get("score1"), -1)
-    score2 = _safe_int(fresh.get("score2"), -1)
+    score1 = _safe_int(match.get("score1"), -1)
+    score2 = _safe_int(match.get("score2"), -1)
     if score1 < 0 or score2 < 0:
         raise ValueError("Tỉ số không hợp lệ.")
 
-    original_status = str(fresh.get("status") or "waiting_confirm")
-    claim = execute_query(
-        db.table("matches").update({
-            "status": "processing_result",
-            "updated_at": now_iso(),
-        }).eq("id", fresh["id"]).eq("status", original_status),
-        "basic_claim_match_result",
-        attempts=1,
-    )
-    if not (claim.data or []):
-        latest = get_match(fresh["id"])
-        if latest and latest.get("status") == "confirmed" and latest.get("delta1") is not None and latest.get("delta2") is not None:
-            return _safe_int(latest.get("delta1")), _safe_int(latest.get("delta2"))
-        raise ValueError("Trạng thái trận vừa thay đổi. Hãy tải lại phòng.")
-
+    original_status = str(match.get("status") or "waiting_confirm")
     try:
-        rng = random.Random(f"{RP_RANDOM_SEED_NAMESPACE}|{fresh.get('id')}")
+        claim = execute_query(
+            db.table("matches").update({
+                "status": "processing_result",
+                "updated_at": now_iso(),
+            }).eq("id", match["id"]).eq("status", original_status),
+            "claim_match_result",
+        )
+        if not (claim.data or []):
+            fresh = get_match(match["id"])
+            if fresh and fresh.get("status") == "confirmed":
+                return _safe_int(fresh.get("delta1")), _safe_int(fresh.get("delta2"))
+            raise ValueError("Kết quả đã được một yêu cầu khác xử lý hoặc trạng thái trận đã thay đổi.")
+
+        # Đóng khe race: Admin có thể tạo khóa sau lần kiểm tra đầu nhưng trước khi
+        # request này claim được dòng trận. Khi đó trả status về và dừng trước khi ghi RP.
+        assert_ranking_rebuild_not_running()
+
         delta1, delta2 = calculate_deltas(
             player1, player2, score1, score2,
-            fresh.get("team1"), fresh.get("team2"),
-            fresh.get("team1_overall"), fresh.get("team2_overall"),
-            fresh.get("team1_tier"), fresh.get("team2_tier"),
-            rng=rng,
+            match.get("team1"), match.get("team2"),
+            match.get("team1_overall"), match.get("team2_overall"),
+            match.get("team1_tier"), match.get("team2_tier"),
+            rng=random.Random(f"{RP_RANDOM_SEED_NAMESPACE}|{match.get('id')}"),
         )
-        delta1, delta2 = validate_ranked_deltas(score1, score2, _safe_int(delta1), _safe_int(delta2))
+        delta1, delta2 = _safe_int(delta1), _safe_int(delta2)
+        # Không còn fallback -20. Nếu engine trả delta sai dấu/0 cho trận thắng-thua,
+        # dừng xử lý và ghi lỗi thay vì âm thầm che lỗi bằng một giá trị hợp lệ giả.
+        delta1, delta2 = validate_ranked_deltas(score1, score2, delta1, delta2)
 
-        # Ghi thống kê/RP trực tiếp từ snapshot trước trận.
-        update_player_after_match(player1, delta1, score1, score2, affect_streak=True)
-        update_player_after_match(player2, delta2, score2, score1, affect_streak=True)
+        # The 0.95 coefficient belongs to the actual room host, not implicitly player1.
+        # Tách thưởng chuỗi khỏi mọi hệ số giảm RP. calculate_deltas đã cộng
+        # thưởng này vào delta thắng; các bước sau chỉ được phép giảm phần RP cơ bản.
+        streak_bonus1 = get_win_streak_bonus(player1, score1 > score2)
+        streak_bonus2 = get_win_streak_bonus(player2, score2 > score1)
 
-        original_note = str(fresh.get("note") or "")
+        host_user_id = match.get("host_user_id")
+        if not host_user_id:
+            try:
+                room_row = execute_query(
+                    db.table("match_rooms").select("host_user_id").eq("match_id", match["id"]).limit(1),
+                    "get_result_host",
+                    attempts=2,
+                )
+                host_user_id = (room_row.data or [{}])[0].get("host_user_id")
+            except Exception as exc:
+                print(f"get_result_host warning match={match.get('id')}: {type(exc).__name__}: {exc}")
+        if str(host_user_id or "") == str(player1_id) and score1 > score2:
+            if delta1 not in (17, 19):
+                base_delta1 = max(0, int(delta1) - int(streak_bonus1))
+                delta1 = _safe_int(apply_host_xp_factor(base_delta1, match.get("host_xp_factor", HOST_WIN_FACTOR))) + int(streak_bonus1)
+            if (_safe_int(player1.get("wins")) + _safe_int(player1.get("draws")) + _safe_int(player1.get("losses"))) < PLACEMENT_MATCHES:
+                delta1 = max(22, min(29, delta1))
+        elif str(host_user_id or "") == str(player2_id) and score2 > score1:
+            if delta2 not in (17, 19):
+                base_delta2 = max(0, int(delta2) - int(streak_bonus2))
+                delta2 = _safe_int(apply_host_xp_factor(base_delta2, match.get("host_xp_factor", HOST_WIN_FACTOR))) + int(streak_bonus2)
+            if (_safe_int(player2.get("wins")) + _safe_int(player2.get("draws")) + _safe_int(player2.get("losses"))) < PLACEMENT_MATCHES:
+                delta2 = max(22, min(29, delta2))
+
+        # Giảm RP khi gặp lại cùng một đối thủ trong ngày. Quy tắc này được áp dụng
+        # sau toàn bộ công thức thắng hiện tại/ưu đãi Chủ phòng và trước trần +150 RP.
+        repeat_context = repeat_opponent_context(match)
+        delta1, delta2, repeat_details = apply_repeat_opponent_rules(
+            match, player1, player2, score1, score2, delta1, delta2,
+            context=repeat_context,
+            streak_bonus1=streak_bonus1, streak_bonus2=streak_bonus2,
+        )
+        match["_streak_eligible"] = bool(repeat_details.get("streak_eligible", True))
+
+        # Hết lượt Rank ngày vẫn được thi đấu và lưu lịch sử, nhưng trận vượt
+        # lượt không cộng/trừ RP và không tác động chuỗi hoặc danh hiệu.
+        daily_game_status = daily_rank_match_rp_status(player1_id, player2_id)
+        if not daily_game_status.get("rp_eligible", True):
+            delta1 = 0
+            delta2 = 0
+            repeat_details["streak_eligible"] = False
+            match["_streak_eligible"] = False
+
+        # Giới hạn RP dương theo ngày được áp dụng sau khi tính đủ công thức,
+        # nhưng trước khi ghi điểm. RP âm khi thua không bị thay đổi.
+        delta1, daily_cap1 = apply_daily_positive_rp_cap(
+            player1_id, delta1, exclude_match_id=match.get("id")
+        )
+        delta2, daily_cap2 = apply_daily_positive_rp_cap(
+            player2_id, delta2, exclude_match_id=match.get("id")
+        )
+
+        affect_streak = bool(repeat_details.get("streak_eligible", True))
+        update_player_after_match(player1, delta1, score1, score2, affect_streak=affect_streak)
+        update_player_after_match(player2, delta2, score2, score1, affect_streak=affect_streak)
+
+        original_note = str(match.get("note") or "")
         is_random3_pick1 = (
             "random 3 chọn 1" in original_note.casefold()
             or "random3_pick1" in original_note.casefold()
         )
-        confirmed_note = "Đã xác nhận."
+        daily_rp_eligible = bool(daily_game_status.get("rp_eligible", True))
+        counted_user_ids = [str(player1_id), str(player2_id)] if daily_rp_eligible else []
+        confirmed_note = (
+            "Đã xác nhận. Không tính RP và không tính lượt vì một trong hai người đã hết giới hạn trận Rank trong ngày."
+            if not daily_rp_eligible
+            else "Đã xác nhận."
+        )
         if is_random3_pick1:
             confirmed_note += " [MODE:random3_pick1]"
 
-        finalized = execute_query(
+        execute_query(
             db.table("matches").update({
                 "delta1": int(delta1),
                 "delta2": int(delta2),
                 "rp_formula_version": RP_FORMULA_VERSION,
                 "rp_details": {
-                    "source": "basic_confirm_flow",
-                    "seed": f"{RP_RANDOM_SEED_NAMESPACE}|{fresh.get('id')}",
+                    "source": "modules/rp_formula.py",
+                    "match_mode": "random3_pick1" if is_random3_pick1 else "rank_random",
+                    "formula": formula_summary(),
+                    "seed": f"{RP_RANDOM_SEED_NAMESPACE}|{match.get('id')}",
                     "delta1": int(delta1),
                     "delta2": int(delta2),
+                    "repeat_opponent": repeat_details,
+                    "daily_rank_limits": {
+                        "game_limit": daily_game_status,
+                        "counted_user_ids": counted_user_ids,
+                        "count_rule": "both_players" if daily_rp_eligible else "neither_player",
+                        "positive_rp_cap": {
+                            "player1": daily_cap1,
+                            "player2": daily_cap2,
+                        },
+                    },
                 },
                 "status": "confirmed",
                 "note": confirmed_note,
                 "updated_at": now_iso(),
-            }).eq("id", fresh["id"]).eq("status", "processing_result"),
-            "basic_finalize_match_result",
-            attempts=1,
+            }).eq("id", match["id"]).eq("status", "processing_result"),
+            "finalize_match_result",
         )
-        if not (finalized.data or []):
-            raise RuntimeError("Không thể chốt kết quả trận đấu.")
-
-    except Exception:
-        # Rollback cơ bản chỉ dùng snapshot trước trận; không retry lồng nhau.
-        for snapshot in (player1, player2):
-            try:
-                _restore_player_snapshot(snapshot)
-            except Exception as rollback_exc:
-                print(f"basic_result rollback user warning: {type(rollback_exc).__name__}: {rollback_exc}")
+    except Exception as exc:
+        print(f"apply_match_result ERROR match={match.get('id')} status={original_status}: {type(exc).__name__}: {exc}")
         try:
             execute_query(
-                db.table("matches").update({
-                    "status": original_status,
-                    "updated_at": now_iso(),
-                }).eq("id", fresh["id"]).eq("status", "processing_result"),
-                "basic_restore_match_status",
-                attempts=1,
+                db.table("matches").update({"status": original_status, "updated_at": now_iso()})
+                .eq("id", match["id"]).eq("status", "processing_result"),
+                "restore_match_after_result_error",
+                attempts=2,
             )
         except Exception as restore_exc:
-            print(f"basic_result restore match warning: {type(restore_exc).__name__}: {restore_exc}")
+            print(f"apply_match_result RESTORE ERROR match={match.get('id')}: {type(restore_exc).__name__}: {restore_exc}")
         raise
 
-    # Các tác vụ phụ không được phép làm hỏng xác nhận chính.
+    # Thông báo riêng khi RP thắng bị chạm/trần giới hạn ngày.
+    try:
+        for user_id, detail in ((player1_id, daily_cap1), (player2_id, daily_cap2)):
+            if not detail:
+                continue
+            applied = int(detail.get("applied_delta") or 0)
+            earned_after = int(detail.get("earned_before") or 0) + max(0, applied)
+            if detail.get("capped") or earned_after >= int(detail.get("limit") or 150):
+                create_user_notification(
+                    user_id,
+                    "Đã đạt giới hạn RP trong ngày",
+                    f"Bạn đã được cộng tổng cộng {earned_after}/150 RP hôm nay. "
+                    "Phần RP vượt giới hạn không được cộng; giới hạn làm mới lúc 00:00.",
+                    "/notifications",
+                    "rank_limit",
+                )
+    except Exception as exc:
+        print(f"daily rank limit notification warning: {exc}")
+
+    # Thưởng tuần là tác vụ phụ, chạy sau khi trận đã confirmed để không làm hỏng kết quả.
     try:
         grant_weekly_rp_rewards_for_users([player1_id, player2_id])
     except Exception as exc:
-        print(f"weekly_rp_reward warning match={fresh.get('id')}: {type(exc).__name__}: {exc}")
+        print(f"weekly_rp_reward warning match={match.get('id')}: {type(exc).__name__}: {exc}")
+
+    # Badge synchronization is auxiliary and must never invalidate a confirmed match.
     try:
         sync_achievements_for_users([player1_id, player2_id])
     except Exception as exc:
-        print(f"achievement_sync warning match={fresh.get('id')}: {type(exc).__name__}: {exc}")
-
+        print(f"achievement_sync warning match={match.get('id')}: {type(exc).__name__}: {exc}")
     return int(delta1), int(delta2)
 
 
@@ -396,10 +461,7 @@ def update_player_after_match(player, delta, goals_for, goals_against, affect_st
         }).eq("id", player["id"]),
         f"update_player_after_match:{player.get('id')}",
     )
-    try:
-        ttl_cache_delete("players_raw", "achievement_map", f"user:{player.get('id')}")
-    except Exception as exc:
-        print(f"update_player_after_match cache warning user={player.get('id')}: {type(exc).__name__}: {exc}")
+    ttl_cache_delete("players_raw", "achievement_map")
 
 
 

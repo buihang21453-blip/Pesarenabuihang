@@ -209,106 +209,130 @@ def register_routes(context):
     @app.route("/room/<room_id>/post-result-exit", methods=["POST"])
     @login_required
     def room_post_result_exit(room_id):
-        """Cho một trong hai người chơi về sảnh an toàn khi kết quả đã được gửi."""
+        """Rời màn hình kết quả an toàn, không gọi lưu RP và không sửa kết quả."""
         user = current_user()
         room = get_room(room_id)
         if not room:
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("dashboard"))
-        if not _same_user_id(user.get("id"), room.get("host_user_id")):
-            flash("Chỉ chủ phòng đã gửi kết quả mới dùng được lựa chọn này.", "danger")
+
+        is_host = _same_user_id(user.get("id"), room.get("host_user_id"))
+        is_guest = _same_user_id(user.get("id"), room.get("guest_user_id"))
+        if not (is_host or is_guest or is_admin_user(user)):
+            flash("Bạn không thuộc phòng đấu này.", "danger")
+            return redirect(url_for("dashboard"))
+
+        if room.get("status") not in {"waiting_result_confirm", "disputed", "confirmed"}:
+            flash("Phòng không còn ở trạng thái có thể rời an toàn.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
-        if room.get("status") not in {"waiting_result_confirm", "disputed"}:
-            flash("Phòng không còn ở trạng thái chờ xác nhận hoặc tranh chấp.", "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
-        flash("Bạn đã rời phòng an toàn. Kết quả vẫn chờ xác nhận hoặc xử lý tranh chấp; không trừ RP.", "success")
+
+        # Quan trọng: route này TUYỆT ĐỐI không gọi apply_match_result().
+        # Kết quả vẫn nằm trong DB để người còn lại xác nhận/Admin xử lý.
+        flash("Bạn đã rời phòng an toàn. Kết quả hiện tại vẫn được giữ nguyên.", "success")
         return redirect(url_for("dashboard"))
 
 
     @app.route("/room/<room_id>/confirm-result", methods=["POST"])
     @login_required
     def room_confirm_result(room_id):
+        """Luồng xác nhận ổn định theo bản V1.2.9: tính/lưu điểm rồi reset phòng."""
         user = current_user()
         room = get_room(room_id)
-        _flow_ok, _flow_message = _require_room_action_safe(room, "confirm_result")
-        if room and not _flow_ok:
-            flash(_flow_message, "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
-        _event_ok, _event_message = _require_room_event_safe(room, "result_confirmed")
-        if room and not _event_ok:
-            flash(_event_message, "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("rooms"))
 
-        if user["id"] != room["guest_user_id"] and not is_admin_user(user):
+        if not _same_user_id(user.get("id"), room.get("guest_user_id")) and not is_admin_user(user):
             flash("Chỉ người được mời mới được xác nhận kết quả.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        if room["status"] != "waiting_result_confirm":
-            flash("Phòng chưa có kết quả cần xác nhận.", "warning")
+        if room.get("status") != "waiting_result_confirm":
+            # Nếu request bị gửi lại sau khi xác nhận thành công, không báo lỗi.
+            if room.get("status") == "waiting_ready":
+                flash("Kết quả đã được xác nhận trước đó.", "success")
+            else:
+                flash("Phòng chưa có kết quả cần xác nhận.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        match = get_match(room["match_id"])
+        match = get_match(room.get("match_id"))
         if not match:
             flash("Không tìm thấy trận.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        room_update = None
         try:
             try:
                 users_before_streak_event = users_map()
             except Exception as exc:
                 print(f"confirm streak snapshot warning room={room_id}: {type(exc).__name__}: {exc}")
                 users_before_streak_event = {}
+
+            # Dùng lại logic tính/lưu RP ổn định từ bản V1.2.9.
             delta1, delta2 = apply_match_result(match)
+
             try:
                 streak_event = build_win_streak_event(match, room, users_before_streak_event)
             except Exception as exc:
                 print(f"confirm streak event warning room={room_id}: {type(exc).__name__}: {exc}")
                 streak_event = None
+
             previous_mode = room.get("team_tier") or SMART_RANDOM_MODE
             if not system_feature_enabled("rank_standard_enabled"):
                 previous_mode = FRIENDLY_RANDOM3_MODE
-            # Kết thúc trận hiện tại trước, chưa xóa tỷ số/CLB/match_id.
-            # Hai người cần nhìn thấy kết quả đã chốt để chọn Đá tiếp hoặc Rời phòng.
+
+            # Cơ chế bản cũ: xác nhận xong reset thẳng phòng về Chờ Sẵn Sàng.
             room_update = {
-                "status": "confirmed",
+                "status": "waiting_ready",
                 "guest_ready": False,
-                "confirmed_by_id": user["id"],
+                "host_team": None,
+                "guest_team": None,
+                "host_team_overall": None,
+                "guest_team_overall": None,
+                "host_team_logo_url": None,
+                "guest_team_logo_url": None,
+                "host_team_league": None,
+                "guest_team_league": None,
+                "host_score": None,
+                "guest_score": None,
+                "match_id": None,
+                "submitted_by_id": None,
+                "confirmed_by_id": user.get("id"),
                 "match_mode": MATCH_MODE_RANKED,
                 "team_tier": previous_mode,
-                "note": "Kết quả đã xác nhận. Chọn Đá tiếp hoặc Rời phòng.",
-                "state_expires_at": future_iso(_rematch_timeout_seconds()),
+                "note": f"__RANK_MODE_LOCKED__|{previous_mode}",
+                "state_expires_at": None,
                 "updated_at": now_iso(),
             }
             room_update_result = execute_query(
                 db.table("match_rooms").update(room_update).eq("id", room_id).eq("status", "waiting_result_confirm"),
-                "confirm_result_finish_room",
+                "confirm_result_reset_room_waiting_ready",
             )
             if not (room_update_result.data or []):
-                raise ValueError("Trạng thái phòng vừa thay đổi; vui lòng tải lại phòng.")
+                # Nếu match đã được chốt nhưng room update response rỗng, đọc lại room.
+                fresh_room = get_room(room_id)
+                if not fresh_room or fresh_room.get("status") != "waiting_ready":
+                    raise ValueError("Phòng vừa thay đổi trạng thái. Hãy tải lại phòng.")
+
             _invalidate_room_cache_safe()
+
             if streak_event:
                 try:
                     publish_global_streak_event(streak_event)
                 except Exception as exc:
                     print(f"publish streak event warning room={room_id}: {type(exc).__name__}: {exc}")
-            flash("Đã xác nhận kết quả. Hai người có thể chọn Đá tiếp hoặc rời phòng.", "success")
+
+            flash(f"Đã xác nhận kết quả ({delta1:+d} / {delta2:+d} RP). Phòng đã trở về Chờ Sẵn Sàng.", "success")
+            return redirect(url_for("room_detail", room_id=room_id))
+
         except ValueError as exc:
+            # Không sinh CONFIRM-*, chỉ hiển thị lỗi dữ liệu thực tế.
             print(f"room_confirm_result validation room={room_id} match={match.get('id')}: {exc}")
             flash(str(exc), "warning")
             return redirect(url_for("room_detail", room_id=room_id))
         except Exception as exc:
-            # Không sinh/hiển thị mã CONFIRM nữa. Luồng ghi điểm cơ bản đã tự trả
-            # snapshot nếu write chính thất bại; người dùng chỉ cần thử lại.
             print(f"room_confirm_result ERROR room={room_id} match={match.get('id')}: {type(exc).__name__}: {exc}")
-            flash("Chưa thể lưu kết quả lúc này. Hãy thử xác nhận lại.", "warning")
+            flash("Không thể xác nhận kết quả. Hãy tải lại phòng và thử lại.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
-
-        return redirect(url_for("room_detail", room_id=room_id))
 
 
     @app.route("/room/<room_id>/dispute-result", methods=["POST"])
