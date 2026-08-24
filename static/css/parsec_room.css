@@ -194,11 +194,11 @@ html[data-theme="light"] .parsec-room-panel button.parsec-action-btn:hover{
 .parsec-room-link-display{margin-bottom:9px}
 .parsec-link-actions{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:6px;
   margin-top:9px;
 }
-.parsec-link-actions .parsec-action-btn{width:100%;min-height:36px;text-decoration:none}
+.parsec-link-actions .parsec-action-btn{width:100%;min-width:0;max-width:100%;min-height:34px;padding:0 7px;font-size:11px;text-decoration:none;overflow:hidden;text-overflow:ellipsis}
 .parsec-open-btn,
 html[data-theme="light"] .parsec-room-panel .parsec-open-btn{
   background:linear-gradient(180deg,#ef2a3c 0%,#c8162d 100%);
@@ -229,28 +229,36 @@ html[data-theme="light"] .parsec-room-panel .parsec-copy-link-btn:hover{
   border-top:1px solid rgba(115,137,255,.22);
 }
 .parsec-discord-link{
-  display:grid;
-  grid-template-columns:auto minmax(0,1fr) auto;
+  appearance:none;
+  -webkit-appearance:none;
+  display:inline-flex;
   align-items:center;
-  gap:8px;
-  min-height:40px;
-  padding:7px 9px;
-  border:1px solid rgba(88,101,242,.72);
+  justify-content:center;
+  gap:7px;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  min-height:36px;
+  padding:0 10px;
+  border:1px solid rgba(88,101,242,.82);
   border-radius:9px;
-  background:linear-gradient(180deg,rgba(88,101,242,.20),rgba(62,72,190,.15));
-  color:#f4f6ff;
+  background:linear-gradient(180deg,#6672f5 0%,#4f5bd5 100%);
+  color:#fff;
+  font-size:12px;
+  font-weight:800;
+  line-height:1;
   text-decoration:none;
-  transition:border-color .15s ease,background .15s ease;
+  white-space:nowrap;
+  overflow:hidden;
 }
 .parsec-discord-link:hover{
-  border-color:#7d89ff;
-  background:linear-gradient(180deg,rgba(88,101,242,.32),rgba(62,72,190,.23));
+  border-color:#8892ff;
+  background:linear-gradient(180deg,#7480ff 0%,#5965df 100%);
   color:#fff;
 }
-.parsec-discord-icon{font-size:16px;color:#8f9aff;line-height:1}
-.parsec-discord-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#bfc6e8}
-.parsec-discord-open{font-size:11px;font-weight:800;color:#fff;white-space:nowrap}
+.parsec-discord-icon{font-size:15px;line-height:1}
+.parsec-discord-open{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:700px){
-  .parsec-link-actions{grid-template-columns:1fr 1fr}
-  .parsec-discord-text{display:none}
+  .parsec-link-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px}
+  .parsec-link-actions .parsec-action-btn{padding:0 5px;font-size:10.5px}
 }
