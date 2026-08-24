@@ -305,11 +305,27 @@ def apply_match_result(match):
             raise RuntimeError("Không thể chốt trạng thái confirmed cho trận đấu.")
     except Exception as exc:
         print(f"apply_match_result ERROR match={match.get('id')} status={original_status} phase={phase}: {type(exc).__name__}: {exc}")
-        # Nếu lỗi xảy ra sau khi đã ghi thống kê người chơi, hoàn tác chính xác
-        # về snapshot trước xác nhận để một lần bấm lại không cộng/trừ trùng.
-        for applied, snapshot in ((player2_applied, player2), (player1_applied, player1)):
-            if not applied:
-                continue
+
+        # Một request Supabase có thể đã COMMIT nhưng client nhận timeout/lỗi mạng.
+        # Nếu bước finalize thực tế đã chốt match thì tuyệt đối KHÔNG rollback player,
+        # nếu không sẽ tạo trạng thái match=confirmed nhưng RP/thống kê bị trả ngược.
+        try:
+            fresh_after_error = get_match(match["id"])
+        except Exception as reload_exc:
+            print(f"apply_match_result RELOAD ERROR match={match.get('id')}: {type(reload_exc).__name__}: {reload_exc}")
+            fresh_after_error = None
+        if (
+            fresh_after_error
+            and fresh_after_error.get("status") == "confirmed"
+            and fresh_after_error.get("delta1") is not None
+            and fresh_after_error.get("delta2") is not None
+        ):
+            return _safe_int(fresh_after_error.get("delta1")), _safe_int(fresh_after_error.get("delta2"))
+
+        # Với write qua HTTP, lỗi response không cho biết chắc update user đã commit hay chưa.
+        # Vì vậy luôn restore CẢ HAI snapshot nếu match chưa confirmed. Restore cùng giá trị
+        # là idempotent, đồng thời loại bỏ trường hợp một user đã được cộng còn user kia chưa.
+        for snapshot in (player2, player1):
             try:
                 _restore_player_snapshot(snapshot)
             except Exception as rollback_exc:
