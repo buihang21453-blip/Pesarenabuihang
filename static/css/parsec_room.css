@@ -262,3 +262,52 @@ html[data-theme="light"] .parsec-room-panel .parsec-copy-link-btn:hover{
   .parsec-link-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px}
   .parsec-link-actions .parsec-action-btn{padding:0 5px;font-size:10.5px}
 }
+
+/* ============================================================
+   V1.2.59 — HARD WIDTH CONTAINMENT FOR PARSEC ACTIONS
+   Component owner: parsec_room.css
+   Muc tieu: moi phan tu trong panel co the co ve <= 100% va grid
+   2 nut khong bao gio lay min-content width de day ra ngoai rail.
+   ============================================================ */
+.parsec-room-panel,
+.parsec-room-panel .parsec-room-block,
+.parsec-room-panel .parsec-room-link-form,
+.parsec-room-panel .parsec-room-inline,
+.parsec-room-panel .parsec-link-actions,
+.parsec-room-panel .parsec-discord-section{
+  min-width:0;
+  max-width:100%;
+}
+
+.parsec-room-panel .parsec-link-actions{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+  overflow:hidden;
+}
+
+.parsec-room-panel .parsec-link-actions > *{
+  min-width:0;
+  width:100%;
+  max-width:100%;
+}
+
+.parsec-room-panel .parsec-open-btn,
+.parsec-room-panel .parsec-copy-link-btn{
+  box-sizing:border-box;
+  min-width:0;
+  width:100%;
+  max-width:100%;
+  padding-inline:6px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+
+.parsec-room-panel .parsec-discord-link{
+  box-sizing:border-box;
+  min-width:0;
+  width:100%;
+  max-width:100%;
+}

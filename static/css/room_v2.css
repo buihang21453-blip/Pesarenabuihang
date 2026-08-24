@@ -723,3 +723,43 @@
     transform-origin:50% 50%;
   }
 }
+
+/* ============================================================
+   V1.2.59 — RIGHT RAIL / PARSEC WIDTH OWNERSHIP FIX
+   Layout owner: room_v2.css
+   Grid items co min-width:auto mac dinh; voi rail hep, min-content
+   co the ep track rong hon khung. Khoa rail + panel ve min-width:0.
+   ============================================================ */
+.room-v2-shell .room-arena-frame > *,
+.room-v2-shell .room-arena-right-rail,
+.room-v2-shell .room-arena-right-rail > .panel,
+.room-v2-shell .room-arena-right-rail > .parsec-room-panel{
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+.room-v2-shell .room-arena-right-rail{
+  width:100%;
+  overflow-x:hidden;
+}
+
+.room-v2-shell .room-arena-right-rail > .parsec-room-panel{
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+}
+
+.room-v2-shell .parsec-room-panel .parsec-link-actions{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+
+.room-v2-shell .parsec-room-panel .parsec-link-actions > .parsec-action-btn{
+  min-width:0;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
