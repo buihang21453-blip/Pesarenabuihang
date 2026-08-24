@@ -821,3 +821,80 @@
     flex:0 0 auto;
   }
 }
+
+/* ==========================================================
+   V1.2.61 — ROOM STATE UI HARDENING
+   1) Ready controls of guest are pinned inside the center panel so legacy
+      min-height/transform rules can no longer push them below overflow:hidden.
+   2) Random3 exit controls and playing host exit stay width-safe.
+   ========================================================== */
+.room-v2-shell .room-ready-actions{
+  min-width:0;
+  box-sizing:border-box;
+}
+.room-v2-shell .room-ready-actions > form,
+.room-v2-shell .room-ready-actions > button{
+  flex:1 1 0;
+  min-width:0;
+}
+.room-v2-shell .room-ready-actions > button,
+.room-v2-shell .room-ready-actions > form .room-center-action-btn{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.room-v2-shell .room-random3-exit-actions,
+.room-v2-shell .room-playing-host-exit{
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.room-v2-shell .room-playing-host-exit{margin-top:8px}
+.room-v2-shell .room-playing-host-exit .room-center-action-btn{width:100%;min-width:0}
+
+@media (min-width:1251px){
+  .room-v2-shell.room-state-waiting-ready .room-center-stage-plain{
+    position:relative;
+    /* Reserve a guaranteed strip for Ready + Exit. */
+    padding-bottom:62px !important;
+  }
+
+  .room-v2-shell.room-state-waiting-ready .room-ready-actions{
+    position:absolute !important;
+    left:50%;
+    bottom:8px;
+    z-index:30;
+    transform:translateX(-50%);
+    width:min(calc(100% - 20px),360px) !important;
+    max-width:360px !important;
+    margin:0 !important;
+    padding:0 !important;
+    gap:8px !important;
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    overflow:visible !important;
+  }
+
+  /* Keep upper waiting content compact enough not to cover the pinned row. */
+  .room-v2-shell.room-state-waiting-ready .room-center-mode-zone{
+    padding:7px 8px;
+    margin-bottom:0;
+  }
+  .room-v2-shell.room-state-waiting-ready .room-center-vs-image{
+    width:68px;
+    height:68px;
+  }
+  .room-v2-shell.room-state-waiting-ready .room-center-random-trigger{
+    min-height:54px;
+    padding:4px 8px 6px;
+  }
+}
+
+@media (max-width:1250px){
+  .room-v2-shell .room-ready-actions{
+    width:min(100%,360px);
+    display:flex;
+    flex-wrap:nowrap;
+  }
+}

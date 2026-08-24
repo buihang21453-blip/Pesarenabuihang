@@ -193,8 +193,10 @@ def register_routes(context):
         if not room:
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("rooms"))
-        if not _same_user_id(user.get("id"), room.get("host_user_id")):
-            flash("Chỉ chủ phòng đã gửi kết quả mới dùng được lựa chọn này.", "danger")
+        is_host = _same_user_id(user.get("id"), room.get("host_user_id"))
+        is_guest = _same_user_id(user.get("id"), room.get("guest_user_id"))
+        if not (is_host or is_guest):
+            flash("Bạn không thuộc phòng đấu này.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
         if room.get("status") != "waiting_result_confirm":
             flash("Chỉ có thể chọn Đá tiếp khi kết quả đang chờ Sân khách xác nhận.", "warning")
@@ -207,7 +209,7 @@ def register_routes(context):
     @app.route("/room/<room_id>/post-result-exit", methods=["POST"])
     @login_required
     def room_post_result_exit(room_id):
-        """Cho chủ phòng về sảnh an toàn sau khi đã gửi kết quả."""
+        """Cho một trong hai người chơi về sảnh an toàn khi kết quả đã được gửi."""
         user = current_user()
         room = get_room(room_id)
         if not room:

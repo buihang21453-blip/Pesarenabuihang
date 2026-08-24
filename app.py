@@ -67,7 +67,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.2.57"
+APP_VERSION = "V1.2.61"
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
 COOLDOWN_MINUTES = 3
@@ -1868,6 +1868,17 @@ def api_active_room():
 
 def build_room_state_key(room):
     """Tạo khóa trạng thái ổn định dùng chung cho HTML và API phòng đấu."""
+    # V1.2.61: Random 3 được lưu/chuẩn hóa thành object trong room runtime.
+    # Hash object này để polling ở máy còn lại nhận ngay thay đổi mode, options
+    # và lựa chọn của từng người ngay cả khi status vẫn là waiting_ready.
+    random3_payload = room.get("friendly_random3") or {}
+    try:
+        random3_fingerprint = hashlib.sha1(
+            json.dumps(random3_payload, sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")
+        ).hexdigest()[:16]
+    except Exception:
+        random3_fingerprint = str(random3_payload)[:80]
+
     return "|".join([
         # Thành viên phòng phải nằm trong state key. Nếu khách vừa tham gia
         # nhưng status vẫn là waiting_ready và guest_ready vẫn False, thiếu
@@ -1878,6 +1889,9 @@ def build_room_state_key(room):
         str(room.get("host_team")),
         str(room.get("guest_team")),
         str(room.get("guest_ready")),
+        str(room.get("team_tier")),
+        str(room.get("friendly_random3_active")),
+        random3_fingerprint,
         str(room.get("host_score")),
         str(room.get("guest_score")),
         str(room.get("rematch_host_ready")),
