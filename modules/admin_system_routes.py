@@ -12,49 +12,23 @@ def register_routes(context):
     @app.context_processor
     def inject_admin_feature_context():
         user = current_user()
-        endpoint = request.endpoint or ""
-        admin_tab = str(request.args.get("tab") or "overview").strip().lower() if endpoint == "admin" else ""
-
-        base = {
+        return {
             "app_name": APP_NAME, "app_version": APP_VERSION,
+            "system_features": get_system_features(),
             "can_admin": lambda code: has_admin_permission(user, code),
             "admin_display_role": "Admin" if is_admin_user(user) else "",
             "is_test_mode": is_test_mode(),
             "simple_test_passwords_enabled": simple_test_passwords_enabled(),
             "minimum_password_length": minimum_password_length(),
-        }
-
-        # /admin mặc định không được kéo hàng loạt system_settings. Chỉ tải đầy đủ
-        # khi mở đúng tab Hệ thống/RP. Các trang khác dùng giá trị mặc định nhẹ.
-        if endpoint == "admin" and admin_tab not in {"system", "rp-tools"}:
-            base.update({
-                "system_features": dict(SYSTEM_FEATURE_DEFAULTS),
-                "maintenance_status": {"closed": False, "countdown": None},
-                "rank_daily_limits_enabled": False,
-                "quick_match_config": {"color": QUICK_MATCH_COLOR_DEFAULT},
-                "repeat_opponent_rp_config": {"winner_factors": [100, 60, 30, 0], "loser_factors": [100, 70, 40, 10]},
-                "weekly_rp_reward_config": {
-                    "opponents_5_threshold": 5, "opponents_5_rp": 20,
-                    "opponents_10_threshold": 10, "opponents_10_rp": 30,
-                    "opponents_20_threshold": 20, "opponents_20_rp": 50,
-                    "matches_threshold": 10, "matches_rp": 20,
-                },
-                "duplicate_ip_warning_config": {"enabled": True, "ignore_admin_managed": True, "trusted_user_ids": []},
-                "admin_discord_link": None,
-            })
-            return base
-
-        base.update({
-            "system_features": get_system_features(),
             "maintenance_status": get_maintenance_status(),
             "rank_daily_limits_enabled": daily_rank_limits_enabled(),
             "quick_match_config": get_quick_match_config(),
+            "room_visual_style": get_room_visual_style(),
+            "room_style_options": ROOM_STYLE_OPTIONS,
             "repeat_opponent_rp_config": get_repeat_opponent_rp_config(),
             "weekly_rp_reward_config": get_weekly_rp_reward_config(),
             "duplicate_ip_warning_config": get_duplicate_ip_warning_config(),
-            "admin_discord_link": get_admin_discord_link(),
-        })
-        return base
+        }
 
     @app.route("/admin/system/maintenance", methods=["POST"])
     @login_required
@@ -93,6 +67,32 @@ def register_routes(context):
         return redirect_admin("system")
 
 
+    @app.route("/admin/system/room-visual-style", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_update_room_visual_style():
+        style = (request.form.get("room_visual_style") or "").strip().lower()
+        if style not in ROOM_STYLE_OPTIONS:
+            flash("Phong cách phòng đấu không hợp lệ.", "danger")
+            return redirect_admin("system")
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": ROOM_STYLE_SETTING_KEY,
+                "setting_value": {"style": style},
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "update_room_visual_style",
+        )
+        ttl_cache_delete("room_visual_style")
+        cache_delete("_room_visual_style_cached")
+        log_admin_action("Đổi phong cách phòng đấu", "system", details={
+            "style": style, "label": ROOM_STYLE_OPTIONS[style],
+        })
+        flash(f"Đã áp dụng phong cách {ROOM_STYLE_OPTIONS[style]} cho toàn bộ phòng đấu.", "success")
+        return redirect_admin("system")
+
+
     @app.route("/admin/system/duplicate-ip-warning", methods=["POST"])
     @login_required
     @admin_required
@@ -117,34 +117,6 @@ def register_routes(context):
         flash("Đã lưu thiết lập cảnh báo IP.", "success")
         return redirect_admin("users")
 
-
-
-    @app.route("/admin/system/discord-link", methods=["POST"])
-    @login_required
-    @admin_required
-    @admin_permission_required("system_features_manage")
-    def admin_update_discord_link():
-        try:
-            discord_link = validate_discord_link(request.form.get("discord_link"))
-        except ValueError as exc:
-            flash(str(exc), "danger")
-            return redirect_admin("system")
-
-        execute_query(
-            db.table("system_settings").upsert({
-                "setting_key": "admin_discord_link",
-                "setting_value": {"url": discord_link},
-                "updated_at": now_iso(),
-            }, on_conflict="setting_key"),
-            "update_admin_discord_link", attempts=2,
-        )
-        ttl_cache_delete("admin_discord_link")
-        log_admin_action(
-            "Cập nhật link Discord phòng đấu", "system",
-            details={"discord_link": discord_link},
-        )
-        flash("Đã lưu link Discord." if discord_link else "Đã xóa link Discord.", "success")
-        return redirect_admin("system")
 
     @app.route("/admin/system/quick-match", methods=["POST"])
     @login_required
@@ -308,7 +280,7 @@ def register_routes(context):
             )
 
         if previous_features.get("friendly_random3_enabled", True) and not features.get("friendly_random3_enabled", False):
-            # Khi Rank thường đang bật, chuyển phòng Random 3 chưa bắt đầu về Rank thường.
+            # Khi Rank đơn đang bật, chuyển phòng Random 3 chưa bắt đầu về Rank đơn.
             best_effort(
                 db.table("match_rooms").update({
                     "status": "waiting_ready",
@@ -316,7 +288,7 @@ def register_routes(context):
                     "team_tier": SMART_RANDOM_MODE,
                     "host_team": None,
                     "guest_team": None,
-                    "note": "Random 3 chọn 1 đã được Admin tắt. Phòng chuyển về Rank thường.",
+                    "note": "Random 3 chọn 1 đã được Admin tắt. Phòng chuyển về Rank đơn.",
                     "updated_at": now_iso(),
                 }).eq("team_tier", FRIENDLY_RANDOM3_MODE).eq("status", "waiting_ready"),
                 "disable_random3_waiting_rooms",
@@ -328,7 +300,7 @@ def register_routes(context):
                     db.table("match_rooms").update({
                         "team_tier": FRIENDLY_RANDOM3_MODE,
                         "friendly_tier": None,
-                        "note": "Rank thường đã tắt. Phòng chuyển sang Random 3 chọn 1.",
+                        "note": "Rank đơn đã tắt. Phòng chuyển sang Random 3 chọn 1.",
                         "updated_at": now_iso(),
                     }).eq("status", "waiting_ready").eq("match_mode", MATCH_MODE_RANKED).eq("team_tier", SMART_RANDOM_MODE),
                     "migrate_smart_rank_rooms_to_random3",
@@ -337,7 +309,7 @@ def register_routes(context):
                     db.table("match_rooms").update({
                         "team_tier": FRIENDLY_RANDOM3_MODE,
                         "friendly_tier": None,
-                        "note": "Rank thường đã tắt. Phòng chuyển sang Random 3 chọn 1.",
+                        "note": "Rank đơn đã tắt. Phòng chuyển sang Random 3 chọn 1.",
                         "updated_at": now_iso(),
                     }).eq("status", "waiting_ready").eq("match_mode", MATCH_MODE_RANKED).is_("team_tier", "null"),
                     "migrate_null_rank_rooms_to_random3",
@@ -649,4 +621,3 @@ def register_routes(context):
         session.clear()
         flash("Đã chuyển giao quyền sở hữu. Hãy đăng nhập lại.", "success")
         return redirect(url_for("login"))
-

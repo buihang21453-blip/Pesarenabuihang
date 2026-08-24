@@ -2,67 +2,9 @@
 import re
 from urllib.parse import urlsplit
 
-EXPORTED_NAMES = ("build_room_parsec_context", "get_admin_discord_link", "validate_discord_link")
+EXPORTED_NAMES = ("build_room_parsec_context",)
 
 PARSEC_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{1,41}(?:#[0-9]{1,20})?$")
-
-DISCORD_LINK_SETTING_KEY = "admin_discord_link"
-
-
-def validate_discord_link(value):
-    value = str(value or "").strip()
-    if not value:
-        return None
-    if len(value) > 500:
-        raise ValueError("Link Discord quá dài.")
-    try:
-        parsed = urlsplit(value)
-    except Exception as exc:
-        raise ValueError("Link Discord không hợp lệ.") from exc
-    if parsed.scheme.lower() != "https":
-        raise ValueError("Link Discord bắt buộc dùng HTTPS.")
-    host = (parsed.hostname or "").lower()
-    valid = False
-    if host == "discord.gg":
-        valid = bool(parsed.path.strip("/"))
-    elif host in {"discord.com", "www.discord.com", "discordapp.com", "www.discordapp.com"}:
-        valid = parsed.path.startswith("/invite/") and bool(parsed.path[len("/invite/"):].strip("/"))
-    if not valid:
-        raise ValueError("Link Discord phải có dạng https://discord.gg/... hoặc https://discord.com/invite/...")
-    if parsed.username or parsed.password or parsed.port or parsed.fragment:
-        raise ValueError("Link Discord chứa thành phần không hợp lệ.")
-    return value
-
-
-def get_admin_discord_link(force_refresh=False):
-    cache_key = "admin_discord_link"
-    if not force_refresh:
-        try:
-            cached = ttl_cache_get(cache_key)
-            if cached is not None:
-                return str(cached or "") or None
-        except Exception:
-            pass
-    value = None
-    try:
-        result = execute_query(
-            db.table("system_settings").select("setting_value")
-            .eq("setting_key", DISCORD_LINK_SETTING_KEY).limit(1),
-            "get_admin_discord_link", attempts=2,
-        )
-        rows = getattr(result, "data", None) or []
-        if rows:
-            raw = rows[0].get("setting_value")
-            if isinstance(raw, dict):
-                raw = raw.get("url")
-            value = validate_discord_link(raw)
-    except Exception:
-        value = None
-    try:
-        ttl_cache_set(cache_key, value or "", 45)
-    except Exception:
-        pass
-    return value
 
 
 def configure(context):
@@ -125,5 +67,4 @@ def build_room_parsec_context(room, viewer):
         "host_parsec_id": host.get("parsec_id"),
         "guest_parsec_id": guest.get("parsec_id"),
         "room_link": room.get("parsec_link"),
-        "discord_link": get_admin_discord_link(),
     }

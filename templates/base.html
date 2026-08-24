@@ -6,17 +6,8 @@
     <meta charset="UTF-8">
     <title>{{ APP_NAME }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {# V1.2.49 CSS cascade contract:
-       1 tokens -> 2 legacy foundation -> 3 shared components/sizes -> 4 feature modules -> 5 page module.
-       Page/module CSS must scope selectors and must not use !important. #}
-    <link rel="stylesheet" href="{{ static_asset('css/core/design_tokens.css') }}">
+    {# Thứ tự CSS: nền tảng trước, module sau; module ở sau chỉ được phép tác động trong phạm vi class riêng. #}
     <link rel="stylesheet" href="{{ static_asset('style.css') }}">
-    <link rel="stylesheet" href="{{ static_asset('css/components/buttons.css') }}">
-    <link rel="stylesheet" href="{{ static_asset('css/components/invites.css') }}">
-    <link rel="stylesheet" href="{{ static_asset('css/button_sizes.css') }}">
-    {% if request.endpoint == 'room_detail' %}
-    <link rel="stylesheet" href="{{ static_asset('css/room_detail.css') }}">
-    {% endif %}
     <link rel="stylesheet" href="{{ static_asset('css/zcoin.css') }}">
     {% if request.endpoint == 'admin' %}
     <link rel="stylesheet" href="{{ static_asset('css/admin_weekly_rewards.css') }}">
@@ -84,16 +75,6 @@ function toggleTheme(){
     <aside class="sidebar player-sidebar">
         <div class="brand-lockup">
             <img class="sidebar-brand-logo" src="{{ asset_url('pes-arena-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="PES Arena – Bản Lĩnh Sân Cỏ">
-            {% if current_user.role == "admin" or current_user.admin_level in ["owner", "admin"] %}
-            <script>
-            (function(){
-              try {
-                var src = localStorage.getItem('pesArenaProjectLogoTest.v132');
-                if (src) document.currentScript.previousElementSibling.setAttribute('src', src);
-              } catch (e) {}
-            })();
-            </script>
-            {% endif %}
         </div>
 
         <nav class="nav player-nav">
@@ -240,7 +221,7 @@ function toggleTheme(){
                         <span class="small">Rank: {{ inv.from_rank }} • Điểm: {{ inv.from_points }} • Tier: {{ inv.tier }}</span>
                     </div>
                 </div>
-                <form class="invite-response-actions" method="post" action="{{ url_for('respond_invite', invite_id=inv.id) }}">
+                <form method="post" action="{{ url_for('respond_invite', invite_id=inv.id) }}">
                     <button class="btn green" name="action" value="accept" type="submit">Chấp nhận</button>
                     <button class="btn red" name="action" value="reject" type="submit">Từ chối</button>
                 </form>
@@ -1032,11 +1013,11 @@ window.addEventListener("DOMContentLoaded", function () {
     const heartbeatPoller = PESNet.createPoller({
         key: "heartbeat",
         task: postHeartbeat,
-        visibleInterval: 30000,
-        hiddenInterval: 60000,
-        runWhenHidden: true,
-        immediate: true,
-        jitter: 3000
+        visibleInterval: 60000,
+        hiddenInterval: 180000,
+        runWhenHidden: false,
+        immediate: false,
+        jitter: 5000
     });
 
     let lastActivityHeartbeatAt = 0;

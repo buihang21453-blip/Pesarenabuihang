@@ -16,8 +16,6 @@ from modules.rp_formula import (
     LOSS_RECOVERY_MIN_STREAK,
     LOSS_RECOVERY_WIN_POINTS,
     MAX_POSITIVE_POINTS_PER_MATCH,
-    DRAW_POINTS_RANGE,
-    DRAW_GAP_THRESHOLD,
     PLACEMENT_LOSS_RANGE,
     PLACEMENT_MATCHES,
     PLACEMENT_WIN_BONUS_RANGE,
@@ -100,24 +98,21 @@ def _loser_points(loser: Mapping, rng) -> int:
     return -max(1, int(deduction))
 
 
-def _draw_points(player_a: Mapping, player_b: Mapping, get_rank_level: Callable, rng) -> Tuple[int, int]:
+def _draw_points(player_a: Mapping, player_b: Mapping, get_rank_level: Callable) -> Tuple[int, int]:
     """Tính RP hòa theo chênh lệch RP trước trận.
 
-    - Chênh dưới 500 RP: mỗi người random độc lập +1..+6 RP.
-    - Chênh từ 500 RP: người RP thấp random +1..+6, người RP cao +0.
+    - Chênh dưới 500 RP: mỗi bên +3 RP.
+    - Chênh từ 500 RP: người thấp hơn +6 RP, người cao hơn +0 RP.
     """
     del get_rank_level
     rp_a = int(player_a.get("rank_points", 0) or 0)
     rp_b = int(player_b.get("rank_points", 0) or 0)
-    if abs(rp_a - rp_b) >= DRAW_GAP_THRESHOLD:
+    if abs(rp_a - rp_b) >= 500:
         if rp_a < rp_b:
-            return _randint(rng, *DRAW_POINTS_RANGE), 0
+            return 6, 0
         if rp_b < rp_a:
-            return 0, _randint(rng, *DRAW_POINTS_RANGE)
-    return (
-        _randint(rng, *DRAW_POINTS_RANGE),
-        _randint(rng, *DRAW_POINTS_RANGE),
-    )
+            return 0, 6
+    return 3, 3
 
 
 def validate_deltas(score_a: int, score_b: int, delta_a: int, delta_b: int) -> Tuple[int, int]:
@@ -145,7 +140,7 @@ def calculate_deltas(
     rng = rng or random
     score_a, score_b = int(score_a), int(score_b)
     if score_a == score_b:
-        return validate_deltas(score_a, score_b, *_draw_points(player_a, player_b, get_rank_level, rng))
+        return validate_deltas(score_a, score_b, *_draw_points(player_a, player_b, get_rank_level))
     a_won = score_a > score_b
     winner = player_a if a_won else player_b
     loser = player_b if a_won else player_a

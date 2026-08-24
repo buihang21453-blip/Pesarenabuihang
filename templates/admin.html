@@ -2,7 +2,6 @@
 {% extends "base.html" %}
 {% block page_styles %}
 <link rel="stylesheet" href="{{ static_asset('css/admin_dashboard.css') }}">
-<link rel="stylesheet" href="{{ static_asset('css/admin/room-ui-designer.css') }}">
 {% endblock %}
 {% block content %}
 
@@ -15,26 +14,26 @@
     <div class="admin-heading-actions">
         <a class="btn gray" href="{{ url_for('dashboard') }}">⌂ Trang người chơi</a>
         <a class="btn" href="{{ url_for('admin_luckybox') }}">🎁 Quản trị Lucky Box</a>
-        {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<a class="btn" href="{{ url_for('admin', tab='system') }}#system">⚙ Cài đặt hệ thống</a>{% endif %}
+        {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<a class="btn" href="#system">⚙ Cài đặt hệ thống</a>{% endif %}
     </div>
 </div>
 
 <section class="admin-metric-grid" aria-label="Thống kê nhanh">
     <article class="admin-metric-card metric-purple">
-        <div class="metric-icon">👥</div><div><span>Tổng người chơi</span><strong>{{ players|length if admin_active_tab == 'overview' else '—' }}</strong>{% if can_admin('users_approve') %}<small>{{ pending_users|length }} tài khoản chờ duyệt</small>{% endif %}</div>
+        <div class="metric-icon">👥</div><div><span>Tổng người chơi</span><strong>{{ players|length }}</strong>{% if can_admin('users_approve') %}<small>{{ pending_users|length }} tài khoản chờ duyệt</small>{% endif %}</div>
     </article>
     <article class="admin-metric-card metric-blue">
-        <div class="metric-icon">🎮</div><div><span>Trận đang diễn ra</span><strong>{{ playing|length if admin_active_tab == 'overview' else '—' }}</strong><small>{{ all_matches|length }} trận gần nhất đã tải</small></div>
+        <div class="metric-icon">🎮</div><div><span>Trận đang diễn ra</span><strong>{{ playing|length }}</strong><small>{{ all_matches|length }} trận gần nhất đã tải</small></div>
     </article>
     <article class="admin-metric-card metric-green">
-        <div class="metric-icon">🚪</div><div><span>Phòng đang mở</span><strong>{{ rooms|length if admin_active_tab == 'overview' else '—' }}</strong><small>{{ invites|length }} lời mời đang chờ</small></div>
+        <div class="metric-icon">🚪</div><div><span>Phòng đang mở</span><strong>{{ rooms|length }}</strong><small>{{ invites|length }} lời mời đang chờ</small></div>
     </article>
     <article class="admin-metric-card metric-orange">
-        <div class="metric-icon">🔑</div><div><span>Cần xử lý</span><strong>{{ password_reset_requests|length if admin_active_tab == 'overview' else '—' }}</strong><small>Yêu cầu quên mật khẩu</small></div>
+        <div class="metric-icon">🔑</div><div><span>Cần xử lý</span><strong>{{ password_reset_requests|length }}</strong><small>Yêu cầu quên mật khẩu</small></div>
     </article>
 </section>
 
-<div class="admin-tabs" role="tablist" aria-label="Khu vực quản trị" data-admin-loaded-tab="{{ admin_active_tab }}" data-admin-base-url="{{ url_for('admin') }}">
+<div class="admin-tabs" role="tablist" aria-label="Khu vực quản trị">
     <button class="admin-tab-button" type="button" data-admin-tab="overview">📌 Tổng quan</button>
     <button class="admin-tab-button" type="button" data-admin-tab="users">👥 Quản lý danh sách user{% if duplicate_ip_groups %} · ⚠️ {{ duplicate_ip_groups|length }} IP trùng{% endif %}</button>
     <button class="admin-tab-button" type="button" data-admin-tab="passwords">🔑 Quên mật khẩu{% if password_reset_requests %} ({{ password_reset_requests|length }}){% endif %}</button>
@@ -42,7 +41,6 @@
     {% if can_admin('matches_view') %}<button class="admin-tab-button" type="button" data-admin-tab="matches">🎮 Trận đấu</button><button class="admin-tab-button" type="button" data-admin-tab="match-report">📊 Báo cáo trận đấu</button>{% endif %}
 {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">🧪 Tài khoản test & Import</button>{% endif %}
     {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>{% endif %}
-    {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="room-ui">🎨 Thiết kế phòng</button>{% endif %}
     {% if can_admin('rp_view') %}<button class="admin-tab-button" type="button" data-admin-tab="rp-tools">📈 Công cụ RP</button>{% endif %}
     <button class="admin-tab-button" type="button" data-admin-tab="economy">🪙 Zcoin & Gift Code</button>
     {% if can_admin('admin_logs_view') %}<button class="admin-tab-button" type="button" data-admin-tab="logs">🧾 Nhật ký</button>{% endif %}
@@ -171,7 +169,7 @@
     <div class="panel">
         <div class="admin-section-heading admin-user-toolbar">
             <div>
-                <h2>👥 Quản lý danh sách user</h2><p class="small admin-load-note">⚡ Tải theo tab: tối đa 120 tài khoản gần nhất; dữ liệu IP chỉ được đọc khi mở tab này.</p>
+                <h2>👥 Quản lý danh sách user</h2>
                 <p class="small">Bảng gọn để đối chiếu nhanh tài khoản, trạng thái và IP. Bấm <strong>Quản lý</strong> để sửa thông tin hoặc reset mật khẩu.</p>
             </div>
             <div class="admin-toolbar-actions">
@@ -351,11 +349,6 @@
             </table>
         </div>
         <p id="adminUserEmpty" class="small" hidden>Không tìm thấy user phù hợp.</p>
-        <nav class="admin-pagination" aria-label="Phân trang người dùng">
-            {% if admin_page > 1 %}<a class="btn gray" href="{{ url_for('admin', tab='users', page=admin_page-1) }}#users">← Trang trước</a>{% endif %}
-            <span>Trang {{ admin_page }}</span>
-            {% if admin_users|length >= admin_page_size %}<a class="btn gray" href="{{ url_for('admin', tab='users', page=admin_page+1) }}#users">Trang sau →</a>{% endif %}
-        </nav>
     </div>
 </section>
 
@@ -569,11 +562,6 @@
                 </tbody>
             </table>
         </div>
-        <nav class="admin-pagination" aria-label="Phân trang trận đấu">
-            {% if admin_page > 1 %}<a class="btn gray" href="{{ url_for('admin', tab='matches', page=admin_page-1) }}#matches">← Trang trước</a>{% endif %}
-            <span>Trang {{ admin_page }}</span>
-            {% if all_matches|length >= admin_page_size %}<a class="btn gray" href="{{ url_for('admin', tab='matches', page=admin_page+1) }}#matches">Trang sau →</a>{% endif %}
-        </nav>
     </div>
 </section>
 
@@ -665,22 +653,33 @@
     {% endif %}
 
     {% if can_admin('system_features_manage') %}
-    <div class="panel admin-discord-link-panel">
-        <h2>💬 Link Discord phòng đấu</h2>
-        <p class="muted">Link này do Admin quản lý và sẽ xuất hiện bên dưới phần Kết nối Parsec trong tất cả phòng đấu. Người chơi chỉ có thể bấm mở, không thể chỉnh sửa.</p>
-        <form method="post" action="{{ url_for('admin_update_discord_link') }}" class="system-toggle-grid">
-            <label>
-                <span>Link mời Discord</span>
-                <input type="url" name="discord_link" maxlength="500" value="{{ admin_discord_link or '' }}" placeholder="https://discord.gg/..." autocomplete="off">
-                <small>Hỗ trợ discord.gg/... hoặc discord.com/invite/...</small>
-            </label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn green" type="submit">Lưu Link Discord</button>
-                {% if admin_discord_link %}<button class="btn red" type="submit" name="discord_link" value="">Xóa Link Discord</button>{% endif %}
+    <div class="panel admin-room-style-panel">
+        <h2>🎨 Phong cách phòng đấu</h2>
+        <p class="muted">Chọn một phong cách áp dụng đồng bộ cho mọi trạng thái phòng, hai phía người chơi và toàn bộ nút thao tác.</p>
+        <form method="post" action="{{ url_for('admin_update_room_visual_style') }}">
+            <div class="admin-room-style-grid">
+                {% set style_descriptions = {
+                    'champions-night':'Khung truyền hình thể thao, bảng tên nổi và góc bo lớn',
+                    'frozen-tech':'Thẻ cầu thủ cắt góc lục giác, cụm VS dạng huy hiệu',
+                    'ember-rivalry':'Các lớp kính trong suốt, viền mảnh và chiều sâu mềm',
+                    'royal-gold':'Hai thẻ sân nghiêng vào đường hầm trung tâm',
+                    'mono-tactical':'Khung vuông, đường nét chiến thuật và bảng trạng thái gọn'
+                } %}
+                {% for value,label in room_style_options.items() %}
+                <label class="admin-room-style-card style-preview-{{ value }}">
+                    <input type="radio" name="room_visual_style" value="{{ value }}" {% if room_visual_style == value %}checked{% endif %}>
+                    <span class="admin-room-style-check">✓</span>
+                    <span class="admin-room-style-stage"><i></i><b>VS</b><i></i></span>
+                    <strong>{{ label }}</strong>
+                    <small>{{ style_descriptions[value] }}</small>
+                    <span class="admin-room-style-buttons"><em>RANK ĐƠN</em><em>RANDOM 3</em><em>TÌM NHANH</em></span>
+                </label>
+                {% endfor %}
             </div>
+            <button class="btn green" type="submit">Áp dụng phong cách phòng đấu</button>
         </form>
     </div>
-    <div class="panel admin-system-features-panel"><h2>🎛️ Bật/tắt tính năng hệ thống</h2><p class="admin-feature-help"><strong>Rank thường</strong> và <strong>Random 3 chọn 1</strong> là hai chế độ thi đấu Rank riêng. Khi tắt Rank thường, Random 3 chọn 1 được bắt buộc bật để người chơi vẫn có thể thi đấu Rank. Công tắc BXH công khai không ảnh hưởng đến hai chế độ này. Trận đang thi đấu không bị can thiệp.</p><form method="post" action="{{ url_for('admin_update_system_features') }}" class="system-toggle-grid">{% for key,label in {'friendly_enabled':'Giao hữu thường','rank_standard_enabled':'Rank thường','friendly_random3_enabled':'Random 3 chọn 1','lobby_chat_enabled':'Chat Sảnh','room_chat_enabled':'Chat Phòng','registration_codes_enabled':'Mã đăng ký','announcements_enabled':'Thông báo','quick_match_enabled':'Tìm Nhanh','repeat_opponent_rp_enabled':'Giảm RP khi gặp lại cùng đối thủ','match_history_all_enabled':'Xem lịch sử toàn hệ thống'}.items() %}<label class="admin-permission-option"><span>{{ label }}</span><span class="admin-switch"><input type="checkbox" name="{{ key }}" value="1" {% if system_features.get(key) %}checked{% endif %}><span class="admin-switch-track"></span></span></label>{% endfor %}
+    <div class="panel admin-system-features-panel"><h2>🎛️ Bật/tắt tính năng hệ thống</h2><p class="admin-feature-help"><strong>Rank đơn</strong> và <strong>Random 3 chọn 1</strong> là hai chế độ thi đấu Rank riêng. Khi tắt Rank đơn, Random 3 chọn 1 được bắt buộc bật để người chơi vẫn có thể thi đấu Rank. Công tắc BXH công khai không ảnh hưởng đến hai chế độ này. Trận đang thi đấu không bị can thiệp.</p><form method="post" action="{{ url_for('admin_update_system_features') }}" class="system-toggle-grid">{% for key,label in {'friendly_enabled':'Giao hữu thường','rank_standard_enabled':'Rank đơn','friendly_random3_enabled':'Random 3 chọn 1','lobby_chat_enabled':'Chat Sảnh','room_chat_enabled':'Chat Phòng','registration_codes_enabled':'Mã đăng ký','announcements_enabled':'Thông báo','quick_match_enabled':'Tìm Nhanh','repeat_opponent_rp_enabled':'Giảm RP khi gặp lại cùng đối thủ','match_history_all_enabled':'Xem lịch sử toàn hệ thống'}.items() %}<label class="admin-permission-option"><span>{{ label }}</span><span class="admin-switch"><input type="checkbox" name="{{ key }}" value="1" {% if system_features.get(key) %}checked{% endif %}><span class="admin-switch-track"></span></span></label>{% endfor %}
 <label class="admin-permission-option admin-public-ranking-option">
     <span>BXH công khai (không cần đăng nhập)</span>
     <span class="admin-switch">
@@ -835,12 +834,6 @@
 </section>
 
 {% if current_user.admin_level == 'owner' %}
-{% if can_admin('system_features_manage') %}
-<section class="admin-tab-panel" data-admin-panel="room-ui" hidden>
-    {% include "admin/tabs/room-ui.html" %}
-</section>
-{% endif %}
-
 <section class="admin-tab-panel" data-admin-panel="rp-tools">
     <div class="panel">
         <h2>📈 Bộ Công Cụ Tính RP</h2>
@@ -920,5 +913,4 @@
 
 {% block page_scripts %}
 <script src="{{ static_asset('js/admin_dashboard.js') }}" defer></script>
-<script src="{{ static_asset('js/admin/room-ui-designer.js') }}" defer></script>
 {% endblock %}

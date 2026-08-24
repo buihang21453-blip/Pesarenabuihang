@@ -118,20 +118,7 @@ def register_routes(context):
     @login_required
     def profile(user_id):
         viewer = current_user()
-        try:
-            context_data = service.build_profile_context(user_id, viewer)
-        except Exception as exc:
-            # V1.2.30: profile khong duoc 500 chi vi read-model/cache/H2H/room phu tro loi.
-            # Ghi log de sua tiep, sau do hien thi du lieu user co ban bang fallback chi-doc.
-            error_code = f"PROFILE-{str(user_id)[:8].upper()}"
-            app.logger.exception("%s build_profile_context failed user=%s viewer=%s: %s", error_code, user_id, (viewer or {}).get("id"), exc)
-            try:
-                context_data = service.build_profile_context_fallback(user_id, viewer or {})
-            except Exception as fallback_exc:
-                app.logger.exception("%s fallback failed: %s", error_code, fallback_exc)
-                context_data = None
-            if context_data is not None:
-                flash(f"Hồ sơ đang hiển thị ở chế độ dữ liệu cơ bản ({error_code}).", "warning")
+        context_data = service.build_profile_context(user_id, viewer)
         if context_data is None:
             flash("Không tìm thấy player.", "danger")
             return redirect(url_for("players"))

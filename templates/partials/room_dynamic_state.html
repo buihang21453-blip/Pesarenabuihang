@@ -1,9 +1,6 @@
 {% set room_room_viewer_is_host = (current_user.id|string == room.host_user_id|string) %}
 {% set room_viewer_is_guest = (room.guest_user_id and current_user.id|string == room.guest_user_id|string) %}
 {% from "_avatar_macros.html" import player_avatar %}
-{# V1.2.56: preserve normalized viewer flags when this partial is rendered independently. #}
-{% set room_room_viewer_is_host = viewer_is_host|default(false) %}
-{% set room_viewer_is_guest = viewer_is_guest|default(false) %}
 <div id="roomDynamicState" data-state-key="{{ room.status }}|{{ room.host_team }}|{{ room.guest_team }}|{{ room.guest_ready }}|{{ room.host_score }}|{{ room.guest_score }}|{{ room.rematch_host_ready }}|{{ room.rematch_guest_ready }}|{{ room.rematch_host_declined }}|{{ room.rematch_guest_declined }}|{{ room.rematch_expired }}|{{ room.state_expires_at }}|{{ room.dispute.status if room.dispute else '' }}|{{ room.dispute.updated_at if room.dispute else '' }}">
 <style>
 #roomDynamicState .room-player-heading-plain { transform: translateY(18px); }
@@ -20,8 +17,9 @@
 }
 </style>
 {% if room_action_message %}<div class="flash {{ room_action_category or 'success' }} room-htmx-message">{{ room_action_message }}</div>{% endif %}
-<div class="room-view-shell">
+<div class="room-view-shell room-layout-v137" data-room-style="{{ room_visual_style|default('champions-night') }}">
     <div class="room-stage-topbar panel">
+        <img class="room-stage-arena-logo" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/pes-arena-room-logo.webp" alt="PES Arena" loading="eager">
         <div class="room-stage-title-wrap">
             <div>
                 <h1 class="room-stage-title">PHÒNG ĐẤU <span class="room-code-badge">#{{ room.room_code }}</span></h1>
@@ -61,14 +59,14 @@
                 <div class="room-center-mode-title">CHẾ ĐỘ THI ĐẤU</div>
                 {% set rematch_mode_locked = '__RANK_MODE_LOCKED__' in (room.note or '') %}
                 {% if rematch_mode_locked %}
-                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Random{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
+                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank đơn{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
                 {% elif room_room_viewer_is_host or current_user.role == "admin" %}
                 <div class="room-center-mode-actions{% if not system_features.rank_standard_enabled or not system_features.friendly_random3_enabled %} room-center-mode-actions--single{% endif %}">
                     {% if system_features.rank_standard_enabled %}
                     <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1">
                         <input type="hidden" name="rank_mode" value="smart_random">
                         <button class="room-mode-select-btn mode-ranked {% if room.team_tier != 'random3_pick1' %}selected{% endif %}" type="submit">
-                            <strong>RANDOM</strong><small>Random trực tiếp 1 CLB</small>
+                            <strong>RANK ĐƠN</strong><small>Random trực tiếp 1 CLB</small>
                         </button>
                     </form>
                     {% endif %}
@@ -81,9 +79,9 @@
                     </form>
                     {% endif %}
                 </div>
-                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Random{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
+                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank đơn{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
                 {% else %}
-                <div class="room-center-mode-note">Chủ phòng đã chọn <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Random{% endif %}</strong></div>
+                <div class="room-center-mode-note">Chủ phòng đã chọn <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank đơn{% endif %}</strong></div>
                 {% endif %}
             </div>
             {% elif room.status == "waiting_ready" and room.friendly_random3_active %}
@@ -160,7 +158,7 @@
                               data-modal-message="Bạn đã hoàn tất việc gửi kết quả. Trận vẫn được giữ để khách xác nhận."
                               data-modal-note="KHÔNG TRỪ RP"
                               data-modal-confirm-label="Thoát và về sảnh">
-                            <button class="room-center-action-btn room-neon-btn room-neon-red" type="submit"><span class="room-neon-icon" aria-hidden="true">⇥</span><span class="room-neon-label">Thoát Phòng</span></button>
+                            <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                         </form>
 
                     </div>
@@ -178,7 +176,7 @@
                               data-modal-message="Bạn đã hoàn tất việc gửi kết quả. Tranh chấp vẫn được giữ để Admin xử lý."
                               data-modal-note="KHÔNG TRỪ RP"
                               data-modal-confirm-label="Thoát và về sảnh">
-                            <button class="room-center-action-btn room-neon-btn room-neon-red" type="submit"><span class="room-neon-icon" aria-hidden="true">⇥</span><span class="room-neon-label">Thoát Phòng</span></button>
+                            <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                         </form>
 
                     </div>
@@ -199,14 +197,14 @@
                               data-modal-message="Trận đấu chưa kết thúc. Thoát phòng lúc này sẽ bị tính là bỏ cuộc và hệ thống trừ 20 RP."
                               data-modal-note="−20 RP"
                               data-modal-confirm-label="Bỏ cuộc và thoát">
-                            <button class="room-center-action-btn room-neon-btn room-neon-red" type="submit"><span class="room-neon-icon" aria-hidden="true">⇥</span><span class="room-neon-label">Thoát Phòng</span></button>
+                            <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                         </form>
                     </div>
                     {% endif %}
                 {% elif room.status == 'confirmed' %}
                     <div class="room-center-state-pill">Đang đồng bộ phòng...</div>
                 {% else %}
-                    <img class="room-center-vs-image" src="{{ asset_url('VS.webp') }}" alt="VS" loading="eager">
+                    <img class="room-center-vs-image" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/VS.webp" alt="VS" loading="eager">
                     {% if room.status == 'waiting_ready' %}
                         {% if (room_room_viewer_is_host or current_user.role == 'admin') and room.guest_ready and not daily_rank_limit_blocked %}
                         <form class="room-center-random-form" method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" data-room-async="1" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
@@ -222,25 +220,12 @@
                             <span class="room-center-random-sub">{% if room_viewer_is_guest %}Đang chờ chủ phòng quay đội{% elif not room.guest_ready %}Khách chưa sẵn sàng{% else %}Đang chờ chủ phòng quay đội{% endif %}</span>
                         </div>
                         {% endif %}
-                        {% if room_viewer_is_guest %}
-                        <div class="room-center-primary-actions room-action-zone">
-                            {% if not room.guest_ready and not daily_rank_limit_blocked %}
-                            <form method="post" action="{{ url_for('room_guest_ready', room_id=room.id) }}">
-                                <button class="room-center-action-btn room-neon-btn room-neon-green" type="submit"><span class="room-neon-icon" aria-hidden="true">⚡</span><span class="room-neon-label">Sẵn Sàng</span></button>
-                            </form>
-                            {% else %}
-                            <form method="post" action="{{ url_for('room_guest_unready', room_id=room.id) }}">
-                                <button class="room-center-action-btn room-neon-btn room-neon-gray" type="submit"><span class="room-neon-icon" aria-hidden="true">↶</span><span class="room-neon-label">Hủy Sẵn Sàng</span></button>
-                            </form>
-                            {% endif %}
-                        </div>
-                        {% endif %}
                     {% else %}
                         <div class="room-center-state-pill">{{ room.status|replace('_',' ')|title }}</div>
                     {% endif %}
                 {% endif %}
             {% else %}
-                <img class="room-center-vs-image" src="{{ asset_url('VS.webp') }}" alt="VS" loading="eager">
+                <img class="room-center-vs-image" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/VS.webp" alt="VS" loading="eager">
                 <div class="room-center-empty-note">Đang chờ đủ 2 người trong phòng</div>
             {% endif %}
         </section>
