@@ -25,8 +25,18 @@ def asset_base_url() -> str:
     return _clean_base(os.getenv("STATIC_ASSET_BASE_URL"))
 
 
+DEFAULT_SHOP_ASSET_BASE_URL = "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.14.41/shop"
+
+
 def shop_asset_base_url() -> str:
-    return _clean_base(os.getenv("SHOP_ASSET_BASE_URL"))
+    explicit = _clean_base(os.getenv("SHOP_ASSET_BASE_URL"))
+    if explicit:
+        return explicit
+    static_base = asset_base_url()
+    if static_base:
+        return f"{static_base}/shop"
+    # Bản Clean không còn static/shop local. Dùng public Storage đã chứa catalog Shop.
+    return DEFAULT_SHOP_ASSET_BASE_URL
 
 
 def luckybox_asset_base_url() -> str:

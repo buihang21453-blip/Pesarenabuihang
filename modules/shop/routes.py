@@ -11,11 +11,12 @@ def register_routes(context):
     @login_required
     def shop_page():
         user = current_user()
-        active_category = request.args.get("category") or request.args.get("tab") or "featured"
-        return render_template(
-            "shop.html",
-            **service.build_shop_context(user, active_category),
-        )
+        requested_tab = str(request.args.get("tab") or "store").strip().lower()
+        page_tab = "topup" if requested_tab in {"topup", "zcoin", "nap-zcoin"} else "store"
+        active_category = request.args.get("category") or "featured"
+        context = service.build_shop_context(user, active_category)
+        context["shop_page_tab"] = page_tab
+        return render_template("shop.html", **context)
 
     @app.route("/shop/purchase/<item_code>", methods=["POST"], endpoint="shop_purchase")
     @login_required

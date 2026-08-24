@@ -265,3 +265,11 @@
 ## V1.2.9.24 - Center height matches player cards
 - Center battle column now uses the same responsive height as Host/Away cards.
 - Right rail remains independent and can extend lower for Parsec/room history/head-to-head.
+
+## V1.2.9.25 - Restore Shop assets and Zcoin tab
+- Fixed Shop image fallback for Clean builds: /v1.14.41/shop on public Supabase Storage.
+- Shop asset base now uses env first, STATIC_ASSET_BASE_URL/shop second, public known-good fallback last.
+- Added primary Shop tabs with Lucky Box first.
+- Moved Nạp Zcoin out of the default Shop flow into its own tab.
+- Default Shop view starts with Lucky Box spotlight, then product categories.
+- Kept latest bonus markers: stars at 300k/500k/1M and no fire icon.
