@@ -32,6 +32,18 @@ def _confirmed_match_result(match):
     )
 
 
+def _get_match_safe(match_id, *, error_id=None, phase="reload"):
+    """Đọc lại match trong nhánh recovery mà không để lỗi phụ biến thành HTTP 500."""
+    if not match_id:
+        return None
+    try:
+        return get_match(match_id)
+    except Exception as exc:
+        prefix = f"{error_id} " if error_id else ""
+        print(f"{prefix}confirm recovery reload ERROR match={match_id} phase={phase}: {type(exc).__name__}: {exc}")
+        return None
+
+
 def _apply_match_result_resilient(match, attempts=2):
     """Xác nhận với một lần retry an toàn sau khi service đã rollback đầy đủ.
 
@@ -48,7 +60,7 @@ def _apply_match_result_resilient(match, attempts=2):
             raise
         except Exception as exc:
             last_exc = exc
-            fresh = get_match(match.get("id")) if match and match.get("id") else None
+            fresh = _get_match_safe(match.get("id"), phase="resilient_retry") if match and match.get("id") else None
             if _confirmed_match_result(fresh):
                 return int(fresh.get("delta1") or 0), int(fresh.get("delta2") or 0)
             if not fresh or fresh.get("status") == "processing_result":
@@ -352,7 +364,7 @@ def register_routes(context):
                     print(f"publish streak event warning room={room_id}: {type(exc).__name__}: {exc}")
             flash("Đã xác nhận kết quả. Hai người có thể chọn Đá tiếp hoặc rời phòng.", "success")
         except ValueError as exc:
-            fresh_match = get_match(match.get("id"))
+            fresh_match = _get_match_safe(match.get("id"), phase="value_error_recovery")
             if fresh_match and fresh_match.get("status") == "confirmed" and room_update:
                 error_id = _result_error_id("ROOM")
                 try:
@@ -377,7 +389,7 @@ def register_routes(context):
         except Exception as exc:
             error_id = _result_error_id("CONFIRM")
             _persist_confirm_error(error_id, room_id, match.get("id"), exc, phase="apply_or_finish")
-            fresh_match = get_match(match.get("id"))
+            fresh_match = _get_match_safe(match.get("id"), error_id=error_id, phase="exception_recovery")
             if fresh_match and fresh_match.get("status") == "confirmed" and room_update:
                 try:
                     repair = execute_query(
