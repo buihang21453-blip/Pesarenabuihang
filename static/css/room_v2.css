@@ -898,3 +898,46 @@
     flex-wrap:nowrap;
   }
 }
+
+/* ==========================================================
+   V1.2.68 — READY ACTIONS FINAL LAYOUT
+   Không ghim absolute nữa: hàng Sẵn Sàng nằm trong luồng bình thường,
+   vì vậy thay đổi chiều cao/scale của Admin không thể cắt mất nút.
+   ========================================================== */
+.room-v2-shell.room-state-waiting-ready .room-center-stage-plain{
+  min-height:max(500px,var(--rui-main-height,500px));
+  overflow:visible;
+  padding-bottom:10px !important;
+}
+.room-v2-shell.room-state-waiting-ready .room-ready-actions{
+  position:relative !important;
+  left:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  display:flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  width:min(100%,360px) !important;
+  max-width:360px !important;
+  min-height:42px;
+  margin:4px auto 0 !important;
+  padding:0 !important;
+  gap:8px !important;
+  flex:0 0 auto !important;
+  z-index:30;
+  overflow:visible !important;
+}
+.room-v2-shell.room-state-waiting-ready .room-ready-actions > form,
+.room-v2-shell.room-state-waiting-ready .room-ready-actions > button{
+  display:block !important;
+  flex:1 1 0 !important;
+  min-width:0 !important;
+  margin:0 !important;
+}
+.room-v2-shell.room-state-waiting-ready .room-ready-actions .room-center-action-btn{
+  display:flex !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+}

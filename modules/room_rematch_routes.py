@@ -228,7 +228,9 @@ def register_routes(context):
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("dashboard"))
 
-        if user["id"] not in [room["host_user_id"], room["guest_user_id"]]:
+        is_host_member = _same_user_id(user.get("id"), room.get("host_user_id"))
+        is_guest_member = _same_user_id(user.get("id"), room.get("guest_user_id"))
+        if not (is_host_member or is_guest_member):
             flash("Bạn không thuộc phòng này.", "danger")
             return redirect(url_for("dashboard"))
 
@@ -244,7 +246,7 @@ def register_routes(context):
             flash("Một trong hai người đang có phòng hoặc trận khác nên chưa thể đá tiếp từ phòng này.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        is_host = user["id"] == room["host_user_id"]
+        is_host = _same_user_id(user.get("id"), room.get("host_user_id"))
         my_ready_note = REMATCH_HOST_READY_NOTE if is_host else REMATCH_GUEST_READY_NOTE
         opponent_ready_note = REMATCH_GUEST_READY_NOTE if is_host else REMATCH_HOST_READY_NOTE
         current_note = room.get("note") or ""
@@ -364,7 +366,9 @@ def register_routes(context):
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("dashboard"))
 
-        if user["id"] not in [room["host_user_id"], room["guest_user_id"]]:
+        is_host_member = _same_user_id(user.get("id"), room.get("host_user_id"))
+        is_guest_member = _same_user_id(user.get("id"), room.get("guest_user_id"))
+        if not (is_host_member or is_guest_member):
             flash("Bạn không thuộc phòng này.", "danger")
             return redirect(url_for("dashboard"))
 
@@ -372,7 +376,7 @@ def register_routes(context):
             flash("Chỉ có thể từ chối đá tiếp sau khi trận trước đã hoàn tất.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        is_host = user["id"] == room["host_user_id"]
+        is_host = _same_user_id(user.get("id"), room.get("host_user_id"))
         my_ready_note = REMATCH_HOST_READY_NOTE if is_host else REMATCH_GUEST_READY_NOTE
         opponent_ready_note = REMATCH_GUEST_READY_NOTE if is_host else REMATCH_HOST_READY_NOTE
         decline_note = REMATCH_HOST_DECLINED_NOTE if is_host else REMATCH_GUEST_DECLINED_NOTE

@@ -280,7 +280,11 @@ def register_routes(context):
             flash("Chủ phòng đã Offline nên phòng được đóng. Khách không bị ảnh hưởng.", "warning")
             return redirect(url_for("rooms"))
 
-        if user["id"] not in [room["host_user_id"], room["guest_user_id"]] and not is_admin_user(user):
+        is_member = (
+            _same_user_id(user.get("id"), room.get("host_user_id"))
+            or _same_user_id(user.get("id"), room.get("guest_user_id"))
+        )
+        if not is_member and not is_admin_user(user):
             flash("Bạn không thuộc phòng này.", "danger")
             return redirect(url_for("rooms"))
 
@@ -423,75 +427,96 @@ def register_routes(context):
     @app.route("/room/<room_id>/leave", methods=["POST"])
     @login_required
     def room_leave(room_id):
+        """Rời/đóng phòng ở giai đoạn an toàn; lỗi DB không được biến thành trang 500."""
         user = current_user()
         room = get_room(room_id)
-
         if not room:
-            flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("dashboard"))
 
-        if user["id"] not in [room.get("host_user_id"), room.get("guest_user_id")]:
+        is_host = _same_user_id(user.get("id"), room.get("host_user_id"))
+        is_guest = _same_user_id(user.get("id"), room.get("guest_user_id"))
+        if not (is_host or is_guest or is_admin_user(user)):
             flash("Bạn không thuộc phòng này.", "danger")
             return redirect(url_for("dashboard"))
 
+        # Sau khi đã gửi/chốt kết quả, 'Thoát' chỉ là về sảnh; không được đụng vào RP.
+        if room.get("status") in {"waiting_result_confirm", "disputed", "confirmed"}:
+            flash("Bạn đã về sảnh. Kết quả trận được giữ nguyên.", "success")
+            return redirect(url_for("dashboard"))
+
         if room.get("status") not in {"waiting_ready", "friendly_playing"}:
-            flash("Không thể rời phòng khi trận xếp hạng đang thi đấu hoặc đang chờ xác nhận kết quả.", "warning")
+            flash("Trận đang diễn ra. Hãy dùng nút Thoát Phòng của trận để xử lý bỏ cuộc đúng luật.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        # Nếu một trong hai người đã chạm giới hạn Rank ngày thì phòng không còn
-        # được phép bắt đầu trận mới. Mọi người được rời phòng an toàn, kể cả khi
-        # giao diện cũ vẫn còn guest_ready=true, để tránh bị trừ RP oan.
-        daily_limit_blocked = bool(
-            room.get("status") == "waiting_ready"
-            and daily_rank_block_message(room.get("host_user_id"), room.get("guest_user_id"))
-        )
-        if daily_limit_blocked:
-            room["guest_ready"] = False
+        daily_limit_blocked = False
+        if room.get("status") == "waiting_ready":
+            try:
+                daily_limit_blocked = bool(daily_rank_block_message(room.get("host_user_id"), room.get("guest_user_id")))
+            except Exception:
+                daily_limit_blocked = False
+        guest_ready = bool(room.get("guest_ready")) and not daily_limit_blocked
 
-        # Ở bước chờ Sẵn Sàng, luồng rời phòng không phạt chỉ hợp lệ khi khách
-        # chưa Sẵn Sàng. Kiểm tra tại backend để không thể né phạt bằng POST
-        # trực tiếp vào endpoint /leave hoặc do giao diện vừa bị thay đổi trạng thái.
-        if room.get("status") == "waiting_ready" and bool(room.get("guest_ready")):
-            if user["id"] == room.get("guest_user_id"):
-                flash("Bạn đã Sẵn Sàng. Thoát lúc này được tính là bỏ cuộc và trừ 20 RP.", "warning")
+        if room.get("status") == "waiting_ready" and guest_ready:
+            if is_guest:
+                flash("Bạn đã Sẵn Sàng. Hãy dùng nút Thoát Phòng để hệ thống xử lý bỏ cuộc đúng luật.", "warning")
             else:
-                flash("Khách đã Sẵn Sàng. Chủ phòng thoát lúc này được tính là bỏ cuộc và trừ 20 RP.", "warning")
+                flash("Khách đã Sẵn Sàng. Hãy dùng nút Thoát Phòng để hệ thống xử lý bỏ cuộc đúng luật.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        if user["id"] == room.get("guest_user_id"):
-            execute_query(
+        try:
+            if is_guest and not is_admin_user(user):
+                result = execute_query(
+                    db.table("match_rooms").update({
+                        "guest_user_id": None,
+                        "guest_ready": False,
+                        "guest_team": None,
+                        "guest_team_overall": None,
+                        "guest_team_logo_url": None,
+                        "host_team": None,
+                        "host_team_overall": None,
+                        "host_team_logo_url": None,
+                        "host_team_league": None,
+                        "guest_team_league": None,
+                        "status": "waiting_ready",
+                        "match_id": None,
+                        "invite_id": None,
+                        "note": f'{user.get("display_name") or "Khách"} đã rời phòng. Chủ phòng có thể mời đối thủ khác.',
+                        "state_expires_at": None,
+                        "updated_at": now_iso(),
+                    }).eq("id", room_id),
+                    "guest_leave_keep_room",
+                    attempts=3,
+                )
+                if not (result.data or []):
+                    fresh = get_room(room_id)
+                    if fresh and _same_user_id(fresh.get("guest_user_id"), user.get("id")):
+                        raise RuntimeError("Chưa cập nhật được trạng thái rời phòng.")
+                cache_delete("_rz_rooms_all", "_rz_invites_all", "_rz_current_pending_invites")
+                ttl_cache_delete("rooms_raw", "invites_raw")
+                flash("Bạn đã rời phòng. Không ảnh hưởng điểm Rank.", "success")
+                return redirect(url_for("dashboard"))
+
+            result = execute_query(
                 db.table("match_rooms").update({
-                    "guest_user_id": None,
+                    "status": "cancelled",
                     "guest_ready": False,
-                    "guest_team": None,
-                    "guest_team_overall": None,
-                    "guest_team_logo_url": None,
-                    "host_team": None,
-                    "host_team_overall": None,
-                    "host_team_logo_url": None,
-                    "host_team_league": None,
-                    "guest_team_league": None,
-                    "status": "waiting_ready",
-                    "match_id": None,
-                    "invite_id": None,
-                    "note": f'{user["display_name"]} đã rời phòng. Chủ phòng có thể mời đối thủ khác.',
+                    "note": f'{user.get("display_name") or "Chủ phòng"} đã đóng phòng.',
                     "state_expires_at": None,
                     "updated_at": now_iso(),
                 }).eq("id", room_id),
-                "guest_leave_keep_room",
+                "host_close_room",
+                attempts=3,
             )
-            flash("Bạn đã rời phòng. Phòng vẫn được giữ cho chủ phòng và không ảnh hưởng điểm rank.", "success")
+            if not (result.data or []):
+                fresh = get_room(room_id)
+                if fresh and fresh.get("status") != "cancelled":
+                    raise RuntimeError("Chưa đóng được phòng.")
+            cache_delete("_rz_rooms_all", "_rz_invites_all", "_rz_current_pending_invites")
+            ttl_cache_delete("rooms_raw", "invites_raw")
+            flash("Bạn đã thoát và đóng phòng đấu.", "success")
             return redirect(url_for("dashboard"))
+        except Exception as exc:
+            app.logger.exception("room_leave failed room=%s user=%s", room_id, user.get("id"))
+            flash("Chưa thể cập nhật trạng thái phòng. Hãy tải lại và thử lại; hệ thống không trừ RP trong lần lỗi này.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
 
-        execute_query(
-            db.table("match_rooms").update({
-                "status": "cancelled",
-                "guest_ready": False,
-                "note": f'{user["display_name"]} đã đóng phòng.',
-                "state_expires_at": None,
-                "updated_at": now_iso(),
-            }).eq("id", room_id),
-            "host_close_room",
-        )
-        flash("Bạn đã thoát và đóng phòng đấu.", "success")
-        return redirect(url_for("dashboard"))
