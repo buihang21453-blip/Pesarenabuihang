@@ -763,3 +763,61 @@
   max-width:100%;
   box-sizing:border-box;
 }
+
+/* ==========================================================
+   V1.2.60 — WAITING READY ACTIONS VISIBILITY FIX
+   Nút Sẵn Sàng / Hủy Sẵn Sàng / Thoát Phòng vốn đã có trong
+   template nhưng bị đẩy ra ngoài chiều cao center panel bởi
+   min-height:158px của .room-center-random-trigger (legacy v1.2.15)
+   kết hợp overflow:hidden của center stage.
+   Chỉ nén khối chờ quay quân ở trạng thái waiting-ready;
+   không thay đổi logic Ready/Unready/Random.
+   ========================================================== */
+@media (min-width:1251px){
+  .room-v2-shell.room-state-waiting-ready .room-center-stage-plain{
+    gap:5px;
+    padding-top:8px;
+    padding-bottom:8px;
+  }
+
+  /* Override legacy .room-layout-v1215 min-height:158px. */
+  .room-v2-shell.room-state-waiting-ready .room-center-random-trigger{
+    min-height:68px;
+    padding:6px 10px 8px;
+    gap:5px;
+    flex:0 0 auto;
+  }
+
+  .room-v2-shell.room-state-waiting-ready .room-center-random-form{
+    flex:0 0 auto;
+    margin:0;
+  }
+
+  .room-v2-shell.room-state-waiting-ready .room-center-countdown-label{
+    min-height:14px;
+    margin:0;
+    line-height:1.1;
+  }
+
+  .room-v2-shell.room-state-waiting-ready .room-center-countdown{
+    min-height:42px;
+    margin:0;
+    font-size:clamp(36px,3vw,48px);
+    line-height:1;
+    flex:0 0 auto;
+  }
+
+  .room-v2-shell.room-state-waiting-ready .room-center-vs-image{
+    width:82px;
+    height:82px;
+    margin:0 auto;
+    flex:0 0 auto;
+  }
+
+  /* Hàng hành động phải luôn nằm bên trong panel, không bị đẩy khỏi đáy. */
+  .room-v2-shell.room-state-waiting-ready .room-center-primary-actions,
+  .room-v2-shell.room-state-waiting-ready .room-action-zone{
+    margin-top:0;
+    flex:0 0 auto;
+  }
+}
