@@ -25,7 +25,9 @@ def asset_base_url() -> str:
     return _clean_base(os.getenv("STATIC_ASSET_BASE_URL"))
 
 
+DEFAULT_PES_ASSET_V11441_BASE_URL = "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.14.41"
 DEFAULT_SHOP_ASSET_BASE_URL = "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.14.41/shop"
+DEFAULT_LUCKYBOX_ASSET_BASE_URL = "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.14.41/luckybox"
 
 
 def shop_asset_base_url() -> str:
@@ -40,11 +42,23 @@ def shop_asset_base_url() -> str:
 
 
 def luckybox_asset_base_url() -> str:
-    return _clean_base(os.getenv("LUCKYBOX_ASSET_BASE_URL"))
+    explicit = _clean_base(os.getenv("LUCKYBOX_ASSET_BASE_URL"))
+    if explicit:
+        return explicit
+    static_base = asset_base_url()
+    if static_base:
+        return f"{static_base}/luckybox"
+    # Bản Clean không còn static/luckybox local. Dùng đúng public Storage v1.14.41.
+    return DEFAULT_LUCKYBOX_ASSET_BASE_URL
 
 
 def asset_url(filename: str) -> str:
-    clean = str(filename or "").strip().lstrip("/")
+    raw = str(filename or "").strip()
+    # Cho phép Supabase/DB lưu URL public đầy đủ mà không bị quote thành đường local sai.
+    if raw.startswith(("https://", "http://")):
+        return raw
+
+    clean = raw.lstrip("/")
     encoded = quote(clean, safe="/")
 
     if clean == "luckybox" or clean.startswith("luckybox/"):

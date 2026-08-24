@@ -273,3 +273,9 @@
 - Moved Nạp Zcoin out of the default Shop flow into its own tab.
 - Default Shop view starts with Lucky Box spotlight, then product categories.
 - Kept latest bonus markers: stars at 300k/500k/1M and no fire icon.
+
+## V1.2.9.26 - Fix exact Supabase Shop/Lucky Box asset paths
+- Shop default base: /pes-assets/v1.14.41/shop.
+- Lucky Box default base: /pes-assets/v1.14.41/luckybox.
+- Verified path patterns for shop/items, luckybox/exclusive and luckybox/rewards.
+- asset_url now passes through full http/https URLs from DB/Admin without corrupting them.
