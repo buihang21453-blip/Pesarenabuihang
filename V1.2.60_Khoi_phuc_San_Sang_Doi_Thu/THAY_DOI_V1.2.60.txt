@@ -1,0 +1,16 @@
+V1.2.60 - Khôi phục hiển thị nút Sẵn Sàng phía đối thủ
+
+Nguyên nhân:
+- Template vẫn có đầy đủ route room_guest_ready / room_guest_unready.
+- CSS legacy room-layout-v1215 ép .room-center-random-trigger min-height:158px.
+- room_v2.css đặt center panel overflow:hidden.
+- Tổng chiều cao nội dung vượt panel nên hàng Sẵn Sàng / Thoát Phòng bị cắt ở đáy.
+
+Sửa:
+- Chỉ ở room-state-waiting-ready trên desktop: giảm khối chờ quay quân xuống 68px.
+- Nén countdown + VS vừa đủ để giữ nguyên toàn bộ hàng hành động trong panel.
+- Không sửa logic backend, không sửa route, không sửa trạng thái guest_ready.
+- Giữ nguyên toàn bộ fix Parsec V1.2.59.
+
+File cần chép đè:
+static/css/room_v2.css
