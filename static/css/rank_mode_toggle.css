@@ -270,3 +270,54 @@
     .room-mode-dock-card strong { font-size: 10px; }
     .room-mode-dock-card small { font-size: 8px; }
 }
+
+/* PES Arena V1.2.9.30 — bộ chọn chế độ nằm ngay bên trong khung đấu,
+   dưới 3 cột Chủ phòng / Trung tâm / Đối thủ; rail bên phải giữ nguyên. */
+.room-layout-v137 .room-mode-dock-slot {
+    min-width: 0;
+    align-self: start;
+    display: flex;
+    justify-content: center;
+    padding: 0 8px 4px;
+}
+.room-layout-v137 .room-mode-dock-slot .room-mode-dock {
+    width: min(100%, 650px);
+    margin: 0;
+    padding: 0;
+}
+
+@media (min-width: 1181px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-areas:
+            "home center away rail"
+            "modes modes modes rail" !important;
+    }
+    .room-layout-v137 .room-mode-dock-slot { grid-area: modes; }
+    .room-layout-v137 .room-arena-right-rail { grid-area: rail; }
+}
+
+@media (min-width: 981px) and (max-width: 1180px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-areas:
+            "home center away"
+            "modes modes modes"
+            "rail rail rail" !important;
+    }
+    .room-layout-v137 .room-mode-dock-slot { grid-area: modes; }
+    .room-layout-v137 .room-arena-right-rail { grid-area: rail; }
+}
+
+@media (max-width: 980px) {
+    .room-layout-v137 .room-mode-dock-slot {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .room-layout-v137 .room-mode-dock-slot {
+        order: 4;
+        padding: 4px 0;
+    }
+    .room-layout-v137 .room-arena-right-rail { order: 5; }
+}

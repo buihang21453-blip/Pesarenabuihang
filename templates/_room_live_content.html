@@ -365,14 +365,16 @@
             </div>
         </section>
 
+        <div class="room-mode-dock-slot" aria-label="Bộ chọn chế độ thi đấu">
+            {% include "partials/room_mode_selector_strip.html" %}
+        </div>
+
         <aside class="room-side-rail room-arena-right-rail" aria-label="Thông tin bổ sung của phòng">
             {% include "partials/parsec_room_panel.html" %}
             {% include "partials/room_history_panel.html" %}
             {% include "partials/player_h2h_panel.html" %}
         </aside>
     </div>
-
-    {% include "partials/room_mode_selector_strip.html" %}
 
     <div class="panel room-extra-controls">
     <h2 class="room-control-title">Điều khiển phòng</h2>
