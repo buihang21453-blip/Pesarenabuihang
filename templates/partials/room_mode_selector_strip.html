@@ -13,7 +13,11 @@
                 <input type="hidden" name="rank_mode" value="smart_random">
                 <button class="room-mode-select-btn room-mode-dock-card mode-ranked {% if not room_mode_random3 %}selected{% endif %}" type="submit" aria-label="Chọn chế độ Random">
                     <span class="room-mode-dock-number">1</span>
-                    <img class="room-mode-dock-logo" src="{{ mode_logo_base }}1.webp" alt="Logo chế độ Random" loading="lazy" decoding="async">
+                    <span class="room-mode-dock-logo-shell" aria-hidden="true">
+
+                        <img class="room-mode-dock-logo" src="{{ mode_logo_base }}1.webp" alt="Logo chế độ Random" loading="lazy" decoding="async">
+
+                    </span>
                     <strong class="room-mode-dock-title">RANDOM</strong>
                     <small class="room-mode-dock-status">Random trực tiếp 1 CLB</small>
                 </button>
@@ -21,7 +25,11 @@
             {% else %}
             <div class="room-mode-select-btn room-mode-dock-card mode-ranked {% if not room_mode_random3 %}selected{% endif %} is-readonly" aria-label="Chế độ Random">
                 <span class="room-mode-dock-number">1</span>
-                <img class="room-mode-dock-logo" src="{{ mode_logo_base }}1.webp" alt="Logo chế độ Random" loading="lazy" decoding="async">
+                <span class="room-mode-dock-logo-shell" aria-hidden="true">
+
+                    <img class="room-mode-dock-logo" src="{{ mode_logo_base }}1.webp" alt="Logo chế độ Random" loading="lazy" decoding="async">
+
+                </span>
                 <strong class="room-mode-dock-title">RANDOM</strong>
                 <small class="room-mode-dock-status">Random trực tiếp 1 CLB</small>
             </div>
@@ -34,7 +42,11 @@
                 <input type="hidden" name="rank_mode" value="random3_pick1">
                 <button class="room-mode-select-btn room-mode-dock-card mode-random3 {% if room_mode_random3 %}selected{% endif %}" type="submit" aria-label="Chọn chế độ Random 3 chọn 1">
                     <span class="room-mode-dock-number">2</span>
-                    <img class="room-mode-dock-logo" src="{{ mode_logo_base }}2.webp" alt="Logo chế độ Random 3 chọn 1" loading="lazy" decoding="async">
+                    <span class="room-mode-dock-logo-shell" aria-hidden="true">
+
+                        <img class="room-mode-dock-logo" src="{{ mode_logo_base }}2.webp" alt="Logo chế độ Random 3 chọn 1" loading="lazy" decoding="async">
+
+                    </span>
                     <strong class="room-mode-dock-title">RANDOM 3 CHỌN 1</strong>
                     <small class="room-mode-dock-status">Nhận 3 CLB theo Rank</small>
                 </button>
@@ -42,7 +54,11 @@
             {% else %}
             <div class="room-mode-select-btn room-mode-dock-card mode-random3 {% if room_mode_random3 %}selected{% endif %} is-readonly" aria-label="Chế độ Random 3 chọn 1">
                 <span class="room-mode-dock-number">2</span>
-                <img class="room-mode-dock-logo" src="{{ mode_logo_base }}2.webp" alt="Logo chế độ Random 3 chọn 1" loading="lazy" decoding="async">
+                <span class="room-mode-dock-logo-shell" aria-hidden="true">
+
+                    <img class="room-mode-dock-logo" src="{{ mode_logo_base }}2.webp" alt="Logo chế độ Random 3 chọn 1" loading="lazy" decoding="async">
+
+                </span>
                 <strong class="room-mode-dock-title">RANDOM 3 CHỌN 1</strong>
                 <small class="room-mode-dock-status">Nhận 3 CLB theo Rank</small>
             </div>
@@ -52,7 +68,11 @@
         <div class="room-mode-select-btn room-mode-dock-card mode-coming-soon is-readonly is-locked" aria-disabled="true" title="Chế độ đang khóa - chưa kích hoạt Core">
             <span class="room-mode-dock-number">3</span>
             <span class="room-mode-lock-badge">🔒</span>
-            <img class="room-mode-dock-logo" src="{{ mode_logo_base }}3.webp" alt="Logo chế độ Random Selection Match" loading="lazy" decoding="async">
+            <span class="room-mode-dock-logo-shell" aria-hidden="true">
+
+                <img class="room-mode-dock-logo" src="{{ mode_logo_base }}3.webp" alt="Logo chế độ Random Selection Match" loading="lazy" decoding="async">
+
+            </span>
             <strong class="room-mode-dock-title">RANDOM SELECTION MATCH</strong>
             <small class="room-mode-dock-status">Đang khóa • Chưa kích hoạt</small>
         </div>
@@ -60,7 +80,11 @@
         <div class="room-mode-select-btn room-mode-dock-card mode-coming-soon is-readonly is-locked" aria-disabled="true" title="Chế độ đang khóa - chưa kích hoạt Core">
             <span class="room-mode-dock-number">4</span>
             <span class="room-mode-lock-badge">🔒</span>
-            <img class="room-mode-dock-logo" src="{{ mode_logo_base }}4.webp" alt="Logo chế độ Lượt đi - Lượt về" loading="lazy" decoding="async">
+            <span class="room-mode-dock-logo-shell" aria-hidden="true">
+
+                <img class="room-mode-dock-logo" src="{{ mode_logo_base }}4.webp" alt="Logo chế độ Lượt đi - Lượt về" loading="lazy" decoding="async">
+
+            </span>
             <strong class="room-mode-dock-title">LƯỢT ĐI - LƯỢT VỀ</strong>
             <small class="room-mode-dock-status">Đang khóa • Chưa kích hoạt</small>
         </div>
@@ -68,7 +92,11 @@
         <div class="room-mode-select-btn room-mode-dock-card mode-coming-soon is-readonly is-locked" aria-disabled="true" title="Chế độ đang khóa - chưa kích hoạt Core">
             <span class="room-mode-dock-number">5</span>
             <span class="room-mode-lock-badge">🔒</span>
-            <img class="room-mode-dock-logo" src="{{ mode_logo_base }}5.webp" alt="Logo chế độ BO3" loading="lazy" decoding="async">
+            <span class="room-mode-dock-logo-shell" aria-hidden="true">
+
+                <img class="room-mode-dock-logo" src="{{ mode_logo_base }}5.webp" alt="Logo chế độ BO3" loading="lazy" decoding="async">
+
+            </span>
             <strong class="room-mode-dock-title">BO3</strong>
             <small class="room-mode-dock-status">Đang khóa • Chưa kích hoạt</small>
         </div>
@@ -76,7 +104,11 @@
         <div class="room-mode-select-btn room-mode-dock-card mode-coming-soon is-readonly is-locked" aria-disabled="true" title="Chế độ đang khóa - chưa kích hoạt Core">
             <span class="room-mode-dock-number">6</span>
             <span class="room-mode-lock-badge">🔒</span>
-            <img class="room-mode-dock-logo" src="{{ mode_logo_base }}6.webp" alt="Logo chế độ Chiến thuật BO3" loading="lazy" decoding="async">
+            <span class="room-mode-dock-logo-shell" aria-hidden="true">
+
+                <img class="room-mode-dock-logo" src="{{ mode_logo_base }}6.webp" alt="Logo chế độ Chiến thuật BO3" loading="lazy" decoding="async">
+
+            </span>
             <strong class="room-mode-dock-title">CHIẾN THUẬT BO3</strong>
             <small class="room-mode-dock-status">Đang khóa • Chưa kích hoạt</small>
         </div>
@@ -84,7 +116,11 @@
         <div class="room-mode-select-btn room-mode-dock-card mode-coming-soon is-readonly is-locked" aria-disabled="true" title="Chế độ đang khóa - chưa kích hoạt Core">
             <span class="room-mode-dock-number">7</span>
             <span class="room-mode-lock-badge">🔒</span>
-            <img class="room-mode-dock-logo" src="{{ mode_logo_base }}7.webp" alt="Logo chế độ Cấm chọn BO3" loading="lazy" decoding="async">
+            <span class="room-mode-dock-logo-shell" aria-hidden="true">
+
+                <img class="room-mode-dock-logo" src="{{ mode_logo_base }}7.webp" alt="Logo chế độ Cấm chọn BO3" loading="lazy" decoding="async">
+
+            </span>
             <strong class="room-mode-dock-title">CẤM CHỌN BO3</strong>
             <small class="room-mode-dock-status">Đang khóa • Chưa kích hoạt</small>
         </div>

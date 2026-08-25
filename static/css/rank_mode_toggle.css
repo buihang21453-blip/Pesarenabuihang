@@ -615,3 +615,147 @@
         grid-template-columns: 1fr 1fr !important;
     }
 }
+
+/* ========================================================================== 
+   PES Arena V1.3 — room layout correction
+   1) 3 main panels have equal width + exact equal height on desktop.
+   2) Invite / Leave actions are centered as one balanced button group.
+   3) MODE strip/cards are fully transparent; Admin opacity affects only the
+      small backing directly behind each mode logo, never the whole strip/card.
+   ========================================================================== */
+
+/* The complete mode area must stay transparent regardless of visual theme. */
+.room-layout-v137 .room-mode-dock-slot,
+.room-layout-v137 .room-mode-dock,
+.room-layout-v137 .room-mode-dock-heading,
+.room-layout-v137 .room-mode-dock-grid,
+.room-layout-v137 .room-mode-dock-form,
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn,
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn.mode-ranked,
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn.mode-random3,
+.room-layout-v137 .room-mode-dock-card.mode-coming-soon,
+.room-layout-v137 .room-mode-dock-card.is-locked,
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn.selected,
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn.mode-random3.selected,
+.room-layout-v137[data-room-style] .room-mode-dock-slot,
+.room-layout-v137[data-room-style] .room-mode-dock,
+.room-layout-v137[data-room-style] .room-mode-dock-grid,
+.room-layout-v137[data-room-style] .room-mode-dock-card.room-mode-select-btn {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Keep only a light selection outline; no opaque selected-card surface. */
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn {
+    box-shadow: none !important;
+}
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn.selected {
+    box-shadow: 0 0 15px rgba(255, 202, 54, .18) !important;
+}
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn.mode-random3.selected {
+    box-shadow: 0 0 15px rgba(192, 69, 255, .18) !important;
+}
+
+/* Admin background-opacity control applies ONLY behind the logo itself. */
+.room-layout-v137 .room-selected-mode-hero,
+.room-layout-v137 .room-selected-mode-hero.mode-random3 {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+.room-layout-v137 .room-selected-mode-logo-shell,
+.room-layout-v137 .room-mode-dock-logo-shell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(6, 15, 30, var(--room-mode-logo-bg-opacity, 0)) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+.room-layout-v137 .room-selected-mode-logo-shell {
+    width: min(100%, 240px);
+    min-height: 92px;
+    padding: 8px 12px;
+}
+.room-layout-v137 .room-mode-dock-logo-shell {
+    width: min(100%, 112px);
+    height: 54px;
+    margin-top: 7px;
+    padding: 4px 7px;
+}
+.room-layout-v137 .room-mode-dock-logo {
+    margin-top: 0 !important;
+}
+
+/* Three primary panels: exactly the same width and height.
+   The first grid row is sized by its tallest one of the three panels, then all
+   three stretch to that same row height. This also stays correct in result/
+   dispute/random states where the center can contain more content. */
+@media (min-width: 981px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(220px, .7fr) !important;
+        align-items: stretch !important;
+    }
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        width: 100% !important;
+        min-width: 0 !important;
+        height: 100% !important;
+        max-height: none !important;
+        box-sizing: border-box !important;
+        align-self: stretch !important;
+    }
+}
+
+/* Center the two primary room actions as a balanced group. */
+.room-layout-v137 .room-center-primary-actions {
+    width: min(100%, 330px) !important;
+    max-width: 330px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    justify-content: center !important;
+    justify-items: stretch !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+.room-layout-v137 .room-center-primary-actions > a,
+.room-layout-v137 .room-center-primary-actions > form,
+.room-layout-v137 .room-center-primary-actions > form > .room-center-action-btn,
+.room-layout-v137 .room-center-primary-actions > .room-center-action-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+.room-layout-v137 .room-center-primary-actions > form {
+    display: block !important;
+}
+
+@media (max-width: 640px) {
+    .room-layout-v137 .room-center-primary-actions {
+        width: min(100%, 330px) !important;
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* V1.3 responsive column correction: 4th rail exists only on wide desktop. */
+@media (min-width: 1181px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(220px, .7fr) !important;
+    }
+}
+@media (min-width: 981px) and (max-width: 1180px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
