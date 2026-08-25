@@ -8,7 +8,7 @@ def read(relative):
 
 
 def test_profile_arena_overview_release():
-    assert 'APP_VERSION = "V1.3.8"' in read("app.py")
+    assert 'APP_VERSION = "V1.3.9"' in read("app.py")
 
 
 def test_arena_overview_composition_is_present():

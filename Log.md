@@ -316,3 +316,8 @@
 - Tách kích thước logo thanh chế độ khỏi logo khung trung tâm.
 - Admin có trường riêng `Kích thước logo CÁC CHẾ ĐỘ THI ĐẤU (%)` (70–220%).
 - Giữ nguyên Core/logic các chế độ thi đấu.
+## V1.3.9 — Admin Room Design Tab
+- Gom toàn bộ tuỳ chỉnh giao diện phòng đấu vào tab `🎨 Thiết kế phòng đấu`.
+- Sau khi lưu form Admin, hệ thống giữ nguyên đúng tab vừa thao tác thay vì quay về Tổng quan.
+- Cập nhật APP_VERSION thành V1.3.9.
+

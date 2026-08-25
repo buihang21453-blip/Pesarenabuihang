@@ -65,7 +65,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.3.8"
+APP_VERSION = "V1.3.9"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -6510,7 +6510,10 @@ def cancel_invite(invite_id):
 # Đăng ký module chức năng
 # =========================
 def redirect_admin(tab="overview"):
-    """Điểm điều hướng Admin dùng chung cho mọi module quản trị."""
+    """Điểm điều hướng Admin dùng chung; ưu tiên giữ tab người dùng vừa thao tác."""
+    submitted_tab = (request.form.get("_admin_tab") or "").strip() if request.method == "POST" else ""
+    if submitted_tab and submitted_tab.replace("-", "").isalnum():
+        tab = submitted_tab
     return redirect(url_for("admin") + f"#{tab}")
 
 

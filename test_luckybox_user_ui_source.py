@@ -17,7 +17,7 @@ ADMIN = (ROOT / "templates/admin_luckybox/index.html").read_text(encoding="utf-8
 
 
 def test_phase3_version_and_python_parse():
-    assert 'APP_VERSION = "V1.3.8"' in APP
+    assert 'APP_VERSION = "V1.3.9"' in APP
     for relative in (
         "modules/luckybox/repository.py",
         "modules/luckybox/service.py",

@@ -41,6 +41,7 @@
     {% if can_admin('matches_view') %}<button class="admin-tab-button" type="button" data-admin-tab="matches">🎮 Trận đấu</button><button class="admin-tab-button" type="button" data-admin-tab="match-report">📊 Báo cáo trận đấu</button>{% endif %}
 {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">🧪 Tài khoản test & Import</button>{% endif %}
     {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>{% endif %}
+    {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="room-design">🎨 Thiết kế phòng đấu</button>{% endif %}
     {% if can_admin('rp_view') %}<button class="admin-tab-button" type="button" data-admin-tab="rp-tools">📈 Công cụ RP</button>{% endif %}
     <button class="admin-tab-button" type="button" data-admin-tab="economy">🪙 Zcoin & Gift Code</button>
     {% if can_admin('admin_logs_view') %}<button class="admin-tab-button" type="button" data-admin-tab="logs">🧾 Nhật ký</button>{% endif %}
@@ -653,85 +654,6 @@
     {% endif %}
 
     {% if can_admin('system_features_manage') %}
-    <div class="panel admin-room-style-panel">
-        <h2>🎨 Phong cách phòng đấu</h2>
-        <p class="muted">Chọn một phong cách áp dụng đồng bộ cho mọi trạng thái phòng, hai phía người chơi và toàn bộ nút thao tác.</p>
-        <form method="post" action="{{ url_for('admin_update_room_visual_style') }}">
-            <div class="admin-room-style-grid">
-                {% set style_descriptions = {
-                    'default':'Giao diện sân vận động hiện tại, không áp dụng skin bổ sung',
-                    'champions-night':'Viền vàng, huy hiệu và bảng điều khiển kiểu cúp vô địch',
-                    'frozen-tech':'Module điện tử góc cắt, đường quét và ánh sáng cyber',
-                    'ember-rivalry':'Mặt sân năng lượng, bảng chế độ và trạng thái thể thao',
-                    'royal-gold':'Các khối phát sáng mạnh như giao diện phòng chiến đấu',
-                    'mono-tactical':'Tấm kim loại, đinh tán và bảng điều khiển thiết giáp'
-                } %}
-                {% for value,label in room_style_options.items() %}
-                <label class="admin-room-style-card style-preview-{{ value }}">
-                    <input type="radio" name="room_visual_style" value="{{ value }}" {% if room_visual_style == value %}checked{% endif %}>
-                    <span class="admin-room-style-check">✓</span>
-                    <span class="admin-room-style-stage"><i></i><b>VS</b><i></i></span>
-                    <strong>{{ label }}</strong>
-                    <small>{{ style_descriptions[value] }}</small>
-                    <span class="admin-room-style-buttons"><em>RANK ĐƠN</em><em>RANDOM 3</em><em>TÌM NHANH</em></span>
-                </label>
-                {% endfor %}
-            </div>
-            <button class="btn green" type="submit">Áp dụng phong cách phòng đấu</button>
-        </form>
-    </div>
-
-    <div class="panel admin-room-mode-logo-panel">
-        <h2>🖼️ Tuỳ chỉnh logo chế độ thi đấu</h2>
-        <p class="muted">Điều chỉnh nền phía sau logo và kích thước riêng cho logo ở khung trung tâm / thanh CÁC CHẾ ĐỘ THI ĐẤU.</p>
-        <form method="post" action="{{ url_for('admin_update_room_mode_logo_config') }}" class="admin-room-mode-logo-form">
-            <label>
-                <span>Độ trong suốt Nền logo (%)</span>
-                <input type="number" name="room_mode_logo_background_opacity" min="{{ room_mode_logo_limits.background_opacity[0] }}" max="{{ room_mode_logo_limits.background_opacity[1] }}" step="1" value="{{ room_mode_logo_config.background_opacity }}" required>
-                <small>0 = nền trong suốt hoàn toàn, 100 = nền rõ hoàn toàn. Logo không bị làm mờ.</small>
-            </label>
-            <label>
-                <span>Kích thước logo khung trung tâm (%)</span>
-                <input type="number" name="room_mode_logo_scale" min="{{ room_mode_logo_limits.scale[0] }}" max="{{ room_mode_logo_limits.scale[1] }}" step="1" value="{{ room_mode_logo_config.scale }}" required>
-                <small>100 = kích thước chuẩn của logo ở khung trung tâm.</small>
-            </label>
-            <label>
-                <span>Kích thước logo CÁC CHẾ ĐỘ THI ĐẤU (%)</span>
-                <input type="number" name="room_mode_dock_logo_scale" min="{{ room_mode_logo_limits.dock_scale[0] }}" max="{{ room_mode_logo_limits.dock_scale[1] }}" step="1" value="{{ room_mode_logo_config.dock_scale }}" required>
-                <small>Mặc định mới 135%. Có thể chỉnh từ 70% đến 220%.</small>
-            </label>
-            <button class="btn green" type="submit">Lưu tùy chỉnh logo chế độ</button>
-        </form>
-    </div>
-
-    <div class="panel admin-room-panel-layout-panel">
-        <h2>📐 Bố cục 3 khung phòng đấu</h2>
-        <p class="muted">Điều chỉnh đồng bộ Khung Chủ phòng, Khung Trung tâm và Khung Đối thủ. Chiều cao đặt ở đây là chiều cao tối thiểu; nếu trạng thái có nhiều nội dung hơn, cả 3 khung vẫn tự giãn bằng nhau để không mất nút/chức năng.</p>
-        <form method="post" action="{{ url_for('admin_update_room_panel_layout_config') }}" class="admin-room-panel-layout-form">
-            <label class="admin-permission-option admin-center-bars-option">
-                <span><strong>Hiện 2 thanh trang trí ở khung trung tâm</strong><small style="display:block">Bật/tắt đồng thời thanh ::before phía trên và ::after phía dưới.</small></span>
-                <span class="admin-switch"><input type="checkbox" name="center_bars_visible" value="1" {% if room_panel_layout_config.center_bars_visible %}checked{% endif %}><span class="admin-switch-track"></span></span>
-            </label>
-            <label class="admin-room-panel-height-field">
-                <span>Chiều cao 3 khung (px)</span>
-                <input type="number" name="panel_height" min="{{ room_panel_layout_limits.panel_height[0] }}" max="{{ room_panel_layout_limits.panel_height[1] }}" step="10" value="{{ room_panel_layout_config.panel_height }}" required>
-                <small>{{ room_panel_layout_limits.panel_height[0] }}–{{ room_panel_layout_limits.panel_height[1] }}px • mặc định 600px</small>
-            </label>
-            <button class="btn green" type="submit">Lưu bố cục phòng đấu</button>
-        </form>
-    </div>
-
-    <div class="panel admin-discord-link-panel">
-        <h2>💬 Link Discord phòng đấu</h2>
-        <p class="muted">Link này sẽ xuất hiện trong khu vực Kết nối Parsec của phòng. Người chơi bấm vào sẽ mở Discord trong tab mới.</p>
-        <form method="post" action="{{ url_for('admin_update_room_discord_link') }}" class="admin-discord-link-form">
-            <label>
-                <span>Link Discord</span>
-                <input type="url" name="discord_link" maxlength="500" value="{{ room_discord_link or '' }}" placeholder="https://discord.gg/...">
-            </label>
-            <button class="btn green" type="submit">Lưu Link Discord</button>
-        </form>
-    </div>
     <div class="panel admin-system-features-panel"><h2>🎛️ Bật/tắt tính năng hệ thống</h2><p class="admin-feature-help"><strong>Rank đơn</strong> và <strong>Random 3 chọn 1</strong> là hai chế độ thi đấu Rank riêng. Khi tắt Rank đơn, Random 3 chọn 1 được bắt buộc bật để người chơi vẫn có thể thi đấu Rank. Công tắc BXH công khai không ảnh hưởng đến hai chế độ này. Trận đang thi đấu không bị can thiệp.</p><form method="post" action="{{ url_for('admin_update_system_features') }}" class="system-toggle-grid">{% for key,label in {'friendly_enabled':'Giao hữu thường','rank_standard_enabled':'Rank đơn','friendly_random3_enabled':'Random 3 chọn 1','lobby_chat_enabled':'Chat Sảnh','room_chat_enabled':'Chat Phòng','registration_codes_enabled':'Mã đăng ký','announcements_enabled':'Thông báo','quick_match_enabled':'Tìm Nhanh','repeat_opponent_rp_enabled':'Giảm RP khi gặp lại cùng đối thủ','match_history_all_enabled':'Xem lịch sử toàn hệ thống'}.items() %}<label class="admin-permission-option"><span>{{ label }}</span><span class="admin-switch"><input type="checkbox" name="{{ key }}" value="1" {% if system_features.get(key) %}checked{% endif %}><span class="admin-switch-track"></span></span></label>{% endfor %}
 <label class="admin-permission-option admin-public-ranking-option">
     <span>BXH công khai (không cần đăng nhập)</span>
@@ -844,19 +766,6 @@
             </div>
         </form>
     </div>
-    <div class="panel">
-        <h2>⚡ Giao diện nút Tìm Nhanh</h2>
-        <p class="muted">Chọn màu nổi bật cho nút Tìm Nhanh trong phòng đấu.</p>
-        <form method="post" action="{{ url_for('admin_update_quick_match') }}" class="system-toggle-grid">
-            <label><span>Màu nút</span>
-                <select name="color">
-                    <option value="blue" {% if quick_match_config.get('color') == 'blue' %}selected{% endif %}>Xanh dương sáng</option>
-                    <option value="green" {% if quick_match_config.get('color') == 'green' %}selected{% endif %}>Xanh lá sáng</option>
-                </select>
-            </label>
-            <button class="btn" type="submit">Lưu màu nút</button>
-        </form>
-    </div>
     {% endif %}
     {% if can_admin('announcements_manage') %}
     <div class="panel">
@@ -873,6 +782,107 @@
     </div>
     {% endif %}
 
+</section>
+{% endif %}
+
+{% if can_admin('system_features_manage') %}
+<section class="admin-tab-panel admin-room-design-tab" data-admin-panel="room-design" hidden>
+    <div class="panel admin-room-design-intro">
+        <h2>🎨 Thiết kế phòng đấu</h2>
+        <p class="muted">Toàn bộ tuỳ chỉnh giao diện phòng đấu được gom tại đây để dễ quản lý: phong cách, logo chế độ, chiều cao 3 khung, hai thanh trang trí, Discord và giao diện nút Tìm Nhanh.</p>
+    </div>
+    <div class="panel admin-room-style-panel">
+        <h2>🎨 Phong cách phòng đấu</h2>
+        <p class="muted">Chọn một phong cách áp dụng đồng bộ cho mọi trạng thái phòng, hai phía người chơi và toàn bộ nút thao tác.</p>
+        <form method="post" action="{{ url_for('admin_update_room_visual_style') }}">
+            <div class="admin-room-style-grid">
+                {% set style_descriptions = {
+                    'default':'Giao diện sân vận động hiện tại, không áp dụng skin bổ sung',
+                    'champions-night':'Viền vàng, huy hiệu và bảng điều khiển kiểu cúp vô địch',
+                    'frozen-tech':'Module điện tử góc cắt, đường quét và ánh sáng cyber',
+                    'ember-rivalry':'Mặt sân năng lượng, bảng chế độ và trạng thái thể thao',
+                    'royal-gold':'Các khối phát sáng mạnh như giao diện phòng chiến đấu',
+                    'mono-tactical':'Tấm kim loại, đinh tán và bảng điều khiển thiết giáp'
+                } %}
+                {% for value,label in room_style_options.items() %}
+                <label class="admin-room-style-card style-preview-{{ value }}">
+                    <input type="radio" name="room_visual_style" value="{{ value }}" {% if room_visual_style == value %}checked{% endif %}>
+                    <span class="admin-room-style-check">✓</span>
+                    <span class="admin-room-style-stage"><i></i><b>VS</b><i></i></span>
+                    <strong>{{ label }}</strong>
+                    <small>{{ style_descriptions[value] }}</small>
+                    <span class="admin-room-style-buttons"><em>RANK ĐƠN</em><em>RANDOM 3</em><em>TÌM NHANH</em></span>
+                </label>
+                {% endfor %}
+            </div>
+            <button class="btn green" type="submit">Áp dụng phong cách phòng đấu</button>
+        </form>
+    </div>
+
+    <div class="panel admin-room-mode-logo-panel">
+        <h2>🖼️ Tuỳ chỉnh logo chế độ thi đấu</h2>
+        <p class="muted">Điều chỉnh nền phía sau logo và kích thước riêng cho logo ở khung trung tâm / thanh CÁC CHẾ ĐỘ THI ĐẤU.</p>
+        <form method="post" action="{{ url_for('admin_update_room_mode_logo_config') }}" class="admin-room-mode-logo-form">
+            <label>
+                <span>Độ trong suốt Nền logo (%)</span>
+                <input type="number" name="room_mode_logo_background_opacity" min="{{ room_mode_logo_limits.background_opacity[0] }}" max="{{ room_mode_logo_limits.background_opacity[1] }}" step="1" value="{{ room_mode_logo_config.background_opacity }}" required>
+                <small>0 = nền trong suốt hoàn toàn, 100 = nền rõ hoàn toàn. Logo không bị làm mờ.</small>
+            </label>
+            <label>
+                <span>Kích thước logo khung trung tâm (%)</span>
+                <input type="number" name="room_mode_logo_scale" min="{{ room_mode_logo_limits.scale[0] }}" max="{{ room_mode_logo_limits.scale[1] }}" step="1" value="{{ room_mode_logo_config.scale }}" required>
+                <small>100 = kích thước chuẩn của logo ở khung trung tâm.</small>
+            </label>
+            <label>
+                <span>Kích thước logo CÁC CHẾ ĐỘ THI ĐẤU (%)</span>
+                <input type="number" name="room_mode_dock_logo_scale" min="{{ room_mode_logo_limits.dock_scale[0] }}" max="{{ room_mode_logo_limits.dock_scale[1] }}" step="1" value="{{ room_mode_logo_config.dock_scale }}" required>
+                <small>Mặc định mới 135%. Có thể chỉnh từ 70% đến 220%.</small>
+            </label>
+            <button class="btn green" type="submit">Lưu tùy chỉnh logo chế độ</button>
+        </form>
+    </div>
+
+    <div class="panel admin-room-panel-layout-panel">
+        <h2>📐 Bố cục 3 khung phòng đấu</h2>
+        <p class="muted">Điều chỉnh đồng bộ Khung Chủ phòng, Khung Trung tâm và Khung Đối thủ. Chiều cao đặt ở đây là chiều cao tối thiểu; nếu trạng thái có nhiều nội dung hơn, cả 3 khung vẫn tự giãn bằng nhau để không mất nút/chức năng.</p>
+        <form method="post" action="{{ url_for('admin_update_room_panel_layout_config') }}" class="admin-room-panel-layout-form">
+            <label class="admin-permission-option admin-center-bars-option">
+                <span><strong>Hiện 2 thanh trang trí ở khung trung tâm</strong><small style="display:block">Bật/tắt đồng thời thanh ::before phía trên và ::after phía dưới.</small></span>
+                <span class="admin-switch"><input type="checkbox" name="center_bars_visible" value="1" {% if room_panel_layout_config.center_bars_visible %}checked{% endif %}><span class="admin-switch-track"></span></span>
+            </label>
+            <label class="admin-room-panel-height-field">
+                <span>Chiều cao 3 khung (px)</span>
+                <input type="number" name="panel_height" min="{{ room_panel_layout_limits.panel_height[0] }}" max="{{ room_panel_layout_limits.panel_height[1] }}" step="10" value="{{ room_panel_layout_config.panel_height }}" required>
+                <small>{{ room_panel_layout_limits.panel_height[0] }}–{{ room_panel_layout_limits.panel_height[1] }}px • mặc định 600px</small>
+            </label>
+            <button class="btn green" type="submit">Lưu bố cục phòng đấu</button>
+        </form>
+    </div>
+
+    <div class="panel admin-discord-link-panel">
+        <h2>💬 Link Discord phòng đấu</h2>
+        <p class="muted">Link này sẽ xuất hiện trong khu vực Kết nối Parsec của phòng. Người chơi bấm vào sẽ mở Discord trong tab mới.</p>
+        <form method="post" action="{{ url_for('admin_update_room_discord_link') }}" class="admin-discord-link-form">
+            <label>
+                <span>Link Discord</span>
+                <input type="url" name="discord_link" maxlength="500" value="{{ room_discord_link or '' }}" placeholder="https://discord.gg/...">
+            </label>
+            <button class="btn green" type="submit">Lưu Link Discord</button>
+        </form>
+    </div>
+    <div class="panel">
+        <h2>⚡ Giao diện nút Tìm Nhanh</h2>
+        <p class="muted">Chọn màu nổi bật cho nút Tìm Nhanh trong phòng đấu.</p>
+        <form method="post" action="{{ url_for('admin_update_quick_match') }}" class="system-toggle-grid">
+            <label><span>Màu nút</span>
+                <select name="color">
+                    <option value="blue" {% if quick_match_config.get('color') == 'blue' %}selected{% endif %}>Xanh dương sáng</option>
+                    <option value="green" {% if quick_match_config.get('color') == 'green' %}selected{% endif %}>Xanh lá sáng</option>
+                </select>
+            </label>
+            <button class="btn" type="submit">Lưu màu nút</button>
+        </form>
+    </div>
 </section>
 {% endif %}
 

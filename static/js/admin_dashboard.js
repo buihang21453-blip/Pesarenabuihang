@@ -23,6 +23,22 @@
         });
     });
 
+    // Giữ nguyên tab hiện tại sau khi lưu bất kỳ cài đặt Admin nào.
+    document.querySelectorAll('.admin-tab-panel form').forEach(function (form) {
+        form.addEventListener('submit', function () {
+            const panel = form.closest('[data-admin-panel]');
+            if (!panel) return;
+            let input = form.querySelector('input[name="_admin_tab"]');
+            if (!input) {
+                input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = '_admin_tab';
+                form.appendChild(input);
+            }
+            input.value = panel.dataset.adminPanel || 'overview';
+        });
+    });
+
     window.addEventListener('hashchange', function () {
         activateAdminTab(window.location.hash.replace('#', ''));
     });
