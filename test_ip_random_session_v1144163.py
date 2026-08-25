@@ -10,7 +10,7 @@ PLAYER_ROUTES = (ROOT / "modules" / "admin_player_routes.py").read_text(encoding
 
 
 def test_version_and_python_parse():
-    assert 'APP_VERSION = "V1.2.9"' in APP
+    assert 'APP_VERSION = "V1.3.3"' in APP
     ast.parse(APP)
     ast.parse(SYSTEM_ROUTES)
     ast.parse(PLAYER_ROUTES)

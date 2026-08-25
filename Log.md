@@ -1,3 +1,8 @@
+## V1.3.3 - Đồng bộ số phiên bản hiển thị
+- Cập nhật APP_VERSION và số hiệu hiển thị trong giao diện lên V1.3.3.
+- Đồng bộ các kiểm thử đang kiểm tra số phiên bản hiện hành.
+- Từ bản này, mỗi gói phát hành phải cập nhật số phiên bản trong source/UI cùng với tên file phát hành.
+
 ## V1.2.6 — 05/08/2026 00:47 (GMT+7)
 - Sửa lỗi tài khoản vẫn bị báo còn trận chưa hoàn tất dù phòng đã bị đóng hoặc không còn tồn tại.
 - Chỉ khóa tạo phòng khi bản ghi trận còn liên kết với một phòng đang hoạt động.
