@@ -553,16 +553,16 @@
 
 /* PES Arena V1.2.9.34 — nền chế độ trong suốt, logo điều chỉnh được từ Admin, 3 khung chính bằng nhau. */
 .room-layout-v137 {
-    --room-mode-logo-opacity: 1;
+    --room-mode-logo-bg-opacity: 0;
     --room-mode-logo-scale: 1;
 }
 .room-selected-mode-hero {
-    background: transparent !important;
+    background: rgba(3, 9, 19, var(--room-mode-logo-bg-opacity, 0)) !important;
     box-shadow: none !important;
     border-color: rgba(255, 207, 72, .35);
 }
 .room-selected-mode-hero.mode-random3 {
-    background: transparent !important;
+    background: rgba(20, 6, 35, var(--room-mode-logo-bg-opacity, 0)) !important;
     box-shadow: none !important;
     border-color: rgba(196, 82, 255, .35);
 }
@@ -575,24 +575,30 @@
 }
 .room-selected-mode-logo,
 .room-mode-dock-logo {
-    opacity: var(--room-mode-logo-opacity, 1);
+    opacity: 1;
     transform: scale(var(--room-mode-logo-scale, 1));
     transform-origin: center center;
 }
 .room-mode-dock-card.room-mode-select-btn,
-.room-mode-dock-card.room-mode-select-btn.mode-random3,
 .room-mode-dock-card.mode-coming-soon {
-    background: transparent !important;
+    background: rgba(8, 24, 43, var(--room-mode-logo-bg-opacity, 0)) !important;
+    box-shadow: none !important;
+}
+.room-mode-dock-card.room-mode-select-btn.mode-random3 {
+    background: rgba(27, 13, 48, var(--room-mode-logo-bg-opacity, 0)) !important;
     box-shadow: none !important;
 }
 .room-mode-dock-card.room-mode-select-btn {
     border-color: rgba(255,255,255,.2);
 }
 .room-mode-dock-card.room-mode-select-btn.selected {
-    background: transparent !important;
+    background-color: rgba(8, 24, 43, var(--room-mode-logo-bg-opacity, 0)) !important;
+}
+.room-mode-dock-card.room-mode-select-btn.mode-random3.selected {
+    background-color: rgba(27, 13, 48, var(--room-mode-logo-bg-opacity, 0)) !important;
 }
 .room-mode-dock-card.is-locked {
-    background: transparent !important;
+    background-color: rgba(22, 29, 38, var(--room-mode-logo-bg-opacity, 0)) !important;
 }
 @media (min-width: 1181px) {
     .room-layout-v137 .room-arena-frame {

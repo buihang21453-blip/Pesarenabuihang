@@ -102,7 +102,7 @@ def register_routes(context):
     @admin_permission_required("system_features_manage")
     def admin_update_room_mode_logo_config():
         payload = normalize_room_mode_logo_config({
-            "opacity": request.form.get("room_mode_logo_opacity"),
+            "background_opacity": request.form.get("room_mode_logo_background_opacity"),
             "scale": request.form.get("room_mode_logo_scale"),
         })
         execute_query(
@@ -117,7 +117,7 @@ def register_routes(context):
         ttl_cache_delete("room_mode_logo_config")
         cache_delete("_room_mode_logo_config_cached")
         log_admin_action("Cập nhật hiển thị logo chế độ phòng đấu", "system", details=payload)
-        flash("Đã lưu độ trong suốt và kích thước logo chế độ phòng đấu.", "success")
+        flash("Đã lưu độ trong suốt nền logo và kích thước logo chế độ phòng đấu.", "success")
         return redirect_admin("system")
 
 

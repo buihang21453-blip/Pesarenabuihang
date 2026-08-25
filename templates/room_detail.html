@@ -3,7 +3,7 @@
 {% block content %}
 {% set room_room_viewer_is_host = (current_user.id|string == room.host_user_id|string) %}
 {% set room_viewer_is_guest = (room.guest_user_id and current_user.id|string == room.guest_user_id|string) %}
-<div id="roomLiveShell" class="room-view-shell room-layout-v137" data-room-style="{{ room_visual_style|default('default') }}" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}" style="--room-mode-logo-opacity: {{ (room_mode_logo_config.opacity|default(100)) / 100 }}; --room-mode-logo-scale: {{ (room_mode_logo_config.scale|default(100)) / 100 }};">
+<div id="roomLiveShell" class="room-view-shell room-layout-v137" data-room-style="{{ room_visual_style|default('default') }}" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}" style="--room-mode-logo-bg-opacity: {{ (room_mode_logo_config.background_opacity|default(0)) / 100 }}; --room-mode-logo-scale: {{ (room_mode_logo_config.scale|default(100)) / 100 }};">
 
 {% include "_streak_animation.html" %}
 

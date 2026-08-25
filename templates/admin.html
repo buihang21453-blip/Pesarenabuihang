@@ -683,12 +683,12 @@
 
     <div class="panel admin-room-mode-logo-panel">
         <h2>🖼️ Tuỳ chỉnh logo chế độ thi đấu</h2>
-        <p class="muted">Điều chỉnh đồng bộ phần logo ở khung trung tâm và thanh CÁC CHẾ ĐỘ THI ĐẤU. 100% là mặc định.</p>
+        <p class="muted">Điều chỉnh đồng bộ nền phía sau logo và kích thước logo ở khung trung tâm cùng thanh CÁC CHẾ ĐỘ THI ĐẤU.</p>
         <form method="post" action="{{ url_for('admin_update_room_mode_logo_config') }}" class="admin-room-mode-logo-form">
             <label>
-                <span>Độ trong suốt logo (%)</span>
-                <input type="number" name="room_mode_logo_opacity" min="{{ room_mode_logo_limits.opacity[0] }}" max="{{ room_mode_logo_limits.opacity[1] }}" step="1" value="{{ room_mode_logo_config.opacity }}" required>
-                <small>0 = ẩn hoàn toàn, 100 = rõ hoàn toàn</small>
+                <span>Độ trong suốt Nền logo (%)</span>
+                <input type="number" name="room_mode_logo_background_opacity" min="{{ room_mode_logo_limits.background_opacity[0] }}" max="{{ room_mode_logo_limits.background_opacity[1] }}" step="1" value="{{ room_mode_logo_config.background_opacity }}" required>
+                <small>0 = nền trong suốt hoàn toàn, 100 = nền rõ hoàn toàn. Logo không bị làm mờ.</small>
             </label>
             <label>
                 <span>Kích thước logo (%)</span>

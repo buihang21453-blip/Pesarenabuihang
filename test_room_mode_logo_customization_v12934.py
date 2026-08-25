@@ -22,16 +22,16 @@ def test_room_mode_logo_config_is_defined_and_routed():
 
 def test_admin_has_controls_for_logo_opacity_and_scale():
     assert "Tuỳ chỉnh logo chế độ thi đấu" in ADMIN
-    assert "room_mode_logo_opacity" in ADMIN
+    assert "room_mode_logo_background_opacity" in ADMIN
     assert "room_mode_logo_scale" in ADMIN
-    assert "Độ trong suốt logo (%)" in ADMIN
+    assert "Độ trong suốt Nền logo (%)" in ADMIN
     assert "Kích thước logo (%)" in ADMIN
 
 
 def test_room_views_receive_css_variables_and_transparent_mode_blocks():
-    assert "--room-mode-logo-opacity" in ROOM
+    assert "--room-mode-logo-bg-opacity" in ROOM
     assert "--room-mode-logo-scale" in ROOM
-    assert "--room-mode-logo-opacity" in ROOM_PARTIAL
+    assert "--room-mode-logo-bg-opacity" in ROOM_PARTIAL
     assert "background: transparent !important;" in CSS
     assert "grid-template-columns: repeat(3, minmax(0, 1fr))" in CSS
 

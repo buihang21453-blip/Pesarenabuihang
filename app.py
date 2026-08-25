@@ -652,11 +652,11 @@ def get_room_visual_style():
 
 ROOM_MODE_LOGO_SETTING_KEY = "room_mode_logo_config"
 ROOM_MODE_LOGO_DEFAULTS = {
-    "opacity": 100,
+    "background_opacity": 0,
     "scale": 100,
 }
 ROOM_MODE_LOGO_LIMITS = {
-    "opacity": (0, 100),
+    "background_opacity": (0, 100),
     "scale": (50, 200),
 }
 
@@ -677,11 +677,16 @@ def normalize_room_mode_logo_config(raw):
         if isinstance(raw, str):
             raw = json.loads(raw)
         if isinstance(raw, dict):
-            config["opacity"] = _coerce_room_mode_logo_value(
-                raw.get("opacity"),
-                default=ROOM_MODE_LOGO_DEFAULTS["opacity"],
-                lower=ROOM_MODE_LOGO_LIMITS["opacity"][0],
-                upper=ROOM_MODE_LOGO_LIMITS["opacity"][1],
+            raw_background_opacity = raw.get("background_opacity")
+            if raw_background_opacity is None and "opacity" in raw:
+                # Tương thích cấu hình V1.2.9.34: opacity cũ là độ rõ logo;
+                # chuyển sang nền trong suốt mặc định thay vì làm mờ logo.
+                raw_background_opacity = ROOM_MODE_LOGO_DEFAULTS["background_opacity"]
+            config["background_opacity"] = _coerce_room_mode_logo_value(
+                raw_background_opacity,
+                default=ROOM_MODE_LOGO_DEFAULTS["background_opacity"],
+                lower=ROOM_MODE_LOGO_LIMITS["background_opacity"][0],
+                upper=ROOM_MODE_LOGO_LIMITS["background_opacity"][1],
             )
             config["scale"] = _coerce_room_mode_logo_value(
                 raw.get("scale"),
