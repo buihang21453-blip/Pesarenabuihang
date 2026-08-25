@@ -297,3 +297,9 @@
 - Verified regular Lucky Box rewards resolve under v1.14.41/luckybox/rewards.
 - Verified Shop equipment remains under v1.14.41/shop/items even when STATIC_ASSET_BASE_URL points to /v1.
 - Updated stale Supabase asset-check example that still referenced /v1/shop.
+
+## V1.3.6 — Equal Adaptive Room Height
+- Bỏ giới hạn `max-height` cố định của V1.3.4 vì có thể che mất nút/chức năng ở trạng thái nhiều nội dung.
+- Desktop dùng chiều cao tối thiểu hợp lý, sau đó để khung có nội dung dài nhất quyết định chiều cao hàng.
+- Chủ phòng / Trung tâm / Đối thủ luôn stretch bằng nhau trong cùng hàng.
+- Khung trung tâm cho phép nội dung hiển thị đầy đủ, không bị cắt.

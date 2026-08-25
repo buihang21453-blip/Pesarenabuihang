@@ -7,11 +7,11 @@ ADMIN = (ROOT / "templates/admin.html").read_text(encoding="utf-8")
 
 
 def test_version_is_v135():
-    assert 'APP_VERSION = "V1.3.5"' in APP
+    assert 'APP_VERSION = "V1.3.6"' in APP
 
 
 def test_admin_target_sections_use_content_sized_buttons():
-    marker = "PES Arena V1.3.5 — Admin action buttons hug their text"
+    marker = "PES Arena V1.3.6 — Admin action buttons hug their text"
     assert marker in CSS
     block = CSS[CSS.index(marker):]
     assert 'width:fit-content!important' in block

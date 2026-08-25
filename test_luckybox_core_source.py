@@ -9,7 +9,7 @@ ROUTES = (ROOT / "modules/luckybox/routes.py").read_text(encoding="utf-8")
 
 
 def test_app_version_and_module_registration():
-    assert 'APP_VERSION = "V1.3.5"' in APP
+    assert 'APP_VERSION = "V1.3.6"' in APP
     assert "from modules.luckybox import register_routes" in APP
     assert "_register_luckybox_routes" in APP
 

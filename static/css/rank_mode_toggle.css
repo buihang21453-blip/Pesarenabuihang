@@ -823,3 +823,51 @@
     }
 }
 
+
+
+/* PES Arena V1.3.6 — equal-height room panels without clipping content.
+   V1.3.4 used hard max-heights, which could hide actions in longer states.
+   V1.3.6 keeps a comfortable minimum height but lets the tallest panel define
+   the row height; CSS Grid then stretches Host / Center / Guest equally. */
+@media (min-width: 981px) {
+    .room-layout-v137 .room-arena-frame {
+        align-items: stretch !important;
+    }
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        height: auto !important;
+        min-height: 600px !important;
+        max-height: none !important;
+        align-self: stretch !important;
+        box-sizing: border-box !important;
+    }
+    .room-layout-v137 .room-center-stage-plain {
+        justify-content: center !important;
+        overflow: visible !important;
+    }
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-team-card.away {
+        overflow: hidden !important;
+    }
+}
+@media (min-width: 981px) and (max-width: 1280px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        min-height: 570px !important;
+    }
+}
+@media (min-width: 641px) and (max-width: 980px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-team-card.away {
+        height: auto !important;
+        min-height: 500px !important;
+        max-height: none !important;
+    }
+    .room-layout-v137 .room-center-stage-plain {
+        height: auto !important;
+        min-height: 440px !important;
+        max-height: none !important;
+    }
+}

@@ -6082,7 +6082,7 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 }
 
 
-/* PES Arena V1.3.5 — Admin action buttons hug their text instead of stretching with neighboring controls. */
+/* PES Arena V1.3.6 — Admin action buttons hug their text instead of stretching with neighboring controls. */
 .admin-tab-panel[data-admin-panel="test-data"] .btn,
 .admin-tab-panel[data-admin-panel="system"] .btn,
 .admin-tab-panel[data-admin-panel="rp-tools"] .btn{

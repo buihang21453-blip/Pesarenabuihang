@@ -5,26 +5,30 @@ APP = (ROOT / "app.py").read_text(encoding="utf-8")
 CSS = (ROOT / "static/css/rank_mode_toggle.css").read_text(encoding="utf-8")
 
 
-def test_version_is_v134():
-    assert 'APP_VERSION = "V1.3.5"' in APP
+def test_version_is_v136():
+    assert 'APP_VERSION = "V1.3.6"' in APP
 
 
-def test_three_primary_panels_have_same_fixed_desktop_height():
-    assert ".room-team-card.home" in CSS
-    assert ".room-center-stage-plain" in CSS
-    assert ".room-team-card.away" in CSS
-    assert "height: 535px !important" in CSS
-    assert "min-height: 535px !important" in CSS
-    assert "max-height: 535px !important" in CSS
-    assert "height: 510px !important" in CSS
-
-
-def test_shorter_center_is_vertically_balanced():
-    marker = "PES Arena V1.3.4 — compact fixed equal-height primary room panels"
+def test_three_primary_panels_share_adaptive_equal_height_without_hard_cap():
+    marker = "PES Arena V1.3.6 — equal-height room panels without clipping content."
+    assert marker in CSS
     block = CSS[CSS.index(marker):]
+    for selector in (".room-team-card.home", ".room-center-stage-plain", ".room-team-card.away"):
+        assert selector in block
+    assert "align-items: stretch !important" in block
+    assert "height: auto !important" in block
+    assert "min-height: 600px !important" in block
+    assert "max-height: none !important" in block
+    assert "align-self: stretch !important" in block
+
+
+def test_center_content_is_not_clipped():
+    marker = "PES Arena V1.3.6 — equal-height room panels without clipping content."
+    block = CSS[CSS.index(marker):]
+    assert "overflow: visible !important" in block
     assert "justify-content: center !important" in block
 
 if __name__ == "__main__":
-    test_version_is_v134()
-    test_three_primary_panels_have_same_fixed_desktop_height()
-    test_shorter_center_is_vertically_balanced()
+    test_version_is_v136()
+    test_three_primary_panels_share_adaptive_equal_height_without_hard_cap()
+    test_center_content_is_not_clipped()
