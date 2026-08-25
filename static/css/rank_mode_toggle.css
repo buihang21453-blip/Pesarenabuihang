@@ -946,7 +946,7 @@
 }
 
 
-/* PES Arena V1.3.12 — granular Admin sizing for center control area.
+/* PES Arena V1.3.13 — granular Admin sizing for center control area.
    Real dimensions are changed so the browser reflows naturally; transform/zoom
    is deliberately avoided because they leave invisible layout gaps. */
 .room-layout-v137 {
@@ -1009,5 +1009,26 @@
     .room-layout-v137 .room-center-vs-image {
         width: min(var(--room-center-vs-size, 150px), 128px) !important;
         height: min(var(--room-center-vs-size, 150px), 128px) !important;
+    }
+}
+
+/* PES Arena V1.3.13 — loại bỏ scroll nội bộ thật sự ở 3 khung chính.
+   Wheel khi trỏ lên khung chỉ cuộn toàn trang; bản thân từng khung không còn là scroll container. */
+@media (min-width: 981px) {
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.home,
+    .room-layout-v137 .room-arena-frame > section.room-center-stage-plain,
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.away {
+        overflow: visible !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+        overscroll-behavior: auto !important;
+        scrollbar-width: auto !important;
+    }
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.home::-webkit-scrollbar,
+    .room-layout-v137 .room-arena-frame > section.room-center-stage-plain::-webkit-scrollbar,
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.away::-webkit-scrollbar {
+        display: initial !important;
+        width: initial !important;
+        height: initial !important;
     }
 }

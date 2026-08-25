@@ -334,10 +334,15 @@
 - Chuyển “Phong cách phòng đấu” xuống cuối tab “Thiết kế phòng đấu”.
 - Bỏ thanh cuộn nội bộ khỏi 3 khung Chủ phòng / Trung tâm / Đối thủ.
 - Chiều cao Admin trở thành chiều cao cơ sở; nội dung dài sẽ tự làm cả 3 khung giãn đều, không cắt chức năng.
-## PES Arena V1.3.12 — Center Control Customizer
+## PES Arena V1.3.13 — Center Control Customizer
 - Admin > Thiết kế phòng đấu: thêm tuỳ biến kích thước chi tiết cho khu vực điều khiển trận đấu.
 - Có nút Trở về mặc định.
 - Dùng kích thước CSS thật thay vì transform để tránh khoảng trống ảo sau khi thu nhỏ.
 - Có 3 cách bố trí dọc: Gom giữa / Dàn đều / Từ trên xuống.
-- APP_VERSION và giao diện đồng bộ V1.3.12.
-
+- APP_VERSION và giao diện đồng bộ V1.3.13.
+## PES Arena V1.3.13 — No Internal Room Scroll
+- Loại bỏ hoàn toàn cơ chế scroll nội bộ trên 3 khung Chủ phòng / Trung tâm / Đối thủ.
+- Không còn dùng cách ẩn scrollbar để tạo cảm giác không cuộn.
+- Khi rê chuột trên 3 khung và lăn wheel, chỉ trang web bên ngoài được cuộn; bản thân khung không giữ vùng cuộn riêng.
+- Nội dung nhiều tiếp tục làm hàng tự giãn chiều cao, không cắt chức năng.
+- Đồng bộ APP_VERSION/UI thành V1.3.13.
