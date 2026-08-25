@@ -920,3 +920,22 @@
     .room-layout-v137 .room-mode-dock-logo-shell { height: 58px; }
     .room-layout-v137 .room-mode-dock-card.room-mode-select-btn { min-height: 112px; }
 }
+
+
+/* PES Arena V1.3.10 — Admin panel height now targets the exact three real room elements.
+   Previous rules used min-height, so reducing the Admin value could appear to do nothing.
+   This rule makes the configured height directly observable while preserving all controls via internal scroll. */
+@media (min-width: 981px) {
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.home,
+    .room-layout-v137 .room-arena-frame > section.room-center-stage-plain,
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.away {
+        height: var(--room-panel-height, 600px) !important;
+        min-height: var(--room-panel-height, 600px) !important;
+        max-height: var(--room-panel-height, 600px) !important;
+        align-self: start !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        scrollbar-width: thin;
+    }
+}

@@ -321,3 +321,10 @@
 - Sau khi lưu form Admin, hệ thống giữ nguyên đúng tab vừa thao tác thay vì quay về Tổng quan.
 - Cập nhật APP_VERSION thành V1.3.9.
 
+
+
+## V1.3.10 — Sửa tác động chiều cao 3 khung từ Admin
+- Xác nhận đúng 3 phần tử thực: `section.room-team-card.home`, `section.room-center-stage-plain`, `section.room-team-card.away`.
+- Nguyên nhân bản trước: Admin chỉ điều khiển `min-height`; các CSS cũ/nội dung tự nhiên có thể giữ khung cao hơn nên giảm số px gần như không thấy tác động.
+- V1.3.10 dùng chiều cao chính xác từ `--room-panel-height` cho cả 3 khung trên desktop.
+- Khi nội dung vượt chiều cao đã đặt, khung cuộn nội bộ thay vì cắt mất nút/chức năng.

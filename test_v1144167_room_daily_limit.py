@@ -7,7 +7,7 @@ ADMIN = Path('modules/admin_dashboard_routes.py').read_text(encoding='utf-8')
 
 
 def test_version_67():
-    assert 'APP_VERSION = "V1.3.9"' in APP
+    assert 'APP_VERSION = "V1.3.10"' in APP
 
 
 def test_active_room_reads_match_rooms_and_waiting_ready():

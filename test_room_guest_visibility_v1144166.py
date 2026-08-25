@@ -5,7 +5,7 @@ ROOM_TEMPLATE = Path("templates/room_detail.html").read_text(encoding="utf-8")
 
 
 def test_version_is_66():
-    assert 'APP_VERSION = "V1.3.9"' in APP
+    assert 'APP_VERSION = "V1.3.10"' in APP
 
 
 def test_room_state_key_tracks_participants():
