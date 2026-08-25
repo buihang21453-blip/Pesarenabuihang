@@ -285,3 +285,10 @@
 - Shop items/equipment always fall back to pes-assets/v1.14.41/shop.
 - Lucky Box reward/exclusive assets always fall back to pes-assets/v1.14.41/luckybox.
 - All other website assets keep using the existing general STATIC_ASSET_BASE_URL (for example /v1).
+
+## V1.2.9.28 - Full Shop/Lucky Box asset path audit
+- Verified Lucky Box root assets resolve to v1.14.41/luckybox/luckybox-pes-arena.webp and v1.14.41/luckybox/no-reward.webp.
+- Verified exclusive rewards resolve under v1.14.41/luckybox/exclusive.
+- Verified regular Lucky Box rewards resolve under v1.14.41/luckybox/rewards.
+- Verified Shop equipment remains under v1.14.41/shop/items even when STATIC_ASSET_BASE_URL points to /v1.
+- Updated stale Supabase asset-check example that still referenced /v1/shop.

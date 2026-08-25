@@ -3,7 +3,8 @@
 
 Cách dùng:
   set STATIC_ASSET_BASE_URL=https://PROJECT.supabase.co/storage/v1/object/public/pes-assets/v1
-  set SHOP_ASSET_BASE_URL=https://PROJECT.supabase.co/storage/v1/object/public/pes-assets/v1/shop
+  set SHOP_ASSET_BASE_URL=https://PROJECT.supabase.co/storage/v1/object/public/pes-assets/v1.14.41/shop
+  set LUCKYBOX_ASSET_BASE_URL=https://PROJECT.supabase.co/storage/v1/object/public/pes-assets/v1.14.41/luckybox
   python tools/check_supabase_assets.py
 
 Script chỉ gửi HEAD/GET nhẹ, không sửa dữ liệu Supabase.
