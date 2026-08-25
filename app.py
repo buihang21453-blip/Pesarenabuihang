@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.4"
+APP_VERSION = "V1.4.5"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -2194,12 +2194,34 @@ def can_view_player_identity(target_user_id, viewer=None, invisible_ids=None):
 def filter_players_for_viewer(players, viewer=None, invisible_ids=None):
     viewer = viewer if viewer is not None else current_user()
     ids = invisible_ids if invisible_ids is not None else get_invisible_player_ids()
+    ids = {str(item) for item in ids}
     if is_admin_user(viewer):
         return list(players or [])
+
+    viewer_id = str((viewer or {}).get("id") or "")
+    # Tài khoản Invisible phải nhìn thấy toàn bộ player, bao gồm các tài khoản
+    # Invisible khác. Bypass thẳng bộ lọc để tránh bất kỳ nhánh lọc phụ nào
+    # làm mất đối thủ ở Players / Mời đấu / Dashboard.
+    if viewer_id and viewer_id in ids:
+        return list(players or [])
+
     return [
         player for player in (players or [])
-        if can_view_player_identity(player.get("id"), viewer, ids)
+        if str(player.get("id") or "") not in ids
     ]
+
+
+def invite_visible_players(viewer=None, *, include_admin=False, force_invisible_refresh=True):
+    """Danh sách dùng cho các bề mặt Mời đấu.
+
+    - Invisible viewer: thấy mọi player khác, kể cả Invisible.
+    - Normal viewer: không thấy Invisible.
+    - Có thể ép đọc lại setting từ DB để tránh cache cũ trên serverless instance.
+    """
+    viewer = viewer if viewer is not None else current_user()
+    invisible_ids = get_invisible_player_ids(force=force_invisible_refresh)
+    rows = list_players(include_admin=include_admin)
+    return filter_players_for_viewer(rows, viewer, invisible_ids)
 
 
 def match_visible_to_viewer(match, viewer=None, invisible_ids=None):
@@ -5899,7 +5921,7 @@ def dashboard():
         invite_count = 0
         flash("Dữ liệu đang tải chậm, vui lòng thử lại sau vài giây.", "warning")
 
-    invisible_ids = get_invisible_player_ids()
+    invisible_ids = get_invisible_player_ids(force=True)
     player_rows = filter_players_for_viewer(player_rows, user, invisible_ids)
     presence_rows = filter_players_for_viewer(presence_rows, user, invisible_ids)
 
@@ -5998,7 +6020,7 @@ def create_open_room():
 @app.route("/players")
 @login_required
 def players():
-    player_rows = list_players(include_admin=True)
+    player_rows = invite_visible_players(current_user(), include_admin=True, force_invisible_refresh=True)
     rooms = list_rooms()
     activity_map = build_player_activity_map(rooms=rooms)
     solo_room_user_ids = {
@@ -6007,7 +6029,6 @@ def players():
         if is_solo_waiting_room(room, room.get("host_user_id"))
     }
     viewer = current_user()
-    player_rows = filter_players_for_viewer(player_rows, viewer)
     viewer_room = active_room_for_user(viewer.get("id")) if viewer else None
     viewer_can_invite = bool(
         viewer
@@ -6223,8 +6244,7 @@ def invites():
     # Dùng cùng chính sách Invisible Accounts như trang Players/BXH.
     # Tài khoản tàng hình nhìn thấy các tài khoản tàng hình khác; tài khoản
     # bình thường không thấy tài khoản tàng hình trong danh sách Mời đấu.
-    invisible_ids = get_invisible_player_ids()
-    all_players = filter_players_for_viewer(list_players(), user, invisible_ids)
+    all_players = invite_visible_players(user, include_admin=False, force_invisible_refresh=True)
     available_players = [
         player for player in all_players
         if str(player.get("id")) != str(user.get("id")) and player.get("is_online")
@@ -6430,7 +6450,7 @@ def quick_match_invite():
         return jsonify({"ok": False, "message": "Không thể đọc danh sách người chơi online lúc này."}), 503
 
     presence_cutoff = now_dt() - timedelta(seconds=max(ONLINE_TIMEOUT_SECONDS, 90))
-    invisible_ids = get_invisible_player_ids()
+    invisible_ids = get_invisible_player_ids(force=True)
     for opponent in quick_players:
         oid = str(opponent.get("id") or "")
         if not oid or oid == str(user["id"]) or oid in excluded_user_ids:

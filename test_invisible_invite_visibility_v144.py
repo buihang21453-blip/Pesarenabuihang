@@ -5,12 +5,11 @@ APP = (ROOT / "app.py").read_text(encoding="utf-8")
 
 
 def test_version_v144():
-    assert 'APP_VERSION = "V1.4.4"' in APP
+    assert 'APP_VERSION = "V1.4.5"' in APP
 
 
 def test_invite_page_uses_same_invisible_visibility_policy_as_players_page():
-    assert 'invisible_ids = get_invisible_player_ids()' in APP
-    assert 'all_players = filter_players_for_viewer(list_players(), user, invisible_ids)' in APP
+    assert 'all_players = invite_visible_players(user, include_admin=False, force_invisible_refresh=True)' in APP
     assert 'if str(player.get("id")) != str(user.get("id")) and player.get("is_online")' in APP
 
 

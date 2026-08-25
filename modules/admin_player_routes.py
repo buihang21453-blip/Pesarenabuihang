@@ -112,7 +112,7 @@ def register_routes(context):
             f"invisible: {enabled}",
         )
         flash(
-            "Đã bật chế độ tàng hình. Tài khoản chỉ còn tự thấy chính mình; Admin vẫn thấy đầy đủ."
+            "Đã bật chế độ tàng hình. Tài khoản thường không nhìn thấy tài khoản này; các tài khoản tàng hình và Admin vẫn thấy đầy đủ."
             if enabled else
             "Đã tắt chế độ tàng hình. Tài khoản xuất hiện lại với người chơi khác.",
             "success",
