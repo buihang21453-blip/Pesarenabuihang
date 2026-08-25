@@ -390,3 +390,9 @@
 - Tin nhắn phòng không ghi vào bảng `chat_messages` hay Supabase; chỉ giữ tạm trong RAM tiến trình và tự mất khi tiến trình khởi động lại/TTL hết hạn.
 - Giữ giới hạn 200 ký tự và chống spam 5 giây/tin.
 - Khi mở Chat Phòng, Chat Sảnh đang mở sẽ tự đóng để tránh hai panel chồng lên nhau.
+
+## V1.4.3 - Invisible Accounts Peer Visibility
+- Tài khoản thường không nhìn thấy tài khoản tàng hình.
+- Admin luôn nhìn thấy tài khoản tàng hình.
+- Các tài khoản tàng hình có thể nhìn thấy nhau và vẫn giữ vị trí BXH đầy đủ theo danh sách toàn hệ thống.
+- Không thay đổi RP, lịch sử trận hay dữ liệu người chơi.

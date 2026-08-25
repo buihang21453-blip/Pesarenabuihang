@@ -11,7 +11,7 @@ CSS = (ROOT / "static/css/rank_mode_toggle.css").read_text(encoding="utf-8")
 
 
 def test_version_and_room_panel_config_exist():
-    assert 'APP_VERSION = "V1.4.2"' in APP
+    assert 'APP_VERSION = "V1.4.3"' in APP
     assert 'ROOM_PANEL_LAYOUT_SETTING_KEY = "room_panel_layout_config"' in APP
     assert '"center_bars_visible": True' in APP
     assert '"panel_height": 600' in APP

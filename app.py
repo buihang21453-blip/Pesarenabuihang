@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.2"
+APP_VERSION = "V1.4.3"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -2174,17 +2174,21 @@ def is_player_invisible(user_id, invisible_ids=None):
 
 
 def can_view_player_identity(target_user_id, viewer=None, invisible_ids=None):
-    """Admin luôn thấy; tài khoản tàng hình chỉ tự thấy chính mình."""
+    """Admin và tài khoản tàng hình thấy đầy đủ; tài khoản thường không thấy tài khoản tàng hình."""
     if not target_user_id:
         return True
     viewer = viewer if viewer is not None else current_user()
     if is_admin_user(viewer):
         return True
     ids = invisible_ids if invisible_ids is not None else get_invisible_player_ids()
-    target_id = str(target_user_id)
-    if target_id not in {str(item) for item in ids}:
+    ids = {str(item) for item in ids}
+    viewer_id = str((viewer or {}).get("id") or "")
+    # Các tài khoản tàng hình tạo thành một nhóm nhìn thấy nhau, đồng thời vẫn
+    # nhìn thấy toàn bộ tài khoản thường như người dùng bình thường.
+    if viewer_id and viewer_id in ids:
         return True
-    return bool(viewer and str(viewer.get("id")) == target_id)
+    target_id = str(target_user_id)
+    return target_id not in ids
 
 
 def filter_players_for_viewer(players, viewer=None, invisible_ids=None):
