@@ -791,33 +791,6 @@
         <h2>🎨 Thiết kế phòng đấu</h2>
         <p class="muted">Toàn bộ tuỳ chỉnh giao diện phòng đấu được gom tại đây để dễ quản lý: phong cách, logo chế độ, chiều cao 3 khung, hai thanh trang trí, Discord và giao diện nút Tìm Nhanh.</p>
     </div>
-    <div class="panel admin-room-style-panel">
-        <h2>🎨 Phong cách phòng đấu</h2>
-        <p class="muted">Chọn một phong cách áp dụng đồng bộ cho mọi trạng thái phòng, hai phía người chơi và toàn bộ nút thao tác.</p>
-        <form method="post" action="{{ url_for('admin_update_room_visual_style') }}">
-            <div class="admin-room-style-grid">
-                {% set style_descriptions = {
-                    'default':'Giao diện sân vận động hiện tại, không áp dụng skin bổ sung',
-                    'champions-night':'Viền vàng, huy hiệu và bảng điều khiển kiểu cúp vô địch',
-                    'frozen-tech':'Module điện tử góc cắt, đường quét và ánh sáng cyber',
-                    'ember-rivalry':'Mặt sân năng lượng, bảng chế độ và trạng thái thể thao',
-                    'royal-gold':'Các khối phát sáng mạnh như giao diện phòng chiến đấu',
-                    'mono-tactical':'Tấm kim loại, đinh tán và bảng điều khiển thiết giáp'
-                } %}
-                {% for value,label in room_style_options.items() %}
-                <label class="admin-room-style-card style-preview-{{ value }}">
-                    <input type="radio" name="room_visual_style" value="{{ value }}" {% if room_visual_style == value %}checked{% endif %}>
-                    <span class="admin-room-style-check">✓</span>
-                    <span class="admin-room-style-stage"><i></i><b>VS</b><i></i></span>
-                    <strong>{{ label }}</strong>
-                    <small>{{ style_descriptions[value] }}</small>
-                    <span class="admin-room-style-buttons"><em>RANK ĐƠN</em><em>RANDOM 3</em><em>TÌM NHANH</em></span>
-                </label>
-                {% endfor %}
-            </div>
-            <button class="btn green" type="submit">Áp dụng phong cách phòng đấu</button>
-        </form>
-    </div>
 
     <div class="panel admin-room-mode-logo-panel">
         <h2>🖼️ Tuỳ chỉnh logo chế độ thi đấu</h2>
@@ -844,7 +817,7 @@
 
     <div class="panel admin-room-panel-layout-panel">
         <h2>📐 Bố cục 3 khung phòng đấu</h2>
-        <p class="muted">Điều chỉnh trực tiếp và đồng bộ chiều cao Khung Chủ phòng, Khung Trung tâm và Khung Đối thủ. Cả 3 khung luôn cao đúng bằng giá trị đã đặt. Nếu nội dung dài hơn chiều cao này, nội dung trong khung sẽ cuộn để không mất nút/chức năng.</p>
+        <p class="muted">Điều chỉnh đồng bộ chiều cao cơ sở của Khung Chủ phòng, Khung Trung tâm và Khung Đối thủ. Cả 3 khung luôn bằng nhau; nếu nội dung nhiều hơn, cả hàng tự giãn thêm và không xuất hiện thanh cuộn trong khung.</p>
         <form method="post" action="{{ url_for('admin_update_room_panel_layout_config') }}" class="admin-room-panel-layout-form">
             <label class="admin-permission-option admin-center-bars-option">
                 <span><strong>Hiện 2 thanh trang trí ở khung trung tâm</strong><small style="display:block">Bật/tắt đồng thời thanh ::before phía trên và ::after phía dưới.</small></span>
@@ -883,6 +856,35 @@
             <button class="btn" type="submit">Lưu màu nút</button>
         </form>
     </div>
+
+    <div class="panel admin-room-style-panel">
+        <h2>🎨 Phong cách phòng đấu</h2>
+        <p class="muted">Chọn một phong cách áp dụng đồng bộ cho mọi trạng thái phòng, hai phía người chơi và toàn bộ nút thao tác.</p>
+        <form method="post" action="{{ url_for('admin_update_room_visual_style') }}">
+            <div class="admin-room-style-grid">
+                {% set style_descriptions = {
+                    'default':'Giao diện sân vận động hiện tại, không áp dụng skin bổ sung',
+                    'champions-night':'Viền vàng, huy hiệu và bảng điều khiển kiểu cúp vô địch',
+                    'frozen-tech':'Module điện tử góc cắt, đường quét và ánh sáng cyber',
+                    'ember-rivalry':'Mặt sân năng lượng, bảng chế độ và trạng thái thể thao',
+                    'royal-gold':'Các khối phát sáng mạnh như giao diện phòng chiến đấu',
+                    'mono-tactical':'Tấm kim loại, đinh tán và bảng điều khiển thiết giáp'
+                } %}
+                {% for value,label in room_style_options.items() %}
+                <label class="admin-room-style-card style-preview-{{ value }}">
+                    <input type="radio" name="room_visual_style" value="{{ value }}" {% if room_visual_style == value %}checked{% endif %}>
+                    <span class="admin-room-style-check">✓</span>
+                    <span class="admin-room-style-stage"><i></i><b>VS</b><i></i></span>
+                    <strong>{{ label }}</strong>
+                    <small>{{ style_descriptions[value] }}</small>
+                    <span class="admin-room-style-buttons"><em>RANK ĐƠN</em><em>RANDOM 3</em><em>TÌM NHANH</em></span>
+                </label>
+                {% endfor %}
+            </div>
+            <button class="btn green" type="submit">Áp dụng phong cách phòng đấu</button>
+        </form>
+    </div>
+
 </section>
 {% endif %}
 

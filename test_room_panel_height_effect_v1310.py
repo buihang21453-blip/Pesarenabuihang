@@ -12,16 +12,18 @@ ROOMS = [
 
 
 def test_version_v1310():
-    assert 'APP_VERSION = "V1.3.10"' in APP
+    assert 'APP_VERSION = "V1.3.11"' in APP
 
 
 def test_real_three_room_elements_are_targeted_exactly():
     assert '.room-arena-frame > section.room-side-card.room-team-card.home' in CSS
     assert '.room-arena-frame > section.room-center-stage-plain' in CSS
     assert '.room-arena-frame > section.room-side-card.room-team-card.away' in CSS
-    assert 'height: var(--room-panel-height, 600px) !important;' in CSS
-    assert 'max-height: var(--room-panel-height, 600px) !important;' in CSS
-    assert 'overflow-y: auto !important;' in CSS
+    assert 'min-height: var(--room-panel-height, 600px) !important;' in CSS
+    assert 'height: auto !important;' in CSS
+    assert 'max-height: none !important;' in CSS
+    assert 'overflow-y: visible !important;' in CSS
+    assert 'scrollbar-width: none !important;' in CSS
 
 
 def test_room_templates_contain_the_three_target_elements_and_variable():
@@ -34,5 +36,6 @@ def test_room_templates_contain_the_three_target_elements_and_variable():
 
 
 def test_admin_explains_direct_height_behavior():
-    assert 'Cả 3 khung luôn cao đúng bằng giá trị đã đặt' in ADMIN
-    assert 'nội dung trong khung sẽ cuộn' in ADMIN
+    assert 'Cả 3 khung luôn bằng nhau' in ADMIN
+    assert 'không xuất hiện thanh cuộn trong khung' in ADMIN
+    assert 'nếu nội dung nhiều hơn, cả hàng tự giãn thêm' in ADMIN

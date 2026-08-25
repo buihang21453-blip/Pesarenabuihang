@@ -328,3 +328,9 @@
 - Nguyên nhân bản trước: Admin chỉ điều khiển `min-height`; các CSS cũ/nội dung tự nhiên có thể giữ khung cao hơn nên giảm số px gần như không thấy tác động.
 - V1.3.10 dùng chiều cao chính xác từ `--room-panel-height` cho cả 3 khung trên desktop.
 - Khi nội dung vượt chiều cao đã đặt, khung cuộn nội bộ thay vì cắt mất nút/chức năng.
+
+
+## V1.3.11
+- Chuyển “Phong cách phòng đấu” xuống cuối tab “Thiết kế phòng đấu”.
+- Bỏ thanh cuộn nội bộ khỏi 3 khung Chủ phòng / Trung tâm / Đối thủ.
+- Chiều cao Admin trở thành chiều cao cơ sở; nội dung dài sẽ tự làm cả 3 khung giãn đều, không cắt chức năng.

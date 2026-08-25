@@ -24,4 +24,4 @@ def test_admin_forms_keep_current_tab_after_save():
     assert "input.name = '_admin_tab'" in JS
     assert 'panel.dataset.adminPanel' in JS
     assert 'request.form.get("_admin_tab")' in APP
-    assert 'APP_VERSION = "V1.3.10"' in APP
+    assert 'APP_VERSION = "V1.3.11"' in APP
