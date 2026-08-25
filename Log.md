@@ -391,8 +391,14 @@
 - Giữ giới hạn 200 ký tự và chống spam 5 giây/tin.
 - Khi mở Chat Phòng, Chat Sảnh đang mở sẽ tự đóng để tránh hai panel chồng lên nhau.
 
-## V1.4.3 - Invisible Accounts Peer Visibility
+## V1.4.4 - Invisible Accounts Peer Visibility
 - Tài khoản thường không nhìn thấy tài khoản tàng hình.
 - Admin luôn nhìn thấy tài khoản tàng hình.
 - Các tài khoản tàng hình có thể nhìn thấy nhau và vẫn giữ vị trí BXH đầy đủ theo danh sách toàn hệ thống.
 - Không thay đổi RP, lịch sử trận hay dữ liệu người chơi.
+
+## V1.4.4 — Invisible Accounts trong Mời đấu
+- Đồng bộ danh sách `/invites` với cùng chính sách tàng hình của `/players` và BXH.
+- Tài khoản Invisible nhìn thấy và có thể chọn các tài khoản Invisible khác khi mời đấu.
+- Tài khoản bình thường tiếp tục không thấy tài khoản Invisible trong danh sách mời.
+- Chuẩn hóa so sánh ID sang chuỗi để tránh lệch kiểu UUID/string.

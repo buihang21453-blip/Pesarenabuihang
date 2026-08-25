@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.3"
+APP_VERSION = "V1.4.4"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -6220,10 +6220,14 @@ def invites():
     except Exception:
         flash("Đang kiểm tra phòng hiện tại hơi chậm, vui lòng thử lại sau vài giây.", "warning")
 
-    all_players = list_players()
+    # Dùng cùng chính sách Invisible Accounts như trang Players/BXH.
+    # Tài khoản tàng hình nhìn thấy các tài khoản tàng hình khác; tài khoản
+    # bình thường không thấy tài khoản tàng hình trong danh sách Mời đấu.
+    invisible_ids = get_invisible_player_ids()
+    all_players = filter_players_for_viewer(list_players(), user, invisible_ids)
     available_players = [
         player for player in all_players
-        if player["id"] != user["id"] and player.get("is_online")
+        if str(player.get("id")) != str(user.get("id")) and player.get("is_online")
     ]
 
     all_invites = list_invites()

@@ -11,7 +11,7 @@ SQL = (ROOT / "docs/update_luckybox_admin_v1_14_41_43.sql").read_text(encoding="
 
 
 def test_phase2b_version_and_python_parse():
-    assert 'APP_VERSION = "V1.4.3"' in APP
+    assert 'APP_VERSION = "V1.4.4"' in APP
     for relative in (
         "modules/luckybox/repository.py",
         "modules/luckybox/service.py",

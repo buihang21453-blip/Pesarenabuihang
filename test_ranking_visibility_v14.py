@@ -7,7 +7,7 @@ RANKING = (ROOT / "templates/ranking.html").read_text(encoding="utf-8")
 
 
 def test_v14_version_and_ranking_thresholds():
-    assert 'APP_VERSION = "V1.4.3"' in APP
+    assert 'APP_VERSION = "V1.4.4"' in APP
     assert 'RANKING_QUALIFY_MATCHES = 5' in APP
     assert 'RANKING_INACTIVE_HIDE_DAYS = 30' in APP
 
