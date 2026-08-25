@@ -25,6 +25,8 @@ def register_routes(context):
             "quick_match_config": get_quick_match_config(),
             "room_visual_style": get_room_visual_style(),
             "room_style_options": ROOM_STYLE_OPTIONS,
+            "room_mode_logo_config": get_room_mode_logo_config(),
+            "room_mode_logo_limits": ROOM_MODE_LOGO_LIMITS,
             "repeat_opponent_rp_config": get_repeat_opponent_rp_config(),
             "weekly_rp_reward_config": get_weekly_rp_reward_config(),
             "duplicate_ip_warning_config": get_duplicate_ip_warning_config(),
@@ -91,6 +93,31 @@ def register_routes(context):
             "style": style, "label": ROOM_STYLE_OPTIONS[style],
         })
         flash(f"Đã áp dụng phong cách {ROOM_STYLE_OPTIONS[style]} cho toàn bộ phòng đấu.", "success")
+        return redirect_admin("system")
+
+
+    @app.route("/admin/system/room-mode-logo-config", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_update_room_mode_logo_config():
+        payload = normalize_room_mode_logo_config({
+            "opacity": request.form.get("room_mode_logo_opacity"),
+            "scale": request.form.get("room_mode_logo_scale"),
+        })
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": ROOM_MODE_LOGO_SETTING_KEY,
+                "setting_value": payload,
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "update_room_mode_logo_config",
+            attempts=2,
+        )
+        ttl_cache_delete("room_mode_logo_config")
+        cache_delete("_room_mode_logo_config_cached")
+        log_admin_action("Cập nhật hiển thị logo chế độ phòng đấu", "system", details=payload)
+        flash("Đã lưu độ trong suốt và kích thước logo chế độ phòng đấu.", "success")
         return redirect_admin("system")
 
 

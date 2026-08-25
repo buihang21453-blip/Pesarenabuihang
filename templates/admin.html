@@ -681,6 +681,24 @@
         </form>
     </div>
 
+    <div class="panel admin-room-mode-logo-panel">
+        <h2>🖼️ Tuỳ chỉnh logo chế độ thi đấu</h2>
+        <p class="muted">Điều chỉnh đồng bộ phần logo ở khung trung tâm và thanh CÁC CHẾ ĐỘ THI ĐẤU. 100% là mặc định.</p>
+        <form method="post" action="{{ url_for('admin_update_room_mode_logo_config') }}" class="admin-room-mode-logo-form">
+            <label>
+                <span>Độ trong suốt logo (%)</span>
+                <input type="number" name="room_mode_logo_opacity" min="{{ room_mode_logo_limits.opacity[0] }}" max="{{ room_mode_logo_limits.opacity[1] }}" step="1" value="{{ room_mode_logo_config.opacity }}" required>
+                <small>0 = ẩn hoàn toàn, 100 = rõ hoàn toàn</small>
+            </label>
+            <label>
+                <span>Kích thước logo (%)</span>
+                <input type="number" name="room_mode_logo_scale" min="{{ room_mode_logo_limits.scale[0] }}" max="{{ room_mode_logo_limits.scale[1] }}" step="1" value="{{ room_mode_logo_config.scale }}" required>
+                <small>50 = nhỏ hơn, 100 = mặc định, 200 = gấp đôi</small>
+            </label>
+            <button class="btn green" type="submit">Lưu tùy chỉnh logo chế độ</button>
+        </form>
+    </div>
+
     <div class="panel admin-discord-link-panel">
         <h2>💬 Link Discord phòng đấu</h2>
         <p class="muted">Link này sẽ xuất hiện trong khu vực Kết nối Parsec của phòng. Người chơi bấm vào sẽ mở Discord trong tab mới.</p>

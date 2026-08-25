@@ -549,3 +549,63 @@
     .room-mode-dock-title { font-size: 8px; }
     .room-mode-dock-status { font-size: 7px; }
 }
+
+
+/* PES Arena V1.2.9.34 — nền chế độ trong suốt, logo điều chỉnh được từ Admin, 3 khung chính bằng nhau. */
+.room-layout-v137 {
+    --room-mode-logo-opacity: 1;
+    --room-mode-logo-scale: 1;
+}
+.room-selected-mode-hero {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-color: rgba(255, 207, 72, .35);
+}
+.room-selected-mode-hero.mode-random3 {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-color: rgba(196, 82, 255, .35);
+}
+.room-selected-mode-logo-shell,
+.room-mode-dock-heading,
+.room-mode-dock,
+.room-mode-dock-grid,
+.room-mode-dock-form {
+    background: transparent !important;
+}
+.room-selected-mode-logo,
+.room-mode-dock-logo {
+    opacity: var(--room-mode-logo-opacity, 1);
+    transform: scale(var(--room-mode-logo-scale, 1));
+    transform-origin: center center;
+}
+.room-mode-dock-card.room-mode-select-btn,
+.room-mode-dock-card.room-mode-select-btn.mode-random3,
+.room-mode-dock-card.mode-coming-soon {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+.room-mode-dock-card.room-mode-select-btn {
+    border-color: rgba(255,255,255,.2);
+}
+.room-mode-dock-card.room-mode-select-btn.selected {
+    background: transparent !important;
+}
+.room-mode-dock-card.is-locked {
+    background: transparent !important;
+}
+@media (min-width: 1181px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(220px, .7fr) !important;
+    }
+}
+@media (min-width: 981px) and (max-width: 1180px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
+@media (max-width: 980px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}

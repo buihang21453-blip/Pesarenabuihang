@@ -650,6 +650,77 @@ def get_room_visual_style():
     return cache_set(request_key, style)
 
 
+ROOM_MODE_LOGO_SETTING_KEY = "room_mode_logo_config"
+ROOM_MODE_LOGO_DEFAULTS = {
+    "opacity": 100,
+    "scale": 100,
+}
+ROOM_MODE_LOGO_LIMITS = {
+    "opacity": (0, 100),
+    "scale": (50, 200),
+}
+
+
+def _coerce_room_mode_logo_value(value, *, default, lower, upper):
+    try:
+        if value is None or value == "":
+            raise ValueError
+        value = int(float(value))
+    except Exception:
+        value = default
+    return max(lower, min(upper, value))
+
+
+def normalize_room_mode_logo_config(raw):
+    config = dict(ROOM_MODE_LOGO_DEFAULTS)
+    try:
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        if isinstance(raw, dict):
+            config["opacity"] = _coerce_room_mode_logo_value(
+                raw.get("opacity"),
+                default=ROOM_MODE_LOGO_DEFAULTS["opacity"],
+                lower=ROOM_MODE_LOGO_LIMITS["opacity"][0],
+                upper=ROOM_MODE_LOGO_LIMITS["opacity"][1],
+            )
+            config["scale"] = _coerce_room_mode_logo_value(
+                raw.get("scale"),
+                default=ROOM_MODE_LOGO_DEFAULTS["scale"],
+                lower=ROOM_MODE_LOGO_LIMITS["scale"][0],
+                upper=ROOM_MODE_LOGO_LIMITS["scale"][1],
+            )
+    except Exception as exc:
+        print(f"normalize_room_mode_logo_config warning: {exc}")
+    return config
+
+
+
+def get_room_mode_logo_config(force=False):
+    request_key = "_room_mode_logo_config_cached"
+    if not force:
+        cached = cache_get(request_key)
+        if isinstance(cached, dict):
+            return dict(cached)
+        cached = ttl_cache_get("room_mode_logo_config")
+        if isinstance(cached, dict):
+            return cache_set(request_key, dict(cached))
+
+    config = dict(ROOM_MODE_LOGO_DEFAULTS)
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", ROOM_MODE_LOGO_SETTING_KEY).limit(1),
+            "get_room_mode_logo_config", attempts=2,
+        )
+        raw = ((result.data or [{}])[0]).get("setting_value")
+        config = normalize_room_mode_logo_config(raw)
+    except Exception as exc:
+        print(f"get_room_mode_logo_config warning: {exc}")
+
+    ttl_cache_set("room_mode_logo_config", dict(config), 45)
+    return cache_set(request_key, dict(config))
+
+
 QUICK_MATCH_SETTING_KEY = "quick_match_config"
 QUICK_MATCH_COLOR_DEFAULT = "blue"
 QUICK_MATCH_COLOR_VALUES = {"blue", "green"}
