@@ -109,8 +109,19 @@ tr:hover td { background: rgba(37,99,235,.12); }
 }
 .invite-modal-actions {
     display: flex;
+    justify-content: center;
+    align-items: center;
     gap: 10px;
     flex-wrap: wrap;
+    width: 100%;
+}
+.invite-modal-actions form {
+    margin: 0;
+    flex: 0 0 auto;
+}
+.invite-modal-actions .btn {
+    min-width: 110px;
+    text-align: center;
 }
 
 

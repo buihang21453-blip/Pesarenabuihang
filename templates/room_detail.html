@@ -101,13 +101,6 @@
         {% endif %}
 
             {% if room.has_guest %}
-                {% if room.status == 'waiting_ready' %}
-                <div class="room-center-countdown-label">Thời gian còn lại để bắt đầu</div>
-                <div class="room-center-countdown" id="roomStartCountdown" data-seconds="{{ room.start_countdown_seconds }}" data-mode="down">05:00</div>
-                {% else %}
-                <div class="room-center-countdown-label">Thời gian thi đấu</div>
-                <div class="room-center-countdown" id="roomStartCountdown" data-seconds="{{ room.match_elapsed_seconds }}" data-mode="up">00:00</div>
-                {% endif %}
                 {% if room.status == 'waiting_result_confirm' %}
                     <div class="room-result-review" aria-label="Tỷ số đang chờ xác nhận">
                         <div class="room-result-score">{{ room.host_score }} <span>-</span> {{ room.guest_score }}</div>
