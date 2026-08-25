@@ -15,6 +15,7 @@ EXPORTED_NAMES = [
     "process_inactivity_decay_batch",
 ]
 
+RANKING_QUALIFY_MATCHES = 5
 DECAY_START_DAY = 10
 SECOND_TIER_START_DAY = 20
 DECAY_END_DAY = 30
@@ -143,9 +144,18 @@ def _save_state(user_id, state):
     )
 
 
+def _completed_rank_matches(user):
+    return max(0, int((user or {}).get("wins") or 0)) + max(0, int((user or {}).get("draws") or 0)) + max(0, int((user or {}).get("losses") or 0))
+
+
 def process_inactivity_for_user(user, now=None):
     if not user or not user.get("id") or user.get("role") == "admin" or is_admin_user(user):
         return {"ok": True, "deducted": 0, "inactive_days": 0}
+
+    # V1.4: người chưa đủ 5 trận chưa có thứ hạng chính thức nên không áp dụng
+    # cơ chế suy giảm RP do không hoạt động. Chu kỳ chỉ bắt đầu sau khi đủ 5 trận.
+    if _completed_rank_matches(user) < RANKING_QUALIFY_MATCHES:
+        return {"ok": True, "deducted": 0, "inactive_days": 0, "placement": True}
 
     inactive_days, last_rank_activity = _inactive_days(user, now=now)
     if not last_rank_activity:
@@ -281,7 +291,7 @@ def process_inactivity_decay_batch(force=False):
     try:
         result = execute_query(
             db.table("users")
-            .select("id,role,admin_level,rank_points,created_at")
+            .select("id,role,admin_level,rank_points,wins,draws,losses,created_at")
             .eq("account_status", "approved")
             .order("created_at", desc=False)
             .limit(2000),

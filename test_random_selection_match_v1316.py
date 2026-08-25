@@ -9,7 +9,7 @@ RESULT=(ROOT/"modules/match_result_service.py").read_text(encoding="utf-8")
 REMATCH=(ROOT/"modules/room_rematch_routes.py").read_text(encoding="utf-8")
 
 def test_mode_core_and_version():
- assert 'APP_VERSION = "V1.3.16"' in APP
+ assert 'APP_VERSION = "V1.4"' in APP
  assert 'RANDOM_SELECTION_MATCH_MODE = "random_selection_match"' in APP
  assert 'build_random_selection_match_state' in APP
  assert 'decode_random_selection_match_state' in APP

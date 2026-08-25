@@ -104,6 +104,18 @@
     {% endif %}
 </section>
 
+{% if current_user and not current_player and current_ranking_status %}
+<section class="ranking-status-card">
+    {% if current_ranking_status.reason == 'placement' %}
+    <strong>Chưa có thứ hạng chính thức</strong>
+    <span>Bạn đã hoàn thành {{ current_ranking_status.matches }} / {{ ranking_qualify_matches }} trận Rank. Còn {{ current_ranking_status.matches_needed }} trận để xuất hiện trên BXH.</span>
+    {% elif current_ranking_status.reason == 'inactive' %}
+    <strong>Thứ hạng đang tạm ẩn</strong>
+    <span>Bạn đã {{ current_ranking_status.inactive_days }} ngày không thi đấu Rank. Hoàn thành 1 trận Rank để tự động xuất hiện lại trên BXH.</span>
+    {% endif %}
+</section>
+{% endif %}
+
 {% if current_player %}
 <section class="my-ranking-card ranking-my-card">
     <div><span class="eyebrow">VỊ TRÍ CỦA BẠN</span><strong class="my-rank-number">#{{ current_position }}</strong></div>

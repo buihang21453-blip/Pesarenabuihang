@@ -65,7 +65,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.3.16"
+APP_VERSION = "V1.4"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -2114,6 +2114,78 @@ def calculated_total_matches(player):
     return max(0, int(player.get("wins", 0) or 0)) + max(0, int(player.get("draws", 0) or 0)) + max(0, int(player.get("losses", 0) or 0))
 
 
+# V1.4 — điều kiện có thứ hạng chính thức trên BXH.
+RANKING_QUALIFY_MATCHES = 5
+RANKING_INACTIVE_HIDE_DAYS = 30
+
+
+def _ranking_activity_match(match):
+    """Một trận được xem là hoạt động Rank để duy trì trạng thái trên BXH."""
+    status = str((match or {}).get("status") or "").strip().lower()
+    if status == "confirmed":
+        return True
+    if status == "cancelled":
+        try:
+            return bool(is_forfeit_match(match))
+        except Exception:
+            note = str((match or {}).get("note") or "").casefold()
+            return "[forfeit:" in note or "bỏ cuộc" in note
+    return False
+
+
+def _latest_ranking_activity_map(matches):
+    latest = {}
+    for match in matches or []:
+        if not _ranking_activity_match(match):
+            continue
+        created = parse_dt((match or {}).get("created_at"))
+        if not created:
+            continue
+        for user_id in ((match or {}).get("player1_id"), (match or {}).get("player2_id")):
+            key = str(user_id or "")
+            if not key:
+                continue
+            old = latest.get(key)
+            if old is None or created > old:
+                latest[key] = created
+    return latest
+
+
+def ranking_eligibility(player, latest_activity_at=None, now=None):
+    """Trạng thái BXH: đủ 5 trận và chưa vắng Rank 30 ngày."""
+    matches = calculated_total_matches(player or {})
+    if matches < RANKING_QUALIFY_MATCHES:
+        return {
+            "visible": False,
+            "reason": "placement",
+            "matches": matches,
+            "matches_needed": RANKING_QUALIFY_MATCHES - matches,
+            "inactive_days": 0,
+        }
+
+    if latest_activity_at:
+        now = now or now_dt()
+        inactive_days = max(0, int((now - latest_activity_at).total_seconds() // 86400))
+        if inactive_days >= RANKING_INACTIVE_HIDE_DAYS:
+            return {
+                "visible": False,
+                "reason": "inactive",
+                "matches": matches,
+                "matches_needed": 0,
+                "inactive_days": inactive_days,
+            }
+    else:
+        inactive_days = 0
+
+    return {
+        "visible": True,
+        "reason": "ranked",
+        "matches": matches,
+        "matches_needed": 0,
+        "inactive_days": inactive_days,
+    }
+
+
 def normalize_player_match_totals(player):
     item = dict(player or {})
     item["total_matches"] = calculated_total_matches(item)
@@ -2171,10 +2243,21 @@ def list_players(include_admin=False):
     achievement_map = list_user_achievement_map()
     if not include_admin:
         safe.sort(key=_player_ranking_sort_key)
-        for position, item in enumerate(safe, 1):
-            item["position"] = position
-            item["rank_info"] = get_player_rank_info(item, position)
-            decorate_player_achievements(item, position, achievement_map)
+        official_position = 0
+        for item in safe:
+            if calculated_total_matches(item) >= RANKING_QUALIFY_MATCHES:
+                official_position += 1
+                item["position"] = official_position
+                item["ranking_status"] = "official"
+                item["matches_to_official_rank"] = 0
+                item["rank_info"] = get_player_rank_info(item, official_position)
+                decorate_player_achievements(item, official_position, achievement_map)
+            else:
+                item["position"] = None
+                item["ranking_status"] = "placement"
+                item["matches_to_official_rank"] = max(0, RANKING_QUALIFY_MATCHES - calculated_total_matches(item))
+                item["rank_info"] = get_player_rank_info(item, None)
+                decorate_player_achievements(item, None, achievement_map)
     else:
         for item in safe:
             item["rank_info"] = get_rank_info(item.get("rank_points", 0))
@@ -5837,20 +5920,49 @@ def ranking():
         return redirect(url_for("login"))
 
     try:
-        player_rows = list_players()
+        all_player_rows = list_players()
     except Exception as exc:
         # BXH là trang công khai; nếu Supabase chập chờn thì vẫn trả trang thay vì HTTP 500.
         print(f"ranking list_players warning: {exc}")
-        player_rows = []
+        all_player_rows = []
+
+    # V1.4: chỉ xếp hạng chính thức sau 5 trận. Người dưới 1.000 RP vẫn
+    # xuất hiện bình thường; người không có hoạt động Rank 30 ngày tạm ẩn.
+    try:
+        ranking_activity_matches = list_matches()
+    except Exception as exc:
+        print(f"ranking activity matches warning: {exc}")
+        ranking_activity_matches = []
+    latest_activity_map = _latest_ranking_activity_map(ranking_activity_matches)
+    ranking_now = now_dt()
+
+    player_rows = []
+    eligibility_by_id = {}
+    for player in all_player_rows:
+        eligibility = ranking_eligibility(
+            player,
+            latest_activity_map.get(str(player.get("id"))),
+            now=ranking_now,
+        )
+        eligibility_by_id[str(player.get("id"))] = eligibility
+        if eligibility.get("visible"):
+            player_rows.append(player)
+
+    player_rows.sort(key=_player_ranking_sort_key)
+    for position, player in enumerate(player_rows, 1):
+        player["position"] = position
+        player["rank_info"] = get_player_rank_info(player, position)
 
     query = (request.args.get("q") or "").strip().casefold()
     rank_filter = (request.args.get("rank") or "all").strip()
 
     current_player = None
     current_position = None
+    current_ranking_status = None
     if user:
-        current_player = next((player for player in player_rows if player.get("id") == user.get("id")), None)
+        current_player = next((player for player in player_rows if str(player.get("id")) == str(user.get("id"))), None)
         current_position = current_player.get("position") if current_player else None
+        current_ranking_status = eligibility_by_id.get(str(user.get("id")))
 
     filtered = player_rows
     if query:
@@ -5863,11 +5975,10 @@ def ranking():
         filtered = [player for player in filtered if player.get("rank_info", {}).get("slug") == rank_filter]
 
     top_players = filtered[:100]
-    try:
-        confirmed_matches = list_matches(status="confirmed")
-    except Exception as exc:
-        print(f"ranking list_matches warning: {exc}")
-        confirmed_matches = []
+    confirmed_matches = [
+        match for match in ranking_activity_matches
+        if str(match.get("status") or "").lower() == "confirmed"
+    ]
 
     recent_form_map = _build_recent_form_map(
         confirmed_matches,
@@ -5890,6 +6001,9 @@ def ranking():
         players=filtered,
         current_player=current_player,
         current_position=current_position,
+        current_ranking_status=current_ranking_status,
+        ranking_qualify_matches=RANKING_QUALIFY_MATCHES,
+        ranking_inactive_hide_days=RANKING_INACTIVE_HIDE_DAYS,
         q=request.args.get("q", ""),
         rank_filter=rank_filter,
     )

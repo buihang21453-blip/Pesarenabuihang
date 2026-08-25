@@ -365,3 +365,13 @@
 - Bỏ bước/nút CHỌN CLB; chủ phòng bấm QUAY QUÂN là tạo trận Rank và bắt đầu ngay.
 - Hai khung Chủ nhà/Đội khách hiển thị đủ 3 CLB được cấp.
 - Kết quả và RP lưu dấu mode `random_selection_match` riêng.
+
+## V1.4 — Official Ranking Qualification & Inactivity Visibility
+- Tài khoản chưa hoàn thành đủ 5 trận Rank không xuất hiện trên BXH và chưa nhận vị trí chính thức.
+- Khi đủ 5 trận, người chơi tự động nhận thứ hạng chính thức theo RP hiện tại; không yêu cầu RP phải từ 1.000 trở lên.
+- Người đã đủ điều kiện vẫn đứng trên BXH kể cả RP dưới 1.000.
+- Sau 30 ngày không có hoạt động Rank, người chơi tạm ẩn khỏi BXH; hoàn thành lại 1 trận Rank sẽ tự xuất hiện lại.
+- Cơ chế giảm RP do không hoạt động chỉ áp dụng sau khi đã đủ 5 trận; mức suy giảm dừng ở mốc 30 ngày, không tiếp tục tăng sau đó.
+- BXH tính lại position sau khi loại người chưa đủ trận hoặc đã tạm ẩn.
+- Thêm thông báo trên BXH cá nhân cho trạng thái chưa đủ 5 trận hoặc đang tạm ẩn do 30 ngày.
+- APP_VERSION/UI cập nhật thành V1.4.
