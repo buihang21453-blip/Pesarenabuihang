@@ -118,6 +118,9 @@ def register_routes(context):
     @login_required
     def profile(user_id):
         viewer = current_user()
+        if not can_view_player_identity(user_id, viewer):
+            flash("Không tìm thấy player.", "danger")
+            return redirect(url_for("players"))
         context_data = service.build_profile_context(user_id, viewer)
         if context_data is None:
             flash("Không tìm thấy player.", "danger")

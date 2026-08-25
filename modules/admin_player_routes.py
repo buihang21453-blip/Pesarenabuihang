@@ -76,6 +76,49 @@ def register_routes(context):
         return redirect_admin("users")
 
 
+
+
+    @app.route("/admin/player/<user_id>/invisibility", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("users_edit")
+    def admin_toggle_player_invisibility(user_id):
+        player = get_user(user_id)
+        if not player or player.get("role") != "player":
+            flash("Không tìm thấy tài khoản người chơi.", "danger")
+            return redirect_admin("users")
+
+        invisible_ids = get_invisible_player_ids(force=True)
+        enabled = request.form.get("enabled") == "1"
+        if enabled:
+            invisible_ids.add(str(user_id))
+        else:
+            invisible_ids.discard(str(user_id))
+
+        payload = {"user_ids": sorted(invisible_ids)}
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": INVISIBLE_PLAYERS_SETTING_KEY,
+                "setting_value": payload,
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "update_player_invisibility", attempts=2,
+        )
+        ttl_cache_delete("invisible_player_ids")
+        cache_delete("_invisible_player_ids_cached")
+        log_admin_action(
+            "Bật tài khoản tàng hình" if enabled else "Tắt tài khoản tàng hình",
+            "user", user_id, player.get("username"),
+            f"invisible: {enabled}",
+        )
+        flash(
+            "Đã bật chế độ tàng hình. Tài khoản chỉ còn tự thấy chính mình; Admin vẫn thấy đầy đủ."
+            if enabled else
+            "Đã tắt chế độ tàng hình. Tài khoản xuất hiện lại với người chơi khác.",
+            "success",
+        )
+        return redirect_admin("users")
+
     @app.route("/admin/toggle-online/<user_id>", methods=["POST"])
     @login_required
     @admin_required

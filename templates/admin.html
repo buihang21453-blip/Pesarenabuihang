@@ -255,6 +255,7 @@
                             <span class="badge {{ 'gold' if p.role == 'admin' or p.admin_level in ['owner', 'admin'] else (p.account_status or 'approved') }}">
                                 {% if p.admin_level == 'owner' %}Admin{% elif p.admin_level == 'admin' %}Admin{% else %}{{ p.account_status or 'approved' }}{% endif %}
                             </span>
+                            {% if p.role == 'player' and p.is_invisible %}<span class="badge gold" title="Tài khoản tàng hình">👻 Tàng hình</span>{% endif %}
                         </td>
                         <td><code class="admin-ip-code">{{ p.register_ip or '-' }}</code></td>
                         <td><code class="admin-ip-code">{{ p.latest_ip or '-' }}</code></td>
@@ -335,6 +336,11 @@
                                 <form class="inline-form" method="post" action="{{ url_for('admin_promote_user', user_id=p.id) }}" onsubmit="return confirm('Thêm người này làm Admin?')"><button class="btn gold" type="submit">Thêm làm Admin</button></form>
                                 {% endif %}
                                 {% if p.admin_level == 'none' %}
+                                <form class="inline-form" method="post" action="{{ url_for('admin_toggle_player_invisibility', user_id=p.id) }}">
+                                    <input type="hidden" name="_admin_tab" value="users">
+                                    <input type="hidden" name="enabled" value="{{ 0 if p.is_invisible else 1 }}">
+                                    <button class="btn {{ 'green' if p.is_invisible else 'gold' }}" type="submit">{{ 'Hiện tài khoản' if p.is_invisible else '👻 Bật tàng hình' }}</button>
+                                </form>
                                 <form class="inline-form" method="post" action="{{ url_for('admin_reset_player_stats', user_id=p.id) }}" onsubmit="return confirm('Reset toàn bộ chỉ số thi đấu?')"><button class="btn gold" type="submit">Reset chỉ số</button></form>
                                 <form class="inline-form" method="post" action="{{ url_for('admin_delete_player', user_id=p.id) }}" onsubmit="return confirm('VÔ HIỆU HÓA tài khoản này? Lịch sử trận và RP của mọi người sẽ được giữ nguyên.')"><button class="btn red" type="submit">Xóa mềm</button></form>
                                 {% endif %}

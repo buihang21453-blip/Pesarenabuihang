@@ -226,6 +226,9 @@ def register_routes(context):
             (item.get("duplicate_ips") or [item.get("latest_ip") or "~"])[0],
             (item.get("username") or "").lower(),
         ))
+        invisible_player_ids = get_invisible_player_ids()
+        for admin_user in admin_users:
+            admin_user["is_invisible"] = str(admin_user.get("id")) in invisible_player_ids
         players = [u for u in admin_users if u.get("role") == "player"]
         admins = [u for u in admin_users if is_admin_user(u)]
         pending_users = [u for u in players if u.get("account_status") == "pending"]

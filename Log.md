@@ -375,3 +375,11 @@
 - BXH tính lại position sau khi loại người chưa đủ trận hoặc đã tạm ẩn.
 - Thêm thông báo trên BXH cá nhân cho trạng thái chưa đủ 5 trận hoặc đang tạm ẩn do 30 ngày.
 - APP_VERSION/UI cập nhật thành V1.4.
+
+## PES Arena V1.4.1 — Tài khoản tàng hình
+- Admin có thể bật/tắt trạng thái tàng hình riêng cho từng tài khoản người chơi trong tab Quản lý user.
+- Tài khoản tàng hình vẫn tự thấy chính mình và thứ hạng thật của mình; Admin luôn thấy đầy đủ.
+- Người chơi thường/khách công khai không thấy tài khoản tàng hình trên BXH; thứ hạng được đánh lại liên tục, không để lại vị trí trống.
+- Ẩn khỏi Players, danh sách Online Dashboard, Online Count, Tìm Nhanh, hồ sơ công khai và lịch sử toàn hệ thống đối với người không có quyền thấy.
+- Không sửa RP, W-D-L, lịch sử gốc, Core trận đấu hay dữ liệu tài khoản.
+- 243/243 pytest PASS.

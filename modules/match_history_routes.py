@@ -66,11 +66,17 @@ def register_routes(context):
         history_view = "all" if requested_view == "all" and can_view_all_history else "mine"
 
         rows = list_matches()
+        invisible_ids = get_invisible_player_ids()
         if history_view != "all":
             user_id = user.get("id")
             rows = [
                 match for match in rows
                 if user_id in {match.get("player1_id"), match.get("player2_id")}
+            ]
+        else:
+            rows = [
+                match for match in rows
+                if match_visible_to_viewer(match, user, invisible_ids)
             ]
 
         if status_filter == "cancelled":

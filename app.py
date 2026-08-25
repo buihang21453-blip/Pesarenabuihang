@@ -65,7 +65,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4"
+APP_VERSION = "V1.4.1"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -2112,6 +2112,93 @@ def calculated_total_matches(player):
     """Nguồn chuẩn duy nhất: tổng trận = thắng + hòa + thua."""
     player = player or {}
     return max(0, int(player.get("wins", 0) or 0)) + max(0, int(player.get("draws", 0) or 0)) + max(0, int(player.get("losses", 0) or 0))
+
+
+# V1.4.1 — tài khoản tàng hình do Admin quản lý.
+# Chỉ ảnh hưởng các bề mặt khám phá (BXH, Players, Dashboard, hồ sơ công khai,
+# lịch sử toàn hệ thống, Tìm Nhanh). Không sửa RP, lịch sử gốc hoặc Core trận đấu.
+INVISIBLE_PLAYERS_SETTING_KEY = "invisible_player_ids"
+
+
+def get_invisible_player_ids(force=False):
+    request_key = "_invisible_player_ids_cached"
+    if not force:
+        cached = cache_get(request_key)
+        if isinstance(cached, (set, list, tuple)):
+            return {str(item) for item in cached if item}
+        cached = ttl_cache_get("invisible_player_ids")
+        if isinstance(cached, (set, list, tuple)):
+            values = {str(item) for item in cached if item}
+            cache_set(request_key, values)
+            return values
+
+    values = set()
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", INVISIBLE_PLAYERS_SETTING_KEY).limit(1),
+            "get_invisible_player_ids", attempts=2,
+        )
+        raw = ((result.data or [{}])[0]).get("setting_value")
+        if isinstance(raw, str):
+            try:
+                raw = json.loads(raw)
+            except Exception:
+                raw = []
+        if isinstance(raw, dict):
+            raw = raw.get("user_ids") or []
+        if isinstance(raw, (list, tuple, set)):
+            values = {str(item) for item in raw if item}
+    except Exception as exc:
+        print(f"get_invisible_player_ids warning: {exc}")
+
+    ttl_cache_set("invisible_player_ids", sorted(values), 45)
+    cache_set(request_key, values)
+    return values
+
+
+def is_player_invisible(user_id, invisible_ids=None):
+    if not user_id:
+        return False
+    ids = invisible_ids if invisible_ids is not None else get_invisible_player_ids()
+    return str(user_id) in {str(item) for item in ids}
+
+
+def can_view_player_identity(target_user_id, viewer=None, invisible_ids=None):
+    """Admin luôn thấy; tài khoản tàng hình chỉ tự thấy chính mình."""
+    if not target_user_id:
+        return True
+    viewer = viewer if viewer is not None else current_user()
+    if is_admin_user(viewer):
+        return True
+    ids = invisible_ids if invisible_ids is not None else get_invisible_player_ids()
+    target_id = str(target_user_id)
+    if target_id not in {str(item) for item in ids}:
+        return True
+    return bool(viewer and str(viewer.get("id")) == target_id)
+
+
+def filter_players_for_viewer(players, viewer=None, invisible_ids=None):
+    viewer = viewer if viewer is not None else current_user()
+    ids = invisible_ids if invisible_ids is not None else get_invisible_player_ids()
+    if is_admin_user(viewer):
+        return list(players or [])
+    return [
+        player for player in (players or [])
+        if can_view_player_identity(player.get("id"), viewer, ids)
+    ]
+
+
+def match_visible_to_viewer(match, viewer=None, invisible_ids=None):
+    viewer = viewer if viewer is not None else current_user()
+    ids = invisible_ids if invisible_ids is not None else get_invisible_player_ids()
+    if is_admin_user(viewer):
+        return True
+    return all(
+        can_view_player_identity(user_id, viewer, ids)
+        for user_id in (match.get("player1_id"), match.get("player2_id"))
+        if user_id
+    )
 
 
 # V1.4 — điều kiện có thứ hạng chính thức trên BXH.
@@ -5688,7 +5775,8 @@ def api_admin_send_announcement():
 @app.route("/api/online-count")
 @login_required
 def api_online_count():
-    players = list_players(include_admin=True)
+    viewer = current_user()
+    players = filter_players_for_viewer(list_players(include_admin=True), viewer)
     online_count = sum(1 for player in players if player.get("is_online"))
     return jsonify({"ok": True, "online_count": online_count})
 
@@ -5721,6 +5809,10 @@ def dashboard():
         player_rows, presence_rows, matches, rooms = [], [], [], []
         invite_count = 0
         flash("Dữ liệu đang tải chậm, vui lòng thử lại sau vài giây.", "warning")
+
+    invisible_ids = get_invisible_player_ids()
+    player_rows = filter_players_for_viewer(player_rows, user, invisible_ids)
+    presence_rows = filter_players_for_viewer(presence_rows, user, invisible_ids)
 
     me = next((player for player in player_rows if player.get("id") == user.get("id")), dict(user))
     my_position = next((index for index, player in enumerate(player_rows, 1) if player.get("id") == user.get("id")), None)
@@ -5826,6 +5918,7 @@ def players():
         if is_solo_waiting_room(room, room.get("host_user_id"))
     }
     viewer = current_user()
+    player_rows = filter_players_for_viewer(player_rows, viewer)
     viewer_room = active_room_for_user(viewer.get("id")) if viewer else None
     viewer_can_invite = bool(
         viewer
@@ -5936,7 +6029,7 @@ def ranking():
     latest_activity_map = _latest_ranking_activity_map(ranking_activity_matches)
     ranking_now = now_dt()
 
-    player_rows = []
+    eligible_player_rows = []
     eligibility_by_id = {}
     for player in all_player_rows:
         eligibility = ranking_eligibility(
@@ -5946,10 +6039,20 @@ def ranking():
         )
         eligibility_by_id[str(player.get("id"))] = eligibility
         if eligibility.get("visible"):
-            player_rows.append(player)
+            eligible_player_rows.append(player)
 
-    player_rows.sort(key=_player_ranking_sort_key)
-    for position, player in enumerate(player_rows, 1):
+    eligible_player_rows.sort(key=_player_ranking_sort_key)
+    invisible_ids = get_invisible_player_ids()
+    global_position_map = {str(player.get("id")): position for position, player in enumerate(eligible_player_rows, 1)}
+    player_rows = filter_players_for_viewer(eligible_player_rows, user, invisible_ids)
+
+    # Người thường: tài khoản tàng hình biến mất hoàn toàn và số thứ hạng được
+    # nén lại, không để lộ khoảng trống. Admin và chính tài khoản tàng hình giữ
+    # vị trí thật trong BXH đầy đủ để tài khoản test vẫn nhìn thấy thứ hạng của mình.
+    viewer_is_invisible = bool(user and str(user.get("id")) in invisible_ids)
+    preserve_global_positions = bool(is_admin_user(user) or viewer_is_invisible)
+    for visible_position, player in enumerate(player_rows, 1):
+        position = global_position_map.get(str(player.get("id")), visible_position) if preserve_global_positions else visible_position
         player["position"] = position
         player["rank_info"] = get_player_rank_info(player, position)
 
@@ -6234,9 +6337,12 @@ def quick_match_invite():
         return jsonify({"ok": False, "message": "Không thể đọc danh sách người chơi online lúc này."}), 503
 
     presence_cutoff = now_dt() - timedelta(seconds=max(ONLINE_TIMEOUT_SECONDS, 90))
+    invisible_ids = get_invisible_player_ids()
     for opponent in quick_players:
         oid = str(opponent.get("id") or "")
         if not oid or oid == str(user["id"]) or oid in excluded_user_ids:
+            continue
+        if not can_view_player_identity(oid, user, invisible_ids):
             continue
         role = str(opponent.get("role") or "").strip().lower()
         admin_level = str(opponent.get("admin_level") or "").strip().lower()
