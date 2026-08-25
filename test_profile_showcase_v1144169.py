@@ -8,7 +8,7 @@ def read(relative):
 
 
 def test_profile_v2_release_version():
-    assert 'APP_VERSION = "V1.3.14"' in read("app.py")
+    assert 'APP_VERSION = "V1.3.15"' in read("app.py")
 
 
 def test_profile_v2_isolated_assets_and_complete_banner():

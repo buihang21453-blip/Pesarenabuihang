@@ -792,6 +792,57 @@
         <p class="muted">Toàn bộ tuỳ chỉnh giao diện phòng đấu được gom tại đây để dễ quản lý: phong cách, logo chế độ, chiều cao 3 khung, hai thanh trang trí, Discord và giao diện nút Tìm Nhanh.</p>
     </div>
 
+    <div class="panel admin-room-preview-panel">
+        <div class="admin-room-preview-heading">
+            <div>
+                <h2>👁️ Preview phòng đấu</h2>
+                <p class="muted">Thay đổi các ô bên dưới để xem trước ngay lập tức trước khi bấm Lưu. Preview không ghi dữ liệu vào hệ thống.</p>
+            </div>
+            <button class="btn gray" type="button" id="adminRoomPreviewReset">↺ Preview theo cài đặt đã lưu</button>
+        </div>
+        <div id="adminRoomPreview"
+             class="admin-room-live-preview room-layout-v137"
+             data-room-style="{{ room_visual_style|default('default') }}"
+             data-center-bars="{{ 'visible' if room_panel_layout_config.center_bars_visible|default(true) else 'hidden' }}"
+             data-center-layout="{{ room_center_design_config.vertical_layout|default('compact') }}"
+             style="--preview-panel-height: {{ room_panel_layout_config.panel_height|default(600) }}px; --preview-stage-padding: {{ room_center_design_config.stage_padding|default(18) }}px; --preview-stage-gap: {{ room_center_design_config.stage_gap|default(18) }}px; --preview-mode-width: {{ room_center_design_config.mode_width|default(320) }}px; --preview-mode-padding: {{ room_center_design_config.mode_padding|default(13) }}px; --preview-vs-size: {{ room_center_design_config.vs_size|default(150) }}px; --preview-score-width: {{ room_center_design_config.score_width|default(340) }}px; --preview-score-padding: {{ room_center_design_config.score_padding|default(14) }}px; --preview-score-input-height: {{ room_center_design_config.score_input_height|default(44) }}px; --preview-action-height: {{ room_center_design_config.action_height|default(46) }}px; --preview-logo-bg-opacity: {{ (room_mode_logo_config.background_opacity|default(0)) / 100 }}; --preview-center-logo-scale: {{ (room_mode_logo_config.scale|default(100)) / 100 }}; --preview-dock-logo-scale: {{ (room_mode_logo_config.dock_scale|default(135)) / 100 }};">
+            <div class="admin-room-preview-stage">
+                <div class="admin-room-preview-side home">
+                    <div class="admin-room-preview-player"><span class="admin-room-preview-avatar">H</span><strong>CHỦ PHÒNG</strong><small>Test Host • Gà</small></div>
+                    <div class="admin-room-preview-club"><div class="admin-room-preview-shield">?</div><strong>CHƯA CHỌN ĐỘI</strong><small>Chưa có giải</small></div>
+                </div>
+                <div class="admin-room-preview-center">
+                    <div class="admin-room-preview-mode">
+                        <small>CHẾ ĐỘ THI ĐẤU</small>
+                        <span class="admin-room-preview-logo-bg"><img src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/Model/2.webp" alt="Random 3 chọn 1"></span>
+                        <strong>RANDOM 3 CHỌN 1</strong>
+                        <em>Trận đấu đang diễn ra</em>
+                    </div>
+                    <img class="admin-room-preview-vs" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/VS.webp" alt="VS">
+                    <div class="admin-room-preview-score">
+                        <strong>Kết quả trận đấu</strong>
+                        <div><input value="0" aria-label="Sân Nhà" readonly><input value="0" aria-label="Sân Khách" readonly></div>
+                        <button class="btn green" type="button">Gửi Kết Quả</button>
+                    </div>
+                </div>
+                <div class="admin-room-preview-side away">
+                    <div class="admin-room-preview-player"><span class="admin-room-preview-avatar">K</span><strong>ĐỐI THỦ</strong><small>Test Khách • Gà</small></div>
+                    <div class="admin-room-preview-club"><div class="admin-room-preview-shield">?</div><strong>CHƯA CHỌN ĐỘI</strong><small>Chưa có giải</small></div>
+                </div>
+            </div>
+            <div class="admin-room-preview-mode-dock">
+                <div class="admin-room-preview-dock-title">CÁC CHẾ ĐỘ THI ĐẤU</div>
+                <div class="admin-room-preview-dock-row">
+                    {% for mode_no in range(1, 8) %}
+                    <span class="admin-room-preview-dock-item{% if mode_no == 2 %} selected{% endif %}">
+                        <span class="admin-room-preview-dock-logo-bg"><img src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/Model/{{ mode_no }}.webp" alt="Logo chế độ {{ mode_no }}"></span>
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="panel admin-room-mode-logo-panel">
         <h2>🖼️ Tuỳ chỉnh logo chế độ thi đấu</h2>
         <p class="muted">Điều chỉnh nền phía sau logo và kích thước riêng cho logo ở khung trung tâm / thanh CÁC CHẾ ĐỘ THI ĐẤU.</p>

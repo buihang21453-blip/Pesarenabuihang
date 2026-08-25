@@ -351,3 +351,9 @@
 - Dọn toàn bộ thư mục `__pycache__`, `.pytest_cache` và các file bytecode `*.pyc`/`*.pyo` khỏi gói ZIP phát hành.
 - Loại bỏ các file rác phổ biến như `.DS_Store`, `Thumbs.db` nếu có.
 - Không thay đổi logic hay giao diện; chỉ làm sạch gói source phát hành.
+## PES Arena V1.3.15 — Admin Room Design Live Preview
+- Thêm màn Preview trực tiếp trong tab 🎨 Thiết kế phòng đấu.
+- Preview cập nhật ngay khi thay đổi kích thước, khoảng cách, logo, chiều cao 3 khung, 2 thanh trang trí, bố cục dọc và phong cách phòng.
+- Preview không lưu dữ liệu; chỉ bấm nút Lưu của từng nhóm cài đặt mới ghi vào hệ thống.
+- Có nút ↺ Preview theo cài đặt đã lưu.
+- Đồng bộ APP_VERSION/UI thành V1.3.15.

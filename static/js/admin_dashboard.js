@@ -127,3 +127,76 @@
     });
     loadLazyModule(window.location.hash.replace('#', ''));
 })();
+
+
+// PES Arena V1.3.15 — Preview trực tiếp cho tab Thiết kế phòng đấu.
+(function () {
+    const preview = document.getElementById('adminRoomPreview');
+    if (!preview) return;
+
+    const designTab = document.querySelector('[data-admin-panel="room-design"]');
+    if (!designTab) return;
+
+    const initial = {
+        style: preview.dataset.roomStyle || 'default',
+        bars: preview.dataset.centerBars || 'visible',
+        layout: preview.dataset.centerLayout || 'compact',
+        cssText: preview.getAttribute('style') || ''
+    };
+
+    function numberValue(name, fallback) {
+        const el = designTab.querySelector('[name="' + name + '"]');
+        const value = el ? Number(el.value) : fallback;
+        return Number.isFinite(value) ? value : fallback;
+    }
+
+    function syncPreview() {
+        const bars = designTab.querySelector('[name="center_bars_visible"]');
+        const layout = designTab.querySelector('[name="vertical_layout"]');
+        const style = designTab.querySelector('[name="room_visual_style"]:checked');
+        const quickColor = designTab.querySelector('[name="color"]');
+
+        preview.dataset.centerBars = bars && bars.checked ? 'visible' : 'hidden';
+        preview.dataset.centerLayout = layout ? layout.value : 'compact';
+        preview.dataset.roomStyle = style ? style.value : (preview.dataset.roomStyle || 'default');
+
+        preview.style.setProperty('--preview-panel-height', numberValue('panel_height', 600) + 'px');
+        preview.style.setProperty('--preview-stage-padding', numberValue('stage_padding', 18) + 'px');
+        preview.style.setProperty('--preview-stage-gap', numberValue('stage_gap', 18) + 'px');
+        preview.style.setProperty('--preview-mode-width', numberValue('mode_width', 320) + 'px');
+        preview.style.setProperty('--preview-mode-padding', numberValue('mode_padding', 13) + 'px');
+        preview.style.setProperty('--preview-vs-size', numberValue('vs_size', 150) + 'px');
+        preview.style.setProperty('--preview-score-width', numberValue('score_width', 340) + 'px');
+        preview.style.setProperty('--preview-score-padding', numberValue('score_padding', 14) + 'px');
+        preview.style.setProperty('--preview-score-input-height', numberValue('score_input_height', 44) + 'px');
+        preview.style.setProperty('--preview-action-height', numberValue('action_height', 46) + 'px');
+        preview.style.setProperty('--preview-logo-bg-opacity', numberValue('room_mode_logo_background_opacity', 0) / 100);
+        preview.style.setProperty('--preview-center-logo-scale', numberValue('room_mode_logo_scale', 100) / 100);
+        preview.style.setProperty('--preview-dock-logo-scale', numberValue('room_mode_dock_logo_scale', 135) / 100);
+
+        const actionButton = preview.querySelector('.admin-room-preview-score .btn');
+        if (actionButton && quickColor) {
+            actionButton.classList.toggle('green', quickColor.value === 'green');
+            actionButton.classList.toggle('blue', quickColor.value === 'blue');
+        }
+    }
+
+    designTab.querySelectorAll('input, select').forEach(function (control) {
+        control.addEventListener('input', syncPreview);
+        control.addEventListener('change', syncPreview);
+    });
+
+    const reset = document.getElementById('adminRoomPreviewReset');
+    if (reset) {
+        reset.addEventListener('click', function () {
+            preview.setAttribute('style', initial.cssText);
+            preview.dataset.roomStyle = initial.style;
+            preview.dataset.centerBars = initial.bars;
+            preview.dataset.centerLayout = initial.layout;
+            designTab.querySelectorAll('form').forEach(function (form) { form.reset(); });
+            syncPreview();
+        });
+    }
+
+    syncPreview();
+})();
