@@ -25,7 +25,8 @@ def test_admin_has_controls_for_logo_opacity_and_scale():
     assert "room_mode_logo_background_opacity" in ADMIN
     assert "room_mode_logo_scale" in ADMIN
     assert "Độ trong suốt Nền logo (%)" in ADMIN
-    assert "Kích thước logo (%)" in ADMIN
+    assert "Kích thước logo khung trung tâm (%)" in ADMIN
+    assert "Kích thước logo CÁC CHẾ ĐỘ THI ĐẤU (%)" in ADMIN
 
 
 def test_room_views_receive_css_variables_and_transparent_mode_blocks():

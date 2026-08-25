@@ -873,7 +873,7 @@
 }
 
 
-/* PES Arena V1.3.7 — Admin controls the two center decorative bars and equal room-panel height. */
+/* PES Arena V1.3.8 — Admin controls the two center decorative bars and equal room-panel height. */
 .room-layout-v137 {
     --room-panel-height: 600px;
 }
@@ -892,4 +892,31 @@
         align-self: stretch !important;
         box-sizing: border-box !important;
     }
+}
+
+
+/* PES Arena V1.3.8 — logo trong CÁC CHẾ ĐỘ THI ĐẤU lớn hơn và có scale riêng từ Admin. */
+.room-layout-v137 { --room-mode-dock-logo-scale: 1.35; }
+.room-layout-v137 .room-selected-mode-logo {
+    transform: scale(var(--room-mode-logo-scale, 1)) !important;
+}
+.room-layout-v137 .room-mode-dock-logo {
+    transform: scale(var(--room-mode-dock-logo-scale, 1.35)) !important;
+    transform-origin: center center;
+    max-width: 104px;
+    height: 46px;
+}
+.room-layout-v137 .room-mode-dock-logo-shell {
+    width: min(100%, 126px);
+    height: 66px;
+    padding: 5px 8px;
+    overflow: visible;
+}
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn {
+    min-height: 122px;
+}
+@media (max-width: 640px) {
+    .room-layout-v137 .room-mode-dock-logo { max-width: 88px; height: 38px; }
+    .room-layout-v137 .room-mode-dock-logo-shell { height: 58px; }
+    .room-layout-v137 .room-mode-dock-card.room-mode-select-btn { min-height: 112px; }
 }

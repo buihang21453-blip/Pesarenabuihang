@@ -683,7 +683,7 @@
 
     <div class="panel admin-room-mode-logo-panel">
         <h2>🖼️ Tuỳ chỉnh logo chế độ thi đấu</h2>
-        <p class="muted">Điều chỉnh đồng bộ nền phía sau logo và kích thước logo ở khung trung tâm cùng thanh CÁC CHẾ ĐỘ THI ĐẤU.</p>
+        <p class="muted">Điều chỉnh nền phía sau logo và kích thước riêng cho logo ở khung trung tâm / thanh CÁC CHẾ ĐỘ THI ĐẤU.</p>
         <form method="post" action="{{ url_for('admin_update_room_mode_logo_config') }}" class="admin-room-mode-logo-form">
             <label>
                 <span>Độ trong suốt Nền logo (%)</span>
@@ -691,9 +691,14 @@
                 <small>0 = nền trong suốt hoàn toàn, 100 = nền rõ hoàn toàn. Logo không bị làm mờ.</small>
             </label>
             <label>
-                <span>Kích thước logo (%)</span>
+                <span>Kích thước logo khung trung tâm (%)</span>
                 <input type="number" name="room_mode_logo_scale" min="{{ room_mode_logo_limits.scale[0] }}" max="{{ room_mode_logo_limits.scale[1] }}" step="1" value="{{ room_mode_logo_config.scale }}" required>
-                <small>50 = nhỏ hơn, 100 = mặc định, 200 = gấp đôi</small>
+                <small>100 = kích thước chuẩn của logo ở khung trung tâm.</small>
+            </label>
+            <label>
+                <span>Kích thước logo CÁC CHẾ ĐỘ THI ĐẤU (%)</span>
+                <input type="number" name="room_mode_dock_logo_scale" min="{{ room_mode_logo_limits.dock_scale[0] }}" max="{{ room_mode_logo_limits.dock_scale[1] }}" step="1" value="{{ room_mode_logo_config.dock_scale }}" required>
+                <small>Mặc định mới 135%. Có thể chỉnh từ 70% đến 220%.</small>
             </label>
             <button class="btn green" type="submit">Lưu tùy chỉnh logo chế độ</button>
         </form>

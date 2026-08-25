@@ -65,7 +65,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.3.7"
+APP_VERSION = "V1.3.8"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -655,10 +655,12 @@ ROOM_MODE_LOGO_SETTING_KEY = "room_mode_logo_config"
 ROOM_MODE_LOGO_DEFAULTS = {
     "background_opacity": 0,
     "scale": 100,
+    "dock_scale": 135,
 }
 ROOM_MODE_LOGO_LIMITS = {
     "background_opacity": (0, 100),
     "scale": (50, 200),
+    "dock_scale": (70, 220),
 }
 
 
@@ -694,6 +696,12 @@ def normalize_room_mode_logo_config(raw):
                 default=ROOM_MODE_LOGO_DEFAULTS["scale"],
                 lower=ROOM_MODE_LOGO_LIMITS["scale"][0],
                 upper=ROOM_MODE_LOGO_LIMITS["scale"][1],
+            )
+            config["dock_scale"] = _coerce_room_mode_logo_value(
+                raw.get("dock_scale"),
+                default=ROOM_MODE_LOGO_DEFAULTS["dock_scale"],
+                lower=ROOM_MODE_LOGO_LIMITS["dock_scale"][0],
+                upper=ROOM_MODE_LOGO_LIMITS["dock_scale"][1],
             )
     except Exception as exc:
         print(f"normalize_room_mode_logo_config warning: {exc}")
