@@ -383,3 +383,10 @@
 - Ẩn khỏi Players, danh sách Online Dashboard, Online Count, Tìm Nhanh, hồ sơ công khai và lịch sử toàn hệ thống đối với người không có quyền thấy.
 - Không sửa RP, W-D-L, lịch sử gốc, Core trận đấu hay dữ liệu tài khoản.
 - 243/243 pytest PASS.
+
+## V1.4.2 - Chat Phòng tạm thời kiểu Chat Sảnh
+- Khôi phục Chat Phòng dưới dạng nút nổi và panel nổi giống Chat Sảnh.
+- Chat chỉ dành cho Chủ phòng, Khách và Admin đang có quyền vào phòng.
+- Tin nhắn phòng không ghi vào bảng `chat_messages` hay Supabase; chỉ giữ tạm trong RAM tiến trình và tự mất khi tiến trình khởi động lại/TTL hết hạn.
+- Giữ giới hạn 200 ký tự và chống spam 5 giây/tin.
+- Khi mở Chat Phòng, Chat Sảnh đang mở sẽ tự đóng để tránh hai panel chồng lên nhau.

@@ -586,6 +586,27 @@
     </div>
 </div>
 
+{% if system_features.room_chat_enabled %}
+<button id="roomChatToggleButton" class="chat-floating-toggle room-chat-floating-toggle" type="button" onclick="toggleRoomChat()">
+    💬 <span id="roomChatToggleText">Chat phòng</span>
+</button>
+<div id="bottomRoomChat" class="bottom-lobby-chat bottom-room-chat chat-collapsed" hidden data-room-chat-panel>
+    <button class="bottom-chat-close" type="button" onclick="toggleRoomChat()" aria-label="Đóng Chat Phòng" title="Đóng">×</button>
+    <div class="bottom-chat-header">
+        <strong>💬 Chat Phòng</strong>
+        <span class="bottom-chat-hint">Chỉ người trong phòng • Không lưu lịch sử</span>
+    </div>
+    <div id="roomChatBox" class="bottom-chat-messages">
+        <div class="bottom-chat-empty">Chưa có tin nhắn trong phòng.</div>
+    </div>
+    <form class="bottom-chat-form room-chat-form" autocomplete="off">
+        <input type="text" name="message" maxlength="200" placeholder="Nhập tin nhắn..." required>
+        <button class="btn green" type="submit">Gửi</button>
+    </form>
+    <div id="roomChatStatus" class="bottom-chat-status">Tin nhắn chỉ tồn tại tạm thời trong phiên phòng.</div>
+</div>
+{% endif %}
+
 <div id="roomExitConfirmModal" class="room-action-modal" hidden aria-hidden="true">
     <div class="room-action-modal-card" role="dialog" aria-modal="true" aria-labelledby="roomActionModalTitle" aria-describedby="roomActionModalMessage">
         <button class="room-action-modal-close" type="button" data-room-modal-cancel aria-label="Đóng">×</button>
@@ -1176,6 +1197,35 @@ document.addEventListener("DOMContentLoaded", function () {
 <script>
 let currentRoomChatKey = "";
 let roomChatPoller = null;
+
+function toggleRoomChat() {
+    const panel = document.getElementById("bottomRoomChat");
+    const button = document.getElementById("roomChatToggleButton");
+    if (!panel) return;
+    const willOpen = panel.hidden || panel.classList.contains("chat-collapsed");
+
+    // Tránh 2 khung Chat Sảnh và Chat Phòng đè lên nhau.
+    if (willOpen) {
+        const lobbyPanel = document.getElementById("bottomLobbyChat");
+        if (lobbyPanel && !lobbyPanel.hidden && !lobbyPanel.classList.contains("chat-collapsed") && typeof toggleLobbyChat === "function") {
+            toggleLobbyChat();
+        }
+    }
+
+    panel.hidden = !willOpen;
+    panel.classList.toggle("chat-collapsed", !willOpen);
+    if (button) button.classList.toggle("chat-toggle-open", willOpen);
+    if (willOpen) {
+        document.dispatchEvent(new CustomEvent("pes:room-chat-opened"));
+        bindRoomChatForm();
+        requestImmediateRoomChatRefresh();
+        const input = panel.querySelector('input[name="message"]');
+        if (input) window.setTimeout(() => input.focus(), 50);
+    } else {
+        document.dispatchEvent(new CustomEvent("pes:room-chat-closed"));
+    }
+}
+
 let roomChatRequestInFlight = false;
 let roomChatSendInFlight = false;
 
@@ -1211,15 +1261,19 @@ function renderRoomChat(messages) {
     if (nextKey === currentRoomChatKey) return;
     currentRoomChatKey = nextKey;
 
+    if (!messages || !messages.length) {
+        box.innerHTML = '<div class="bottom-chat-empty">Chưa có tin nhắn trong phòng.</div>';
+        return;
+    }
+
     box.innerHTML = messages.map(function (msg) {
         const adminBadge = msg.user_role === "admin" ? '<span class="badge gold">ADMIN</span>' : '';
         const adminClass = msg.user_role === "admin" ? 'admin' : '';
         return `
-            <div class="chat-message">
-                <div class="chat-message-head">${renderRoomAvatar(msg.user_avatar_url, msg.user_name, msg.user_achievement, msg.user_avatar_frame_url)}<span class="chat-name ${adminClass}">${escapeRoomHtml(msg.user_name)}</span></div>
-                ${adminBadge}
-                <span class="chat-time">${escapeRoomHtml(msg.created_at_display || msg.created_at)}</span>
-                <div class="chat-text">${escapeRoomHtml(msg.message)}</div>
+            <div class="bottom-chat-message">
+                <div class="chat-message-head">${renderRoomAvatar(msg.user_avatar_url, msg.user_name, msg.user_achievement, msg.user_avatar_frame_url)}<span class="chat-name ${adminClass}">${escapeRoomHtml(msg.user_name)}</span>${adminBadge}</div>
+                <span class="bottom-chat-time">${escapeRoomHtml(msg.created_at_display || msg.created_at)}</span>
+                <div class="bottom-chat-text">${escapeRoomHtml(msg.message)}</div>
             </div>
         `;
     }).join("");

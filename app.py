@@ -8,6 +8,7 @@ import secrets
 import string
 import time
 import uuid
+import threading
 import zipfile
 from datetime import datetime, timezone, timedelta
 from functools import wraps
@@ -65,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.1"
+APP_VERSION = "V1.4.2"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -73,6 +74,14 @@ COOLDOWN_MINUTES = 3
 ONLINE_TIMEOUT_SECONDS = 60
 CHAT_COOLDOWN_SECONDS = 5
 CHAT_MAX_LENGTH = 200
+
+# V1.4.2 — Chat Phòng tạm thời trong RAM, không ghi vào Supabase/database.
+# Dữ liệu tự mất khi tiến trình khởi động lại và được dọn theo TTL.
+ROOM_CHAT_MEMORY_TTL_SECONDS = 2 * 60 * 60
+ROOM_CHAT_MEMORY_LIMIT = 50
+_room_chat_memory = {}
+_room_chat_last_sent = {}
+_room_chat_memory_lock = threading.Lock()
 DISPUTE_EVIDENCE_BUCKET = "dispute-evidence"
 DISPUTE_EVIDENCE_MAX_BYTES = 4 * 1024 * 1024
 DISPUTE_EVIDENCE_MAX_SIDE = 1600
@@ -4003,6 +4012,82 @@ def user_can_chat(user_id, scope="global", room_id=None):
     return True, ""
 
 
+def _room_chat_memory_cleanup(now_ts=None):
+    now_ts = float(now_ts or time.time())
+    cutoff = now_ts - ROOM_CHAT_MEMORY_TTL_SECONDS
+    stale_rooms = []
+    for room_id, bucket in list(_room_chat_memory.items()):
+        messages = [m for m in bucket if float(m.get("created_ts") or 0) >= cutoff]
+        if messages:
+            _room_chat_memory[room_id] = messages[-ROOM_CHAT_MEMORY_LIMIT:]
+        else:
+            stale_rooms.append(room_id)
+    for room_id in stale_rooms:
+        _room_chat_memory.pop(room_id, None)
+    for key, sent_at in list(_room_chat_last_sent.items()):
+        if float(sent_at or 0) < cutoff:
+            _room_chat_last_sent.pop(key, None)
+
+
+def list_transient_room_chat_messages(room_id, limit=20):
+    room_id = str(room_id or "")
+    with _room_chat_memory_lock:
+        _room_chat_memory_cleanup()
+        raw = list(_room_chat_memory.get(room_id, []))[-max(1, int(limit or 20)):]
+    users = users_map()
+    output = []
+    for item in raw:
+        msg = dict(item)
+        msg.pop("created_ts", None)
+        output.append(enrich_chat_message(msg, users))
+    return output
+
+
+def create_transient_room_chat_message(user_id, room_id, message):
+    room_id = str(room_id or "")
+    user_id = str(user_id or "")
+    message = (message or "").strip()
+    if not message:
+        return False, "Tin nhắn không được để trống."
+    if len(message) > CHAT_MAX_LENGTH:
+        return False, f"Tin nhắn tối đa {CHAT_MAX_LENGTH} ký tự."
+
+    now_ts = time.time()
+    cooldown_key = (room_id, user_id)
+    with _room_chat_memory_lock:
+        _room_chat_memory_cleanup(now_ts)
+        last_sent = float(_room_chat_last_sent.get(cooldown_key) or 0)
+        elapsed = now_ts - last_sent
+        if elapsed < CHAT_COOLDOWN_SECONDS:
+            wait = max(1, int(CHAT_COOLDOWN_SECONDS - elapsed))
+            return False, f"Bạn gửi quá nhanh. Chờ {wait} giây."
+
+        created_at = datetime.fromtimestamp(now_ts, tz=timezone.utc).isoformat()
+        bucket = _room_chat_memory.setdefault(room_id, [])
+        bucket.append({
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "room_id": room_id,
+            "scope": "room",
+            "message": message,
+            "created_at": created_at,
+            "created_ts": now_ts,
+        })
+        if len(bucket) > ROOM_CHAT_MEMORY_LIMIT:
+            del bucket[:-ROOM_CHAT_MEMORY_LIMIT]
+        _room_chat_last_sent[cooldown_key] = now_ts
+    touch_room_activity(room_id)
+    return True, ""
+
+
+def clear_transient_room_chat(room_id):
+    room_id = str(room_id or "")
+    with _room_chat_memory_lock:
+        _room_chat_memory.pop(room_id, None)
+        for key in [k for k in _room_chat_last_sent if k[0] == room_id]:
+            _room_chat_last_sent.pop(key, None)
+
+
 def touch_room_activity(room_id):
     """Reset the 60-minute inactivity timer after a meaningful room action."""
     if not room_id:
@@ -5609,8 +5694,8 @@ def api_room_chat(room_id):
     if user["id"] not in [room["host_user_id"], room["guest_user_id"]] and not is_admin_user(user):
         return polling_stop_response("room_access_ended")
 
-    messages = list_chat_messages("room", room_id=room_id, limit=20)
-    return jsonify({"ok": True, "messages": messages})
+    messages = list_transient_room_chat_messages(room_id, limit=20)
+    return jsonify({"ok": True, "messages": messages, "transient": True})
 
 
 @app.route("/room/<room_id>/chat/send", methods=["POST"])
@@ -5631,7 +5716,7 @@ def send_room_chat(room_id):
         return redirect(url_for("rooms"))
 
     message = request.form.get("message", "")
-    ok, error = create_chat_message(user["id"], message, scope="room", room_id=room_id)
+    ok, error = create_transient_room_chat_message(user["id"], room_id, message)
 
     if not ok:
         flash(error, "warning")
@@ -5655,7 +5740,7 @@ def api_send_room_chat(room_id):
 
     payload = request.get_json(silent=True) or request.form
     message = payload.get("message", "")
-    ok, error = create_chat_message(user["id"], message, scope="room", room_id=room_id)
+    ok, error = create_transient_room_chat_message(user["id"], room_id, message)
     if not ok:
         return jsonify({"ok": False, "error": error}), 400
     return jsonify({"ok": True})
