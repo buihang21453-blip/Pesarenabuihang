@@ -173,9 +173,11 @@ def register_routes(context):
                 flash("Chế độ Random 3 chọn 1 đang tạm tắt.", "warning")
                 return redirect(url_for("room_detail", room_id=room_id))
             label = "Random 3 chọn 1"
+        elif selected_mode == RANDOM_SELECTION_MATCH_MODE:
+            label = "Random Selection Match"
         else:
             selected_mode = SMART_RANDOM_MODE
-            label = "Rank thường"
+            label = "Random"
         execute_query(
             db.table("match_rooms").update({
                 "match_mode": MATCH_MODE_RANKED,
@@ -187,6 +189,71 @@ def register_routes(context):
             "select_ranked_room_mode",
         )
         flash(f"Đã chọn chế độ {label}.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+    @app.route("/room/<room_id>/start-random-selection-match", methods=["POST"])
+    @login_required
+    def room_start_random_selection_match(room_id):
+        user = current_user()
+        room = get_room(room_id)
+        if not room or (user["id"] != room.get("host_user_id") and not is_admin_user(user)):
+            flash("Chỉ chủ phòng mới được mở chế độ này.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if room.get("status") != "waiting_ready" or not room.get("guest_user_id") or not room.get("guest_ready"):
+            flash("Cần đủ hai người và khách đã Sẵn sàng.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if room.get("team_tier") != RANDOM_SELECTION_MATCH_MODE:
+            flash("Phòng hiện không ở chế độ Random Selection Match.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        try:
+            assert_can_start_ranked_match(room.get("host_user_id"), room.get("guest_user_id"))
+        except ValueError as exc:
+            flash(str(exc), "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        host = get_user(room.get("host_user_id"))
+        guest = get_user(room.get("guest_user_id"))
+        try:
+            state = build_random_selection_match_state(host, guest)
+        except ValueError as exc:
+            flash(str(exc), "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        host_options = state.get("host_options") or []
+        guest_options = state.get("guest_options") or []
+        if len(host_options) != 3 or len(guest_options) != 3:
+            flash("Không thể tạo đủ 3 CLB cho mỗi bên. Vui lòng thử lại.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+        pack_names = lambda items: " + ".join(str(item.get("name") or "CLB") for item in items)
+        match_result = execute_query(db.table("matches").insert({
+            "player1_id": room["host_user_id"], "player2_id": room["guest_user_id"],
+            "team1": pack_names(host_options), "team2": pack_names(guest_options),
+            "team1_overall": int(round(sum(int(x.get("overall") or 0) for x in host_options) / 3)),
+            "team2_overall": int(round(sum(int(x.get("overall") or 0) for x in guest_options) / 3)),
+            "team1_logo_url": host_options[0].get("logo") or None, "team2_logo_url": guest_options[0].get("logo") or None,
+            "team1_league": "Random Selection Match", "team2_league": "Random Selection Match",
+            "host_xp_factor": HOST_XP_FACTOR, "status": "playing",
+            "note": "Random Selection Match - mỗi bên 3 CLB - trận xếp hạng tính RP. [MODE:random_selection_match]",
+            "updated_at": now_iso(),
+        }), "create_random_selection_ranked_match")
+        match = match_result.data[0] if match_result.data else None
+        if not match:
+            flash("Không thể tạo trận Random Selection Match. Vui lòng thử lại.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+        update = {
+            "host_team": "3 CLB Random", "guest_team": "3 CLB Random",
+            "host_team_overall": int(round(sum(int(x.get("overall") or 0) for x in host_options) / 3)),
+            "guest_team_overall": int(round(sum(int(x.get("overall") or 0) for x in guest_options) / 3)),
+            "host_team_logo_url": host_options[0].get("logo") or None, "guest_team_logo_url": guest_options[0].get("logo") or None,
+            "host_team_league": "Random Selection Match", "guest_team_league": "Random Selection Match",
+            "status": "playing", "match_id": match["id"], "match_mode": MATCH_MODE_RANKED,
+            "team_tier": RANDOM_SELECTION_MATCH_MODE, "note": encode_random_selection_match_state(state),
+            "state_expires_at": None, "updated_at": now_iso(),
+        }
+        result = execute_query(db.table("match_rooms").update(update).eq("id", room_id).eq("status", "waiting_ready"), "start_random_selection_ranked")
+        if not (result.data or []):
+            execute_query(db.table("matches").delete().eq("id", match["id"]).eq("status", "playing"), "rollback_random_selection_ranked_match", attempts=1)
+            flash("Trạng thái phòng vừa thay đổi. Trận chưa được bắt đầu.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        flash("Random Selection Match đã bắt đầu: mỗi bên nhận 3 CLB, không cần chọn lại.", "success")
         return redirect(url_for("room_detail", room_id=room_id))
 
     @app.route("/room/<room_id>/start-random3-friendly", methods=["POST"])

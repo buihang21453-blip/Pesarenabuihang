@@ -50,8 +50,21 @@
                 </div>
                 {% endif %}
             </div>
-            <div class="room-card-club-area{% if room.status == 'waiting_ready' and room.friendly_random3_active %} room-card-club-area--random3{% endif %}">
-                {% if room.status == 'waiting_ready' and room.friendly_random3_active %}
+            <div class="room-card-club-area{% if (room.status == 'waiting_ready' and room.friendly_random3_active) or room.random_selection_match_active %} room-card-club-area--random3{% endif %}">
+                {% if room.random_selection_match_active %}
+                    <div class="room-side-random3-selector room-random-selection-display room-side-random3-selector--home">
+                        <div class="room-side-random3-title">3 CLB CỦA CHỦ NHÀ</div>
+                        <div class="room-side-random3-grid">
+                            {% for team in room.random_selection_match.host_options %}
+                            <div class="room-side-random3-card is-display-only">
+                                {% if team.logo %}<img src="{{ team.logo }}" alt="Logo {{ team.name }}" loading="lazy">{% else %}<div class="friendly-random3-placeholder">?</div>{% endif %}
+                                <strong title="{{ team.name }}">{{ team.name }}</strong>
+                                <small>{{ team.tier or '' }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% elif room.status == 'waiting_ready' and room.friendly_random3_active %}
                     {% set host_random3_choice = room.friendly_random3.host_choice %}
                     {% if room_room_viewer_is_host or current_user.role == 'admin' %}
                         <div class="room-side-random3-selector room-side-random3-selector--home">
@@ -195,11 +208,11 @@
                         </div>
                         {% endif %}
                         {% if (room_room_viewer_is_host or current_user.role == 'admin') and room.guest_ready and not daily_rank_limit_blocked %}
-                        <form class="room-center-random-form" method="post" action="{% if room.team_tier == 'random3_pick1' %}{{ url_for('room_start_random3_friendly', room_id=room.id) }}{% else %}{{ url_for('room_random_teams', room_id=room.id) }}{% endif %}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
-                            {% if room.team_tier != 'random3_pick1' %}<input type="hidden" name="match_mode" value="ranked">{% endif %}
-                            <button class="room-center-random-trigger {% if room.team_tier == 'random3_pick1' %}random3-trigger{% endif %}" type="submit">
+                        <form class="room-center-random-form" method="post" action="{% if room.team_tier == 'random3_pick1' %}{{ url_for('room_start_random3_friendly', room_id=room.id) }}{% elif room.team_tier == 'random_selection_match' %}{{ url_for('room_start_random_selection_match', room_id=room.id) }}{% else %}{{ url_for('room_random_teams', room_id=room.id) }}{% endif %}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
+                            {% if room.team_tier not in ['random3_pick1', 'random_selection_match'] %}<input type="hidden" name="match_mode" value="ranked">{% endif %}
+                            <button class="room-center-random-trigger {% if room.team_tier in ['random3_pick1', 'random_selection_match'] %}random3-trigger{% endif %}" type="submit">
                                 <span class="room-center-random-title room-random-button-label">QUAY QUÂN</span>
-                                <span class="room-center-random-sub">{% if room.team_tier == 'random3_pick1' %}Random 3 CLB cho mỗi người{% else %}Random trực tiếp 1 CLB cho mỗi bên{% endif %}</span>
+                                <span class="room-center-random-sub">{% if room.team_tier == 'random3_pick1' %}Random 3 CLB rồi chọn 1{% elif room.team_tier == 'random_selection_match' %}Mỗi bên nhận thẳng 3 CLB{% else %}Random trực tiếp 1 CLB cho mỗi bên{% endif %}</span>
                             </button>
                         </form>
                         {% else %}
@@ -363,8 +376,21 @@
                 {% endif %}
                 {% endif %}
             </div>
-            <div class="room-card-club-area{% if room.status == 'waiting_ready' and room.friendly_random3_active %} room-card-club-area--random3{% endif %}">
-                {% if room.status == 'waiting_ready' and room.friendly_random3_active and room.has_guest %}
+            <div class="room-card-club-area{% if (room.status == 'waiting_ready' and room.friendly_random3_active) or room.random_selection_match_active %} room-card-club-area--random3{% endif %}">
+                {% if room.random_selection_match_active and room.has_guest %}
+                    <div class="room-side-random3-selector room-random-selection-display room-side-random3-selector--away">
+                        <div class="room-side-random3-title">3 CLB CỦA ĐỘI KHÁCH</div>
+                        <div class="room-side-random3-grid">
+                            {% for team in room.random_selection_match.guest_options %}
+                            <div class="room-side-random3-card is-display-only">
+                                {% if team.logo %}<img src="{{ team.logo }}" alt="Logo {{ team.name }}" loading="lazy">{% else %}<div class="friendly-random3-placeholder">?</div>{% endif %}
+                                <strong title="{{ team.name }}">{{ team.name }}</strong>
+                                <small>{{ team.tier or '' }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% elif room.status == 'waiting_ready' and room.friendly_random3_active and room.has_guest %}
                     {% set guest_random3_choice = room.friendly_random3.guest_choice %}
                     {% if room_viewer_is_guest or current_user.role == 'admin' %}
                         <div class="room-side-random3-selector room-side-random3-selector--away">

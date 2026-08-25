@@ -357,3 +357,11 @@
 - Preview không lưu dữ liệu; chỉ bấm nút Lưu của từng nhóm cài đặt mới ghi vào hệ thống.
 - Có nút ↺ Preview theo cài đặt đã lưu.
 - Đồng bộ APP_VERSION/UI thành V1.3.15.
+
+
+## V1.3.16 — Random Selection Match Core
+- Mở khóa chế độ số 3 Random Selection Match.
+- Dùng nguyên lõi random theo Rank của Random 3 chọn 1: mỗi bên nhận 3 CLB khác nhau.
+- Bỏ bước/nút CHỌN CLB; chủ phòng bấm QUAY QUÂN là tạo trận Rank và bắt đầu ngay.
+- Hai khung Chủ nhà/Đội khách hiển thị đủ 3 CLB được cấp.
+- Kết quả và RP lưu dấu mode `random_selection_match` riêng.

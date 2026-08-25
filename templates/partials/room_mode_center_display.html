@@ -1,7 +1,8 @@
 {% set mode_logo_base = 'https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/Model/' %}
-{% set room_mode_random3 = (room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled) %}
-{% set room_mode_label = 'Random 3 chọn 1' if room_mode_random3 else 'Random' %}
-{% set room_mode_logo_index = '2' if room_mode_random3 else '1' %}
+{% set room_mode_random_selection = (room.team_tier == 'random_selection_match') %}
+{% set room_mode_random3 = (room.team_tier == 'random3_pick1' or (not system_features.rank_standard_enabled and not room_mode_random_selection)) %}
+{% set room_mode_label = 'Random Selection Match' if room_mode_random_selection else ('Random 3 chọn 1' if room_mode_random3 else 'Random') %}
+{% set room_mode_logo_index = '3' if room_mode_random_selection else ('2' if room_mode_random3 else '1') %}
 {% set room_mode_state = '' %}
 {% if room.status == 'waiting_ready' %}
     {% if room.friendly_random3_active %}
@@ -27,7 +28,7 @@
     {% set room_mode_state = room.status|replace('_',' ')|title %}
 {% endif %}
 
-<div class="room-selected-mode-hero {{ 'mode-random3' if room_mode_random3 else 'mode-ranked' }} {{ 'is-compact' if room.status not in ['waiting_ready'] else '' }}" aria-label="Chế độ thi đấu đang chọn: {{ room_mode_label }}">
+<div class="room-selected-mode-hero {{ 'mode-random-selection' if room_mode_random_selection else ('mode-random3' if room_mode_random3 else 'mode-ranked') }} {{ 'is-compact' if room.status not in ['waiting_ready'] else '' }}" aria-label="Chế độ thi đấu đang chọn: {{ room_mode_label }}">
     <div class="room-selected-mode-kicker">CHẾ ĐỘ THI ĐẤU</div>
     <div class="room-selected-mode-logo-shell" aria-hidden="true">
         <img class="room-selected-mode-logo" src="{{ mode_logo_base }}{{ room_mode_logo_index }}.webp" alt="Logo chế độ {{ room_mode_label }}" loading="lazy" decoding="async">

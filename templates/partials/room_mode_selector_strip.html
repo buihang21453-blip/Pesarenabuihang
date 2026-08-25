@@ -1,7 +1,8 @@
 {% set mode_logo_base = 'https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/Model/' %}
-{% set room_mode_random3 = (room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled) %}
+{% set room_mode_random_selection = (room.team_tier == 'random_selection_match') %}
+{% set room_mode_random3 = (room.team_tier == 'random3_pick1' or (not system_features.rank_standard_enabled and not room_mode_random_selection)) %}
 {% set room_mode_locked = '__RANK_MODE_LOCKED__' in (room.note or '') %}
-{% set room_mode_can_change = (room.status == 'waiting_ready' and not room.friendly_random3_active and not room_mode_locked and (room_room_viewer_is_host or current_user.role == 'admin')) %}
+{% set room_mode_can_change = (room.status == 'waiting_ready' and not room.friendly_random3_active and not room.random_selection_match_active and not room_mode_locked and (room_room_viewer_is_host or current_user.role == 'admin')) %}
 
 {% if room.match_mode != 'friendly' %}
 <section class="room-mode-dock" aria-label="Các chế độ thi đấu">
@@ -11,7 +12,7 @@
             {% if room_mode_can_change %}
             <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1" class="room-mode-dock-form">
                 <input type="hidden" name="rank_mode" value="smart_random">
-                <button class="room-mode-select-btn room-mode-dock-card mode-ranked {% if not room_mode_random3 %}selected{% endif %}" type="submit" aria-label="Chọn chế độ Random">
+                <button class="room-mode-select-btn room-mode-dock-card mode-ranked {% if not room_mode_random3 and not room_mode_random_selection %}selected{% endif %}" type="submit" aria-label="Chọn chế độ Random">
                     <span class="room-mode-dock-number">1</span>
                     <span class="room-mode-dock-logo-shell" aria-hidden="true">
 
@@ -23,7 +24,7 @@
                 </button>
             </form>
             {% else %}
-            <div class="room-mode-select-btn room-mode-dock-card mode-ranked {% if not room_mode_random3 %}selected{% endif %} is-readonly" aria-label="Chế độ Random">
+            <div class="room-mode-select-btn room-mode-dock-card mode-ranked {% if not room_mode_random3 and not room_mode_random_selection %}selected{% endif %} is-readonly" aria-label="Chế độ Random">
                 <span class="room-mode-dock-number">1</span>
                 <span class="room-mode-dock-logo-shell" aria-hidden="true">
 
@@ -65,17 +66,28 @@
             {% endif %}
         {% endif %}
 
-        <div class="room-mode-select-btn room-mode-dock-card mode-coming-soon is-readonly is-locked" aria-disabled="true" title="Chế độ đang khóa - chưa kích hoạt Core">
+        {% if room_mode_can_change %}
+        <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1" class="room-mode-dock-form">
+            <input type="hidden" name="rank_mode" value="random_selection_match">
+            <button class="room-mode-select-btn room-mode-dock-card mode-random-selection {% if room_mode_random_selection %}selected{% endif %}" type="submit" aria-label="Chọn chế độ Random Selection Match">
+                <span class="room-mode-dock-number">3</span>
+                <span class="room-mode-dock-logo-shell" aria-hidden="true">
+                    <img class="room-mode-dock-logo" src="{{ mode_logo_base }}3.webp" alt="Logo chế độ Random Selection Match" loading="lazy" decoding="async">
+                </span>
+                <strong class="room-mode-dock-title">RANDOM SELECTION MATCH</strong>
+                <small class="room-mode-dock-status">Mỗi bên nhận 3 CLB</small>
+            </button>
+        </form>
+        {% else %}
+        <div class="room-mode-select-btn room-mode-dock-card mode-random-selection {% if room_mode_random_selection %}selected{% endif %} is-readonly" aria-label="Chế độ Random Selection Match">
             <span class="room-mode-dock-number">3</span>
-            <span class="room-mode-lock-badge">🔒</span>
             <span class="room-mode-dock-logo-shell" aria-hidden="true">
-
                 <img class="room-mode-dock-logo" src="{{ mode_logo_base }}3.webp" alt="Logo chế độ Random Selection Match" loading="lazy" decoding="async">
-
             </span>
             <strong class="room-mode-dock-title">RANDOM SELECTION MATCH</strong>
-            <small class="room-mode-dock-status">Đang khóa • Chưa kích hoạt</small>
+            <small class="room-mode-dock-status">Mỗi bên nhận 3 CLB</small>
         </div>
+        {% endif %}
 
         <div class="room-mode-select-btn room-mode-dock-card mode-coming-soon is-readonly is-locked" aria-disabled="true" title="Chế độ đang khóa - chưa kích hoạt Core">
             <span class="room-mode-dock-number">4</span>

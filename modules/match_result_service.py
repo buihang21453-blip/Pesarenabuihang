@@ -207,6 +207,10 @@ def apply_match_result(match):
             "random 3 chọn 1" in original_note.casefold()
             or "random3_pick1" in original_note.casefold()
         )
+        is_random_selection_match = (
+            "random selection match" in original_note.casefold()
+            or "random_selection_match" in original_note.casefold()
+        )
         daily_rp_eligible = bool(daily_game_status.get("rp_eligible", True))
         counted_user_ids = [str(player1_id), str(player2_id)] if daily_rp_eligible else []
         confirmed_note = (
@@ -216,6 +220,8 @@ def apply_match_result(match):
         )
         if is_random3_pick1:
             confirmed_note += " [MODE:random3_pick1]"
+        elif is_random_selection_match:
+            confirmed_note += " [MODE:random_selection_match]"
 
         execute_query(
             db.table("matches").update({
@@ -224,7 +230,11 @@ def apply_match_result(match):
                 "rp_formula_version": RP_FORMULA_VERSION,
                 "rp_details": {
                     "source": "modules/rp_formula.py",
-                    "match_mode": "random3_pick1" if is_random3_pick1 else "rank_random",
+                    "match_mode": (
+                        "random3_pick1" if is_random3_pick1
+                        else "random_selection_match" if is_random_selection_match
+                        else "rank_random"
+                    ),
                     "formula": formula_summary(),
                     "seed": f"{RP_RANDOM_SEED_NAMESPACE}|{match.get('id')}",
                     "delta1": int(delta1),

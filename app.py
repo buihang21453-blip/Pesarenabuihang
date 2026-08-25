@@ -65,7 +65,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.3.15"
+APP_VERSION = "V1.3.16"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -1539,6 +1539,8 @@ MATCH_MODE_RANKED = "ranked"
 MATCH_MODE_FRIENDLY = "friendly"
 FRIENDLY_RANDOM3_MODE = "random3_pick1"
 FRIENDLY_RANDOM3_NOTE_PREFIX = "FRIENDLY_RANDOM3:"
+RANDOM_SELECTION_MATCH_MODE = "random_selection_match"
+RANDOM_SELECTION_MATCH_NOTE_PREFIX = "RANDOM_SELECTION_MATCH:"
 
 def build_friendly_random3_state(host_player, guest_player):
     """Chia 3 CLB mỗi bên; tránh đội trong 5 trận gần nhất với đúng đối thủ."""
@@ -1620,6 +1622,29 @@ def decode_friendly_random3_state(note):
     try:
         data = json.loads(text[len(FRIENDLY_RANDOM3_NOTE_PREFIX):])
         return data if data.get("mode") == FRIENDLY_RANDOM3_MODE else None
+    except Exception:
+        return None
+
+
+def build_random_selection_match_state(host_player, guest_player):
+    """Dùng cùng lõi Random 3 chọn 1 nhưng mỗi bên giữ cả 3 CLB, không chọn 1."""
+    state = build_friendly_random3_state(host_player, guest_player)
+    state["mode"] = RANDOM_SELECTION_MATCH_MODE
+    state["selection_required"] = False
+    return state
+
+
+def encode_random_selection_match_state(state):
+    return RANDOM_SELECTION_MATCH_NOTE_PREFIX + json.dumps(state, ensure_ascii=False, separators=(",", ":"))
+
+
+def decode_random_selection_match_state(note):
+    text = str(note or "")
+    if not text.startswith(RANDOM_SELECTION_MATCH_NOTE_PREFIX):
+        return None
+    try:
+        data = json.loads(text[len(RANDOM_SELECTION_MATCH_NOTE_PREFIX):])
+        return data if data.get("mode") == RANDOM_SELECTION_MATCH_MODE else None
     except Exception:
         return None
 
@@ -3551,6 +3576,9 @@ def enrich_room(room):
     room["friendly_random3_active"] = bool(random3_state)
     room["friendly_random3_host_chosen"] = bool(random3_state and random3_state.get("host_choice") is not None)
     room["friendly_random3_guest_chosen"] = bool(random3_state and random3_state.get("guest_choice") is not None)
+    random_selection_state = decode_random_selection_match_state(room.get("note"))
+    room["random_selection_match"] = random_selection_state
+    room["random_selection_match_active"] = bool(random_selection_state)
     room["host_team_league"] = room.get("host_team_league") or ""
     room["guest_team_league"] = room.get("guest_team_league") or ""
     room["host_team_league_logo_url"] = room.get("host_team_league_logo_url") or get_league_logo_url(room["host_team_league"])
