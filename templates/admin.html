@@ -832,6 +832,30 @@
         </form>
     </div>
 
+    <div class="panel admin-room-center-design-panel">
+        <h2>🎛️ Tuỳ biến khu vực điều khiển trận đấu</h2>
+        <p class="muted">Điều chỉnh gần như từng khối trong <strong>Khung Trung tâm</strong>. Các giá trị thay đổi kích thước thật của phần tử, không dùng scale giả nên bố cục sẽ tự tính lại khoảng trống.</p>
+        <form method="post" action="{{ url_for('admin_update_room_center_design_config') }}" class="admin-room-center-design-form">
+            <input type="hidden" name="_admin_tab" value="room-design">
+            <div class="admin-room-center-design-grid">
+                <label><span>Padding Khung Trung tâm (px)</span><input type="number" name="stage_padding" min="{{ room_center_design_limits.stage_padding[0] }}" max="{{ room_center_design_limits.stage_padding[1] }}" value="{{ room_center_design_config.stage_padding }}" required><small>Thu nhỏ phần đệm bên trong toàn bộ khu điều khiển.</small></label>
+                <label><span>Khoảng cách giữa các phần tử (px)</span><input type="number" name="stage_gap" min="{{ room_center_design_limits.stage_gap[0] }}" max="{{ room_center_design_limits.stage_gap[1] }}" value="{{ room_center_design_config.stage_gap }}" required><small>Giảm số này nếu sau khi thu nhỏ còn khoảng trống giữa các khối.</small></label>
+                <label><span>Độ rộng khung CHẾ ĐỘ (px)</span><input type="number" name="mode_width" min="{{ room_center_design_limits.mode_width[0] }}" max="{{ room_center_design_limits.mode_width[1] }}" value="{{ room_center_design_config.mode_width }}" required></label>
+                <label><span>Padding khung CHẾ ĐỘ (px)</span><input type="number" name="mode_padding" min="{{ room_center_design_limits.mode_padding[0] }}" max="{{ room_center_design_limits.mode_padding[1] }}" value="{{ room_center_design_config.mode_padding }}" required></label>
+                <label><span>Kích thước logo VS (px)</span><input type="number" name="vs_size" min="{{ room_center_design_limits.vs_size[0] }}" max="{{ room_center_design_limits.vs_size[1] }}" value="{{ room_center_design_config.vs_size }}" required></label>
+                <label><span>Độ rộng khung Kết quả (px)</span><input type="number" name="score_width" min="{{ room_center_design_limits.score_width[0] }}" max="{{ room_center_design_limits.score_width[1] }}" value="{{ room_center_design_config.score_width }}" required></label>
+                <label><span>Padding khung Kết quả (px)</span><input type="number" name="score_padding" min="{{ room_center_design_limits.score_padding[0] }}" max="{{ room_center_design_limits.score_padding[1] }}" value="{{ room_center_design_config.score_padding }}" required></label>
+                <label><span>Chiều cao ô nhập tỷ số (px)</span><input type="number" name="score_input_height" min="{{ room_center_design_limits.score_input_height[0] }}" max="{{ room_center_design_limits.score_input_height[1] }}" value="{{ room_center_design_config.score_input_height }}" required></label>
+                <label><span>Chiều cao nút hành động (px)</span><input type="number" name="action_height" min="{{ room_center_design_limits.action_height[0] }}" max="{{ room_center_design_limits.action_height[1] }}" value="{{ room_center_design_config.action_height }}" required><small>Áp dụng cho Gửi Kết Quả, Mời Đấu, Thoát Phòng và Tìm Nhanh.</small></label>
+                <label><span>Cách xử lý khoảng trống</span><select name="vertical_layout"><option value="compact" {% if room_center_design_config.vertical_layout == 'compact' %}selected{% endif %}>Gom giữa — gọn nhất</option><option value="spread" {% if room_center_design_config.vertical_layout == 'spread' %}selected{% endif %}>Dàn đều — lấp khoảng trống</option><option value="top" {% if room_center_design_config.vertical_layout == 'top' %}selected{% endif %}>Từ trên xuống</option></select><small>Nếu thu nhỏ nhiều, chọn “Dàn đều” để tránh khoảng trống dồn xuống dưới.</small></label>
+            </div>
+            <div class="admin-room-center-design-actions">
+                <button class="btn green" name="config_action" value="save" type="submit">Lưu tuỳ chỉnh trung tâm</button>
+                <button class="btn gray" name="config_action" value="reset" type="submit" formnovalidate>↺ Trở về mặc định</button>
+            </div>
+        </form>
+    </div>
+
     <div class="panel admin-discord-link-panel">
         <h2>💬 Link Discord phòng đấu</h2>
         <p class="muted">Link này sẽ xuất hiện trong khu vực Kết nối Parsec của phòng. Người chơi bấm vào sẽ mở Discord trong tab mới.</p>

@@ -29,6 +29,8 @@ def register_routes(context):
             "room_mode_logo_limits": ROOM_MODE_LOGO_LIMITS,
             "room_panel_layout_config": get_room_panel_layout_config(),
             "room_panel_layout_limits": ROOM_PANEL_LAYOUT_LIMITS,
+            "room_center_design_config": get_room_center_design_config(),
+            "room_center_design_limits": ROOM_CENTER_DESIGN_LIMITS,
             "repeat_opponent_rp_config": get_repeat_opponent_rp_config(),
             "weekly_rp_reward_config": get_weekly_rp_reward_config(),
             "duplicate_ip_warning_config": get_duplicate_ip_warning_config(),
@@ -146,7 +148,47 @@ def register_routes(context):
         cache_delete("_room_panel_layout_config_cached")
         log_admin_action("Cập nhật bố cục 3 khung phòng đấu", "system", details=payload)
         flash("Đã lưu hiển thị 2 thanh trung tâm và chiều cao 3 khung phòng đấu.", "success")
-        return redirect_admin("system")
+        return redirect_admin("room-design")
+
+
+    @app.route("/admin/system/room-center-design-config", methods=["POST"])
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_update_room_center_design_config():
+        if request.form.get("config_action") == "reset":
+            payload = dict(ROOM_CENTER_DESIGN_DEFAULTS)
+            message = "Đã đưa toàn bộ kích thước khu vực điều khiển trận đấu về mặc định."
+            action_label = "Khôi phục mặc định khu vực điều khiển trận đấu"
+        else:
+            payload = normalize_room_center_design_config({
+                "stage_padding": request.form.get("stage_padding"),
+                "stage_gap": request.form.get("stage_gap"),
+                "mode_width": request.form.get("mode_width"),
+                "mode_padding": request.form.get("mode_padding"),
+                "vs_size": request.form.get("vs_size"),
+                "score_width": request.form.get("score_width"),
+                "score_padding": request.form.get("score_padding"),
+                "score_input_height": request.form.get("score_input_height"),
+                "action_height": request.form.get("action_height"),
+                "vertical_layout": request.form.get("vertical_layout"),
+            })
+            message = "Đã lưu tuỳ chỉnh kích thước khu vực điều khiển trận đấu."
+            action_label = "Cập nhật kích thước khu vực điều khiển trận đấu"
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": ROOM_CENTER_DESIGN_SETTING_KEY,
+                "setting_value": payload,
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "update_room_center_design_config",
+            attempts=2,
+        )
+        ttl_cache_delete("room_center_design_config")
+        cache_delete("_room_center_design_config_cached")
+        log_admin_action(action_label, "system", details=payload)
+        flash(message, "success")
+        return redirect_admin("room-design")
 
 
     @app.route("/admin/system/duplicate-ip-warning", methods=["POST"])

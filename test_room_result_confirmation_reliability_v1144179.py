@@ -8,7 +8,7 @@ SERVICE_SOURCE = (ROOT / "modules" / "match_result_service.py").read_text(encodi
 
 
 def test_release_version_and_root_cause_fix_are_present():
-    assert 'APP_VERSION = "V1.3.11"' in APP_SOURCE
+    assert 'APP_VERSION = "V1.3.12"' in APP_SOURCE
     assert "from modules.rp_engine import get_win_streak_bonus" in SERVICE_SOURCE
     assert SERVICE_SOURCE.count("get_win_streak_bonus(") >= 2
 

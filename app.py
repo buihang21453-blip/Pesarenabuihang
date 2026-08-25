@@ -65,7 +65,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.3.11"
+APP_VERSION = "V1.3.12"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -789,6 +789,77 @@ def get_room_panel_layout_config(force=False):
         print(f"get_room_panel_layout_config warning: {exc}")
 
     ttl_cache_set("room_panel_layout_config", dict(config), 45)
+    return cache_set(request_key, dict(config))
+
+
+ROOM_CENTER_DESIGN_SETTING_KEY = "room_center_design_config"
+ROOM_CENTER_DESIGN_DEFAULTS = {
+    "stage_padding": 18,
+    "stage_gap": 18,
+    "mode_width": 320,
+    "mode_padding": 13,
+    "vs_size": 150,
+    "score_width": 340,
+    "score_padding": 14,
+    "score_input_height": 44,
+    "action_height": 46,
+    "vertical_layout": "compact",
+}
+ROOM_CENTER_DESIGN_LIMITS = {
+    "stage_padding": (0, 40),
+    "stage_gap": (0, 40),
+    "mode_width": (180, 420),
+    "mode_padding": (4, 28),
+    "vs_size": (70, 220),
+    "score_width": (220, 440),
+    "score_padding": (6, 28),
+    "score_input_height": (32, 64),
+    "action_height": (34, 64),
+}
+ROOM_CENTER_VERTICAL_LAYOUTS = {"compact", "spread", "top"}
+
+
+def normalize_room_center_design_config(raw):
+    config = dict(ROOM_CENTER_DESIGN_DEFAULTS)
+    try:
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        if isinstance(raw, dict):
+            for key, (lower, upper) in ROOM_CENTER_DESIGN_LIMITS.items():
+                config[key] = _coerce_room_mode_logo_value(
+                    raw.get(key), default=ROOM_CENTER_DESIGN_DEFAULTS[key], lower=lower, upper=upper,
+                )
+            layout = str(raw.get("vertical_layout") or "").strip().lower()
+            if layout in ROOM_CENTER_VERTICAL_LAYOUTS:
+                config["vertical_layout"] = layout
+    except Exception as exc:
+        print(f"normalize_room_center_design_config warning: {exc}")
+    return config
+
+
+def get_room_center_design_config(force=False):
+    request_key = "_room_center_design_config_cached"
+    if not force:
+        cached = cache_get(request_key)
+        if isinstance(cached, dict):
+            return dict(cached)
+        cached = ttl_cache_get("room_center_design_config")
+        if isinstance(cached, dict):
+            return cache_set(request_key, dict(cached))
+
+    config = dict(ROOM_CENTER_DESIGN_DEFAULTS)
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", ROOM_CENTER_DESIGN_SETTING_KEY).limit(1),
+            "get_room_center_design_config", attempts=2,
+        )
+        raw = ((result.data or [{}])[0]).get("setting_value")
+        config = normalize_room_center_design_config(raw)
+    except Exception as exc:
+        print(f"get_room_center_design_config warning: {exc}")
+
+    ttl_cache_set("room_center_design_config", dict(config), 45)
     return cache_set(request_key, dict(config))
 
 

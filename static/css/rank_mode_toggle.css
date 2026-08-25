@@ -944,3 +944,70 @@
         height: 0 !important;
     }
 }
+
+
+/* PES Arena V1.3.12 — granular Admin sizing for center control area.
+   Real dimensions are changed so the browser reflows naturally; transform/zoom
+   is deliberately avoided because they leave invisible layout gaps. */
+.room-layout-v137 {
+    --room-center-stage-padding: 18px;
+    --room-center-stage-gap: 18px;
+    --room-center-mode-width: 320px;
+    --room-center-mode-padding: 13px;
+    --room-center-vs-size: 150px;
+    --room-center-score-width: 340px;
+    --room-center-score-padding: 14px;
+    --room-center-score-input-height: 44px;
+    --room-center-action-height: 46px;
+}
+.room-layout-v137 .room-center-stage-plain {
+    padding: var(--room-center-stage-padding, 18px) 8px !important;
+    gap: var(--room-center-stage-gap, 18px) !important;
+}
+.room-layout-v137[data-center-layout="compact"] .room-center-stage-plain { justify-content: center !important; }
+.room-layout-v137[data-center-layout="spread"] .room-center-stage-plain { justify-content: space-evenly !important; }
+.room-layout-v137[data-center-layout="top"] .room-center-stage-plain { justify-content: flex-start !important; }
+.room-layout-v137 .room-selected-mode-hero,
+.room-layout-v137 .room-selected-mode-hero.mode-random3 {
+    width: min(100%, var(--room-center-mode-width, 320px)) !important;
+    padding: var(--room-center-mode-padding, 13px) 14px !important;
+    box-sizing: border-box !important;
+}
+.room-layout-v137 .room-selected-mode-hero.is-compact {
+    padding-top: max(4px, calc(var(--room-center-mode-padding, 13px) - 3px)) !important;
+    padding-bottom: max(4px, calc(var(--room-center-mode-padding, 13px) - 4px)) !important;
+}
+.room-layout-v137 .room-center-vs-image {
+    width: var(--room-center-vs-size, 150px) !important;
+    height: var(--room-center-vs-size, 150px) !important;
+    max-width: min(100%, var(--room-center-vs-size, 150px)) !important;
+    max-height: var(--room-center-vs-size, 150px) !important;
+    object-fit: contain !important;
+    box-sizing: border-box !important;
+}
+.room-layout-v137 .room-center-score-panel {
+    width: min(100%, var(--room-center-score-width, 340px)) !important;
+    padding: var(--room-center-score-padding, 14px) !important;
+    margin-top: 0 !important;
+    box-sizing: border-box !important;
+}
+.room-layout-v137 .room-score-fields input {
+    height: var(--room-center-score-input-height, 44px) !important;
+    min-height: var(--room-center-score-input-height, 44px) !important;
+}
+.room-layout-v137 :is(.room-center-action-btn,.room-submit-result-btn,.room-quick-match-btn) {
+    min-height: var(--room-center-action-height, 46px) !important;
+    height: var(--room-center-action-height, 46px) !important;
+    box-sizing: border-box !important;
+}
+.room-layout-v137 .room-center-primary-actions,
+.room-layout-v137 .room-quick-match-row {
+    margin-top: 0 !important;
+}
+@media (max-width: 640px) {
+    .room-layout-v137 .room-center-stage-plain { padding-inline: 6px !important; }
+    .room-layout-v137 .room-center-vs-image {
+        width: min(var(--room-center-vs-size, 150px), 128px) !important;
+        height: min(var(--room-center-vs-size, 150px), 128px) !important;
+    }
+}
