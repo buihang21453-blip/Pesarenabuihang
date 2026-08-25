@@ -346,3 +346,8 @@
 - Khi rê chuột trên 3 khung và lăn wheel, chỉ trang web bên ngoài được cuộn; bản thân khung không giữ vùng cuộn riêng.
 - Nội dung nhiều tiếp tục làm hàng tự giãn chiều cao, không cắt chức năng.
 - Đồng bộ APP_VERSION/UI thành V1.3.13.
+
+## PES Arena V1.3.14 — Clean Project Package
+- Dọn toàn bộ thư mục `__pycache__`, `.pytest_cache` và các file bytecode `*.pyc`/`*.pyo` khỏi gói ZIP phát hành.
+- Loại bỏ các file rác phổ biến như `.DS_Store`, `Thumbs.db` nếu có.
+- Không thay đổi logic hay giao diện; chỉ làm sạch gói source phát hành.
