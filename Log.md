@@ -1,5 +1,5 @@
-## V1.3.3 - Đồng bộ số phiên bản hiển thị
-- Cập nhật APP_VERSION và số hiệu hiển thị trong giao diện lên V1.3.3.
+## V1.3.4 - Đồng bộ số phiên bản hiển thị
+- Cập nhật APP_VERSION và số hiệu hiển thị trong giao diện lên V1.3.4.
 - Đồng bộ các kiểm thử đang kiểm tra số phiên bản hiện hành.
 - Từ bản này, mỗi gói phát hành phải cập nhật số phiên bản trong source/UI cùng với tên file phát hành.
 

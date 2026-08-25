@@ -759,3 +759,67 @@
         grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     }
 }
+
+/* PES Arena V1.3.4 — compact fixed equal-height primary room panels after timer removal.
+   Host / center / guest always share one explicit height on desktop so no panel
+   grows independently and the empty lower area is reduced. */
+@media (min-width: 1281px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        height: 535px !important;
+        min-height: 535px !important;
+        max-height: 535px !important;
+        align-self: stretch !important;
+        box-sizing: border-box !important;
+    }
+}
+@media (min-width: 981px) and (max-width: 1280px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        height: 510px !important;
+        min-height: 510px !important;
+        max-height: 510px !important;
+        align-self: stretch !important;
+        box-sizing: border-box !important;
+    }
+}
+
+/* Keep content vertically balanced inside the shorter center panel. */
+@media (min-width: 981px) {
+    .room-layout-v137 .room-center-stage-plain {
+        justify-content: center !important;
+        overflow: visible !important;
+    }
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-team-card.away {
+        overflow: hidden !important;
+    }
+}
+
+/* Tablet/mobile keep natural content height; only paired side cards remain equal
+   when they share the same grid row. */
+@media (min-width: 641px) and (max-width: 980px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-team-card.away {
+        height: 470px !important;
+        min-height: 470px !important;
+        max-height: 470px !important;
+    }
+    .room-layout-v137 .room-center-stage-plain {
+        height: auto !important;
+        min-height: 390px !important;
+        max-height: none !important;
+    }
+}
+@media (max-width: 640px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+    }
+}
+

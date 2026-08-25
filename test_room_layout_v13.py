@@ -9,7 +9,7 @@ APP = (ROOT / "app.py").read_text(encoding="utf-8")
 
 def test_release_bundle_is_v13_without_breaking_legacy_app_version_contract():
     assert '# UI release bundle: V1.3' in APP
-    assert 'APP_VERSION = "V1.3.3"' in APP
+    assert 'APP_VERSION = "V1.3.4"' in APP
 
 
 def test_user_reported_dom_classes_are_covered():
