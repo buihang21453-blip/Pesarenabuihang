@@ -1,0 +1,65 @@
+{% set room_mode_random3 = (room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled) %}
+{% set room_mode_locked = '__RANK_MODE_LOCKED__' in (room.note or '') %}
+{% set room_mode_can_change = (room.status == 'waiting_ready' and not room.friendly_random3_active and not room_mode_locked and (room_room_viewer_is_host or current_user.role == 'admin')) %}
+
+{% if room.match_mode != 'friendly' %}
+<section class="room-mode-dock" aria-label="Các chế độ thi đấu">
+    <div class="room-mode-dock-heading"><span></span><strong>CÁC CHẾ ĐỘ THI ĐẤU</strong><span></span></div>
+    <div class="room-mode-dock-grid{% if not system_features.rank_standard_enabled or not system_features.friendly_random3_enabled %} is-single{% endif %}">
+        {% if system_features.rank_standard_enabled %}
+            {% if room_mode_can_change %}
+            <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1" class="room-mode-dock-form">
+                <input type="hidden" name="rank_mode" value="smart_random">
+                <button class="room-mode-select-btn room-mode-dock-card mode-ranked {% if not room_mode_random3 %}selected{% endif %}" type="submit">
+                    <span class="room-mode-dock-number">1</span>
+                    <span class="room-mode-dock-icon" aria-hidden="true">⚽</span>
+                    <strong>RANK ĐƠN</strong>
+                    <small>Random trực tiếp 1 CLB</small>
+                </button>
+            </form>
+            {% else %}
+            <div class="room-mode-select-btn room-mode-dock-card mode-ranked {% if not room_mode_random3 %}selected{% endif %} is-readonly">
+                <span class="room-mode-dock-number">1</span>
+                <span class="room-mode-dock-icon" aria-hidden="true">⚽</span>
+                <strong>RANK ĐƠN</strong>
+                <small>Random trực tiếp 1 CLB</small>
+            </div>
+            {% endif %}
+        {% endif %}
+
+        {% if system_features.friendly_random3_enabled %}
+            {% if room_mode_can_change %}
+            <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1" class="room-mode-dock-form">
+                <input type="hidden" name="rank_mode" value="random3_pick1">
+                <button class="room-mode-select-btn room-mode-dock-card mode-random3 {% if room_mode_random3 %}selected{% endif %}" type="submit">
+                    <span class="room-mode-dock-number">2</span>
+                    <span class="room-mode-dock-icon room-mode-dock-icon-random3" aria-hidden="true">3</span>
+                    <strong>RANDOM 3 CHỌN 1</strong>
+                    <small>Nhận 3 CLB theo Rank</small>
+                </button>
+            </form>
+            {% else %}
+            <div class="room-mode-select-btn room-mode-dock-card mode-random3 {% if room_mode_random3 %}selected{% endif %} is-readonly">
+                <span class="room-mode-dock-number">2</span>
+                <span class="room-mode-dock-icon room-mode-dock-icon-random3" aria-hidden="true">3</span>
+                <strong>RANDOM 3 CHỌN 1</strong>
+                <small>Nhận 3 CLB theo Rank</small>
+            </div>
+            {% endif %}
+        {% endif %}
+    </div>
+    <div class="room-mode-dock-note">
+        {% if room_mode_can_change %}
+            Chủ phòng chọn chế độ tại đây • Chế độ đang chọn sẽ hiện ở khung trung tâm
+        {% elif room.status == 'waiting_ready' and room.friendly_random3_active %}
+            Chế độ đã khóa trong lúc hai bên chọn CLB
+        {% elif room_mode_locked %}
+            Chế độ được giữ nguyên cho trận đá tiếp
+        {% elif room.status != 'waiting_ready' %}
+            Chế độ được khóa sau khi trận đấu bắt đầu
+        {% else %}
+            Chế độ do chủ phòng lựa chọn
+        {% endif %}
+    </div>
+</section>
+{% endif %}

@@ -1,0 +1,35 @@
+{% set room_mode_random3 = (room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled) %}
+{% set room_mode_label = 'Random 3 chọn 1' if room_mode_random3 else 'Rank đơn' %}
+{% set room_mode_state = '' %}
+{% if room.status == 'waiting_ready' %}
+    {% if room.friendly_random3_active %}
+        {% set room_mode_state = 'Đang chọn CLB' %}
+    {% elif not room.has_guest %}
+        {% set room_mode_state = 'Mời đối thủ vào phòng' %}
+    {% elif room.guest_ready %}
+        {% set room_mode_state = 'Khách đã sẵn sàng' %}
+    {% else %}
+        {% set room_mode_state = 'Chờ khách sẵn sàng' %}
+    {% endif %}
+{% elif room.status == 'playing' %}
+    {% set room_mode_state = 'Trận đấu đang diễn ra' %}
+{% elif room.status == 'waiting_result_confirm' %}
+    {% set room_mode_state = 'Chờ xác nhận kết quả' %}
+{% elif room.status == 'disputed' %}
+    {% set room_mode_state = 'Đang chờ Admin xử lý' %}
+{% elif room.status == 'confirmed' %}
+    {% set room_mode_state = 'Trận đấu đã xác nhận' %}
+{% elif room.status == 'friendly_playing' %}
+    {% set room_mode_state = 'Trận giao hữu đang diễn ra' %}
+{% else %}
+    {% set room_mode_state = room.status|replace('_',' ')|title %}
+{% endif %}
+
+<div class="room-selected-mode-hero {{ 'mode-random3' if room_mode_random3 else 'mode-ranked' }} {{ 'is-compact' if room.status not in ['waiting_ready'] else '' }}" aria-label="Chế độ thi đấu đang chọn: {{ room_mode_label }}">
+    <div class="room-selected-mode-kicker">CHẾ ĐỘ THI ĐẤU</div>
+    <div class="room-selected-mode-emblem" aria-hidden="true">
+        <span class="room-selected-mode-emblem-core">{{ '3' if room_mode_random3 else '⚽' }}</span>
+    </div>
+    <div class="room-selected-mode-name">{{ room_mode_label|upper }}</div>
+    <div class="room-selected-mode-state">{{ room_mode_state }}</div>
+</div>

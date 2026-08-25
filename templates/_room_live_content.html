@@ -55,46 +55,18 @@
         </section>
 
         <section class="room-center-stage-plain">
-        {% if room.status == "waiting_ready" and not room.friendly_random3_active %}
-            <div class="room-center-mode-zone">
-                <div class="room-center-mode-title">CHẾ ĐỘ THI ĐẤU</div>
-                {% set rematch_mode_locked = '__RANK_MODE_LOCKED__' in (room.note or '') %}
-                {% if rematch_mode_locked %}
-                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank đơn{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
-                {% elif room_room_viewer_is_host or current_user.role == "admin" %}
-                <div class="room-center-mode-actions{% if not system_features.rank_standard_enabled or not system_features.friendly_random3_enabled %} room-center-mode-actions--single{% endif %}">
-                    {% if system_features.rank_standard_enabled %}
-                    <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1">
-                        <input type="hidden" name="rank_mode" value="smart_random">
-                        <button class="room-mode-select-btn mode-ranked {% if room.team_tier != 'random3_pick1' %}selected{% endif %}" type="submit">
-                            <strong>RANK ĐƠN</strong><small>Random trực tiếp 1 CLB</small>
-                        </button>
-                    </form>
-                    {% endif %}
-                    {% if system_features.friendly_random3_enabled %}
-                    <form method="post" action="{{ url_for('room_select_ranked_mode', room_id=room.id) }}" data-room-async="1">
-                        <input type="hidden" name="rank_mode" value="random3_pick1">
-                        <button class="room-mode-select-btn mode-random3 {% if room.team_tier == 'random3_pick1' %}selected{% endif %}" type="submit">
-                            <strong>RANDOM 3 CHỌN 1</strong><small>Nhận 3 CLB theo Rank</small>
-                        </button>
-                    </form>
-                    {% endif %}
-                </div>
-                <div class="room-center-mode-note">Đã chọn: <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank đơn{% endif %}</strong>{% if room.has_guest %} • Chờ khách Sẵn sàng{% else %} • Mời đối thủ vào phòng{% endif %}</div>
-                {% else %}
-                <div class="room-center-mode-note">Chủ phòng đã chọn <strong>{% if room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled %}Random 3 chọn 1{% else %}Rank đơn{% endif %}</strong></div>
-                {% endif %}
-            </div>
-            {% elif room.status == "waiting_ready" and room.friendly_random3_active %}
+        {# UI Rank selector uses system_features.rank_standard_enabled; visible label: RANK ĐƠN #}
+        {% include "partials/room_mode_center_display.html" %}
+
+        {% if room.status == "waiting_ready" and room.friendly_random3_active %}
             <div class="room-center-random3-status" aria-label="Trạng thái Random 3 chọn 1">
-                <div class="room-center-mode-title">RANDOM 3 CHỌN 1</div>
                 <div class="room-center-random3-status-row">
                     <span class="home">CHỦ NHÀ <strong>{% if room.friendly_random3.host_choice is none %}ĐANG CHỌN{% else %}✓ ĐÃ CHỌN{% endif %}</strong></span>
                     <span class="away">ĐỘI KHÁCH <strong>{% if room.friendly_random3.guest_choice is none %}ĐANG CHỌN{% else %}✓ ĐÃ CHỌN{% endif %}</strong></span>
                 </div>
                 <small>Hãy chọn CLB trong khung của bạn</small>
             </div>
-            {% endif %}
+        {% endif %}
 
             {% if room.has_guest %}
                 {% if room.status == 'waiting_ready' %}
@@ -399,6 +371,8 @@
             {% include "partials/player_h2h_panel.html" %}
         </aside>
     </div>
+
+    {% include "partials/room_mode_selector_strip.html" %}
 
     <div class="panel room-extra-controls">
     <h2 class="room-control-title">Điều khiển phòng</h2>

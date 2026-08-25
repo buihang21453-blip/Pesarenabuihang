@@ -26,3 +26,247 @@
         max-width: 100%;
     }
 }
+
+/* PES Arena V1.2.9.29 — đưa bộ chọn chế độ xuống dưới, chế độ đã chọn hiển thị ở trung tâm. */
+.room-selected-mode-hero {
+    width: min(100%, 320px);
+    margin: 0 auto 12px;
+    padding: 13px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 1px solid rgba(255, 207, 72, .45);
+    border-radius: 16px;
+    background: radial-gradient(circle at 50% 18%, rgba(255, 196, 55, .14), transparent 45%), rgba(3, 9, 19, .72);
+    box-shadow: inset 0 0 28px rgba(255, 197, 54, .05), 0 10px 28px rgba(0, 0, 0, .3);
+}
+.room-selected-mode-hero.mode-random3 {
+    border-color: rgba(196, 82, 255, .52);
+    background: radial-gradient(circle at 50% 18%, rgba(192, 70, 255, .16), transparent 46%), rgba(8, 6, 24, .76);
+}
+.room-selected-mode-kicker {
+    margin-bottom: 8px;
+    color: #f7f8fb;
+    font-size: 11px;
+    font-weight: 1000;
+    letter-spacing: .13em;
+}
+.room-selected-mode-emblem {
+    width: 78px;
+    height: 88px;
+    display: grid;
+    place-items: center;
+    position: relative;
+    margin-bottom: 7px;
+    clip-path: polygon(50% 0, 91% 17%, 86% 68%, 50% 100%, 14% 68%, 9% 17%);
+    background: linear-gradient(145deg, #ffe783 0%, #a96e08 48%, #fff0a1 100%);
+    filter: drop-shadow(0 8px 14px rgba(212, 145, 9, .34));
+}
+.room-selected-mode-emblem::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    clip-path: inherit;
+    background: linear-gradient(160deg, rgba(34, 24, 3, .96), rgba(91, 55, 5, .92));
+}
+.mode-random3 .room-selected-mode-emblem {
+    background: linear-gradient(145deg, #f4c8ff 0%, #9d32ed 45%, #ff69cf 100%);
+    filter: drop-shadow(0 8px 14px rgba(183, 50, 255, .3));
+}
+.mode-random3 .room-selected-mode-emblem::before {
+    background: linear-gradient(160deg, rgba(28, 7, 51, .98), rgba(72, 12, 88, .94));
+}
+.room-selected-mode-emblem-core {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border: 2px solid rgba(255, 232, 145, .7);
+    border-radius: 50%;
+    color: #ffe782;
+    font-size: 27px;
+    font-weight: 1000;
+    line-height: 1;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .8);
+}
+.mode-random3 .room-selected-mode-emblem-core {
+    border-color: rgba(245, 193, 255, .72);
+    color: #f6d6ff;
+}
+.room-selected-mode-name {
+    color: #ffd75d;
+    font-size: 15px;
+    font-weight: 1000;
+    letter-spacing: .055em;
+    text-shadow: 0 0 16px rgba(255, 195, 39, .28);
+}
+.mode-random3 .room-selected-mode-name {
+    color: #efb9ff;
+    text-shadow: 0 0 16px rgba(212, 77, 255, .28);
+}
+.room-selected-mode-state {
+    margin-top: 5px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: rgba(22, 113, 47, .34);
+    border: 1px solid rgba(91, 221, 115, .36);
+    color: #c8ffd2;
+    font-size: 10px;
+    font-weight: 900;
+}
+.room-selected-mode-hero.is-compact {
+    padding-top: 10px;
+    padding-bottom: 9px;
+}
+.room-selected-mode-hero.is-compact .room-selected-mode-emblem {
+    width: 58px;
+    height: 65px;
+    margin-bottom: 4px;
+}
+.room-selected-mode-hero.is-compact .room-selected-mode-emblem-core {
+    width: 36px;
+    height: 36px;
+    font-size: 21px;
+}
+
+.room-mode-dock {
+    margin: 10px 0 14px;
+    padding: 0 2px;
+}
+.room-mode-dock-heading {
+    display: grid;
+    grid-template-columns: minmax(24px, 1fr) auto minmax(24px, 1fr);
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    color: #e0b93f;
+    font-size: 11px;
+    font-weight: 1000;
+    letter-spacing: .12em;
+}
+.room-mode-dock-heading span {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(224, 185, 63, .52));
+}
+.room-mode-dock-heading span:last-child { transform: scaleX(-1); }
+.room-mode-dock-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+.room-mode-dock-grid.is-single {
+    grid-template-columns: minmax(220px, 520px);
+    justify-content: center;
+}
+.room-mode-dock-form { margin: 0; min-width: 0; }
+.room-mode-dock-card.room-mode-select-btn {
+    min-height: 112px;
+    width: 100%;
+    position: relative;
+    padding: 12px 12px 10px;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 10px;
+    background: linear-gradient(160deg, rgba(8, 24, 43, .95), rgba(6, 13, 25, .96));
+    box-shadow: inset 0 0 28px rgba(41, 132, 255, .04), 0 8px 22px rgba(0, 0, 0, .22);
+    color: #dce9f7;
+    transform: none;
+    filter: none;
+}
+.room-mode-dock-card.room-mode-select-btn.mode-random3 {
+    background: linear-gradient(160deg, rgba(27, 13, 48, .95), rgba(10, 12, 28, .96)) !important;
+    box-shadow: inset 0 0 28px rgba(197, 67, 255, .05), 0 8px 22px rgba(0, 0, 0, .22) !important;
+}
+.room-mode-dock-card.room-mode-select-btn.selected {
+    outline: 2px solid #ffe27a;
+    outline-offset: -2px;
+    border-color: rgba(255, 226, 122, .95);
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 32px rgba(255, 215, 80, .08), 0 0 17px rgba(255, 202, 54, .22), 0 10px 24px rgba(0, 0, 0, .3) !important;
+}
+.room-mode-dock-card.room-mode-select-btn.mode-random3.selected {
+    outline-color: #e9b4ff;
+    border-color: rgba(226, 160, 255, .9);
+    box-shadow: inset 0 0 32px rgba(205, 91, 255, .09), 0 0 17px rgba(192, 69, 255, .24), 0 10px 24px rgba(0, 0, 0, .3) !important;
+}
+.room-mode-dock-card.room-mode-select-btn:not(.is-readonly):hover {
+    transform: translateY(-3px);
+    filter: brightness(1.12);
+}
+.room-mode-dock-number {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    display: grid;
+    place-items: center;
+    border-radius: 5px;
+    background: rgba(71, 157, 231, .35);
+    border: 1px solid rgba(102, 188, 255, .45);
+    color: #d9f2ff;
+    font-size: 10px;
+    font-weight: 1000;
+}
+.mode-random3 .room-mode-dock-number {
+    background: rgba(190, 74, 226, .34);
+    border-color: rgba(221, 124, 255, .42);
+    color: #f3ddff;
+}
+.room-mode-dock-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 3px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 205, 72, .28), rgba(255, 205, 72, .02) 65%);
+    font-size: 29px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .4));
+}
+.room-mode-dock-icon-random3 {
+    border: 2px solid rgba(232, 183, 255, .5);
+    color: #efd1ff;
+    font-weight: 1000;
+    font-size: 24px;
+}
+.room-mode-dock-card strong {
+    font-size: 11px;
+    line-height: 1.15;
+    color: #f5f8fc;
+}
+.room-mode-dock-card small {
+    font-size: 9px;
+    line-height: 1.2;
+    color: #92a5b8;
+}
+.room-mode-dock-card.is-readonly { cursor: default; }
+.room-mode-dock-note {
+    margin-top: 7px;
+    color: #7f91a5;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+/* Trạng thái Random 3 chọn 1 giữ nguyên logic, chỉ gọn lại vì tên chế độ đã nằm trong hero trung tâm. */
+.room-center-random3-status { margin-top: -3px; }
+.room-center-random3-status .room-center-mode-title { display: none; }
+
+@media (min-width: 900px) {
+    .room-mode-dock-grid { grid-template-columns: repeat(2, minmax(0, 300px)); justify-content: center; }
+}
+@media (max-width: 640px) {
+    .room-selected-mode-hero { width: 100%; }
+    .room-selected-mode-emblem { width: 64px; height: 72px; }
+    .room-selected-mode-emblem-core { width: 39px; height: 39px; font-size: 23px; }
+    .room-mode-dock-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .room-mode-dock-card.room-mode-select-btn { min-height: 104px; padding-inline: 7px; }
+    .room-mode-dock-card strong { font-size: 10px; }
+    .room-mode-dock-card small { font-size: 8px; }
+}
