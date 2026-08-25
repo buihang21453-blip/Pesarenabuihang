@@ -6080,3 +6080,57 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
     font-size:11px!important;
   }
 }
+
+
+/* PES Arena V1.3.5 — Admin action buttons hug their text instead of stretching with neighboring controls. */
+.admin-tab-panel[data-admin-panel="test-data"] .btn,
+.admin-tab-panel[data-admin-panel="system"] .btn,
+.admin-tab-panel[data-admin-panel="rp-tools"] .btn{
+  width:fit-content!important;
+  max-width:100%;
+  min-width:0!important;
+  min-height:32px!important;
+  height:fit-content!important;
+  block-size:fit-content!important;
+  padding:7px 12px!important;
+  flex:0 0 auto!important;
+  align-self:center!important;
+  justify-self:start!important;
+  line-height:1.15!important;
+  white-space:nowrap;
+}
+
+/* Các form 2 cột: control dài ở một bên, nút chỉ nằm giữa theo chiều cao của hàng. */
+.admin-tab-panel[data-admin-panel="system"] .system-toggle-grid{
+  align-items:center;
+}
+.admin-tab-panel[data-admin-panel="system"] .system-toggle-grid > .btn{
+  align-self:center!important;
+  justify-self:start!important;
+}
+
+/* Form flex: không cho nút ăn chiều cao của input/label bên cạnh. */
+.admin-tab-panel[data-admin-panel="system"] .admin-discord-link-form > .btn,
+.admin-tab-panel[data-admin-panel="system"] .admin-room-mode-logo-form > .btn{
+  align-self:end!important;
+}
+
+/* Nhóm nút riêng: trình bày gọn, không kéo giãn ngang. */
+.admin-tab-panel[data-admin-panel="test-data"] .admin-primary-action,
+.admin-tab-panel[data-admin-panel="system"] .repeat-rp-actions .btn,
+.admin-tab-panel[data-admin-panel="system"] .weekly-rp-footer .btn,
+.admin-tab-panel[data-admin-panel="rp-tools"] .btn{
+  width:fit-content!important;
+  min-width:0!important;
+}
+
+@media(max-width:640px){
+  .admin-tab-panel[data-admin-panel="test-data"] .btn,
+  .admin-tab-panel[data-admin-panel="system"] .btn,
+  .admin-tab-panel[data-admin-panel="rp-tools"] .btn{
+    min-height:30px!important;
+    padding:6px 10px!important;
+    font-size:11px!important;
+    white-space:normal;
+  }
+}
