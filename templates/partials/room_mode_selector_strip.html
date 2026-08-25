@@ -47,6 +47,47 @@
             </div>
             {% endif %}
         {% endif %}
+
+        {# V1.2.9.32: các chế độ mới hiện UI trước, CHƯA có Core nên luôn khóa. #}
+        <div class="room-mode-select-btn room-mode-dock-card mode-coming-soon is-readonly is-locked" aria-disabled="true" title="Chế độ đang khóa - chưa kích hoạt Core">
+            <span class="room-mode-dock-number">3</span>
+            <span class="room-mode-lock-badge">🔒</span>
+            <span class="room-mode-dock-icon room-mode-dock-icon-text" aria-hidden="true">RS</span>
+            <strong>RANDOM SELECTION MATCH</strong>
+            <small>Đang khóa • Chưa kích hoạt</small>
+        </div>
+
+        <div class="room-mode-select-btn room-mode-dock-card mode-coming-soon is-readonly is-locked" aria-disabled="true" title="Chế độ đang khóa - chưa kích hoạt Core">
+            <span class="room-mode-dock-number">4</span>
+            <span class="room-mode-lock-badge">🔒</span>
+            <span class="room-mode-dock-icon room-mode-dock-icon-text" aria-hidden="true">↔</span>
+            <strong>LƯỢT ĐI - LƯỢT VỀ</strong>
+            <small>Đang khóa • Chưa kích hoạt</small>
+        </div>
+
+        <div class="room-mode-select-btn room-mode-dock-card mode-coming-soon is-readonly is-locked" aria-disabled="true" title="Chế độ đang khóa - chưa kích hoạt Core">
+            <span class="room-mode-dock-number">5</span>
+            <span class="room-mode-lock-badge">🔒</span>
+            <span class="room-mode-dock-icon room-mode-dock-icon-text" aria-hidden="true">BO3</span>
+            <strong>BO3</strong>
+            <small>Đang khóa • Chưa kích hoạt</small>
+        </div>
+
+        <div class="room-mode-select-btn room-mode-dock-card mode-coming-soon is-readonly is-locked" aria-disabled="true" title="Chế độ đang khóa - chưa kích hoạt Core">
+            <span class="room-mode-dock-number">6</span>
+            <span class="room-mode-lock-badge">🔒</span>
+            <span class="room-mode-dock-icon room-mode-dock-icon-text" aria-hidden="true">♟</span>
+            <strong>CHIẾN THUẬT BO3</strong>
+            <small>Đang khóa • Chưa kích hoạt</small>
+        </div>
+
+        <div class="room-mode-select-btn room-mode-dock-card mode-coming-soon is-readonly is-locked" aria-disabled="true" title="Chế độ đang khóa - chưa kích hoạt Core">
+            <span class="room-mode-dock-number">7</span>
+            <span class="room-mode-lock-badge">🔒</span>
+            <span class="room-mode-dock-icon room-mode-dock-icon-text" aria-hidden="true">⊘</span>
+            <strong>CẤM CHỌN BO3</strong>
+            <small>Đang khóa • Chưa kích hoạt</small>
+        </div>
     </div>
     <div class="room-mode-dock-note">
         {% if room_mode_can_change %}
