@@ -34,11 +34,12 @@ def test_room_style_reaches_full_and_polling_room_views():
     assert "data-room-style=" in ROOM_TEMPLATES[2]
 
 
-def test_rank_single_label_is_consistent_in_room_and_admin():
+def test_rank_single_room_label_is_random_while_admin_feature_name_stays_rank_single():
     visible_sources = ROOM_TEMPLATES + [ADMIN]
     assert all("RANK THƯỜNG" not in source for source in visible_sources)
     assert all("Rank thường" not in source for source in visible_sources)
-    assert all("RANK ĐƠN" in source for source in ROOM_TEMPLATES)
+    assert all("RANDOM" in source for source in ROOM_TEMPLATES)
+    assert all("RANK ĐƠN" not in source for source in ROOM_TEMPLATES)
     assert "Rank đơn" in ADMIN
 
 
@@ -69,6 +70,6 @@ def test_styles_change_structure_but_keep_button_colors_and_stadiums_visible():
 if __name__ == "__main__":
     test_default_plus_five_new_styles_are_available_in_admin_and_css()
     test_room_style_reaches_full_and_polling_room_views()
-    test_rank_single_label_is_consistent_in_room_and_admin()
+    test_rank_single_room_label_is_random_while_admin_feature_name_stays_rank_single()
     test_theme_styles_cover_room_actions_and_states()
     test_styles_change_structure_but_keep_button_colors_and_stadiums_visible()

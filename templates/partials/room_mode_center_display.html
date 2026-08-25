@@ -1,5 +1,5 @@
 {% set room_mode_random3 = (room.team_tier == 'random3_pick1' or not system_features.rank_standard_enabled) %}
-{% set room_mode_label = 'Random 3 chọn 1' if room_mode_random3 else 'Rank đơn' %}
+{% set room_mode_label = 'Random 3 chọn 1' if room_mode_random3 else 'Random' %}
 {% set room_mode_state = '' %}
 {% if room.status == 'waiting_ready' %}
     {% if room.friendly_random3_active %}
