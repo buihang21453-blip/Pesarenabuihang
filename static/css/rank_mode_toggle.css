@@ -321,4 +321,231 @@
     }
     .room-layout-v137 .room-arena-right-rail { order: 5; }
 }
-\n\n/* PES Arena V1.2.9.32 — 5 vỏ chế độ mới, cố ý khóa vì chưa có Core. */\n.room-mode-dock-card.mode-coming-soon {\n    background: linear-gradient(160deg, rgba(22, 29, 38, .88), rgba(9, 13, 20, .96)) !important;\n    border-color: rgba(153, 168, 184, .22);\n    box-shadow: inset 0 0 24px rgba(130, 150, 170, .035), 0 8px 20px rgba(0, 0, 0, .18) !important;\n}\n.room-mode-dock-card.is-locked {\n    opacity: .62;\n    filter: grayscale(.32) saturate(.65);\n    cursor: not-allowed !important;\n    user-select: none;\n}\n.room-mode-dock-card.is-locked:hover {\n    transform: none !important;\n    filter: grayscale(.32) saturate(.65) !important;\n}\n.room-mode-lock-badge {\n    position: absolute;\n    top: 7px;\n    right: 8px;\n    display: grid;\n    place-items: center;\n    width: 22px;\n    height: 22px;\n    border: 1px solid rgba(255,255,255,.14);\n    border-radius: 6px;\n    background: rgba(0,0,0,.28);\n    font-size: 11px;\n}\n.room-mode-dock-icon-text {\n    border: 1px solid rgba(217, 227, 239, .28);\n    color: #c4cfda;\n    background: radial-gradient(circle, rgba(152, 170, 188, .14), rgba(96, 111, 127, .02) 68%);\n    font-size: 15px;\n    font-weight: 1000;\n    letter-spacing: -.03em;\n}\n.room-mode-dock-card.mode-coming-soon strong { color: #d1d9e2; }\n.room-mode-dock-card.mode-coming-soon small { color: #778696; }\n\n/* 7 chế độ: desktop trải thành một hàng giống thanh chế độ trong mẫu; vẫn co giãn ở màn hình nhỏ. */\n@media (min-width: 1181px) {\n    .room-layout-v137 .room-mode-dock-slot .room-mode-dock { width: min(100%, 1240px); }\n    .room-mode-dock-grid,\n    .room-mode-dock-grid.is-single {\n        grid-template-columns: repeat(7, minmax(112px, 1fr));\n        max-width: 1240px;\n        margin-inline: auto;\n        gap: 6px;\n    }\n    .room-mode-dock-card.room-mode-select-btn { min-height: 106px; padding: 11px 7px 8px; }\n    .room-mode-dock-card strong { font-size: 9px; }\n    .room-mode-dock-card small { font-size: 8px; }\n    .room-mode-dock-icon { width: 42px; height: 42px; font-size: 23px; }\n    .room-mode-dock-icon-text { font-size: 13px; }\n}\n@media (min-width: 641px) and (max-width: 1180px) {\n    .room-mode-dock-grid,\n    .room-mode-dock-grid.is-single { grid-template-columns: repeat(4, minmax(0, 1fr)); }\n}\n
+
+/* PES Arena V1.2.9.32 — 5 vỏ chế độ mới, cố ý khóa vì chưa có Core. */
+.room-mode-dock-card.mode-coming-soon {
+    background: linear-gradient(160deg, rgba(22, 29, 38, .88), rgba(9, 13, 20, .96)) !important;
+    border-color: rgba(153, 168, 184, .22);
+    box-shadow: inset 0 0 24px rgba(130, 150, 170, .035), 0 8px 20px rgba(0, 0, 0, .18) !important;
+}
+.room-mode-dock-card.is-locked {
+    opacity: .62;
+    filter: grayscale(.32) saturate(.72);
+    cursor: not-allowed !important;
+    user-select: none;
+}
+.room-mode-dock-card.is-locked:hover {
+    transform: none !important;
+    filter: grayscale(.32) saturate(.72) !important;
+}
+.room-mode-lock-badge {
+    position: absolute;
+    top: 7px;
+    right: 8px;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 6px;
+    background: rgba(0,0,0,.32);
+    font-size: 11px;
+}
+
+/* PES Arena V1.2.9.33 — dùng logo cho 7 chế độ, thanh chế độ trải 1 hàng ngang trên desktop. */
+.room-selected-mode-hero {
+    width: min(100%, 330px);
+}
+.room-selected-mode-logo-shell {
+    width: min(100%, 240px);
+    margin: 0 auto 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.room-selected-mode-logo {
+    display: block;
+    width: 100%;
+    max-width: 208px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .34));
+}
+.room-selected-mode-name {
+    margin-top: 2px;
+}
+
+.room-mode-dock {
+    margin: 10px 0 14px;
+    padding: 0 2px;
+}
+.room-mode-dock-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+    align-items: stretch;
+}
+.room-mode-dock-grid.is-single {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    justify-content: stretch;
+}
+.room-mode-dock-form { margin: 0; min-width: 0; }
+.room-mode-dock-card.room-mode-select-btn {
+    min-height: 106px;
+    width: 100%;
+    position: relative;
+    padding: 8px 8px 9px;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 12px;
+    background: linear-gradient(160deg, rgba(8, 24, 43, .95), rgba(6, 13, 25, .96));
+    box-shadow: inset 0 0 28px rgba(41, 132, 255, .04), 0 8px 22px rgba(0, 0, 0, .22);
+    color: #dce9f7;
+    transform: none;
+    filter: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+.room-mode-dock-card.room-mode-select-btn.mode-random3 {
+    background: linear-gradient(160deg, rgba(27, 13, 48, .95), rgba(10, 12, 28, .96)) !important;
+    box-shadow: inset 0 0 28px rgba(197, 67, 255, .05), 0 8px 22px rgba(0, 0, 0, .22) !important;
+}
+.room-mode-dock-card.room-mode-select-btn.selected {
+    outline: 2px solid #ffe27a;
+    outline-offset: -2px;
+    border-color: rgba(255, 226, 122, .95);
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 32px rgba(255, 215, 80, .08), 0 0 17px rgba(255, 202, 54, .22), 0 10px 24px rgba(0, 0, 0, .3) !important;
+}
+.room-mode-dock-card.room-mode-select-btn.mode-random3.selected {
+    outline-color: #e9b4ff;
+    border-color: rgba(226, 160, 255, .9);
+    box-shadow: inset 0 0 32px rgba(205, 91, 255, .09), 0 0 17px rgba(192, 69, 255, .24), 0 10px 24px rgba(0, 0, 0, .3) !important;
+}
+.room-mode-dock-card.room-mode-select-btn:not(.is-readonly):hover {
+    transform: translateY(-3px);
+    filter: brightness(1.1);
+}
+.room-mode-dock-number {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    display: grid;
+    place-items: center;
+    border-radius: 5px;
+    background: rgba(71, 157, 231, .35);
+    border: 1px solid rgba(102, 188, 255, .45);
+    color: #d9f2ff;
+    font-size: 10px;
+    font-weight: 1000;
+}
+.mode-random3 .room-mode-dock-number {
+    background: rgba(190, 74, 226, .34);
+    border-color: rgba(221, 124, 255, .42);
+    color: #f3ddff;
+}
+.room-mode-dock-logo {
+    display: block;
+    width: 100%;
+    max-width: 98px;
+    height: 40px;
+    object-fit: contain;
+    margin-top: 8px;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .3));
+    pointer-events: none;
+}
+.room-mode-dock-title {
+    font-size: 9px;
+    line-height: 1.12;
+    color: #f5f8fc;
+    text-align: center;
+    margin-top: 1px;
+}
+.room-mode-dock-status {
+    font-size: 8px;
+    line-height: 1.2;
+    color: #92a5b8;
+    text-align: center;
+}
+.room-mode-dock-card.mode-coming-soon .room-mode-dock-title { color: #d1d9e2; }
+.room-mode-dock-card.mode-coming-soon .room-mode-dock-status { color: #778696; }
+.room-mode-dock-card.is-readonly { cursor: default; }
+.room-mode-dock-note {
+    margin-top: 7px;
+    color: #7f91a5;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.room-layout-v137 .room-mode-dock-slot {
+    min-width: 0;
+    align-self: start;
+    display: flex;
+    justify-content: center;
+    padding: 0 8px 4px;
+}
+.room-layout-v137 .room-mode-dock-slot .room-mode-dock {
+    width: min(100%, 1240px);
+    margin: 0;
+    padding: 0;
+}
+
+@media (min-width: 1181px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-areas:
+            "home center away rail"
+            "modes modes modes rail" !important;
+    }
+    .room-layout-v137 .room-mode-dock-slot { grid-area: modes; }
+    .room-layout-v137 .room-arena-right-rail { grid-area: rail; }
+}
+
+@media (min-width: 981px) and (max-width: 1180px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-areas:
+            "home center away"
+            "modes modes modes"
+            "rail rail rail" !important;
+    }
+    .room-layout-v137 .room-mode-dock-slot { grid-area: modes; }
+    .room-layout-v137 .room-arena-right-rail { grid-area: rail; }
+    .room-layout-v137 .room-mode-dock-slot .room-mode-dock { width: min(100%, 980px); }
+    .room-mode-dock-grid,
+    .room-mode-dock-grid.is-single {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 980px) {
+    .room-layout-v137 .room-mode-dock-slot {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+    .room-mode-dock-grid,
+    .room-mode-dock-grid.is-single {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .room-selected-mode-hero { width: 100%; }
+    .room-selected-mode-logo { max-width: 180px; }
+    .room-layout-v137 .room-mode-dock-slot {
+        order: 4;
+        padding: 4px 0;
+    }
+    .room-layout-v137 .room-arena-right-rail { order: 5; }
+    .room-mode-dock-grid,
+    .room-mode-dock-grid.is-single { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .room-mode-dock-card.room-mode-select-btn { min-height: 98px; padding-inline: 7px; }
+    .room-mode-dock-logo { max-width: 82px; height: 34px; }
+    .room-mode-dock-title { font-size: 8px; }
+    .room-mode-dock-status { font-size: 7px; }
+}
