@@ -6000,3 +6000,72 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 .admin-room-mode-logo-form small{color:#94a3b8;line-height:1.35}
 .admin-room-mode-logo-form .btn{align-self:end}
 @media(max-width:760px){.admin-room-mode-logo-form{grid-template-columns:1fr}}
+
+/* PES Arena V1.3.1 — nút Admin nhỏ gọn tại Tài khoản test & Import / Hệ thống / Công cụ RP. */
+.admin-tabs .admin-tab-button[data-admin-tab="test-data"],
+.admin-tabs .admin-tab-button[data-admin-tab="system"],
+.admin-tabs .admin-tab-button[data-admin-tab="rp-tools"]{
+  min-height:34px;
+  padding:7px 11px;
+  border-radius:8px;
+  font-size:12px;
+  line-height:1.15;
+  width:auto;
+  flex:0 0 auto;
+}
+
+.admin-tab-panel[data-admin-panel="test-data"] .btn,
+.admin-tab-panel[data-admin-panel="system"] .btn,
+.admin-tab-panel[data-admin-panel="rp-tools"] .btn{
+  width:auto!important;
+  min-width:0!important;
+  min-height:34px!important;
+  height:auto!important;
+  padding:7px 12px!important;
+  border-radius:8px!important;
+  font-size:12px!important;
+  line-height:1.15!important;
+  font-weight:850!important;
+  align-self:auto!important;
+  justify-self:start!important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  white-space:normal;
+}
+
+.admin-tab-panel[data-admin-panel="test-data"] form,
+.admin-tab-panel[data-admin-panel="system"] form,
+.admin-tab-panel[data-admin-panel="rp-tools"] form{
+  justify-items:start;
+}
+
+.admin-tab-panel[data-admin-panel="test-data"] .admin-primary-action{
+  width:auto!important;
+  min-width:150px!important;
+  justify-self:start!important;
+}
+
+.admin-tab-panel[data-admin-panel="system"] .system-toggle-grid > .btn,
+.admin-tab-panel[data-admin-panel="system"] .admin-room-mode-logo-form > .btn,
+.admin-tab-panel[data-admin-panel="system"] .admin-discord-link-form > .btn,
+.admin-tab-panel[data-admin-panel="rp-tools"] form > .btn{
+  margin-top:4px;
+}
+
+@media(max-width:640px){
+  .admin-tabs .admin-tab-button[data-admin-tab="test-data"],
+  .admin-tabs .admin-tab-button[data-admin-tab="system"],
+  .admin-tabs .admin-tab-button[data-admin-tab="rp-tools"]{
+    min-height:32px;
+    padding:6px 9px;
+    font-size:11px;
+  }
+  .admin-tab-panel[data-admin-panel="test-data"] .btn,
+  .admin-tab-panel[data-admin-panel="system"] .btn,
+  .admin-tab-panel[data-admin-panel="rp-tools"] .btn{
+    min-height:32px!important;
+    padding:6px 10px!important;
+    font-size:11px!important;
+  }
+}
