@@ -6134,3 +6134,14 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
     white-space:normal;
   }
 }
+
+
+/* PES Arena V1.3.7 — compact Admin controls for room-panel layout. */
+.admin-room-panel-layout-form{display:grid;grid-template-columns:minmax(320px,1.4fr) minmax(220px,.7fr) auto;gap:14px;align-items:center;margin-top:14px}
+.admin-room-panel-layout-form .admin-permission-option{margin:0;min-height:0}
+.admin-room-panel-height-field{display:grid;gap:6px;align-self:center}
+.admin-room-panel-height-field>span{font-weight:800;color:#fff}
+.admin-room-panel-height-field small{color:#94a3b8;line-height:1.35}
+.admin-room-panel-layout-form>.btn{width:max-content;height:max-content;min-height:0;align-self:center;justify-self:start;padding:8px 13px}
+@media(max-width:980px){.admin-room-panel-layout-form{grid-template-columns:1fr 1fr}.admin-room-panel-layout-form>.btn{grid-column:1/-1}}
+@media(max-width:640px){.admin-room-panel-layout-form{grid-template-columns:1fr}.admin-room-panel-layout-form>.btn{grid-column:auto}}

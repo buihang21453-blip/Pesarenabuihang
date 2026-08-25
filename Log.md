@@ -303,3 +303,9 @@
 - Desktop dùng chiều cao tối thiểu hợp lý, sau đó để khung có nội dung dài nhất quyết định chiều cao hàng.
 - Chủ phòng / Trung tâm / Đối thủ luôn stretch bằng nhau trong cùng hàng.
 - Khung trung tâm cho phép nội dung hiển thị đầy đủ, không bị cắt.
+
+## V1.3.7 — Admin Room Panel Controls
+- Admin có 1 công tắc bật/tắt đồng thời 2 thanh trang trí `::before` và `::after` của `.room-center-stage-plain`.
+- Admin có thể thay đổi chiều cao cơ sở của 3 khung Chủ phòng / Trung tâm / Đối thủ từ 480–900px.
+- 3 khung vẫn dùng cơ chế adaptive equal-height: không đặt `max-height`, nên trạng thái nhiều nội dung không bị cắt nút/chức năng.
+- Cấu hình lưu trong `system_settings` với key `room_panel_layout_config`.

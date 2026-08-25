@@ -161,6 +161,7 @@ def register_routes(context):
             "quick_match_config": get_quick_match_config(),
             "room_visual_style": get_room_visual_style(),
             "room_mode_logo_config": get_room_mode_logo_config(),
+            "room_panel_layout_config": get_room_panel_layout_config(),
             "daily_rank_limit_blocked": bool(daily_limit_message),
             "daily_rank_limit_message": daily_limit_message,
             # Supabase có thể trả ID ở kiểu khác session. Dùng so sánh chuẩn hóa

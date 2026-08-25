@@ -9,7 +9,7 @@ ROOM = (ROOT / "templates" / "partials" / "room_dynamic_state.html").read_text(e
 
 
 def test_version_and_timeout_stay_60_seconds():
-    assert 'APP_VERSION = "V1.3.6"' in APP
+    assert 'APP_VERSION = "V1.3.7"' in APP
     assert 'RESULT_CONFIRM_TIMEOUT_SECONDS = 60' in APP
 
 

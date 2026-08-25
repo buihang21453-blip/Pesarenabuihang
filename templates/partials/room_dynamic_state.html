@@ -17,7 +17,7 @@
 }
 </style>
 {% if room_action_message %}<div class="flash {{ room_action_category or 'success' }} room-htmx-message">{{ room_action_message }}</div>{% endif %}
-<div class="room-view-shell room-layout-v137" data-room-style="{{ room_visual_style|default('default') }}" style="--room-mode-logo-bg-opacity: {{ (room_mode_logo_config.background_opacity|default(0)) / 100 }}; --room-mode-logo-scale: {{ (room_mode_logo_config.scale|default(100)) / 100 }};">
+<div class="room-view-shell room-layout-v137" data-room-style="{{ room_visual_style|default('default') }}" style="--room-mode-logo-bg-opacity: {{ (room_mode_logo_config.background_opacity|default(0)) / 100 }}; --room-mode-logo-scale: {{ (room_mode_logo_config.scale|default(100)) / 100 }}; --room-panel-height: {{ room_panel_layout_config.panel_height|default(600) }}px;" data-center-bars="{{ 'visible' if room_panel_layout_config.center_bars_visible|default(true) else 'hidden' }}">
     <div class="room-stage-topbar panel">
         <img class="room-stage-arena-logo" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/pes-arena-room-logo.webp" alt="PES Arena" loading="eager">
         <div class="room-stage-title-wrap">

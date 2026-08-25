@@ -65,7 +65,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.3.6"
+APP_VERSION = "V1.3.7"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -724,6 +724,63 @@ def get_room_mode_logo_config(force=False):
         print(f"get_room_mode_logo_config warning: {exc}")
 
     ttl_cache_set("room_mode_logo_config", dict(config), 45)
+    return cache_set(request_key, dict(config))
+
+
+ROOM_PANEL_LAYOUT_SETTING_KEY = "room_panel_layout_config"
+ROOM_PANEL_LAYOUT_DEFAULTS = {
+    "center_bars_visible": True,
+    "panel_height": 600,
+}
+ROOM_PANEL_LAYOUT_LIMITS = {
+    "panel_height": (480, 900),
+}
+
+
+def normalize_room_panel_layout_config(raw):
+    config = dict(ROOM_PANEL_LAYOUT_DEFAULTS)
+    try:
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        if isinstance(raw, dict):
+            visible = raw.get("center_bars_visible", ROOM_PANEL_LAYOUT_DEFAULTS["center_bars_visible"])
+            if isinstance(visible, str):
+                visible = visible.strip().lower() in {"1", "true", "yes", "on", "show", "visible"}
+            config["center_bars_visible"] = bool(visible)
+            config["panel_height"] = _coerce_room_mode_logo_value(
+                raw.get("panel_height"),
+                default=ROOM_PANEL_LAYOUT_DEFAULTS["panel_height"],
+                lower=ROOM_PANEL_LAYOUT_LIMITS["panel_height"][0],
+                upper=ROOM_PANEL_LAYOUT_LIMITS["panel_height"][1],
+            )
+    except Exception as exc:
+        print(f"normalize_room_panel_layout_config warning: {exc}")
+    return config
+
+
+def get_room_panel_layout_config(force=False):
+    request_key = "_room_panel_layout_config_cached"
+    if not force:
+        cached = cache_get(request_key)
+        if isinstance(cached, dict):
+            return dict(cached)
+        cached = ttl_cache_get("room_panel_layout_config")
+        if isinstance(cached, dict):
+            return cache_set(request_key, dict(cached))
+
+    config = dict(ROOM_PANEL_LAYOUT_DEFAULTS)
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", ROOM_PANEL_LAYOUT_SETTING_KEY).limit(1),
+            "get_room_panel_layout_config", attempts=2,
+        )
+        raw = ((result.data or [{}])[0]).get("setting_value")
+        config = normalize_room_panel_layout_config(raw)
+    except Exception as exc:
+        print(f"get_room_panel_layout_config warning: {exc}")
+
+    ttl_cache_set("room_panel_layout_config", dict(config), 45)
     return cache_set(request_key, dict(config))
 
 

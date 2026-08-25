@@ -699,6 +699,23 @@
         </form>
     </div>
 
+    <div class="panel admin-room-panel-layout-panel">
+        <h2>📐 Bố cục 3 khung phòng đấu</h2>
+        <p class="muted">Điều chỉnh đồng bộ Khung Chủ phòng, Khung Trung tâm và Khung Đối thủ. Chiều cao đặt ở đây là chiều cao tối thiểu; nếu trạng thái có nhiều nội dung hơn, cả 3 khung vẫn tự giãn bằng nhau để không mất nút/chức năng.</p>
+        <form method="post" action="{{ url_for('admin_update_room_panel_layout_config') }}" class="admin-room-panel-layout-form">
+            <label class="admin-permission-option admin-center-bars-option">
+                <span><strong>Hiện 2 thanh trang trí ở khung trung tâm</strong><small style="display:block">Bật/tắt đồng thời thanh ::before phía trên và ::after phía dưới.</small></span>
+                <span class="admin-switch"><input type="checkbox" name="center_bars_visible" value="1" {% if room_panel_layout_config.center_bars_visible %}checked{% endif %}><span class="admin-switch-track"></span></span>
+            </label>
+            <label class="admin-room-panel-height-field">
+                <span>Chiều cao 3 khung (px)</span>
+                <input type="number" name="panel_height" min="{{ room_panel_layout_limits.panel_height[0] }}" max="{{ room_panel_layout_limits.panel_height[1] }}" step="10" value="{{ room_panel_layout_config.panel_height }}" required>
+                <small>{{ room_panel_layout_limits.panel_height[0] }}–{{ room_panel_layout_limits.panel_height[1] }}px • mặc định 600px</small>
+            </label>
+            <button class="btn green" type="submit">Lưu bố cục phòng đấu</button>
+        </form>
+    </div>
+
     <div class="panel admin-discord-link-panel">
         <h2>💬 Link Discord phòng đấu</h2>
         <p class="muted">Link này sẽ xuất hiện trong khu vực Kết nối Parsec của phòng. Người chơi bấm vào sẽ mở Discord trong tab mới.</p>

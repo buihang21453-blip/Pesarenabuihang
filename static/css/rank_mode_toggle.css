@@ -871,3 +871,25 @@
         max-height: none !important;
     }
 }
+
+
+/* PES Arena V1.3.7 — Admin controls the two center decorative bars and equal room-panel height. */
+.room-layout-v137 {
+    --room-panel-height: 600px;
+}
+.room-layout-v137[data-center-bars="hidden"] .room-center-stage-plain::before,
+.room-layout-v137[data-center-bars="hidden"] .room-center-stage-plain::after {
+    display: none !important;
+    content: none !important;
+}
+@media (min-width: 981px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        height: auto !important;
+        min-height: var(--room-panel-height, 600px) !important;
+        max-height: none !important;
+        align-self: stretch !important;
+        box-sizing: border-box !important;
+    }
+}
