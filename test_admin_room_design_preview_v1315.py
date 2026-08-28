@@ -20,4 +20,4 @@ def test_preview_reflects_room_design_controls_live():
     assert '[data-center-bars="hidden"]' in CSS
 
 def test_version_1315():
-    assert 'APP_VERSION = "V1.4.5"' in APP
+    assert 'APP_VERSION = "V1.4.6"' in APP

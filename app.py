@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.5"
+APP_VERSION = "V1.4.6"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -6138,14 +6138,18 @@ def ranking():
         ranking_activity_matches = []
     latest_activity_map = _latest_ranking_activity_map(ranking_activity_matches)
     ranking_now = now_dt()
+    current_season = get_current_season()
+    season_match_count_map = build_season_match_count_map(ranking_activity_matches, current_season)
 
     eligible_player_rows = []
     eligibility_by_id = {}
     for player in all_player_rows:
-        eligibility = ranking_eligibility(
+        eligibility = season_ranking_eligibility(
             player,
+            season_match_count_map.get(str(player.get("id")), 0),
             latest_activity_map.get(str(player.get("id"))),
             now=ranking_now,
+            season=current_season,
         )
         eligibility_by_id[str(player.get("id"))] = eligibility
         if eligibility.get("visible"):
@@ -6215,7 +6219,8 @@ def ranking():
         current_player=current_player,
         current_position=current_position,
         current_ranking_status=current_ranking_status,
-        ranking_qualify_matches=RANKING_QUALIFY_MATCHES,
+        ranking_qualify_matches=int(current_season.get("placement_matches") or 5),
+        current_rank_season=current_season,
         ranking_inactive_hide_days=RANKING_INACTIVE_HIDE_DAYS,
         q=request.args.get("q", ""),
         rank_filter=rank_filter,
@@ -6964,6 +6969,7 @@ from modules import zcoin as _zcoin_module
 from modules import daily_checkin as _daily_checkin_module
 from modules.parsec_room import service as _parsec_room_service
 from modules import gift_codes as _gift_codes_module
+from modules import season_service as _season_service
 
 for _service_module in (
     _notification_service,
@@ -6975,6 +6981,7 @@ for _service_module in (
     _zcoin_module,
     _daily_checkin_module,
     _gift_codes_module,
+    _season_service,
     _parsec_room_service,
     _match_result_service,
     _ranking_rebuild_service,
@@ -7010,6 +7017,7 @@ from modules.admin_account_routes import register_routes as _register_admin_acco
 from modules.admin_match_routes import register_routes as _register_admin_match_routes
 from modules.admin_player_routes import register_routes as _register_admin_player_routes
 from modules.admin_data_routes import register_routes as _register_admin_data_routes
+from modules.season_routes import register_routes as _register_season_routes
 
 for _route_registrar in (
     _register_room_access_routes,
@@ -7027,6 +7035,7 @@ for _route_registrar in (
     _register_gift_code_routes,
     _register_admin_economy_routes,
     _register_luckybox_routes,
+    _register_season_routes,
     _register_admin_system_routes,
     _register_admin_dashboard_routes,
     _register_admin_account_routes,
