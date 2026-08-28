@@ -57,11 +57,30 @@ def register_routes(context):
             history = get_season_history(12)
         except Exception:
             season, history = {"season_number":1,"name":"Season 1","placement_matches":5}, []
-        return {"current_rank_season": season, "rank_season_history": history, "rank_season_reward_config": get_season_reward_config()}
+        return {"current_rank_season": season, "rank_season_history": history, "rank_season_reward_config": get_season_reward_config(), "ranking_layout_style": get_ranking_layout()}
 
     @app.get('/api/rank/season')
     def rank_season_api():
         return jsonify({"ok": True, "season": get_current_season(), "history": get_season_history(12)})
+
+
+    @app.post('/admin/season/ranking-layout')
+    @login_required
+    @admin_required
+    @admin_permission_required('system_features_manage')
+    def admin_season_ranking_layout():
+        layout = str(request.form.get('ranking_layout') or 'horizontal').strip().lower()
+        if layout not in {'horizontal', 'vertical'}:
+            flash('Kiểu bố cục BXH không hợp lệ.', 'danger')
+            return redirect_admin('season')
+        execute_query(db.table('system_settings').upsert({
+            'setting_key': RANKING_LAYOUT_SETTING_KEY,
+            'setting_value': {'layout': layout},
+            'updated_at': now_iso(),
+        }, on_conflict='setting_key'), 'save_ranking_layout_style', attempts=2)
+        log_admin_action('Đổi bố cục BXH', 'season', details={'layout': layout})
+        flash('Đã chuyển bố cục BXH sang ' + ('Dọc' if layout == 'vertical' else 'Ngang') + '.', 'success')
+        return redirect_admin('season')
 
     @app.post('/admin/season/snapshot')
     @login_required

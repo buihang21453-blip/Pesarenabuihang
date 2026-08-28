@@ -4,7 +4,7 @@ RANK=Path('templates/ranking.html').read_text(encoding='utf-8')
 PUBLIC=Path('templates/public_ranking.html').read_text(encoding='utf-8')
 SQL=Path('docs/update_rank_season_v1_4_9.sql').read_text(encoding='utf-8')
 
-def test_version(): assert 'APP_VERSION = "V1.4.14"' in APP
+def test_version(): assert 'APP_VERSION = "V1.4.15"' in APP
 def test_historical_snapshot_is_source():
     assert 'ranking_historical_snapshot' in APP
     assert 'rank_season_snapshots' in APP

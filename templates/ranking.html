@@ -2,7 +2,7 @@
 {% from "_rank_macros.html" import rank_badge %}
 {% from "_avatar_macros.html" import player_avatar %}
 {% block content %}
-<section class="ranking-hero">
+<section class="ranking-hero ranking-layout-{{ ranking_layout_style or 'horizontal' }}">
     <header class="ranking-main-header">
         <div class="ranking-season-headline">
             <span class="ranking-kicker">PES eFOOTBALL 2026</span>
@@ -15,7 +15,9 @@
                     {% endfor %}
                 </select>
             </form>
+            {% if ranking_layout_style == 'vertical' %}<span class="ranking-season-tagline">THE NEW SEASON BEGINS</span>{% endif %}
         </div>
+        {% if ranking_layout_style != 'vertical' %}
         <div class="ranking-title-wrap ranking-title-wrap-season">
             <span class="ranking-star">★</span>
             <div>
@@ -24,6 +26,7 @@
             </div>
             <span class="ranking-star">★</span>
         </div>
+        {% endif %}
     </header>
 
     <div class="ranking-showcase">
@@ -43,6 +46,17 @@
                 </div>
             </div>
         </div>
+
+        {% if ranking_layout_style == 'vertical' %}
+        <div class="ranking-title-wrap ranking-title-wrap-season ranking-title-after-podium">
+            <span class="ranking-star">★</span>
+            <div>
+                <h1>TOP 100 BẢNG XẾP HẠNG</h1>
+                <p>Vinh danh những huấn luyện viên có thành tích tốt nhất hệ thống.</p>
+            </div>
+            <span class="ranking-star">★</span>
+        </div>
+        {% endif %}
 
         <div class="ranking-board-panel">
             <form class="ranking-search" method="get">

@@ -5,7 +5,7 @@ FORFEIT = Path("modules/forfeit_history_service.py").read_text(encoding="utf-8")
 
 
 def test_version_v126():
-    assert 'APP_VERSION = "V1.4.14"' in APP
+    assert 'APP_VERSION = "V1.4.15"' in APP
 
 
 def test_orphan_match_does_not_block_new_room():

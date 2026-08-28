@@ -6265,3 +6265,21 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 /* V1.4.14 - Lucky Box balance in global topbar */
 .topbar-luckybox{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:6px 10px;border:1px solid rgba(241,190,74,.32);border-radius:12px;background:rgba(18,27,42,.76);text-decoration:none;color:inherit}.topbar-luckybox img{width:32px;height:32px;object-fit:contain}.topbar-luckybox span{display:flex;flex-direction:column;line-height:1.05}.topbar-luckybox strong{font-size:14px;color:#ffe18c}.topbar-luckybox small{margin-top:3px;font-size:9px;letter-spacing:.08em;color:#9eabc0}.account-dropdown-luckybox{border-top:1px solid rgba(255,255,255,.06)}
 @media(max-width:720px){.topbar-luckybox small{display:none}.topbar-luckybox{padding:5px 7px}.topbar-luckybox img{width:28px;height:28px}}
+
+/* V1.4.15 - Admin selectable ranking layout: horizontal / vertical */
+.season-ranking-layout-config{margin:16px 0;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(0,0,0,.12)}
+.season-ranking-layout-config h3{margin:0 0 10px}
+.season-layout-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.season-layout-option{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid rgba(255,255,255,.14);border-radius:10px;cursor:pointer}
+.season-layout-option input{margin-top:3px}
+.season-layout-option span{display:flex;flex-direction:column;gap:3px}
+.season-layout-option small{opacity:.72}
+.ranking-season-tagline{font-size:12px;font-weight:900;letter-spacing:2.2px;color:#f5cf6e;white-space:nowrap;text-shadow:0 0 18px rgba(245,207,110,.22)}
+.ranking-layout-vertical .ranking-main-header{margin-bottom:12px}
+.ranking-layout-vertical .ranking-season-headline{justify-content:center;gap:14px;flex-wrap:wrap}
+.ranking-layout-vertical .ranking-showcase{display:flex!important;flex-direction:column;gap:16px;align-items:stretch}
+.ranking-layout-vertical .podium-stage-reference{width:100%;max-width:920px;margin:0 auto;min-height:500px!important}
+.ranking-layout-vertical .podium-reference-wrap{max-width:760px}
+.ranking-layout-vertical .ranking-title-after-podium{margin:2px 0 4px}
+.ranking-layout-vertical .ranking-board-panel{width:100%;max-width:1180px;margin:0 auto}
+@media(max-width:720px){.season-layout-options{grid-template-columns:1fr}.ranking-season-tagline{width:100%;text-align:center;font-size:10px;letter-spacing:1.4px}.ranking-layout-vertical .podium-stage-reference{min-height:290px!important}.ranking-layout-vertical .ranking-title-after-podium{margin-top:0}}

@@ -5,10 +5,12 @@ EXPORTED_NAMES = [
     "get_current_season", "get_season_history", "count_season_matches",
     "build_season_match_count_map", "season_ranking_eligibility",
     "get_season_reward_config", "SEASON_REWARD_SETTING_KEY",
+    "get_ranking_layout", "RANKING_LAYOUT_SETTING_KEY",
 ]
 
 SEASON_SETTING_KEY = "rank_season_current"
 SEASON_REWARD_SETTING_KEY = "rank_season_reward_config"
+RANKING_LAYOUT_SETTING_KEY = "ranking_layout_style"
 DEFAULT_REWARD_CONFIG = {
     "top1": {"zcoin": 20000, "lucky_box": 3},
     "top2": {"zcoin": 15000, "lucky_box": 2},
@@ -70,6 +72,27 @@ def get_season_reward_config():
     except Exception:
         pass
     return config
+
+
+
+def get_ranking_layout():
+    """Return admin-selected ranking layout: horizontal or vertical."""
+    require_db()
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value").eq("setting_key", RANKING_LAYOUT_SETTING_KEY).limit(1),
+            "get_ranking_layout_style", attempts=2,
+        )
+        if result.data:
+            raw = result.data[0].get("setting_value")
+            if isinstance(raw, dict):
+                raw = raw.get("layout")
+            value = str(raw or "horizontal").strip().lower()
+            if value in {"horizontal", "vertical"}:
+                return value
+    except Exception:
+        pass
+    return "horizontal"
 
 def get_season_history(limit=20):
     require_db()

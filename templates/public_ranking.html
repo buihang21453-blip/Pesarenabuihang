@@ -37,7 +37,7 @@
 </header>
 
 <main class="public-ranking-main synced-ranking-main">
-<section class="ranking-hero">
+<section class="ranking-hero ranking-layout-{{ ranking_layout_style or 'horizontal' }}">
     <header class="ranking-main-header">
         <div class="ranking-season-headline">
             <span class="ranking-kicker">PES eFOOTBALL 2026</span>
@@ -50,7 +50,9 @@
                     {% endfor %}
                 </select>
             </form>
+            {% if ranking_layout_style == 'vertical' %}<span class="ranking-season-tagline">THE NEW SEASON BEGINS</span>{% endif %}
         </div>
+        {% if ranking_layout_style != 'vertical' %}
         <div class="ranking-title-wrap ranking-title-wrap-season">
             <span class="ranking-star">★</span>
             <div>
@@ -59,30 +61,37 @@
             </div>
             <span class="ranking-star">★</span>
         </div>
+        {% endif %}
     </header>
 
-    {% if players %}
     <div class="ranking-showcase">
         <div class="podium-stage podium-stage-cups podium-stage-reference">
             <div class="podium-reference-wrap">
                 <img class="podium-reference-image" src="{{ asset_url('podium_top3_reference.webp') }}" alt="Top 3 podium cups">
                 <div class="podium-reference-names">
-                    {% if players|length > 1 %}
                     <div class="podium-name-slot podium-name-slot-second">
-                        <span class="podium-name-engrave {{ players[1].name_style_class or '' }}">{{ players[1].display_name }}</span>
+                        <span class="podium-name-engrave {{ players[1].name_style_class or '' if players|length > 1 else '' }}">{{ players[1].display_name if players|length > 1 else '---' }}</span>
                     </div>
-                    {% endif %}
                     <div class="podium-name-slot podium-name-slot-first">
-                        <span class="podium-name-engrave {{ players[0].name_style_class or '' }}">{{ players[0].display_name }}</span>
+                        <span class="podium-name-engrave {{ players[0].name_style_class or '' if players|length > 0 else '' }}">{{ players[0].display_name if players|length > 0 else '---' }}</span>
                     </div>
-                    {% if players|length > 2 %}
                     <div class="podium-name-slot podium-name-slot-third">
-                        <span class="podium-name-engrave {{ players[2].name_style_class or '' }}">{{ players[2].display_name }}</span>
+                        <span class="podium-name-engrave {{ players[2].name_style_class or '' if players|length > 2 else '' }}">{{ players[2].display_name if players|length > 2 else '---' }}</span>
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
+
+        {% if ranking_layout_style == 'vertical' %}
+        <div class="ranking-title-wrap ranking-title-wrap-season ranking-title-after-podium">
+            <span class="ranking-star">★</span>
+            <div>
+                <h1>TOP 100 BẢNG XẾP HẠNG</h1>
+                <p>Vinh danh những huấn luyện viên có thành tích tốt nhất hệ thống.</p>
+            </div>
+            <span class="ranking-star">★</span>
+        </div>
+        {% endif %}
 
         <div class="ranking-board-panel">
             <form class="ranking-search" method="get" action="{{ url_for('ranking') }}">
@@ -154,9 +163,6 @@
             </div>
         </div>
     </div>
-    {% else %}
-    <div class="empty-state public-ranking-empty">BXH chưa có dữ liệu người chơi.</div>
-    {% endif %}
 </section>
 </main>
 <footer class="public-ranking-footer">PES Arena • Bảng xếp hạng công khai</footer>

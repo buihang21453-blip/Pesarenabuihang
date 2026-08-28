@@ -631,6 +631,15 @@
   <div class="panel">
     <h2>🏆 Quản lý mùa giải Rank</h2>
     <p><strong>{{ current_rank_season.name }}</strong> · Mỗi tài khoản cần đủ <strong>{{ current_rank_season.placement_matches or 5 }} trận</strong> trong mùa mới để hiện BXH.</p>
+    <form method="post" action="{{ url_for('admin_season_ranking_layout') }}" class="season-ranking-layout-config">
+      <input type="hidden" name="_admin_tab" value="season">
+      <h3>🖼️ Bố cục Bảng Xếp Hạng</h3>
+      <div class="season-layout-options">
+        <label class="season-layout-option"><input type="radio" name="ranking_layout" value="horizontal" {% if ranking_layout_style != 'vertical' %}checked{% endif %}><span><strong>Ngang</strong><small>Ảnh Cup và bảng BXH nằm cạnh nhau (giao diện hiện tại).</small></span></label>
+        <label class="season-layout-option"><input type="radio" name="ranking_layout" value="vertical" {% if ranking_layout_style == 'vertical' %}checked{% endif %}><span><strong>Dọc</strong><small>Header → Season → Cup → TOP 100 → tìm kiếm → BXH.</small></span></label>
+      </div>
+      <button class="btn" type="submit">💾 Lưu bố cục BXH</button>
+    </form>
     {% set src = rank_season_reward_config %}
     <form method="post" action="{{ url_for('admin_season_reward_config') }}" class="season-reward-config">
       <input type="hidden" name="_admin_tab" value="season">

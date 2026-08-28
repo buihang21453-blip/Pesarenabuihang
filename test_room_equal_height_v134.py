@@ -6,7 +6,7 @@ CSS = (ROOT / "static/css/rank_mode_toggle.css").read_text(encoding="utf-8")
 
 
 def test_version_is_v136():
-    assert 'APP_VERSION = "V1.4.14"' in APP
+    assert 'APP_VERSION = "V1.4.15"' in APP
 
 
 def test_three_primary_panels_share_adaptive_equal_height_without_hard_cap():
