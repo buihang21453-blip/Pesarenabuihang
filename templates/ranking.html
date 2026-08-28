@@ -2,7 +2,16 @@
 {% from "_rank_macros.html" import rank_badge %}
 {% from "_avatar_macros.html" import player_avatar %}
 {% block content %}
-<section class="ranking-season-strip"><strong>{{ current_rank_season.name if current_rank_season else 'Season 1' }}</strong><span> · Đủ {{ ranking_qualify_matches }} trận mùa này để có thứ hạng chính thức</span></section>
+<section class="ranking-season-strip ranking-season-switcher">
+    <div><strong>{{ selected_rank_season.name if selected_rank_season else 'Season 1' }}</strong>
+    {% if viewing_historical_season %}<span> · Đã kết thúc · BXH đã đóng băng</span>{% else %}<span> · Đang diễn ra · Đủ {{ ranking_qualify_matches }} trận mùa này để có thứ hạng chính thức</span>{% endif %}</div>
+    <form method="get" action="{{ url_for('ranking') }}" class="ranking-season-form">
+        <label for="season-select">Mùa giải</label>
+        <select id="season-select" name="season" onchange="this.form.submit()">
+            {% for season in rank_seasons %}<option value="{{ season.season_number }}" {{ 'selected' if season.season_number|int == selected_season_number|int else '' }}>{{ season.name }}{{ ' · Đang diễn ra' if season.season_number|int == current_rank_season.season_number|int else ' · Đã kết thúc' }}</option>{% endfor %}
+        </select>
+    </form>
+</section>
 <section class="ranking-hero">
     <div class="ranking-title-wrap">
         <span class="ranking-star">★</span>
@@ -35,6 +44,7 @@
 
         <div class="ranking-board-panel">
             <form class="ranking-search" method="get">
+                <input type="hidden" name="season" value="{{ selected_season_number }}">
                 <input name="q" value="{{ q }}" placeholder="Nhập tên HLV hoặc tài khoản muốn tìm">
                 <select name="rank" aria-label="Lọc theo hạng" onchange="this.form.submit()">
                     <option value="all">Tất cả hạng</option>
@@ -105,7 +115,7 @@
     {% endif %}
 </section>
 
-{% if current_user and not current_player and current_ranking_status %}
+{% if not viewing_historical_season and current_user and not current_player and current_ranking_status %}
 <section class="ranking-status-card">
     {% if current_ranking_status.reason == 'placement' %}
     <strong>Chưa có thứ hạng chính thức</strong>
@@ -117,7 +127,7 @@
 </section>
 {% endif %}
 
-{% if current_player %}
+{% if current_player and not viewing_historical_season %}
 <section class="my-ranking-card ranking-my-card">
     <div><span class="eyebrow">VỊ TRÍ CỦA BẠN</span><strong class="my-rank-number">#{{ current_position }}</strong></div>
     <div>{{ player_avatar(current_player, size='sm') }}{{ rank_badge(current_player.rank_info) }}<strong>{{ current_player.rank_points or 0 }} điểm</strong></div>

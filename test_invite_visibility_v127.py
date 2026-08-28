@@ -6,7 +6,7 @@ BASE = (ROOT / 'templates' / 'base.html').read_text(encoding='utf-8')
 
 
 def test_version_v127():
-    assert 'APP_VERSION = "V1.4.8"' in APP
+    assert 'APP_VERSION = "V1.4.9"' in APP
 
 
 def test_pending_api_reads_multiple_rows():

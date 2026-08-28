@@ -7,7 +7,7 @@ ADMIN = (ROOT / "templates/admin.html").read_text(encoding="utf-8")
 
 
 def test_version_is_v135():
-    assert 'APP_VERSION = "V1.4.8"' in APP
+    assert 'APP_VERSION = "V1.4.9"' in APP
 
 
 def test_admin_target_sections_use_content_sized_buttons():

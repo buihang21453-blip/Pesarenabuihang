@@ -1,0 +1,14 @@
+PES Arena V1.4.9 - Separate Season Rankings
+
+1. Deploy toàn bộ source V1.4.9.
+2. Vào Supabase > SQL Editor.
+3. Chạy: docs/update_rank_season_v1_4_9.sql
+4. Mở /ranking hoặc /bxh.
+5. Góc Season chọn:
+   - Season 2: BXH hiện tại, tài khoản cần đủ 5 trận mùa 2 mới xuất hiện.
+   - Season 1: BXH đã đóng băng, RP/vị trí lấy từ Snapshot mùa 1.
+
+LƯU Ý:
+- SQL V1.4.9 bắt buộc phải tìm thấy Snapshot Season 1; nếu không có sẽ dừng để bảo vệ dữ liệu.
+- Nếu V1.4.8 đã mở Season 2 thì SQL V1.4.9 KHÔNG reset RP thêm lần nữa.
+- Không xóa Zcoin, vật phẩm, lịch sử trận hoặc Snapshot Season 1.

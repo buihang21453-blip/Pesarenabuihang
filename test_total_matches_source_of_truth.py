@@ -21,4 +21,4 @@ def test_rp_engine_uses_wdl_total():
     assert 'matches = _calculated_total_matches(loser)' in RP_ENGINE
 
 def test_version():
-    assert 'APP_VERSION = "V1.4.8"' in APP
+    assert 'APP_VERSION = "V1.4.9"' in APP

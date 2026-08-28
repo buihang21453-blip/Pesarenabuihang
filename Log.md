@@ -1,4 +1,11 @@
-# PES Arena changelog
+# PES Arena Change Log
+
+## V1.4.9 - Separate Season Rankings
+- BXH Season 1 đọc từ snapshot đã đóng băng, giữ nguyên RP/vị trí cũ.
+- Season 2 dùng RP hiện tại của users và điều kiện 5 trận tính từ thời điểm mở Season 2.
+- Thêm dropdown chọn Season ngay trên BXH.
+- SQL phục hồi an toàn: nếu V1.4.8 đã mở Season 2 thì không reset RP lần nữa.
+- Không xóa lịch sử trận, Zcoin, vật phẩm hay snapshot Season 1.
 
 ## V1.4.8 - Safe Season Reset
 - Sửa lỗi 500 tại `/admin/season/reset-open-next`.
