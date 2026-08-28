@@ -428,3 +428,10 @@
 - Tài khoản Invisible nhìn thấy và có thể chọn các tài khoản Invisible khác khi mời đấu.
 - Tài khoản bình thường tiếp tục không thấy tài khoản Invisible trong danh sách mời.
 - Chuẩn hóa so sánh ID sang chuỗi để tránh lệch kiểu UUID/string.
+
+## V1.4.13 – Season Notifications
+- Dropdown BXH rút gọn thành `SEASON 2`, `SEASON 1`.
+- Trao thưởng Top 1–3 tự tạo thông báo cá nhân ở các mùa sau.
+- Thêm nút gửi bù thông báo riêng Top 3 cho mùa vừa kết thúc.
+- Admin có 3 mẫu thông báo Season toàn hệ thống soạn sẵn; chỉ gửi khi Admin bấm.
+- Không thay đổi database/schema và không thay đổi RP/Season logic.

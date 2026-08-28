@@ -46,7 +46,7 @@
                 {% if rank_filter and rank_filter != 'all' %}<input type="hidden" name="rank" value="{{ rank_filter }}">{% endif %}
                 <select id="season-select" name="season" onchange="this.form.submit()" aria-label="Chọn mùa giải">
                     {% for season in rank_seasons %}
-                    <option value="{{ season.season_number }}" {{ 'selected' if season.season_number|int == selected_season_number|int else '' }}>🏆 Mùa {{ season.season_number }} - {{ 'Hiện tại' if season.season_number|int == current_rank_season.season_number|int else 'Đã kết thúc' }}</option>
+                    <option value="{{ season.season_number }}" {{ 'selected' if season.season_number|int == selected_season_number|int else '' }}>SEASON {{ season.season_number }}</option>
                     {% endfor %}
                 </select>
             </form>

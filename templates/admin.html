@@ -652,7 +652,44 @@
       <form method="post" action="{{ url_for('admin_season_rewards') }}" onsubmit="return confirm('Trao thưởng Top 1-3 theo Snapshot và cấu hình đang lưu?');"><input type="hidden" name="_admin_tab" value="season"><button class="btn gold" type="submit">2. Trao thưởng + Log</button></form>
       <form method="post" action="{{ url_for('admin_season_reset_open_next') }}" onsubmit="return confirm('Reset toàn bộ RP về 1000 và mở Season mới?');"><input type="hidden" name="_admin_tab" value="season"><button class="btn red" type="submit">3. Reset RP & Mở mùa mới</button></form>
     </div>
-    <p class="small">Bạn có thể sửa Zcoin/Lucky Box rồi bấm <strong>Lưu phần thưởng</strong>. Nút Trao thưởng sẽ dùng đúng cấu hình đã lưu và ghi log chống trao trùng.</p>
+    <p class="small">Bạn có thể sửa Zcoin/Lucky Box rồi bấm <strong>Lưu phần thưởng</strong>. Nút Trao thưởng sẽ dùng đúng cấu hình đã lưu, ghi log chống trao trùng và tự gửi thông báo riêng cho Top 1–3 ở các mùa sau.</p>
+
+    <hr style="margin:18px 0">
+    <h3>🔔 Thông báo mùa giải</h3>
+    <div class="season-notification-card">
+      <h4>🥇🥈🥉 Thông báo riêng Top 3</h4>
+      <p class="small">Dùng để gửi bù thông báo cho Top 1–3 của mùa vừa kết thúc. Nội dung lấy đúng mức thưởng đã ghi trong log.</p>
+      <form method="post" action="{{ url_for('admin_season_notify_top3') }}" onsubmit="return confirm('Gửi thông báo riêng cho Top 1–3 của mùa vừa kết thúc?');">
+        <input type="hidden" name="_admin_tab" value="season">
+        <input type="hidden" name="season_number" value="{{ [1, (current_rank_season.season_number|int - 1)]|max }}">
+        <button class="btn gold" type="submit">🔔 Gửi thông báo thưởng Top 3</button>
+      </form>
+    </div>
+
+    <div class="season-system-notification-list">
+      <div class="season-notification-card">
+        <strong>📢 Toàn hệ thống #1</strong>
+        <p>🏆 Season {{ [1, (current_rank_season.season_number|int - 1)]|max }} đã chính thức khép lại. Chúc mừng các HLV xuất sắc nhất mùa giải!</p>
+        <form method="post" action="{{ url_for('admin_season_notify_all', message_key='season_closed') }}" onsubmit="return confirm('Gửi thông báo này tới toàn bộ tài khoản người chơi?');">
+          <input type="hidden" name="_admin_tab" value="season"><button class="btn" type="submit">📨 Gửi thông báo #1</button>
+        </form>
+      </div>
+      <div class="season-notification-card">
+        <strong>🏆 Toàn hệ thống #2</strong>
+        <p><strong>SEASON {{ current_rank_season.season_number }} ĐÃ BẮT ĐẦU!</strong><br>Thông báo đầy đủ Top 1–3, 1000 RP và yêu cầu hoàn thành 5 trận để xuất hiện trên BXH.</p>
+        <form method="post" action="{{ url_for('admin_season_notify_all', message_key='season_started_detail') }}" onsubmit="return confirm('Gửi thông báo Season mới đầy đủ tới toàn bộ tài khoản?');">
+          <input type="hidden" name="_admin_tab" value="season"><button class="btn gold" type="submit">📨 Gửi thông báo #2</button>
+        </form>
+      </div>
+      <div class="season-notification-card">
+        <strong>🎉 Toàn hệ thống #3</strong>
+        <p>⚽ CHÀO MỪNG SEASON {{ current_rank_season.season_number }} – Một mùa giải mới chính thức bắt đầu! Tất cả HLV khởi đầu với 1000 RP. Đủ 5 trận sẽ xuất hiện trên BXH.</p>
+        <form method="post" action="{{ url_for('admin_season_notify_all', message_key='season_welcome') }}" onsubmit="return confirm('Gửi thông báo chào mừng Season mới tới toàn bộ tài khoản?');">
+          <input type="hidden" name="_admin_tab" value="season"><button class="btn green" type="submit">📨 Gửi thông báo #3</button>
+        </form>
+      </div>
+    </div>
+    <p class="small">Ba nút trên chỉ gửi khi Admin bấm. Không tự động gửi toàn hệ thống.</p>
   </div>
 </section>
 {% endif %}

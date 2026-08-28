@@ -6255,3 +6255,10 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 .ranking-title-wrap-season{margin:7px 0 0}
 .ranking-title-wrap-season h1{margin-top:0}
 @media(max-width:720px){.ranking-season-headline{gap:8px}.ranking-header-season-form select{min-width:170px;font-size:11px;padding-block:6px}.ranking-main-header{margin-bottom:13px}}
+
+/* V1.4.13 - Season notification controls */
+.season-system-notification-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.season-notification-card{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px;background:rgba(6,15,29,.34);margin-top:12px}
+.season-notification-card h4,.season-notification-card p{margin:0 0 10px}
+.season-notification-card form{margin:0}
+@media(max-width:900px){.season-system-notification-list{grid-template-columns:1fr}}
