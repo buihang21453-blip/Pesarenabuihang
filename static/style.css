@@ -6244,3 +6244,14 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
     url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1/Nencup.webp") center center / cover no-repeat!important;
 }
 .podium-stage-reference .podium-reference-wrap{position:relative;z-index:1}
+
+
+/* V1.4.12 - Ranking header: PES eFOOTBALL + season dropdown on first line */
+.ranking-main-header{position:relative;margin-bottom:18px;text-align:center}
+.ranking-season-headline{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:4px 0 4px}
+.ranking-season-headline .ranking-kicker{display:inline-flex;align-items:center;line-height:1;white-space:nowrap}
+.ranking-header-season-form{display:inline-flex;align-items:center;margin:0}
+.ranking-header-season-form select{appearance:auto;min-width:185px;padding:7px 30px 7px 11px;border:1px solid rgba(245,207,110,.46);border-radius:9px;background:rgba(5,16,26,.86);color:#f5cf6e;font-size:12px;font-weight:900;letter-spacing:.02em;cursor:pointer}
+.ranking-title-wrap-season{margin:7px 0 0}
+.ranking-title-wrap-season h1{margin-top:0}
+@media(max-width:720px){.ranking-season-headline{gap:8px}.ranking-header-season-form select{min-width:170px;font-size:11px;padding-block:6px}.ranking-main-header{margin-bottom:13px}}

@@ -37,26 +37,29 @@
 </header>
 
 <main class="public-ranking-main synced-ranking-main">
-<section class="ranking-season-strip ranking-season-switcher">
-    <div><strong>{{ selected_rank_season.name if selected_rank_season else 'Season 1' }}</strong>
-    {% if viewing_historical_season %}<span> · Đã kết thúc · BXH đã đóng băng</span>{% else %}<span> · Đang diễn ra · Đủ {{ ranking_qualify_matches }} trận mùa này để có thứ hạng chính thức</span>{% endif %}</div>
-    <form method="get" action="{{ url_for('ranking') }}" class="ranking-season-form">
-        <label for="season-select">Mùa giải</label>
-        <select id="season-select" name="season" onchange="this.form.submit()">
-            {% for season in rank_seasons %}<option value="{{ season.season_number }}" {{ 'selected' if season.season_number|int == selected_season_number|int else '' }}>{{ season.name }}{{ ' · Đang diễn ra' if season.season_number|int == current_rank_season.season_number|int else ' · Đã kết thúc' }}</option>{% endfor %}
-        </select>
-    </form>
-</section>
 <section class="ranking-hero">
-    <div class="ranking-title-wrap">
-        <span class="ranking-star">★</span>
-        <div>
-            <span class="ranking-kicker">PES Arena CHAMPIONSHIP</span>
-            <h1>TOP 100 BẢNG XẾP HẠNG</h1>
-            <p>Vinh danh những huấn luyện viên có thành tích tốt nhất hệ thống.</p>
+    <header class="ranking-main-header">
+        <div class="ranking-season-headline">
+            <span class="ranking-kicker">PES eFOOTBALL 2026</span>
+            <form method="get" action="{{ url_for('ranking') }}" class="ranking-header-season-form">
+                {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+                {% if rank_filter and rank_filter != 'all' %}<input type="hidden" name="rank" value="{{ rank_filter }}">{% endif %}
+                <select id="season-select" name="season" onchange="this.form.submit()" aria-label="Chọn mùa giải">
+                    {% for season in rank_seasons %}
+                    <option value="{{ season.season_number }}" {{ 'selected' if season.season_number|int == selected_season_number|int else '' }}>🏆 Mùa {{ season.season_number }} - {{ 'Hiện tại' if season.season_number|int == current_rank_season.season_number|int else 'Đã kết thúc' }}</option>
+                    {% endfor %}
+                </select>
+            </form>
         </div>
-        <span class="ranking-star">★</span>
-    </div>
+        <div class="ranking-title-wrap ranking-title-wrap-season">
+            <span class="ranking-star">★</span>
+            <div>
+                <h1>TOP 100 BẢNG XẾP HẠNG</h1>
+                <p>Vinh danh những huấn luyện viên có thành tích tốt nhất hệ thống.</p>
+            </div>
+            <span class="ranking-star">★</span>
+        </div>
+    </header>
 
     {% if players %}
     <div class="ranking-showcase">
