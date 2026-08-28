@@ -118,6 +118,10 @@ def register_routes(context):
     @login_required
     def profile(user_id):
         viewer = current_user()
+        target = get_user(user_id)
+        if target and str(target.get("account_status") or "approved").lower() == "deleted" and not is_admin_user(viewer):
+            flash("Không tìm thấy player.", "danger")
+            return redirect(url_for("players"))
         if not can_view_player_identity(user_id, viewer):
             flash("Không tìm thấy player.", "danger")
             return redirect(url_for("players"))

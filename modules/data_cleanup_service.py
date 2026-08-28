@@ -113,10 +113,10 @@ def delete_player_safe(user_id):
     tombstone_password = hash_password(f"deleted:{user_id}:{deleted_at}")
     execute_query(
         db.table("users").update({
-            "account_status": "banned",
+            "account_status": "deleted",
             "is_online": False,
             "password_hash": tombstone_password,
-            "rejection_reason": "Tài khoản đã được Admin xóa mềm. Lịch sử thi đấu được giữ nguyên.",
+            "rejection_reason": "Tài khoản đã được Admin xóa. Hồ sơ lịch sử thi đấu và BXH mùa cũ được giữ nguyên.",
             "last_seen_at": deleted_at,
         }).eq("id", user_id),
         "soft_delete_player_keep_history",

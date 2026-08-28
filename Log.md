@@ -444,3 +444,11 @@
 - Cấp Lucky Box thưởng Season qua RPC idempotent, chống cộng trùng.
 - BXH luôn render cụm 3 Cup kể cả chưa có người đủ 5 trận; tên trống hiển thị ---.
 - Test: 287/287 passed.
+
+## V1.4.16 - Deleted Account Keeps History
+- Tách trạng thái `deleted` khỏi `banned` trong Admin.
+- Nút `Xóa tài khoản` chỉ vô hiệu hóa hồ sơ đang hoạt động; không xóa users row, matches hoặc season snapshots.
+- Tài khoản deleted không đăng nhập, không xuất hiện ở Players/tìm kiếm/mời đấu/BXH mùa hiện tại.
+- BXH các season đã đóng dùng `preserve_deleted=True` để giữ nguyên người chơi, RP và vị trí lịch sử.
+- Hồ sơ deleted không mở được với player thường; Admin vẫn xem được để quản trị/đối chiếu lịch sử.
+- Test: 298 passed.

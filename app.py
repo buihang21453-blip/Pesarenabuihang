@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.15"
+APP_VERSION = "V1.4.16"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -97,7 +97,7 @@ ACHIEVEMENT_DEFINITIONS = [
 ]
 ACHIEVEMENT_BY_CODE = {item["code"]: item for item in ACHIEVEMENT_DEFINITIONS}
 ADMIN_LEVELS = {"owner", "admin"}
-ACCOUNT_STATUSES = {"pending", "approved", "rejected", "banned"}
+ACCOUNT_STATUSES = {"pending", "approved", "rejected", "banned", "deleted"}
 REMATCH_HOST_READY_NOTE = "__rematch_host_ready__"
 REMATCH_GUEST_READY_NOTE = "__rematch_guest_ready__"
 REMATCH_HOST_DECLINED_NOTE = "__rematch_host_declined__"
@@ -2191,24 +2191,26 @@ def can_view_player_identity(target_user_id, viewer=None, invisible_ids=None):
     return target_id not in ids
 
 
-def filter_players_for_viewer(players, viewer=None, invisible_ids=None):
+def filter_players_for_viewer(players, viewer=None, invisible_ids=None, *, preserve_deleted=False):
     viewer = viewer if viewer is not None else current_user()
     ids = invisible_ids if invisible_ids is not None else get_invisible_player_ids()
     ids = {str(item) for item in ids}
+    rows = list(players or [])
+
+    # deleted chỉ còn là hồ sơ lưu lịch sử. Không xuất hiện ở Players, tìm kiếm,
+    # mời đấu hoặc BXH mùa hiện tại. Riêng BXH mùa đã đóng có thể bật
+    # preserve_deleted=True để giữ nguyên thứ hạng lịch sử.
+    if not preserve_deleted:
+        rows = [p for p in rows if str(p.get("account_status") or "approved").lower() != "deleted"]
+
     if is_admin_user(viewer):
-        return list(players or [])
+        return rows
 
     viewer_id = str((viewer or {}).get("id") or "")
-    # Tài khoản Invisible phải nhìn thấy toàn bộ player, bao gồm các tài khoản
-    # Invisible khác. Bypass thẳng bộ lọc để tránh bất kỳ nhánh lọc phụ nào
-    # làm mất đối thủ ở Players / Mời đấu / Dashboard.
     if viewer_id and viewer_id in ids:
-        return list(players or [])
+        return rows
 
-    return [
-        player for player in (players or [])
-        if str(player.get("id") or "") not in ids
-    ]
+    return [player for player in rows if str(player.get("id") or "") not in ids]
 
 
 def invite_visible_players(viewer=None, *, include_admin=False, force_invisible_refresh=True):
@@ -4815,6 +4817,7 @@ def login_required(view):
                 "pending": "Tài khoản đang chờ Admin duyệt.",
                 "rejected": "Tài khoản đã bị từ chối.",
                 "banned": "Tài khoản đã bị khóa.",
+                "deleted": "Tài khoản này đã được xóa khỏi hệ thống.",
             }
             flash(messages.get(status, "Tài khoản chưa được phép sử dụng."), "danger")
             return redirect(url_for("login"))
@@ -5416,6 +5419,7 @@ def login():
                 "pending": "Tài khoản của bạn đang chờ Admin duyệt.",
                 "rejected": "Tài khoản của bạn đã bị từ chối.",
                 "banned": "Tài khoản của bạn đã bị khóa. Hãy liên hệ Admin.",
+                "deleted": "Tài khoản này đã được Admin xóa khỏi hệ thống.",
             }
             flash(messages.get(status, "Tài khoản chưa được phép đăng nhập."), "danger")
             return redirect(url_for("login"))
@@ -6239,7 +6243,7 @@ def ranking():
             base["record_text"] = f'{base["wins"]}T • {base["draws"]}H • {base["losses"]}B'
             archived.append(base)
         archived.sort(key=lambda x: int(x.get("position") or 999999))
-        player_rows = filter_players_for_viewer(archived, user, invisible_ids)
+        player_rows = filter_players_for_viewer(archived, user, invisible_ids, preserve_deleted=True)
         if not (is_admin_user(user) or (user and str(user.get("id")) in invisible_ids)):
             for pos, item in enumerate(player_rows, 1):
                 item["position"] = pos
@@ -6252,6 +6256,8 @@ def ranking():
         season_match_count_map = build_season_match_count_map(ranking_activity_matches, current_season)
         eligible_player_rows = []
         for player in all_player_rows:
+            if str(player.get("account_status") or "approved").lower() == "deleted":
+                continue
             eligibility = season_ranking_eligibility(
                 player, season_match_count_map.get(str(player.get("id")), 0),
                 latest_activity_map.get(str(player.get("id"))), now=ranking_now, season=current_season,

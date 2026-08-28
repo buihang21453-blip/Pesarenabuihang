@@ -7,7 +7,7 @@ def read(path):
     return (ROOT / path).read_text(encoding="utf-8")
 
 def test_version_and_python_parse():
-    assert 'APP_VERSION = "V1.4.15"' in read("app.py")
+    assert 'APP_VERSION = "V1.4.16"' in read("app.py")
     for path in ("app.py", "modules/profile/equipment_service.py", "modules/room_access_routes.py"):
         ast.parse(read(path), filename=path)
 

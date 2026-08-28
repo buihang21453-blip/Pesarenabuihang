@@ -11,7 +11,7 @@ def test_soft_delete_keeps_matches_and_user_row():
     assert 'db.table("matches").delete()' not in body
     assert 'db.table("users").delete()' not in body
     assert 'reverse_confirmed_match_result' not in body
-    assert 'account_status": "banned"' in body
+    assert 'account_status": "deleted"' in body
     assert 'if room.get("match_id")' in body
 
 
@@ -24,5 +24,5 @@ def test_kick_is_pre_match_only_and_cancels_invite():
 
 
 def test_admin_copy_explains_soft_delete():
-    assert 'Xóa mềm' in admin
-    assert 'Lịch sử trận và RP' in admin
+    assert 'Xóa tài khoản' in admin
+    assert 'Lịch sử trận và BXH các mùa cũ' in admin
