@@ -42,11 +42,19 @@ def register_routes(context):
     def admin_season_snapshot():
         season = get_current_season()
         players = _players_sorted()
+        matches = list_matches()
+        season_stats = _build_season_stats_map(matches, season)
         payload = []
         for pos, p in enumerate(players, 1):
-            payload.append({"user_id": str(p.get('id')), "position": pos,
+            uid = str(p.get('id'))
+            stats = season_stats.get(uid, {})
+            payload.append({"user_id": uid, "position": pos,
                             "rank_points": int(p.get('rank_points') or 0),
-                            "display_name": p.get('display_name') or p.get('username')})
+                            "display_name": p.get('display_name') or p.get('username'),
+                            "wins": int(stats.get('wins') or 0),
+                            "draws": int(stats.get('draws') or 0),
+                            "losses": int(stats.get('losses') or 0),
+                            "recent_form": list(stats.get('recent_form') or [])[:5]})
         execute_query(db.table('rank_season_snapshots').upsert({
             'season_number': int(season.get('season_number') or 1),
             'snapshot_data': payload, 'created_at': now_iso()

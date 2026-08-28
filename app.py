@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.10"
+APP_VERSION = "V1.4.11"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -6074,6 +6074,60 @@ def players():
     )
 
 
+def _build_season_stats_map(matches, season):
+    """Rebuild W/D/L + recent form for one season from preserved match history.
+
+    This is also the compatibility path for Season 1 snapshots created before
+    V1.4.11, which only stored final RP/position/name.
+    """
+    start = None
+    end = None
+    try:
+        start = parse_dt((season or {}).get("started_at")) if (season or {}).get("started_at") else None
+    except Exception:
+        start = None
+    try:
+        end = parse_dt((season or {}).get("ended_at")) if (season or {}).get("ended_at") else None
+    except Exception:
+        end = None
+
+    stats = {}
+    for match in matches or []:
+        if str(match.get("status") or "").lower() != "confirmed":
+            continue
+        try:
+            created = parse_dt(match.get("created_at")) if match.get("created_at") else None
+        except Exception:
+            created = None
+        if start and (not created or created < start):
+            continue
+        if end and (not created or created > end):
+            continue
+
+        p1, p2 = match.get("player1_id"), match.get("player2_id")
+        s1, s2 = match.get("score1"), match.get("score2")
+        if not p1 or not p2 or s1 is None or s2 is None:
+            continue
+        try:
+            s1, s2 = int(s1), int(s2)
+        except (TypeError, ValueError):
+            continue
+
+        for uid, mine, theirs in ((p1, s1, s2), (p2, s2, s1)):
+            key = str(uid)
+            row = stats.setdefault(key, {"wins": 0, "draws": 0, "losses": 0, "recent_form": []})
+            if mine > theirs:
+                row["wins"] += 1; code = {"code": "win", "short": "T", "label": "Thắng"}
+            elif mine < theirs:
+                row["losses"] += 1; code = {"code": "loss", "short": "B", "label": "Bại"}
+            else:
+                row["draws"] += 1; code = {"code": "draw", "short": "H", "label": "Hòa"}
+            # list_matches() is newest first, so the first five are the final five of the season.
+            if len(row["recent_form"]) < 5:
+                row["recent_form"].append(code)
+    return stats
+
+
 def _build_recent_form_map(matches, player_ids=None, limit=5):
     """Build recent form pills for leaderboard rows using confirmed matches only."""
     tracked_ids = set(player_ids or []) if player_ids else None
@@ -6158,6 +6212,10 @@ def ranking():
             print(f"ranking historical snapshot warning: {exc}")
             snapshot_rows = []
 
+        selected_season = next((x for x in get_season_history(50) if int(x.get("season_number") or 0) == requested_sn), None) or {
+            "season_number": requested_sn, "name": f"Season {requested_sn}", "status": "closed", "placement_matches": 5
+        }
+        reconstructed_stats = _build_season_stats_map(ranking_activity_matches, selected_season)
         by_id = {str(p.get("id")): dict(p) for p in all_player_rows}
         archived = []
         for row in snapshot_rows:
@@ -6168,13 +6226,17 @@ def ranking():
             base["rank_points"] = int(row.get("rank_points") or 0)
             base["position"] = int(row.get("position") or 0)
             base["rank_info"] = get_player_rank_info(base, base["position"])
-            # Snapshot V1.4.6 chỉ lưu RP/vị trí/tên. Không giả dữ liệu thống kê cũ.
-            base["wins"] = int(row.get("wins") or 0)
-            base["draws"] = int(row.get("draws") or 0)
-            base["losses"] = int(row.get("losses") or 0)
-            base["recent_form"] = []
+
+            # V1.4.11: snapshots cũ (Season 1) chưa có W/D/L/recent_form sẽ
+            # được phục hồi trực tiếp từ bảng matches, không dùng thống kê live Season 2.
+            rebuilt = reconstructed_stats.get(uid, {})
+            base["wins"] = int(row["wins"] if "wins" in row else rebuilt.get("wins", 0))
+            base["draws"] = int(row["draws"] if "draws" in row else rebuilt.get("draws", 0))
+            base["losses"] = int(row["losses"] if "losses" in row else rebuilt.get("losses", 0))
+            base["recent_form"] = list(row.get("recent_form") if "recent_form" in row else rebuilt.get("recent_form", []))[:5]
             total = base["wins"] + base["draws"] + base["losses"]
             base["winrate"] = round((base["wins"] / total) * 100, 1) if total else 0
+            base["record_text"] = f'{base["wins"]}T • {base["draws"]}H • {base["losses"]}B'
             archived.append(base)
         archived.sort(key=lambda x: int(x.get("position") or 999999))
         player_rows = filter_players_for_viewer(archived, user, invisible_ids)
@@ -6182,9 +6244,6 @@ def ranking():
             for pos, item in enumerate(player_rows, 1):
                 item["position"] = pos
                 item["rank_info"] = get_player_rank_info(item, pos)
-        selected_season = next((x for x in get_season_history(50) if int(x.get("season_number") or 0) == requested_sn), None) or {
-            "season_number": requested_sn, "name": f"Season {requested_sn}", "status": "closed", "placement_matches": 5
-        }
         current_player = next((p for p in player_rows if user and str(p.get("id")) == str(user.get("id"))), None)
         current_position = current_player.get("position") if current_player else None
     else:

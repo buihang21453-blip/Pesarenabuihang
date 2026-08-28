@@ -7,7 +7,7 @@ ADMIN = Path('templates/admin.html').read_text(encoding='utf-8')
 SQL = Path('docs/update_rank_season_v1_4_6.sql').read_text(encoding='utf-8')
 
 def test_version_and_module_registration():
-    assert 'APP_VERSION = "V1.4.10"' in APP
+    assert 'APP_VERSION = "V1.4.11"' in APP
     assert '_season_service' in APP
     assert '_register_season_routes' in APP
 
