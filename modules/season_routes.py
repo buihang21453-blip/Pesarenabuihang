@@ -130,21 +130,37 @@ def register_routes(context):
         if not snap.data or len(rewards.data or []) < 3:
             flash('Chưa đủ Snapshot + log thưởng Top 3. Không cho phép reset.', 'danger')
             return redirect_admin('season')
-        execute_query(db.table('users').update({'rank_points': 1000}).eq('role', 'player'), 'season_reset_all_rp', attempts=2)
         next_sn = sn + 1
         started = now_iso()
-        execute_query(db.table('rank_seasons').upsert({
-            'season_number': sn, 'name': season.get('name') or f'Season {sn}',
-            'started_at': season.get('started_at'), 'ended_at': started, 'status': 'closed'
-        }, on_conflict='season_number'), 'close_rank_season', attempts=2)
-        new_season = {'season_number': next_sn, 'name': f'Season {next_sn}', 'started_at': started,
-                      'status': 'active', 'placement_matches': 5}
-        execute_query(db.table('rank_seasons').upsert({**new_season, 'ended_at': None}, on_conflict='season_number'), 'open_rank_season', attempts=2)
-        execute_query(db.table('system_settings').upsert({
-            'setting_key': SEASON_SETTING_KEY, 'setting_value': new_season, 'updated_at': started
-        }, on_conflict='setting_key'), 'set_current_rank_season', attempts=2)
-        try: ttl_cache_delete('players_raw')
-        except Exception: pass
+        try:
+            result = execute_query(
+                db.rpc('reset_rank_season_open_next', {
+                    'p_current_season': sn,
+                    'p_current_name': season.get('name') or f'Season {sn}',
+                    'p_current_started_at': season.get('started_at'),
+                    'p_reset_at': started,
+                    'p_next_season': next_sn,
+                    'p_next_name': f'Season {next_sn}',
+                    'p_placement_matches': 5,
+                }),
+                'reset_rank_season_open_next_rpc', attempts=2
+            )
+            payload = result.data
+            if isinstance(payload, list):
+                payload = payload[0] if payload else {}
+            if not isinstance(payload, dict):
+                payload = {}
+            if payload.get('ok') is False:
+                raise RuntimeError(payload.get('message') or 'Database từ chối reset mùa.')
+        except Exception as exc:
+            print(f'season reset failed: {type(exc).__name__}: {exc}')
+            flash('Reset mùa chưa hoàn tất. Database đã tự hoàn tác thay đổi của lần này. Hãy kiểm tra đã chạy SQL V1.4.8 rồi thử lại.', 'danger')
+            return redirect_admin('season')
+        try:
+            ttl_cache_delete('players_raw')
+            cache_set('_rz_players_all', None)
+        except Exception:
+            pass
         log_admin_action('Reset RP và mở mùa mới', 'season', details={'closed': sn, 'opened': next_sn, 'rp': 1000})
         flash(f'Đã mở Season {next_sn}. Tất cả tài khoản bắt đầu 1000 RP và cần đủ 5 trận mùa mới để hiện BXH.', 'success')
         return redirect_admin('season')

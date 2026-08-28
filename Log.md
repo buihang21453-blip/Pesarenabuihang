@@ -1,3 +1,13 @@
+# PES Arena changelog
+
+## V1.4.8 - Safe Season Reset
+- Sửa lỗi 500 tại `/admin/season/reset-open-next`.
+- Chuyển Reset RP + đóng mùa + mở mùa sang PostgreSQL RPC nguyên tử.
+- Nếu một bước lỗi, toàn bộ thao tác reset của lần đó tự rollback.
+- Có guard Snapshot + đủ 3 log thưởng.
+- Có chống chạy lặp khi mùa đã được chuyển thành công.
+- Thêm SQL `docs/update_rank_season_v1_4_8.sql`.
+
 
 ## V1.4.7 - Configurable Season Rewards
 - Admin > Mùa giải có 6 ô nhập phần thưởng: Zcoin + Lucky Box cho Top 1, Top 2, Top 3.
