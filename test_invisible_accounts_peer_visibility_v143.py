@@ -5,7 +5,7 @@ APP = (ROOT / "app.py").read_text(encoding="utf-8")
 
 
 def test_version_v143():
-    assert 'APP_VERSION = "V1.4.6"' in APP
+    assert 'APP_VERSION = "V1.4.7"' in APP
 
 
 def test_invisible_viewer_can_see_other_invisible_accounts():

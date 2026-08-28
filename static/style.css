@@ -6220,3 +6220,12 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 
 /* V1.4.6 Rank Season */
 .ranking-season-strip{max-width:1180px;margin:14px auto 0;padding:10px 16px;border-radius:12px;background:rgba(12,18,35,.82);text-align:center;font-size:14px}.ranking-season-strip strong{font-size:16px}.admin-action-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0}.admin-action-row form{margin:0}
+
+/* V1.4.7 configurable season rewards */
+.season-reward-config{margin:16px 0;padding:14px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.025)}
+.season-reward-config h3{margin:0 0 12px}
+.season-reward-grid{display:grid;gap:10px;margin-bottom:12px}
+.season-reward-row{display:grid;grid-template-columns:90px minmax(150px,1fr) minmax(120px,1fr);gap:10px;align-items:end;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:10px}
+.season-reward-row label{display:grid;gap:5px;font-size:12px}
+.season-reward-row input{width:100%}
+@media(max-width:720px){.season-reward-row{grid-template-columns:1fr}}

@@ -1,3 +1,12 @@
+
+## V1.4.7 - Configurable Season Rewards
+- Admin > Mùa giải có 6 ô nhập phần thưởng: Zcoin + Lucky Box cho Top 1, Top 2, Top 3.
+- Mặc định: Top 1 = 20.000 + 3 box; Top 2 = 15.000 + 2; Top 3 = 10.000 + 1.
+- Cấu hình lưu tại `system_settings.rank_season_reward_config`; nút Trao thưởng đọc cấu hình đã lưu.
+- Giữ nguyên luồng Snapshot -> Trao thưởng + Log -> Reset RP & Mở mùa mới.
+- Thêm SQL `docs/update_rank_season_v1_4_7.sql`.
+- Test: 264/264 passed.
+
 ## V1.3.4 - Đồng bộ số phiên bản hiển thị
 - Cập nhật APP_VERSION và số hiệu hiển thị trong giao diện lên V1.3.4.
 - Đồng bộ các kiểm thử đang kiểm tra số phiên bản hiện hành.

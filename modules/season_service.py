@@ -4,9 +4,16 @@ from datetime import datetime
 EXPORTED_NAMES = [
     "get_current_season", "get_season_history", "count_season_matches",
     "build_season_match_count_map", "season_ranking_eligibility",
+    "get_season_reward_config", "SEASON_REWARD_SETTING_KEY",
 ]
 
 SEASON_SETTING_KEY = "rank_season_current"
+SEASON_REWARD_SETTING_KEY = "rank_season_reward_config"
+DEFAULT_REWARD_CONFIG = {
+    "top1": {"zcoin": 20000, "lucky_box": 3},
+    "top2": {"zcoin": 15000, "lucky_box": 2},
+    "top3": {"zcoin": 10000, "lucky_box": 1},
+}
 DEFAULT_SEASON = {
     "season_number": 1,
     "name": "Season 1",
@@ -44,6 +51,25 @@ def get_current_season(force=False):
     except Exception:
         pass
     return dict(DEFAULT_SEASON)
+
+
+def get_season_reward_config():
+    require_db()
+    config = {k: dict(v) for k, v in DEFAULT_REWARD_CONFIG.items()}
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value").eq("setting_key", SEASON_REWARD_SETTING_KEY).limit(1),
+            "get_rank_season_reward_config", attempts=2,
+        )
+        if result.data:
+            raw = dict(result.data[0].get("setting_value") or {})
+            for key in ("top1", "top2", "top3"):
+                if isinstance(raw.get(key), dict):
+                    config[key]["zcoin"] = max(0, int(raw[key].get("zcoin", config[key]["zcoin"])))
+                    config[key]["lucky_box"] = max(0, int(raw[key].get("lucky_box", config[key]["lucky_box"])))
+    except Exception:
+        pass
+    return config
 
 def get_season_history(limit=20):
     require_db()

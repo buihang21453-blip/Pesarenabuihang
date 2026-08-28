@@ -1,8 +1,6 @@
 """Admin/API routes for Rank seasons."""
 from flask import jsonify
 
-REWARDS = {1: (20000, 3), 2: (15000, 2), 3: (10000, 1)}
-
 def register_routes(context):
     globals().update(context)
 
@@ -31,7 +29,7 @@ def register_routes(context):
             history = get_season_history(12)
         except Exception:
             season, history = {"season_number":1,"name":"Season 1","placement_matches":5}, []
-        return {"current_rank_season": season, "rank_season_history": history}
+        return {"current_rank_season": season, "rank_season_history": history, "rank_season_reward_config": get_season_reward_config()}
 
     @app.get('/api/rank/season')
     def rank_season_api():
@@ -57,6 +55,29 @@ def register_routes(context):
         flash(f"Đã đóng băng BXH {season.get('name') or 'Season' } với {len(payload)} người chơi.", 'success')
         return redirect_admin('season')
 
+    @app.post('/admin/season/reward-config')
+    @login_required
+    @admin_required
+    @admin_permission_required('system_features_manage')
+    def admin_season_reward_config():
+        config = {}
+        try:
+            for pos in (1, 2, 3):
+                zcoin = max(0, int(request.form.get(f'top{pos}_zcoin') or 0))
+                boxes = max(0, int(request.form.get(f'top{pos}_lucky_box') or 0))
+                if zcoin > 100000000 or boxes > 100000:
+                    raise ValueError('reward too large')
+                config[f'top{pos}'] = {'zcoin': zcoin, 'lucky_box': boxes}
+        except (TypeError, ValueError):
+            flash('Giá trị phần thưởng không hợp lệ.', 'danger')
+            return redirect_admin('season')
+        execute_query(db.table('system_settings').upsert({
+            'setting_key': SEASON_REWARD_SETTING_KEY, 'setting_value': config, 'updated_at': now_iso()
+        }, on_conflict='setting_key'), 'save_rank_season_reward_config', attempts=2)
+        log_admin_action('Cập nhật thưởng mùa', 'season', details=config)
+        flash('Đã lưu phần thưởng Top 1-3.', 'success')
+        return redirect_admin('season')
+
     @app.post('/admin/season/rewards')
     @login_required
     @admin_required
@@ -70,11 +91,14 @@ def register_routes(context):
             return redirect_admin('season')
         rows = list(snap.data[0].get('snapshot_data') or [])[:3]
         actor = current_user()
+        reward_config = get_season_reward_config()
         rewarded = 0
         for row in rows:
             pos = int(row.get('position') or 0)
-            if pos not in REWARDS: continue
-            zcoin, boxes = REWARDS[pos]
+            if pos not in (1, 2, 3): continue
+            reward = reward_config.get(f'top{pos}', {})
+            zcoin = max(0, int(reward.get('zcoin') or 0))
+            boxes = max(0, int(reward.get('lucky_box') or 0))
             uid = str(row.get('user_id'))
             key = f"season:{sn}:rank:{pos}:zcoin"
             try:

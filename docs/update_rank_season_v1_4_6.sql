@@ -1,4 +1,4 @@
--- PES Arena V1.4.6 - Rank Season V1
+-- PES Arena V1.4.7 - Rank Season V1
 create table if not exists public.rank_seasons (
   season_number integer primary key,
   name text not null,
