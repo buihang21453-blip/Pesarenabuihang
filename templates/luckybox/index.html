@@ -10,7 +10,8 @@
      data-rate-version-id="{{ selected_rate.id if selected_rate else '' }}"
      data-box-code="{{ box.code if box else 'lucky_box_pes_arena' }}"
      data-box-image="{{ asset_url(box.image_path) if box else asset_url('luckybox/luckybox-pes-arena.webp') }}"
-     data-open-price="{{ open_price }}">
+     data-open-price="{{ open_price }}"
+     data-owned-boxes="{{ owned_boxes }}">
 
   {% if preview_mode %}
   <div class="lb3-preview-banner">
@@ -41,6 +42,10 @@
           <small>Số dư của bạn</small>
           <strong data-lb3-balance>{{ format_zcoin(balance) }} Zcoin</strong>
         </div>
+        <div class="lb3-owned-boxes">
+          <img src="{{ asset_url('luckybox/luckybox-pes-arena.webp') }}" alt="Lucky Box">
+          <span><small>Lucky Box sở hữu</small><strong data-lb3-owned-boxes>{{ owned_boxes }}</strong></span>
+        </div>
       </div>
       <div class="lb3-actions">
         <button class="btn gold lb3-open-button" type="button" data-lb3-open {% if not can_open %}disabled{% endif %}>
@@ -50,8 +55,10 @@
       </div>
       {% if not preview_mode and not is_live %}
       <p class="lb3-notice">Lucky Box chưa được Admin bật cho người chơi.</p>
-      {% elif not preview_mode and balance < open_price %}
-      <p class="lb3-notice is-warning">Bạn chưa đủ Zcoin để mở hộp.</p>
+      {% elif not preview_mode and owned_boxes <= 0 and balance < open_price %}
+      <p class="lb3-notice is-warning">Bạn chưa có Lucky Box sở hữu và chưa đủ Zcoin để mở hộp.</p>
+      {% elif not preview_mode and owned_boxes > 0 %}
+      <p class="lb3-owned-note">🎁 Bạn có <strong>{{ owned_boxes }}</strong> Lucky Box sở hữu. Hệ thống sẽ ưu tiên dùng lượt sở hữu trước, không trừ Zcoin.</p>
       {% endif %}
     </div>
   </section>

@@ -6262,3 +6262,6 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 .season-notification-card h4,.season-notification-card p{margin:0 0 10px}
 .season-notification-card form{margin:0}
 @media(max-width:900px){.season-system-notification-list{grid-template-columns:1fr}}
+/* V1.4.14 - Lucky Box balance in global topbar */
+.topbar-luckybox{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:6px 10px;border:1px solid rgba(241,190,74,.32);border-radius:12px;background:rgba(18,27,42,.76);text-decoration:none;color:inherit}.topbar-luckybox img{width:32px;height:32px;object-fit:contain}.topbar-luckybox span{display:flex;flex-direction:column;line-height:1.05}.topbar-luckybox strong{font-size:14px;color:#ffe18c}.topbar-luckybox small{margin-top:3px;font-size:9px;letter-spacing:.08em;color:#9eabc0}.account-dropdown-luckybox{border-top:1px solid rgba(255,255,255,.06)}
+@media(max-width:720px){.topbar-luckybox small{display:none}.topbar-luckybox{padding:5px 7px}.topbar-luckybox img{width:28px;height:28px}}

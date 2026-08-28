@@ -160,6 +160,7 @@ def register_routes(context):
                 "box": None, "active_rate": None, "selected_rate": None, "rewards": [],
                 "reward_groups": {"zcoin": [], "shop": [], "exclusive": [], "other": []},
                 "item_count_odds": [], "show_rates": False, "open_price": 0, "balance": int(actor.get("zcoin_balance") or 0),
+                "owned_boxes": int(actor.get("lucky_box_balance") or 0),
                 "can_open": False, "is_live": False, "preview_mode": admin_preview, "openings": [],
                 "request_id": "", "reward_catalog": {},
             }

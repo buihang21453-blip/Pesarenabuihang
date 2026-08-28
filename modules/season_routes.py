@@ -148,6 +148,15 @@ def register_routes(context):
                 'season_reward_existing_log', attempts=2,
             )
             already_granted = bool(previous_reward.data and str(previous_reward.data[0].get('status') or '').lower() == 'granted')
+            if boxes > 0:
+                execute_query(db.rpc('adjust_lucky_box_balance', {
+                    'p_user_id': uid,
+                    'p_amount': boxes,
+                    'p_source': 'season_reward',
+                    'p_description': f'Thưởng Lucky Box Season {sn} Top {pos}',
+                    'p_idempotency_key': f'season:{sn}:rank:{pos}:luckybox',
+                    'p_metadata': {'season_number': sn, 'position': pos},
+                }), 'season_lucky_box_reward', attempts=2)
             execute_query(db.table('rank_season_rewards').upsert({
                 'season_number': sn, 'user_id': uid, 'position': pos,
                 'zcoin_reward': zcoin, 'lucky_box_reward': boxes,

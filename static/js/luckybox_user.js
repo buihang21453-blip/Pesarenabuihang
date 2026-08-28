@@ -10,6 +10,7 @@
   const openingLink=page.querySelector('[data-lb3-opening-link]');
   const errorBox=page.querySelector('[data-lb3-error]');
   const balanceNode=page.querySelector('[data-lb3-balance]');
+  const ownedBoxesNode=page.querySelector('[data-lb3-owned-boxes]');
 
   const overlay=page.querySelector('[data-lb4-overlay]');
   const stage=page.querySelector('[data-lb4-stage]');
@@ -128,6 +129,12 @@
       balanceNode.textContent=`${formatter.format(Number(data.balance_after))} Zcoin`;
       document.querySelectorAll('.topbar-zcoin strong').forEach(node=>{node.textContent=formatter.format(Number(data.balance_after));});
     }
+    if(!previewMode&&Number.isFinite(Number(data.lucky_box_balance_after))){
+      const boxes=Number(data.lucky_box_balance_after);
+      page.dataset.ownedBoxes=String(boxes);
+      if(ownedBoxesNode) ownedBoxesNode.textContent=formatter.format(boxes);
+      document.querySelectorAll('.topbar-luckybox strong').forEach(node=>{node.textContent=formatter.format(boxes);});
+    }
     if(openingLink){
       if(!previewMode&&data.opening_id){
         openingLink.href=`/lucky-box/openings/${encodeURIComponent(data.opening_id)}`;
@@ -174,7 +181,11 @@
     if(!openButton||openButton.disabled||animationRunning) return;
     if(!previewMode){
       const price=Number(page.dataset.openPrice||0);
-      if(!window.confirm(`Mở Lucky Box với ${formatter.format(price)} Zcoin?`)) return;
+      const owned=Number(page.dataset.ownedBoxes||0);
+      const message=owned>0
+        ?`Dùng 1 Lucky Box đang sở hữu để mở hộp? (Còn ${formatter.format(owned)} lượt)`
+        :`Mở Lucky Box với ${formatter.format(price)} Zcoin?`;
+      if(!window.confirm(message)) return;
     }
 
     openButton.disabled=true;

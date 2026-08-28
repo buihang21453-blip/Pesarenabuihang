@@ -7,7 +7,7 @@ RANK = (ROOT/'templates'/'ranking.html').read_text(encoding='utf-8')
 PUBLIC = (ROOT/'templates'/'public_ranking.html').read_text(encoding='utf-8')
 
 def test_version_v1413():
-    assert 'APP_VERSION = "V1.4.13"' in APP
+    assert 'APP_VERSION = "V1.4.14"' in APP
 
 def test_season_dropdown_simple_labels():
     assert 'SEASON {{ season.season_number }}' in RANK

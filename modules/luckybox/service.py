@@ -321,11 +321,12 @@ def build_user_context(actor, admin_preview=False, selected_rate_version_id=None
         "other": [row for row in visible_rewards if row.get("reward_type") == "no_reward"],
     }
     balance = _safe_int((actor or {}).get("zcoin_balance"), 0)
+    owned_boxes = _safe_int((actor or {}).get("lucky_box_balance"), 0)
     price = _safe_int((selected_rate or {}).get("open_price_zcoin"), 0)
     is_live = bool(box and box.get("is_enabled") and active_rate and selected_rate and str(selected_rate.get("id")) == str(active_rate.get("id")))
     can_open = bool(
         (preview_mode and selected_rate)
-        or (is_live and actor and actor.get("role") == "player" and price > 0 and balance >= price)
+        or (is_live and actor and actor.get("role") == "player" and price > 0 and (owned_boxes > 0 or balance >= price))
     )
     openings = repository.list_user_openings(actor.get("id"), 8) if actor and actor.get("id") else []
     return {
@@ -338,6 +339,7 @@ def build_user_context(actor, admin_preview=False, selected_rate_version_id=None
         "show_rates": show_rates,
         "open_price": price,
         "balance": balance,
+        "owned_boxes": owned_boxes,
         "can_open": can_open,
         "is_live": is_live,
         "preview_mode": preview_mode,

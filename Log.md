@@ -435,3 +435,12 @@
 - Thêm nút gửi bù thông báo riêng Top 3 cho mùa vừa kết thúc.
 - Admin có 3 mẫu thông báo Season toàn hệ thống soạn sẵn; chỉ gửi khi Admin bấm.
 - Không thay đổi database/schema và không thay đổi RP/Season logic.
+
+## V1.4.14 – Owned Lucky Box + Empty Season Podium
+- Thêm users.lucky_box_balance và lịch sử biến động Lucky Box.
+- Backfill Lucky Box đã trao qua rank_season_rewards (Top 1–3 Season cũ).
+- Topbar + trang Lucky Box hiển thị số Lucky Box đang sở hữu.
+- Khi mở hộp, ưu tiên dùng Lucky Box sở hữu; hết lượt mới trừ Zcoin.
+- Cấp Lucky Box thưởng Season qua RPC idempotent, chống cộng trùng.
+- BXH luôn render cụm 3 Cup kể cả chưa có người đủ 5 trận; tên trống hiển thị ---.
+- Test: 287/287 passed.

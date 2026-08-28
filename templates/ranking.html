@@ -26,25 +26,20 @@
         </div>
     </header>
 
-    {% if players %}
     <div class="ranking-showcase">
         <div class="podium-stage podium-stage-cups podium-stage-reference">
             <div class="podium-reference-wrap">
                 <img class="podium-reference-image" src="{{ asset_url('podium_top3_reference.webp') }}?v={{ APP_VERSION }}" alt="Top 3 podium cups">
                 <div class="podium-reference-names">
-                    {% if players|length > 1 %}
                     <div class="podium-name-slot podium-name-slot-second">
-                        <span class="podium-name-engrave {{ players[1].name_style_class or '' }}">{{ players[1].display_name }}</span>
+                        <span class="podium-name-engrave {{ players[1].name_style_class or '' if players|length > 1 else '' }}">{{ players[1].display_name if players|length > 1 else '---' }}</span>
                     </div>
-                    {% endif %}
                     <div class="podium-name-slot podium-name-slot-first">
-                        <span class="podium-name-engrave {{ players[0].name_style_class or '' }}">{{ players[0].display_name }}</span>
+                        <span class="podium-name-engrave {{ players[0].name_style_class or '' if players|length > 0 else '' }}">{{ players[0].display_name if players|length > 0 else '---' }}</span>
                     </div>
-                    {% if players|length > 2 %}
                     <div class="podium-name-slot podium-name-slot-third">
-                        <span class="podium-name-engrave {{ players[2].name_style_class or '' }}">{{ players[2].display_name }}</span>
+                        <span class="podium-name-engrave {{ players[2].name_style_class or '' if players|length > 2 else '' }}">{{ players[2].display_name if players|length > 2 else '---' }}</span>
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -119,7 +114,6 @@
             </div>
         </div>
     </div>
-    {% endif %}
 </section>
 
 {% if not viewing_historical_season and current_user and not current_player and current_ranking_status %}

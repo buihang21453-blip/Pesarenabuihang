@@ -164,6 +164,10 @@ function toggleTheme(){
                     <img src="{{ asset_url('zcoin-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Zcoin">
                     <span><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }}</strong><small>ZCOIN</small></span>
                 </a>
+                <a class="topbar-luckybox" href="{{ url_for('luckybox_home') }}" title="Lucky Box đang sở hữu">
+                    <img src="{{ asset_url('luckybox/luckybox-pes-arena.webp') }}?v={{ APP_VERSION|urlencode }}" alt="Lucky Box">
+                    <span><strong>{{ current_user.lucky_box_balance|default(0, true) }}</strong><small>LUCKY BOX</small></span>
+                </a>
                 <div class="topbar-account-wrap">
                     <button id="accountMenuButton" class="topbar-profile" type="button" onclick="toggleAccountMenu(event)" aria-expanded="false" aria-haspopup="menu" aria-controls="accountDropdown">
                         {{ player_avatar(current_user, size='sm', frame=current_profile_equipment.avatar_frame if current_profile_equipment else none) }}
@@ -173,6 +177,10 @@ function toggleTheme(){
                         <div class="account-dropdown-wallet">
                             <img src="{{ asset_url('zcoin-logo.webp') }}" alt="">
                             <div><small>Số dư hiện tại</small><strong>{{ format_zcoin(current_user.zcoin_balance|default(0, true)) }} Zcoin</strong></div>
+                        </div>
+                        <div class="account-dropdown-wallet account-dropdown-luckybox">
+                            <img src="{{ asset_url('luckybox/luckybox-pes-arena.webp') }}" alt="">
+                            <div><small>Lucky Box sở hữu</small><strong>{{ current_user.lucky_box_balance|default(0, true) }} Lucky Box</strong></div>
                         </div>
                         <a href="{{ url_for('profile', user_id=current_user.id) }}"><span>👤</span> Hồ sơ cá nhân</a>
                         <a href="{{ url_for('zcoin_rewards') }}#daily-checkin"><span>📅</span> Điểm danh hằng ngày</a>
