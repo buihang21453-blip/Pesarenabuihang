@@ -35,4 +35,4 @@ def test_css_uses_real_dimensions_not_transform_for_center_blocks():
     assert 'justify-content: space-evenly' in CSS
 
 def test_version_is_v1312():
-    assert 'APP_VERSION = "V1.4.9"' in APP
+    assert 'APP_VERSION = "V1.4.10"' in APP

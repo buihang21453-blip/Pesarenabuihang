@@ -1,6 +1,6 @@
 # PES Arena Change Log
 
-## V1.4.9 - Separate Season Rankings
+## V1.4.10 - Separate Season Rankings
 - BXH Season 1 đọc từ snapshot đã đóng băng, giữ nguyên RP/vị trí cũ.
 - Season 2 dùng RP hiện tại của users và điều kiện 5 trận tính từ thời điểm mở Season 2.
 - Thêm dropdown chọn Season ngay trên BXH.
