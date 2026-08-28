@@ -215,7 +215,10 @@ def register_routes(context):
             ),
         }
 
-        raw_users = admin_safe_load("users", list_all_users, [])
+        raw_users = [
+            u for u in admin_safe_load("users", list_all_users, [])
+            if str(u.get("account_status") or "approved").lower() != "deleted"
+        ]
         admin_users = admin_safe_load(
             "decorate_users", lambda: decorate_admin_users(raw_users), []
         )

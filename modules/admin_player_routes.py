@@ -273,7 +273,7 @@ def register_routes(context):
             flash(error, "danger")
             return redirect_admin("users")
 
-        log_admin_action("Xóa tài khoản", "user", user_id, player_label, "Trạng thái: deleted. Giữ lịch sử trận và BXH mùa cũ.")
+        log_admin_action("Xóa tài khoản", "user", user_id, player_label, "Đã xóa thật tài khoản. Chỉ giữ danh tính lịch sử, matches và BXH mùa cũ.")
         flash("Đã xóa tài khoản khỏi hệ thống. Lịch sử trận và BXH mùa cũ được giữ nguyên.", "success")
         return redirect_admin("users")
 

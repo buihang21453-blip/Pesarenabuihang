@@ -54,82 +54,52 @@ def delete_match_safe(match_id, *, reverse_result=True):
 
 
 def delete_player_safe(user_id):
-    """Vô hiệu hóa tài khoản nhưng giữ nguyên hồ sơ thi đấu và RP lịch sử.
+    """Xóa thật tài khoản, chỉ giữ danh tính tối thiểu + lịch sử matches/BXH mùa cũ.
 
-    Người chơi vẫn phải tồn tại trong bảng users để các khóa player1_id/player2_id
-    của matches và các phòng đã hoàn tất tiếp tục tra được tên, avatar và dữ liệu cũ.
-    Chỉ dữ liệu phiên hoạt động/lời mời chưa hoàn tất được dọn dẹp.
+    V1.4.17 dùng RPC database để thao tác nguyên tử. RPC sẽ:
+    1) chép danh tính cần thiết sang archived_player_identities;
+    2) xóa dữ liệu phụ thuộc tài khoản và phòng/lời mời;
+    3) giữ nguyên public.matches và rank_season_snapshots;
+    4) xóa hẳn hàng public.users.
     """
     user = get_user(user_id)
     if not user:
         return False, "Không tìm thấy tài khoản."
-
     if is_admin_user(user):
-        return False, "Không được xóa tài khoản admin chính."
+        return False, "Không được xóa tài khoản Admin."
 
-    deleted_at = now_iso()
+    # Hủy trạng thái tàng hình trước khi user biến mất để setting không giữ UUID rác.
+    try:
+        invisible_ids = get_invisible_player_ids(force=True)
+        if str(user_id) in {str(x) for x in invisible_ids}:
+            invisible_ids = {str(x) for x in invisible_ids if str(x) != str(user_id)}
+            execute_query(
+                db.table("system_settings").upsert({
+                    "setting_key": INVISIBLE_PLAYERS_SETTING_KEY,
+                    "setting_value": {"user_ids": sorted(invisible_ids)},
+                    "updated_at": now_iso(),
+                }, on_conflict="setting_key"),
+                "hard_delete_remove_invisible_id", attempts=2,
+            )
+    except Exception as exc:
+        print(f"hard delete invisible cleanup warning: {exc}")
 
-    # Chỉ giải phóng các phòng CHƯA tạo trận. Phòng/trận đã có match_id phải được
-    # giữ nguyên để lịch sử, tỷ số và phép tính RP không thay đổi.
-    for room in list_rooms():
-        if user_id not in [room.get("host_user_id"), room.get("guest_user_id")]:
-            continue
-        if room.get("match_id"):
-            continue
+    try:
+        result = execute_query(
+            db.rpc("hard_delete_player_keep_match_history", {"p_user_id": user_id}),
+            "hard_delete_player_keep_match_history", attempts=1,
+        )
+        payload = (result.data or {}) if not isinstance(result.data, list) else ((result.data or [{}])[0])
+        if isinstance(payload, dict) and payload.get("ok") is False:
+            return False, str(payload.get("error") or "Không thể xóa tài khoản.")
+    except Exception as exc:
+        print(f"hard_delete_player_keep_match_history error: {type(exc).__name__}: {exc}")
+        return False, "Không thể xóa tài khoản. Hãy chạy docs/update_hard_delete_account_v1_4_17.sql trong Supabase rồi thử lại."
 
-        if str(room.get("host_user_id")) == str(user_id):
-            # Chủ tài khoản bị xóa: đóng phòng chờ, không đụng tới trận lịch sử.
-            db.table("chat_messages").delete().eq("room_id", room.get("id")).execute()
-            db.table("match_rooms").delete().eq("id", room.get("id")).execute()
-        else:
-            # Khách bị xóa: trả phòng về trạng thái chờ để chủ có thể mời người khác.
-            db.table("match_rooms").update({
-                "guest_user_id": None,
-                "guest_ready": False,
-                "guest_team": None,
-                "guest_team_overall": None,
-                "guest_team_logo_url": None,
-                "guest_team_league": None,
-                "invite_id": None,
-                "status": "waiting_ready",
-                "note": "Tài khoản khách đã bị vô hiệu hóa. Phòng đang chờ đối thủ mới.",
-                "state_expires_at": None,
-                "updated_at": deleted_at,
-            }).eq("id", room.get("id")).execute()
-
-    # Lời mời chưa hoàn tất không còn hiệu lực, nhưng không xóa lịch sử trận.
-    for invite in list_invites():
-        if user_id in [invite.get("from_user_id"), invite.get("to_user_id")]:
-            try:
-                db.table("match_invites").update({
-                    "status": "cancelled",
-                    "updated_at": deleted_at,
-                }).eq("id", invite.get("id")).execute()
-            except Exception:
-                db.table("match_invites").delete().eq("id", invite.get("id")).execute()
-
-    # Xóa dữ liệu đăng nhập/thiết bị đang hoạt động, nhưng giữ users và matches.
-    db.table("user_devices").delete().eq("user_id", user_id).execute()
-    tombstone_password = hash_password(f"deleted:{user_id}:{deleted_at}")
-    execute_query(
-        db.table("users").update({
-            "account_status": "deleted",
-            "is_online": False,
-            "password_hash": tombstone_password,
-            "rejection_reason": "Tài khoản đã được Admin xóa. Hồ sơ lịch sử thi đấu và BXH mùa cũ được giữ nguyên.",
-            "last_seen_at": deleted_at,
-        }).eq("id", user_id),
-        "soft_delete_player_keep_history",
-        attempts=2,
-    )
-
-    cache_delete("_rz_users_all")
-    cache_delete("_rz_rooms_all")
-    cache_delete("_rz_invites_all")
-    cache_delete("_rz_matches_all")
-    cache_delete("_rz_current_pending_invites")
-    ttl_cache_delete("users_raw")
-    ttl_cache_delete("rooms_raw")
-    ttl_cache_delete("invites_raw")
-    ttl_cache_delete("matches_raw")
+    for key in ("_rz_users_all", "_rz_users_map", "_rz_archived_users_map", "_rz_players_all",
+                "_rz_rooms_all", "_rz_invites_all", "_rz_matches_all", "_rz_current_pending_invites"):
+        cache_delete(key)
+    for key in ("users_raw", "players_raw", "rooms_raw", "invites_raw", "matches_raw", "invisible_player_ids"):
+        ttl_cache_delete(key)
     return True, ""
+

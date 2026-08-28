@@ -6,13 +6,12 @@ kick = (ROOT / 'modules/room_access_routes.py').read_text(encoding='utf-8')
 admin = (ROOT / 'templates/admin.html').read_text(encoding='utf-8')
 
 
-def test_soft_delete_keeps_matches_and_user_row():
+def test_hard_delete_keeps_matches_and_removes_user_via_rpc():
     body = cleanup.split('def delete_player_safe', 1)[1]
     assert 'db.table("matches").delete()' not in body
-    assert 'db.table("users").delete()' not in body
     assert 'reverse_confirmed_match_result' not in body
-    assert 'account_status": "deleted"' in body
-    assert 'if room.get("match_id")' in body
+    assert 'hard_delete_player_keep_match_history' in body
+    assert 'account_status": "deleted"' not in body
 
 
 def test_kick_is_pre_match_only_and_cancels_invite():
@@ -23,6 +22,6 @@ def test_kick_is_pre_match_only_and_cancels_invite():
     assert 'reverse_confirmed_match_result' not in body
 
 
-def test_admin_copy_explains_soft_delete():
+def test_admin_copy_explains_history_preserving_delete():
     assert 'Xóa tài khoản' in admin
     assert 'Lịch sử trận và BXH các mùa cũ' in admin

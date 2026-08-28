@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.16"
+APP_VERSION = "V1.4.17"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -2409,6 +2409,25 @@ def list_players(include_admin=False):
     return safe
 
 
+def archived_users_map():
+    """Danh tính tối thiểu của tài khoản đã xóa thật, chỉ dùng để đọc lịch sử trận."""
+    cached = cache_get("_rz_archived_users_map")
+    if cached is not None:
+        return cached
+    rows = []
+    try:
+        result = execute_query(
+            db.table("archived_player_identities").select("user_id,username,display_name,avatar_url"),
+            "archived_users_map", attempts=2,
+        )
+        rows = list(result.data or [])
+    except Exception as exc:
+        # Tương thích trước khi chạy SQL V1.4.17: lịch sử vẫn mở được, chỉ thiếu tên archive.
+        print(f"archived_users_map warning: {exc}")
+    mapped = {str(row.get("user_id")): dict(row) for row in rows if row.get("user_id")}
+    return cache_set("_rz_archived_users_map", mapped)
+
+
 def users_map():
     cached = cache_get("_rz_users_map")
     if cached is not None:
@@ -2923,10 +2942,13 @@ def list_matches(status=None):
     processed_matches = [auto_confirm_expired_match_if_needed(dict(m)) for m in cached]
     matches = [m for m in processed_matches if not status or m.get("status") == status]
     users = users_map()
+    archived_users = archived_users_map()
 
     for match in matches:
-        player1 = users.get(match.get("player1_id"), {})
-        player2 = users.get(match.get("player2_id"), {})
+        player1_id = str(match.get("player1_id") or "")
+        player2_id = str(match.get("player2_id") or "")
+        player1 = users.get(match.get("player1_id"), {}) or archived_users.get(player1_id, {})
+        player2 = users.get(match.get("player2_id"), {}) or archived_users.get(player2_id, {})
         match["player1_name"] = player1.get("display_name", "Unknown")
         match["player2_name"] = player2.get("display_name", "Unknown")
         match["player1_avatar_url"] = player1.get("avatar_url")
@@ -2935,9 +2957,9 @@ def list_matches(status=None):
         match["player2_avatar_frame"] = player2.get("avatar_frame")
         match["player1_achievement"] = player1.get("featured_achievement")
         match["player2_achievement"] = player2.get("featured_achievement")
-        match["submitted_by_name"] = users.get(match.get("submitted_by_id"), {}).get("display_name", "")
-        match["winner_name"] = users.get(match.get("winner_id"), {}).get("display_name", "")
-        match["loser_name"] = users.get(match.get("loser_id"), {}).get("display_name", "")
+        match["submitted_by_name"] = (users.get(match.get("submitted_by_id"), {}) or archived_users.get(str(match.get("submitted_by_id") or ""), {})).get("display_name", "")
+        match["winner_name"] = (users.get(match.get("winner_id"), {}) or archived_users.get(str(match.get("winner_id") or ""), {})).get("display_name", "")
+        match["loser_name"] = (users.get(match.get("loser_id"), {}) or archived_users.get(str(match.get("loser_id") or ""), {})).get("display_name", "")
 
     return matches
 

@@ -6,13 +6,13 @@ ADMIN=(ROOT/'templates/admin.html').read_text(encoding='utf-8')
 PROFILE=(ROOT/'modules/profile/routes.py').read_text(encoding='utf-8')
 
 def test_v1416_version_and_status():
-    assert 'APP_VERSION = "V1.4.16"' in APP
+    assert 'APP_VERSION = "V1.4.17"' in APP
     assert '"deleted"' in APP.split('ACCOUNT_STATUSES',1)[1].split('\n',1)[0]
 
-def test_delete_is_history_preserving_tombstone():
+def test_delete_is_history_preserving_hard_delete():
     body=CLEAN.split('def delete_player_safe',1)[1]
-    assert '"account_status": "deleted"' in body
-    assert 'db.table("users").delete()' not in body
+    assert 'hard_delete_player_keep_match_history' in body
+    assert '"account_status": "deleted"' not in body
     assert 'db.table("matches").delete()' not in body
     assert 'reverse_confirmed_match_result' not in body
 
@@ -21,8 +21,7 @@ def test_deleted_hidden_from_live_surfaces_but_kept_in_old_season():
     assert 'preserve_deleted=True' in APP
     assert 'account_status") or "approved").lower() == "deleted"' in APP
 
-def test_admin_distinguishes_banned_and_deleted():
-    assert 'Đã xóa' in ADMIN
+def test_admin_has_ban_and_hard_delete_actions():
     assert 'Banned' in ADMIN
     assert 'Xóa tài khoản' in ADMIN
 
