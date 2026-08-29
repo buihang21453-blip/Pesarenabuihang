@@ -6,7 +6,7 @@ ADMIN = (ROOT / "templates/admin.html").read_text(encoding="utf-8")
 CSS = (ROOT / "static/css/rank_mode_toggle.css").read_text(encoding="utf-8")
 
 def test_version_and_room_style_is_last_room_design_panel():
-    assert 'APP_VERSION = "V1.4.18"' in APP
+    assert 'APP_VERSION = "V1.4.19"' in APP
     room_design = ADMIN.split('data-admin-panel="room-design"', 1)[1].split('</section>', 1)[0]
     assert room_design.rfind('🎨 Phong cách phòng đấu') > room_design.rfind('⚡ Giao diện nút Tìm Nhanh')
 

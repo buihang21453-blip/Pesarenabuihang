@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.18"
+APP_VERSION = "V1.4.19"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -6225,6 +6225,18 @@ def ranking():
     eligibility_by_id = {}
     current_ranking_status = None
 
+    # V1.4.19: nguồn dữ liệu BXH chính thức là season_player_stats theo season_number.
+    try:
+        season_stats_result = execute_query(
+            db.table("season_player_stats").select("*").eq("season_number", requested_sn),
+            "ranking_season_player_stats", attempts=2,
+        )
+        season_stats_rows = [dict(x) for x in (season_stats_result.data or [])]
+    except Exception as exc:
+        print(f"ranking season_player_stats warning: {exc}")
+        season_stats_rows = []
+    season_stats_by_id = {str(x.get("user_id")): x for x in season_stats_rows if x.get("user_id")}
+
     if viewing_historical_season:
         # Season đã đóng: đọc đúng điểm + vị trí đã đóng băng từ snapshot,
         # tuyệt đối không lấy users.rank_points của season hiện tại.
@@ -6244,23 +6256,23 @@ def ranking():
         reconstructed_stats = _build_season_stats_map(ranking_activity_matches, selected_season)
         by_id = {str(p.get("id")): dict(p) for p in all_player_rows}
         archived = []
+        # Snapshot quyết định ai + vị trí cuối mùa; season_player_stats quyết định stats của mùa.
         for row in snapshot_rows:
             uid = str(row.get("user_id") or "")
+            stat = dict(season_stats_by_id.get(uid) or {})
             base = dict(by_id.get(uid) or {})
             if not base:
-                base = {"id": uid, "username": row.get("display_name") or "player", "display_name": row.get("display_name") or "Player"}
-            base["rank_points"] = int(row.get("rank_points") or 0)
-            base["position"] = int(row.get("position") or 0)
+                base = {"id": uid, "username": stat.get("username") or row.get("display_name") or "player", "display_name": stat.get("display_name") or row.get("display_name") or "Player"}
+            base["rank_points"] = int(stat.get("rank_points") if stat else row.get("rank_points") or 0)
+            base["position"] = int(stat.get("final_rank") or row.get("position") or 0)
             base["rank_info"] = get_player_rank_info(base, base["position"])
-
-            # V1.4.11: snapshots cũ (Season 1) chưa có W/D/L/recent_form sẽ
-            # được phục hồi trực tiếp từ bảng matches, không dùng thống kê live Season 2.
             rebuilt = reconstructed_stats.get(uid, {})
-            base["wins"] = int(row["wins"] if "wins" in row else rebuilt.get("wins", 0))
-            base["draws"] = int(row["draws"] if "draws" in row else rebuilt.get("draws", 0))
-            base["losses"] = int(row["losses"] if "losses" in row else rebuilt.get("losses", 0))
-            base["recent_form"] = list(row.get("recent_form") if "recent_form" in row else rebuilt.get("recent_form", []))[:5]
+            base["wins"] = int(stat.get("wins") if stat else row.get("wins", rebuilt.get("wins", 0)) or 0)
+            base["draws"] = int(stat.get("draws") if stat else row.get("draws", rebuilt.get("draws", 0)) or 0)
+            base["losses"] = int(stat.get("losses") if stat else row.get("losses", rebuilt.get("losses", 0)) or 0)
+            base["recent_form"] = list(stat.get("recent_form") if stat else row.get("recent_form", rebuilt.get("recent_form", [])) or [])[:5]
             total = base["wins"] + base["draws"] + base["losses"]
+            base["total_matches"] = total
             base["winrate"] = round((base["wins"] / total) * 100, 1) if total else 0
             base["record_text"] = f'{base["wins"]}T • {base["draws"]}H • {base["losses"]}B'
             archived.append(base)
@@ -6275,7 +6287,14 @@ def ranking():
     else:
         latest_activity_map = _latest_ranking_activity_map(ranking_activity_matches)
         ranking_now = now_dt()
-        season_match_count_map = build_season_match_count_map(ranking_activity_matches, current_season)
+        # Merge record Season hiện tại vào user profile; users chỉ còn là lớp tương thích.
+        for player in all_player_rows:
+            stat = season_stats_by_id.get(str(player.get("id")))
+            if stat:
+                for key in ("rank_points", "wins", "draws", "losses", "total_matches"):
+                    player[key] = int(stat.get(key) or 0)
+                player["recent_form"] = list(stat.get("recent_form") or [])[:5]
+        season_match_count_map = {str(p.get("id")): int(p.get("total_matches") or 0) for p in all_player_rows}
         eligible_player_rows = []
         for player in all_player_rows:
             if str(player.get("account_status") or "approved").lower() == "deleted":
@@ -6310,24 +6329,21 @@ def ranking():
         filtered = [p for p in filtered if p.get("rank_info", {}).get("slug") == rank_filter]
 
     if not viewing_historical_season:
-        # V1.4.18: BXH mùa hiện tại tuyệt đối không dùng W/D/L hoặc 5 trận
-        # của mùa trước. Tất cả thống kê được dựng theo started_at/ended_at
-        # của chính Season đang xem từ lịch sử matches còn nguyên vẹn.
-        top_players = filtered[:100]
-        current_season_stats = _build_season_stats_map(ranking_activity_matches, current_season)
-        for player in top_players:
-            stats = current_season_stats.get(str(player.get("id")), {})
-            wins = int(stats.get("wins") or 0)
-            draws = int(stats.get("draws") or 0)
-            losses = int(stats.get("losses") or 0)
-            total_matches = wins + draws + losses
-            player["wins"] = wins
-            player["draws"] = draws
-            player["losses"] = losses
+        # V1.4.19: BXH current đọc trực tiếp season_player_stats của requested season.
+        fallback_stats = None
+        for player in filtered[:100]:
+            stat = season_stats_by_id.get(str(player.get("id")))
+            if not stat:
+                # Chỉ fallback khi migration SQL chưa chạy/record chưa tồn tại.
+                fallback_stats = fallback_stats or _build_season_stats_map(ranking_activity_matches, current_season)
+                stat = fallback_stats.get(str(player.get("id")), {})
+            wins = int(stat.get("wins") or 0); draws = int(stat.get("draws") or 0); losses = int(stat.get("losses") or 0)
+            total_matches = int(stat.get("total_matches") or (wins + draws + losses))
+            player["wins"], player["draws"], player["losses"] = wins, draws, losses
             player["total_matches"] = total_matches
             player["winrate"] = round((wins / total_matches) * 100, 1) if total_matches else 0
             player["record_text"] = f"{wins}T • {draws}H • {losses}B"
-            player["recent_form"] = list(stats.get("recent_form") or [])[:5]
+            player["recent_form"] = list(stat.get("recent_form") or [])[:5]
 
     seasons = get_season_history(50)
     known = {int(x.get("season_number") or 0) for x in seasons}

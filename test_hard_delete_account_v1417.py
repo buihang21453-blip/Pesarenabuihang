@@ -5,7 +5,7 @@ ADMIN=Path('modules/admin_dashboard_routes.py').read_text()
 SQL=Path('docs/update_hard_delete_account_v1_4_17.sql').read_text()
 
 def test_version():
-    assert 'APP_VERSION = "V1.4.18"' in APP
+    assert 'APP_VERSION = "V1.4.19"' in APP
 
 def test_delete_uses_atomic_rpc_not_soft_status():
     body=CLEAN.split('def delete_player_safe',1)[1]

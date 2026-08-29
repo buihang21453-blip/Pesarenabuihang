@@ -7,14 +7,14 @@ ADMIN = Path('templates/admin.html').read_text(encoding='utf-8')
 SQL = Path('docs/update_rank_season_v1_4_6.sql').read_text(encoding='utf-8')
 
 def test_version_and_module_registration():
-    assert 'APP_VERSION = "V1.4.18"' in APP
+    assert 'APP_VERSION = "V1.4.19"' in APP
     assert '_season_service' in APP
     assert '_register_season_routes' in APP
 
 def test_new_season_uses_five_matches_from_season_start():
     assert 'started_at' in SERVICE
     assert 'placement_matches' in SERVICE
-    assert 'build_season_match_count_map' in APP
+    assert 'season_match_count_map' in APP and 'total_matches' in APP
     assert 'season_ranking_eligibility' in APP
 
 def test_admin_flow_is_guarded_snapshot_reward_reset():

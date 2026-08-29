@@ -4,11 +4,11 @@ APP=(ROOT/'app.py').read_text(encoding='utf-8')
 SQL=(ROOT/'docs/update_season_isolated_stats_v1_4_18.sql').read_text(encoding='utf-8')
 
 def test_version():
-    assert 'APP_VERSION = "V1.4.18"' in APP
+    assert 'APP_VERSION = "V1.4.19"' in APP
 
 def test_current_ranking_uses_season_stats():
-    assert 'current_season_stats = _build_season_stats_map(ranking_activity_matches, current_season)' in APP
-    assert 'player["recent_form"] = list(stats.get("recent_form") or [])[:5]' in APP
+    assert 'season_player_stats' in APP
+    assert 'season_stats_by_id' in APP
 
 def test_sql_backfills_current_season_only():
     assert "m.created_at >= v_started_at" in SQL
