@@ -8,7 +8,7 @@ ROOM = (ROOT / "templates/room_detail.html").read_text(encoding="utf-8")
 CSS = (ROOT / "static/css/rank_mode_toggle.css").read_text(encoding="utf-8")
 
 def test_v138_dock_logo_has_independent_admin_scale():
-    assert 'APP_VERSION = "V1.4.19"' in APP
+    assert 'APP_VERSION = "V1.4.20"' in APP
     assert '"dock_scale": 135' in APP
     assert '"dock_scale": (70, 220)' in APP
     assert 'room_mode_dock_logo_scale' in ADMIN

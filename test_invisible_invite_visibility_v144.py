@@ -5,7 +5,7 @@ APP = (ROOT / "app.py").read_text(encoding="utf-8")
 
 
 def test_version_v144():
-    assert 'APP_VERSION = "V1.4.19"' in APP
+    assert 'APP_VERSION = "V1.4.20"' in APP
 
 
 def test_invite_page_uses_same_invisible_visibility_policy_as_players_page():

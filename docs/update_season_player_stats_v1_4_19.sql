@@ -1,4 +1,5 @@
 -- PES Arena V1.4.19 - Season Player Stats
+-- KNOWN BUG: không chạy lại file này sau V1.4.20; dùng update_season_player_stats_v1_4_20.sql để sửa current-season stats.
 -- Tách hoàn toàn dữ liệu BXH theo từng season, không xóa dữ liệu hiện có.
 
 create table if not exists public.season_player_stats (

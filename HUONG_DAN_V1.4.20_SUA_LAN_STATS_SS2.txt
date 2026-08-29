@@ -1,0 +1,21 @@
+PES Arena V1.4.20 - Repair Current Season Stats
+
+Lỗi đã sửa:
+- V1.4.19 đã copy W/D/L từ users vào season_player_stats current season.
+- Nếu users còn số liệu mùa cũ thì Season 2 bị lẫn Season 1.
+
+Cách cập nhật:
+1. Deploy source V1.4.20.
+2. Supabase > SQL Editor.
+3. Chạy CHỈ file: docs/update_season_player_stats_v1_4_20.sql
+4. Không chạy lại update_season_player_stats_v1_4_19.sql.
+5. Mở SEASON 2 và đối chiếu Thành tích / 5 trận gần nhất / Win Rate với Lịch sử trận.
+
+SQL V1.4.20:
+- Không reset RP.
+- Không xóa matches.
+- Không sửa Snapshot/BXH Season 1.
+- Lấy started_at của current season làm ranh giới.
+- Tính lại users W/D/L/total_matches cho current season.
+- Ghi đè đúng record season_player_stats của current season.
+- Dựng lại recent_form tối đa 5 trận của current season.

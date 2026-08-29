@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.19"
+APP_VERSION = "V1.4.20"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -6225,7 +6225,7 @@ def ranking():
     eligibility_by_id = {}
     current_ranking_status = None
 
-    # V1.4.19: nguồn dữ liệu BXH chính thức là season_player_stats theo season_number.
+    # V1.4.20: nguồn dữ liệu BXH chính thức là season_player_stats theo season_number.
     try:
         season_stats_result = execute_query(
             db.table("season_player_stats").select("*").eq("season_number", requested_sn),
@@ -6329,7 +6329,7 @@ def ranking():
         filtered = [p for p in filtered if p.get("rank_info", {}).get("slug") == rank_filter]
 
     if not viewing_historical_season:
-        # V1.4.19: BXH current đọc trực tiếp season_player_stats của requested season.
+        # V1.4.20: BXH current đọc trực tiếp season_player_stats của requested season.
         fallback_stats = None
         for player in filtered[:100]:
             stat = season_stats_by_id.get(str(player.get("id")))

@@ -10,7 +10,7 @@ SQL=(ROOT/'docs/update_luckybox_owned_v1_4_14.sql').read_text(encoding='utf-8')
 JS=(ROOT/'static/js/luckybox_user.js').read_text(encoding='utf-8')
 
 def test_version():
-    assert 'APP_VERSION = "V1.4.19"' in APP
+    assert 'APP_VERSION = "V1.4.20"' in APP
 
 def test_podium_always_rendered_even_empty():
     assert '{% if players %}' not in RANK.split('ranking-showcase',1)[0][-80:]
