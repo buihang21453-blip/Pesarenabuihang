@@ -6,7 +6,7 @@ ADMIN=(ROOT/'templates/admin.html').read_text(encoding='utf-8')
 PROFILE=(ROOT/'modules/profile/routes.py').read_text(encoding='utf-8')
 
 def test_v1416_version_and_status():
-    assert 'APP_VERSION = "V1.4.17"' in APP
+    assert 'APP_VERSION = "V1.4.18"' in APP
     assert '"deleted"' in APP.split('ACCOUNT_STATUSES',1)[1].split('\n',1)[0]
 
 def test_delete_is_history_preserving_hard_delete():

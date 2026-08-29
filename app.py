@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.17"
+APP_VERSION = "V1.4.18"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -6310,15 +6310,24 @@ def ranking():
         filtered = [p for p in filtered if p.get("rank_info", {}).get("slug") == rank_filter]
 
     if not viewing_historical_season:
+        # V1.4.18: BXH mùa hiện tại tuyệt đối không dùng W/D/L hoặc 5 trận
+        # của mùa trước. Tất cả thống kê được dựng theo started_at/ended_at
+        # của chính Season đang xem từ lịch sử matches còn nguyên vẹn.
         top_players = filtered[:100]
-        confirmed_matches = [m for m in ranking_activity_matches if str(m.get("status") or "").lower() == "confirmed"]
-        recent_form_map = _build_recent_form_map(confirmed_matches, player_ids={p.get("id") for p in top_players}, limit=5)
+        current_season_stats = _build_season_stats_map(ranking_activity_matches, current_season)
         for player in top_players:
-            total_matches = calculated_total_matches(player)
-            wins = int(player.get("wins") or 0); draws = int(player.get("draws") or 0); losses = int(player.get("losses") or 0)
+            stats = current_season_stats.get(str(player.get("id")), {})
+            wins = int(stats.get("wins") or 0)
+            draws = int(stats.get("draws") or 0)
+            losses = int(stats.get("losses") or 0)
+            total_matches = wins + draws + losses
+            player["wins"] = wins
+            player["draws"] = draws
+            player["losses"] = losses
+            player["total_matches"] = total_matches
             player["winrate"] = round((wins / total_matches) * 100, 1) if total_matches else 0
             player["record_text"] = f"{wins}T • {draws}H • {losses}B"
-            player["recent_form"] = recent_form_map.get(player.get("id"), [])
+            player["recent_form"] = list(stats.get("recent_form") or [])[:5]
 
     seasons = get_season_history(50)
     known = {int(x.get("season_number") or 0) for x in seasons}
