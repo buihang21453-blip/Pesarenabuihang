@@ -5,7 +5,7 @@ SERVICE=Path('modules/season_service.py').read_text(encoding='utf-8')
 ADMIN=Path('templates/admin.html').read_text(encoding='utf-8')
 SQL=Path('docs/update_rank_season_v1_4_7.sql').read_text(encoding='utf-8')
 
-def test_v147_version(): assert 'APP_VERSION = "V1.4.20"' in APP
+def test_v147_version(): assert 'APP_VERSION = "V1.4.21"' in APP
 def test_reward_config_setting():
     assert 'SEASON_REWARD_SETTING_KEY = "rank_season_reward_config"' in SERVICE
     assert 'get_season_reward_config' in SERVICE

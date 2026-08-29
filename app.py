@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.20"
+APP_VERSION = "V1.4.21"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -4942,47 +4942,56 @@ def before_request():
         # V4.9: chỉ thao tác thật của người dùng mới gia hạn phiên. Heartbeat/polling không gia hạn.
         if session.get("user_id"):
             now_ts = int(time.time())
-            last_real = int(session.get("last_real_activity", 0) or 0)
+            remembered_login = bool(session.get("remember_account"))
 
-            # V1.14.41.78: người chơi có thể chuyển sang cửa sổ PES/Parsec trong khi
-            # trang phòng nằm nền. Mọi request thuộc đúng phòng đấu được xem là
-            # hoạt động hợp lệ để không bị đăng xuất giữa trận.
-            room_request_active = (
-                request.path.startswith("/room/")
-                or request.path.startswith("/api/room/")
-            )
-            if room_request_active:
-                session["last_real_activity"] = now_ts
-                session.modified = True
-                last_real = now_ts
+            # V1.4.21 — Login Session V2:
+            # - Phiên thường: giữ cơ chế timeout 60 phút không hoạt động.
+            # - Phiên "Ghi nhớ đăng nhập": cookie tồn tại 30 ngày và KHÔNG bị idle-timeout 60 phút xóa.
+            # Flask lưu cờ permanent trong session; gán lại để các phiên remember cũ cũng được chuẩn hóa.
+            if remembered_login:
+                session.permanent = True
+            else:
+                last_real = int(session.get("last_real_activity", 0) or 0)
 
-            if not last_real:
-                session["last_real_activity"] = now_ts
-            elif now_ts - last_real >= IDLE_TIMEOUT_SECONDS and request.endpoint not in {"logout", "static", "api_session_timeout_check", "api_session_activity"}:
-                room = None
-                try:
-                    room = active_room_for_user(session.get("user_id"))
-                except Exception as exc:
-                    print(f"idle room check warning: {exc}")
-                decision = idle_decision(now_ts=now_ts, last_activity_ts=last_real, room=room)
-                if decision.protected:
-                    # Tuyệt đối không đăng xuất khi người chơi đang ở một trận/phòng cần hoàn tất.
+                # V1.14.41.78: người chơi có thể chuyển sang cửa sổ PES/Parsec trong khi
+                # trang phòng nằm nền. Mọi request thuộc đúng phòng đấu được xem là
+                # hoạt động hợp lệ để không bị đăng xuất giữa trận.
+                room_request_active = (
+                    request.path.startswith("/room/")
+                    or request.path.startswith("/api/room/")
+                )
+                if room_request_active:
                     session["last_real_activity"] = now_ts
                     session.modified = True
-                elif decision.expired:
+                    last_real = now_ts
+
+                if not last_real:
+                    session["last_real_activity"] = now_ts
+                elif now_ts - last_real >= IDLE_TIMEOUT_SECONDS and request.endpoint not in {"logout", "static", "api_session_timeout_check", "api_session_activity"}:
+                    room = None
                     try:
-                        execute_query(
-                            db.table("users").update({"is_online": False, "last_seen_at": now_iso()}).eq("id", session.get("user_id")),
-                            "idle_logout_mark_offline",
-                            attempts=1,
-                        )
+                        room = active_room_for_user(session.get("user_id"))
                     except Exception as exc:
-                        print(f"idle logout warning: {exc}")
-                    session.clear()
-                    if request.path.startswith("/api/"):
-                        return jsonify({"ok": False, "error": "session_expired", "redirect": url_for("login")}), 401
-                    flash("Bạn đã được đăng xuất do không hoạt động trong 60 phút.", "warning")
-                    return redirect(url_for("login"))
+                        print(f"idle room check warning: {exc}")
+                    decision = idle_decision(now_ts=now_ts, last_activity_ts=last_real, room=room)
+                    if decision.protected:
+                        # Tuyệt đối không đăng xuất khi người chơi đang ở một trận/phòng cần hoàn tất.
+                        session["last_real_activity"] = now_ts
+                        session.modified = True
+                    elif decision.expired:
+                        try:
+                            execute_query(
+                                db.table("users").update({"is_online": False, "last_seen_at": now_iso()}).eq("id", session.get("user_id")),
+                                "idle_logout_mark_offline",
+                                attempts=1,
+                            )
+                        except Exception as exc:
+                            print(f"idle logout warning: {exc}")
+                        session.clear()
+                        if request.path.startswith("/api/"):
+                            return jsonify({"ok": False, "error": "session_expired", "redirect": url_for("login")}), 401
+                        flash("Bạn đã được đăng xuất do không hoạt động trong 60 phút.", "warning")
+                        return redirect(url_for("login"))
 
         # Không gọi ensure_admin() ở mọi request. Trước đây mỗi Vercel instance mới
         # lại đọc + cập nhật bảng users trước khi tải /bxh, tạo thêm kết nối Supabase
@@ -5147,7 +5156,9 @@ def api_session_activity():
 @app.route("/api/session/timeout-check")
 @login_required
 def api_session_timeout_check():
-    """Chỉ gọi một lần khi bộ đếm 60 phút hết; không phải polling."""
+    """Kiểm tra timeout cho phiên thường; phiên remember 30 ngày không dùng idle-timeout."""
+    if session.get("remember_account"):
+        return jsonify({"ok": True, "protected": True, "remembered": True, "room_url": None})
     user = current_user()
     room = None
     try:
@@ -6196,7 +6207,7 @@ def _build_recent_form_map(matches, player_ids=None, limit=5):
 def ranking():
     user = current_user()
     if not user and not system_feature_enabled("public_ranking_enabled"):
-        flash("Bảng xếp hạng công khai đang được Admin tạm khóa. Vui lòng đăng nhập để tiếp tục.", "warning")
+        flash("Đăng ký để tham gia Championship Ranking", "warning")
         return redirect(url_for("login"))
 
     current_season = get_current_season()

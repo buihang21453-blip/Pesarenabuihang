@@ -452,3 +452,13 @@
 - BXH các season đã đóng dùng `preserve_deleted=True` để giữ nguyên người chơi, RP và vị trí lịch sử.
 - Hồ sơ deleted không mở được với player thường; Admin vẫn xem được để quản trị/đối chiếu lịch sử.
 - Test: 298 passed.
+
+## V1.4.21 - Login Session V2
+- Tách session thường và session ghi nhớ đăng nhập.
+- Session thường: giữ timeout 60 phút không hoạt động.
+- Ghi nhớ đăng nhập: permanent session 30 ngày, không bị idle-timeout 60 phút xóa.
+- Client không chạy bộ đếm idle-timeout khi session đang ở chế độ remember.
+- API timeout-check trả trạng thái protected/remembered cho session remember.
+- Rút gọn thông báo BXH công khai bị khóa thành: "Đăng ký để tham gia Championship Ranking".
+- Không lưu mật khẩu trong localStorage; chỉ lưu username khi người dùng chọn ghi nhớ.
+- Test: 321/321 passed.

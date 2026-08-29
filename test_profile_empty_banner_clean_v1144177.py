@@ -8,7 +8,7 @@ def read(relative):
 
 
 def test_profile_empty_banner_clean_release():
-    assert 'APP_VERSION = "V1.4.20"' in read("app.py")
+    assert 'APP_VERSION = "V1.4.21"' in read("app.py")
 
 
 def test_profile_without_banner_has_no_center_placeholder_words():

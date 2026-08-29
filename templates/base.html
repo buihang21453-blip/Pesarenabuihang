@@ -30,7 +30,7 @@
     {% if request.endpoint == 'zcoin_rewards' %}
     <script src="{{ static_asset('js/zcoin_rewards.js') }}" defer></script>
     {% endif %}
-    {% if current_user and not (auth_only|default(false)) %}
+    {% if current_user and not (auth_only|default(false)) and not session.get('remember_account') %}
     <script>
     window.PES_SESSION_CONFIG = {
         enabled: true,
