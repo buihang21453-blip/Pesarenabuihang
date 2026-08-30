@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+<style>
+.tournament-shell{max-width:1500px;margin:0 auto;padding:8px 4px 28px}
+.tournament-hero{position:relative;overflow:hidden;border:1px solid rgba(231,190,88,.22);border-radius:22px;background:linear-gradient(135deg,rgba(7,24,39,.96),rgba(7,17,29,.98));padding:30px 34px;box-shadow:0 22px 60px rgba(0,0,0,.22)}
+.tournament-hero:before{content:"";position:absolute;inset:-1px;background:radial-gradient(circle at 18% 18%,rgba(231,190,88,.10),transparent 38%),radial-gradient(circle at 86% 15%,rgba(39,118,201,.12),transparent 34%);pointer-events:none}
+.tournament-kicker{position:relative;margin:0 0 6px;color:#e8bd58;font-size:12px;letter-spacing:.22em;font-weight:900;text-transform:uppercase}
+.tournament-title{position:relative;margin:0;color:#f5f7fa;font-size:clamp(28px,4vw,48px);line-height:1.05;font-weight:950;letter-spacing:.02em}
+.tournament-subtitle{position:relative;margin:10px 0 0;color:#a8b4c0;font-size:15px;max-width:760px;line-height:1.6}
+.tournament-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 14px;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(8,20,32,.72)}
+.tournament-tab{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 15px;color:#8e9aa7;background:rgba(255,255,255,.025);font-size:12px;font-weight:850;letter-spacing:.04em;cursor:not-allowed;opacity:.76}
+.tournament-tab.is-active{color:#f2ca68;border-color:rgba(231,190,88,.32);background:rgba(231,190,88,.08);opacity:1}
+.tournament-empty{min-height:390px;display:grid;place-items:center;text-align:center;border:1px dashed rgba(255,255,255,.10);border-radius:20px;background:rgba(6,17,28,.48);padding:28px}
+.tournament-empty-icon{width:74px;height:74px;display:grid;place-items:center;margin:0 auto 16px;border-radius:22px;background:rgba(231,190,88,.08);border:1px solid rgba(231,190,88,.18);font-size:34px}
+.tournament-empty h2{margin:0 0 7px;font-size:20px;color:#e9eef4}
+.tournament-empty p{margin:0;color:#82909d;font-size:14px;line-height:1.65;max-width:620px}
+@media(max-width:700px){.tournament-hero{padding:24px 20px}.tournament-tab{flex:1 1 calc(50% - 8px);text-align:center}.tournament-empty{min-height:300px}}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tournament-shell" aria-label="Giải đấu">
+    <div class="tournament-hero">
+        <p class="tournament-kicker">PES eFOOTBALL 2026</p>
+        <h1 class="tournament-title">GIẢI ĐẤU</h1>
+        <p class="tournament-subtitle">Khu vực giải đấu đã được tách thành module riêng. Dữ liệu và thể thức giải sẽ được bổ sung độc lập ở các phiên bản tiếp theo.</p>
+    </div>
+
+    <div class="tournament-tabs" aria-label="Các khu vực giải đấu">
+        <span class="tournament-tab is-active">TỔNG QUAN</span>
+        <span class="tournament-tab">LỊCH THI ĐẤU</span>
+        <span class="tournament-tab">BẢNG XẾP HẠNG</span>
+        <span class="tournament-tab">NHÁNH ĐẤU</span>
+        <span class="tournament-tab">THỐNG KÊ</span>
+    </div>
+
+    <div class="tournament-empty">
+        <div>
+            <div class="tournament-empty-icon">🏆</div>
+            <h2>Chưa có giải đấu được mở</h2>
+            <p>Module Giải đấu đã sẵn sàng. Hiện chưa tạo dữ liệu mẫu, chưa gắn với Rank và chưa can thiệp lịch sử trận đấu hiện tại.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

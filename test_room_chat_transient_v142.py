@@ -7,7 +7,7 @@ CSS = (ROOT / 'static/style.css').read_text(encoding='utf-8')
 
 
 def test_version_and_transient_room_chat_store():
-    assert 'APP_VERSION = "V1.4.21"' in APP
+    assert 'APP_VERSION = "V1.4.22"' in APP
     assert 'ROOM_CHAT_MEMORY_TTL_SECONDS' in APP
     assert '_room_chat_memory = {}' in APP
     assert 'list_transient_room_chat_messages' in APP

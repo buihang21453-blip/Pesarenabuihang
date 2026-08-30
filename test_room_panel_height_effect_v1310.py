@@ -12,7 +12,7 @@ ROOMS = [
 
 
 def test_version_v1310():
-    assert 'APP_VERSION = "V1.4.21"' in APP
+    assert 'APP_VERSION = "V1.4.22"' in APP
 
 
 def test_real_three_room_elements_are_targeted_exactly():

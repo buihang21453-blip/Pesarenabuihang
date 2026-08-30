@@ -9,7 +9,7 @@ def read(relative):
 
 def test_profile_identity_release_has_moved_forward():
     app = read("app.py")
-    assert 'APP_VERSION = "V1.4.21"' in app
+    assert 'APP_VERSION = "V1.4.22"' in app
 
 
 def test_profile_identity_remains_scoped_and_complete():

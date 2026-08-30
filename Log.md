@@ -462,3 +462,10 @@
 - Rút gọn thông báo BXH công khai bị khóa thành: "Đăng ký để tham gia Championship Ranking".
 - Không lưu mật khẩu trong localStorage; chỉ lưu username khi người dùng chọn ghi nhớ.
 - Test: 321/321 passed.
+
+## V1.4.22 - Tournament Module Shell
+- Thêm tab `Giải đấu` vào sidebar người chơi.
+- Tách route `/tournaments` vào module riêng `modules/tournament_routes.py`.
+- Thêm template `templates/tournaments.html` độc lập.
+- Chỉ dựng khung: Tổng quan / Lịch thi đấu / Bảng xếp hạng / Nhánh đấu / Thống kê.
+- Không tạo mock data, không đọc/ghi Rank, không dùng bảng matches và không cần migration SQL.

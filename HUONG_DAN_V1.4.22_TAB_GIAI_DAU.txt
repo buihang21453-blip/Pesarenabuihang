@@ -1,0 +1,6 @@
+PES Arena V1.4.22 - Tournament Module Shell
+
+1. Deploy source như các phiên bản trước.
+2. Không cần chạy SQL.
+3. Đăng nhập và bấm tab "Giải đấu" ở sidebar.
+4. Đây mới là module khung, chưa có dữ liệu giải đấu giả và chưa nối vào Rank/matches.
