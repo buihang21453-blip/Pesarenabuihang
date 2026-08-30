@@ -41,7 +41,7 @@
     {% if can_admin('matches_view') %}<button class="admin-tab-button" type="button" data-admin-tab="matches">🎮 Trận đấu</button><button class="admin-tab-button" type="button" data-admin-tab="match-report">📊 Báo cáo trận đấu</button>{% endif %}
 {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">🧪 Tài khoản test & Import</button>{% endif %}
     {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>{% endif %}
-    {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="season">🏆 Mùa giải</button><button class="admin-tab-button" type="button" data-admin-tab="room-design">🎨 Thiết kế phòng đấu</button>{% endif %}
+    {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="season">🏆 Mùa giải</button><button class="admin-tab-button" type="button" data-admin-tab="tournaments">🏟️ Giải đấu</button><button class="admin-tab-button" type="button" data-admin-tab="room-design">🎨 Thiết kế phòng đấu</button>{% endif %}
     {% if can_admin('rp_view') %}<button class="admin-tab-button" type="button" data-admin-tab="rp-tools">📈 Công cụ RP</button>{% endif %}
     <button class="admin-tab-button" type="button" data-admin-tab="economy">🪙 Zcoin & Gift Code</button>
     {% if can_admin('admin_logs_view') %}<button class="admin-tab-button" type="button" data-admin-tab="logs">🧾 Nhật ký</button>{% endif %}
@@ -701,6 +701,27 @@
       </div>
     </div>
     <p class="small">Ba nút trên chỉ gửi khi Admin bấm. Không tự động gửi toàn hệ thống.</p>
+  </div>
+</section>
+{% endif %}
+
+
+{% if can_admin('system_features_manage') %}
+<section class="admin-tab-panel" data-admin-panel="tournaments">
+  <div class="panel">
+    <h2>🏟️ Quản lý khu vực Giải đấu</h2>
+    <p class="muted">Công tắc này chỉ mở/đóng khu vực Giải đấu đối với người chơi. Không ảnh hưởng BXH Rank, Season, lịch sử trận hoặc phòng đấu.</p>
+    <form method="post" action="{{ url_for('admin_tournament_access') }}" class="system-toggle-grid">
+      <input type="hidden" name="_admin_tab" value="tournaments">
+      <label class="admin-permission-option">
+        <span><strong>Mở khu vực Giải đấu</strong><small style="display:block">Tắt = người chơi chỉ thấy thông báo “Giải đấu tạm đóng”.</small></span>
+        <span class="admin-switch"><input type="checkbox" name="enabled" value="1" {% if tournament_area_enabled %}checked{% endif %}><span class="admin-switch-track"></span></span>
+      </label>
+      <button class="btn green" type="submit">Lưu trạng thái Giải đấu</button>
+    </form>
+    <hr style="margin:18px 0">
+    <h3>Khung module hiện có</h3>
+    <p class="small">Tổng quan · Lịch thi đấu · Bảng xếp hạng · Nhánh đấu · Thống kê. Hiện chưa tạo dữ liệu giải thật.</p>
   </div>
 </section>
 {% endif %}

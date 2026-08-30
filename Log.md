@@ -475,3 +475,11 @@
 - Đổi vị trí menu: Phòng đấu đứng trước Giải đấu.
 - Không thay đổi route, logic phòng đấu hay module giải đấu.
 - Không cần SQL.
+
+## V1.4.24 - Tournament Basic Components + Admin Gate
+- Giữ module Giải đấu độc lập, không tái sử dụng Rank/Matches.
+- Dựng rõ Header, trạng thái giải, thanh tìm kiếm/lọc, nhóm đang diễn ra/sắp diễn ra/đã kết thúc.
+- Dựng sẵn 5 thành phần: Tổng quan, Lịch thi đấu, BXH, Nhánh đấu, Thống kê.
+- Không mockup giải hay HLV giả.
+- Khu vực Giải đấu mặc định tạm đóng.
+- Admin có tab Giải đấu và công tắc mở/đóng qua system_settings.

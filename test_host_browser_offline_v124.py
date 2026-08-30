@@ -5,7 +5,7 @@ ACCESS = Path('modules/room_access_routes.py').read_text(encoding='utf-8')
 
 
 def test_version_and_constants():
-    assert 'APP_VERSION = "V1.4.23"' in APP
+    assert 'APP_VERSION = "V1.4.24"' in APP
     assert 'HOST_BROWSER_OFFLINE_GRACE_SECONDS = 20' in APP
     assert 'HOST_BROWSER_OFFLINE_ROOM_STATUSES = {"playing", "friendly_playing"}' in APP
 

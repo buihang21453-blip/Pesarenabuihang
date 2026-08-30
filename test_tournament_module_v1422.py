@@ -7,7 +7,7 @@ TPL = Path('templates/tournaments.html').read_text(encoding='utf-8')
 
 
 def test_version_v1422():
-    assert 'APP_VERSION = "V1.4.23"' in APP
+    assert 'APP_VERSION = "V1.4.24"' in APP
 
 
 def test_tournament_is_registered_as_separate_module():
