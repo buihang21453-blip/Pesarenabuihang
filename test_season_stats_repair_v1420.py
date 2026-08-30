@@ -5,7 +5,7 @@ SQL=(ROOT/'docs/update_season_player_stats_v1_4_20.sql').read_text(encoding='utf
 SQL19=(ROOT/'docs/update_season_player_stats_v1_4_19.sql').read_text(encoding='utf-8')
 
 def test_version():
-    assert 'APP_VERSION = "V1.4.24"' in APP
+    assert 'APP_VERSION = "V1.4.25"' in APP
 
 def test_repair_uses_current_season_started_at():
     assert "rank_season_current" in SQL

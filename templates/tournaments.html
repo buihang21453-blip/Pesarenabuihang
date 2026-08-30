@@ -47,20 +47,49 @@
       <div class="tournament-control is-disabled"><strong>Mới nhất</strong></div>
     </div>
 
-    <div class="tournament-section-grid">
-      <section class="tournament-section-card">
-        <div class="tournament-section-head"><h3>🟢 Giải đang diễn ra</h3><span class="tournament-badge live">ĐANG DIỄN RA</span></div>
-        <div class="tournament-section-empty"><div><span>🏆</span><strong>Chưa có giải đang diễn ra</strong><small>Khi Admin tạo giải, thẻ giải sẽ xuất hiện tại khu vực này.</small></div></div>
-      </section>
-      <section class="tournament-section-card">
-        <div class="tournament-section-head"><h3>🔵 Giải sắp diễn ra</h3><span class="tournament-badge upcoming">SẮP DIỄN RA</span></div>
-        <div class="tournament-section-empty"><div><span>📅</span><strong>Chưa có giải sắp mở</strong><small>Khu đăng ký và lịch khai mạc sẽ được gắn vào đây sau.</small></div></div>
-      </section>
-      <section class="tournament-section-card">
-        <div class="tournament-section-head"><h3>⚪ Giải đã kết thúc</h3><span class="tournament-badge">ĐÃ KẾT THÚC</span></div>
-        <div class="tournament-section-empty"><div><span>🏅</span><strong>Chưa có giải lưu trữ</strong><small>Các giải đã hoàn thành sẽ được giữ lại để xem kết quả và thành tích.</small></div></div>
-      </section>
+    {% if not tournament_db_ready %}
+    <div class="tournament-closed" style="min-height:240px">
+      <div><div class="tournament-closed-icon">🗄️</div><h2>CHƯA KHỞI TẠO DATABASE GIẢI ĐẤU</h2><p>Admin cần chạy file SQL V1.4.25 trước khi mở đăng ký.</p></div>
     </div>
+    {% else %}
+    <div class="tournament-section-grid">
+      {% for tournament in tournaments %}
+      <section class="tournament-section-card">
+        <div class="tournament-section-head">
+          <h3>🏆 {{ tournament.name }}</h3>
+          <span class="tournament-badge {{ 'live' if tournament.status == 'active' else 'upcoming' }}">{{ tournament.status|upper }}</span>
+        </div>
+        <div style="padding:18px">
+          <p style="margin:0 0 12px;color:#9eabb7;line-height:1.6">{{ tournament.description or 'Giải đấu PES Arena.' }}</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+            <span class="tournament-badge">ĐĂNG KÝ: {{ 'MỞ' if tournament.registration_open else 'ĐÓNG' }}</span>
+            {% if tournament.my_member %}<span class="tournament-badge live">✓ ĐÃ VÀO GIẢI</span>
+            {% elif tournament.my_registration %}<span class="tournament-badge upcoming">{{ tournament.my_registration.status|upper }}</span>{% endif %}
+          </div>
+          {% if tournament.my_member %}
+          <div class="tournament-control"><strong>✓ Admin đã duyệt bạn tham gia giải.</strong></div>
+          {% elif tournament.my_registration and tournament.my_registration.status == 'pending' %}
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div class="tournament-control" style="flex:1"><strong>Đang chờ Admin duyệt</strong></div>
+            <form method="post" action="{{ url_for('tournament_withdraw', tournament_id=tournament.id) }}"><button class="btn" type="submit">Hủy đăng ký</button></form>
+          </div>
+          {% elif tournament.registration_open %}
+          <form method="post" action="{{ url_for('tournament_register', tournament_id=tournament.id) }}">
+            <button class="btn gold" type="submit">🏆 Đăng ký tham gia</button>
+          </form>
+          {% else %}
+          <div class="tournament-control"><strong>Đăng ký đang đóng</strong></div>
+          {% endif %}
+        </div>
+      </section>
+      {% else %}
+      <section class="tournament-section-card">
+        <div class="tournament-section-head"><h3>🏆 Chưa có giải đấu</h3></div>
+        <div class="tournament-section-empty"><div><span>📅</span><strong>Chưa có giải được tạo</strong><small>Admin có thể tạo giải ở bước quản trị tiếp theo.</small></div></div>
+      </section>
+      {% endfor %}
+    </div>
+    {% endif %}
 
     <section class="tournament-components">
       <h2>Các thành phần của một giải đấu</h2>
@@ -74,7 +103,7 @@
       </div>
     </section>
 
-    <div class="tournament-info"><div><strong>ⓘ Thông tin giải đấu</strong><br><span>Module đang ở giai đoạn khung nền. Chưa tạo giải, chưa đăng ký HLV và chưa ghi dữ liệu vào Rank/Matches.</span></div><span>Hướng dẫn tham gia → sẽ bổ sung sau</span></div>
+    <div class="tournament-info"><div><strong>ⓘ Thông tin giải đấu</strong><br><span>Module Giải đấu dùng database riêng. Người chơi đăng ký, Admin duyệt thành viên; chưa có lịch đấu/BXH/Knockout ở bước này.</span></div><span>Hướng dẫn tham gia → sẽ bổ sung sau</span></div>
   </div>
   {% endif %}
 </section>

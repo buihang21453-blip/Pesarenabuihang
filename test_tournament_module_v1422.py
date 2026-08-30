@@ -7,7 +7,7 @@ TPL = Path('templates/tournaments.html').read_text(encoding='utf-8')
 
 
 def test_version_v1422():
-    assert 'APP_VERSION = "V1.4.24"' in APP
+    assert 'APP_VERSION = "V1.4.25"' in APP
 
 
 def test_tournament_is_registered_as_separate_module():
@@ -27,4 +27,4 @@ def test_shell_has_no_mock_tournament_data():
     assert 'BẢNG XẾP HẠNG' in TPL
     assert 'NHÁNH ĐẤU' in TPL
     assert 'THỐNG KÊ' in TPL
-    assert 'Chưa có giải đấu được mở' in TPL
+    assert 'Đăng ký tham gia' in TPL
