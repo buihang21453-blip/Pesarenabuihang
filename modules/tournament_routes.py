@@ -1,6 +1,6 @@
 """Independent Tournament module routes.
 
-V1.4.25 introduces the first real Tournament database core:
+V1.4.26 introduces the first real Tournament database core:
 - tournaments
 - tournament_registrations
 - tournament_members
@@ -174,7 +174,7 @@ def register_routes(context):
             "tournament_register_lookup",
         )
         if error or not tournaments_found:
-            flash("Chưa thể truy cập dữ liệu giải đấu. Hãy chạy SQL V1.4.25 trước.", "error")
+            flash("Chưa thể truy cập dữ liệu giải đấu. Hãy chạy SQL V1.4.26 trước.", "error")
             return redirect(url_for("tournaments"))
         tournament = tournaments_found[0]
         if not tournament.get("registration_open") or tournament.get("status") not in {"registration", "upcoming"}:

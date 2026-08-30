@@ -1,0 +1,8 @@
+PES Arena V1.4.26 - Tournament C1 Assets
+
+- Hero tournament background: Nengiaidau.webp
+- Hero right cup: Cupnen.webp
+- CHAMPION LEAGUE ARENA card background: NenC1arena.webp
+- CHAMPION LEAGUE ARENA cup: C1arena.webp
+- No database change. No new SQL required.
+- Keep V1.4.25 tournament database SQL already applied.
