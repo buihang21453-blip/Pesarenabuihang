@@ -6,7 +6,7 @@ PUBLIC = (ROOT / "templates" / "public_ranking.html").read_text(encoding="utf-8"
 APP = (ROOT / "app.py").read_text(encoding="utf-8")
 
 def test_version():
-    assert 'APP_VERSION = "V1.4.26"' in APP
+    assert 'APP_VERSION = "V1.4.27"' in APP
 
 def test_ranking_header_order():
     for src in (RANKING, PUBLIC):

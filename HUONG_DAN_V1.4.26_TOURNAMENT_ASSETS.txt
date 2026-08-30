@@ -1,4 +1,4 @@
-PES Arena V1.4.26 - Tournament C1 Assets
+PES Arena V1.4.27 - Tournament C1 Assets
 
 - Hero tournament background: Nengiaidau.webp
 - Hero right cup: Cupnen.webp

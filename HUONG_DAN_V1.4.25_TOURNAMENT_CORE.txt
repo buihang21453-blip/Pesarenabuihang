@@ -1,6 +1,6 @@
-PES Arena V1.4.26 - Tournament Core + Registration Approval
+PES Arena V1.4.27 - Tournament Core + Registration Approval
 
-1. Deploy source V1.4.26.
+1. Deploy source V1.4.27.
 2. Supabase SQL Editor: run docs/update_tournament_core_v1_4_25.sql exactly once.
 3. Admin > Giải đấu: bật khu vực Giải đấu nếu muốn người chơi truy cập.
 4. Người chơi vào Giải đấu > Đăng ký tham gia.

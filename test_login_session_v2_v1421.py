@@ -6,7 +6,7 @@ LOGIN = Path("templates/login.html").read_text(encoding="utf-8")
 
 
 def test_release_version_and_short_public_ranking_notice():
-    assert 'APP_VERSION = "V1.4.26"' in APP
+    assert 'APP_VERSION = "V1.4.27"' in APP
     assert 'flash("Đăng ký để tham gia Championship Ranking", "warning")' in APP
     assert 'Bảng xếp hạng công khai đang được Admin tạm khóa' not in APP
 

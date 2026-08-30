@@ -719,6 +719,19 @@
       </label>
       <button class="btn green" type="submit">Lưu trạng thái Giải đấu</button>
     </form>
+
+    <h3 style="margin-top:20px">🎨 Kích thước & vị trí ảnh Giải đấu</h3>
+    <p class="muted">Điều chỉnh trực tiếp ảnh Cup banner và Huy hiệu Champions League. Lưu trong <code>system_settings</code>, không cần sửa CSS.</p>
+    <form method="post" action="{{ url_for('admin_tournament_design') }}" class="system-toggle-grid">
+      <input type="hidden" name="_admin_tab" value="tournaments">
+      <label><span>Banner Cup — Kích thước (px)</span><input type="number" name="hero_cup_width" min="80" max="420" value="{{ tournament_design.hero_cup_width|default(220) }}"></label>
+      <label><span>Banner Cup — Vị trí ngang Right (px)</span><input type="number" name="hero_cup_right" min="-120" max="260" value="{{ tournament_design.hero_cup_right|default(24) }}"></label>
+      <label><span>Banner Cup — Vị trí dọc Bottom (px)</span><input type="number" name="hero_cup_bottom" min="-160" max="160" value="{{ tournament_design.hero_cup_bottom|default(-14) }}"></label>
+      <label><span>Huy hiệu C1 — Kích thước (px)</span><input type="number" name="arena_badge_width" min="80" max="420" value="{{ tournament_design.arena_badge_width|default(230) }}"></label>
+      <label><span>Huy hiệu C1 — Vị trí ngang (%)</span><input type="number" name="arena_badge_x" min="0" max="100" value="{{ tournament_design.arena_badge_x|default(50) }}"></label>
+      <label><span>Huy hiệu C1 — Vị trí dọc (%)</span><input type="number" name="arena_badge_y" min="0" max="100" value="{{ tournament_design.arena_badge_y|default(46) }}"></label>
+      <button class="btn green" type="submit">Lưu bố cục ảnh</button>
+    </form>
     <hr style="margin:18px 0">
     {% set td = tournament_admin_data|default({}) %}
     {% if not td.get('db_ready', false) %}

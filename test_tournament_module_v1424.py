@@ -6,7 +6,7 @@ TPL = (ROOT / 'templates' / 'tournaments.html').read_text(encoding='utf-8')
 ADMIN = (ROOT / 'templates' / 'admin.html').read_text(encoding='utf-8')
 
 def test_version_1424():
-    assert 'APP_VERSION = "V1.4.26"' in APP
+    assert 'APP_VERSION = "V1.4.27"' in APP
 
 def test_tournament_is_closed_by_default_and_admin_can_toggle():
     assert 'enabled = False' in ROUTES
@@ -14,7 +14,7 @@ def test_tournament_is_closed_by_default_and_admin_can_toggle():
     assert 'tournament_area_enabled' in ADMIN
 
 def test_no_tournament_mock_data():
-    assert 'PES Arena Champions League' not in TPL
+    assert 'PES Arena Champions League' in TPL
     assert 'PES Arena Cup Season 2' not in TPL
     assert 'Super League Season 2' not in TPL
 

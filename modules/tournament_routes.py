@@ -1,6 +1,6 @@
 """Independent Tournament module routes.
 
-V1.4.26 introduces the first real Tournament database core:
+V1.4.27 introduces the first real Tournament database core:
 - tournaments
 - tournament_registrations
 - tournament_members
@@ -9,6 +9,16 @@ Tournament data stays independent from Rank / Season / normal matches.
 """
 
 TOURNAMENT_AREA_SETTING_KEY = "tournament_area_enabled"
+TOURNAMENT_DESIGN_SETTING_KEY = "tournament_design_v1"
+
+DEFAULT_TOURNAMENT_DESIGN = {
+    "hero_cup_width": 220,
+    "hero_cup_right": 24,
+    "hero_cup_bottom": -14,
+    "arena_badge_width": 230,
+    "arena_badge_x": 50,
+    "arena_badge_y": 46,
+}
 
 
 def register_routes(context):
@@ -43,6 +53,38 @@ def register_routes(context):
 
         ttl_cache_set("tournament_area_enabled", enabled, 45)
         return cache_set(request_key, enabled)
+
+
+    def tournament_design_settings(force=False):
+        request_key = "_tournament_design_settings_cached"
+        if not force:
+            cached = cache_get(request_key)
+            if isinstance(cached, dict):
+                return cached
+            cached = ttl_cache_get("tournament_design_settings")
+            if isinstance(cached, dict):
+                return cache_set(request_key, cached)
+
+        value = dict(DEFAULT_TOURNAMENT_DESIGN)
+        try:
+            result = execute_query(
+                db.table("system_settings").select("setting_value")
+                .eq("setting_key", TOURNAMENT_DESIGN_SETTING_KEY).limit(1),
+                "get_tournament_design_settings", attempts=2,
+            )
+            raw = ((result.data or [{}])[0]).get("setting_value")
+            if isinstance(raw, dict):
+                for key in value:
+                    if key in raw:
+                        try:
+                            value[key] = int(raw[key])
+                        except (TypeError, ValueError):
+                            pass
+        except Exception as exc:
+            app.logger.warning("Tournament design settings unavailable: %s", exc)
+
+        ttl_cache_set("tournament_design_settings", value, 45)
+        return cache_set(request_key, value)
 
     def _safe_rows(query, label):
         try:
@@ -135,7 +177,7 @@ def register_routes(context):
 
     @app.context_processor
     def inject_tournament_context():
-        payload = {"tournament_area_enabled": tournament_area_enabled()}
+        payload = {"tournament_area_enabled": tournament_area_enabled(), "tournament_design": tournament_design_settings()}
         if request.endpoint == "admin":
             payload["tournament_admin_data"] = _admin_tournament_data()
         return payload
@@ -154,6 +196,12 @@ def register_routes(context):
             for item in tournament_rows:
                 item["my_registration"] = _registration_for_user(item.get("id"), user_id)
                 item["my_member"] = _member_for_user(item.get("id"), user_id)
+                member_rows, _ = _safe_rows(
+                    db.table("tournament_members").select("id").eq("tournament_id", item.get("id")).eq("status", "active"),
+                    "tournament_member_count",
+                )
+                item["member_count"] = len(member_rows)
+                item["phase_name"] = "Registration" if item.get("status") in {"registration", "upcoming"} else "League Phase"
         return render_template(
             'tournaments.html',
             tournament_open=opened,
@@ -174,7 +222,7 @@ def register_routes(context):
             "tournament_register_lookup",
         )
         if error or not tournaments_found:
-            flash("Chưa thể truy cập dữ liệu giải đấu. Hãy chạy SQL V1.4.26 trước.", "error")
+            flash("Chưa thể truy cập dữ liệu giải đấu. Hãy chạy SQL V1.4.27 trước.", "error")
             return redirect(url_for("tournaments"))
         tournament = tournaments_found[0]
         if not tournament.get("registration_open") or tournament.get("status") not in {"registration", "upcoming"}:
@@ -223,6 +271,42 @@ def register_routes(context):
             )
             flash("Đã hủy đăng ký giải đấu.", "success")
         return redirect(url_for("tournaments"))
+
+
+    @app.post('/admin/tournaments/design')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_design():
+        limits = {
+            "hero_cup_width": (80, 420),
+            "hero_cup_right": (-120, 260),
+            "hero_cup_bottom": (-160, 160),
+            "arena_badge_width": (80, 420),
+            "arena_badge_x": (0, 100),
+            "arena_badge_y": (0, 100),
+        }
+        current = tournament_design_settings()
+        payload = dict(current)
+        for key, (low, high) in limits.items():
+            try:
+                value = int(float(request.form.get(key, payload[key])))
+            except (TypeError, ValueError):
+                value = payload[key]
+            payload[key] = max(low, min(high, value))
+        execute_query(
+            db.table("system_settings").upsert({
+                "setting_key": TOURNAMENT_DESIGN_SETTING_KEY,
+                "setting_value": payload,
+                "updated_at": now_iso(),
+            }, on_conflict="setting_key"),
+            "admin_update_tournament_design", attempts=2,
+        )
+        ttl_cache_delete("tournament_design_settings")
+        cache_delete("_tournament_design_settings_cached")
+        log_admin_action("Cập nhật bố cục ảnh Giải đấu", "system", details=payload)
+        flash("Đã lưu kích thước và vị trí ảnh Giải đấu.", "success")
+        return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/access')
     @login_required
