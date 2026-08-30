@@ -1,4 +1,4 @@
-PES Arena V1.4.22 - Tournament Module Shell
+PES Arena V1.4.23 - Tournament Module Shell
 
 1. Deploy source như các phiên bản trước.
 2. Không cần chạy SQL.

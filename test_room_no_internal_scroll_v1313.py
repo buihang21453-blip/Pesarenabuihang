@@ -5,7 +5,7 @@ APP = (ROOT / "app.py").read_text(encoding="utf-8")
 CSS = (ROOT / "static/css/rank_mode_toggle.css").read_text(encoding="utf-8")
 
 def test_version():
-    assert 'APP_VERSION = "V1.4.22"' in APP
+    assert 'APP_VERSION = "V1.4.23"' in APP
 
 def test_three_main_room_panels_are_not_scroll_containers():
     marker = "PES Arena V1.3.13 — loại bỏ scroll nội bộ thật sự ở 3 khung chính."

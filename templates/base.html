@@ -79,8 +79,8 @@ function toggleTheme(){
 
         <nav class="nav player-nav">
             <a class="{{ 'active' if request.endpoint == 'ranking' else '' }}" href="{{ url_for('ranking') }}"><span>🏆</span> BXH</a>
-            <a class="{{ 'active' if request.endpoint == 'tournaments' else '' }}" href="{{ url_for('tournaments') }}"><span>🏟️</span> Giải đấu</a>
             <a class="{{ 'active' if request.endpoint in ['rooms', 'room_detail'] else '' }}" href="#" onclick="event.preventDefault(); document.getElementById('quickCreateRoomForm').submit();"><span>🎮</span> Phòng đấu</a>
+            <a class="{{ 'active' if request.endpoint == 'tournaments' else '' }}" href="{{ url_for('tournaments') }}"><span>🏟️</span> Giải đấu</a>
             <a class="{{ 'active' if request.endpoint in ['shop', 'shop_purchase', 'luckybox_home', 'luckybox_history', 'luckybox_opening_detail'] else '' }}" href="{{ url_for('shop') }}"><span>🛒</span> Cửa hàng</a>
             <a class="{{ 'active' if request.endpoint == 'guide' else '' }}" href="{{ url_for('guide') }}"><span>📘</span> Hướng dẫn</a>
             {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}<a class="{{ 'active' if request.endpoint == 'admin' else '' }}" href="{{ url_for('admin') }}"><span>⚙️</span> Admin</a><a class="{{ 'active' if request.endpoint and request.endpoint.startswith('admin_shop') else '' }}" href="{{ url_for('admin_shop') }}"><span>🛍️</span> Quản trị Shop</a>{% endif %}

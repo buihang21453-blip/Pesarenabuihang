@@ -9,7 +9,7 @@ ADMIN = (ROOT/'templates'/'admin.html').read_text(encoding='utf-8')
 CSS = (ROOT/'static'/'style.css').read_text(encoding='utf-8')
 
 def test_version_1415():
-    assert 'APP_VERSION = "V1.4.22"' in APP
+    assert 'APP_VERSION = "V1.4.23"' in APP
 
 def test_layout_setting_core():
     assert 'RANKING_LAYOUT_SETTING_KEY = "ranking_layout_style"' in SERVICE

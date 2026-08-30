@@ -463,9 +463,15 @@
 - Không lưu mật khẩu trong localStorage; chỉ lưu username khi người dùng chọn ghi nhớ.
 - Test: 321/321 passed.
 
-## V1.4.22 - Tournament Module Shell
+## V1.4.23 - Tournament Module Shell
 - Thêm tab `Giải đấu` vào sidebar người chơi.
 - Tách route `/tournaments` vào module riêng `modules/tournament_routes.py`.
 - Thêm template `templates/tournaments.html` độc lập.
 - Chỉ dựng khung: Tổng quan / Lịch thi đấu / Bảng xếp hạng / Nhánh đấu / Thống kê.
 - Không tạo mock data, không đọc/ghi Rank, không dùng bảng matches và không cần migration SQL.
+
+
+## V1.4.23 - Swap Room / Tournament Menu
+- Đổi vị trí menu: Phòng đấu đứng trước Giải đấu.
+- Không thay đổi route, logic phòng đấu hay module giải đấu.
+- Không cần SQL.

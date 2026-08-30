@@ -1,0 +1,6 @@
+PES Arena V1.4.23
+
+Thay đổi duy nhất:
+- Menu: Phòng đấu đứng trước Giải đấu.
+- Giữ nguyên chức năng của cả hai tab.
+- Không cần chạy SQL.

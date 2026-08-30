@@ -4,7 +4,7 @@ ROUTES=Path("modules/season_routes.py").read_text(encoding="utf-8")
 SQL=Path("docs/update_rank_season_v1_4_8.sql").read_text(encoding="utf-8")
 
 def test_v148_version():
-    assert 'APP_VERSION = "V1.4.22"' in APP
+    assert 'APP_VERSION = "V1.4.23"' in APP
 
 def test_reset_is_atomic_rpc():
     assert "db.rpc('reset_rank_season_open_next'" in ROUTES

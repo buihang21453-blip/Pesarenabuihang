@@ -1,6 +1,6 @@
 """Tournament module routes.
 
-V1.4.22 introduces only the isolated tournament shell.  No tournament data is
+V1.4.23 introduces only the isolated tournament shell.  No tournament data is
 mocked and no ranking/match tables are reused by this module yet.
 """
 
