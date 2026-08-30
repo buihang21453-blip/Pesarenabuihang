@@ -5,7 +5,7 @@ BASE = Path('templates/base.html').read_text(encoding='utf-8')
 
 
 def test_version_v128():
-    assert 'APP_VERSION = "V1.4.27"' in APP
+    assert 'APP_VERSION = "V1.4.28"' in APP
 
 
 def test_snapshot_filters_orphan_matches():

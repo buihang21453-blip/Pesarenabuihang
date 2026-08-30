@@ -6,7 +6,7 @@ ADMIN=Path("templates/admin.html").read_text()
 ROUTES=Path("modules/tournament_routes.py").read_text()
 
 def test_version():
-    assert 'APP_VERSION = "V1.4.27"' in APP
+    assert 'APP_VERSION = "V1.4.28"' in APP
 
 def test_new_badge_and_card_layout():
     assert 'Huyhieu.webp' in TPL

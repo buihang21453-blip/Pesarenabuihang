@@ -4,7 +4,7 @@ APP=(ROOT/'app.py').read_text(encoding='utf-8')
 SQL=(ROOT/'docs/update_season_isolated_stats_v1_4_18.sql').read_text(encoding='utf-8')
 
 def test_version():
-    assert 'APP_VERSION = "V1.4.27"' in APP
+    assert 'APP_VERSION = "V1.4.28"' in APP
 
 def test_current_ranking_uses_season_stats():
     assert 'season_player_stats' in APP

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 def test_version_and_sql_exist():
-    assert 'APP_VERSION = "V1.4.27"' in Path('app.py').read_text()
+    assert 'APP_VERSION = "V1.4.28"' in Path('app.py').read_text()
     sql = Path('docs/update_tournament_core_v1_4_25.sql').read_text().lower()
     assert 'create table if not exists public.tournaments' in sql
     assert 'create table if not exists public.tournament_registrations' in sql

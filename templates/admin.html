@@ -720,18 +720,57 @@
       <button class="btn green" type="submit">Lưu trạng thái Giải đấu</button>
     </form>
 
-    <h3 style="margin-top:20px">🎨 Kích thước & vị trí ảnh Giải đấu</h3>
-    <p class="muted">Điều chỉnh trực tiếp ảnh Cup banner và Huy hiệu Champions League. Lưu trong <code>system_settings</code>, không cần sửa CSS.</p>
-    <form method="post" action="{{ url_for('admin_tournament_design') }}" class="system-toggle-grid">
-      <input type="hidden" name="_admin_tab" value="tournaments">
-      <label><span>Banner Cup — Kích thước (px)</span><input type="number" name="hero_cup_width" min="80" max="420" value="{{ tournament_design.hero_cup_width|default(220) }}"></label>
-      <label><span>Banner Cup — Vị trí ngang Right (px)</span><input type="number" name="hero_cup_right" min="-120" max="260" value="{{ tournament_design.hero_cup_right|default(24) }}"></label>
-      <label><span>Banner Cup — Vị trí dọc Bottom (px)</span><input type="number" name="hero_cup_bottom" min="-160" max="160" value="{{ tournament_design.hero_cup_bottom|default(-14) }}"></label>
-      <label><span>Huy hiệu C1 — Kích thước (px)</span><input type="number" name="arena_badge_width" min="80" max="420" value="{{ tournament_design.arena_badge_width|default(230) }}"></label>
-      <label><span>Huy hiệu C1 — Vị trí ngang (%)</span><input type="number" name="arena_badge_x" min="0" max="100" value="{{ tournament_design.arena_badge_x|default(50) }}"></label>
-      <label><span>Huy hiệu C1 — Vị trí dọc (%)</span><input type="number" name="arena_badge_y" min="0" max="100" value="{{ tournament_design.arena_badge_y|default(46) }}"></label>
-      <button class="btn green" type="submit">Lưu bố cục ảnh</button>
-    </form>
+    <h3 style="margin-top:20px">🎨 Vị trí & kích thước hình ảnh</h3>
+    <p class="muted">Chỉ điều chỉnh <strong>Ảnh Cúp Giải đấu</strong> và <strong>Ảnh Huy hiệu C1</strong>. Hai ảnh nền Banner Giải đấu và Banner C1 được giữ cố định.</p>
+
+    <div class="tournament-design-admin" id="tournament-design-admin">
+      <form method="post" action="{{ url_for('admin_tournament_design') }}" class="tournament-design-form" id="tournament-design-form">
+        <input type="hidden" name="_admin_tab" value="tournaments">
+
+        <div class="tournament-design-controls">
+          <section class="tournament-design-group">
+            <h4>🏆 Ảnh Cúp Giải đấu</h4>
+            <p class="small">Ảnh <code>Cupnen.webp</code> nằm trên Banner Giải đấu cố định.</p>
+            <label><span>Kích thước (px)</span><input data-preview-control type="range" name="hero_cup_width" min="80" max="420" value="{{ tournament_design.hero_cup_width|default(220) }}"><output data-output-for="hero_cup_width"></output></label>
+            <label><span>Vị trí ngang — cách mép phải (px)</span><input data-preview-control type="range" name="hero_cup_right" min="-120" max="260" value="{{ tournament_design.hero_cup_right|default(24) }}"><output data-output-for="hero_cup_right"></output></label>
+            <label><span>Vị trí dọc — cách đáy (px)</span><input data-preview-control type="range" name="hero_cup_bottom" min="-160" max="160" value="{{ tournament_design.hero_cup_bottom|default(-14) }}"><output data-output-for="hero_cup_bottom"></output></label>
+          </section>
+
+          <section class="tournament-design-group">
+            <h4>🛡️ Ảnh Huy hiệu C1</h4>
+            <p class="small">Ảnh <code>Huyhieu.webp</code> nằm trên Banner C1 cố định.</p>
+            <label><span>Kích thước (px)</span><input data-preview-control type="range" name="arena_badge_width" min="80" max="420" value="{{ tournament_design.arena_badge_width|default(230) }}"><output data-output-for="arena_badge_width"></output></label>
+            <label><span>Vị trí ngang (%)</span><input data-preview-control type="range" name="arena_badge_x" min="0" max="100" value="{{ tournament_design.arena_badge_x|default(50) }}"><output data-output-for="arena_badge_x"></output></label>
+            <label><span>Vị trí dọc (%)</span><input data-preview-control type="range" name="arena_badge_y" min="0" max="100" value="{{ tournament_design.arena_badge_y|default(46) }}"><output data-output-for="arena_badge_y"></output></label>
+          </section>
+        </div>
+
+        <div class="tournament-design-preview-wrap">
+          <div class="tournament-preview-title"><strong>👁 Preview trực quan</strong><span>Thay đổi ngay khi kéo thanh điều chỉnh</span></div>
+          <div class="tournament-preview-grid">
+            <section class="tournament-preview-card">
+              <div class="tournament-preview-label">Banner Giải đấu</div>
+              <div class="tournament-preview-hero" id="preview-tournament-hero">
+                <div class="tournament-preview-hero-copy"><small>PES eFOOTBALL 2026</small><strong>★ GIẢI ĐẤU PES ARENA ★</strong></div>
+                <img id="preview-hero-cup" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/Giaidau/C1mua1/Cupnen.webp" alt="Preview Cúp Giải đấu">
+              </div>
+            </section>
+            <section class="tournament-preview-card">
+              <div class="tournament-preview-label">Banner C1</div>
+              <div class="tournament-preview-c1" id="preview-tournament-c1">
+                <span class="tournament-preview-status">● Đang diễn ra</span>
+                <img id="preview-arena-badge" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/Giaidau/C1mua1/Huyhieu.webp" alt="Preview Huy hiệu C1">
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="tournament-design-actions">
+          <button class="btn gray" type="button" id="tournament-design-reset-preview">↺ Mặc định</button>
+          <button class="btn green" type="submit">💾 Lưu vị trí & kích thước</button>
+        </div>
+      </form>
+    </div>
     <hr style="margin:18px 0">
     {% set td = tournament_admin_data|default({}) %}
     {% if not td.get('db_ready', false) %}
@@ -1200,4 +1239,5 @@
 
 {% block page_scripts %}
 <script src="{{ static_asset('js/admin_dashboard.js') }}" defer></script>
+<script src="{{ static_asset('js/tournament_admin_preview.js') }}" defer></script>
 {% endblock %}
