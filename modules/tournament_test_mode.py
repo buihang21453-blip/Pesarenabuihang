@@ -1,4 +1,4 @@
-"""Tournament Test Mode V1.4.32.
+"""Tournament Test Mode V1.4.33.
 
 A fully isolated sandbox stored as JSON. It never writes Rank matches, tournament
 production matches, Zcoin, Lucky Box or real tournament members.
@@ -20,6 +20,7 @@ def register_routes(context):
             "registrations": [],
             "registration_open": True,
             "stage1_target": 5,
+            "pot_count": 4,
             "stage1_matches": [],
             "stage1_ranking": [],
             "pots": [],
@@ -89,6 +90,32 @@ def register_routes(context):
             rounds.append(pairs)
             rotating = [rotating[-1]] + rotating[:-1]
         return rounds
+
+    def _regular_pairs(player_ids, degree):
+        """Return a deterministic simple regular graph as player pairs."""
+        n=len(player_ids)
+        if degree < 0 or degree >= n or (n * degree) % 2:
+            return []
+        pairs=set()
+        for offset in range(1, (degree // 2) + 1):
+            for i in range(n):
+                a,b=player_ids[i],player_ids[(i+offset) % n]
+                if a != b: pairs.add(tuple(sorted((a,b))))
+        if degree % 2:
+            for i in range(n // 2):
+                pairs.add(tuple(sorted((player_ids[i],player_ids[i+n//2]))))
+        return sorted(pairs)
+
+    def _balanced_stage1_pairs(players, target):
+        """Exactly target matches/player, with no pair repeated more than twice."""
+        ids=[p["id"] for p in players]
+        n=len(ids)
+        if n < 2 or n * target % 2 or target > 2 * (n - 1):
+            return None
+        if target <= n - 1:
+            return _regular_pairs(ids, target)
+        first=[tuple(sorted((ids[i],ids[j]))) for i in range(n) for j in range(i+1,n)]
+        return first + _regular_pairs(ids, target - (n - 1))
 
     def _score(seed):
         r = random.Random(seed)
@@ -261,12 +288,14 @@ def register_routes(context):
         if len(players)<4:
             flash("Hãy tạo HLV Test trước.","warning"); return redirect(url_for('admin_tournament_test_mode'))
         target=int(state.get("stage1_target") or 5)
-        rounds=_round_robin_rounds(players)[:target]
-        matches=[]; seq=1
-        for rnd,pairs in enumerate(rounds,1):
-            for a,b in pairs:
-                hs,av=_score(f"s1-{rnd}-{a}-{b}")
-                matches.append({"id":f"s1-{seq}","round":rnd,"home":a,"away":b,"home_score":hs,"away_score":av,"status":"completed"}); seq+=1
+        pairs=_balanced_stage1_pairs(players,target)
+        if pairs is None:
+            flash(f"Không thể chia đều {target} trận cho {len(players)} HLV. Hãy đổi số HLV hoặc chọn số trận khác.","error")
+            return redirect(url_for('admin_tournament_test_mode'))
+        matches=[]; per_round=max(1,len(players)//2)
+        for seq,(a,b) in enumerate(pairs,1):
+            rnd=((seq-1)//per_round)+1; hs,av=_score(f"s1-{rnd}-{a}-{b}")
+            matches.append({"id":f"s1-{seq}","round":rnd,"home":a,"away":b,"home_score":hs,"away_score":av,"status":"completed"})
         state["stage1_matches"]=matches
         state["stage1_ranking"]=_ranking(players,matches)
         state["pots"]=[]; state["league_matches"]=[]; state["league_ranking"]=[]; state["knockout"]=[]
@@ -282,13 +311,13 @@ def register_routes(context):
         state,_=_load_state(); ranking=state.get("stage1_ranking") or []
         if not ranking:
             flash("Hãy sinh GĐ1 trước.","warning"); return redirect(url_for('admin_tournament_test_mode'))
-        pot_count=max(1,min(8,int(request.form.get("pot_count") or 4)))
+        pot_count=3 if int(request.form.get("pot_count") or 4) == 3 else 4
         pots=[[] for _ in range(pot_count)]
         chunk=(len(ranking)+pot_count-1)//pot_count
         for i,row in enumerate(ranking):
             p=min(i//chunk,pot_count-1)
             pots[p].append({"user_id":row["user_id"],"display_name":row["display_name"],"seed":i+1,"pot":p+1})
-        state["pots"]=pots; _save_state(state)
+        state["pots"]=pots; state["pot_count"]=pot_count; _save_state(state)
         flash(f"Đã chia {pot_count} Pot theo BXH GĐ1.","success")
         return redirect(url_for('admin_tournament_test_mode'))
 
@@ -358,15 +387,20 @@ def register_routes(context):
         # Reuse the same deterministic logic in one request.
         count=max(4,min(36,int(request.form.get("count") or 16)))
         target=max(5,min(6,int(request.form.get("target") or 5)))
-        state=_empty_state(); state["stage1_target"]=target
+        pot_count=3 if int(request.form.get("pot_count") or 4) == 3 else 4
+        state=_empty_state(); state["stage1_target"]=target; state["pot_count"]=pot_count
         players=[{"id":f"test-hlv-{i:02d}","name":f"Test HLV {i:02d}","is_test":True} for i in range(1,count+1)]; state["players"]=players
         state["registrations"]=[{"id":f"test-reg-{i:02d}","user_id":p["id"],"display_name":p["name"],"status":"approved","registered_at":datetime.now(timezone.utc).isoformat()} for i,p in enumerate(players,1)]
-        rounds=_round_robin_rounds(players)[:target]; s1=[]; seq=1
-        for rnd,pairs in enumerate(rounds,1):
-            for a,b in pairs:
-                hs,av=_score(f"all-s1-{rnd}-{a}-{b}"); s1.append({"id":f"s1-{seq}","round":rnd,"home":a,"away":b,"home_score":hs,"away_score":av,"status":"completed"}); seq+=1
+        pairs=_balanced_stage1_pairs(players,target)
+        if pairs is None:
+            flash(f"Không thể chia đều {target} trận cho {count} HLV. Hãy đổi số HLV hoặc chọn số trận khác.","error")
+            return redirect(url_for('admin_tournament_test_mode'))
+        s1=[]; per_round=max(1,len(players)//2)
+        for seq,(a,b) in enumerate(pairs,1):
+            rnd=((seq-1)//per_round)+1; hs,av=_score(f"all-s1-{rnd}-{a}-{b}")
+            s1.append({"id":f"s1-{seq}","round":rnd,"home":a,"away":b,"home_score":hs,"away_score":av,"status":"completed"})
         state["stage1_matches"]=s1; state["stage1_ranking"]=_ranking(players,s1)
-        pot_count=4; chunk=(len(players)+pot_count-1)//pot_count; pots=[[] for _ in range(pot_count)]
+        chunk=(len(players)+pot_count-1)//pot_count; pots=[[] for _ in range(pot_count)]
         for i,row in enumerate(state["stage1_ranking"]):
             p=min(i//chunk,pot_count-1); pots[p].append({"user_id":row["user_id"],"display_name":row["display_name"],"seed":i+1,"pot":p+1})
         state["pots"]=pots
@@ -387,7 +421,7 @@ def register_routes(context):
             ko.append({"name":labels.get(len(current),f"Top {len(current)}"),"pairs":prs}); current=nxt
             if len(current)==1: break
         state["knockout"]=ko; _save_state(state)
-        flash("Đã tạo sandbox và mô phỏng toàn bộ giải đến Chung kết.","success")
+        flash(f"Đã mô phỏng toàn giải: {count} HLV · GĐ1 {target} trận/HLV · {pot_count} Pot.","success")
         return redirect(url_for('admin_tournament_test_mode'))
 
     @app.post('/admin/tournament-test-mode/reset')
