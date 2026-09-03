@@ -488,3 +488,11 @@
 ## V1.4.30 Tournament Operations
 - Thêm GĐ1, BXH, Pot, CLB, League fixtures, lịch hẹn, Host, progress, Knockout 2 lượt và thưởng sớm.
 - Module độc lập khỏi Rank/Season.
+
+## V1.4.31 Tournament Test Mode
+- Added isolated `tournament_test_sandboxes` JSON sandbox per Admin.
+- Fake HLVs are virtual only; no real accounts are created.
+- One-tap full simulation: Stage 1 -> Pots -> League -> two-leg Knockout.
+- Role preview: Admin / spectator / each fake coach.
+- Reset deletes only sandbox state.
+- No Rank, RP, Zcoin, Lucky Box or production Tournament records are modified.
