@@ -182,6 +182,31 @@ def register_routes(context):
             payload["tournament_admin_data"] = _admin_tournament_data()
         return payload
 
+    @app.get('/dang-ky-c1')
+    @login_required
+    def tournament_register_shortcut():
+        """Short public-friendly link that opens the active C1 registration form."""
+        if not tournament_area_enabled():
+            flash("Khu vực Giải đấu đang tạm đóng.", "warning")
+            return redirect(url_for("tournaments"))
+
+        tournament_rows, error = _list_tournaments()
+        if error:
+            flash("Chưa thể truy cập dữ liệu giải đấu lúc này.", "error")
+            return redirect(url_for("tournaments"))
+
+        active = next((
+            item for item in tournament_rows
+            if item.get("registration_open") and item.get("status") in {"registration", "upcoming"}
+        ), None)
+        if not active:
+            flash("Hiện chưa có giải đấu nào đang mở đăng ký.", "warning")
+            return redirect(url_for("tournaments"))
+
+        tournament_id = active.get("id")
+        return redirect(url_for("tournaments", register=tournament_id) + f"#register-{tournament_id}")
+
+
     @app.get('/tournaments')
     @login_required
     def tournaments():
