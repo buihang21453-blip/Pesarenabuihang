@@ -232,6 +232,18 @@ def register_routes(context):
             flash("Bạn đã là thành viên của giải đấu này.", "info")
             return redirect(url_for("tournaments"))
         existing = _registration_for_user(tournament_id, user_id)
+        host_choice = (request.form.get("host_choice") or "").strip().lower()
+        host_region = (request.form.get("host_region") or "").strip()
+        payment_confirmed = request.form.get("payment_confirmed") == "1"
+        if host_choice not in {"yes", "no"}:
+            flash("Hãy chọn Có Host hoặc Không Host.", "warning")
+            return redirect(url_for("tournaments", register=tournament_id))
+        if host_region not in {"Bắc", "Trung", "Nam"}:
+            flash("Hãy chọn khu vực Bắc, Trung hoặc Nam.", "warning")
+            return redirect(url_for("tournaments", register=tournament_id))
+        if not payment_confirmed:
+            flash("Hãy xác nhận sau khi đã chuyển khoản phí giải.", "warning")
+            return redirect(url_for("tournaments", register=tournament_id))
         payload = {
             "tournament_id": tournament_id,
             "user_id": user_id,
@@ -239,6 +251,10 @@ def register_routes(context):
             "registered_at": now_iso(),
             "reviewed_at": None,
             "reviewed_by": None,
+            "has_host": host_choice == "yes",
+            "host_region": host_region,
+            "payment_status": "reported",
+            "payment_reported_at": now_iso(),
         }
         try:
             if existing:

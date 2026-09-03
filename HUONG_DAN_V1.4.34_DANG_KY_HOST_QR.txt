@@ -1,0 +1,30 @@
+PES Arena V1.4.34 - Dang ky HLV: Host + khu vuc + QR thanh toan
+
+1. Chay SQL moi:
+   SQL_CAN_CHAY/04_DANG_KY_HOST_KHU_VUC_THANH_TOAN_V1.4.34.sql
+
+2. Deploy source V1.4.34 len GitHub/Vercel.
+
+3. Flow HLV:
+   - Bam Dang ky
+   - Chon Co Host / Khong Host
+   - Chon Bac / Trung / Nam
+   - Quet QR chuyen khoan phi giai
+   - Tich xac nhan da chuyen khoan
+   - Gui dang ky va cho Admin duyet
+
+4. Admin se thay trong danh sach Cho duyet:
+   - Kha nang Host
+   - Khu vuc
+   - Trang thai HLV bao da chuyen khoan
+
+5. Test Mode:
+   - Admin > Giai dau > Tournament Test Mode
+   - Chon HLV Test > Dang ky giai dau
+   - Form Test co day du Host / khu vuc / QR / xac nhan CK.
+   - Test Mode khong phat sinh giao dich that.
+
+Luu y:
+- QR su dung cung ma QR ngan hang hien co o khu Nap Zcoin.
+- Phi tham gia khong hard-code de tranh sai khi BTC thay doi muc phi.
+- Web chi ghi nhan HLV bao da CK; Admin van can doi chieu giao dich truoc khi duyet.

@@ -1,0 +1,13 @@
+PES Arena V1.4.35 - QR va noi dung chuyen khoan
+
+QR phi giai:
+https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1/Qr.webp
+
+Noi dung chuyen khoan duoc tu dong tao:
+<Ten HLV> C1 Arena
+
+Vi du HLV ten Nguyen Van A:
+Nguyen Van A C1 Arena
+
+Test Mode cung tu dong dung ten HLV Test dang duoc chon.
+Khong can chay them SQL neu da chay SQL V1.4.34.

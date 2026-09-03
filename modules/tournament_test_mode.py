@@ -1,4 +1,4 @@
-"""Tournament Test Mode V1.4.33.
+"""Tournament Test Mode V1.4.34.
 
 A fully isolated sandbox stored as JSON. It never writes Rank matches, tournament
 production matches, Zcoin, Lucky Box or real tournament members.
@@ -239,7 +239,7 @@ def register_routes(context):
             status = "pending" if i < 4 else ("approved" if i < max(5, len(players)-4) else ("rejected" if i < len(players)-2 else None))
             if status:
                 rows.append({"id":f"test-reg-{i+1:02d}","user_id":p["id"],"display_name":p["name"],
-                             "status":status,"registered_at":datetime.now(timezone.utc).isoformat()})
+                             "status":status,"has_host":i%2==0,"host_region":["Bắc","Trung","Nam"][i%3],"payment_status":"reported","registered_at":datetime.now(timezone.utc).isoformat()})
         state["registrations"] = rows
         state["registration_open"] = True
         _save_state(state)
@@ -257,8 +257,16 @@ def register_routes(context):
             flash("Không thể gửi đăng ký Test lúc này.","warning")
         else:
             rows=[r for r in (state.get("registrations") or []) if r.get("user_id")!=player_id]
+            host_choice=(request.form.get("host_choice") or "").strip().lower()
+            host_region=(request.form.get("host_region") or "").strip()
+            payment_confirmed=request.form.get("payment_confirmed") == "1"
+            if host_choice not in {"yes","no"} or host_region not in {"Bắc","Trung","Nam"} or not payment_confirmed:
+                flash("Hãy chọn Host, khu vực và xác nhận chuyển khoản trong form Test.","warning")
+                return redirect(url_for('admin_tournament_test_public',view_as=player_id,register='1'))
             rows.append({"id":f"test-reg-{uuid.uuid4().hex[:8]}","user_id":player_id,"display_name":player["name"],
-                         "status":"pending","registered_at":datetime.now(timezone.utc).isoformat()})
+                         "status":"pending","has_host":host_choice=="yes","host_region":host_region,
+                         "payment_status":"reported","payment_reported_at":datetime.now(timezone.utc).isoformat(),
+                         "registered_at":datetime.now(timezone.utc).isoformat()})
             state["registrations"]=rows; _save_state(state)
             flash(f"{player['name']} đã gửi đăng ký và đang chờ Admin duyệt.","success")
         return redirect(url_for('admin_tournament_test_public',view_as=player_id))
