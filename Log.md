@@ -483,3 +483,8 @@
 - Không mockup giải hay HLV giả.
 - Khu vực Giải đấu mặc định tạm đóng.
 - Admin có tab Giải đấu và công tắc mở/đóng qua system_settings.
+
+
+## V1.4.30 Tournament Operations
+- Thêm GĐ1, BXH, Pot, CLB, League fixtures, lịch hẹn, Host, progress, Knockout 2 lượt và thưởng sớm.
+- Module độc lập khỏi Rank/Season.

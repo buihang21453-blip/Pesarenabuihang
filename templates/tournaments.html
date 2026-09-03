@@ -66,9 +66,9 @@
             <span>👥 {{ tournament.member_count|default(0) }} HLV</span><span>•</span><span>◯ {{ tournament.phase_name|default('Registration') }}</span>
           </div>
           <div class="tournament-card-actions">
-            <button class="btn" type="button" disabled>◉ Xem giải đấu</button>
+            <a class="btn" href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}">◉ Xem giải đấu</a>
             {% if tournament.my_member %}
-              <button class="btn" type="button" disabled>▣ Lịch đấu</button>
+              <a class="btn" href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#schedule">▣ Lịch đấu</a>
             {% elif tournament.my_registration and tournament.my_registration.status == 'pending' %}
               <div class="tournament-control"><strong>Đang chờ Admin duyệt</strong></div>
               <form method="post" action="{{ url_for('tournament_withdraw', tournament_id=tournament.id) }}"><button class="btn" type="submit">Hủy đăng ký</button></form>

@@ -7180,6 +7180,7 @@ from modules.gift_codes import register_routes as _register_gift_code_routes
 from modules.admin_economy import register_routes as _register_admin_economy_routes
 from modules.luckybox import register_routes as _register_luckybox_routes
 from modules.tournament_routes import register_routes as _register_tournament_routes
+from modules.tournament_competition import register_routes as _register_tournament_competition_routes
 
 # Route Admin.
 from modules.admin_system_routes import register_routes as _register_admin_system_routes
@@ -7207,6 +7208,7 @@ for _route_registrar in (
     _register_admin_economy_routes,
     _register_luckybox_routes,
     _register_tournament_routes,
+    _register_tournament_competition_routes,
     _register_season_routes,
     _register_admin_system_routes,
     _register_admin_dashboard_routes,

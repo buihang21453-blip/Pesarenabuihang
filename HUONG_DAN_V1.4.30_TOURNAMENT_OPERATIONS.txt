@@ -1,0 +1,8 @@
+PES Arena V1.4.30 - Tournament Operations
+
+1. Deploy source.
+2. Chạy docs/update_tournament_operations_v1_4_30.sql sau các SQL Tournament cũ.
+3. Admin > Giải đấu để mở từng giai đoạn, tạo trận, chia Pot, thêm CLB/Host, sinh League, tạo Knockout và thưởng.
+
+Các bảng mới đều tournament_*; không ghi vào Rank matches hoặc season_player_stats.
+GĐ1 mặc định: 5 trận, tối thiểu 3 đối thủ, tối đa 2 trận/cùng HLV. Admin có thể đổi mục tiêu 5/6.
