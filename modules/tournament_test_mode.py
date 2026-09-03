@@ -1,4 +1,4 @@
-"""Tournament Test Mode V1.4.31.
+"""Tournament Test Mode V1.4.32.
 
 A fully isolated sandbox stored as JSON. It never writes Rank matches, tournament
 production matches, Zcoin, Lucky Box or real tournament members.
@@ -17,6 +17,8 @@ def register_routes(context):
         return {
             "enabled": True,
             "players": [],
+            "registrations": [],
+            "registration_open": True,
             "stage1_target": 5,
             "stage1_matches": [],
             "stage1_ranking": [],
@@ -46,7 +48,9 @@ def register_routes(context):
             )
             rows = result.data or []
             if rows and isinstance(rows[0].get("state"), dict):
-                return dict(rows[0]["state"]), True
+                state = _empty_state()
+                state.update(dict(rows[0]["state"]))
+                return state, True
         except Exception as exc:
             app.logger.warning("Tournament test mode unavailable: %s", exc)
         return _empty_state(), False
@@ -127,6 +131,14 @@ def register_routes(context):
             out.append(row)
         return out
 
+    def _registration_for(state, player_id):
+        return next((r for r in (state.get("registrations") or []) if r.get("user_id") == player_id), None)
+
+    def _registration_counts(state):
+        rows = state.get("registrations") or []
+        return {key: sum(1 for row in rows if row.get("status") == key)
+                for key in ("pending", "approved", "rejected", "withdrawn")}
+
     @app.get('/admin/tournament-test-mode')
     @login_required
     @admin_required
@@ -143,8 +155,31 @@ def register_routes(context):
         return render_template(
             'tournament_test_mode.html', state=state, sandbox_ready=ready,
             view_as=view_as, me=me, my_s1=my_s1, my_league=my_league,
+            registration_counts=_registration_counts(state),
             stage1_matches=_decorate_matches(state.get("stage1_matches") or [],players),
             league_matches=_decorate_matches(state.get("league_matches") or [],players),
+        )
+
+    @app.get('/admin/tournament-test-mode/public')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_public():
+        state, ready = _load_state()
+        players = state.get("players") or []
+        view_as = (request.args.get("view_as") or (players[0]["id"] if players else "spectator")).strip()
+        me = next((p for p in players if p.get("id") == view_as), None)
+        registration = _registration_for(state, view_as) if me else None
+        member = bool(registration and registration.get("status") == "approved")
+        my_s1 = next((r for r in (state.get("stage1_ranking") or []) if r.get("user_id") == view_as), None)
+        my_league = next((r for r in (state.get("league_ranking") or []) if r.get("user_id") == view_as), None)
+        return render_template(
+            'tournament_test_public.html', state=state, sandbox_ready=ready,
+            players=players, view_as=view_as, me=me, registration=registration,
+            member=member, my_s1=my_s1, my_league=my_league,
+            registration_counts=_registration_counts(state),
+            stage1_matches=_decorate_matches(state.get("stage1_matches") or [], players),
+            league_matches=_decorate_matches(state.get("league_matches") or [], players),
         )
 
     @app.post('/admin/tournament-test-mode/create-players')
@@ -159,6 +194,62 @@ def register_routes(context):
         state["players"]=[{"id":f"test-hlv-{i:02d}","name":f"Test HLV {i:02d}","is_test":True} for i in range(1,count+1)]
         _save_state(state)
         flash(f"Đã tạo {count} HLV giả trong sandbox. Không tạo tài khoản thật.","success")
+        return redirect(url_for('admin_tournament_test_mode'))
+
+    @app.post('/admin/tournament-test-mode/seed-registrations')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_seed_registrations():
+        state, _ = _load_state()
+        players = state.get("players") or []
+        if not players:
+            count=max(4,min(36,int(request.form.get("count") or 16)))
+            players=[{"id":f"test-hlv-{i:02d}","name":f"Test HLV {i:02d}","is_test":True} for i in range(1,count+1)]
+            state["players"] = players
+        rows=[]
+        for i,p in enumerate(players):
+            status = "pending" if i < 4 else ("approved" if i < max(5, len(players)-4) else ("rejected" if i < len(players)-2 else None))
+            if status:
+                rows.append({"id":f"test-reg-{i+1:02d}","user_id":p["id"],"display_name":p["name"],
+                             "status":status,"registered_at":datetime.now(timezone.utc).isoformat()})
+        state["registrations"] = rows
+        state["registration_open"] = True
+        _save_state(state)
+        flash("Đã tạo mẫu đăng ký: có đơn chờ duyệt, đã duyệt, từ chối và HLV chưa đăng ký.","success")
+        return redirect(url_for('admin_tournament_test_mode'))
+
+    @app.post('/admin/tournament-test-mode/register/<player_id>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_register(player_id):
+        state,_=_load_state()
+        player=next((p for p in (state.get("players") or []) if p.get("id")==player_id),None)
+        if not player or not state.get("registration_open", True):
+            flash("Không thể gửi đăng ký Test lúc này.","warning")
+        else:
+            rows=[r for r in (state.get("registrations") or []) if r.get("user_id")!=player_id]
+            rows.append({"id":f"test-reg-{uuid.uuid4().hex[:8]}","user_id":player_id,"display_name":player["name"],
+                         "status":"pending","registered_at":datetime.now(timezone.utc).isoformat()})
+            state["registrations"]=rows; _save_state(state)
+            flash(f"{player['name']} đã gửi đăng ký và đang chờ Admin duyệt.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=player_id))
+
+    @app.post('/admin/tournament-test-mode/registration/<registration_id>/<decision>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_registration_review(registration_id, decision):
+        if decision not in {"approved","rejected"}:
+            decision="rejected"
+        state,_=_load_state(); found=None
+        for row in state.get("registrations") or []:
+            if row.get("id")==registration_id:
+                row["status"]=decision; row["reviewed_at"]=datetime.now(timezone.utc).isoformat(); found=row; break
+        if found:
+            _save_state(state); flash("Đã duyệt HLV vào giải Test." if decision=="approved" else "Đã từ chối đơn Test.","success")
+        else: flash("Không tìm thấy đơn đăng ký Test.","error")
         return redirect(url_for('admin_tournament_test_mode'))
 
     @app.post('/admin/tournament-test-mode/generate-stage1')
@@ -269,6 +360,7 @@ def register_routes(context):
         target=max(5,min(6,int(request.form.get("target") or 5)))
         state=_empty_state(); state["stage1_target"]=target
         players=[{"id":f"test-hlv-{i:02d}","name":f"Test HLV {i:02d}","is_test":True} for i in range(1,count+1)]; state["players"]=players
+        state["registrations"]=[{"id":f"test-reg-{i:02d}","user_id":p["id"],"display_name":p["name"],"status":"approved","registered_at":datetime.now(timezone.utc).isoformat()} for i,p in enumerate(players,1)]
         rounds=_round_robin_rounds(players)[:target]; s1=[]; seq=1
         for rnd,pairs in enumerate(rounds,1):
             for a,b in pairs:
