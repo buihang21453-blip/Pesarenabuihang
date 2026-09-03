@@ -72,6 +72,41 @@ def _week_bounds_vn(now=None):
     return start, end
 
 
+
+
+def _current_season_context():
+    """Return current season number and time bounds directly from DB."""
+    season_number = 1
+    started_at = None
+    ended_at = None
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", "rank_season_current").limit(1),
+            "weekly_current_season", attempts=2,
+        )
+        value = ((result.data or [{}])[0].get("setting_value") or {}) if result.data else {}
+        season_number = max(1, _safe_int(value.get("season_number"), 1))
+        started_at = value.get("started_at") or None
+    except Exception as exc:
+        print(f"weekly current season warning: {type(exc).__name__}: {exc}")
+    return season_number, started_at, ended_at
+
+
+def _bounded_week_window(now=None):
+    calendar_week_start, week_end = _week_bounds_vn(now=now)
+    activity_start = calendar_week_start
+    season_number, started_at, ended_at = _current_season_context()
+    try:
+        season_start = datetime.fromisoformat(str(started_at).replace("Z", "+00:00")) if started_at else None
+        if season_start and season_start.tzinfo is None:
+            season_start = season_start.replace(tzinfo=timezone.utc)
+        if season_start and season_start > calendar_week_start.astimezone(timezone.utc):
+            activity_start = season_start.astimezone(calendar_week_start.tzinfo)
+    except Exception:
+        pass
+    return season_number, activity_start, week_end, calendar_week_start
+
 def _load_week_activity(user_id, week_start, week_end):
     result = execute_query(
         db.table("matches")
@@ -94,10 +129,11 @@ def _load_week_activity(user_id, week_start, week_end):
     return len(rows), len(opponents)
 
 
-def _claim_and_apply_reward(user_id, week_start, reward_code, reward_name, reward_rp):
+def _claim_and_apply_reward(user_id, season_number, week_start, reward_code, reward_name, reward_rp):
     """Claim bằng unique key trước, sau đó cộng RP; rollback claim nếu cộng thất bại."""
     claim_payload = {
         "user_id": user_id,
+        "season_number": int(season_number),
         "week_start": week_start.date().isoformat(),
         "reward_code": reward_code,
         "reward_name": reward_name,
@@ -107,7 +143,7 @@ def _claim_and_apply_reward(user_id, week_start, reward_code, reward_name, rewar
     try:
         claim = execute_query(
             db.table("weekly_rp_rewards").insert(claim_payload),
-            f"claim_weekly_rp_reward:{user_id}:{reward_code}",
+            f"claim_weekly_rp_reward:s{season_number}:{user_id}:{reward_code}",
             attempts=1,
         )
     except Exception as exc:
@@ -146,6 +182,7 @@ def _claim_and_apply_reward(user_id, week_start, reward_code, reward_name, rewar
             query = db.table("weekly_rp_rewards").delete()
             query = query.eq("id", claim_id) if claim_id else (
                 query.eq("user_id", user_id)
+                .eq("season_number", int(season_number))
                 .eq("week_start", week_start.date().isoformat())
                 .eq("reward_code", reward_code)
             )
@@ -157,7 +194,7 @@ def _claim_and_apply_reward(user_id, week_start, reward_code, reward_name, rewar
 
 def grant_weekly_rp_rewards_for_users(user_ids):
     """Kiểm tra và cộng tất cả mốc tuần vừa đạt cho danh sách người chơi."""
-    week_start, week_end = _week_bounds_vn()
+    season_number, activity_start, week_end, reward_week_start = _bounded_week_window()
     config = get_weekly_rp_reward_config()
     awarded = {}
     for raw_user_id in dict.fromkeys(user_ids or []):
@@ -165,7 +202,7 @@ def grant_weekly_rp_rewards_for_users(user_ids):
         if not user_id:
             continue
         try:
-            match_count, opponent_count = _load_week_activity(user_id, week_start, week_end)
+            match_count, opponent_count = _load_week_activity(user_id, activity_start, week_end)
             eligible_codes = set()
             if match_count >= config["matches_threshold"]:
                 eligible_codes.add("matches_10")
@@ -179,7 +216,7 @@ def grant_weekly_rp_rewards_for_users(user_ids):
             total = 0
             for code, name, rp in _reward_rules(config):
                 if code in eligible_codes:
-                    total += _claim_and_apply_reward(user_id, week_start, code, name, rp)
+                    total += _claim_and_apply_reward(user_id, season_number, reward_week_start, code, name, rp)
             if total:
                 awarded[user_id] = {
                     "rp": total,

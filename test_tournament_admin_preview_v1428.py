@@ -6,7 +6,7 @@ CSS = Path('static/css/admin_dashboard.css').read_text(encoding='utf-8')
 APP = Path('app.py').read_text(encoding='utf-8')
 
 def test_version_v1428():
-    assert 'APP_VERSION = "V1.4.28"' in APP
+    assert 'APP_VERSION = "V1.4.29"' in APP
 
 def test_only_foreground_assets_have_controls():
     assert 'Ảnh Cúp Giải đấu' in ADMIN

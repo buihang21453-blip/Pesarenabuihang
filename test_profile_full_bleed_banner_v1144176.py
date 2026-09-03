@@ -8,7 +8,7 @@ def read(relative):
 
 
 def test_profile_full_bleed_banner_release():
-    assert 'APP_VERSION = "V1.4.28"' in read("app.py")
+    assert 'APP_VERSION = "V1.4.29"' in read("app.py")
 
 
 def test_equipped_banner_covers_the_complete_profile_hero():

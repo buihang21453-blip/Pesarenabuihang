@@ -531,14 +531,14 @@
                 {% set can_edit_match = can_admin('matches_confirm') or can_admin('matches_cancel') %}
                 <tr>
                     <td class="match-time-cell">{{ format_vn_datetime(m.created_at) }}</td>
-                    <td class="match-player-cell"><strong>{{ m.player1_name }}</strong></td>
+                    <td class="match-player-cell">{% if m.player1_profile_available %}<a class="admin-match-profile-link" href="{{ url_for('profile', user_id=m.player1_id) }}" title="Xem hồ sơ {{ m.player1_name }}"><strong>{{ m.player1_name }}</strong></a>{% else %}<strong>{{ m.player1_name }}</strong>{% endif %}</td>
                     <td class="rp-cell {{ 'rp-negative' if (m.delta1 or 0) < 0 else 'rp-positive' }}">{{ '%+d'|format(m.delta1 or 0) }}</td>
                     <td class="admin-score-edit-cell">
                         <strong>{{ m.score1 if m.score1 is not none else '–' }}</strong>
                         <span>–</span>
                         <strong>{{ m.score2 if m.score2 is not none else '–' }}</strong>
                     </td>
-                    <td class="match-player-cell"><strong>{{ m.player2_name }}</strong></td>
+                    <td class="match-player-cell">{% if m.player2_profile_available %}<a class="admin-match-profile-link" href="{{ url_for('profile', user_id=m.player2_id) }}" title="Xem hồ sơ {{ m.player2_name }}"><strong>{{ m.player2_name }}</strong></a>{% else %}<strong>{{ m.player2_name }}</strong>{% endif %}</td>
                     <td class="rp-cell {{ 'rp-negative' if (m.delta2 or 0) < 0 else 'rp-positive' }}">{{ '%+d'|format(m.delta2 or 0) }}</td>
                     <td>
                         {% if can_edit_match %}

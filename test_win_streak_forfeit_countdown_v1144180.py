@@ -9,12 +9,14 @@ ROOM = (ROOT / "templates" / "partials" / "room_dynamic_state.html").read_text(e
 
 
 def test_version_and_timeout_stay_60_seconds():
-    assert 'APP_VERSION = "V1.4.28"' in APP
+    assert 'APP_VERSION = "V1.4.29"' in APP
     assert 'RESULT_CONFIRM_TIMEOUT_SECONDS = 60' in APP
 
 
 def test_draw_resets_live_and_rebuilt_win_streak():
-    assert 'new_streak = current_streak + 1 if win else 0' in RESULT
+    assert 'new_streak = current_streak + 1' in RESULT
+    assert 'new_streak = 0' in RESULT
+    assert 'new_loss_streak = 0' in RESULT
     assert 'state["streak"] = 0' in REBUILD
     assert 'Hòa làm gián đoạn chuỗi thắng liên tiếp' in REBUILD
 

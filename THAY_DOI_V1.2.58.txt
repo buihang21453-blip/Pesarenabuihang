@@ -1,6 +1,0 @@
-V1.2.58 - Chỉnh giao diện Parsec / Discord
-
-- Căn lại hai nút Mở Parsec và Copy Link để không tràn khỏi khung.
-- Hai cột nút dùng minmax(0,1fr), giảm gap/padding và khóa max-width 100%.
-- Discord chỉ hiển thị một nút Discord; không hiển thị URL trên giao diện người dùng.
-- Link Discord vẫn lấy từ cấu hình Admin và bấm nút sẽ mở trực tiếp.

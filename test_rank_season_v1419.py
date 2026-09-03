@@ -5,7 +5,7 @@ SQL=(ROOT/'docs/update_season_player_stats_v1_4_19.sql').read_text(encoding='utf
 ROUTES=(ROOT/'modules/season_routes.py').read_text(encoding='utf-8')
 
 def test_version_1419():
-    assert 'APP_VERSION = "V1.4.28"' in APP
+    assert 'APP_VERSION = "V1.4.29"' in APP
 
 def test_ranking_reads_season_table():
     assert 'db.table("season_player_stats").select("*").eq("season_number", requested_sn)' in APP

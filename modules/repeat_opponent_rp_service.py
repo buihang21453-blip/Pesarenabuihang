@@ -72,6 +72,28 @@ def _day_bounds(value):
     return start_vn.astimezone(timezone.utc).isoformat(), end_vn.astimezone(timezone.utc).isoformat()
 
 
+
+
+def _current_season_started_at():
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", "rank_season_current").limit(1),
+            "repeat_opponent_current_season", attempts=2,
+        )
+        value = ((result.data or [{}])[0].get("setting_value") or {}) if result.data else {}
+        raw = value.get("started_at")
+        if not raw:
+            return None
+        dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+    except Exception as exc:
+        print(f"repeat opponent season warning: {type(exc).__name__}: {exc}")
+        return None
+
+
 def _pair_key(a, b):
     return tuple(sorted((str(a or ""), str(b or ""))))
 
@@ -130,6 +152,11 @@ def repeat_opponent_context(match):
     if not p1 or not p2:
         return {"prior_encounters": 0, "wins": {p1: 0, p2: 0}, "draw_bonus_used": False}
     start_iso, end_iso = _day_bounds(match.get("created_at"))
+    season_start = _current_season_started_at()
+    if season_start:
+        day_start = datetime.fromisoformat(start_iso.replace("Z", "+00:00"))
+        if season_start > day_start:
+            start_iso = season_start.isoformat()
     result = execute_query(
         db.table("matches")
         .select("id,player1_id,player2_id,score1,score2,winner_id,status,delta1,delta2,rp_details,note,created_at")

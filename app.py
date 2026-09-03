@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.28"
+APP_VERSION = "V1.4.29"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -1259,20 +1259,38 @@ def _match_affects_streak(match):
     return not (isinstance(repeat, dict) and repeat.get("streak_eligible") is False)
 
 
+def _current_season_mechanics_start_iso():
+    """Mốc bắt đầu Season hiện tại cho các cơ chế streak/recovery legacy."""
+    if db is None:
+        return None
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", "rank_season_current").limit(1),
+            "current_season_mechanics_start", attempts=2,
+        )
+        value = ((result.data or [{}])[0].get("setting_value") or {}) if result.data else {}
+        return value.get("started_at") or None
+    except Exception as exc:
+        print(f"current season mechanics warning: {type(exc).__name__}: {exc}")
+        return None
+
+
 def get_current_loss_streak(user_id):
     """Đếm số trận thua liên tiếp gần nhất từ lịch sử đã xác nhận."""
     if not user_id or db is None:
         return 0
     try:
-        result = execute_query(
-            db.table("matches")
+        query = (db.table("matches")
             .select("player1_id,player2_id,score1,score2,status,created_at,rp_details")
             .or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}")
-            .eq("status", "confirmed")
-            .order("created_at", desc=True)
-            .limit(30),
-            f"get_loss_streak:{user_id}",
-            attempts=2,
+            .eq("status", "confirmed"))
+        season_start = _current_season_mechanics_start_iso()
+        if season_start:
+            query = query.gte("created_at", season_start)
+        result = execute_query(
+            query.order("created_at", desc=True).limit(30),
+            f"get_loss_streak:{user_id}", attempts=2,
         )
     except Exception as exc:
         print(f"get_current_loss_streak warning user={user_id}: {type(exc).__name__}: {exc}")
@@ -1299,13 +1317,15 @@ def get_loss_recovery_win_step(user_id):
     if not user_id or db is None:
         return 0
     try:
-        result = execute_query(
-            db.table("matches")
+        query = (db.table("matches")
             .select("player1_id,player2_id,score1,score2,status,created_at,rp_details")
             .or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}")
-            .eq("status", "confirmed")
-            .order("created_at", desc=True)
-            .limit(30),
+            .eq("status", "confirmed"))
+        season_start = _current_season_mechanics_start_iso()
+        if season_start:
+            query = query.gte("created_at", season_start)
+        result = execute_query(
+            query.order("created_at", desc=True).limit(30),
             f"get_loss_recovery:{user_id}", attempts=2,
         )
     except Exception as exc:
@@ -2951,6 +2971,8 @@ def list_matches(status=None):
         player2 = users.get(match.get("player2_id"), {}) or archived_users.get(player2_id, {})
         match["player1_name"] = player1.get("display_name", "Unknown")
         match["player2_name"] = player2.get("display_name", "Unknown")
+        match["player1_profile_available"] = bool(users.get(match.get("player1_id")))
+        match["player2_profile_available"] = bool(users.get(match.get("player2_id")))
         match["player1_avatar_url"] = player1.get("avatar_url")
         match["player2_avatar_url"] = player2.get("avatar_url")
         match["player1_avatar_frame"] = player1.get("avatar_frame")

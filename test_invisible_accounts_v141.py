@@ -10,7 +10,7 @@ HISTORY = (ROOT / "modules/match_history_routes.py").read_text(encoding="utf-8")
 
 
 def test_version_and_invisible_setting_exist():
-    assert 'APP_VERSION = "V1.4.28"' in APP
+    assert 'APP_VERSION = "V1.4.29"' in APP
     assert 'INVISIBLE_PLAYERS_SETTING_KEY = "invisible_player_ids"' in APP
     assert "get_invisible_player_ids" in APP
     assert "can_view_player_identity" in APP

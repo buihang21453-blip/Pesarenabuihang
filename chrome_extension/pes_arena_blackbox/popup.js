@@ -1,5 +1,0 @@
-const $=id=>document.getElementById(id);let tab=null;
-async function active(){const tabs=await chrome.tabs.query({active:true,currentWindow:true});tab=tabs[0];return tab}
-async function refresh(){try{await active();const s=await chrome.tabs.sendMessage(tab.id,{type:'GET_STATUS'});$('site').textContent='● Đang ghi: '+new URL(s.url).host;$('site').className='ok';$('events').textContent=s.events;$('errors').textContent=s.errors;$('warnings').textContent=s.warnings}catch(e){$('site').textContent='Không hoạt động trên trang này';$('site').className='bad'}}
-$('save').onclick=async()=>{try{await active();const report=await chrome.tabs.sendMessage(tab.id,{type:'GET_REPORT'});chrome.runtime.sendMessage({type:'DOWNLOAD_REPORT',report});}catch(e){alert('Không lấy được báo cáo: '+e.message)}};
-$('shot').onclick=async()=>{const r=await chrome.runtime.sendMessage({type:'CAPTURE_VISIBLE'});if(!r.ok)return alert(r.error||'Không chụp được');const a=document.createElement('a');a.href=r.dataUrl;a.download='PES_Arena_BlackBox_'+Date.now()+'.png';a.click()};refresh();

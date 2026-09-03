@@ -1,0 +1,27 @@
+PES Arena V1.4.29 - Season Mechanics Isolation
+
+Mục tiêu:
+- Chuỗi thắng / chuỗi thua tách theo Season.
+- Thưởng RP tuần chỉ tính hoạt động của Season hiện tại.
+- Số đối thủ khác nhau trong tuần chỉ tính trận của Season hiện tại.
+- Chống farm cùng đối thủ không đọc trận của Season trước nếu đổi mùa giữa ngày.
+- Inactivity / trừ RP chỉ xét hoạt động Rank của Season hiện tại.
+- Admin > Quản lý trận đấu gần đây: bấm tên HLV để mở hồ sơ.
+
+Cài đặt:
+1. Deploy source V1.4.29.
+2. Supabase SQL Editor: chạy docs/update_season_mechanics_v1_4_29.sql đúng 1 lần.
+3. Không chạy lại các SQL reset/backfill Season cũ sau file này.
+
+Migration KHÔNG:
+- reset RP,
+- xóa matches,
+- xóa snapshot,
+- thay đổi Tournament.
+
+Migration CÓ:
+- thêm streak/loss_streak vào season_player_stats,
+- thêm season_number vào weekly_rp_rewards,
+- dựng lại streak/loss_streak theo từng Season từ matches,
+- đồng bộ users.streak/loss_streak về đúng Season hiện tại,
+- bảo đảm Season mới reset streak/loss_streak về 0.
