@@ -259,12 +259,19 @@ def register_routes(context):
         existing = _registration_for_user(tournament_id, user_id)
         host_choice = (request.form.get("host_choice") or "").strip().lower()
         host_region = (request.form.get("host_region") or "").strip()
+        zalo_name = (request.form.get("zalo_name") or "").strip()
         payment_confirmed = request.form.get("payment_confirmed") == "1"
         if host_choice not in {"yes", "no"}:
             flash("Hãy chọn Có Host hoặc Không Host.", "warning")
             return redirect(url_for("tournaments", register=tournament_id))
         if host_region not in {"Bắc", "Trung", "Nam"}:
             flash("Hãy chọn khu vực Bắc, Trung hoặc Nam.", "warning")
+            return redirect(url_for("tournaments", register=tournament_id))
+        if not zalo_name:
+            flash("Hãy nhập Tên Zalo để các HLV có thể liên hệ với bạn.", "warning")
+            return redirect(url_for("tournaments", register=tournament_id))
+        if len(zalo_name) > 80:
+            flash("Tên Zalo tối đa 80 ký tự.", "warning")
             return redirect(url_for("tournaments", register=tournament_id))
         if not payment_confirmed:
             flash("Hãy xác nhận sau khi đã chuyển khoản phí giải.", "warning")
@@ -278,6 +285,7 @@ def register_routes(context):
             "reviewed_by": None,
             "has_host": host_choice == "yes",
             "host_region": host_region,
+            "zalo_name": zalo_name,
             "payment_status": "reported",
             "payment_reported_at": now_iso(),
         }
@@ -399,6 +407,7 @@ def register_routes(context):
                     "status": "active",
                     "approved_at": now_value,
                     "approved_by": admin_user.get("id"),
+                    "zalo_name": registration.get("zalo_name"),
                 }, on_conflict="tournament_id,user_id"),
                 "admin_tournament_member_upsert", attempts=2,
             )

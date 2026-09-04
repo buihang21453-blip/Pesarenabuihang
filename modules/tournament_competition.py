@@ -67,7 +67,7 @@ def register_routes(context):
         table={str(m["user_id"]):{
             "user_id":str(m["user_id"]),"display_name":m["display_name"],"played":0,"wins":0,"draws":0,"losses":0,
             "gf":0,"ga":0,"gd":0,"points":0,"opponents":set(),"pot_no":m.get("pot_no"),"seed_no":m.get("seed_no"),
-            "club":m.get("fixed_club_name") or ""
+            "club":m.get("fixed_club_name") or "", "zalo_name":m.get("zalo_name") or ""
         } for m in members}
         for match in _matches(tournament_id, stage_code, ["completed"]):
             h,a=str(match.get("home_user_id")),str(match.get("away_user_id"))
@@ -106,8 +106,12 @@ def register_routes(context):
         hosts,_=_rows(db.table("tournament_hosts").select("*").eq("tournament_id",tournament_id),"ops_hosts_decor")
         hostmap={str(h.get("id")):h for h in hosts}
         for m in rows:
-            m["home_name"]=(members.get(str(m.get("home_user_id"))) or {}).get("display_name","HLV")
-            m["away_name"]=(members.get(str(m.get("away_user_id"))) or {}).get("display_name","HLV")
+            home_member=members.get(str(m.get("home_user_id"))) or {}
+            away_member=members.get(str(m.get("away_user_id"))) or {}
+            m["home_name"]=home_member.get("display_name","HLV")
+            m["away_name"]=away_member.get("display_name","HLV")
+            m["home_zalo_name"]=home_member.get("zalo_name") or ""
+            m["away_zalo_name"]=away_member.get("zalo_name") or ""
             m["host"] = hostmap.get(str(m.get("host_id")))
         return rows
 

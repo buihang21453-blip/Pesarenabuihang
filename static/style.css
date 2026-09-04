@@ -6283,3 +6283,6 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 .ranking-layout-vertical .ranking-title-after-podium{margin:2px 0 4px}
 .ranking-layout-vertical .ranking-board-panel{width:100%;max-width:1180px;margin:0 auto}
 @media(max-width:720px){.season-layout-options{grid-template-columns:1fr}.ranking-season-tagline{width:100%;text-align:center;font-size:10px;letter-spacing:1.4px}.ranking-layout-vertical .podium-stage-reference{min-height:290px!important}.ranking-layout-vertical .ranking-title-after-podium{margin-top:0}}
+
+/* V1.4.37 Tournament registration - Zalo */
+.tournament-zalo-input{width:100%;max-width:520px;margin-top:10px;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(4,17,29,.75);color:#eef5fb;box-sizing:border-box}.tournament-zalo-input:focus{outline:2px solid rgba(231,190,88,.35);border-color:#d9b34e}
