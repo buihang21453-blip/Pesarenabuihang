@@ -13,3 +13,6 @@ PES ARENA V1.4.40 - TÌM NHANH HAI BÊN / 30 PHÚT
    - Quá 30 phút kể từ lần bấm cuối, HLV tự hết hiệu lực Tìm Nhanh.
 
 3. Không còn trường hợp một người chỉ Online mà chưa bấm Tìm Nhanh vẫn bị hệ thống chọn làm đối thủ.
+
+
+Ghi chú V1.4.41: phía nhận giờ cũng có thể là HLV đang ở phòng đấu một mình chờ đối thủ, dù chưa bấm Tìm Nhanh.

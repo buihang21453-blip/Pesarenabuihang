@@ -1,0 +1,18 @@
+PES ARENA V1.4.41 - TÌM NHANH + PHÒNG CHỜ MỘT MÌNH
+
+1. Không cần chạy SQL mới nếu đã chạy:
+   SQL_CAN_CHAY/06_TIM_NHANH_HAI_BEN_30_PHUT_V1.4.40.sql
+
+2. Logic ghép mới:
+   - HLV chủ động muốn tìm đối thủ vẫn bấm TÌM NHANH.
+   - Phía nhận đủ điều kiện nếu thỏa một trong hai:
+     A. Đã bấm TÌM NHANH trong 30 phút gần nhất; HOẶC
+     B. Đang ở phòng đấu một mình, trạng thái chờ và chưa có đối thủ.
+   - Người chỉ Online, không ở phòng chờ và chưa bật TÌM NHANH sẽ không bị tự động mời.
+   - Người đang có đối thủ, đang thi đấu, đang bận gửi lời mời, bị cooldown hoặc không thỏa Rank/RP vẫn bị loại như cũ.
+   - Bấm TÌM NHANH lại vẫn làm mới cửa sổ 30 phút.
+
+3. Ví dụ:
+   - A tạo phòng và ngồi chờ, chưa bấm Tìm nhanh.
+   - B vào phòng riêng và bấm Tìm nhanh.
+   - Nếu A/B thỏa các điều kiện còn lại, B có thể gửi lời mời Tìm nhanh tới A.

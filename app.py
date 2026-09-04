@@ -6669,10 +6669,20 @@ def quick_match_invite():
             continue
         online_total += 1
 
-        # Điều kiện bắt buộc mới: đối thủ cũng phải từng bấm Tìm Nhanh trong
-        # 30 phút gần nhất. Online đơn thuần không còn đủ để bị ghép tự động.
+        # V1.4.41: phía nhận đủ điều kiện nếu thỏa MỘT trong hai:
+        # 1) đã chủ động bấm Tìm Nhanh trong 30 phút gần nhất; HOẶC
+        # 2) đang ở phòng đấu một mình, trạng thái chờ và chưa có đối thủ.
+        # Người chỉ Online nhưng không ở phòng chờ và cũng chưa bật Tìm Nhanh
+        # vẫn không bị hệ thống tự động chọn.
         opponent_requested_at = parse_dt(opponent.get("quick_match_requested_at"))
-        if not opponent_requested_at or opponent_requested_at < quick_match_cutoff:
+        opponent_quick_active = bool(
+            opponent_requested_at and opponent_requested_at >= quick_match_cutoff
+        )
+        opponent_room = room_by_user.get(oid)
+        opponent_solo_waiting = bool(
+            opponent_room and is_solo_waiting_room(opponent_room, oid)
+        )
+        if not (opponent_quick_active or opponent_solo_waiting):
             continue
 
         # Có lời mời ĐẾN không làm người chơi bị loại khỏi danh sách.
@@ -6680,8 +6690,7 @@ def quick_match_invite():
         if oid in busy_match_ids or oid in outgoing_inviter_ids:
             busy_total += 1
             continue
-        opponent_room = room_by_user.get(oid)
-        if opponent_room and not is_solo_waiting_room(opponent_room, oid):
+        if opponent_room and not opponent_solo_waiting:
             busy_total += 1
             continue
         opponent_points = int(opponent.get("rank_points", 0) or 0)
@@ -6719,7 +6728,7 @@ def quick_match_invite():
             "opponent_id": None,
             "active_seconds": QUICK_MATCH_ACTIVE_SECONDS,
             "active_until": future_iso(QUICK_MATCH_ACTIVE_SECONDS),
-            "message": "Đã bật Tìm Nhanh trong 30 phút. Hệ thống chỉ ghép khi đối thủ cũng đã bấm Tìm Nhanh trong 30 phút gần nhất và thỏa các điều kiện ghép trận.",
+            "message": "Đã bật Tìm Nhanh trong 30 phút. Hệ thống có thể ghép với HLV đã bật Tìm Nhanh trong 30 phút hoặc đang ở phòng đấu một mình chờ đối thủ, nếu vẫn thỏa các điều kiện ghép trận.",
         })
 
     candidates.sort(key=lambda item: (item[0], item[1], item[2], item[3]))
