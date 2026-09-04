@@ -1,0 +1,15 @@
+PES ARENA V1.4.40 - TÌM NHANH HAI BÊN / 30 PHÚT
+
+1. Chạy SQL:
+   SQL_CAN_CHAY/06_TIM_NHANH_HAI_BEN_30_PHUT_V1.4.40.sql
+
+2. Logic mới:
+   - HLV A bấm TÌM NHANH -> A được ghi nhận đang tìm trong 30 phút.
+   - Nếu chưa có đối thủ phù hợp, A vẫn nằm trong cửa sổ tìm 30 phút.
+   - HLV B chỉ có thể ghép với A khi B cũng tự bấm TÌM NHANH trong thời gian đó.
+   - Cả hai vẫn phải thỏa toàn bộ điều kiện cũ: online, phòng một mình, không bận,
+     điều kiện Rank/RP, invisible, trạng thái tài khoản và các điều kiện matchmaking khác.
+   - Bấm TÌM NHANH lại sẽ làm mới thời hạn 30 phút.
+   - Quá 30 phút kể từ lần bấm cuối, HLV tự hết hiệu lực Tìm Nhanh.
+
+3. Không còn trường hợp một người chỉ Online mà chưa bấm Tìm Nhanh vẫn bị hệ thống chọn làm đối thủ.

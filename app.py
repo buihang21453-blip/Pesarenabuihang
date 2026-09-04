@@ -6559,6 +6559,9 @@ def is_quick_match_invite(invite):
     return message.startswith("QUICK_MATCH|")
 
 
+QUICK_MATCH_ACTIVE_SECONDS = 30 * 60
+
+
 @app.route("/invites/quick-match", methods=["POST"])
 @login_required
 def quick_match_invite():
@@ -6601,6 +6604,24 @@ def quick_match_invite():
     if str(user["id"]) in outgoing_inviter_ids:
         return jsonify({"ok": False, "message": "Bạn đang chờ một đối thủ phản hồi lời mời đã gửi."}), 409
 
+    # Chỉ một lần bấm hợp lệ (đang ở phòng một mình, không bận) mới kích hoạt
+    # trạng thái Tìm Nhanh. Mỗi lần bấm làm mới cửa sổ 30 phút.
+    quick_match_requested_at = now_iso()
+    try:
+        execute_query(
+            db.table("users").update({
+                "quick_match_requested_at": quick_match_requested_at,
+            }).eq("id", user["id"]),
+            "quick_match_mark_requested",
+            attempts=3,
+        )
+    except Exception as exc:
+        print(f"quick_match mark ERROR user={user.get('id')}: {type(exc).__name__}: {exc}")
+        return jsonify({
+            "ok": False,
+            "message": "Không thể bật trạng thái Tìm Nhanh. Hãy kiểm tra SQL cập nhật V1.4.40.",
+        }), 503
+
     my_points = int(user.get("rank_points", 0) or 0)
     my_rank_level = get_rank_level(my_points)
     candidates = []
@@ -6615,7 +6636,7 @@ def quick_match_invite():
     try:
         online_result = execute_query(
             db.table("users")
-            .select("id,username,display_name,role,admin_level,account_status,rank_points,is_online,last_seen_at,matchmaking_cooldown_until"),
+            .select("id,username,display_name,role,admin_level,account_status,rank_points,is_online,last_seen_at,matchmaking_cooldown_until,quick_match_requested_at"),
             "quick_match_live_players",
             attempts=3,
         )
@@ -6625,6 +6646,7 @@ def quick_match_invite():
         return jsonify({"ok": False, "message": "Không thể đọc danh sách người chơi online lúc này."}), 503
 
     presence_cutoff = now_dt() - timedelta(seconds=max(ONLINE_TIMEOUT_SECONDS, 90))
+    quick_match_cutoff = now_dt() - timedelta(seconds=QUICK_MATCH_ACTIVE_SECONDS)
     invisible_ids = get_invisible_player_ids(force=True)
     for opponent in quick_players:
         oid = str(opponent.get("id") or "")
@@ -6646,6 +6668,13 @@ def quick_match_invite():
         if opponent.get("is_online") is not True or not seen or seen < presence_cutoff:
             continue
         online_total += 1
+
+        # Điều kiện bắt buộc mới: đối thủ cũng phải từng bấm Tìm Nhanh trong
+        # 30 phút gần nhất. Online đơn thuần không còn đủ để bị ghép tự động.
+        opponent_requested_at = parse_dt(opponent.get("quick_match_requested_at"))
+        if not opponent_requested_at or opponent_requested_at < quick_match_cutoff:
+            continue
+
         # Có lời mời ĐẾN không làm người chơi bị loại khỏi danh sách.
         # Chỉ loại khi chính họ đang có lời mời ĐI chờ phản hồi.
         if oid in busy_match_ids or oid in outgoing_inviter_ids:
@@ -6681,15 +6710,17 @@ def quick_match_invite():
         candidates.append((*sort_key, opponent))
 
     if not candidates:
-        if online_total == 0:
-            message = "Hiện không có người chơi nào khác đang online."
-        elif busy_total:
-            message = "Người chơi đang online hiện đều bận, phòng đã đủ người hoặc đang chờ đối thủ phản hồi lời mời đã gửi."
-        elif cooldown_total:
-            message = "Người chơi đang online hiện đều trong thời gian chờ ghép trận."
-        else:
-            message = "Hiện chưa có đối thủ phù hợp đang online."
-        return jsonify({"ok": False, "message": message}), 404
+        # Không có ứng viên ngay lúc này vẫn là một lần bấm Tìm Nhanh hợp lệ.
+        # Giữ HLV trong hàng đợi 30 phút để một HLV khác bấm sau có thể ghép.
+        return jsonify({
+            "ok": True,
+            "searching": True,
+            "invite_id": None,
+            "opponent_id": None,
+            "active_seconds": QUICK_MATCH_ACTIVE_SECONDS,
+            "active_until": future_iso(QUICK_MATCH_ACTIVE_SECONDS),
+            "message": "Đã bật Tìm Nhanh trong 30 phút. Hệ thống chỉ ghép khi đối thủ cũng đã bấm Tìm Nhanh trong 30 phút gần nhất và thỏa các điều kiện ghép trận.",
+        })
 
     candidates.sort(key=lambda item: (item[0], item[1], item[2], item[3]))
     opponent = candidates[0][4]

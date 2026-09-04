@@ -53,9 +53,10 @@
     const buttonIcon = button.querySelector('.quick-match-icon');
     button.classList.toggle('is-searching', mode === 'searching');
     button.classList.toggle('is-sent', mode === 'sent');
+    button.classList.toggle('is-active-window', mode === 'active');
     button.disabled = mode === 'searching' || mode === 'sent';
-    if (buttonIcon) buttonIcon.textContent = mode === 'searching' ? '⏳' : (mode === 'sent' ? '✓' : '⚡');
-    if (label) label.textContent = mode === 'searching' ? 'ĐANG TÌM ĐỐI THỦ...' : (mode === 'sent' ? 'ĐANG CHỜ PHẢN HỒI' : 'TÌM NHANH');
+    if (buttonIcon) buttonIcon.textContent = mode === 'searching' ? '⏳' : (mode === 'sent' ? '✓' : (mode === 'active' ? '⚡' : '⚡'));
+    if (label) label.textContent = mode === 'searching' ? 'ĐANG KIỂM TRA...' : (mode === 'sent' ? 'ĐANG CHỜ PHẢN HỒI' : (mode === 'active' ? 'TÌM NHANH ĐANG BẬT' : 'TÌM NHANH'));
   }
 
   async function sendNext(button, excluded) {
@@ -76,6 +77,23 @@
       });
       const data = await response.json().catch(function () { return {}; });
       if (!response.ok || !data.ok) throw new Error(data.message || 'Không thể tìm đối thủ lúc này.');
+
+      // Chưa có đối thủ lúc bấm không phải là thất bại. Server vẫn ghi nhận
+      // HLV đang chủ động Tìm Nhanh trong 30 phút để người bấm sau có thể ghép.
+      if (data.searching && !data.invite_id) {
+        saveState({
+          inviteId: '',
+          opponentId: '',
+          excluded: excluded || [],
+          quickMatchUrl: button.dataset.quickMatchUrl,
+          activeUntil: data.active_until || '',
+          searchingWindow: true
+        });
+        setButton('active');
+        if (window.showGameNotice) window.showGameNotice(data.message || 'Tìm Nhanh đã bật trong 30 phút.', 'success', 'Tìm Nhanh');
+        return;
+      }
+
       const state = {
         inviteId: String(data.invite_id || ''),
         opponentId: String(data.opponent_id || ''),
@@ -171,5 +189,13 @@
     setButton('sent');
     watchState(existing);
     checkState(existing);
+  } else if (existing && existing.searchingWindow && existing.activeUntil) {
+    const until = Date.parse(existing.activeUntil);
+    if (Number.isFinite(until) && until > Date.now()) {
+      setButton('active');
+    } else {
+      saveState(null);
+      setButton('idle');
+    }
   }
 })();

@@ -148,3 +148,8 @@
   .game-notice-copy h3 { font-size: 18px; }
   .game-notice-copy p { font-size: 13px; }
 }
+
+/* V1.4.40 - cửa sổ Tìm Nhanh 30 phút đã được kích hoạt. */
+.room-layout-v137 .room-quick-match-row .room-quick-match-btn.is-active-window {
+  animation: quickMatchPulse 1.8s ease-in-out infinite;
+}
