@@ -1,8 +1,0 @@
-PES Arena V1.4.15 - Bố cục BXH Dọc / Ngang
-
-Admin -> Mùa giải -> Bố cục Bảng Xếp Hạng:
-- Ngang: giữ giao diện hiện tại.
-- Dọc: PES eFOOTBALL 2026 -> SEASON + THE NEW SEASON BEGINS -> Ảnh Cup -> TOP 100 -> mô tả -> tìm kiếm -> bảng xếp hạng.
-
-Cấu hình được lưu trong system_settings, không cần SQL mới.
-Cụm 3 Cup vẫn hiển thị khi BXH chưa có người chơi; tên Top 1-3 khi trống là ---.

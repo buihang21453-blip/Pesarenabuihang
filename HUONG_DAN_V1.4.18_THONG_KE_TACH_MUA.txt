@@ -1,9 +1,0 @@
-PES Arena V1.4.18 - Season Isolated Statistics
-
-1. Deploy source V1.4.18.
-2. Supabase SQL Editor: chạy docs/update_season_isolated_stats_v1_4_18.sql đúng 1 lần.
-3. SQL KHÔNG xóa matches, Snapshot, RP, Zcoin hay tài khoản.
-4. SQL chỉ tính lại users.wins/draws/losses/total_matches theo Season hiện tại dựa vào started_at.
-5. BXH SEASON 2: Thành tích, Win Rate, 5 trận gần nhất chỉ lấy trận Season 2.
-6. BXH SEASON 1: vẫn lấy dữ liệu Season 1 từ Snapshot + lịch sử matches trong khoảng Season 1.
-7. Các Season sau: nút Reset mở mùa mới sẽ reset RP=1000 và W/D/L/total_matches=0, nhưng không xóa lịch sử.

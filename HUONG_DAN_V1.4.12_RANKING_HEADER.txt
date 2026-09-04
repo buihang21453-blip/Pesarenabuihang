@@ -1,9 +1,0 @@
-PES Arena V1.4.12 - Ranking Header Layout
-
-Bố cục BXH:
-PES eFOOTBALL 2026  [🏆 Mùa N - Hiện tại/Đã kết thúc ▼]
-★ TOP 100 BẢNG XẾP HẠNG ★
-Vinh danh những huấn luyện viên có thành tích tốt nhất hệ thống.
-Sau đó: Cup -> tìm kiếm -> bảng xếp hạng.
-
-Không cần SQL. Không thay đổi dữ liệu Rank/Season.

@@ -1,7 +1,0 @@
-PES ARENA V1.4.7 - RANK SEASON V1
-
-1. Nếu đã chạy SQL V1.4.6: chỉ cần chạy docs/update_rank_season_v1_4_7.sql.
-2. Nếu chưa từng cài Season: chạy docs/update_rank_season_v1_4_6.sql rồi update_rank_season_v1_4_7.sql.
-3. Deploy toàn bộ source V1.4.7.
-4. Admin > Mùa giải: nhập Zcoin + Lucky Box Top 1-3 > Lưu phần thưởng.
-5. Đóng băng BXH > Trao thưởng + Log > Reset RP & Mở mùa mới.

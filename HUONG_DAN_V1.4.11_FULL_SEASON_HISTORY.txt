@@ -1,7 +1,0 @@
-PES Arena V1.4.11 - Full Season History Restore
-
-- Không reset wins/draws/losses khi mở mùa mới.
-- Lịch sử matches cũ vẫn được giữ nguyên.
-- Season 1 snapshot cũ chỉ có RP/vị trí: V1.4.11 tự dựng lại W/D/L, Win Rate và 5 trận cuối từ matches trong khoảng thời gian Season 1.
-- Snapshot từ V1.4.11 trở đi lưu luôn wins/draws/losses/recent_form.
-- Không cần chạy SQL mới.

@@ -1,9 +1,0 @@
-PES Arena V1.4.24 - Tournament Basic Components
-
-- Module Giải đấu vẫn độc lập.
-- Khu vực mặc định TẠM ĐÓNG.
-- Admin > Giải đấu có công tắc mở/đóng.
-- Khi đóng: người chơi thấy thông báo Giải đấu tạm đóng.
-- Khi mở: hiện khung cơ bản gồm trạng thái, tìm kiếm/lọc, 3 nhóm giải và 5 thành phần Tổng quan/Lịch/BXH/Nhánh đấu/Thống kê.
-- Chưa có dữ liệu giải giả, chưa tạo bảng giải đấu, chưa dùng Rank/Matches.
-- Không cần chạy SQL mới vì dùng system_settings hiện có.
