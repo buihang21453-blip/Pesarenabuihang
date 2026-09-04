@@ -3,7 +3,7 @@
 Independent from Rank/Season. Handles stages, tournament-only matches, ranking,
 Pot, club lock, scheduling, hosts, progress, knockout/two legs and early rewards.
 """
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 
 STAGE_LABELS = {
@@ -115,6 +115,49 @@ def register_routes(context):
             m["host"] = hostmap.get(str(m.get("host_id")))
         return rows
 
+    def _attach_schedule_state(tournament_id, matches, viewer_id=None):
+        """Attach latest schedule request + player contact/host profile to each match."""
+        reqs,_=_rows(
+            db.table("tournament_schedule_requests").select("*")
+            .eq("tournament_id",tournament_id).order("created_at", desc=True),
+            "ops_schedule_requests",
+        )
+        latest={}
+        for r in reqs:
+            mid=str(r.get("match_id"))
+            if mid not in latest and r.get("status") in {"pending","accepted","rejected","cancelled","disputed"}:
+                latest[mid]=r
+
+        # Registration data is the source of Host / region information collected at signup.
+        regs,_=_rows(
+            db.table("tournament_registrations").select("user_id,has_host,host_region,status")
+            .eq("tournament_id",tournament_id),
+            "ops_schedule_registration_profiles",
+        )
+        profiles={str(r.get("user_id")):r for r in regs if r.get("user_id")}
+        member_map={str(m.get("user_id")):m for m in _all_members(tournament_id)}
+        host_rows,_=_rows(db.table("tournament_hosts").select("*").eq("tournament_id",tournament_id),"ops_schedule_hosts")
+        host_map={str(h.get("id")):h for h in host_rows}
+
+        for m in matches:
+            req=latest.get(str(m.get("id")))
+            m["schedule_request"]=req
+            if req:
+                m["schedule_request_host"]=host_map.get(str(req.get("host_id")))
+                proposer=member_map.get(str(req.get("proposed_by"))) or {}
+                m["schedule_proposer_name"]=proposer.get("display_name") or "HLV"
+                m["schedule_is_mine"]=str(req.get("proposed_by"))==str(viewer_id)
+                m["schedule_can_accept"]=(
+                    req.get("status")=="pending" and str(viewer_id) in {str(m.get("home_user_id")),str(m.get("away_user_id"))}
+                    and str(req.get("proposed_by"))!=str(viewer_id)
+                )
+            for side in ("home","away"):
+                uid=str(m.get(f"{side}_user_id"))
+                prof=profiles.get(uid) or {}
+                m[f"{side}_has_host"]=bool(prof.get("has_host"))
+                m[f"{side}_host_region"]=prof.get("host_region") or "—"
+        return matches
+
     def _reward_summary(tournament_id,user_id):
         rules,_=_rows(db.table("tournament_reward_rules").select("*").eq("tournament_id",tournament_id).eq("enabled",True).order("priority"),"ops_rewards")
         grants,_=_rows(db.table("tournament_reward_grants").select("*").eq("tournament_id",tournament_id).eq("user_id",user_id),"ops_reward_grants")
@@ -128,6 +171,7 @@ def register_routes(context):
         s1=_stage1_progress(tournament_id)
         league=_ranking(tournament_id,"league")
         matches=_decorate_matches(tournament_id,_matches(tournament_id))
+        matches=_attach_schedule_state(tournament_id,matches,user_id)
         hosts,_=_rows(db.table("tournament_hosts").select("*").eq("tournament_id",tournament_id).order("region").order("name"),"ops_hosts")
         clubs,_=_rows(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).order("name"),"ops_clubs")
         me_progress=next((r for r in s1 if str(r["user_id"])==str(user_id)),None)
@@ -356,24 +400,81 @@ def register_routes(context):
         match,_=_one(db.table("tournament_matches").select("*").eq("id",match_id),"ops_schedule_match")
         if not match or str(uid) not in {str(match.get("home_user_id")),str(match.get("away_user_id"))}:
             flash("Bạn không thuộc trận này.","error"); return redirect(url_for("tournaments"))
+        if match.get("status") in {"completed","playing","cancelled"}:
+            flash("Trận này không thể hẹn lịch ở trạng thái hiện tại.","warning")
+            return redirect(url_for("tournament_detail",tournament_id=match.get("tournament_id"))+"#schedule")
         proposed=(request.form.get("scheduled_at") or "").strip(); host_id=(request.form.get("host_id") or "").strip() or None
         if not proposed:
-            flash("Hãy chọn thời gian.","error"); return redirect(url_for("tournament_detail",tournament_id=match.get("tournament_id")))
-        execute_query(db.table("tournament_schedule_requests").insert({"tournament_id":match.get("tournament_id"),"match_id":match_id,"proposed_by":uid,"proposed_at":proposed,"host_id":host_id,"status":"pending","created_at":now_iso()}),"ops_schedule_propose",attempts=2)
-        flash("Đã gửi đề xuất lịch thi đấu.","success"); return redirect(url_for("tournament_detail",tournament_id=match.get("tournament_id")))
+            flash("Hãy chọn ngày và giờ thi đấu.","error"); return redirect(url_for("tournament_detail",tournament_id=match.get("tournament_id"))+"#schedule")
+        try:
+            # datetime-local is entered in Vietnam local time; save an explicit +07:00 offset for timestamptz.
+            vn_tz=timezone(timedelta(hours=7))
+            parsed=datetime.fromisoformat(proposed).replace(tzinfo=vn_tz)
+            if parsed <= datetime.now(vn_tz):
+                flash("Thời gian đề xuất phải ở tương lai.","error")
+                return redirect(url_for("tournament_detail",tournament_id=match.get("tournament_id"))+"#schedule")
+        except ValueError:
+            flash("Thời gian đề xuất không hợp lệ.","error")
+            return redirect(url_for("tournament_detail",tournament_id=match.get("tournament_id"))+"#schedule")
+
+        # A new proposal supersedes every previous pending proposal for this match.
+        try:
+            execute_query(
+                db.table("tournament_schedule_requests").update({"status":"cancelled","responded_at":now_iso()})
+                .eq("match_id",match_id).eq("status","pending"),
+                "ops_schedule_cancel_old",attempts=2,
+            )
+        except Exception as exc:
+            app.logger.warning("Cancel previous schedule proposal failed: %s", exc)
+        proposed_iso=parsed.isoformat()
+        execute_query(db.table("tournament_schedule_requests").insert({
+            "tournament_id":match.get("tournament_id"),"match_id":match_id,"proposed_by":uid,
+            "proposed_at":proposed_iso,"host_id":host_id,"status":"pending","created_at":now_iso()
+        }),"ops_schedule_propose",attempts=2)
+        if match.get("status")=="scheduled":
+            execute_query(db.table("tournament_matches").update({"status":"pending","scheduled_at":None,"host_id":None,"updated_at":now_iso()}).eq("id",match_id),"ops_schedule_reopen",attempts=2)
+        flash("Đã gửi đề xuất giờ. Đang chờ đối thủ xác nhận.","success")
+        return redirect(url_for("tournament_detail",tournament_id=match.get("tournament_id"))+"#schedule")
 
     @app.post('/tournaments/schedules/<schedule_id>/accept')
     @login_required
     def tournament_schedule_accept(schedule_id):
         uid=(current_user() or {}).get("id")
         sched,_=_one(db.table("tournament_schedule_requests").select("*").eq("id",schedule_id),"ops_sched_lookup")
-        if not sched: flash("Không tìm thấy lịch.","error"); return redirect(url_for("tournaments"))
+        if not sched: flash("Không tìm thấy đề xuất lịch.","error"); return redirect(url_for("tournaments"))
         match,_=_one(db.table("tournament_matches").select("*").eq("id",sched.get("match_id")),"ops_sched_match")
         if not match or str(uid) not in {str(match.get("home_user_id")),str(match.get("away_user_id"))} or str(uid)==str(sched.get("proposed_by")):
-            flash("Bạn không thể xác nhận lịch này.","error"); return redirect(url_for("tournament_detail",tournament_id=sched.get("tournament_id")))
+            flash("Bạn không thể xác nhận lịch này.","error"); return redirect(url_for("tournament_detail",tournament_id=sched.get("tournament_id"))+"#schedule")
+        if sched.get("status")!="pending":
+            flash("Đề xuất này không còn chờ xác nhận.","warning"); return redirect(url_for("tournament_detail",tournament_id=sched.get("tournament_id"))+"#schedule")
         execute_query(db.table("tournament_schedule_requests").update({"status":"accepted","responded_by":uid,"responded_at":now_iso()}).eq("id",schedule_id),"ops_sched_accept",attempts=2)
         execute_query(db.table("tournament_matches").update({"scheduled_at":sched.get("proposed_at"),"host_id":sched.get("host_id"),"status":"scheduled","updated_at":now_iso()}).eq("id",sched.get("match_id")),"ops_match_schedule",attempts=2)
-        flash("Đã chốt lịch thi đấu.","success"); return redirect(url_for("tournament_detail",tournament_id=sched.get("tournament_id")))
+        # Close any other pending proposal for this match.
+        try:
+            execute_query(db.table("tournament_schedule_requests").update({"status":"cancelled","responded_at":now_iso()}).eq("match_id",sched.get("match_id")).eq("status","pending"),"ops_sched_close_others",attempts=2)
+        except Exception:
+            pass
+        flash("Hai HLV đã thống nhất. Lịch thi đấu đã được chốt.","success")
+        return redirect(url_for("tournament_detail",tournament_id=sched.get("tournament_id"))+"#schedule")
+
+    @app.post('/tournaments/schedules/<schedule_id>/reject')
+    @login_required
+    def tournament_schedule_reject(schedule_id):
+        uid=(current_user() or {}).get("id")
+        sched,_=_one(db.table("tournament_schedule_requests").select("*").eq("id",schedule_id),"ops_sched_reject_lookup")
+        if not sched:
+            flash("Không tìm thấy đề xuất lịch.","error"); return redirect(url_for("tournaments"))
+        match,_=_one(db.table("tournament_matches").select("*").eq("id",sched.get("match_id")),"ops_sched_reject_match")
+        if not match or str(uid) not in {str(match.get("home_user_id")),str(match.get("away_user_id"))} or str(uid)==str(sched.get("proposed_by")):
+            flash("Bạn không thể từ chối lịch này.","error"); return redirect(url_for("tournament_detail",tournament_id=sched.get("tournament_id"))+"#schedule")
+        if sched.get("status")!="pending":
+            flash("Đề xuất này không còn chờ xác nhận.","warning"); return redirect(url_for("tournament_detail",tournament_id=sched.get("tournament_id"))+"#schedule")
+        execute_query(db.table("tournament_schedule_requests").update({
+            "status":"rejected","responded_by":uid,"responded_at":now_iso(),
+            "note":(request.form.get("note") or "").strip()[:250] or None
+        }).eq("id",schedule_id),"ops_sched_reject",attempts=2)
+        flash("Đã từ chối đề xuất. Bạn có thể chọn giờ khác và gửi đề xuất lại.","success")
+        return redirect(url_for("tournament_detail",tournament_id=sched.get("tournament_id"))+"#schedule")
 
     @app.post('/admin/tournaments/<tournament_id>/hosts/add')
     @login_required

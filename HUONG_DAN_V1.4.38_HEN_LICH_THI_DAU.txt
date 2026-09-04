@@ -1,0 +1,34 @@
+PES ARENA V1.4.38 - MODULE HEN LICH THI DAU (BAN THU)
+
+LUONG HLV
+1. Moi cap dau co khu "Hen lich thi dau".
+2. Mot HLV chon ngay/gio va Host (neu can) -> De xuat gio.
+3. Doi thu thay ngay de xuat + Zalo + Co/Khong Host + khu vuc.
+4. Doi thu co the:
+   - Dong y gio nay -> tran chuyen sang Da chot lich.
+   - Tu choi -> hai ben chon gio khac.
+   - De xuat gio khac -> de xuat moi thay de xuat dang cho cu.
+5. Neu da chot van co nut "De xuat doi gio" de hai HLV thuong luong lai.
+
+TRANG THAI
+- Chua hen
+- Cho doi thu xac nhan
+- Da chot lich
+- Playing / Dang dau (su dung trang thai tran hien co)
+- Completed / Hoan thanh (su dung trang thai tran hien co)
+
+THONG TIN HIEN TREN CAP DAU
+- Ten HLV
+- Ten Zalo
+- Co Host / Khong Host
+- Bac / Trung / Nam
+- Host duoc chon cho tran (neu co)
+
+DATABASE
+Khong can SQL moi neu da chay:
+SQL_CAN_CHAY/02_GIAI_DAU_MODULE_DAY_DU_V1.4.30.sql
+Bang tournament_schedule_requests da co san va duoc tai su dung.
+
+LUU Y
+- Gio HLV nhap duoc luu kem timezone +07:00 (Viet Nam).
+- Module nay la ban thu de test flow truoc khi bo sung thong bao, han chot va Admin can thiep.
