@@ -1,0 +1,28 @@
+PES ARENA V1.4.42 - TEST LICH THI DAU
+======================================
+
+MUC TIEU
+- Kiem tra day du module Hen lich thi dau duoi goc nhin HLV trong Tournament Test Console.
+- Du lieu chi nam trong Test Mode sandbox, khong ghi vao giai that.
+
+CAC TRANG THAI CO SAN
+1. Chua hen
+2. Toi cho doi thu
+3. Co de xuat den
+4. Bi tu choi
+5. Da chot
+6. Sap dau (con khoang 30 phut)
+7. Hoan thanh
+8. Qua han chot lich
+9. Admin chot ho
+
+CACH TEST
+1. Admin -> Tournament Test Console.
+2. Tim muc 3: TEST LICH THI DAU.
+3. Bam vao tung trang thai.
+4. He thong tu tao cap Test HLV 01 vs Test HLV 02 va tu mo dung goc nhin HLV can xem.
+5. Bam <- Test Console de quay lai va chon trang thai tiep theo.
+
+LUU Y
+- Khong can SQL moi neu Test Mode V1.4.31 da duoc cai.
+- Day la snapshot de kiem tra UI/logic trang thai nhanh, khong can cho thoi gian that.

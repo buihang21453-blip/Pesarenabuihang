@@ -3,7 +3,7 @@
 A fully isolated sandbox stored as JSON. It never writes Rank matches, tournament
 production matches, Zcoin, Lucky Box or real tournament members.
 """
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import random
 import uuid
 
@@ -28,6 +28,7 @@ def register_routes(context):
             "league_matches": [],
             "league_ranking": [],
             "knockout": [],
+            "schedule_test": None,
             "hosts": [
                 {"id":"host-bac","name":"Host Test Bắc","region":"Bắc","status":"available"},
                 {"id":"host-trung","name":"Host Test Trung","region":"Trung","status":"available"},
@@ -170,6 +171,7 @@ def register_routes(context):
     STAGES = [
         ("registration", "Đăng ký"),
         ("stage1", "GĐ1 - Random/Xếp Pot"),
+        ("schedule", "Hẹn lịch thi đấu"),
         ("league", "GĐ2 - League Phase"),
         ("playoff", "Play-off"),
         ("r16", "Vòng 1/8"),
@@ -178,6 +180,69 @@ def register_routes(context):
         ("final", "Chung kết"),
     ]
     STAGE_KEYS = {key for key, _ in STAGES}
+
+
+    SCHEDULE_CASES = [
+        ("unscheduled", "Chưa hẹn"),
+        ("waiting_outgoing", "Tôi chờ đối thủ"),
+        ("incoming", "Có đề xuất đến"),
+        ("rejected", "Bị từ chối"),
+        ("scheduled", "Đã chốt"),
+        ("soon", "Sắp đấu"),
+        ("completed", "Hoàn thành"),
+        ("overdue", "Quá hạn"),
+        ("admin_fixed", "Admin chốt hộ"),
+    ]
+    SCHEDULE_CASE_KEYS = {key for key, _ in SCHEDULE_CASES}
+
+    def _schedule_test_case(state, case):
+        players=state.get("players") or []
+        if len(players) < 2:
+            raise ValueError("Cần ít nhất 2 HLV Test để kiểm tra lịch thi đấu.")
+        case = case if case in SCHEDULE_CASE_KEYS else "unscheduled"
+        a,b=players[0],players[1]
+        now=datetime.now(timezone.utc)
+        proposed=(now+timedelta(hours=2)).isoformat()
+        base={
+            "case":case,"match_id":"schedule-test-01","home":a["id"],"away":b["id"],
+            "home_name":a["name"],"away_name":b["name"],"status":"pending",
+            "scheduled_at":None,"deadline_at":(now+timedelta(days=2)).isoformat(),
+            "request":None,"home_score":None,"away_score":None,"admin_fixed":False,
+        }
+        view_as=a["id"]
+        if case=="waiting_outgoing":
+            base["request"]={"id":"sched-test-req","status":"pending","proposed_by":a["id"],"proposed_at":proposed,"note":""}
+        elif case=="incoming":
+            base["request"]={"id":"sched-test-req","status":"pending","proposed_by":a["id"],"proposed_at":proposed,"note":""}; view_as=b["id"]
+        elif case=="rejected":
+            base["request"]={"id":"sched-test-req","status":"rejected","proposed_by":a["id"],"proposed_at":proposed,"note":"Bận giờ này, đề xuất giờ khác nhé."}
+        elif case=="scheduled":
+            base.update({"status":"scheduled","scheduled_at":proposed})
+        elif case=="soon":
+            base.update({"status":"scheduled","scheduled_at":(now+timedelta(minutes=30)).isoformat()})
+        elif case=="completed":
+            base.update({"status":"completed","scheduled_at":(now-timedelta(hours=2)).isoformat(),"home_score":2,"away_score":1})
+        elif case=="overdue":
+            base["deadline_at"]=(now-timedelta(hours=6)).isoformat()
+        elif case=="admin_fixed":
+            base.update({"status":"scheduled","scheduled_at":proposed,"admin_fixed":True})
+        state["schedule_test"]=base
+        state["current_stage"]="schedule"
+        return view_as
+
+    def _schedule_view(state, view_as):
+        row=dict(state.get("schedule_test") or {})
+        if not row:
+            return None
+        players=state.get("players") or []
+        pmap={p.get("id"):p for p in players}
+        opp_id=row.get("away") if view_as==row.get("home") else row.get("home")
+        row["opponent"]=pmap.get(opp_id) or {}
+        row["is_home"]=view_as==row.get("home")
+        req=row.get("request") or {}
+        row["request_is_mine"]=bool(req and req.get("proposed_by")==view_as)
+        row["can_accept"]=bool(req and req.get("status")=="pending" and req.get("proposed_by")!=view_as)
+        return row
 
     def _build_full_simulation(count=36, target=5, pot_count=4):
         count=max(4,min(36,int(count or 36)))
@@ -275,6 +340,11 @@ def register_routes(context):
             rnd=next((r for r in (state.get("knockout") or []) if r.get("key")==stage),None)
             if rnd and rnd.get("pairs"):
                 return rnd["pairs"][0].get("home") or rnd["pairs"][0].get("away")
+        if stage=="schedule" and state.get("schedule_test"):
+            row=state.get("schedule_test") or {}
+            case=row.get("case")
+            if case=="incoming": return row.get("away")
+            return row.get("home")
         if stage=="league" and state.get("league_ranking"):
             return state["league_ranking"][0].get("user_id")
         if stage=="stage1" and state.get("stage1_ranking"):
@@ -318,7 +388,7 @@ def register_routes(context):
         return render_template(
             'tournament_test_mode.html', state=state, sandbox_ready=ready,
             view_as=view_as, me=me, my_s1=my_s1, my_league=my_league,
-            registration_counts=_registration_counts(state),
+            registration_counts=_registration_counts(state), schedule_cases=SCHEDULE_CASES,
             stage1_matches=_decorate_matches(state.get("stage1_matches") or [],players),
             league_matches=_decorate_matches(state.get("league_matches") or [],players),
         )
@@ -342,6 +412,7 @@ def register_routes(context):
             players=players, view_as=view_as, me=me, registration=registration,
             member=member, my_s1=my_s1, my_league=my_league, stage=stage, stages=STAGES, stage_label=dict(STAGES).get(stage, stage),
             my_s1_matches=my_s1_matches, my_league_matches=my_league_matches, my_pot=my_pot, my_ko=my_ko,
+            schedule_test=_schedule_view(state, view_as), schedule_cases=SCHEDULE_CASES,
             registration_counts=_registration_counts(state),
             stage1_matches=_decorate_matches(state.get("stage1_matches") or [], players),
             league_matches=_decorate_matches(state.get("league_matches") or [], players),
@@ -581,6 +652,28 @@ def register_routes(context):
                 view_as=_default_view_for_stage(state,stage)
             return redirect(url_for('admin_tournament_test_public',view_as=view_as,stage=stage))
         return redirect(url_for('admin_tournament_test_mode'))
+
+
+    @app.post('/admin/tournament-test-mode/prepare-schedule/<case>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_prepare_schedule(case):
+        if case not in SCHEDULE_CASE_KEYS:
+            flash("Trạng thái lịch Test không hợp lệ.","error")
+            return redirect(url_for('admin_tournament_test_mode'))
+        state,_=_load_state()
+        if len(state.get("players") or []) < 2:
+            try:
+                state=_build_full_simulation(36, int(state.get("stage1_target") or 5), int(state.get("pot_count") or 4))
+            except ValueError as exc:
+                flash(str(exc),"error")
+                return redirect(url_for('admin_tournament_test_mode'))
+        view_as=_schedule_test_case(state,case)
+        _save_state(state)
+        label=dict(SCHEDULE_CASES).get(case,case)
+        flash(f"Đã chuẩn bị Test lịch: {label}.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=view_as,stage='schedule'))
 
     @app.post('/admin/tournament-test-mode/reset')
     @login_required
