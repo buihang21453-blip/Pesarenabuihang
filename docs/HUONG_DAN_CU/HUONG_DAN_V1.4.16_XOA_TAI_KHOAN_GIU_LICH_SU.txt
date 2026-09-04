@@ -1,0 +1,8 @@
+PES Arena V1.4.16 - Xóa tài khoản giữ lịch sử
+
+- Admin có 2 trạng thái riêng: Banned và Đã xóa.
+- Xóa tài khoản = account_status: deleted.
+- Không xóa row users, matches hoặc snapshot BXH.
+- Tài khoản deleted không đăng nhập được, không hiện Players/tìm kiếm/mời đấu/BXH mùa hiện tại.
+- BXH các Season đã kết thúc vẫn giữ nguyên tên, RP, vị trí và lịch sử.
+- Không cần SQL nếu account_status đang là cột text/varchar như source hiện tại.

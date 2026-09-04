@@ -1,0 +1,8 @@
+PES ARENA V1.4.14 - LUCKY BOX SỞ HỮU + CUP BXH TRỐNG
+
+1. Deploy source V1.4.14.
+2. Supabase SQL Editor: chạy docs/update_luckybox_owned_v1_4_14.sql.
+3. Lucky Box thưởng Season đã trao trước đây sẽ được backfill vào số Lucky Box sở hữu.
+4. Trên thanh trên cùng và trang Lucky Box sẽ hiện số Lucky Box đang sở hữu.
+5. Khi mở hộp: nếu còn Lucky Box sở hữu, hệ thống dùng 1 lượt trước và không trừ Zcoin; hết lượt mới dùng Zcoin.
+6. BXH luôn hiện cụm 3 Cup kể cả Season mới chưa có người đủ 5 trận; tên trống hiện ---.

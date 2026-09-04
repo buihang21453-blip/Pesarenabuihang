@@ -1,0 +1,9 @@
+PES ARENA V1.4.37 - TÊN ZALO HLV
+
+1. Form đăng ký C1 thêm trường bắt buộc: Tên Zalo.
+2. HLV chỉ cần nhập tên Zalo/tên tìm kiếm, không yêu cầu số điện thoại.
+3. Admin nhìn thấy Tên Zalo trong danh sách chờ duyệt.
+4. Khi Admin duyệt, Tên Zalo được lưu sang thành viên giải.
+5. Tên Zalo hiển thị trong tiến độ GĐ1 và ở lịch đấu để hai HLV tự liên hệ.
+6. Test Mode có dữ liệu Zalo mô phỏng.
+7. Cần chạy SQL_CAN_CHAY/05_TEN_ZALO_HLV_GIAI_DAU_V1.4.37.sql trước khi dùng form mới.

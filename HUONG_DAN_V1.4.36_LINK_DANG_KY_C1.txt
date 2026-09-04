@@ -1,0 +1,12 @@
+PES ARENA V1.4.36 - LINK TRUC TIEP DANG KY C1
+
+Link gui cho HLV:
+https://pesonline.vercel.app/dang-ky-c1
+
+Co che:
+- Neu chua dang nhap: web yeu cau dang nhap, sau do vao trang Giai dau.
+- Neu da dang nhap: tu dong tim giai dang mo dang ky va cuon toi dung form dang ky.
+- Form gom: Co Host/Khong Host -> Bac/Trung/Nam -> QR -> noi dung CK = Ten HLV C1 Arena -> xac nhan -> Gui dang ky.
+- Neu khong co giai dang mo dang ky: thong bao cho HLV thay vi mo nham form.
+
+Khong can chay SQL moi neu da chay SQL V1.4.34.

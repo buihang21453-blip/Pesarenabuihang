@@ -1,0 +1,14 @@
+PES Arena V1.4.33 - Tournament Test Mode tuy chon cau hinh
+
+1. Deploy source V1.4.33.
+2. Supabase SQL Editor: chạy docs/update_tournament_test_mode_v1_4_31.sql.
+3. Admin > Giải đấu > mở Tournament Test Mode.
+4. Muốn xem đăng ký: bấm "Tạo mẫu đăng ký để quan sát".
+5. Bấm "Xem tab Giải đấu như thật", chọn Người ngoài hoặc từng Test HLV.
+6. Với HLV chưa đăng ký: bấm Đăng ký. Quay lại bảng điều khiển để Duyệt/Từ chối.
+7. Đổi lại đúng HLV đó để xem trạng thái cập nhật.
+8. Muốn test toàn bộ các giai đoạn: chọn số HLV, GĐ1 5/6 trận và 3/4 Pot rồi bấm "Tạo và mô phỏng toàn giải".
+9. Xong test bấm "Xóa dữ liệu Test".
+
+Test Mode lưu trong tournament_test_sandboxes riêng.
+Không tạo user giả thật; không ghi public.matches; không cộng RP/Zcoin/Lucky Box; không sửa giải thật.

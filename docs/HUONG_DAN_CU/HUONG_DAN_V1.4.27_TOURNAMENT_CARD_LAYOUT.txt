@@ -1,0 +1,7 @@
+PES Arena V1.4.27 - Tournament Card Layout + Admin Image Controls
+
+- Banner giữ Nengiaidau.webp + Cupnen.webp.
+- Card Champions League đổi sang layout ảnh trên / thông tin dưới.
+- C1arena.webp được thay bằng Huyhieu.webp.
+- Admin > Giải đấu có chỉnh kích thước/vị trí Cup banner và Huy hiệu C1.
+- Các giá trị lưu trong system_settings, KHÔNG cần chạy SQL mới.

@@ -437,10 +437,20 @@ def update_player_after_match(player, delta, goals_for, goals_against, affect_st
     goals_against = _safe_int(goals_against)
     new_points = max(0, _safe_int(player.get("rank_points")) + delta)
     current_streak = int(player.get("streak", 0) or 0)
+    current_loss_streak = int(player.get("loss_streak", 0) or 0)
     if affect_streak:
-        new_streak = current_streak + 1 if win else 0
+        if win:
+            new_streak = current_streak + 1
+            new_loss_streak = 0
+        elif loss:
+            new_streak = 0
+            new_loss_streak = current_loss_streak + 1
+        else:
+            new_streak = 0
+            new_loss_streak = 0
     else:
         new_streak = current_streak
+        new_loss_streak = current_loss_streak
 
     new_wins = _safe_int(player.get("wins")) + win
     new_draws = _safe_int(player.get("draws")) + draw
@@ -456,6 +466,7 @@ def update_player_after_match(player, delta, goals_for, goals_against, affect_st
             "goals_for": _safe_int(player.get("goals_for")) + goals_for,
             "goals_against": _safe_int(player.get("goals_against")) + goals_against,
             "streak": new_streak,
+            "loss_streak": new_loss_streak,
         }).eq("id", player["id"]),
         f"update_player_after_match:{player.get('id')}",
     )

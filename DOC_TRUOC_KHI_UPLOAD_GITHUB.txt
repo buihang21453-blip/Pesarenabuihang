@@ -1,0 +1,8 @@
+PES ARENA V1.4.37
+=================
+
+- ZIP nay KHONG boc them thu muc ngoai.
+- Giai nen la thay truc tiep app.py, modules, templates, static...
+- SQL can chay nam rieng tai: SQL_CAN_CHAY/
+- SQL cu nam tai: docs/SQL_CU/
+- Cache Python, pytest cache, log tam va manifest tam da duoc xoa.

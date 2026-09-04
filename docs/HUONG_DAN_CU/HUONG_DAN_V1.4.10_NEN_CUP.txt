@@ -1,0 +1,6 @@
+PES Arena V1.4.10 - Nen Top 3 Cup
+
+- Them Nencup.webp lam anh nen phia sau cum 3 Cup tren BXH.
+- Giu nguyen podium_top3_reference.webp va vi tri ten Top 1/2/3.
+- Khong thay doi API, database, Season, RP hay logic BXH.
+- Khong can chay SQL moi.

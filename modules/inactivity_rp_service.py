@@ -51,6 +51,22 @@ def _aware_dt(value):
     return parsed.astimezone(timezone.utc)
 
 
+
+
+def _current_season_context():
+    try:
+        result = execute_query(
+            db.table("system_settings").select("setting_value")
+            .eq("setting_key", "rank_season_current").limit(1),
+            "inactivity_current_season", attempts=2,
+        )
+        value = ((result.data or [{}])[0].get("setting_value") or {}) if result.data else {}
+        return max(1, int(value.get("season_number") or 1)), _aware_dt(value.get("started_at"))
+    except Exception as exc:
+        print(f"inactivity current season warning: {type(exc).__name__}: {exc}")
+        return 1, None
+
+
 def _is_rank_activity_match(match):
     status = str((match or {}).get("status") or "").strip().lower()
     if status in RANK_ACTIVITY_STATUSES:
@@ -71,10 +87,14 @@ def _latest_rank_match_at(user_id):
     if not user_id:
         return None
     try:
-        result = execute_query(
-            db.table("matches")
+        season_number, season_start = _current_season_context()
+        query = (db.table("matches")
             .select("id,status,note,loser_id,created_at")
-            .or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}")
+            .or_(f"player1_id.eq.{user_id},player2_id.eq.{user_id}"))
+        if season_start:
+            query = query.gte("created_at", season_start.isoformat())
+        result = execute_query(
+            query
             .order("created_at", desc=True)
             .limit(20),
             "latest_rank_match_for_inactivity",
@@ -89,13 +109,14 @@ def _latest_rank_match_at(user_id):
 
 
 def _rank_activity_anchor(user):
+    season_number, season_start = _current_season_context()
     supplied = _aware_dt(user.get("last_rank_match_at"))
-    if supplied:
+    if supplied and (not season_start or supplied >= season_start):
         return supplied
     latest = _latest_rank_match_at(user.get("id"))
     if latest:
         return latest
-    return _aware_dt(user.get("created_at"))
+    return season_start or _aware_dt(user.get("created_at"))
 
 
 def _inactive_days(user, now=None):
@@ -116,7 +137,8 @@ def _target_penalty(inactive_days):
 
 
 def _setting_key(user_id):
-    return f"{USER_SETTING_PREFIX}{user_id}"
+    season_number, _ = _current_season_context()
+    return f"{USER_SETTING_PREFIX}s{season_number}_{user_id}"
 
 
 def _load_state(user_id):

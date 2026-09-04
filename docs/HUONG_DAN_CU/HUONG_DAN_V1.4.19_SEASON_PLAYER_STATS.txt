@@ -1,0 +1,19 @@
+PES Arena V1.4.19 - Season Player Stats
+
+1. Deploy toàn bộ source V1.4.19.
+2. Vào Supabase > SQL Editor.
+3. Chạy file: docs/update_season_player_stats_v1_4_19.sql
+4. Không chạy lại các file reset cũ sau file này.
+5. Mở BXH và kiểm tra SEASON 2: RP / Thành tích / 5 trận gần nhất / Win Rate.
+6. Chuyển SEASON 1 để kiểm tra dữ liệu mùa cũ vẫn nguyên.
+
+Cơ chế mới:
+- users: lớp tương thích cho season hiện tại để các module cũ vẫn hoạt động.
+- season_player_stats: nguồn dữ liệu BXH theo season_number + user_id.
+- matches: giữ nguyên toàn bộ lịch sử.
+- rank_season_snapshots: giữ vị trí/RP cuối các mùa đã đóng.
+
+Khi mở Season 3:
+- Season 2 giữ nguyên record trong season_player_stats.
+- Current season chuyển sang 3 trước khi reset users.
+- users reset 1000 RP, 0 W/D/L; trigger ghi các số này vào Season 3, không ghi đè Season 2.

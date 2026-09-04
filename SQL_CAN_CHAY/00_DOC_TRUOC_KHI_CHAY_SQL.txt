@@ -1,0 +1,12 @@
+PES ARENA V1.4.31 - SQL CAN CHAY
+================================
+
+Neu database cua ban da chay mot file o ban truoc thi KHONG can chay lai file do.
+Neu nang cap lien tuc tu V1.4.28 len V1.4.31, chay theo thu tu:
+
+1. 01_SS2_TACH_CO_CHE_THEO_MUA_V1.4.29.sql
+2. 02_GIAI_DAU_MODULE_DAY_DU_V1.4.30.sql
+3. 03_GIAI_DAU_TEST_MODE_V1.4.31.sql
+
+Cac SQL cu da duoc gom vao: docs/SQL_CU/
+Khong can mo thu muc SQL_CU khi deploy/nang cap binh thuong.

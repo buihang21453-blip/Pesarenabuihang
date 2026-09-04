@@ -1,0 +1,33 @@
+PES ARENA V1.4.39 - TOURNAMENT TEST CONSOLE
+============================================
+
+Muc dich
+- Kiem tra toan bo giai dau duoi goc nhin HLV ma khong can HLV/tai khoan/tran dau that.
+- Sandbox Test Mode tach biet, khong ghi Rank/RP/Zcoin va khong sua giai that.
+
+Cach dung nhanh
+1. Vao Admin -> Giai dau -> Tournament Test Mode.
+2. Khuyen nghi chon 36 HLV, GĐ1 5/6 tran, 3/4 Pot.
+3. Tai muc "Chon HLV + nhay giai doan", bam truc tiep:
+   - Dang ky
+   - GĐ1
+   - GĐ2 League
+   - Play-off
+   - Vong 1/8
+   - Tu ket
+   - Ban ket
+   - Chung ket
+4. Neu khong chon HLV, he thong tu chon mot HLV phu hop voi vong do.
+5. Trong man hinh HLV Test, co the doi HLV hoac doi giai doan ngay tren thanh TEST MODE.
+
+Cac noi dung co the kiem tra
+- Dang ky: Host, Bac/Trung/Nam, Zalo, QR, noi dung CK "Ten HLV C1 Arena", cho Admin duyet.
+- GĐ1: doi thu, tien do, ket qua, BXH.
+- GĐ2: Pot, doi thu League, BXH va trang thai Top 8 / 9-24 / bi loai.
+- Play-off: cap dau hai luot cua hang 9-24.
+- 1/8 -> Ban ket: chi HLV con trong giai moi co cap dau ca nhan.
+- Chung ket: Bo3; tran 1/2 90 phut, tran 3 co ET/PEN.
+
+SQL
+- Khong co SQL moi cho V1.4.39.
+- Van can bang tournament_test_sandboxes tu SQL_CAN_CHAY/03_GIAI_DAU_TEST_MODE_V1.4.31.sql neu chua tung chay.
