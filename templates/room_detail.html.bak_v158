@@ -1339,9 +1339,7 @@ function bindRoomChatForm() {
                 }
                 if (input) input.value = "";
                 if (status) status.textContent = "";
-                // API gửi trả luôn snapshot mới nhất: render ngay để không có cảm giác delay.
-                if (Array.isArray(data.messages)) renderRoomChat(data.messages);
-                else requestImmediateRoomChatRefresh();
+                requestImmediateRoomChatRefresh();
             })
             .catch(function () {
                 if (status) status.textContent = "Kết nối chat bị gián đoạn. Vui lòng thử lại.";
@@ -1414,8 +1412,8 @@ function startRoomChatPolling() {
     roomChatPoller = PESNet.createPoller({
         key: "room-chat:{{ room.id }}",
         task: loadRoomChat,
-        visibleInterval: 3000,
-        hiddenInterval: 30000,
+        visibleInterval: 30000,
+        hiddenInterval: 120000,
         runWhenHidden: false,
         immediate: true,
         jitter: 1000

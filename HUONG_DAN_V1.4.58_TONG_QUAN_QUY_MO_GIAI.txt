@@ -1,0 +1,10 @@
+PES Arena V1.4.58 - TONG QUAN QUY MO GIAI
+
+- Sau khi Admin bam Ket thuc dang ky, Quan ly giai dau hien khoi Tong quan quy mo giai.
+- Tu tinh theo so HLV da duyet va cau hinh hien tai.
+- Hien tong tran GĐ1, GĐ2 League Phase, Knockout, Chung ket Bo3.
+- Truoc khi chon co/bo Play-off, Knockout hien ca hai phuong an neu so HLV cho phep.
+- Chung ket hien 2-3 tran vi Bo3 co the ket thuc 2-0.
+- Hien tong du kien, da hoan thanh, con lai du kien va % tien do toan giai.
+- Khi sinh League, cau hinh so doi thu/Pot duoc luu de cac lan tinh sau dung thong so thuc te.
+- Khong can SQL moi.

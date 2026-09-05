@@ -510,6 +510,79 @@ def register_routes(context):
                 "matches":matches,"hosts":hosts,"clubs":clubs,"me_progress":me_progress,"rewards":_reward_summary(tournament_id,user_id),"availability":availability,
                 "event_ops":ops_events,"knockout_flow":_setting(tournament_id,"knockout_flow",{}) or {}}
 
+    def _tournament_scale(tournament_id):
+        """Planned/actual match volume for Admin after registration closes."""
+        members=_all_members(tournament_id)
+        n=len(members)
+        s1=_stage(tournament_id,"stage1") or {}
+        s1_target=int(s1.get("match_target") or 6)
+        stage1_planned=(n*s1_target)//2 if n else 0
+
+        pot_state=_setting(tournament_id,"pots_locked",{}) or {}
+        pot_count=max(1,int(pot_state.get("pot_count") or 3))
+        league_cfg=_setting(tournament_id,"league_config",{}) or {}
+        matches_per_pot=max(1,int(league_cfg.get("matches_per_pot") or 2))
+        league_per_hlv=pot_count*matches_per_pot
+        league_planned=(n*league_per_hlv)//2 if n else 0
+
+        all_matches=_matches(tournament_id)
+        actual_by_stage={"stage1":0,"league":0,"knockout":0}
+        completed_by_stage={"stage1":0,"league":0,"knockout":0}
+        for m in all_matches:
+            code=str(m.get("stage_code") or "")
+            if code in actual_by_stage:
+                actual_by_stage[code]+=1
+                if m.get("status") in {"completed","cancelled"}:
+                    completed_by_stage[code]+=1
+
+        ko_state=_setting(tournament_id,"knockout_flow",{}) or {}
+        ko_generated=actual_by_stage["knockout"]>0
+        if ko_generated:
+            knockout_planned=actual_by_stage["knockout"]
+            knockout_label=f"{knockout_planned} trận đã sinh"
+            total_min=stage1_planned+league_planned+knockout_planned
+            total_max=total_min
+        else:
+            # Final is Bo3: 2 matches minimum, 3 maximum.
+            if n>=24:
+                ko_no_playoff_min,ko_no_playoff_max=30,31
+                ko_playoff_min,ko_playoff_max=46,47
+            elif n>=16:
+                ko_no_playoff_min,ko_no_playoff_max=30,31
+                ko_playoff_min,ko_playoff_max=30,31
+            elif n>=8:
+                ko_no_playoff_min,ko_no_playoff_max=14,15
+                ko_playoff_min,ko_playoff_max=14,15
+            else:
+                ko_no_playoff_min=ko_no_playoff_max=ko_playoff_min=ko_playoff_max=0
+            use_playoff=ko_state.get("use_playoff") if ko_state else None
+            if use_playoff is True:
+                ko_min,ko_max=ko_playoff_min,ko_playoff_max
+                knockout_label=f"{ko_min}–{ko_max} trận (có Play-off)" if ko_min!=ko_max else f"{ko_max} trận"
+            elif use_playoff is False:
+                ko_min,ko_max=ko_no_playoff_min,ko_no_playoff_max
+                knockout_label=f"{ko_min}–{ko_max} trận (bỏ Play-off)" if ko_min!=ko_max else f"{ko_max} trận"
+            else:
+                ko_min=min(ko_no_playoff_min,ko_playoff_min); ko_max=max(ko_no_playoff_max,ko_playoff_max)
+                knockout_label=f"{ko_no_playoff_min}–{ko_no_playoff_max} bỏ Play-off / {ko_playoff_min}–{ko_playoff_max} có Play-off" if n>=24 else f"{ko_min}–{ko_max} trận"
+            knockout_planned=ko_max
+            total_min=stage1_planned+league_planned+ko_min
+            total_max=stage1_planned+league_planned+ko_max
+
+        # For progress, only count fixtures that already exist. Planned future fixtures are not complete yet.
+        completed=sum(completed_by_stage.values())
+        total_planned=max(total_max,0)
+        remaining=max(0,total_planned-completed)
+        percent=round((completed/total_planned)*100,1) if total_planned else 0
+        return {
+            "member_count":n,
+            "stage1":{"per_hlv":s1_target,"planned":stage1_planned,"actual":actual_by_stage["stage1"],"completed":completed_by_stage["stage1"]},
+            "league":{"per_hlv":league_per_hlv,"pot_count":pot_count,"matches_per_pot":matches_per_pot,"planned":league_planned,"actual":actual_by_stage["league"],"completed":completed_by_stage["league"]},
+            "knockout":{"planned":knockout_planned,"actual":actual_by_stage["knockout"],"completed":completed_by_stage["knockout"],"label":knockout_label},
+            "final_label":"2–3 trận (Bo3)",
+            "total_min":total_min,"total_max":total_max,"completed":completed,"remaining":remaining,"percent":percent,
+        }
+
     def _admin_payload():
         tours,_=_rows(db.table("tournaments").select("*").eq("is_visible",True).order("created_at"),"ops_admin_tours")
         if not tours: return {"ready":True,"tournament":None}
@@ -524,7 +597,7 @@ def register_routes(context):
             m["stage1_target"]=pr.get("target",6)
             m["stage1_percent"]=pr.get("percent",0)
             m["stage1_points"]=pr.get("points",0)
-        payload.update({"ready":True,"tournament":tour,"members":members,"progress":progress,"combined_ranking":_combined_ranking(tid),"knockout_flow":_setting(tid,"knockout_flow",{}) or {}})
+        payload.update({"ready":True,"tournament":tour,"members":members,"progress":progress,"combined_ranking":_combined_ranking(tid),"knockout_flow":_setting(tid,"knockout_flow",{}) or {},"scale":_tournament_scale(tid)})
         return payload
 
     @app.context_processor
@@ -712,6 +785,7 @@ def register_routes(context):
     @admin_permission_required("system_features_manage")
     def admin_tournament_league_generate(tournament_id):
         k=max(1,min(4,int(request.form.get("matches_per_pot") or 2)))
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"league_config","setting_value":{"matches_per_pot":k},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_config",attempts=2)
         members=_all_members(tournament_id); pots={}
         for m in members: pots.setdefault(int(m.get("pot_no") or 0),[]).append(str(m["user_id"]))
         pots={p:ids for p,ids in pots.items() if p>0}

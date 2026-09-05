@@ -770,6 +770,26 @@
             </tbody></table></div>{% endif %}
           </div>
         </details>
+
+        {% if not tour.registration_open %}
+        {% set sc = ops.get('scale',{}) %}
+        <div style="margin-top:14px;padding:14px;border:1px solid rgba(46,204,113,.32);border-radius:13px;background:rgba(46,204,113,.05)">
+          <h4 style="margin:0 0 6px">📊 Tổng quan quy mô giải</h4>
+          <p class="small" style="margin-top:0">Tự tính theo <strong>{{ sc.get('member_count',0) }} HLV đã duyệt</strong> và cấu hình hiện tại. Chung kết Bo3 có thể kết thúc sau 2 trận.</p>
+          <div class="admin-table-wrap"><table><thead><tr><th>Giai đoạn</th><th>Cấu hình</th><th>Dự kiến</th><th>Đã hoàn thành</th></tr></thead><tbody>
+            <tr><td><strong>GĐ1</strong></td><td>{{ sc.get('stage1',{}).get('per_hlv',6) }} trận/HLV</td><td><strong>{{ sc.get('stage1',{}).get('planned',0) }}</strong> trận</td><td>{{ sc.get('stage1',{}).get('completed',0) }}</td></tr>
+            <tr><td><strong>GĐ2 · League Phase</strong></td><td>{{ sc.get('league',{}).get('pot_count',3) }} Pot · {{ sc.get('league',{}).get('matches_per_pot',2) }} đối thủ/Pot = {{ sc.get('league',{}).get('per_hlv',6) }} trận/HLV</td><td><strong>{{ sc.get('league',{}).get('planned',0) }}</strong> trận</td><td>{{ sc.get('league',{}).get('completed',0) }}</td></tr>
+            <tr><td><strong>Knockout</strong></td><td>Play-off (tùy chọn) → 1/8 → TK → BK → CK</td><td><strong>{{ sc.get('knockout',{}).get('label','—') }}</strong></td><td>{{ sc.get('knockout',{}).get('completed',0) }}</td></tr>
+            <tr><td><strong>Chung kết</strong></td><td>Bo3</td><td>{{ sc.get('final_label','2–3 trận') }}</td><td>—</td></tr>
+          </tbody></table></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <span class="btn gray" style="cursor:default">Tổng dự kiến: <strong>{% if sc.get('total_min',0)==sc.get('total_max',0) %}{{ sc.get('total_max',0) }}{% else %}{{ sc.get('total_min',0) }}–{{ sc.get('total_max',0) }}{% endif %}</strong> trận</span>
+            <span class="btn green" style="cursor:default">Đã xong: {{ sc.get('completed',0) }}</span>
+            <span class="btn gray" style="cursor:default">Còn lại dự kiến: {{ sc.get('remaining',0) }}</span>
+            <span class="btn gray" style="cursor:default">Tiến độ toàn giải: {{ sc.get('percent',0) }}%</span>
+          </div>
+        </div>
+        {% endif %}
       </div>
     {% endif %}
   </div>

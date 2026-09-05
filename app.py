@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.57"
+APP_VERSION = "V1.4.59"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -4188,12 +4188,20 @@ def create_chat_message(user_id, message, scope="global", room_id=None):
     if not ok:
         return False, error
 
-    db.table("chat_messages").insert({
-        "user_id": user_id,
-        "room_id": room_id,
-        "scope": scope,
-        "message": message,
-    }).execute()
+    try:
+        execute_query(
+            db.table("chat_messages").insert({
+                "user_id": user_id,
+                "room_id": room_id,
+                "scope": scope,
+                "message": message,
+            }),
+            "create_chat_message",
+            attempts=3,
+        )
+    except Exception as exc:
+        print(f"create_chat_message warning: {exc}")
+        return False, "Kết nối chat đang gián đoạn. Tin nhắn chưa được lưu, vui lòng gửi lại."
 
     if scope == "room" and room_id:
         touch_room_activity(room_id)
@@ -5779,8 +5787,8 @@ def api_room_chat(room_id):
     if user["id"] not in [room["host_user_id"], room["guest_user_id"]] and not is_admin_user(user):
         return polling_stop_response("room_access_ended")
 
-    messages = list_transient_room_chat_messages(room_id, limit=20)
-    return jsonify({"ok": True, "messages": messages, "transient": True})
+    messages = list_chat_messages("room", room_id=room_id, limit=30)
+    return jsonify({"ok": True, "messages": messages, "persistent": True})
 
 
 @app.route("/room/<room_id>/chat/send", methods=["POST"])
@@ -5801,7 +5809,7 @@ def send_room_chat(room_id):
         return redirect(url_for("rooms"))
 
     message = request.form.get("message", "")
-    ok, error = create_transient_room_chat_message(user["id"], room_id, message)
+    ok, error = create_chat_message(user["id"], message, scope="room", room_id=room_id)
 
     if not ok:
         flash(error, "warning")
@@ -5825,10 +5833,12 @@ def api_send_room_chat(room_id):
 
     payload = request.get_json(silent=True) or request.form
     message = payload.get("message", "")
-    ok, error = create_transient_room_chat_message(user["id"], room_id, message)
+    ok, error = create_chat_message(user["id"], message, scope="room", room_id=room_id)
     if not ok:
         return jsonify({"ok": False, "error": error}), 400
-    return jsonify({"ok": True})
+    # Trả luôn snapshot mới nhất để máy gửi render tức thì, không phải chờ poll kế tiếp.
+    messages = list_chat_messages("room", room_id=room_id, limit=30)
+    return jsonify({"ok": True, "messages": messages, "persistent": True})
 
 
 @app.route("/admin/announcement", methods=["POST"])

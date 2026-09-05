@@ -1,0 +1,17 @@
+PES Arena V1.4.59 - FIX CHAT PHONG
+
+Nguyen nhan loi da tim thay:
+1. Chat phong V1.4.58 luu trong RAM cua process Python (transient memory), khong luu Supabase.
+   Tren Vercel/serverless, request gui va request doc co the vao instance khac nhau => tin nhan co the mat/tre.
+2. Polling chat phong la 30 giay => nguoi con lai co the thay tin nhan tre gan 30 giay.
+3. Ghi chat DB cu khong co retry ro rang khi ket noi Supabase bi gian doan.
+
+Da sua V1.4.59:
+- Chat phong luu ben vung vao bang chat_messages cua Supabase voi scope=room + room_id.
+- API gui tra ngay snapshot chat moi nhat de may gui hien tin ngay.
+- Polling khi mo chat: 3 giay (tab an: 30 giay).
+- Ghi tin nhan qua execute_query voi retry 3 lan; chi bao thanh cong khi DB xac nhan.
+- API doc loi se khong xoa khung chat hien tai.
+- Khi phong bi xoa, module cleanup hien co van xoa chat_messages theo room_id.
+
+SQL: Khong can SQL moi (du an hien tai da co chat_messages.room_id va scope).
