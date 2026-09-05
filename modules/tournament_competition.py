@@ -213,7 +213,18 @@ def register_routes(context):
             overlap=sorted(mine_set & opp_set)
             m["opponent_availability"]=opp_rows
             m["availability_overlap"]=[{"iso":x,"label":datetime.fromisoformat(x).strftime("%d/%m · %H:%M")} for x in overlap]
-        return {"days":_availability_days(),"mine":mine,"mine_set":mine_set}
+        vn_tz=timezone(timedelta(hours=7)); today=datetime.now(vn_tz).date()
+        slot_dates=[]
+        for x in mine_set:
+            try: slot_dates.append(datetime.fromisoformat(x).astimezone(vn_tz).date())
+            except Exception: pass
+        if not slot_dates:
+            status="missing"
+        elif max(slot_dates) <= today:
+            status="expiring"
+        else:
+            status="active"
+        return {"days":_availability_days(),"mine":mine,"mine_set":mine_set,"status":status,"slot_count":len(mine_set)}
 
     def _reward_summary(tournament_id,user_id):
         rules,_=_rows(db.table("tournament_reward_rules").select("*").eq("tournament_id",tournament_id).eq("enabled",True).order("priority"),"ops_rewards")
@@ -229,7 +240,7 @@ def register_routes(context):
         league=_ranking(tournament_id,"league")
         matches=_decorate_matches(tournament_id,_matches(tournament_id))
         matches=_attach_schedule_state(tournament_id,matches,user_id)
-        availability=_availability_payload(tournament_id,user_id,matches) if member else {"days":_availability_days(),"mine":[],"mine_set":set()}
+        availability=_availability_payload(tournament_id,user_id,matches) if member else {"days":_availability_days(),"mine":[],"mine_set":set(),"status":"missing","slot_count":0}
         hosts,_=_rows(db.table("tournament_hosts").select("*").eq("tournament_id",tournament_id).order("region").order("name"),"ops_hosts")
         clubs,_=_rows(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).order("name"),"ops_clubs")
         me_progress=next((r for r in s1 if str(r["user_id"])==str(user_id)),None)

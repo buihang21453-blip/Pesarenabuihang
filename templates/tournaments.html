@@ -72,7 +72,7 @@
               <a class="btn" href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#schedule">▣ Lịch đấu</a>
             {% elif tournament.my_registration and tournament.my_registration.status == 'pending' %}
               <div class="tournament-control"><strong>Đang chờ Admin duyệt</strong></div>
-              <form method="post" action="{{ url_for('tournament_withdraw', tournament_id=tournament.id) }}"><button class="btn" type="submit">Hủy đăng ký</button></form>
+              <form method="post" action="{{ url_for('tournament_withdraw', tournament_id=tournament.id) }}" onsubmit="return confirm('Hủy đăng ký? Bạn sẽ trở về trạng thái Chưa đăng ký và có thể đăng ký lại bằng biểu mẫu mới.');"><button class="btn" type="submit">Hủy đăng ký</button></form>
             {% elif tournament.registration_open %}
               <a class="btn gold" href="{{ url_for('tournaments', register=tournament.id) }}#register-{{ tournament.id }}">🏆 Đăng ký</a>
             {% else %}

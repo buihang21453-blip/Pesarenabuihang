@@ -1,0 +1,10 @@
+PES ARENA V1.4.49 - HUY DANG KY + DAT LICH NOI BAT
+
+1. Admin co nut Huy dang ky cho don chua duyet. HLV tro ve trang thai Chua dang ky va dang ky lai bang form moi.
+2. HLV pending tu huy dang ky cung co canh bao ro rang, khong xoa tai khoan.
+3. Trang giai dau co banner Dat lich thi dau noi bat:
+   - Do: Chua dat lich.
+   - Vang: Lich chi con trong hom nay, can cap nhat.
+   - Xanh: Da dat lich, hien so slot va nut Sua lich.
+4. Lich 3 ngay ap dung cho tat ca doi thu; van xem lich doi thu va chot gio trung nhu V1.4.48.
+5. Khong co SQL moi o V1.4.49.

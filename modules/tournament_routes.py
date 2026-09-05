@@ -318,7 +318,7 @@ def register_routes(context):
                 .eq("id", registration.get("id")),
                 "tournament_withdraw", attempts=2,
             )
-            flash("Đã hủy đăng ký giải đấu.", "success")
+            flash("Đã hủy đăng ký. Bạn có thể đăng ký lại ngay bằng biểu mẫu mới.", "success")
         return redirect(url_for("tournaments"))
 
 
@@ -433,6 +433,34 @@ def register_routes(context):
     def admin_tournament_registration_reject(registration_id):
         _review_registration(registration_id, "rejected")
         flash("Đã từ chối đăng ký.", "success")
+        return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/registrations/<registration_id>/cancel')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_registration_cancel(registration_id):
+        rows, error = _safe_rows(
+            db.table("tournament_registrations").select("*").eq("id", registration_id).limit(1),
+            "admin_tournament_registration_cancel_lookup",
+        )
+        if error or not rows:
+            flash("Không tìm thấy đăng ký giải đấu.", "error")
+            return redirect_admin("tournaments")
+        registration = rows[0]
+        if registration.get("status") == "approved":
+            flash("HLV đã được duyệt. Hãy dùng chức năng xóa HLV khỏi giải nếu cần.", "warning")
+            return redirect_admin("tournaments")
+        execute_query(
+            db.table("tournament_registrations").update({
+                "status": "withdrawn",
+                "reviewed_at": now_iso(),
+                "reviewed_by": (current_user() or {}).get("id"),
+            }).eq("id", registration_id),
+            "admin_tournament_registration_cancel", attempts=2,
+        )
+        log_admin_action("Hủy đơn đăng ký để HLV đăng ký lại", "tournament_registration", details={"registration_id": registration_id})
+        flash("Đã hủy đơn. HLV đã trở về trạng thái Chưa đăng ký và có thể đăng ký lại bằng form mới.", "success")
         return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/members/add')
