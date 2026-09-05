@@ -41,7 +41,7 @@
     {% if can_admin('matches_view') %}<button class="admin-tab-button" type="button" data-admin-tab="matches">🎮 Trận đấu</button><button class="admin-tab-button" type="button" data-admin-tab="match-report">📊 Báo cáo trận đấu</button>{% endif %}
 {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">🧪 Tài khoản test & Import</button>{% endif %}
     {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>{% endif %}
-    {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="season">🏆 Mùa giải</button><button class="admin-tab-button" type="button" data-admin-tab="tournaments">🏟️ Giải đấu</button><button class="admin-tab-button" type="button" data-admin-tab="room-design">🎨 Thiết kế phòng đấu</button>{% endif %}
+    {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="season">🏆 Mùa giải</button><button class="admin-tab-button" type="button" data-admin-tab="tournaments">🏟️ Quản lý giải đấu</button><button class="admin-tab-button" type="button" data-admin-tab="tournament-test">🧪 Test Mode</button><button class="admin-tab-button" type="button" data-admin-tab="room-design">🎨 Thiết kế phòng đấu</button>{% endif %}
     {% if can_admin('rp_view') %}<button class="admin-tab-button" type="button" data-admin-tab="rp-tools">📈 Công cụ RP</button>{% endif %}
     <button class="admin-tab-button" type="button" data-admin-tab="economy">🪙 Zcoin & Gift Code</button>
     {% if can_admin('admin_logs_view') %}<button class="admin-tab-button" type="button" data-admin-tab="logs">🧾 Nhật ký</button>{% endif %}
@@ -709,7 +709,7 @@
 {% if can_admin('system_features_manage') %}
 <section class="admin-tab-panel" data-admin-panel="tournaments">
   <div class="panel">
-    <h2>🏟️ Quản lý khu vực Giải đấu</h2>
+    <h2>🏟️ Quản lý giải đấu</h2>
     <p class="muted">Công tắc này chỉ mở/đóng khu vực Giải đấu đối với người chơi. Không ảnh hưởng BXH Rank, Season, lịch sử trận hoặc phòng đấu.</p>
     <form method="post" action="{{ url_for('admin_tournament_access') }}" class="system-toggle-grid">
       <input type="hidden" name="_admin_tab" value="tournaments">
@@ -809,10 +809,33 @@
   {% set ot = ops.get('tournament') %}
   <div class="panel" style="margin-top:16px">
     <h2>⚙️ Điều hành CHAMPION LEAGUE ARENA</h2>
-    <div style="margin:0 0 14px;padding:12px;border:1px solid rgba(46,204,113,.35);border-radius:12px;background:rgba(46,204,113,.08)"><strong>🧪 Test Mode</strong><p class="small" style="margin:5px 0 10px">Test toàn bộ flow bằng HLV giả mà không chạm dữ liệu giải/Rank thật.</p><a class="btn gold" href="{{ url_for('admin_tournament_test_mode') }}">Mở Tournament Test Mode</a></div>
     <p class="muted">Lõi riêng của giải: GĐ1 → Pot/CLB → League Phase → Knockout. Không dùng bảng trận Rank.</p>
 
     {% set ev = ops.get('event_ops',{}) %}{% set tm = ev.get('timing',{}) %}{% set cd = ev.get('club_draft',{}) %}{% set ld = ev.get('league_draw',{}).get('state',{}) %}
+    <div style="margin:14px 0 18px;padding:16px;border:1px solid rgba(46,204,113,.32);border-radius:14px;background:rgba(46,204,113,.07)">
+      <h3 style="margin:0 0 10px">🚦 QUẢN LÝ TIẾN TRÌNH GIẢI</h3>
+      <p class="small" style="margin:0 0 12px">Luồng chính: <strong>Mở đăng ký → Kết thúc đăng ký → Đặt giờ GĐ1 → Bắt đầu GĐ1 → Random đối thủ → Theo dõi tiến độ.</strong></p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <span class="btn gray" style="cursor:default">Trạng thái: {{ ot.status }}</span>
+        <span class="btn {{ 'green' if ot.registration_open else 'gray' }}" style="cursor:default">Đăng ký: {{ 'ĐANG MỞ' if ot.registration_open else 'ĐÃ KẾT THÚC' }}</span>
+        <span class="btn gray" style="cursor:default">HLV đã duyệt: {{ ops.get('members',[])|length }}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        {% if ot.registration_open %}
+        <form method="post" action="{{ url_for('admin_tournament_registration_status',tournament_id=ot.id) }}" onsubmit="return confirm('Kết thúc đăng ký? Sau bước này HLV sẽ không thể gửi đơn mới cho tới khi Admin mở lại.');">
+          <input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="open" value="0"><button class="btn red" type="submit">🔒 Kết thúc đăng ký</button>
+        </form>
+        {% else %}
+        <form method="post" action="{{ url_for('admin_tournament_registration_status',tournament_id=ot.id) }}">
+          <input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="open" value="1"><button class="btn gray" type="submit">↺ Mở lại đăng ký</button>
+        </form>
+        {% endif %}
+        <form method="post" action="{{ url_for('admin_tournament_stage1_start_now',tournament_id=ot.id) }}" onsubmit="return confirm('Bắt đầu GĐ1 ngay? Hệ thống sẽ đóng đăng ký và mở GĐ1. Sau đó hãy bấm Random đối thủ GĐ1.');">
+          <input type="hidden" name="_admin_tab" value="tournaments"><button class="btn green" type="submit">▶ Bắt đầu GĐ1 ngay</button>
+        </form>
+      </div>
+      <p class="small" style="margin:10px 0 0">Nếu muốn bắt đầu vào giờ cụ thể, hãy đặt <strong>Bắt đầu GĐ1</strong> ở khung lịch bên dưới. Nút “Bắt đầu GĐ1 ngay” dùng khi BTC muốn mở giai đoạn lập tức.</p>
+    </div>
     <div style="margin:14px 0;padding:14px;border:1px solid rgba(241,202,104,.28);border-radius:14px;background:rgba(241,202,104,.06)">
       <h3 style="margin-top:0">🎬 Điều hành sự kiện & thời gian</h3>
       <form method="post" action="{{ url_for('admin_tournament_timing',tournament_id=ot.id) }}" class="system-toggle-grid">
@@ -872,6 +895,21 @@
     <h3 style="margin-top:18px">9. Thưởng sớm</h3><form method="post" action="{{ url_for('admin_tournament_reward_add',tournament_id=ot.id) }}" class="system-toggle-grid"><input type="hidden" name="_admin_tab" value="tournaments"><label>Tên thưởng<input name="name" value="Hoàn thành sớm"></label><label>Giai đoạn<select name="stage_code"><option value="stage1">GĐ1</option><option value="league">League</option><option value="knockout">Knockout</option></select></label><label>Loại<select name="reward_type"><option value="zcoin">Zcoin</option><option value="badge">Badge</option><option value="luckybox">Lucky Box</option></select></label><label>Giá trị<input name="reward_value" required></label><label>Hạn<input name="deadline_at" type="datetime-local"></label><button class="btn" type="submit">Thêm mức thưởng</button></form>
   </div>
   {% endif %}
+</section>
+{% endif %}
+
+{% if can_admin('system_features_manage') %}
+<section class="admin-tab-panel" data-admin-panel="tournament-test">
+  <div class="panel">
+    <h2>🧪 Tournament Test Mode</h2>
+    <p class="muted">Khu vực mô phỏng được tách riêng khỏi Quản lý giải đấu. Dùng HLV giả để thử đăng ký, đặt lịch, Random GĐ1, chọn CLB, Pot và League Phase mà không chạm dữ liệu Rank/giải thật.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:14px 0">
+      <div style="padding:14px;border:1px solid rgba(255,255,255,.1);border-radius:12px"><strong>👤 Góc nhìn HLV</strong><p class="small">Test xuyên suốt bằng HLV Yến, Nam và các HLV giả.</p></div>
+      <div style="padding:14px;border:1px solid rgba(255,255,255,.1);border-radius:12px"><strong>📅 Đặt lịch 3 ngày</strong><p class="small">Kiểm tra lịch cá nhân, lịch đối thủ, giờ trùng và chốt lịch.</p></div>
+      <div style="padding:14px;border:1px solid rgba(255,255,255,.1);border-radius:12px"><strong>🎲 Sự kiện giải</strong><p class="small">Kiểm tra Random đối thủ, Top hoàn thành, CLB và bốc thăm League Phase.</p></div>
+    </div>
+    <a class="btn gold" href="{{ url_for('admin_tournament_test_mode') }}">🧪 Mở Test Mode</a>
+  </div>
 </section>
 {% endif %}
 

@@ -1,0 +1,28 @@
+PES Arena V1.4.54 - QUẢN LÝ GIẢI ĐẤU & TEST MODE TÁCH RIÊNG
+
+1. ADMIN CÓ 2 TAB RIÊNG
+- 🏟️ Quản lý giải đấu: chỉ dùng vận hành giải thật.
+- 🧪 Test Mode: mô phỏng bằng HLV giả, không chạm dữ liệu giải/Rank thật.
+
+2. QUẢN LÝ TIẾN TRÌNH GIẢI
+Khối mới đặt ở đầu phần điều hành CHAMPION LEAGUE ARENA:
+- Hiện trạng thái giải.
+- Hiện đăng ký ĐANG MỞ / ĐÃ KẾT THÚC.
+- Hiện số HLV đã duyệt.
+- Nút 🔒 Kết thúc đăng ký.
+- Nút ↺ Mở lại đăng ký.
+- Nút ▶ Bắt đầu GĐ1 ngay.
+
+3. BẮT ĐẦU GĐ1 NGAY
+Khi Admin bấm:
+- Tự đóng đăng ký.
+- Chuyển giải sang trạng thái active.
+- Mở stage1.
+- Ghi thời điểm bắt đầu GĐ1 là thời điểm hiện tại.
+- Sau đó Admin bấm 🎲 RANDOM ĐỐI THỦ GĐ1.
+
+4. BẮT ĐẦU THEO LỊCH
+Nếu không muốn bắt đầu ngay, Admin dùng phần Điều hành sự kiện & thời gian để đặt ngày/giờ GĐ1 và các mốc 3 ngày, 7 ngày, gia hạn +2 ngày, GĐ2.
+
+5. DATABASE
+Không cần SQL mới cho V1.4.54.

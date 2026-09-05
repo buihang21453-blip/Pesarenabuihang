@@ -576,6 +576,41 @@ def register_routes(context):
             execute_query(db.table("tournament_matches").insert({"tournament_id":tournament_id,"stage_code":"league","round_code":f"LP-{idx}","home_user_id":a,"away_user_id":b,"status":"pending","leg_no":1,"created_at":now_iso(),"updated_at":now_iso()}),"ops_league_insert",attempts=2)
         flash(f"Đã sinh {len(unique)} trận League Phase.","success"); return redirect_admin("tournaments")
 
+    @app.post('/admin/tournaments/<tournament_id>/registration-status')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_registration_status(tournament_id):
+        opened=(request.form.get("open") or "0") == "1"
+        tour=_tour(tournament_id) or {}
+        payload={"registration_open": opened, "updated_at": now_iso()}
+        current_status=str(tour.get("status") or "registration")
+        if opened:
+            if current_status in {"upcoming", "registration"}:
+                payload["status"]="registration"
+        else:
+            if current_status=="registration":
+                payload["status"]="upcoming"
+        execute_query(db.table("tournaments").update(payload).eq("id",tournament_id),"ops_registration_status",attempts=2)
+        log_admin_action("Mở lại đăng ký Giải đấu" if opened else "Kết thúc đăng ký Giải đấu","tournament",details={"tournament_id":tournament_id,"registration_open":opened})
+        flash("Đã mở lại đăng ký." if opened else "Đã kết thúc đăng ký. HLV không thể gửi đơn mới cho tới khi Admin mở lại.","success")
+        return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/stage1/start-now')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_stage1_start_now(tournament_id):
+        now_value=now_iso()
+        execute_query(db.table("tournaments").update({"registration_open":False,"status":"active","updated_at":now_value}).eq("id",tournament_id),"ops_stage1_start_tournament",attempts=2)
+        execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_value}).eq("tournament_id",tournament_id).eq("stage_code","stage1"),"ops_stage1_start_stage",attempts=2)
+        current=_setting(tournament_id,"competition_timing",{}) or {}
+        current["stage1_start_at"]=now_value
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"competition_timing","setting_value":current,"updated_at":now_value},on_conflict="tournament_id,setting_key"),"ops_stage1_start_timing",attempts=2)
+        log_admin_action("Bắt đầu GĐ1 Giải đấu","tournament_stage",details={"tournament_id":tournament_id,"stage_code":"stage1"})
+        flash("Đã bắt đầu GĐ1 và tự động đóng đăng ký. Bước tiếp theo: Random đối thủ GĐ1.","success")
+        return redirect_admin("tournaments")
+
     @app.post('/admin/tournaments/<tournament_id>/timing')
     @login_required
     @admin_required
