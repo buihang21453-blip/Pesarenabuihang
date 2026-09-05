@@ -740,7 +740,34 @@
           <div style="padding-top:10px">
             <form method="post" action="{{ url_for('admin_tournament_member_add', tournament_id=tour.id) }}" class="system-toggle-grid"><input type="hidden" name="_admin_tab" value="tournaments"><label><span>Thêm HLV trực tiếp</span><select name="user_id" required><option value="">-- Chọn HLV --</option>{% for player in players|sort(attribute='display_name') %}<option value="{{ player.id }}">{{ player.display_name }}</option>{% endfor %}</select></label><button class="btn green" type="submit">Thêm vào giải</button></form>
             {% if td.get('pending') %}<h4>Chờ duyệt ({{ td.get('pending')|length }})</h4><div class="admin-table-wrap"><table><thead><tr><th>HLV</th><th>Zalo</th><th>Host</th><th>Thanh toán</th><th>Thao tác</th></tr></thead><tbody>{% for row in td.get('pending',[]) %}<tr><td><strong>{{ row.display_name }}</strong></td><td>{{ row.zalo_name|default('—',true) }}</td><td>{{ '✓ Có' if row.has_host else '—' }} {{ row.host_region|default('',true) }}</td><td>{{ '✓ Đã báo CK' if row.payment_status=='reported' else 'Chưa xác nhận' }}</td><td style="display:flex;gap:6px;flex-wrap:wrap"><form method="post" action="{{ url_for('admin_tournament_registration_approve',registration_id=row.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn green" type="submit">✓ Duyệt</button></form><form method="post" action="{{ url_for('admin_tournament_registration_reject',registration_id=row.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn red" type="submit">Từ chối</button></form><form method="post" action="{{ url_for('admin_tournament_registration_cancel',registration_id=row.id) }}" onsubmit="return confirm('Hủy đơn đăng ký này?');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn" type="submit">↺ Hủy đơn</button></form></td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="small">Không có đơn đang chờ duyệt.</p>{% endif %}
-            <h4>Đã duyệt ({{ td.get('members',[])|length }})</h4>{% if td.get('members') %}<div class="admin-table-wrap"><table><thead><tr><th>HLV</th><th>Zalo</th><th>Trạng thái</th><th></th></tr></thead><tbody>{% for row in td.get('members',[]) %}<tr><td>{{ row.display_name }}</td><td>{{ row.zalo_name|default('—',true) }}</td><td>{{ row.status }}</td><td><form method="post" action="{{ url_for('admin_tournament_member_remove',tournament_id=tour.id,user_id=row.user_id) }}" onsubmit="return confirm('Xóa HLV khỏi giải?');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn red" type="submit">Xóa</button></form></td></tr>{% endfor %}</tbody></table></div>{% endif %}
+            {% set approved_members = ops.get('members',[]) if ops.get('members') else td.get('members',[]) %}
+            <h4>Đã duyệt ({{ approved_members|length }})</h4>
+            {% if approved_members %}<div class="admin-table-wrap"><table><thead><tr><th>HLV</th><th>Khu vực</th><th>Host</th><th>Tiến độ GĐ1</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
+            {% for row in approved_members %}
+              <tr>
+                <td><strong>{{ row.display_name }}</strong><div class="small">{{ row.zalo_name|default('—',true) }}</div></td>
+                <td>{{ row.host_region|default('—',true) }}</td>
+                <td>{{ '✅ Có Host' if row.has_host else '❌ Không Host' }}</td>
+                <td>{{ row.stage1_played|default(0) }}/{{ row.stage1_target|default(6) }} · {{ row.stage1_percent|default(0) }}%</td>
+                <td>{{ row.status }}</td>
+                <td style="min-width:150px">
+                  <details><summary class="btn gray" style="display:inline-block;cursor:pointer">👁 Xem</summary>
+                    <div style="min-width:280px;padding:10px 0">
+                      <div class="small"><strong>ID HLV:</strong> {{ row.user_id }}</div>
+                      <div class="small"><strong>Zalo:</strong> {{ row.zalo_name|default('—',true) }}</div>
+                      <div class="small"><strong>Khu vực:</strong> {{ row.host_region|default('—',true) }}</div>
+                      <div class="small"><strong>Khả năng Host:</strong> {{ 'Có Host' if row.has_host else 'Không Host' }}</div>
+                      <div class="small"><strong>Thanh toán:</strong> {{ 'Đã báo chuyển khoản' if row.payment_status=='reported' else row.payment_status|default('—',true) }}</div>
+                      <div class="small"><strong>Pot:</strong> {{ row.pot_no|default('—',true) }}</div>
+                      <div class="small"><strong>CLB:</strong> {{ row.fixed_club_name|default('—',true) }}</div>
+                      <div class="small"><strong>GĐ1:</strong> {{ row.stage1_played|default(0) }}/{{ row.stage1_target|default(6) }} trận · {{ row.stage1_points|default(0) }} điểm · {{ row.stage1_percent|default(0) }}%</div>
+                    </div>
+                  </details>
+                  <form method="post" action="{{ url_for('admin_tournament_member_remove',tournament_id=tour.id,user_id=row.user_id) }}" onsubmit="return confirm('Xóa HLV khỏi giải?');" style="display:inline-block;margin-left:4px"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn red" type="submit">Xóa</button></form>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody></table></div>{% endif %}
           </div>
         </details>
       </div>

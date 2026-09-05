@@ -45,13 +45,23 @@ def register_routes(context):
         rows, _ = _rows(db.table("tournament_members").select("*").eq("tournament_id", tournament_id).eq("status", "active").order("approved_at"), "ops_members")
         ids = [str(r.get("user_id")) for r in rows if r.get("user_id")]
         users = {}
+        profiles = {}
         if ids:
             urows, _ = _rows(db.table("users").select("id,username,display_name,avatar_url").in_("id", ids), "ops_member_users")
             users = {str(u.get("id")):u for u in urows}
+            rrows, _ = _rows(db.table("tournament_registrations").select("user_id,zalo_name,has_host,host_region,payment_status,status,registered_at").eq("tournament_id", tournament_id).in_("user_id", ids), "ops_member_registration_profiles")
+            profiles = {str(x.get("user_id")):x for x in rrows if x.get("user_id")}
         for r in rows:
-            u=users.get(str(r.get("user_id"))) or {}
+            uid=str(r.get("user_id"))
+            u=users.get(uid) or {}
+            prof=profiles.get(uid) or {}
             r["display_name"] = u.get("display_name") or u.get("username") or "HLV"
             r["user"] = u
+            r["zalo_name"] = prof.get("zalo_name") or r.get("zalo_name") or ""
+            r["has_host"] = bool(prof.get("has_host"))
+            r["host_region"] = prof.get("host_region") or "—"
+            r["payment_status"] = prof.get("payment_status") or "—"
+            r["registered_at"] = prof.get("registered_at")
         return rows
 
     def _matches(tournament_id, stage_code=None, statuses=None):
@@ -505,7 +515,16 @@ def register_routes(context):
         if not tours: return {"ready":True,"tournament":None}
         tour=tours[0]; tid=tour["id"]
         payload=_detail_payload(tid,(current_user() or {}).get("id")) or {}
-        payload.update({"ready":True,"tournament":tour,"members":_all_members(tid),"progress":_stage1_progress(tid),"combined_ranking":_combined_ranking(tid),"knockout_flow":_setting(tid,"knockout_flow",{}) or {}})
+        progress=_stage1_progress(tid)
+        pmap={str(x.get("user_id")):x for x in progress}
+        members=_all_members(tid)
+        for m in members:
+            pr=pmap.get(str(m.get("user_id"))) or {}
+            m["stage1_played"]=pr.get("played",0)
+            m["stage1_target"]=pr.get("target",6)
+            m["stage1_percent"]=pr.get("percent",0)
+            m["stage1_points"]=pr.get("points",0)
+        payload.update({"ready":True,"tournament":tour,"members":members,"progress":progress,"combined_ranking":_combined_ranking(tid),"knockout_flow":_setting(tid,"knockout_flow",{}) or {}})
         return payload
 
     @app.context_processor

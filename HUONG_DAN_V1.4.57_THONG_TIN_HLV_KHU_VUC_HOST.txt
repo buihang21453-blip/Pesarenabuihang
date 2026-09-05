@@ -1,0 +1,6 @@
+PES Arena V1.4.57 - THONG TIN HLV / KHU VUC / HOST
+
+- Quan ly giai dau > Buoc 1 hien bang HLV da duyet voi: Khu vuc, Co Host, tien do GD1.
+- Nut Xem bung chi tiet: ID HLV, Zalo, Khu vuc, Host, thanh toan, Pot, CLB, tien do GD1.
+- Du lieu Host/Khu vuc lay lai tu don dang ky goc, khong can SQL moi.
+- Tab Thiet ke giai dau > Host van chi dung de cau hinh Host.
