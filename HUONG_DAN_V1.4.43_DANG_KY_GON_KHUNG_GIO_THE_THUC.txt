@@ -1,0 +1,9 @@
+PES Arena V1.4.43 - Dang ky giai dau gon hon
+
+- Lua chon Host / Khu vuc doi thanh dau tich nho, khong con card/nut lon.
+- Them KHUNG GIO THI DAU CHINH THUC vao form dang ky.
+- Them nut mo/dong "The thuc thi dau".
+- Doi ten hien thi GĐ1 tu "Random/Xep Pot" thanh "Vong Khoi Dong" de khong lo co che xep hat giong.
+- Du lieu dang ky that van luu vao Supabase: has_host, host_region, zalo_name, payment_status, registered_at.
+- Test Mode la sandbox, khong tao dang ky that.
+- Khong can SQL moi.
