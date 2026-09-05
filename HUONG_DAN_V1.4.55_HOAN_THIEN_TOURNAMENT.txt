@@ -1,0 +1,31 @@
+PES Arena V1.4.55 - HOAN THIEN TOAN BO TIEN TRINH GIAI
+
+1. GĐ1
+- Mac dinh 6 tran / HLV, 3 doi thu, 2 tran/cap.
+- Top hoan thanh som chi duoc tinh neu hoan tat truoc moc 3 ngay.
+- Top 1 = 3 ve Random; Top 2-3 = 2 ve; Top 4-10 = 1 ve.
+- Admin co nut Ket thuc GĐ1 som (chi khi 100% tran xong).
+- Co nut Gia han +2 ngay.
+- Het gia han, tran chua xong duoc chuyen sang disputed / Cho BTC xu ly.
+
+2. GĐ2
+- Co BXH tong GĐ1 + GĐ2.
+- Admin co nut Ket thuc GĐ2 & khoa BXH.
+- Neu cuong che ket thuc, tran con thieu chuyen Cho BTC xu ly.
+
+3. Knockout
+- Sinh bracket tu dong co Play-off hoac bo Play-off.
+- Co Play-off: Top 1-8 vao thang 1/8; Top 9-24 da Play-off.
+- Khong Play-off: Top 16 vao 1/8 (neu it hon, he thong bat dau tu vong phu hop).
+- Play-off, 1/8, Tu ket, Ban ket: 2 luot, tinh tong ty so.
+- Hoa tong ty so: nhap Penalty o luot quyet dinh.
+- He thong tu day nguoi thang sang vong sau khi tat ca cap cua vong da xong.
+- Chung ket Bo3: tran 1-2 90 phut; tran 3 la tran phan dinh va co the nhap penalty. HLV dat 2 tran thang se vo dich; tran 3 khong can neu da 2-0.
+
+4. Lich thoi gian
+- Dat gio bat dau GĐ1: neu bo trong cac moc khac, he thong tu tinh +3 ngay thuong som, +7 ngay het GĐ1, +9 ngay het gia han.
+- Dat gio bat dau GĐ2: neu bo trong gio ket thuc, he thong tu tinh +7 ngay.
+- Khi toi gio bat dau, trang duoc truy cap se dong bo trang thai mo giai doan.
+
+SQL
+- Chay file SQL_HOAN_THIEN_TOURNAMENT_V1.4.55.sql mot lan de chuan hoa GĐ1 = 6 tran.

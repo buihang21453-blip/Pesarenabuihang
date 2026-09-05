@@ -249,6 +249,7 @@ def register_routes(context):
         stage=_stage(tournament_id,"stage1") or {}
         target=int(stage.get("match_target") or 6)
         min_opp=int(stage.get("min_opponents") or 3)
+        cutoff=_parse_iso((_setting(tournament_id,"competition_timing",{}) or {}).get("stage1_early_end_at"))
         members=_all_members(tournament_id)
         by={str(m.get("user_id")):{"user_id":str(m.get("user_id")),"display_name":m.get("display_name") or "HLV","done":[],"opponents":set()} for m in members}
         for m in _matches(tournament_id,"stage1",["completed"]):
@@ -263,17 +264,125 @@ def register_routes(context):
             valid=[x for x in row.pop("done") if x]
             row["played"]=len(valid); row["opponent_count"]=len(row.pop("opponents"))
             row["eligible"]=row["played"]>=target and row["opponent_count"]>=min_opp
-            row["completed_at"]=max(valid).isoformat() if row["eligible"] and valid else None
+            completed=max(valid) if row["eligible"] and valid else None
+            row["completed_at"]=completed.isoformat() if completed else None
+            row["early_eligible"]=bool(completed and (not cutoff or completed<=cutoff))
             out.append(row)
         out.sort(key=lambda r: (_parse_iso(r.get("completed_at")) or datetime.max.replace(tzinfo=timezone.utc)))
         rank=0
         for r in out:
-            if r["eligible"]:
+            if r["eligible"] and r["early_eligible"]:
                 rank+=1; r["finish_rank"]=rank
                 r["tickets"]=3 if rank==1 else (2 if rank<=3 else (1 if rank<=10 else 0))
             else:
                 r["finish_rank"]=None; r["tickets"]=0
         return out
+
+    def _combined_ranking(tournament_id):
+        members=_all_members(tournament_id)
+        base={str(m["user_id"]):{"user_id":str(m["user_id"]),"display_name":m.get("display_name") or "HLV","played":0,"wins":0,"draws":0,"losses":0,"gf":0,"ga":0,"gd":0,"points":0,"pot_no":m.get("pot_no"),"club":m.get("fixed_club_name") or ""} for m in members}
+        for code in ("stage1","league"):
+            for r in _ranking(tournament_id,code):
+                row=base.get(str(r.get("user_id")))
+                if not row: continue
+                for k in ("played","wins","draws","losses","gf","ga","points"):
+                    row[k]+=int(r.get(k) or 0)
+        vals=list(base.values())
+        for r in vals: r["gd"]=r["gf"]-r["ga"]
+        vals.sort(key=lambda x:(x["points"],x["gd"],x["gf"],x["wins"]),reverse=True)
+        for i,r in enumerate(vals,1): r["rank"]=i
+        return vals
+
+    def _round_pairs(tournament_id, round_code):
+        rows=[m for m in _matches(tournament_id,"knockout") if m.get("round_code")==round_code]
+        groups={}
+        for m in rows:
+            key=m.get("aggregate_group") or str(m.get("id"))
+            groups.setdefault(key,[]).append(m)
+        return groups
+
+    def _pair_winner(matches):
+        if not matches: return None
+        # Final Bo3: first coach to 2 match wins; game 3 is only needed if score is 1-1.
+        if matches[0].get("round_code")=="final":
+            wins={}
+            for m in sorted(matches,key=lambda x:int(x.get("leg_no") or 1)):
+                if m.get("status")!="completed": continue
+                hs,aw=int(m.get("home_score") or 0),int(m.get("away_score") or 0)
+                w=None
+                if hs>aw: w=str(m.get("home_user_id"))
+                elif aw>hs: w=str(m.get("away_user_id"))
+                elif m.get("home_pen") is not None and m.get("away_pen") is not None:
+                    if int(m.get("home_pen"))>int(m.get("away_pen")): w=str(m.get("home_user_id"))
+                    elif int(m.get("away_pen"))>int(m.get("home_pen")): w=str(m.get("away_user_id"))
+                if w: wins[w]=wins.get(w,0)+1
+            for uid,n in wins.items():
+                if n>=2: return uid
+            return None
+        if any(m.get("status")!="completed" for m in matches): return None
+        a=str(matches[0].get("home_user_id")); b=str(matches[0].get("away_user_id"))
+        totals={a:0,b:0}
+        for m in matches:
+            h,a2=str(m.get("home_user_id")),str(m.get("away_user_id"))
+            totals[h]=totals.get(h,0)+int(m.get("home_score") or 0)
+            totals[a2]=totals.get(a2,0)+int(m.get("away_score") or 0)
+        if totals[a]>totals[b]: return a
+        if totals[b]>totals[a]: return b
+        # Aggregate tie: penalties from the final leg decide.
+        last=sorted(matches,key=lambda x:int(x.get("leg_no") or 1))[-1]
+        hp,ap=last.get("home_pen"),last.get("away_pen")
+        if hp is not None and ap is not None:
+            if int(hp)>int(ap): return str(last.get("home_user_id"))
+            if int(ap)>int(hp): return str(last.get("away_user_id"))
+        return None
+
+    def _insert_ko_pair(tournament_id,round_code,home,away,two_legged=True):
+        group=str(uuid.uuid4())
+        if round_code=="final":
+            legs=[1,2,3]
+        else:
+            legs=[1,2] if two_legged else [1]
+        for leg in legs:
+            h,a=(home,away) if leg%2==1 else (away,home)
+            execute_query(db.table("tournament_matches").insert({"tournament_id":tournament_id,"stage_code":"knockout","round_code":round_code,"leg_no":leg,"aggregate_group":group,"home_user_id":h,"away_user_id":a,"status":"pending","created_at":now_iso(),"updated_at":now_iso()}),"ops_ko_auto_insert",attempts=2)
+
+    def _maybe_advance_knockout(tournament_id):
+        state=_setting(tournament_id,"knockout_flow",{}) or {}
+        current=state.get("current_round")
+        if not current: return state
+        groups=_round_pairs(tournament_id,current)
+        if not groups: return state
+        winners=[]
+        for matches in groups.values():
+            w=_pair_winner(matches)
+            if not w: return state
+            winners.append(w)
+        if current=="final":
+            champion=winners[0] if winners else None
+            if champion:
+                for matches in groups.values():
+                    for m in matches:
+                        if m.get("status")!="completed":
+                            execute_query(db.table("tournament_matches").update({"status":"cancelled","updated_at":now_iso()}).eq("id",m.get("id")),"ops_final_cancel_unused",attempts=2)
+            state.update({"completed":True,"champion_user_id":champion,"completed_at":now_iso()})
+            execute_query(db.table("tournament_stages").update({"status":"completed","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","knockout"),"ops_ko_stage_done",attempts=2)
+            execute_query(db.table("tournaments").update({"status":"completed","updated_at":now_iso()}).eq("id",tournament_id),"ops_tournament_done",attempts=2)
+        else:
+            nxt={"playoff":"r16","r16":"qf","qf":"sf","sf":"final"}.get(current)
+            if nxt and not _round_pairs(tournament_id,nxt):
+                if current=="playoff":
+                    direct=state.get("direct_r16") or []
+                    entrants=direct+winners
+                else:
+                    entrants=winners
+                # Seed outer-to-inner where possible for a clear bracket.
+                pairs=[]
+                while len(entrants)>=2:
+                    pairs.append((entrants.pop(0),entrants.pop(-1)))
+                for a,b in pairs: _insert_ko_pair(tournament_id,nxt,a,b,two_legged=(nxt!="final"))
+                state["current_round"]=nxt
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"knockout_flow","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_ko_flow_save",attempts=2)
+        return state
 
     def _timing_payload(tournament_id):
         cfg=_setting(tournament_id,"competition_timing",{}) or {}
@@ -330,7 +439,37 @@ def register_routes(context):
         reveals=_setting(tournament_id,"league_player_reveals",{}) or {}
         return {"state":state,"player_reveals":reveals}
 
+    def _sync_competition_deadlines(tournament_id):
+        cfg=_setting(tournament_id,"competition_timing",{}) or {}
+        state=_setting(tournament_id,"deadline_sync",{}) or {}
+        vn=timezone(timedelta(hours=7)); now=datetime.now(vn)
+        s1start=_parse_iso(cfg.get("stage1_start_at"))
+        if s1start and s1start.tzinfo is None: s1start=s1start.replace(tzinfo=vn)
+        if s1start and now>=s1start and not state.get("stage1_started"):
+            execute_query(db.table("tournaments").update({"registration_open":False,"status":"active","updated_at":now_iso()}).eq("id",tournament_id),"ops_auto_s1_tournament",attempts=2)
+            execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","stage1"),"ops_auto_s1_stage",attempts=2)
+            state["stage1_started"]=now_iso()
+        lgstart=_parse_iso(cfg.get("league_start_at"))
+        if lgstart and lgstart.tzinfo is None: lgstart=lgstart.replace(tzinfo=vn)
+        if lgstart and now>=lgstart and not state.get("league_started"):
+            execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_auto_league_stage",attempts=2)
+            state["league_started"]=now_iso()
+        ext=_parse_iso(cfg.get("stage1_extension_end_at"))
+        if ext and ext.tzinfo is None: ext=ext.replace(tzinfo=timezone(timedelta(hours=7)))
+        now=datetime.now((ext.tzinfo if ext else vn))
+        if ext and now>=ext and not state.get("stage1_extension_processed"):
+            pending=[m for m in _matches(tournament_id,"stage1") if m.get("status") not in {"completed","disputed","cancelled"}]
+            for m in pending:
+                execute_query(db.table("tournament_matches").update({"status":"disputed","updated_at":now_iso()}).eq("id",m.get("id")),"ops_deadline_s1_dispute",attempts=2)
+            if pending:
+                state["stage1_extension_processed"]=now_iso(); state["stage1_unfinished_count"]=len(pending)
+                execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"deadline_sync","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_deadline_sync_save",attempts=2)
+        if state:
+            execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"deadline_sync","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_deadline_sync_persist",attempts=2)
+        return state
+
     def _event_ops_payload(tournament_id,user_id=None):
+        _sync_competition_deadlines(tournament_id)
         cr=_completion_ranking(tournament_id)
         mine=next((x for x in cr if str(x.get("user_id"))==str(user_id)),None) if user_id else None
         s1_reveals=_setting(tournament_id,"stage1_player_reveals",{}) or {}
@@ -357,16 +496,16 @@ def register_routes(context):
         clubs,_=_rows(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).order("name"),"ops_clubs")
         me_progress=next((r for r in s1 if str(r["user_id"])==str(user_id)),None)
         ops_events=_event_ops_payload(tournament_id,user_id)
-        return {"tournament":tour,"member":member,"stages":stages,"stage1_ranking":s1,"league_ranking":league,
+        return {"tournament":tour,"member":member,"stages":stages,"stage1_ranking":s1,"league_ranking":league,"combined_ranking":_combined_ranking(tournament_id),
                 "matches":matches,"hosts":hosts,"clubs":clubs,"me_progress":me_progress,"rewards":_reward_summary(tournament_id,user_id),"availability":availability,
-                "event_ops":ops_events}
+                "event_ops":ops_events,"knockout_flow":_setting(tournament_id,"knockout_flow",{}) or {}}
 
     def _admin_payload():
         tours,_=_rows(db.table("tournaments").select("*").eq("is_visible",True).order("created_at"),"ops_admin_tours")
         if not tours: return {"ready":True,"tournament":None}
         tour=tours[0]; tid=tour["id"]
         payload=_detail_payload(tid,(current_user() or {}).get("id")) or {}
-        payload.update({"ready":True,"tournament":tour,"members":_all_members(tid),"progress":_stage1_progress(tid)})
+        payload.update({"ready":True,"tournament":tour,"members":_all_members(tid),"progress":_stage1_progress(tid),"combined_ranking":_combined_ranking(tid),"knockout_flow":_setting(tid,"knockout_flow",{}) or {}})
         return payload
 
     @app.context_processor
@@ -410,7 +549,7 @@ def register_routes(context):
     @admin_required
     @admin_permission_required("system_features_manage")
     def admin_tournament_stage1_settings(tournament_id):
-        target=max(1,min(20,int(request.form.get("match_target") or 5)))
+        target=max(1,min(20,int(request.form.get("match_target") or 6)))
         min_opp=max(1,min(target,int(request.form.get("min_opponents") or 3)))
         max_same=max(1,min(target,int(request.form.get("max_per_opponent") or 2)))
         execute_query(db.table("tournament_stages").update({"match_target":target,"min_opponents":min_opp,"max_matches_per_opponent":max_same,"updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","stage1"),"ops_stage1_settings",attempts=2)
@@ -454,6 +593,9 @@ def register_routes(context):
             elif payload["away_pen"]>payload["home_pen"]: winner=match.get("away_user_id")
         payload["winner_user_id"]=winner
         execute_query(db.table("tournament_matches").update(payload).eq("id",match_id),"ops_match_result",attempts=2)
+        if match.get("stage_code")=="knockout":
+            try: _maybe_advance_knockout(match.get("tournament_id"))
+            except Exception as exc: app.logger.warning("Knockout auto advance failed: %s",exc)
         log_admin_action("Cập nhật kết quả trận giải","tournament_match",details={"match_id":match_id,"score":f"{hs}-{aw}"})
         flash("Đã lưu kết quả trận giải.","success"); return redirect_admin("tournaments")
 
@@ -605,7 +747,11 @@ def register_routes(context):
         execute_query(db.table("tournaments").update({"registration_open":False,"status":"active","updated_at":now_value}).eq("id",tournament_id),"ops_stage1_start_tournament",attempts=2)
         execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_value}).eq("tournament_id",tournament_id).eq("stage_code","stage1"),"ops_stage1_start_stage",attempts=2)
         current=_setting(tournament_id,"competition_timing",{}) or {}
-        current["stage1_start_at"]=now_value
+        start=datetime.now(timezone(timedelta(hours=7)))
+        current["stage1_start_at"]=start.isoformat()
+        current["stage1_early_end_at"]=(start+timedelta(days=3)).isoformat()
+        current["stage1_end_at"]=(start+timedelta(days=7)).isoformat()
+        current["stage1_extension_end_at"]=(start+timedelta(days=9)).isoformat()
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"competition_timing","setting_value":current,"updated_at":now_value},on_conflict="tournament_id,setting_key"),"ops_stage1_start_timing",attempts=2)
         log_admin_action("Bắt đầu GĐ1 Giải đấu","tournament_stage",details={"tournament_id":tournament_id,"stage_code":"stage1"})
         flash("Đã bắt đầu GĐ1 và tự động đóng đăng ký. Bước tiếp theo: Random đối thủ GĐ1.","success")
@@ -623,6 +769,13 @@ def register_routes(context):
                 return datetime.fromisoformat(raw).replace(tzinfo=timezone(timedelta(hours=7))).isoformat()
             except Exception: return None
         cfg={k:norm(k) for k in ("stage1_start_at","stage1_end_at","stage1_early_end_at","stage1_extension_end_at","league_start_at","league_end_at")}
+        s1=_parse_iso(cfg.get("stage1_start_at"))
+        if s1:
+            if not cfg.get("stage1_early_end_at"): cfg["stage1_early_end_at"]=(s1+timedelta(days=3)).isoformat()
+            if not cfg.get("stage1_end_at"): cfg["stage1_end_at"]=(s1+timedelta(days=7)).isoformat()
+            if not cfg.get("stage1_extension_end_at"): cfg["stage1_extension_end_at"]=(s1+timedelta(days=9)).isoformat()
+        lg=_parse_iso(cfg.get("league_start_at"))
+        if lg and not cfg.get("league_end_at"): cfg["league_end_at"]=(lg+timedelta(days=7)).isoformat()
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"competition_timing","setting_value":cfg,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_timing_save",attempts=2)
         flash("Đã lưu lịch vận hành và đồng hồ đếm ngược.","success"); return redirect_admin("tournaments")
 
@@ -666,9 +819,7 @@ def register_routes(context):
     @admin_required
     @admin_permission_required("system_features_manage")
     def admin_tournament_club_draft_start(tournament_id):
-        ranking=[x for x in _completion_ranking(tournament_id) if x.get("eligible")][:10]
-        if not ranking:
-            ranking=_stage1_progress(tournament_id)[:10]
+        ranking=[x for x in _completion_ranking(tournament_id) if x.get("eligible") and x.get("early_eligible")][:10]
         order=[str(x.get("user_id")) for x in ranking]
         entries={}
         for i,row in enumerate(ranking,1):
@@ -947,6 +1098,78 @@ def register_routes(context):
         if status not in {"available","busy","offline"}: status="offline"
         execute_query(db.table("tournament_hosts").update({"status":status,"updated_at":now_iso()}).eq("id",host_id),"ops_host_status",attempts=2)
         flash("Đã cập nhật Host.","success"); return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/stage1/extend')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_stage1_extend(tournament_id):
+        cfg=_setting(tournament_id,"competition_timing",{}) or {}
+        base=_parse_iso(cfg.get("stage1_end_at")) or datetime.now(timezone(timedelta(hours=7)))
+        if base.tzinfo is None: base=base.replace(tzinfo=timezone(timedelta(hours=7)))
+        cfg["stage1_extension_end_at"]=(max(base,datetime.now(base.tzinfo))+timedelta(days=2)).isoformat()
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"competition_timing","setting_value":cfg,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_s1_extend",attempts=2)
+        flash("Đã gia hạn GĐ1 thêm 2 ngày.","success"); return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/stage1/finish')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_stage1_finish(tournament_id):
+        force=request.form.get("force")=="1"
+        pending=[m for m in _matches(tournament_id,"stage1") if m.get("status")!="completed"]
+        if pending and not force:
+            flash(f"GĐ1 còn {len(pending)} trận chưa hoàn thành. Chỉ kết thúc sớm khi 100% trận xong, hoặc dùng kết thúc sau gia hạn.","warning"); return redirect_admin("tournaments")
+        if pending and force:
+            for m in pending:
+                execute_query(db.table("tournament_matches").update({"status":"disputed","updated_at":now_iso()}).eq("id",m.get("id")),"ops_s1_pending_btc",attempts=2)
+        execute_query(db.table("tournament_stages").update({"status":"completed","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","stage1"),"ops_s1_finish",attempts=2)
+        execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_league_open_after_s1",attempts=2)
+        flash("Đã kết thúc GĐ1. Có thể chia Pot, chọn CLB và chuẩn bị League Phase.","success"); return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/league/finish')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_league_finish(tournament_id):
+        force=request.form.get("force")=="1"
+        pending=[m for m in _matches(tournament_id,"league") if m.get("status")!="completed"]
+        if pending and not force:
+            flash(f"League Phase còn {len(pending)} trận chưa hoàn thành.","warning"); return redirect_admin("tournaments")
+        if pending and force:
+            for m in pending:
+                execute_query(db.table("tournament_matches").update({"status":"disputed","updated_at":now_iso()}).eq("id",m.get("id")),"ops_league_pending_btc",attempts=2)
+        execute_query(db.table("tournament_stages").update({"status":"completed","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_league_finish",attempts=2)
+        execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","knockout"),"ops_ko_open",attempts=2)
+        flash("Đã khóa League Phase. BXH tổng GĐ1 + GĐ2 đã sẵn sàng để sinh Knockout.","success"); return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/knockout/generate')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_knockout_generate(tournament_id):
+        use_playoff=request.form.get("use_playoff")=="1"
+        ranking=_combined_ranking(tournament_id)
+        if len(ranking)<8:
+            flash("Chưa đủ HLV để sinh Knockout.","error"); return redirect_admin("tournaments")
+        existing=_matches(tournament_id,"knockout")
+        if any(m.get("status")=="completed" for m in existing):
+            flash("Knockout đã có kết quả, không thể sinh lại.","error"); return redirect_admin("tournaments")
+        if existing:
+            execute_query(db.table("tournament_matches").delete().eq("tournament_id",tournament_id).eq("stage_code","knockout"),"ops_ko_clear",attempts=2)
+        ids=[str(r.get("user_id")) for r in ranking]
+        state={"use_playoff":use_playoff,"completed":False,"champion_user_id":None,"created_at":now_iso()}
+        if use_playoff and len(ids)>=24:
+            direct=ids[:8]; pool=ids[8:24]; state["direct_r16"]=direct; state["current_round"]="playoff"
+            for i in range(8): _insert_ko_pair(tournament_id,"playoff",pool[i],pool[-(i+1)],True)
+        else:
+            entrants=ids[:16] if len(ids)>=16 else ids[:8]
+            round_code="r16" if len(entrants)>=16 else "qf"
+            state["current_round"]=round_code
+            for i in range(len(entrants)//2): _insert_ko_pair(tournament_id,round_code,entrants[i],entrants[-(i+1)],True)
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"knockout_flow","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_ko_generate_state",attempts=2)
+        execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","knockout"),"ops_ko_generate_open",attempts=2)
+        flash("Đã sinh bracket Knockout tự động.","success"); return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/knockout/match')
     @login_required
