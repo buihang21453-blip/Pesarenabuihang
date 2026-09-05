@@ -1,0 +1,15 @@
+PES Arena V1.4.56 - TACH THIET KE GIAI DAU
+
+1. Admin > Quan ly giai dau
+- Chi giu 5 buoc van hanh: Dang ky, GD1, Pot/CLB, League Phase, Knockout.
+- Cac bang chi tiet duoc thu gon trong muc bam mo.
+- Sua ket qua/ngoai le duoc dua xuong cuoi trang.
+
+2. Admin > Thiet ke giai dau
+- Cong tac hien thi khu vuc giai dau.
+- Thiet ke Cup/Huy hieu + preview.
+- Cau hinh GD1, moc thoi gian, Pot, CLB, League.
+- Host, thuong, tao tran thu cong du phong.
+
+3. Test Mode van la tab rieng.
+4. Khong co SQL moi o V1.4.56. Neu da chay SQL V1.4.55 thi khong can chay them.
