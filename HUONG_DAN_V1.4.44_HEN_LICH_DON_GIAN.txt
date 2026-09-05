@@ -1,0 +1,14 @@
+PES ARENA V1.4.44 - HEN LICH DON GIAN
+
+Giao dien HLV chi con 3 trang thai:
+1. Chua hen: Chon ngay/gio + Host (tuy chon) -> Gui.
+2. Cho xac nhan: Nguoi nhan chi co Dong y hoac chon Gio khac.
+3. Da chot: Hien gio da chot; neu can co the Doi gio.
+
+Da bo khoi giao dien HLV:
+- Nut Tu choi rieng.
+- O nhap ly do tu choi.
+- Cac mo ta trang thai dai/dong kenh.
+
+Logic backend cu van duoc giu de tuong thich va Admin/Test Mode van co the kiem tra cac truong hop dac biet.
+Khong can SQL moi.
