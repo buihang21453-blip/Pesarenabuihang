@@ -1,0 +1,7 @@
+PES Arena V1.4.53 - NÚT CHIA SẺ GÓC PHẢI
+
+- Dời nút Chia sẻ link đăng ký lên góc phải phần tiêu đề của thẻ giải đấu.
+- Rút gọn nhãn thành: 🔗 Chia sẻ.
+- Giữ nguyên cơ chế Share trên thiết bị hỗ trợ và Copy link khi không hỗ trợ.
+- Không thay đổi logic đăng ký, hủy đăng ký hoặc database.
+- Không cần SQL mới.
