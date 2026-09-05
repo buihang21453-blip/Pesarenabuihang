@@ -1,0 +1,8 @@
+PES ARENA V1.4.46
+
+- Thu gon form dang ky giai dau.
+- Co Host/Khong Host va Bac/Trung/Nam chi con o tich nho, khi chon hien dau ✓.
+- Them nut "The thuc thi dau" dang mo/dong; noi dung dang de cho BTC cap nhat.
+- Khung gio toi sua thanh 18:00 - 22:00.
+- APP_VERSION cap nhat V1.4.46.
+- Khong co SQL moi.
