@@ -78,6 +78,9 @@
             {% else %}
               <button class="btn" type="button" disabled>Đăng ký đã đóng</button>
             {% endif %}
+            {% if tournament.registration_open %}
+              <button class="btn tournament-share-register" type="button" data-share-path="{{ url_for('tournament_register_shortcut') }}">🔗 Chia sẻ link đăng ký</button>
+            {% endif %}
           </div>
           {% if tournament.registration_open and not tournament.my_member and (not tournament.my_registration or tournament.my_registration.status in ['rejected','withdrawn']) and request.args.get('register') == tournament.id|string %}
           <form id="register-{{ tournament.id }}" class="tournament-register-box" method="post" action="{{ url_for('tournament_register', tournament_id=tournament.id) }}">
@@ -135,4 +138,60 @@
   </div>
   {% endif %}
 </section>
+<script>
+(function(){
+  const buttons = document.querySelectorAll('.tournament-share-register');
+  if (!buttons.length) return;
+
+  function registrationUrl(button){
+    const path = button.dataset.sharePath || '/dang-ky-c1';
+    return new URL(path, window.location.origin).href;
+  }
+
+  async function copyFallback(text){
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand('copy');
+    area.remove();
+  }
+
+  buttons.forEach(function(button){
+    button.addEventListener('click', async function(){
+      const url = registrationUrl(button);
+      const original = button.textContent;
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: 'Đăng ký PES Arena Champions League',
+            text: 'Link đăng ký PES Arena Champions League',
+            url: url
+          });
+          button.textContent = '✓ Đã mở chia sẻ';
+        } else {
+          await copyFallback(url);
+          button.textContent = '✓ Đã sao chép link';
+        }
+      } catch (error) {
+        if (error && error.name === 'AbortError') return;
+        try {
+          await copyFallback(url);
+          button.textContent = '✓ Đã sao chép link';
+        } catch (_) {
+          button.textContent = 'Không thể sao chép';
+        }
+      }
+      window.setTimeout(function(){ button.textContent = original; }, 1800);
+    });
+  });
+})();
+</script>
 {% endblock %}
