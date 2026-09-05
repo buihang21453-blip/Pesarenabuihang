@@ -1,0 +1,43 @@
+PES ARENA V1.4.50 - SU KIEN GIAI DAU GĐ1 / CLB / LEAGUE PHASE
+
+1. ADMIN - LICH VAN HANH
+- Dat gio bat dau GĐ1, het 3 ngay thuong som, het 7 ngay GĐ1, gia han +2 ngay.
+- Dat gio bat dau va ket thuc GĐ2 (7 ngay).
+- HLV thay dong ho dem nguoc Ngay/Gio/Phut/Giay tren trang giai dau.
+
+2. RANDOM DOI THU GĐ1
+- Admin bam RANDOM DOI THU GĐ1.
+- Moi HLV co dung 3 doi thu, moi cap 2 tran = 6 tran/HLV.
+- Ket qua duoc luu truoc; HLV bam MO DOI THU CUA TOI chi de reveal. Khong bam van khong lam ket giai.
+
+3. TOP HOAN THANH SOM
+- Xep hang theo thoi diem HLV hoan tat du tran.
+- Top 1: 3 ve Random; Top 2-3: 2 ve; Top 4-10: 1 ve.
+- Sau moc 3 ngay, HLV con thieu tran se duoc nhac hoan thanh not trong thoi gian con lai.
+- Admin theo doi duoc tien do va Top hoan thanh.
+
+4. RANDOM / CHON CLB TOP 10
+- Top 1 co 10 phut. Top 2-10 moi HLV 5 phut.
+- Den luot moi mo nut RANDOM CLB. Random lan dau khong ton ve.
+- Neu bo qua CLB da Random: dung 1 ve va khong duoc quay lai CLB da bo qua.
+- Chot CLB xong tu dong chuyen HLV tiep theo.
+- Het gio: he thong tu Random + chot. Admin co nut Random/chot thay.
+- Moi lan Random, bo qua, chot deu hien trong lich su cong khai.
+- Sau Top 10, Admin bam Random CLB phan con lai.
+
+5. CHIA POT & BOC THAM LEAGUE PHASE
+- Mac dinh 3 Pot.
+- Sinh lich League Phase theo Pot truoc.
+- Admin bam Bat dau le boc tham, sau do Boc tiep theo thu tu POT 1 -> POT 2 -> POT 3 cho tung HLV.
+- Ket qua duoc luu ngay khi Admin boc.
+- HLV vao trang giai dau bam MO DOI THU CUA TOI de reveal ket qua cua minh.
+- HLV khong bam mo van khong anh huong tien do giai.
+
+6. QUY TAC CHONG KET
+- Ket qua that duoc luu truoc/luu ngay tai backend.
+- Hieu ung Random/Reveal chi la phan trinh dien.
+- HLV vang mat: Admin co the thao tac thay; het thoi gian he thong tu xu ly.
+
+7. SQL
+- V1.4.50 khong co SQL moi. Su dung tournament_settings JSON va cac bang giai dau da co.
+- Van can SQL DAT LICH 3 NGAY cua V1.4.47 neu database chua tung chay.
