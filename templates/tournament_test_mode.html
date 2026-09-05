@@ -24,16 +24,10 @@
 <div class="tm-stage {% if state.current_stage==key %}active{% endif %}"><h3>{{ label }}</h3><p>{{ stage_desc[key] }}</p><form method="post" action="{{ url_for('admin_tournament_test_prepare_stage',stage=key) }}"><input type="hidden" name="count" value="{{ state.players|length if state.players else 36 }}"><input type="hidden" name="target" value="{{ state.stage1_target or 5 }}"><input type="hidden" name="pot_count" value="{{ state.pot_count or 4 }}"><select name="view_as"><option value="">Tự chọn HLV phù hợp</option>{% for p in state.players %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select><input type="hidden" name="open_player_view" value="1"><button class="btn {% if state.current_stage==key %}gold{% endif %}" type="submit">Xem như HLV ở {{ label }}</button></form></div>
 {% endfor %}</div></section>
 
-<section class="tm-panel"><h2>3. 🗓 TEST LỊCH THI ĐẤU</h2><p>Bấm một trạng thái để tự dựng cặp <strong>Test HLV 01 ↔ Test HLV 02</strong> và mở đúng góc nhìn HLV cần kiểm tra.</p><div class="tm-schedule-grid">{% set schedule_desc={
-'unscheduled':'Chưa bên nào đề xuất giờ. HLV thấy nút Hẹn lịch.',
-'waiting_outgoing':'Tôi đã gửi giờ và đang chờ đối thủ phản hồi.',
-'incoming':'Đối thủ gửi giờ cho tôi. HLV chỉ thấy Đồng ý / Giờ khác.',
-'rejected':'Đề xuất gần nhất bị từ chối và có lý do.',
-'scheduled':'Hai bên đã thống nhất ngày giờ thi đấu.',
-'soon':'Lịch đã chốt và còn khoảng 30 phút tới giờ đấu.',
-'completed':'Trận đã đá xong, có tỷ số và khóa hẹn lịch.',
-'overdue':'Đã quá hạn 2 ngày nhưng hai bên chưa chốt lịch.',
-'admin_fixed':'Admin can thiệp và chốt lịch hộ hai HLV.'} %}{% for key,label in schedule_cases %}<div class="tm-schedule-card"><h3>{{ label }}</h3><p>{{ schedule_desc[key] }}</p><form method="post" action="{{ url_for('admin_tournament_test_prepare_schedule',case=key) }}"><button class="btn {% if state.schedule_test and state.schedule_test.case==key %}gold{% endif %}" type="submit">Xem trạng thái {{ label }}</button></form></div>{% endfor %}</div></section>
+<section class="tm-panel"><h2>3. 📅 TEST ĐẶT LỊCH THI ĐẤU 3 NGÀY</h2><p>Test đúng cơ chế mới: <strong>HLV Yến</strong> đặt lịch cá nhân cho Hôm nay · Ngày mai · Ngày kia; lịch áp dụng cho tất cả đối thủ. Bạn có thể đổi góc nhìn sang <strong>HLV Nam</strong>, xem lịch hai bên, sửa lịch Yến để khớp và chốt giờ trùng.</p><div class="tm-schedule-grid">{% set av_desc={
+'no_overlap':'Yến và Nam đã đặt lịch nhưng chưa có slot trùng. Dùng để test xem lịch đối thủ rồi sửa lịch của Yến.',
+'has_overlap':'Hai HLV đã có sẵn ít nhất một giờ trùng để test nút Chốt lịch.',
+'empty_mine':'HLV Yến chưa chọn giờ nào, còn HLV Nam đã có lịch.'} %}{% for key,label in availability_cases %}<div class="tm-schedule-card"><h3>{{ label }}</h3><p>{{ av_desc[key] }}</p><form method="post" action="{{ url_for('admin_tournament_test_prepare_availability',case=key) }}"><button class="btn gold" type="submit">Mở góc nhìn HLV Yến</button></form></div>{% endfor %}</div></section>
 
 <section class="tm-panel"><h2>4. Trạng thái kiểm thử</h2><div class="tm-checks"><div class="tm-check {% if state.players %}ok{% endif %}">HLV Test<br><b>{{ state.players|length }}</b></div><div class="tm-check {% if state.registrations %}ok{% endif %}">Đăng ký<br><b>{{ state.registrations|length }}</b></div><div class="tm-check {% if state.stage1_ranking %}ok{% endif %}">GĐ1/BXH<br><b>{{ '✓' if state.stage1_ranking else '—' }}</b></div><div class="tm-check {% if state.pots %}ok{% endif %}">Chia Pot<br><b>{{ state.pot_count if state.pots else '—' }}</b></div><div class="tm-check {% if state.league_ranking %}ok{% endif %}">League<br><b>{{ '✓' if state.league_ranking else '—' }}</b></div><div class="tm-check {% if state.knockout %}ok{% endif %}">Play-off<br><b>{{ '✓' if state.knockout else '—' }}</b></div><div class="tm-check {% if state.knockout|length>=4 %}ok{% endif %}">1/8 → Bán kết<br><b>{{ '✓' if state.knockout|length>=4 else '—' }}</b></div><div class="tm-check {% if state.knockout|length>=5 %}ok{% endif %}">Chung kết<br><b>{{ '✓' if state.knockout|length>=5 else '—' }}</b></div></div></section>
 

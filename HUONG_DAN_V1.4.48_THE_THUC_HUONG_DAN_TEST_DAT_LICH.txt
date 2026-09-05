@@ -1,0 +1,19 @@
+PES ARENA V1.4.48 - THE THUC + HUONG DAN + TEST DAT LICH
+
+1. Khong co SQL moi o V1.4.48.
+2. Neu chua tung chay SQL Dat lich 3 ngay cua V1.4.47, hay chay file SQL trong thu muc SQL_CU truoc khi test du lieu that.
+3. Form dang ky: sau Khung gio thi dau co 2 muc mo/thu gon:
+   - The thuc thi dau
+   - Huong dan nguoi choi
+4. The thuc hien tai:
+   - GD1: 6 tran, 3 doi thu random, moi cap 2 tran, thoi han 1 tuan, hoan thanh som co ve Random thuong.
+   - GD2: 3 Pot, CLB co dinh, BXH cong diem GD1 + GD2, thoi han 1 tuan, hoan thanh som co ve Random thuong.
+   - GD3: Play-off -> 1/8 -> Tu ket -> Ban ket -> Chung ket; co the bo Play-off.
+5. Test Mode Dat lich:
+   - Vao Admin -> Tournament Test Mode.
+   - Muc TEST DAT LICH THI DAU 3 NGAY.
+   - Chon: Chua co gio trung / Co gio trung / HLV Yen chua dat lich.
+   - Mo goc nhin HLV Yen, chon slot Hôm nay / Ngay mai / Ngay kia va Luu.
+   - Doi goc nhin sang HLV Nam de kiem tra lich doi thu.
+   - Khi co slot trung, bam Chot lich de kiem tra.
+   - Toan bo la sandbox, khong ghi vao du lieu giai that.

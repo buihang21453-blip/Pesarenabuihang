@@ -20,8 +20,8 @@ def register_routes(context):
             "registrations": [],
             "registration_open": True,
             "current_stage": "registration",
-            "stage1_target": 5,
-            "pot_count": 4,
+            "stage1_target": 6,
+            "pot_count": 3,
             "stage1_matches": [],
             "stage1_ranking": [],
             "pots": [],
@@ -29,6 +29,8 @@ def register_routes(context):
             "league_ranking": [],
             "knockout": [],
             "schedule_test": None,
+            "availability_test": {},
+            "availability_bookings": {},
             "journey_mode": False,
             "journey_player_id": None,
             "hosts": [
@@ -173,7 +175,7 @@ def register_routes(context):
     STAGES = [
         ("registration", "Đăng ký"),
         ("stage1", "GĐ1 - Vòng Khởi Động"),
-        ("schedule", "Hẹn lịch thi đấu"),
+        ("schedule", "Đặt lịch thi đấu"),
         ("league", "GĐ2 - League Phase"),
         ("playoff", "Play-off"),
         ("r16", "Vòng 1/8"),
@@ -196,6 +198,73 @@ def register_routes(context):
         ("admin_fixed", "Admin chốt hộ"),
     ]
     SCHEDULE_CASE_KEYS = {key for key, _ in SCHEDULE_CASES}
+
+    AVAILABILITY_CASES = [
+        ("no_overlap", "Chưa có giờ trùng"),
+        ("has_overlap", "Có giờ trùng"),
+        ("empty_mine", "HLV Yến chưa đặt lịch"),
+    ]
+    AVAILABILITY_CASE_KEYS = {key for key, _ in AVAILABILITY_CASES}
+
+    def _availability_days_test():
+        vn_tz=timezone(timedelta(hours=7))
+        today=datetime.now(vn_tz).date()
+        labels=("Hôm nay","Ngày mai","Ngày kia")
+        days=[]
+        now=datetime.now(vn_tz)
+        for offset,label in enumerate(labels):
+            d=today+timedelta(days=offset)
+            hours=[11,12,18,19,20,21] if d.weekday()<5 else list(range(11,22))
+            slots=[]
+            for hour in hours:
+                dt=datetime(d.year,d.month,d.day,hour,0,tzinfo=vn_tz)
+                if dt>now:
+                    slots.append({"iso":dt.isoformat(),"time":f"{hour:02d}:00"})
+            days.append({"date":d.isoformat(),"label":label,"weekday":d.strftime("%d/%m"),"slots":slots})
+        return days
+
+    def _seed_availability_test(state, case="no_overlap"):
+        players=state.get("players") or []
+        if len(players)<2:
+            return
+        case=case if case in AVAILABILITY_CASE_KEYS else "no_overlap"
+        a,b=players[0],players[1]
+        # Friendly names make the two-view test obvious.
+        a["name"]="HLV Yến"; a["zalo_name"]="Yến"
+        b["name"]="HLV Nam"; b["zalo_name"]="Nam"
+        days=_availability_days_test()
+        flat=[x["iso"] for d in days for x in d["slots"]]
+        av={str(p.get("id")):[] for p in players}
+        if case=="has_overlap":
+            av[str(a["id"])]=flat[:2]+flat[4:5]
+            av[str(b["id"])]=flat[1:3]+flat[5:6]
+        elif case=="empty_mine":
+            av[str(a["id"])]=[]
+            av[str(b["id"])]=flat[1:4]
+        else:
+            av[str(a["id"])]=flat[:2]
+            av[str(b["id"])]=flat[3:6]
+        state["availability_test"]=av
+        state["availability_bookings"]={}
+        state["current_stage"]="schedule"
+
+    def _availability_view(state, view_as):
+        days=_availability_days_test()
+        av=state.get("availability_test") or {}
+        mine=set(av.get(str(view_as)) or [])
+        players=state.get("players") or []
+        opponents=[]
+        for p in players:
+            pid=str(p.get("id"))
+            if pid==str(view_as):
+                continue
+            slots=sorted(set(av.get(pid) or []))
+            overlap=sorted(mine & set(slots))
+            opponents.append({"id":pid,"name":p.get("name") or pid,"slots":slots,"overlap":overlap,"booking":(state.get("availability_bookings") or {}).get("|".join(sorted((str(view_as),pid))))})
+            if len(opponents)>=5:
+                break
+        labels={x["iso"]:f"{d['label']} · {x['time']}" for d in days for x in d["slots"]}
+        return {"days":days,"mine_set":mine,"opponents":opponents,"labels":labels}
 
     def _schedule_test_case(state, case):
         players=state.get("players") or []
@@ -438,7 +507,7 @@ def register_routes(context):
         return render_template(
             'tournament_test_mode.html', state=state, sandbox_ready=ready,
             view_as=view_as, me=me, my_s1=my_s1, my_league=my_league,
-            registration_counts=_registration_counts(state), schedule_cases=SCHEDULE_CASES,
+            registration_counts=_registration_counts(state), schedule_cases=SCHEDULE_CASES, availability_cases=AVAILABILITY_CASES,
             stage1_matches=_decorate_matches(state.get("stage1_matches") or [],players),
             league_matches=_decorate_matches(state.get("league_matches") or [],players),
             journey_player_id=state.get("journey_player_id"), journey_mode=bool(state.get("journey_mode")),
@@ -463,7 +532,7 @@ def register_routes(context):
             players=players, view_as=view_as, me=me, registration=registration,
             member=member, my_s1=my_s1, my_league=my_league, stage=stage, stages=STAGES, stage_label=dict(STAGES).get(stage, stage),
             my_s1_matches=my_s1_matches, my_league_matches=my_league_matches, my_pot=my_pot, my_ko=my_ko,
-            schedule_test=_schedule_view(state, view_as), schedule_cases=SCHEDULE_CASES,
+            schedule_test=_schedule_view(state, view_as), schedule_cases=SCHEDULE_CASES, availability_test=_availability_view(state, view_as), availability_cases=AVAILABILITY_CASES,
             registration_counts=_registration_counts(state),
             stage1_matches=_decorate_matches(state.get("stage1_matches") or [], players),
             league_matches=_decorate_matches(state.get("league_matches") or [], players),
@@ -695,6 +764,8 @@ def register_routes(context):
             except ValueError as exc:
                 flash(str(exc),"error"); return redirect(url_for('admin_tournament_test_mode'))
         state["current_stage"]=stage
+        if stage=="schedule":
+            _seed_availability_test(state,"no_overlap")
         _save_state(state)
         label=dict(STAGES).get(stage,stage)
         flash(f"Đã chuẩn bị dữ liệu Test cho {label}. Bây giờ có thể chọn HLV và xem đúng góc nhìn vòng này.","success")
@@ -726,6 +797,52 @@ def register_routes(context):
         label=dict(SCHEDULE_CASES).get(case,case)
         flash(f"Đã chuẩn bị Test lịch: {label}.","success")
         return redirect(url_for('admin_tournament_test_public',view_as=view_as,stage='schedule'))
+
+
+    @app.post('/admin/tournament-test-mode/prepare-availability/<case>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_prepare_availability(case):
+        state,_=_load_state()
+        if len(state.get("players") or []) < 2:
+            state=_build_full_simulation(36,6,3)
+        _seed_availability_test(state,case)
+        _save_state(state)
+        flash("Đã chuẩn bị Test Đặt lịch 3 ngày.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=state["players"][0]["id"],stage='schedule'))
+
+    @app.post('/admin/tournament-test-mode/availability/<player_id>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_availability_save(player_id):
+        state,_=_load_state()
+        allowed={x["iso"] for d in _availability_days_test() for x in d["slots"]}
+        selected=[x for x in request.form.getlist("slots") if x in allowed]
+        av=state.get("availability_test") or {}
+        av[str(player_id)]=sorted(set(selected))
+        state["availability_test"]=av
+        _save_state(state)
+        flash("Đã cập nhật lịch cá nhân Test. Lịch này áp dụng cho tất cả đối thủ.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=player_id,stage='schedule'))
+
+    @app.post('/admin/tournament-test-mode/availability/<player_id>/book/<opponent_id>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_availability_book(player_id,opponent_id):
+        state,_=_load_state(); slot=(request.form.get("slot_at") or "").strip()
+        av=state.get("availability_test") or {}
+        overlap=set(av.get(str(player_id)) or []) & set(av.get(str(opponent_id)) or [])
+        if slot not in overlap:
+            flash("Khung giờ này không còn trùng giữa hai HLV.","warning")
+        else:
+            bookings=state.get("availability_bookings") or {}
+            bookings["|".join(sorted((str(player_id),str(opponent_id))))]=slot
+            state["availability_bookings"]=bookings; _save_state(state)
+            flash("Đã chốt lịch Test từ khung giờ trùng.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=player_id,stage='schedule'))
 
     @app.post('/admin/tournament-test-mode/start-single-journey')
     @login_required
@@ -792,6 +909,7 @@ def register_routes(context):
                 a=next((p for p in players if p.get("id")==pid),players[0]); b=others[0]
                 state["players"]=[a,b]+[p for p in players if p.get("id") not in {a.get("id"),b.get("id")}]
                 _schedule_test_case(state,"unscheduled")
+            _seed_availability_test(state,"no_overlap")
         _force_journey_player(state,pid); _save_state(state)
         return redirect(url_for('admin_tournament_test_public',view_as=pid,stage=stage))
 
