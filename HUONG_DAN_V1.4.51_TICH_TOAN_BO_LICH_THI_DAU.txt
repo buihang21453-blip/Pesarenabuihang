@@ -1,0 +1,8 @@
+PES Arena V1.4.51 - TÍCH TOÀN BỘ LỊCH THI ĐẤU
+
+- Thêm lựa chọn "Tích toàn bộ" cho từng ngày trong Đặt lịch thi đấu.
+- Bấm Tích toàn bộ sẽ chọn tất cả slot còn hiển thị trong ngày đó.
+- Bấm lại sẽ bỏ chọn toàn bộ slot của ngày đó.
+- Nếu chỉ chọn một phần slot, checkbox Tích toàn bộ hiển thị trạng thái chọn một phần.
+- Áp dụng cả giao diện giải thật và TEST MODE.
+- Không thay đổi database, không cần SQL mới.
