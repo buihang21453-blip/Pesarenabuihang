@@ -158,6 +158,63 @@ def register_routes(context):
                 m[f"{side}_host_region"]=prof.get("host_region") or "—"
         return matches
 
+    def _availability_days():
+        """Three rolling Vietnam-local calendar days: today, tomorrow, day after tomorrow."""
+        vn_tz=timezone(timedelta(hours=7))
+        today=datetime.now(vn_tz).date()
+        labels=("Hôm nay","Ngày mai","Ngày kia")
+        days=[]
+        for offset,label in enumerate(labels):
+            d=today+timedelta(days=offset)
+            # Weekdays use the official tournament window in 1-hour slots.
+            # Weekend is flexible, so expose a simple daytime/evening hourly range.
+            hours=[11,12,18,19,20,21] if d.weekday()<5 else list(range(11,22))
+            slots=[]
+            for hour in hours:
+                dt=datetime(d.year,d.month,d.day,hour,0,tzinfo=vn_tz)
+                if dt>datetime.now(vn_tz):
+                    slots.append({"iso":dt.isoformat(),"time":f"{hour:02d}:00"})
+            days.append({"date":d.isoformat(),"label":label,"weekday":d.strftime("%d/%m"),"slots":slots})
+        return days
+
+    def _availability_rows(tournament_id, user_ids=None):
+        q=db.table("tournament_availability_slots").select("*").eq("tournament_id",tournament_id)
+        if user_ids:
+            q=q.in_("user_id",[str(x) for x in user_ids])
+        rows,err=_rows(q.order("slot_at"),"ops_availability")
+        if err:
+            return []
+        vn_tz=timezone(timedelta(hours=7)); now=datetime.now(vn_tz)
+        max_day=(now.date()+timedelta(days=2))
+        out=[]
+        for r in rows:
+            try:
+                dt=datetime.fromisoformat(str(r.get("slot_at")).replace("Z","+00:00")).astimezone(vn_tz)
+                if now < dt and now.date() <= dt.date() <= max_day:
+                    r["slot_iso"]=dt.isoformat(); r["slot_label"]=dt.strftime("%d/%m · %H:%M"); out.append(r)
+            except Exception:
+                continue
+        return out
+
+    def _availability_payload(tournament_id,user_id,matches):
+        ids={str(user_id)}
+        for m in matches:
+            if str(user_id) in {str(m.get("home_user_id")),str(m.get("away_user_id"))}:
+                ids.add(str(m.get("home_user_id"))); ids.add(str(m.get("away_user_id")))
+        rows=_availability_rows(tournament_id,list(ids))
+        by_user={}
+        for r in rows: by_user.setdefault(str(r.get("user_id")),[]).append(r)
+        mine=by_user.get(str(user_id),[])
+        mine_set={x.get("slot_iso") for x in mine}
+        for m in matches:
+            if str(user_id) not in {str(m.get("home_user_id")),str(m.get("away_user_id"))}: continue
+            opp=str(m.get("away_user_id")) if str(m.get("home_user_id"))==str(user_id) else str(m.get("home_user_id"))
+            opp_rows=by_user.get(opp,[]); opp_set={x.get("slot_iso") for x in opp_rows}
+            overlap=sorted(mine_set & opp_set)
+            m["opponent_availability"]=opp_rows
+            m["availability_overlap"]=[{"iso":x,"label":datetime.fromisoformat(x).strftime("%d/%m · %H:%M")} for x in overlap]
+        return {"days":_availability_days(),"mine":mine,"mine_set":mine_set}
+
     def _reward_summary(tournament_id,user_id):
         rules,_=_rows(db.table("tournament_reward_rules").select("*").eq("tournament_id",tournament_id).eq("enabled",True).order("priority"),"ops_rewards")
         grants,_=_rows(db.table("tournament_reward_grants").select("*").eq("tournament_id",tournament_id).eq("user_id",user_id),"ops_reward_grants")
@@ -172,11 +229,12 @@ def register_routes(context):
         league=_ranking(tournament_id,"league")
         matches=_decorate_matches(tournament_id,_matches(tournament_id))
         matches=_attach_schedule_state(tournament_id,matches,user_id)
+        availability=_availability_payload(tournament_id,user_id,matches) if member else {"days":_availability_days(),"mine":[],"mine_set":set()}
         hosts,_=_rows(db.table("tournament_hosts").select("*").eq("tournament_id",tournament_id).order("region").order("name"),"ops_hosts")
         clubs,_=_rows(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).order("name"),"ops_clubs")
         me_progress=next((r for r in s1 if str(r["user_id"])==str(user_id)),None)
         return {"tournament":tour,"member":member,"stages":stages,"stage1_ranking":s1,"league_ranking":league,
-                "matches":matches,"hosts":hosts,"clubs":clubs,"me_progress":me_progress,"rewards":_reward_summary(tournament_id,user_id)}
+                "matches":matches,"hosts":hosts,"clubs":clubs,"me_progress":me_progress,"rewards":_reward_summary(tournament_id,user_id),"availability":availability}
 
     def _admin_payload():
         tours,_=_rows(db.table("tournaments").select("*").eq("is_visible",True).order("created_at"),"ops_admin_tours")
@@ -392,6 +450,46 @@ def register_routes(context):
         for idx,(a,b) in enumerate(unique,1):
             execute_query(db.table("tournament_matches").insert({"tournament_id":tournament_id,"stage_code":"league","round_code":f"LP-{idx}","home_user_id":a,"away_user_id":b,"status":"pending","leg_no":1,"created_at":now_iso(),"updated_at":now_iso()}),"ops_league_insert",attempts=2)
         flash(f"Đã sinh {len(unique)} trận League Phase.","success"); return redirect_admin("tournaments")
+
+    @app.post('/tournaments/<tournament_id>/availability')
+    @login_required
+    def tournament_availability_save(tournament_id):
+        uid=(current_user() or {}).get("id")
+        if not _member(tournament_id,uid):
+            flash("Bạn chưa phải HLV của giải đấu này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        allowed={slot["iso"] for day in _availability_days() for slot in day["slots"]}
+        selected=[]
+        for raw in request.form.getlist("slots"):
+            try:
+                vn_tz=timezone(timedelta(hours=7)); dt=datetime.fromisoformat(raw).astimezone(vn_tz); iso=dt.isoformat()
+                if iso in allowed: selected.append(iso)
+            except Exception: pass
+        # Replace only this HLV's rolling availability; this schedule applies to every opponent.
+        execute_query(db.table("tournament_availability_slots").delete().eq("tournament_id",tournament_id).eq("user_id",uid),"ops_availability_clear",attempts=2)
+        for iso in sorted(set(selected)):
+            execute_query(db.table("tournament_availability_slots").insert({"tournament_id":tournament_id,"user_id":uid,"slot_at":iso,"created_at":now_iso(),"updated_at":now_iso()}),"ops_availability_insert",attempts=2)
+        flash(f"Đã lưu lịch thi đấu của bạn: {len(set(selected))} khung giờ trong 3 ngày gần nhất.","success")
+        return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+
+    @app.post('/tournaments/matches/<match_id>/schedule-from-availability')
+    @login_required
+    def tournament_schedule_from_availability(match_id):
+        uid=(current_user() or {}).get("id")
+        match,_=_one(db.table("tournament_matches").select("*").eq("id",match_id),"ops_availability_match")
+        if not match or str(uid) not in {str(match.get("home_user_id")),str(match.get("away_user_id"))}:
+            flash("Bạn không thuộc trận này.","error"); return redirect(url_for("tournaments"))
+        slot=(request.form.get("slot_at") or "").strip()
+        if not slot:
+            flash("Hãy chọn một khung giờ trùng.","error"); return redirect(url_for("tournament_detail",tournament_id=match.get("tournament_id"))+"#schedule")
+        rows=_availability_rows(match.get("tournament_id"),[match.get("home_user_id"),match.get("away_user_id")])
+        users_at={str(r.get("user_id")) for r in rows if r.get("slot_iso")==slot}
+        required={str(match.get("home_user_id")),str(match.get("away_user_id"))}
+        if not required.issubset(users_at):
+            flash("Khung giờ này không còn trùng lịch của cả hai HLV. Hãy tải lại lịch.","warning")
+            return redirect(url_for("tournament_detail",tournament_id=match.get("tournament_id"))+"#schedule")
+        execute_query(db.table("tournament_matches").update({"scheduled_at":slot,"status":"scheduled","updated_at":now_iso()}).eq("id",match_id),"ops_availability_schedule",attempts=2)
+        flash("Đã chốt lịch vì cả hai HLV đều đánh dấu rảnh ở khung giờ này.","success")
+        return redirect(url_for("tournament_detail",tournament_id=match.get("tournament_id"))+"#schedule")
 
     @app.post('/tournaments/matches/<match_id>/schedule')
     @login_required

@@ -1,0 +1,9 @@
+PES ARENA V1.4.47 - DAT LICH THI DAU 3 NGAY
+
+1. Chay SQL_DAT_LICH_THI_DAU_3_NGAY_V1.4.47.sql tren Supabase.
+2. Moi HLV chi duoc dat lich trong Hom nay, Ngay mai, Ngay kia.
+3. Lich da dat ap dung cho tat ca doi thu, khong gui rieng cho tung tran.
+4. HLV co the xem lich cua doi thu trong tung cap dau.
+5. Neu chua co gio trung, HLV tu tich them slot phu hop vao lich cua minh va Luu.
+6. Neu co gio trung, he thong hien nut Chot lich ngay tai cap dau.
+7. Ngay thuong: slot moi 1 gio trong khung 11:00-13:00 va 18:00-22:00. T7/CN linh hoat.

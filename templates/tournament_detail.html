@@ -2,48 +2,60 @@
 {% block page_styles %}<style>
 .td-shell{max-width:1500px;margin:0 auto;padding:12px 4px 30px}.td-head{padding:20px;border:1px solid rgba(231,190,88,.22);border-radius:18px;background:#071522}.td-head h1{margin:0;color:#f1ca68}.td-meta{display:flex;gap:9px;flex-wrap:wrap;margin-top:9px;color:#98a7b4}.td-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}.td-card{border:1px solid rgba(255,255,255,.1);background:#071522;border-radius:15px;padding:15px;min-width:0}.td-card h3{margin:0 0 8px;color:#e7edf3}.td-big{font-size:27px;font-weight:900;color:#efc85e}.td-tabs{display:flex;gap:8px;overflow:auto;margin:14px 0}.td-tabs a{padding:9px 12px;border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#aab7c3;text-decoration:none;white-space:nowrap}.td-section{margin-top:14px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:#071522;padding:16px;scroll-margin-top:15px}.td-section h2{margin:0 0 12px;color:#f1ca68;font-size:18px}.td-table{width:100%;border-collapse:collapse}.td-table th,.td-table td{padding:9px;border-bottom:1px solid rgba(255,255,255,.07);text-align:left;font-size:13px}.td-table th{color:#8fa0ae}.td-table td{color:#d9e1e8}.td-progress{height:8px;background:#0d2436;border-radius:99px;overflow:hidden}.td-progress span{display:block;height:100%;background:#d8ad45}.td-clubs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.td-club{padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px}.td-match{display:grid;grid-template-columns:1fr auto 1fr auto;gap:9px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)}
 .td-schedule-list{display:grid;gap:9px}.td-schedule-card{border:1px solid rgba(255,255,255,.09);background:#091a29;border-radius:12px;padding:11px 12px}.td-schedule-card.is-mine{border-color:rgba(241,202,104,.25)}.td-schedule-top{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}.td-player{text-align:left;font-size:13px}.td-player.away{text-align:right}.td-player small{display:block;color:#92a4b3;margin-top:2px;font-weight:400;font-size:11px}.td-vs{font-weight:900;color:#f1ca68;font-size:12px}.td-schedule-status{margin-top:8px;padding:8px 10px;border-radius:8px;background:#0d2436;color:#cbd7e0;font-size:12px}.td-schedule-status strong{color:#f1ca68}.td-schedule-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}.td-schedule-actions form{display:flex;gap:6px;flex-wrap:wrap;align-items:center;width:100%}.td-schedule-actions input,.td-schedule-actions select{background:#06131f;color:#e6edf3;border:1px solid rgba(255,255,255,.13);border-radius:7px;padding:7px 8px;font-size:12px;min-height:34px}.td-schedule-actions input[type=datetime-local]{flex:1;min-width:180px}.td-schedule-actions select{max-width:180px}.td-schedule-actions .btn{padding:7px 10px;font-size:12px;min-height:34px}.td-contact-line{margin-top:3px;color:#8799a7;font-size:11px}.td-empty{padding:16px;border:1px dashed rgba(255,255,255,.12);border-radius:10px;color:#91a3b1;text-align:center}
-@media(max-width:900px){.td-grid{grid-template-columns:1fr 1fr}.td-clubs{grid-template-columns:1fr 1fr}}@media(max-width:560px){.td-grid{grid-template-columns:1fr}.td-match{grid-template-columns:1fr auto 1fr}.td-match form{grid-column:1/-1}.td-clubs{grid-template-columns:1fr}}
+
+.td-av-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.td-av-day{background:#091a29;border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:11px}.td-av-day-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.td-av-day-head strong{color:#f1ca68}.td-av-day-head span{color:#91a3b1;font-size:12px}.td-av-slots{display:flex;flex-wrap:wrap;gap:7px}.td-av-slot input{display:none}.td-av-slot span{display:inline-block;padding:8px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.13);background:#06131f;color:#dce7ef;font-size:12px;cursor:pointer}.td-av-slot input:checked+span{background:#1677ff;border-color:#4d9bff;color:#fff;font-weight:800}.td-av-save{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}.td-av-save small{color:#91a3b1}.td-overlap-list{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.td-overlap-list form{margin:0}.td-opponent-slots{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.td-opponent-slots span{padding:6px 9px;border-radius:7px;background:#0d2436;border:1px solid rgba(255,255,255,.1);font-size:11px}.td-schedule-status.overlap{border:1px solid rgba(46,204,113,.35)}
+@media(max-width:900px){.td-grid{grid-template-columns:1fr 1fr}.td-clubs{grid-template-columns:1fr 1fr}}@media(max-width:560px){.td-av-days{grid-template-columns:1fr}.td-grid{grid-template-columns:1fr}.td-match{grid-template-columns:1fr auto 1fr}.td-match form{grid-column:1/-1}.td-clubs{grid-template-columns:1fr}}
 </style>{% endblock %}
 {% block content %}<div class="td-shell">
 <div class="td-head"><h1>🏆 {{ tournament.name }}</h1><div class="td-meta"><span>{{ tournament.status|upper }}</span><span>•</span><span>{{ 'Đang tham gia' if member else 'Người xem' }}</span>{% if member %}<span>• Pot {{ member.pot_no or '—' }}</span><span>• {{ member.fixed_club_name or 'Chưa chọn CLB' }}</span>{% endif %}</div></div>
 <div class="td-grid"><div class="td-card"><h3>Tiến độ GĐ1</h3><div class="td-big">{{ me_progress.played if me_progress else 0 }}/{{ me_progress.target if me_progress else 5 }}</div><small>{{ me_progress.remaining if me_progress else 5 }} trận còn lại</small></div><div class="td-card"><h3>Đối thủ GĐ1</h3><div class="td-big">{{ me_progress.opponent_count if me_progress else 0 }}</div><small>Tối thiểu 3 đối thủ</small></div><div class="td-card"><h3>Pot</h3><div class="td-big">{{ member.pot_no if member and member.pot_no else '—' }}</div><small>Chia theo BXH GĐ1</small></div><div class="td-card"><h3>CLB cố định</h3><div class="td-big" style="font-size:18px">{{ member.fixed_club_name if member and member.fixed_club_name else 'Chưa chọn' }}</div></div></div>
-<nav class="td-tabs"><a href="#stage1">GĐ1</a><a href="#ranking">BXH</a><a href="#club">Chọn CLB</a><a href="#league">League Phase</a><a href="#schedule">Hẹn lịch</a><a href="#host">Host</a><a href="#knockout">Knockout</a><a href="#reward">Thưởng</a></nav>
+<nav class="td-tabs"><a href="#stage1">GĐ1</a><a href="#ranking">BXH</a><a href="#club">Chọn CLB</a><a href="#league">League Phase</a><a href="#schedule">Đặt lịch thi đấu</a><a href="#host">Host</a><a href="#knockout">Knockout</a><a href="#reward">Thưởng</a></nav>
 <section class="td-section" id="stage1"><h2>GĐ1 · Tiến độ HLV</h2><div style="overflow:auto"><table class="td-table"><thead><tr><th>#</th><th>HLV</th><th>Zalo</th><th>Trận</th><th>Đối thủ</th><th>Tiến độ</th><th>Điểm</th></tr></thead><tbody>{% for r in stage1_ranking %}<tr><td>{{ r.rank }}</td><td>{{ r.display_name }}</td><td>{{ r.zalo_name or '—' }}</td><td>{{ r.played }}/{{ r.target }}</td><td>{{ r.opponent_count }}</td><td><div class="td-progress"><span style="width:{{ r.percent }}%"></span></div> {{ r.percent }}%</td><td>{{ r.points }}</td></tr>{% endfor %}</tbody></table></div></section>
 <section class="td-section" id="ranking"><h2>BXH GĐ1</h2><div style="overflow:auto"><table class="td-table"><thead><tr><th>#</th><th>HLV</th><th>Tr</th><th>T</th><th>H</th><th>B</th><th>BT</th><th>BB</th><th>HS</th><th>Điểm</th></tr></thead><tbody>{% for r in stage1_ranking %}<tr><td>{{ r.rank }}</td><td>{{ r.display_name }}</td><td>{{ r.played }}</td><td>{{ r.wins }}</td><td>{{ r.draws }}</td><td>{{ r.losses }}</td><td>{{ r.gf }}</td><td>{{ r.ga }}</td><td>{{ r.gd }}</td><td><b>{{ r.points }}</b></td></tr>{% endfor %}</tbody></table></div></section>
 <section class="td-section" id="club"><h2>Chọn CLB cố định</h2>{% if member %}<div class="td-clubs">{% for c in clubs %}<div class="td-club"><strong>{{ c.name }}</strong><br><small>{{ 'Đã có HLV chọn' if c.selected_by and c.selected_by|string != member.user_id|string else 'Còn trống' }}</small>{% if not c.selected_by or c.selected_by|string == member.user_id|string %}<form method="post" action="{{ url_for('tournament_club_select',tournament_id=tournament.id) }}"><input type="hidden" name="club_id" value="{{ c.id }}"><button class="btn" type="submit">Chọn</button></form>{% endif %}</div>{% endfor %}</div>{% else %}<p>Bạn đang xem với tư cách khán giả.</p>{% endif %}</section>
 <section class="td-section" id="league"><h2>League Phase</h2><div style="overflow:auto"><table class="td-table"><thead><tr><th>#</th><th>HLV</th><th>Pot</th><th>CLB</th><th>Tr</th><th>HS</th><th>Điểm</th></tr></thead><tbody>{% for r in league_ranking %}<tr><td>{{ r.rank }}</td><td>{{ r.display_name }}</td><td>{{ r.pot_no or '—' }}</td><td>{{ r.club or '—' }}</td><td>{{ r.played }}</td><td>{{ r.gd }}</td><td>{{ r.points }}</td></tr>{% endfor %}</tbody></table></div></section>
-<section class="td-section" id="schedule"><h2>📅 Hẹn lịch</h2>
-<p style="color:#91a3b1;margin:-4px 0 10px;font-size:12px">Chọn giờ → đối thủ đồng ý. Nếu chưa phù hợp, chỉ cần đề xuất giờ khác.</p>
+<section class="td-section" id="schedule"><h2>📅 Đặt lịch thi đấu</h2>
+<p style="color:#91a3b1;margin:-4px 0 12px;font-size:12px">Chọn các giờ bạn có thể thi đấu trong <strong>Hôm nay · Ngày mai · Ngày kia</strong>. Lịch này áp dụng cho <strong>tất cả đối thủ</strong> của bạn.</p>
+{% if member %}
+<form method="post" action="{{ url_for('tournament_availability_save',tournament_id=tournament.id) }}">
+  <div class="td-av-days">
+  {% for day in availability.days %}
+    <div class="td-av-day"><div class="td-av-day-head"><strong>{{ day.label }}</strong><span>{{ day.weekday }}</span></div>
+      <div class="td-av-slots">
+      {% for slot in day.slots %}<label class="td-av-slot"><input type="checkbox" name="slots" value="{{ slot.iso }}" {% if slot.iso in availability.mine_set %}checked{% endif %}><span>{{ slot.time }}</span></label>{% else %}<small>Không còn slot trong ngày.</small>{% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+  </div>
+  <div class="td-av-save"><button class="btn" type="submit">💾 Lưu lịch thi đấu</button><small>Ngày thường: slot mỗi 1 giờ · T2–T6: 11:00–13:00 & 18:00–22:00 · T7/CN linh hoạt.</small></div>
+</form>
+
+<h3 style="margin-top:20px">Lịch đối thủ</h3>
+<p style="color:#91a3b1;font-size:12px">Bạn có thể xem lịch của từng đối thủ. Nếu chưa trùng, hãy tích thêm giờ phù hợp ở lịch của mình phía trên rồi lưu lại.</p>
 <div class="td-schedule-list">
 {% set ns = namespace(count=0) %}
 {% for m in matches if m.status in ['pending','scheduled'] %}
-  {% if member and (member.user_id|string == m.home_user_id|string or member.user_id|string == m.away_user_id|string) %}
+  {% if member.user_id|string == m.home_user_id|string or member.user_id|string == m.away_user_id|string %}
     {% set ns.count = ns.count + 1 %}
+    {% set opp_name = m.away_name if member.user_id|string == m.home_user_id|string else m.home_name %}
     <article class="td-schedule-card is-mine">
-      <div class="td-schedule-top">
-        <div class="td-player"><strong>{{ m.home_name }}</strong><div class="td-contact-line">Zalo: {{ m.home_zalo_name or '—' }} · {{ 'Host' if m.home_has_host else 'Không host' }} · {{ m.home_host_region or '—' }}</div></div>
-        <div class="td-vs">VS</div>
-        <div class="td-player away"><strong>{{ m.away_name }}</strong><div class="td-contact-line">Zalo: {{ m.away_zalo_name or '—' }} · {{ 'Host' if m.away_has_host else 'Không host' }} · {{ m.away_host_region or '—' }}</div></div>
-      </div>
-
+      <div class="td-schedule-top"><div class="td-player"><strong>Bạn</strong></div><div class="td-vs">VS</div><div class="td-player away"><strong>{{ opp_name }}</strong></div></div>
       {% if m.status == 'scheduled' %}
-        <div class="td-schedule-status">✅ <strong>Đã chốt:</strong> {{ (m.scheduled_at|string)|replace('T',' ') }}{% if m.host %} · Host: {{ m.host.name }}{% endif %}</div>
-        <div class="td-schedule-actions"><form method="post" action="{{ url_for('tournament_match_schedule',match_id=m.id) }}"><input type="datetime-local" name="scheduled_at" required><select name="host_id"><option value="">Tự thống nhất Host</option>{% for h in hosts if h.status=='available' %}<option value="{{ h.id }}">{{ h.name }} · {{ h.region }}</option>{% endfor %}</select><button class="btn gray" type="submit">Đổi giờ</button></form></div>
-      {% elif m.schedule_request and m.schedule_request.status == 'pending' %}
-        <div class="td-schedule-status">⏳ <strong>{{ m.schedule_proposer_name }}</strong>: {{ (m.schedule_request.proposed_at|string)|replace('T',' ') }}{% if m.schedule_request_host %} · Host: {{ m.schedule_request_host.name }}{% endif %}<br><small>{{ 'Chờ đối thủ đồng ý.' if m.schedule_is_mine else 'Đối thủ đang chờ bạn.' }}</small></div>
-        <div class="td-schedule-actions">
-          {% if m.schedule_can_accept %}<form method="post" action="{{ url_for('tournament_schedule_accept',schedule_id=m.schedule_request.id) }}" style="width:auto"><button class="btn green" type="submit">✓ Đồng ý</button></form>{% endif %}
-          <form method="post" action="{{ url_for('tournament_match_schedule',match_id=m.id) }}"><input type="datetime-local" name="scheduled_at" required><select name="host_id"><option value="">Tự thống nhất Host</option>{% for h in hosts if h.status=='available' %}<option value="{{ h.id }}">{{ h.name }} · {{ h.region }}</option>{% endfor %}</select><button class="btn" type="submit">Giờ khác</button></form>
-        </div>
+        <div class="td-schedule-status">✅ <strong>Đã chốt:</strong> {{ (m.scheduled_at|string)|replace('T',' ') }}</div>
+      {% elif m.availability_overlap %}
+        <div class="td-schedule-status overlap">✅ <strong>Có {{ m.availability_overlap|length }} giờ trùng</strong></div>
+        <div class="td-overlap-list">{% for x in m.availability_overlap %}<form method="post" action="{{ url_for('tournament_schedule_from_availability',match_id=m.id) }}"><input type="hidden" name="slot_at" value="{{ x.iso }}"><button class="btn green" type="submit">{{ x.label }} · Chốt lịch</button></form>{% endfor %}</div>
       {% else %}
-        <div class="td-schedule-status">⚪ <strong>Chưa hẹn.</strong></div>
-        <div class="td-schedule-actions"><form method="post" action="{{ url_for('tournament_match_schedule',match_id=m.id) }}"><input type="datetime-local" name="scheduled_at" required><select name="host_id"><option value="">Tự thống nhất Host</option>{% for h in hosts if h.status=='available' %}<option value="{{ h.id }}">{{ h.name }} · {{ h.region }}</option>{% endfor %}</select><button class="btn" type="submit">Gửi</button></form></div>
+        <div class="td-schedule-status">⚠️ <strong>Chưa có giờ trùng.</strong> Xem lịch {{ opp_name }} và cập nhật lịch của bạn nếu có thể.</div>
+        <div class="td-opponent-slots">{% for x in m.opponent_availability %}<span>{{ x.slot_label }}</span>{% else %}<small>{{ opp_name }} chưa đặt lịch trong 3 ngày gần nhất.</small>{% endfor %}</div>
       {% endif %}
     </article>
   {% endif %}
 {% endfor %}
-{% if ns.count == 0 %}<div class="td-empty">Bạn chưa có trận cần hẹn lịch.</div>{% endif %}
-</div></section>
+{% if ns.count == 0 %}<div class="td-empty">Bạn chưa có đối thủ cần sắp lịch.</div>{% endif %}
+</div>
+{% else %}<div class="td-empty">Khán giả có thể xem giải nhưng chỉ HLV tham gia mới được đặt lịch thi đấu.</div>{% endif %}
+</section>
 <section class="td-section" id="host"><h2>Host đang rảnh</h2><div class="td-clubs">{% for h in hosts %}<div class="td-club"><strong>{{ h.name }}</strong><br><small>{{ h.region }} · {{ h.status }}</small></div>{% endfor %}</div></section>
 <section class="td-section" id="knockout"><h2>Knockout · Hai lượt / tổng tỷ số</h2>{% for m in matches if m.stage_code=='knockout' %}<div class="td-match"><span>{{ m.round_code|upper }} · Lượt {{ m.leg_no }}</span><strong>{{ m.home_name }} {{ m.home_score if m.home_score is not none else '—' }}</strong><strong>{{ m.away_score if m.away_score is not none else '—' }} {{ m.away_name }}</strong><small>{{ m.status }}</small></div>{% endfor %}</section>
 <section class="td-section" id="reward"><h2>Thưởng sớm</h2>{% for r in rewards.rules %}<div class="td-club"><strong>{{ r.name }}</strong><br><small>{{ r.reward_type }}: {{ r.reward_value }} · Hạn {{ r.deadline_at or 'Không giới hạn' }}</small></div>{% else %}<p>Chưa cấu hình thưởng sớm.</p>{% endfor %}</section>
