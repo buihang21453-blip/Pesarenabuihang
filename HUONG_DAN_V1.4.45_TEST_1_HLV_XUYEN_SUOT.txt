@@ -1,0 +1,17 @@
+PES ARENA V1.4.45 - TEST 1 HLV XUYEN SUOT
+
+1. Vao Admin > Tournament Test Console.
+2. O muc "Test xuyen suot nhu 1 HLV", bam "Bat dau Test nhu 1 HLV".
+3. Ban luon la Test HLV 01. Cac HLV khac do he thong tu tao.
+4. Dang ky: dien Host/Khu vuc/Zalo/QR > Gui dang ky > bam "Duyet ngay" ngay canh trang thai cho duyet.
+5. Hen lich: vao Hen lich > Gui de xuat > bam "Doi thu dong y" > bam "Gia lap da xong".
+6. Dung thanh giai doan o tren cung de di lan luot: Dang ky > GD1 > Hen lich > GD2 > Play-off > 1/8 > Tu ket > Ban ket > Chung ket.
+7. Test HLV 01 duoc giu lai trong moi vong Knockout de co the kiem tra lien tuc den Chung ket.
+8. Du lieu chi nam trong Tournament Test Sandbox, khong ghi vao giai that/Rank/RP/Zcoin.
+
+Dong goi V1.4.45:
+- APP_VERSION da cap nhat V1.4.45.
+- ZIP khong boc thu muc.
+- Da xoa __pycache__ va file tam.
+- SQL cu nam trong thu muc SQL_CU.
+- V1.4.45 khong co SQL moi.

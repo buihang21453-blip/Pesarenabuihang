@@ -29,6 +29,8 @@ def register_routes(context):
             "league_ranking": [],
             "knockout": [],
             "schedule_test": None,
+            "journey_mode": False,
+            "journey_player_id": None,
             "hosts": [
                 {"id":"host-bac","name":"Host Test Bắc","region":"Bắc","status":"available"},
                 {"id":"host-trung","name":"Host Test Trung","region":"Trung","status":"available"},
@@ -334,6 +336,54 @@ def register_routes(context):
         state["knockout"]=ko
         return state
 
+    def _force_journey_player(state, player_id):
+        """Keep one Test HLV visible through every stage for end-to-end UX testing."""
+        players=state.get("players") or []
+        names={p.get("id"):p.get("name") for p in players}
+        pname=names.get(player_id, player_id)
+        for key in ("stage1_ranking","league_ranking"):
+            rows=list(state.get(key) or [])
+            mine=next((r for r in rows if r.get("user_id")==player_id),None)
+            if mine:
+                rows=[mine]+[r for r in rows if r.get("user_id")!=player_id]
+                for idx,row in enumerate(rows,1): row["rank"]=idx
+                state[key]=rows
+        # Put the journey HLV in Pot 1 for a predictable player view.
+        if state.get("pots"):
+            mine=None
+            for pot in state["pots"]:
+                for row in list(pot):
+                    if row.get("user_id")==player_id:
+                        mine=row; pot.remove(row); break
+                if mine: break
+            if mine:
+                mine["pot"]=1; state["pots"][0].insert(0,mine)
+        # Ensure the same HLV appears and advances in every knockout screen.
+        for rnd in state.get("knockout") or []:
+            if not rnd.get("pairs"): continue
+            pair=rnd["pairs"][0]
+            pair["home"]=player_id; pair["home_name"]=pname
+            pair["winner"]=player_id; pair["winner_name"]=pname
+            if pair.get("away")==player_id:
+                alt=next((p for p in players if p.get("id")!=player_id),None)
+                if alt:
+                    pair["away"]=alt["id"]; pair["away_name"]=alt["name"]
+            if rnd.get("key")=="final":
+                pair["aggregate"]="Bo3 2-1"
+                pair["leg1"]="Trận 1: 2-1"; pair["leg2"]="Trận 2: 0-1"; pair["decider"]="Trận 3: 2-1 (có ET/PEN nếu cần)"
+        return state
+
+    def _build_single_hlv_journey(count=36, target=5, pot_count=4):
+        state=_build_full_simulation(count,target,pot_count)
+        player_id="test-hlv-01"
+        state["journey_mode"]=True; state["journey_player_id"]=player_id
+        state["registration_open"]=True
+        # Other HLVs are ready; the tester completes only their own registration.
+        state["registrations"]=[r for r in (state.get("registrations") or []) if r.get("user_id")!=player_id]
+        state["current_stage"]="registration"
+        _force_journey_player(state,player_id)
+        return state
+
     def _default_view_for_stage(state, stage):
         players=state.get("players") or []
         if stage in {"playoff","r16","qf","sf","final"}:
@@ -391,6 +441,7 @@ def register_routes(context):
             registration_counts=_registration_counts(state), schedule_cases=SCHEDULE_CASES,
             stage1_matches=_decorate_matches(state.get("stage1_matches") or [],players),
             league_matches=_decorate_matches(state.get("league_matches") or [],players),
+            journey_player_id=state.get("journey_player_id"), journey_mode=bool(state.get("journey_mode")),
         )
 
     @app.get('/admin/tournament-test-mode/public')
@@ -416,6 +467,7 @@ def register_routes(context):
             registration_counts=_registration_counts(state),
             stage1_matches=_decorate_matches(state.get("stage1_matches") or [], players),
             league_matches=_decorate_matches(state.get("league_matches") or [], players),
+            journey_player_id=state.get("journey_player_id"), journey_mode=bool(state.get("journey_mode")),
         )
 
     @app.post('/admin/tournament-test-mode/create-players')
@@ -674,6 +726,74 @@ def register_routes(context):
         label=dict(SCHEDULE_CASES).get(case,case)
         flash(f"Đã chuẩn bị Test lịch: {label}.","success")
         return redirect(url_for('admin_tournament_test_public',view_as=view_as,stage='schedule'))
+
+    @app.post('/admin/tournament-test-mode/start-single-journey')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_start_single_journey():
+        old,_=_load_state()
+        count=max(16,min(36,int(request.form.get("count") or 36)))
+        target=max(5,min(6,int(request.form.get("target") or old.get("stage1_target") or 5)))
+        pot_count=3 if int(request.form.get("pot_count") or old.get("pot_count") or 4)==3 else 4
+        try:
+            state=_build_single_hlv_journey(count,target,pot_count)
+        except ValueError as exc:
+            flash(str(exc),"error"); return redirect(url_for('admin_tournament_test_mode'))
+        _save_state(state)
+        flash("Đã tạo hành trình 1 HLV. Bạn là Test HLV 01; các HLV còn lại do hệ thống tự mô phỏng.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=state["journey_player_id"],stage='registration'))
+
+    @app.post('/admin/tournament-test-mode/journey/approve-registration')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_journey_approve_registration():
+        state,_=_load_state(); pid=state.get("journey_player_id")
+        reg=_registration_for(state,pid)
+        if reg and reg.get("status")=="pending":
+            reg["status"]="approved"; reg["reviewed_at"]=datetime.now(timezone.utc).isoformat(); _save_state(state)
+            flash("Đối thủ/Admin Test đã duyệt đăng ký ngay.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=pid,stage='registration'))
+
+    @app.post('/admin/tournament-test-mode/journey/schedule/<action>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_journey_schedule(action):
+        state,_=_load_state(); pid=state.get("journey_player_id") or "test-hlv-01"
+        if not state.get("schedule_test"):
+            _schedule_test_case(state,"unscheduled")
+        row=state.get("schedule_test") or {}; now=datetime.now(timezone.utc)
+        if action=="propose":
+            row["case"]="waiting_outgoing"; row["request"]={"id":"journey-request","status":"pending","proposed_by":pid,"proposed_at":(now+timedelta(hours=2)).isoformat(),"note":""}
+        elif action=="approve":
+            req=row.get("request") or {}
+            row["case"]="scheduled"; row["status"]="scheduled"; row["scheduled_at"]=req.get("proposed_at") or (now+timedelta(hours=2)).isoformat()
+        elif action=="complete":
+            row["case"]="completed"; row["status"]="completed"; row["scheduled_at"]=row.get("scheduled_at") or (now-timedelta(hours=2)).isoformat(); row["home_score"]=2; row["away_score"]=1
+        state["schedule_test"]=row; state["current_stage"]="schedule"; _save_state(state)
+        return redirect(url_for('admin_tournament_test_public',view_as=pid,stage='schedule'))
+
+    @app.post('/admin/tournament-test-mode/journey/go/<stage>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_journey_go(stage):
+        if stage not in STAGE_KEYS:
+            flash("Giai đoạn Test không hợp lệ.","error"); return redirect(url_for('admin_tournament_test_mode'))
+        state,_=_load_state(); pid=state.get("journey_player_id") or "test-hlv-01"
+        state["journey_mode"]=True; state["journey_player_id"]=pid; state["current_stage"]=stage
+        if stage=="schedule" and not state.get("schedule_test"):
+            # Use the journey player as HLV A and an automatic opponent as HLV B.
+            players=state.get("players") or []
+            others=[p for p in players if p.get("id")!=pid]
+            if others:
+                a=next((p for p in players if p.get("id")==pid),players[0]); b=others[0]
+                state["players"]=[a,b]+[p for p in players if p.get("id") not in {a.get("id"),b.get("id")}]
+                _schedule_test_case(state,"unscheduled")
+        _force_journey_player(state,pid); _save_state(state)
+        return redirect(url_for('admin_tournament_test_public',view_as=pid,stage=stage))
 
     @app.post('/admin/tournament-test-mode/reset')
     @login_required

@@ -1,0 +1,3 @@
+SQL_CU = toàn bộ SQL của các phiên bản trước.
+Bản V1.4.45 không phát sinh SQL mới.
+Khi có SQL mới ở các bản sau, file SQL mới sẽ được đặt riêng ở cấp ngoài để dễ nhận biết trước khi deploy.
