@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.59"
+APP_VERSION = "V1.4.60"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -2690,6 +2690,7 @@ def list_password_reset_requests(status=None, limit=100):
             user = users.get(row.get("user_id"), {})
             row["current_username"] = user.get("username") or row.get("username_snapshot") or "-"
             row["current_zalo_name"] = user.get("zalo_name") or row.get("zalo_name_snapshot") or "-"
+            row["current_zalo_phone"] = user.get("zalo_phone") or row.get("zalo_phone_snapshot") or "-"
         return rows
     except Exception as exc:
         print(f"list_password_reset_requests warning: {exc}")
@@ -5529,42 +5530,83 @@ def login():
 
     return render_template("login.html")
 
+def normalize_zalo_phone(value: str) -> str:
+    digits = "".join(ch for ch in str(value or "") if ch.isdigit())
+    if digits.startswith("84") and len(digits) in {11, 12}:
+        digits = "0" + digits[2:]
+    return digits
+
+
+def generate_temporary_password(length: int = 6) -> str:
+    # Bỏ các ký tự dễ nhìn nhầm: I/O/0/1.
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
-        zalo_name = request.form.get("zalo_name", "").strip()
+        zalo_phone = normalize_zalo_phone(request.form.get("zalo_phone", ""))
         user = get_user_by_username(username) if username else None
+        stored_phone = normalize_zalo_phone((user or {}).get("zalo_phone"))
 
-        matches_identity = bool(
-            user
-            and zalo_name
-            and (user.get("zalo_name") or "").strip().casefold() == zalo_name.casefold()
+        if not username or not zalo_phone:
+            flash("Vui lòng nhập đủ Tên tài khoản và SĐT Zalo đã đăng ký.", "danger")
+            return redirect(url_for("forgot_password"))
+
+        if not user or not stored_phone or stored_phone != zalo_phone:
+            flash("Tên tài khoản hoặc SĐT Zalo không khớp với thông tin đã đăng ký.", "danger")
+            return redirect(url_for("forgot_password"))
+
+        # Chống bấm liên tục: mỗi tài khoản tối đa 1 lần/phút.
+        recent = execute_query(
+            db.table("password_reset_requests")
+            .select("id,created_at")
+            .eq("user_id", user["id"])
+            .order("created_at", desc=True)
+            .limit(1),
+            "forgot_password_recent_request",
+        )
+        if recent.data:
+            last_at = parse_dt(recent.data[0].get("created_at"))
+            if last_at and (now_dt() - last_at).total_seconds() < 60:
+                flash("Bạn vừa yêu cầu cấp lại mật khẩu. Vui lòng thử lại sau 1 phút.", "warning")
+                return redirect(url_for("forgot_password"))
+
+        temporary_password = generate_temporary_password(6)
+        requested_at = now_iso()
+        request_row = execute_query(
+            db.table("password_reset_requests").insert({
+                "user_id": user["id"],
+                "username_snapshot": user.get("username"),
+                "zalo_name_snapshot": user.get("zalo_name"),
+                "zalo_phone_snapshot": zalo_phone,
+                "status": "resolved",
+                "requested_ip": get_client_ip(),
+                "admin_note": "Hệ thống tự cấp mật khẩu tạm 6 ký tự.",
+                "resolved_at": requested_at,
+            }),
+            "forgot_password_log_request",
+        )
+        execute_query(
+            db.table("users").update({
+                "password_hash": hash_password(temporary_password),
+                "must_change_password": True,
+                "password_changed_at": requested_at,
+            }).eq("id", user["id"]),
+            "forgot_password_issue_temporary_password",
         )
 
-        if matches_identity:
-            existing = execute_query(
-                db.table("password_reset_requests")
-                .select("id")
-                .eq("user_id", user["id"])
-                .eq("status", "pending")
-                .limit(1),
-                "find_pending_password_reset",
-            )
-            if not existing.data:
-                execute_query(
-                    db.table("password_reset_requests").insert({
-                        "user_id": user["id"],
-                        "username_snapshot": user.get("username"),
-                        "zalo_name_snapshot": user.get("zalo_name"),
-                        "status": "pending",
-                        "requested_ip": get_client_ip(),
-                    }),
-                    "create_password_reset_request",
-                )
-
-        flash("Nếu tài khoản và tên Zalo khớp, yêu cầu đã được gửi đến Admin. Hãy liên hệ Admin qua Zalo để nhận mật khẩu tạm.", "success")
-        return redirect(url_for("login"))
+        response = make_response(render_template(
+            "forgot_password.html",
+            temporary_password=temporary_password,
+            reset_username=user.get("username"),
+            request_logged=bool(request_row.data),
+        ))
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        return response
 
     return render_template("forgot_password.html")
 
@@ -5634,9 +5676,10 @@ def register():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
         zalo_name = request.form.get("zalo_name", "").strip()
+        zalo_phone = normalize_zalo_phone(request.form.get("zalo_phone", ""))
 
-        if not username or not password or not zalo_name:
-            flash("Vui lòng nhập đủ Tên tài khoản, Mật khẩu và Tên Zalo.", "danger")
+        if not username or not password or not zalo_name or not zalo_phone:
+            flash("Vui lòng nhập đủ Tên tài khoản, Mật khẩu, Tên Zalo và SĐT Zalo.", "danger")
             return redirect(url_for("register"))
 
         if len(username) < 3 or len(username) > 30:
@@ -5649,6 +5692,9 @@ def register():
 
         if len(zalo_name) < 2 or len(zalo_name) > 80:
             flash("Tên Zalo không hợp lệ.", "danger")
+            return redirect(url_for("register"))
+        if len(zalo_phone) < 9 or len(zalo_phone) > 11:
+            flash("SĐT Zalo không hợp lệ.", "danger")
             return redirect(url_for("register"))
 
         if get_user_by_username(username):
@@ -5664,6 +5710,7 @@ def register():
                 "password_hash": hash_password(password),
                 "display_name": username,
                 "zalo_name": zalo_name,
+                "zalo_phone": zalo_phone,
                 "role": "player",
                 "account_status": "pending",
                 "invite_code_used": None,

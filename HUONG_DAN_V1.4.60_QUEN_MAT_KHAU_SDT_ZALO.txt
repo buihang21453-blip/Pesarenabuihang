@@ -1,0 +1,14 @@
+PES Arena V1.4.60 - QUEN MAT KHAU DON GIAN
+
+1. Chay SQL_V1.4.60_QUEN_MAT_KHAU_SDT_ZALO.sql tren Supabase SQL Editor.
+2. Tai khoan moi bat buoc nhap: Ten Zalo + SDT Zalo.
+3. Tai khoan cu: Admin -> Quan ly danh sach user -> Quan ly -> them SDT Zalo.
+4. Luong Quen mat khau:
+   - Nhap Ten tai khoan + SDT Zalo da dang ky.
+   - Neu khop: he thong tao MK tam 6 ky tu (chu HOA + so, bo ky tu de nham).
+   - MK tam hien ngay tren man hinh.
+   - Yeu cau duoc luu vao password_reset_requests: tai khoan, SDT snapshot, IP, thoi gian, trang thai.
+   - MK tam khong duoc luu dang ro; users chi luu password_hash.
+   - Dang nhap bang MK tam se bi bat buoc doi mat khau moi.
+   - Moi tai khoan chi yeu cau lai toi da 1 lan/phut.
+5. Trang hien MK tam dat Cache-Control: no-store.

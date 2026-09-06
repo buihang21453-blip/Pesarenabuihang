@@ -237,7 +237,7 @@ def register_routes(context):
         pending_users = [u for u in players if u.get("account_status") == "pending"]
 
         password_reset_requests = admin_safe_load(
-            "password_resets", lambda: list_password_reset_requests("pending"), []
+            "password_resets", lambda: list_password_reset_requests(None, 100), []
         )
         raw_disputes = admin_safe_load(
             "match_disputes", lambda: list_match_disputes("pending"), []
