@@ -1,0 +1,6 @@
+PES Arena V1.4.62
+
+- Xóa dòng giải thích công khai rằng SĐT Zalo chỉ dùng để lưu log và không dùng đối chiếu.
+- Trang Quên mật khẩu chỉ còn form Tên tài khoản + SĐT Zalo và kết quả cấp mật khẩu tạm.
+- Không thay đổi logic quên mật khẩu của V1.4.61.
+- Không cần SQL mới.
