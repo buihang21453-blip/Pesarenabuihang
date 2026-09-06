@@ -7,7 +7,7 @@
 <p class="page-subtitle">Tìm đối thủ, xem hồ sơ và thành tích đối đầu.</p>
 
 <form class="filter-bar" method="get">
-    <input name="q" value="{{ q }}" placeholder="Tìm tên hoặc username...">
+    <input name="q" value="{{ q }}" placeholder="Tìm theo tên hiển thị...">
     <select name="status">
         <option value="all">Mọi trạng thái</option>
         <option value="ready" {{ 'selected' if status_filter == 'ready' else '' }}>Sẵn sàng</option>
@@ -33,7 +33,7 @@
     <tbody>
         {% for p in players %}
         <tr class="{{ 'current-user-row' if p.id == current_user.id else '' }}">
-            <td><a class="player-link player-with-avatar" href="{{ url_for('profile', user_id=p.id) }}">{{ player_avatar(p, size='sm') }}<span class="player-name-stack"><span class="player-display-name-line"><strong class="{{ p.name_style_class or '' }}">{{ p.display_name }}</strong>{% if p.profile_badge %}<img class="equipped-profile-badge players-equipped-profile-badge" src="{{ p.profile_badge.image_url }}" alt="{{ p.profile_badge.name }}" title="{{ p.profile_badge.name }}" loading="lazy">{% endif %}</span>{% if p.username != p.display_name %}<small>@{{ p.username }}</small>{% endif %}{% set player_streak_badge = get_win_streak_badge(p.streak or 0) %}{% if player_streak_badge %}<span class="win-streak-badge compact players-win-streak-badge">🔥 <strong>{{ player_streak_badge.title }}</strong> · {{ player_streak_badge.count }}</span>{% endif %}</span></a></td>
+            <td><a class="player-link player-with-avatar" href="{{ url_for('profile', user_id=p.id) }}">{{ player_avatar(p, size='sm') }}<span class="player-name-stack"><span class="player-display-name-line"><strong class="{{ p.name_style_class or '' }}">{{ p.display_name }}</strong>{% if p.profile_badge %}<img class="equipped-profile-badge players-equipped-profile-badge" src="{{ p.profile_badge.image_url }}" alt="{{ p.profile_badge.name }}" title="{{ p.profile_badge.name }}" loading="lazy">{% endif %}</span>{% if viewer_is_admin and p.username != p.display_name %}<small>@{{ p.username }}</small>{% endif %}{% set player_streak_badge = get_win_streak_badge(p.streak or 0) %}{% if player_streak_badge %}<span class="win-streak-badge compact players-win-streak-badge">🔥 <strong>{{ player_streak_badge.title }}</strong> · {{ player_streak_badge.count }}</span>{% endif %}</span></a></td>
 <td class="action-cell">
                 <a class="btn gray small" href="{{ url_for('profile', user_id=p.id) }}">Hồ sơ</a>
                 {% if p.id != current_user.id and viewer_can_invite and p.can_receive_invite %}

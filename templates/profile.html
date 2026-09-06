@@ -56,7 +56,7 @@
                         </div>
                         <div class="profile-v2-lol-crest" aria-hidden="true"><span></span><i></i><span></span></div>
                         <div class="profile-v2-lol-account-row">
-                            <span>@{{ player.username }}</span>
+                            {% if is_owner or viewer_is_admin %}<span>@{{ player.username }}</span>{% endif %}
                             <span>{{ player.rank_points or 0 }} RP</span>
                             <span>{{ player.rank_info.name }}</span>
                         </div>
@@ -228,7 +228,7 @@
             <section class="profile-v2-card profile-v2-public-info">
                 <div class="profile-v2-section-heading"><div><span>THÔNG TIN PLAYER</span><h2>{{ player.display_name }}</h2></div></div>
                 <div class="profile-v2-info-grid">
-                    <div><span>Tài khoản</span><strong>@{{ player.username }}</strong></div>
+                    {% if viewer_is_admin %}<div><span>Tài khoản</span><strong>@{{ player.username }}</strong></div>{% endif %}
                     <div><span>Tên hiển thị</span><strong>{{ player.display_name }}</strong></div>
                     <div><span>Tên Zalo</span><strong>{{ player.zalo_name or '-' }}</strong></div>
                     <div><span>Ngày tham gia</span><strong>{{ format_vn_datetime(player.created_at) }}</strong></div>

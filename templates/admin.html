@@ -133,7 +133,7 @@
         <div class="admin-section-heading">
             <div>
                 <h2>🔑 Lịch sử quên mật khẩu</h2>
-                <p class="small">Hệ thống tự đối chiếu Tên tài khoản + SĐT Zalo và cấp mật khẩu tạm 6 ký tự. Mật khẩu tạm không được lưu lại; chỉ lưu thông tin yêu cầu để Admin kiểm tra.</p>
+                <p class="small">Hệ thống kiểm tra Tên tài khoản, tự cấp mật khẩu tạm 6 ký tự và lưu SĐT Zalo người dùng cung cấp để Admin tra cứu. SĐT không dùng để xác minh tài khoản.</p>
             </div>
             <span class="admin-count">{{ password_reset_requests|length }}</span>
         </div>
@@ -144,7 +144,7 @@
                     <strong>{{ item.current_username }}</strong>
                     <span class="badge {{ 'confirmed' if item.status == 'resolved' else 'pending' }}">{{ 'Đã tự cấp' if item.status == 'resolved' else item.status }}</span>
                     <p>Tên Zalo: <strong>{{ item.current_zalo_name }}</strong></p>
-                    <p>SĐT Zalo: <strong>{{ item.current_zalo_phone or item.zalo_phone_snapshot or '-' }}</strong></p>
+                    <p>SĐT Zalo: <strong>{{ item.zalo_phone_snapshot or '-' }}</strong></p>
                     <p class="small">Yêu cầu lúc {{ format_vn_datetime(item.created_at) }} • IP: <code>{{ item.requested_ip or '-' }}</code></p>
                 </div>
             </article>
@@ -234,7 +234,7 @@
                     <tr class="admin-user-summary-row{% if p.duplicate_ip_warning_visible %} has-duplicate-ip{% endif %}"
                         data-user-summary
                         data-duplicate-ip="{{ 1 if p.duplicate_ip_detected else 0 }}"
-                        data-user-search="{{ (p.username ~ ' ' ~ (p.display_name or '') ~ ' ' ~ (p.zalo_name or '') ~ ' ' ~ (p.zalo_phone or '') ~ ' ' ~ (p.register_ip or '') ~ ' ' ~ (p.latest_ip or '') ~ ' ' ~ (p.duplicate_ip_accounts|join(' ')))|lower }}">
+                        data-user-search="{{ (p.username ~ ' ' ~ (p.display_name or '') ~ ' ' ~ (p.zalo_name or '') ~ ' ' ~ (p.register_ip or '') ~ ' ' ~ (p.latest_ip or '') ~ ' ' ~ (p.duplicate_ip_accounts|join(' ')))|lower }}">
                         <td>{{ loop.index }}</td>
                         <td><strong>{{ p.username }}</strong></td>
                         <td>
@@ -273,7 +273,6 @@
                                     <label>Tài khoản<input name="username" value="{{ p.username }}" required {% if not can_edit %}disabled{% endif %}></label>
                                     <label>Tên hiển thị<input name="display_name" value="{{ p.display_name or p.username }}" required {% if not can_edit %}disabled{% endif %}></label>
                                     <label>Tên Zalo<input name="zalo_name" value="{{ p.zalo_name or '' }}" {% if not can_edit %}disabled{% endif %}></label>
-                                    <label>SĐT Zalo<input name="zalo_phone" value="{{ p.zalo_phone or '' }}" inputmode="tel" {% if not can_edit %}disabled{% endif %}></label>
                                 </div>
 
                                 <div class="admin-user-edit-group">

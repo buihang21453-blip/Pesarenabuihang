@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.60"
+APP_VERSION = "V1.4.61"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -2690,7 +2690,7 @@ def list_password_reset_requests(status=None, limit=100):
             user = users.get(row.get("user_id"), {})
             row["current_username"] = user.get("username") or row.get("username_snapshot") or "-"
             row["current_zalo_name"] = user.get("zalo_name") or row.get("zalo_name_snapshot") or "-"
-            row["current_zalo_phone"] = user.get("zalo_phone") or row.get("zalo_phone_snapshot") or "-"
+            row["current_zalo_phone"] = row.get("zalo_phone_snapshot") or "-"
         return rows
     except Exception as exc:
         print(f"list_password_reset_requests warning: {exc}")
@@ -5549,14 +5549,15 @@ def forgot_password():
         username = request.form.get("username", "").strip()
         zalo_phone = normalize_zalo_phone(request.form.get("zalo_phone", ""))
         user = get_user_by_username(username) if username else None
-        stored_phone = normalize_zalo_phone((user or {}).get("zalo_phone"))
 
         if not username or not zalo_phone:
-            flash("Vui lòng nhập đủ Tên tài khoản và SĐT Zalo đã đăng ký.", "danger")
+            flash("Vui lòng nhập đủ Tên tài khoản và SĐT Zalo đang dùng.", "danger")
             return redirect(url_for("forgot_password"))
 
-        if not user or not stored_phone or stored_phone != zalo_phone:
-            flash("Tên tài khoản hoặc SĐT Zalo không khớp với thông tin đã đăng ký.", "danger")
+        # SĐT Zalo chỉ được lưu làm thông tin liên hệ/lịch sử yêu cầu, KHÔNG dùng để xác minh.
+        # Hệ thống hiện chưa có dữ liệu SĐT đã đăng ký đáng tin cậy cho các tài khoản cũ.
+        if not user:
+            flash("Không tìm thấy tài khoản này.", "danger")
             return redirect(url_for("forgot_password"))
 
         # Chống bấm liên tục: mỗi tài khoản tối đa 1 lần/phút.
@@ -5676,10 +5677,8 @@ def register():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
         zalo_name = request.form.get("zalo_name", "").strip()
-        zalo_phone = normalize_zalo_phone(request.form.get("zalo_phone", ""))
-
-        if not username or not password or not zalo_name or not zalo_phone:
-            flash("Vui lòng nhập đủ Tên tài khoản, Mật khẩu, Tên Zalo và SĐT Zalo.", "danger")
+        if not username or not password or not zalo_name:
+            flash("Vui lòng nhập đủ Tên tài khoản, Mật khẩu và Tên Zalo.", "danger")
             return redirect(url_for("register"))
 
         if len(username) < 3 or len(username) > 30:
@@ -5693,10 +5692,6 @@ def register():
         if len(zalo_name) < 2 or len(zalo_name) > 80:
             flash("Tên Zalo không hợp lệ.", "danger")
             return redirect(url_for("register"))
-        if len(zalo_phone) < 9 or len(zalo_phone) > 11:
-            flash("SĐT Zalo không hợp lệ.", "danger")
-            return redirect(url_for("register"))
-
         if get_user_by_username(username):
             flash("Tên tài khoản đã tồn tại.", "danger")
             return redirect(url_for("register"))
@@ -5710,7 +5705,6 @@ def register():
                 "password_hash": hash_password(password),
                 "display_name": username,
                 "zalo_name": zalo_name,
-                "zalo_phone": zalo_phone,
                 "role": "player",
                 "account_status": "pending",
                 "invite_code_used": None,
@@ -6170,11 +6164,12 @@ def players():
         player["winrate"] = round((int(player.get("wins", 0) or 0) / total) * 100, 1) if total else 0
         player["last_seen_display"] = format_vn_datetime(player.get("last_seen_at"))
 
+    viewer_is_admin = is_admin_user(viewer)
     if query:
         player_rows = [
             player for player in player_rows
             if query in str(player.get("display_name") or "").casefold()
-            or query in str(player.get("username") or "").casefold()
+            or (viewer_is_admin and query in str(player.get("username") or "").casefold())
         ]
     if status_filter != "all":
         player_rows = [player for player in player_rows if player.get("activity_code") == status_filter]
@@ -6187,6 +6182,7 @@ def players():
         q=request.args.get("q", ""),
         status_filter=status_filter,
         viewer_can_invite=viewer_can_invite,
+        viewer_is_admin=viewer_is_admin,
     )
 
 

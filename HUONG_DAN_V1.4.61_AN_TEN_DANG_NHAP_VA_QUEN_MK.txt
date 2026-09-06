@@ -1,0 +1,23 @@
+PES Arena V1.4.61
+
+1. Bao mat ten dang nhap
+- User thuong chi thay Ten hien thi cua tai khoan khac.
+- Trang Players khong hien username va khong tim theo username doi voi user thuong.
+- Ho so nguoi khac khong hien username.
+- Chinh chu van thay username cua minh trong Quan ly ho so.
+- Admin van thay username day du trong khu vuc Admin va khi can quan tri.
+
+2. Quen mat khau
+- Nhap Ten tai khoan + SDT Zalo dang dung.
+- SDT Zalo KHONG doi chieu voi tai khoan; chi luu vao lich su yeu cau de Admin biet thong tin lien he.
+- Neu Ten tai khoan ton tai, he thong tu cap mat khau tam 6 ky tu ngau nhien.
+- Mat khau tam bat buoc doi sau khi dang nhap.
+- Gioi han yeu cau lien tuc van duoc giu.
+
+3. Dang ky tai khoan
+- Khong bat buoc nhap SDT Zalo khi tao tai khoan.
+- SDT Zalo khong con la thuoc tinh ho so tai khoan.
+
+SQL
+- V1.4.61 khong co SQL moi.
+- Neu chua tung chay SQL V1.4.60 thi van can cot zalo_phone_snapshot trong password_reset_requests de luu SDT cua yeu cau quen mat khau.

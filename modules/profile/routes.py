@@ -126,6 +126,8 @@ def register_routes(context):
             flash("Không tìm thấy player.", "danger")
             return redirect(url_for("players"))
         context_data = service.build_profile_context(user_id, viewer)
+        if context_data is not None:
+            context_data["viewer_is_admin"] = is_admin_user(viewer)
         if context_data is None:
             flash("Không tìm thấy player.", "danger")
             return redirect(url_for("players"))

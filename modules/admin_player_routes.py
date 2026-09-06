@@ -155,8 +155,6 @@ def register_routes(context):
         rank_points = request.form.get("rank_points", "").strip()
         rp_adjustment_reason = request.form.get("rp_adjustment_reason", "").strip()[:200]
         zalo_name = request.form.get("zalo_name", "").strip()
-        zalo_phone_raw = request.form.get("zalo_phone", "").strip()
-        zalo_phone = normalize_zalo_phone(zalo_phone_raw)
         new_password = request.form.get("new_password", "").strip()
 
         if not display_name or not username:
@@ -168,15 +166,10 @@ def register_routes(context):
             flash("Username này đã tồn tại.", "danger")
             return redirect_admin("users")
 
-        if zalo_phone and (len(zalo_phone) < 9 or len(zalo_phone) > 11):
-            flash("SĐT Zalo không hợp lệ.", "danger")
-            return redirect_admin("users")
-
         update_data = {
             "display_name": display_name,
             "username": username,
             "zalo_name": zalo_name,
-            "zalo_phone": zalo_phone or None,
         }
 
         try:
@@ -224,7 +217,7 @@ def register_routes(context):
                 )
             except Exception as exc:
                 print(f"close password reset from user admin warning: {exc}")
-        changed = ["username", "display_name", "zalo_name", "zalo_phone"]
+        changed = ["username", "display_name", "zalo_name"]
         if rp_delta != 0:
             changed.append(f"rank_points {rp_delta:+d} RP - lý do: {rp_adjustment_reason}")
         else:
