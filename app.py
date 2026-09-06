@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.62"
+APP_VERSION = "V1.4.63"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -2511,17 +2511,17 @@ def user_ignored_for_duplicate_ip(user, config=None):
 
 
 def link_device_to_user(user):
-    # Admin chính và tài khoản do Admin tạo/import không bị giới hạn thiết bị/IP.
-    # Đây chỉ là ngoại lệ xác thực; mọi trận Rank vẫn tính W/H/B và RP bình thường.
+    """Ghi nhận thiết bị dùng gần nhất, nhưng không dùng thiết bị để chặn tài khoản.
+
+    Từ V1.4.63, quy tắc duyệt tài khoản mới chỉ dựa trên IP đăng ký:
+    IP mới -> tự duyệt; IP trùng -> chờ Admin kiểm duyệt. Vì vậy một thiết bị đã
+    từng dùng tài khoản khác không được phép trở thành một lớp chặn thứ hai.
+    """
     if user.get("role") == "admin" or is_admin_managed_test_account(user):
         return True, ""
 
     device_id = get_device_id()
     link = get_device_link(device_id)
-
-    if link and link["user_id"] != user["id"]:
-        return False, "Thiết bị này đã được liên kết với một tài khoản player khác."
-
     ip = get_client_ip()
     user_agent = request.headers.get("User-Agent", "")
 
@@ -2537,8 +2537,11 @@ def link_device_to_user(user):
             "link_device_create",
         )
     else:
+        # Thiết bị chỉ là dữ liệu theo dõi. Khi một tài khoản đã được duyệt hợp lệ,
+        # cập nhật liên kết sang tài khoản đang đăng nhập thay vì khóa đăng nhập.
         execute_query(
             db.table("user_devices").update({
+                "user_id": user["id"],
                 "ip_address": ip,
                 "user_agent": user_agent,
                 "last_seen_at": now_iso(),
@@ -2550,29 +2553,30 @@ def link_device_to_user(user):
 
 
 def device_can_register():
-    device_id = get_device_id()
-    link = get_device_link(device_id)
-    if link:
-        return False, "Thiết bị này đã có tài khoản player. Mỗi thiết bị chỉ được tạo 1 tài khoản."
-
-    ip = get_client_ip()
-    ua = request.headers.get("User-Agent", "")
-
-    # Chặn mềm: cùng IP + cùng User Agent đã từng đăng ký.
-    result = (
-        db.table("users")
-        .select("id")
-        .eq("role", "player")
-        .eq("register_ip", ip)
-        .eq("register_user_agent", ua)
-        .limit(1)
-        .execute()
-    )
-
-    if result.data:
-        return False, "Thiết bị/trình duyệt này có dấu hiệu đã đăng ký tài khoản player."
-
+    """Giữ endpoint tương thích; đăng ký không còn bị chặn theo thiết bị/browser."""
     return True, ""
+
+
+def registration_ip_conflicts(ip):
+    """Trả về các tài khoản player đang tồn tại đã đăng ký bằng cùng IP."""
+    ip = str(ip or "").strip()
+    if not ip:
+        return []
+    result = execute_query(
+        db.table("users")
+        .select("id,username,display_name,account_status,register_ip")
+        .eq("role", "player")
+        .eq("register_ip", ip),
+        "registration_ip_conflicts", attempts=2,
+    )
+    rows = []
+    for row in (result.data or []):
+        if str(row.get("account_status") or "approved").lower() == "deleted":
+            continue
+        if is_admin_managed_test_account(row):
+            continue
+        rows.append(row)
+    return rows
 
 
 
@@ -5480,7 +5484,11 @@ def login():
         status = user.get("account_status", "approved")
         if status != "approved":
             messages = {
-                "pending": "Tài khoản của bạn đang chờ Admin duyệt.",
+                "pending": (
+                    "Tài khoản chưa thể duyệt tự động vì IP đăng ký bị trùng. Admin có thể kiểm duyệt tài khoản này."
+                    if "Trùng IP" in str(user.get("rejection_reason") or "")
+                    else "Tài khoản của bạn đang chờ Admin duyệt."
+                ),
                 "rejected": "Tài khoản của bạn đã bị từ chối.",
                 "banned": "Tài khoản của bạn đã bị khóa. Hãy liên hệ Admin.",
                 "deleted": "Tài khoản này đã được Admin xóa khỏi hệ thống.",
@@ -5699,26 +5707,42 @@ def register():
         ip = get_client_ip()
         ua = request.headers.get("User-Agent", "")
 
+        ip_conflicts = registration_ip_conflicts(ip)
+        auto_approved = not ip_conflicts
+        account_status = "approved" if auto_approved else "pending"
+
+        payload = {
+            "username": username,
+            "password_hash": hash_password(password),
+            "display_name": username,
+            "zalo_name": zalo_name,
+            "role": "player",
+            "account_status": account_status,
+            "invite_code_used": None,
+            "rank_points": DEFAULT_POINTS,
+            "register_ip": ip,
+            "register_user_agent": ua,
+            "rejection_reason": None if auto_approved else "Trùng IP - chờ Admin kiểm duyệt",
+        }
+        if auto_approved:
+            payload["approved_at"] = now_iso()
+
         created = execute_query(
-            db.table("users").insert({
-                "username": username,
-                "password_hash": hash_password(password),
-                "display_name": username,
-                "zalo_name": zalo_name,
-                "role": "player",
-                "account_status": "pending",
-                "invite_code_used": None,
-                "rank_points": DEFAULT_POINTS,
-                "register_ip": ip,
-                "register_user_agent": ua,
-            }),
+            db.table("users").insert(payload),
             "register_user",
         )
 
         user = created.data[0]
-        link_device_to_user(user)
 
-        flash("Đăng ký thành công. Tài khoản đang chờ Admin duyệt.", "success")
+        if auto_approved:
+            # Chỉ ghi nhận thiết bị; không dùng thiết bị làm điều kiện duyệt.
+            try:
+                link_device_to_user(user)
+            except Exception as exc:
+                print(f"register device tracking warning: {exc}")
+            flash("Đăng ký thành công. Tài khoản đã được duyệt tự động, bạn có thể đăng nhập ngay.", "success")
+        else:
+            flash("Không thể duyệt tự động vì IP đăng ký đã được sử dụng. Tài khoản đã chuyển sang chờ Admin kiểm duyệt.", "warning")
         return redirect(url_for("login"))
 
     return render_template("register.html")

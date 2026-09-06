@@ -1,0 +1,15 @@
+PES Arena V1.4.63 - TỰ DUYỆT TÀI KHOẢN THEO IP
+
+QUY TẮC MỚI
+1. Người dùng gửi đăng ký tài khoản bình thường.
+2. Nếu IP đăng ký chưa tồn tại ở tài khoản player khác (không tính tài khoản đã xóa/test Admin):
+   - Tài khoản được approved tự động.
+   - Có thể đăng nhập ngay.
+3. Nếu IP đăng ký đã tồn tại:
+   - Tài khoản vẫn được tạo nhưng ở trạng thái pending.
+   - Người dùng được báo không thể duyệt tự động vì trùng IP.
+   - Admin xem tại danh sách tài khoản chờ duyệt và có thể Duyệt/Từ chối bằng tay.
+4. Sau khi Admin duyệt, tài khoản có thể đăng nhập bình thường.
+5. Ràng buộc cũ theo thiết bị/browser không còn dùng để chặn đăng ký hoặc đăng nhập; thiết bị chỉ còn được ghi nhận phục vụ theo dõi.
+
+SQL: Không có SQL mới.
