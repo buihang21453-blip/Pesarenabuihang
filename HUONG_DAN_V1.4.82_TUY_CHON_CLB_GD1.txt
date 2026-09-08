@@ -1,0 +1,12 @@
+PES Arena V1.4.82
+
+CAP NHAT CLB GIAI DOAN 1
+- Admin tu tich/bo tich tung CLB trong Pool GĐ1.
+- So CLB tu dong tang/giam theo lua chon.
+- Them nut Top 10, Chon tat ca, Bo chon tat ca.
+- Hien so CLB dang duoc chon.
+- Van giu nut khoi phuc Top 10 mac dinh.
+- GĐ1 bat buoc it nhat 2 CLB.
+- Giu nguyen loi Dat lich 3 ngay hien tai.
+
+Phien ban giao dien: V1.4.82
