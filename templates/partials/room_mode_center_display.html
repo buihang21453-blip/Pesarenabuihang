@@ -1,8 +1,8 @@
 {% set mode_logo_base = 'https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/Model/' %}
-{% set room_mode_random_selection = (room.team_tier == 'random_selection_match') %}
-{% set room_mode_random3 = (room.team_tier == 'random3_pick1' or (not system_features.rank_standard_enabled and not room_mode_random_selection)) %}
-{% set room_mode_label = 'Random Selection Match' if room_mode_random_selection else ('Random 3 chọn 1' if room_mode_random3 else 'Random') %}
-{% set room_mode_logo_index = '3' if room_mode_random_selection else ('2' if room_mode_random3 else '1') %}
+{% set room_mode_random_selection = (not is_tournament_room and room.team_tier == 'random_selection_match') %}
+{% set room_mode_random3 = (not is_tournament_room and (room.team_tier == 'random3_pick1' or (not system_features.rank_standard_enabled and not room_mode_random_selection))) %}
+{% set room_mode_label = 'Random' if is_tournament_room else ('Random Selection Match' if room_mode_random_selection else ('Random 3 chọn 1' if room_mode_random3 else 'Random')) %}
+{% set room_mode_logo_index = '1' if is_tournament_room else ('3' if room_mode_random_selection else ('2' if room_mode_random3 else '1')) %}
 {% set room_mode_state = '' %}
 {% if room.status == 'waiting_ready' %}
     {% if room.friendly_random3_active %}

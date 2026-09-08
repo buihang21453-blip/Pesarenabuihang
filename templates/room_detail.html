@@ -439,7 +439,30 @@
     <div class="panel room-extra-controls">
     <h2 class="room-control-title">Điều khiển phòng</h2>
 
-    {% if (system_features.friendly_enabled or system_features.friendly_random3_enabled) and room.status == "waiting_ready" %}
+    {% if is_tournament_room and tournament_meta and tournament_match %}
+    <div class="room-mode-grid">
+        <div class="room-mode-card">
+            <h3>🏆 Phòng giải đấu</h3>
+            <p class="small">Chế độ duy nhất: <strong>Random CLB</strong>. Không có Random 3 chọn 1 hoặc Random Selection Match.</p>
+            {% if room.status == 'waiting_ready' and not room.has_guest %}
+                <p class="small">Đang chờ đúng đối thủ của trận giải vào phòng.</p>
+            {% elif room.status == 'waiting_ready' and room.has_guest and not room.host_team %}
+                {% if room_room_viewer_is_host or current_user.role == 'admin' %}
+                <form method="post" action="{{ url_for('tournament_room_random_stage1_clubs', tournament_id=tournament_meta.tournament_id, room_id=room.id) }}" data-room-async="1">
+                    <button class="btn gold" type="submit">🎲 Random CLB</button>
+                </form>
+                {% else %}
+                <p class="small">Đã đủ 2 HLV. Chờ chủ phòng Random CLB.</p>
+                {% endif %}
+            {% elif room.status == 'playing' %}
+                <p class="small">CLB đã được Random. Trận đấu đang diễn ra.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+
+    {% if not is_tournament_room and (system_features.friendly_enabled or system_features.friendly_random3_enabled) and room.status == "waiting_ready" %}
 
         {% if room_room_viewer_is_host or current_user.role == "admin" %}
             {% if room.has_guest %}

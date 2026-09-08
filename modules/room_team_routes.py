@@ -203,6 +203,9 @@ def register_routes(context):
     def room_select_ranked_mode(room_id):
         user = current_user()
         room = get_room(room_id)
+        if room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            flash("Phòng giải đấu chỉ sử dụng chế độ Random CLB.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
         if not room or (user["id"] != room.get("host_user_id") and not is_admin_user(user)):
             flash("Chỉ chủ phòng mới được chọn chế độ thi đấu.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
@@ -243,6 +246,9 @@ def register_routes(context):
     def room_start_random_selection_match(room_id):
         user = current_user()
         room = get_room(room_id)
+        if room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            flash("Phòng giải đấu chỉ sử dụng chế độ Random CLB.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
         if not room or (user["id"] != room.get("host_user_id") and not is_admin_user(user)):
             flash("Chỉ chủ phòng mới được mở chế độ này.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
@@ -308,6 +314,9 @@ def register_routes(context):
     def room_start_random3_friendly(room_id):
         user = current_user()
         room = get_room(room_id)
+        if room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            flash("Phòng giải đấu chỉ sử dụng chế độ Random CLB.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
         if not room or (user["id"] != room.get("host_user_id") and not is_admin_user(user)):
             flash("Chỉ chủ phòng mới được mở chế độ này.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
@@ -338,6 +347,9 @@ def register_routes(context):
     def room_choose_random3_friendly(room_id):
         user = current_user()
         room = get_room(room_id)
+        if room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            flash("Phòng giải đấu chỉ sử dụng chế độ Random CLB.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
         state = decode_friendly_random3_state(room.get("note") if room else None)
         if not system_feature_enabled("friendly_random3_enabled"):
             flash("Chế độ Random 3 chọn 1 đang tạm tắt.", "warning")
