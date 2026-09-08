@@ -49,13 +49,16 @@
 </tbody></table></div>{% endif %}
 </section>
 <section class="td-section" id="stage1" data-tab-panel="stage1"><h2>⚽ GĐ1</h2>
+{% if member %}{% set myid = member.user_id|string %}{% set s1opened = ev.get('stage1_reveals',{}).get(myid) %}
+  <div style="margin:4px 0 18px;padding:16px;border:1px solid rgba(241,202,104,.35);border-radius:14px;background:linear-gradient(135deg,rgba(241,202,104,.10),rgba(9,26,41,.95))">
+    <h3 style="margin:0 0 10px;color:#f1ca68">🎯 ĐỐI THỦ CỦA TÔI</h3>
+    {% if not s1opened %}<div class="td-reveal"><p>Bấm để mở cả 3 đối thủ GĐ1 của bạn.</p><form method="post" action="{{ url_for('tournament_stage1_reveal',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">🎁 MỞ 3 ĐỐI THỦ</button></form></div>
+    {% else %}<div class="td-opponents">{% set seen=[] %}{% for m in matches if m.stage_code=='stage1' and (m.home_user_id|string==myid or m.away_user_id|string==myid) %}{% set opp = m.away_name if m.home_user_id|string==myid else m.home_name %}{% if opp not in seen %}{% if seen.append(opp) %}{% endif %}<div class="td-opponent"><small>ĐỐI THỦ {{ seen|length }}</small><b>{{ opp }}</b><span>2 trận</span></div>{% endif %}{% endfor %}</div>{% endif %}
+  </div>
+{% endif %}
 <h3>BXH GĐ1</h3><div style="overflow:auto"><table class="td-table"><thead><tr><th>#</th><th>HLV</th><th>Tr</th><th>T</th><th>H</th><th>B</th><th>BT</th><th>BB</th><th>HS</th><th>Điểm</th></tr></thead><tbody>{% for r in stage1_ranking %}<tr><td>{{ r.rank }}</td><td>{{ r.display_name }}</td><td>{{ r.played }}</td><td>{{ r.wins }}</td><td>{{ r.draws }}</td><td>{{ r.losses }}</td><td>{{ r.gf }}</td><td>{{ r.ga }}</td><td>{{ r.gd }}</td><td><b>{{ r.points }}</b></td></tr>{% endfor %}</tbody></table></div>
 {% if ev.get('completion_ranking') %}<h3 style="margin-top:16px">🏁 Đua hoàn thành sớm</h3><div style="overflow:auto"><table class="td-table"><thead><tr><th>Top</th><th>HLV</th><th>Trận</th><th>Thưởng</th></tr></thead><tbody>{% for r in ev.get('completion_ranking',[])[:10] %}<tr><td>{{ r.finish_rank or '—' }}</td><td>{{ r.display_name }}</td><td>{{ r.played }}/6</td><td>{% if r.tickets %}<span class="td-ticket">🎟 {{ r.tickets }} vé Random</span>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
 <h3 style="margin-top:16px">CLB GĐ1</h3><div class="td-pool">{% for c in stage1_club_pool %}<span>{{ c.name }}</span>{% endfor %}</div>
-{% if member %}{% set myid = member.user_id|string %}{% set s1opened = ev.get('stage1_reveals',{}).get(myid) %}
-  {% if not s1opened %}<div class="td-reveal"><h3>Đối thủ GĐ1 của bạn đã sẵn sàng</h3><p>Bấm để mở cả 3 đối thủ của bạn cùng lúc.</p><form method="post" action="{{ url_for('tournament_stage1_reveal',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">🎁 MỞ ĐỐI THỦ CỦA TÔI</button></form></div>
-  {% else %}<div class="td-opponents">{% set seen=[] %}{% for m in matches if m.stage_code=='stage1' and (m.home_user_id|string==myid or m.away_user_id|string==myid) %}{% set opp = m.away_name if m.home_user_id|string==myid else m.home_name %}{% if opp not in seen %}{% if seen.append(opp) %}{% endif %}<div class="td-opponent"><small>ĐỐI THỦ {{ seen|length }}</small><b>{{ opp }}</b><span>2 trận</span></div>{% endif %}{% endfor %}</div>{% endif %}
-{% endif %}
 </section>
 <section class="td-section" id="club" data-tab-panel="league"><h2>🎰 Random / Chọn CLB</h2>
 {% set cd = ev.get('club_draft',{}) %}{% if member %}{% set uid = member.user_id|string %}{% set entry = cd.get('entries',{}).get(uid,{}) %}
