@@ -669,17 +669,101 @@ def register_routes(context):
     @admin_required
     @admin_permission_required("system_features_manage")
     def admin_tournament_fee_unmatched_link(fee_id):
-        registration_id = str(request.form.get("registration_id") or "").strip()
-        fees, _ = _safe_rows(db.table("tournament_fee_unmatched").select("*").eq("id", fee_id).limit(1), "fee_unmatched_lookup")
-        regs, _ = _safe_rows(db.table("tournament_registrations").select("*").eq("id", registration_id).limit(1), "fee_registration_lookup")
-        if not fees or not regs:
-            flash("Không tìm thấy khoản tiền hoặc đăng ký để ghép.", "error")
+        # V1.4.75: link against ANY player account on the website, including pending accounts.
+        user_id = str(request.form.get("user_id") or "").strip()
+        fees, _ = _safe_rows(
+            db.table("tournament_fee_unmatched").select("*").eq("id", fee_id).limit(1),
+            "fee_unmatched_lookup",
+        )
+        users, _ = _safe_rows(
+            db.table("users").select("id,username,display_name,role,account_status").eq("id", user_id).limit(1),
+            "fee_link_user_lookup",
+        )
+        if not fees or not users or users[0].get("role") != "player":
+            flash("Không tìm thấy khoản tiền hoặc tài khoản web để ghép.", "error")
             return redirect_admin("tournaments")
-        fee, reg = fees[0], regs[0]
-        total = int(reg.get("amount_paid") or 0) + int(fee.get("amount_paid") or 0)
-        execute_query(db.table("tournament_registrations").update({"amount_paid": total, "payment_status":"verified", "payment_updated_at":now_iso(), "payment_updated_by":(current_user() or {}).get("id")}).eq("id", registration_id), "fee_link_registration", attempts=2)
-        execute_query(db.table("tournament_fee_unmatched").update({"status":"linked", "linked_registration_id":registration_id, "linked_user_id":reg.get("user_id"), "linked_at":now_iso(), "linked_by":(current_user() or {}).get("id")}).eq("id", fee_id), "fee_link_unmatched", attempts=2)
-        flash("Đã ghép khoản tiền vào HLV.", "success")
+
+        fee = fees[0]
+        user = users[0]
+        tournament_id = fee.get("tournament_id")
+        admin_user = current_user() or {}
+        now_value = now_iso()
+
+        regs, _ = _safe_rows(
+            db.table("tournament_registrations").select("*")
+            .eq("tournament_id", tournament_id).eq("user_id", user_id).limit(1),
+            "fee_registration_lookup_by_user",
+        )
+        reg = regs[0] if regs else None
+        if not reg:
+            created = execute_query(
+                db.table("tournament_registrations").insert({
+                    "tournament_id": tournament_id,
+                    "user_id": user_id,
+                    "status": "approved",
+                    "registered_at": now_value,
+                    "reviewed_at": now_value,
+                    "reviewed_by": admin_user.get("id"),
+                    "payment_status": "verified",
+                    "amount_paid": int(fee.get("amount_paid") or 0),
+                    "payment_updated_at": now_value,
+                    "payment_updated_by": admin_user.get("id"),
+                }),
+                "fee_link_create_registration", attempts=2,
+            )
+            rows = getattr(created, "data", None) or []
+            reg = rows[0] if rows else None
+            if not reg:
+                regs, _ = _safe_rows(
+                    db.table("tournament_registrations").select("*")
+                    .eq("tournament_id", tournament_id).eq("user_id", user_id).limit(1),
+                    "fee_registration_reload",
+                )
+                reg = regs[0] if regs else None
+        else:
+            total = int(reg.get("amount_paid") or 0) + int(fee.get("amount_paid") or 0)
+            execute_query(
+                db.table("tournament_registrations").update({
+                    "status": "approved",
+                    "reviewed_at": now_value,
+                    "reviewed_by": admin_user.get("id"),
+                    "amount_paid": total,
+                    "payment_status": "verified",
+                    "payment_updated_at": now_value,
+                    "payment_updated_by": admin_user.get("id"),
+                }).eq("id", reg.get("id")),
+                "fee_link_registration", attempts=2,
+            )
+            reg["amount_paid"] = total
+            reg["status"] = "approved"
+
+        if not reg:
+            flash("Không thể tạo hồ sơ giải đấu cho tài khoản đã chọn.", "error")
+            return redirect_admin("tournaments")
+
+        # Keep the already-approved fee row as an active tournament HLV after linking.
+        execute_query(
+            db.table("tournament_members").upsert({
+                "tournament_id": tournament_id,
+                "user_id": user_id,
+                "status": "active",
+                "approved_at": now_value,
+                "approved_by": admin_user.get("id"),
+            }, on_conflict="tournament_id,user_id"),
+            "fee_link_member", attempts=2,
+        )
+        execute_query(
+            db.table("tournament_fee_unmatched").update({
+                "status": "linked",
+                "linked_registration_id": reg.get("id"),
+                "linked_user_id": user_id,
+                "linked_at": now_value,
+                "linked_by": admin_user.get("id"),
+            }).eq("id", fee_id),
+            "fee_link_unmatched", attempts=2,
+        )
+        label = user.get("display_name") or user.get("username") or "HLV"
+        flash(f"Đã ghép khoản tiền vào tài khoản {label}.", "success")
         return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/fees/unmatched/<fee_id>/remove')
