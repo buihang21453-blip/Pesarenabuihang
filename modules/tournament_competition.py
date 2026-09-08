@@ -637,9 +637,24 @@ def register_routes(context):
     @admin_required
     @admin_permission_required("system_features_manage")
     def admin_tournament_member_remove(tournament_id,user_id):
-        execute_query(db.table("tournament_members").update({"status":"withdrawn"}).eq("tournament_id",tournament_id).eq("user_id",user_id),"ops_member_remove",attempts=2)
-        log_admin_action("Xóa HLV khỏi giải","tournament_member",details={"tournament_id":tournament_id,"user_id":user_id})
-        flash("Đã xóa HLV khỏi danh sách thi đấu.","success"); return redirect_admin("tournaments")
+        # V1.4.79: khi Admin xóa HLV ở giai đoạn đăng ký, phải đồng bộ cả
+        # danh sách thi đấu và hồ sơ đăng ký. Không xóa tài khoản web / lịch sử tiền.
+        execute_query(
+            db.table("tournament_members").update({"status":"withdrawn"})
+            .eq("tournament_id",tournament_id).eq("user_id",user_id),
+            "ops_member_remove", attempts=2,
+        )
+        execute_query(
+            db.table("tournament_registrations").update({"status":"withdrawn"})
+            .eq("tournament_id",tournament_id).eq("user_id",user_id),
+            "ops_registration_remove", attempts=2,
+        )
+        log_admin_action(
+            "Xóa HLV khỏi giải", "tournament_member",
+            details={"tournament_id":tournament_id,"user_id":user_id,"registration_status":"withdrawn"},
+        )
+        flash("Đã xóa HLV khỏi giải. Tài khoản web và lịch sử lệ phí vẫn được giữ lại.","success")
+        return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/stages/<stage_code>/status')
     @login_required
