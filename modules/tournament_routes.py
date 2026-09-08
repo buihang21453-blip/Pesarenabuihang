@@ -414,7 +414,15 @@ def register_routes(context):
             flash("Hãy nhập đủ Tên Zalo, Khu vực và lựa chọn Host.", "warning")
             return redirect(url_for("tournaments"))
         payload = {"has_host": host_choice == "yes", "host_region": host_region, "zalo_name": zalo_name[:80]}
-        execute_query(db.table("tournament_registrations").update(payload).eq("id", registration.get("id")), "tournament_profile_update", attempts=2)
+        try:
+            execute_query(
+                db.table("tournament_registrations").update(payload).eq("id", registration.get("id")),
+                "tournament_profile_update", attempts=2,
+            )
+        except Exception as exc:
+            print(f"tournament_profile_update failed: {exc}")
+            flash("Không thể lưu Khu vực / Host / Zalo. Vui lòng báo Admin kiểm tra Database / SQL.", "error")
+            return redirect(url_for("tournaments"))
         # Keep member snapshot aligned when present.
         try:
             execute_query(db.table("tournament_members").update({"zalo_name": zalo_name[:80]}).eq("tournament_id", tournament_id).eq("user_id", user.get("id")), "tournament_member_profile_sync", attempts=1)
@@ -431,21 +439,76 @@ def register_routes(context):
         host_choice = (request.form.get("host_choice") or "").strip().lower()
         host_region = (request.form.get("host_region") or "").strip()
         zalo_name = (request.form.get("zalo_name") or "").strip()
+        tournament_id = (request.form.get("tournament_id") or "").strip()
+        user_id = (request.form.get("user_id") or "").strip()
         if host_choice not in {"yes", "no"} or host_region not in {"Bắc", "Trung", "Nam"}:
             flash("Thông tin Khu vực/Host không hợp lệ.", "warning")
             return redirect_admin("tournaments")
-        rows, _ = _safe_rows(db.table("tournament_registrations").select("tournament_id,user_id").eq("id", registration_id).limit(1), "admin_tournament_profile_lookup")
-        if not rows:
-            flash("Không tìm thấy đăng ký HLV.", "error")
+
+        reg = None
+        reg_id = None if str(registration_id).strip().lower() in {"", "none", "null", "undefined"} else registration_id
+        if reg_id:
+            rows, _ = _safe_rows(
+                db.table("tournament_registrations").select("id,tournament_id,user_id,status").eq("id", reg_id).limit(1),
+                "admin_tournament_profile_lookup",
+            )
+            reg = rows[0] if rows else None
+
+        # HLV added directly by Admin may exist in tournament_members without a registration row.
+        # Build a lightweight approved registration profile so Host/region/Zalo can still be edited safely.
+        if not reg and tournament_id and user_id:
+            rows, _ = _safe_rows(
+                db.table("tournament_registrations").select("id,tournament_id,user_id,status").eq("tournament_id", tournament_id).eq("user_id", user_id).limit(1),
+                "admin_tournament_profile_lookup_by_member",
+            )
+            reg = rows[0] if rows else None
+            if not reg:
+                try:
+                    created = execute_query(
+                        db.table("tournament_registrations").insert({
+                            "tournament_id": tournament_id,
+                            "user_id": user_id,
+                            "status": "approved",
+                            "has_host": host_choice == "yes",
+                            "host_region": host_region,
+                            "zalo_name": zalo_name[:80] or None,
+                            "payment_status": "unreported",
+                            "registered_at": now_iso(),
+                        }),
+                        "admin_tournament_profile_create_for_direct_member", attempts=2,
+                    )
+                    data = getattr(created, "data", None) or []
+                    reg = data[0] if data else None
+                except Exception as exc:
+                    print(f"admin_tournament_profile_create_for_direct_member failed: {exc}")
+                    flash("Không thể tạo hồ sơ thông tin cho HLV. Hãy kiểm tra SQL Database trong Admin.", "error")
+                    return redirect_admin("tournaments")
+
+        if not reg:
+            flash("Không tìm thấy hồ sơ đăng ký của HLV.", "error")
             return redirect_admin("tournaments")
-        reg = rows[0]
-        payload = {"has_host": host_choice == "yes", "host_region": host_region, "zalo_name": zalo_name[:80]}
-        execute_query(db.table("tournament_registrations").update(payload).eq("id", registration_id), "admin_tournament_profile_update", attempts=2)
+
+        reg_id = reg.get("id") or reg_id
+        payload = {"has_host": host_choice == "yes", "host_region": host_region, "zalo_name": zalo_name[:80] or None}
         try:
-            execute_query(db.table("tournament_members").update({"zalo_name": zalo_name[:80]}).eq("tournament_id", reg.get("tournament_id")).eq("user_id", reg.get("user_id")), "admin_tournament_member_profile_sync", attempts=1)
+            execute_query(
+                db.table("tournament_registrations").update(payload).eq("id", reg_id),
+                "admin_tournament_profile_update", attempts=2,
+            )
+        except Exception as exc:
+            print(f"admin_tournament_profile_update failed: {exc}")
+            flash("Không thể lưu Khu vực / Host / Zalo. Hãy kiểm tra mục Database / SQL.", "error")
+            return redirect_admin("tournaments")
+
+        try:
+            execute_query(
+                db.table("tournament_members").update({"zalo_name": zalo_name[:80] or None})
+                .eq("tournament_id", reg.get("tournament_id")).eq("user_id", reg.get("user_id")),
+                "admin_tournament_member_profile_sync", attempts=1,
+            )
         except Exception:
             pass
-        log_admin_action("Cập nhật thông tin HLV giải đấu", "tournament_registration", target_id=registration_id, details=payload)
+        log_admin_action("Cập nhật thông tin HLV giải đấu", "tournament_registration", target_id=reg_id, details=payload)
         flash("Đã cập nhật Khu vực / Host / Zalo của HLV.", "success")
         return redirect_admin("tournaments")
 
