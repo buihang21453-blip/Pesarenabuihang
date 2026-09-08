@@ -198,15 +198,29 @@ def register_routes(context):
         data["rejected"] = [row for row in registrations if row.get("status") == "rejected"]
 
         finance_rows = data["pending"] + data["approved"]
+        unmatched_finance = []
+        for fee in unmatched:
+            paid = int(fee.get("amount_paid") or 0)
+            unmatched_finance.append({
+                "display_name": fee.get("payer_name") or "HLV chưa ghép tài khoản",
+                "amount_paid": paid,
+                "amount_missing": max(0, 100000 - paid),
+                "amount_surplus": max(0, paid - 100000),
+                "amount_refunded": 0,
+                "fee_amount": 50000,
+                "responsibility_amount": 50000,
+                "is_unmatched_fee": True,
+            })
+        all_finance_rows = finance_rows + unmatched_finance
         data["finance_summary"] = {
-            "player_count": len(finance_rows),
-            "total_collected": sum(int(r.get("amount_paid") or 0) for r in finance_rows),
-            "tournament_fee_collected": sum(min(int(r.get("amount_paid") or 0), int(r.get("fee_amount") or 50000)) for r in finance_rows),
-            "responsibility_collected": sum(max(0, min(int(r.get("amount_paid") or 0) - int(r.get("fee_amount") or 50000), int(r.get("responsibility_amount") or 50000))) for r in finance_rows),
-            "total_missing": sum(int(r.get("amount_missing") or 0) for r in finance_rows),
-            "total_surplus": sum(int(r.get("amount_surplus") or 0) for r in finance_rows),
-            "total_refunded": sum(int(r.get("amount_refunded") or 0) for r in finance_rows),
-            "surplus_players": [r for r in finance_rows if int(r.get("amount_surplus") or 0) > 0],
+            "player_count": len(all_finance_rows),
+            "total_collected": sum(int(r.get("amount_paid") or 0) for r in all_finance_rows),
+            "tournament_fee_collected": sum(min(int(r.get("amount_paid") or 0), int(r.get("fee_amount") or 50000)) for r in all_finance_rows),
+            "responsibility_collected": sum(max(0, min(int(r.get("amount_paid") or 0) - int(r.get("fee_amount") or 50000), int(r.get("responsibility_amount") or 50000))) for r in all_finance_rows),
+            "total_missing": sum(int(r.get("amount_missing") or 0) for r in all_finance_rows),
+            "total_surplus": sum(int(r.get("amount_surplus") or 0) for r in all_finance_rows),
+            "total_refunded": sum(int(r.get("amount_refunded") or 0) for r in all_finance_rows),
+            "surplus_players": [r for r in all_finance_rows if int(r.get("amount_surplus") or 0) > 0],
         }
 
         members, _ = _safe_rows(
@@ -540,6 +554,12 @@ def register_routes(context):
             fee=min(paid,50000)
             resp=max(0,min(paid-50000,50000))
             ws.append([i,r.get("display_name") or "", "Đã duyệt" if r.get("status")=="approved" else "Chờ duyệt", r.get("zalo_name") or "", r.get("host_region") or "", "Có" if r.get("has_host") else "Không", paid, fee, resp, int(r.get("amount_missing") or 0), int(r.get("amount_surplus") or 0), int(r.get("amount_refunded") or 0), int(r.get("responsibility_deducted") or 0), r.get("payment_note") or ""])
+        base_stt = len(active_regs)
+        for j,row in enumerate(unmatched,1):
+            paid=int(row.get("amount_paid") or 0)
+            fee=min(paid,50000)
+            resp=max(0,min(paid-50000,50000))
+            ws.append([base_stt+j,row.get("payer_name") or "HLV chưa ghép tài khoản","Đã duyệt · Chưa có TK",row.get("zalo_contact") or "","","",paid,fee,resp,max(0,100000-paid),max(0,paid-100000),0,0,row.get("note") or ""])
         for col in "GHIJKLM":
             for cell in ws[col][1:]: cell.number_format = '#,##0" đ"'
         widths=[6,24,14,22,12,10,14,14,14,14,16,14,14,30]
@@ -556,12 +576,12 @@ def register_routes(context):
         wu.freeze_panes="A2"
 
         ws2=wb.create_sheet("Tổng hợp")
-        total=sum(int(r.get("amount_paid") or 0) for r in active_regs)
-        fee_total=sum(min(int(r.get("amount_paid") or 0),50000) for r in active_regs)
-        resp_total=sum(max(0,min(int(r.get("amount_paid") or 0)-50000,50000)) for r in active_regs)
-        surplus=sum(int(r.get("amount_surplus") or 0) for r in active_regs)
-        missing=sum(int(r.get("amount_missing") or 0) for r in active_regs)
-        for row in [("Giải",tour_name),("Số HLV",len(active_regs)),("Tổng đã thu",total),("Tiền giải",fee_total),("Tiền trách nhiệm",resp_total),("Cần hoàn thừa",surplus),("Còn thiếu",missing),("Tiền chưa ghép tài khoản",sum(int(x.get("amount_paid") or 0) for x in unmatched))]: ws2.append(row)
+        total=sum(int(r.get("amount_paid") or 0) for r in active_regs) + sum(int(x.get("amount_paid") or 0) for x in unmatched)
+        fee_total=sum(min(int(r.get("amount_paid") or 0),50000) for r in active_regs) + sum(min(int(x.get("amount_paid") or 0),50000) for x in unmatched)
+        resp_total=sum(max(0,min(int(r.get("amount_paid") or 0)-50000,50000)) for r in active_regs) + sum(max(0,min(int(x.get("amount_paid") or 0)-50000,50000)) for x in unmatched)
+        surplus=sum(int(r.get("amount_surplus") or 0) for r in active_regs) + sum(max(0,int(x.get("amount_paid") or 0)-100000) for x in unmatched)
+        missing=sum(int(r.get("amount_missing") or 0) for r in active_regs) + sum(max(0,100000-int(x.get("amount_paid") or 0)) for x in unmatched)
+        for row in [("Giải",tour_name),("Số HLV theo dõi",len(active_regs)+len(unmatched)),("Trong đó chưa ghép TK",len(unmatched)),("Tổng đã thu",total),("Tiền giải",fee_total),("Tiền trách nhiệm",resp_total),("Cần hoàn thừa",surplus),("Còn thiếu",missing)]: ws2.append(row)
         ws2.column_dimensions['A'].width=28; ws2.column_dimensions['B'].width=28
         for cell in ws2['A']: cell.font=Font(bold=True)
         for cell in ws2['B'][2:]:
