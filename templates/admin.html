@@ -761,6 +761,26 @@
           </div>
         </details>
 
+        <details style="margin-top:12px" open><summary><strong>💰 Lệ phí giải · Admin quản trị</strong></summary>
+          <div style="padding-top:10px">
+            <p class="small">Mức hiện tại: <strong>50.000đ lệ phí + 50.000đ trách nhiệm = 100.000đ</strong>. Nhập số tiền thực tế đã thu; hệ thống tự tính thiếu/dư. Tiền trách nhiệm có thể khấu trừ nếu vi phạm và hoàn phần còn lại sau giải.</p>
+            {% set fee_rows = td.get('pending',[]) + td.get('approved',[]) %}
+            {% if fee_rows %}<div class="admin-table-wrap"><table><thead><tr><th>HLV</th><th>Đã thu</th><th>Cần thu</th><th>Thiếu / Dư</th><th>Trách nhiệm</th><th>Cập nhật</th></tr></thead><tbody>
+            {% for row in fee_rows %}<tr>
+              <td><strong>{{ row.display_name }}</strong><div class="small">{{ row.zalo_name|default('—',true) }}</div></td>
+              <td><strong>{{ '{:,}'.format(row.amount_paid|default(0)|int).replace(',', '.') }}đ</strong></td>
+              <td>{{ '{:,}'.format(row.required_amount|default(100000)|int).replace(',', '.') }}đ</td>
+              <td>{% if row.amount_missing|default(0)|int > 0 %}<span style="color:#e67e22">Thiếu {{ '{:,}'.format(row.amount_missing|int).replace(',', '.') }}đ</span>{% elif row.amount_surplus|default(0)|int > 0 %}<span style="color:#27ae60">Dư {{ '{:,}'.format(row.amount_surplus|int).replace(',', '.') }}đ</span>{% else %}<span style="color:#27ae60">✓ Đủ</span>{% endif %}</td>
+              <td>Giữ {{ '{:,}'.format(row.responsibility_amount|default(50000)|int).replace(',', '.') }}đ<div class="small">Khấu trừ {{ '{:,}'.format(row.responsibility_deducted|default(0)|int).replace(',', '.') }}đ · Đã hoàn {{ '{:,}'.format(row.amount_refunded|default(0)|int).replace(',', '.') }}đ</div></td>
+              <td><details><summary class="btn gray" style="cursor:pointer">Sửa tiền</summary><form method="post" action="{{ url_for('admin_tournament_registration_finance',registration_id=row.id) }}" style="min-width:300px;padding-top:8px;display:grid;gap:6px"><input type="hidden" name="_admin_tab" value="tournaments"><label>Đã thu<input type="number" name="amount_paid" min="0" step="1000" value="{{ row.amount_paid|default(0) }}"></label><input type="hidden" name="fee_amount" value="50000"><input type="hidden" name="responsibility_amount" value="50000"><label>Khấu trừ trách nhiệm<input type="number" name="responsibility_deducted" min="0" max="50000" step="1000" value="{{ row.responsibility_deducted|default(0) }}"></label><label>Đã hoàn cho HLV<input type="number" name="amount_refunded" min="0" step="1000" value="{{ row.amount_refunded|default(0) }}"></label><label>Ghi chú<input name="payment_note" maxlength="500" value="{{ row.payment_note|default('',true) }}"></label><button class="btn green" type="submit">Lưu</button></form></details></td>
+            </tr>{% endfor %}</tbody></table></div>{% else %}<p class="small">Chưa có HLV đăng ký để ghi nhận lệ phí.</p>{% endif %}
+
+            <h4 style="margin-top:16px">Tiền đã nhận nhưng chưa có tài khoản web</h4>
+            <form method="post" action="{{ url_for('admin_tournament_fee_unmatched_add',tournament_id=tour.id) }}" class="system-toggle-grid" style="align-items:end"><input type="hidden" name="_admin_tab" value="tournaments"><label><span>Tên người chuyển / HLV</span><input name="payer_name" required></label><label><span>Zalo / liên hệ</span><input name="zalo_contact"></label><label><span>Số tiền đã nhận</span><input type="number" name="amount_paid" min="1000" step="1000" required></label><label><span>Ghi chú</span><input name="note"></label><button class="btn green" type="submit">+ Lưu tiền chờ ghép</button></form>
+            {% if td.get('fee_unmatched') %}<div class="admin-table-wrap" style="margin-top:8px"><table><thead><tr><th>Người chuyển</th><th>Liên hệ</th><th>Số tiền</th><th>Ghi chú</th><th>Ghép tài khoản</th></tr></thead><tbody>{% for fee in td.get('fee_unmatched',[]) %}<tr><td><strong>{{ fee.payer_name }}</strong></td><td>{{ fee.zalo_contact|default('—',true) }}</td><td><strong>{{ '{:,}'.format(fee.amount_paid|int).replace(',', '.') }}đ</strong></td><td>{{ fee.note|default('—',true) }}</td><td><form method="post" action="{{ url_for('admin_tournament_fee_unmatched_link',fee_id=fee.id) }}" style="display:flex;gap:5px;flex-wrap:wrap"><input type="hidden" name="_admin_tab" value="tournaments"><select name="registration_id" required><option value="">-- Chọn HLV sau khi có tài khoản --</option>{% for row in fee_rows %}<option value="{{ row.id }}">{{ row.display_name }}</option>{% endfor %}</select><button class="btn green" type="submit">Ghép</button></form><form method="post" action="{{ url_for('admin_tournament_fee_unmatched_remove',fee_id=fee.id) }}" style="display:inline-block;margin-top:4px"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn red" type="submit">Bỏ</button></form></td></tr>{% endfor %}</tbody></table></div>{% endif %}
+          </div>
+        </details>
+
         {% if not tour.registration_open %}
         {% set sc = ops.get('scale',{}) %}
         <div style="margin-top:14px;padding:14px;border:1px solid rgba(46,204,113,.32);border-radius:13px;background:rgba(46,204,113,.05)">

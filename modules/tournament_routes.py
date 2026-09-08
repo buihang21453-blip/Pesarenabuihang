@@ -137,6 +137,30 @@ def register_routes(context):
             row["display_name"] = user.get("display_name") or user.get("username") or "Tài khoản"
         return rows
 
+    def _decorate_finance(row):
+        fee_amount = int(row.get("fee_amount") or 50000)
+        responsibility_amount = int(row.get("responsibility_amount") or 50000)
+        paid = int(row.get("amount_paid") or 0)
+        deducted = max(0, int(row.get("responsibility_deducted") or 0))
+        refunded = max(0, int(row.get("amount_refunded") or 0))
+        required = fee_amount + responsibility_amount
+        row["fee_amount"] = fee_amount
+        row["responsibility_amount"] = responsibility_amount
+        row["amount_paid"] = paid
+        row["responsibility_deducted"] = min(deducted, responsibility_amount)
+        row["amount_refunded"] = refunded
+        row["required_amount"] = required
+        row["amount_missing"] = max(0, required - paid)
+        row["amount_surplus"] = max(0, paid - required - refunded)
+        row["responsibility_refundable"] = max(0, responsibility_amount - row["responsibility_deducted"] - refunded)
+        if paid < required:
+            row["finance_status"] = "missing"
+        elif paid > required + refunded:
+            row["finance_status"] = "surplus"
+        else:
+            row["finance_status"] = "paid"
+        return row
+
     def _admin_tournament_data():
         data = {
             "db_ready": True,
@@ -162,7 +186,13 @@ def register_routes(context):
             .eq("tournament_id", tournament_id).order("registered_at"),
             "admin_tournament_registrations",
         )
-        registrations = _decorate_registration_rows(registrations)
+        registrations = [_decorate_finance(row) for row in _decorate_registration_rows(registrations)]
+        unmatched, _ = _safe_rows(
+            db.table("tournament_fee_unmatched").select("*")
+            .eq("tournament_id", tournament_id).neq("status", "linked").order("created_at", desc=True),
+            "admin_tournament_fee_unmatched",
+        )
+        data["fee_unmatched"] = unmatched
         data["pending"] = [row for row in registrations if row.get("status") == "pending"]
         data["approved"] = [row for row in registrations if row.get("status") == "approved"]
         data["rejected"] = [row for row in registrations if row.get("status") == "rejected"]
@@ -355,6 +385,81 @@ def register_routes(context):
         cache_delete("_tournament_design_settings_cached")
         log_admin_action("Cập nhật bố cục ảnh Giải đấu", "system", details=payload)
         flash("Đã lưu kích thước và vị trí ảnh Giải đấu.", "success")
+        return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/registrations/<registration_id>/finance')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_registration_finance(registration_id):
+        def money(name, default=0):
+            raw = str(request.form.get(name, default) or "0").replace(",", "").replace(".", "").strip()
+            try:
+                return max(0, int(raw))
+            except ValueError:
+                return default
+        payload = {
+            "amount_paid": money("amount_paid"),
+            "fee_amount": money("fee_amount", 50000),
+            "responsibility_amount": money("responsibility_amount", 50000),
+            "responsibility_deducted": money("responsibility_deducted"),
+            "amount_refunded": money("amount_refunded"),
+            "payment_note": (request.form.get("payment_note") or "").strip()[:500],
+            "payment_updated_at": now_iso(),
+            "payment_updated_by": (current_user() or {}).get("id"),
+            "payment_status": "verified" if money("amount_paid") > 0 else "unreported",
+        }
+        execute_query(db.table("tournament_registrations").update(payload).eq("id", registration_id), "admin_tournament_finance_update", attempts=2)
+        log_admin_action("Cập nhật lệ phí giải", "tournament_registration", target_id=registration_id, details=payload)
+        flash("Đã cập nhật lệ phí HLV.", "success")
+        return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/fees/unmatched/add')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_fee_unmatched_add(tournament_id):
+        payer_name = (request.form.get("payer_name") or "").strip()
+        zalo_contact = (request.form.get("zalo_contact") or "").strip()
+        raw = str(request.form.get("amount_paid") or "0").replace(",", "").replace(".", "").strip()
+        try: amount = max(0, int(raw))
+        except ValueError: amount = 0
+        if not payer_name or amount <= 0:
+            flash("Hãy nhập tên người chuyển và số tiền đã nhận.", "warning")
+            return redirect_admin("tournaments")
+        execute_query(db.table("tournament_fee_unmatched").insert({
+            "tournament_id": tournament_id, "payer_name": payer_name, "zalo_contact": zalo_contact or None,
+            "amount_paid": amount, "note": (request.form.get("note") or "").strip()[:500],
+            "status": "waiting", "created_by": (current_user() or {}).get("id"),
+        }), "admin_tournament_fee_unmatched_add", attempts=2)
+        flash("Đã lưu khoản tiền chờ ghép tài khoản.", "success")
+        return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/fees/unmatched/<fee_id>/link')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_fee_unmatched_link(fee_id):
+        registration_id = str(request.form.get("registration_id") or "").strip()
+        fees, _ = _safe_rows(db.table("tournament_fee_unmatched").select("*").eq("id", fee_id).limit(1), "fee_unmatched_lookup")
+        regs, _ = _safe_rows(db.table("tournament_registrations").select("*").eq("id", registration_id).limit(1), "fee_registration_lookup")
+        if not fees or not regs:
+            flash("Không tìm thấy khoản tiền hoặc đăng ký để ghép.", "error")
+            return redirect_admin("tournaments")
+        fee, reg = fees[0], regs[0]
+        total = int(reg.get("amount_paid") or 0) + int(fee.get("amount_paid") or 0)
+        execute_query(db.table("tournament_registrations").update({"amount_paid": total, "payment_status":"verified", "payment_updated_at":now_iso(), "payment_updated_by":(current_user() or {}).get("id")}).eq("id", registration_id), "fee_link_registration", attempts=2)
+        execute_query(db.table("tournament_fee_unmatched").update({"status":"linked", "linked_registration_id":registration_id, "linked_user_id":reg.get("user_id"), "linked_at":now_iso(), "linked_by":(current_user() or {}).get("id")}).eq("id", fee_id), "fee_link_unmatched", attempts=2)
+        flash("Đã ghép khoản tiền vào HLV.", "success")
+        return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/fees/unmatched/<fee_id>/remove')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_fee_unmatched_remove(fee_id):
+        execute_query(db.table("tournament_fee_unmatched").update({"status":"cancelled"}).eq("id", fee_id), "fee_unmatched_cancel", attempts=2)
+        flash("Đã bỏ khoản tiền chờ ghép.", "success")
         return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/access')

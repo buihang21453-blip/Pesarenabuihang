@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.63"
+APP_VERSION = "V1.4.64"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -5708,8 +5708,13 @@ def register():
         ua = request.headers.get("User-Agent", "")
 
         ip_conflicts = registration_ip_conflicts(ip)
-        auto_approved = not ip_conflicts
-        account_status = "approved" if auto_approved else "pending"
+        if ip_conflicts:
+            # Không tiết lộ cơ chế kiểm tra IP ra giao diện công khai.
+            flash("⚠️ PES Arena phát hiện bạn đã có tài khoản trên web rồi. Vui lòng không lập thêm tài khoản khác. Nếu quên mật khẩu hoặc tài khoản, vui lòng liên hệ Admin.", "warning")
+            return redirect(url_for("register"))
+
+        auto_approved = True
+        account_status = "approved"
 
         payload = {
             "username": username,
@@ -5722,7 +5727,7 @@ def register():
             "rank_points": DEFAULT_POINTS,
             "register_ip": ip,
             "register_user_agent": ua,
-            "rejection_reason": None if auto_approved else "Trùng IP - chờ Admin kiểm duyệt",
+            "rejection_reason": None,
         }
         if auto_approved:
             payload["approved_at"] = now_iso()
