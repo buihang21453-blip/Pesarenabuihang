@@ -702,7 +702,15 @@
   {% set td = tournament_admin_data|default({}) %}
   {% set ops = tournament_ops_admin|default({}) %}
   <div class="panel">
-    <style>.tournament-compact table{font-size:12px}.tournament-compact th,.tournament-compact td{padding:5px 7px;line-height:1.2;vertical-align:middle}.tournament-compact .btn{padding:5px 8px;font-size:11px}.tournament-compact select,.tournament-compact input{min-height:28px;padding:3px 6px;font-size:12px}.tournament-compact .small{font-size:10px;line-height:1.15}.tournament-compact details>summary{white-space:nowrap}</style>
+    <style>
+    .tournament-op-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px;padding:6px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.08);border-radius:12px}
+    .tournament-op-tab-btn{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:inherit;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;line-height:1.2}
+    .tournament-op-tab-btn:hover{background:rgba(255,255,255,.08)}
+    .tournament-op-tab-btn.active{background:linear-gradient(180deg,#f5d57a,#d9a93e);color:#17130a;border-color:#f1ca68}
+    .tournament-op-tab-panel{display:none;width:100%;box-sizing:border-box}
+    .tournament-op-tab-panel.active{display:block}
+    @media(max-width:900px){.tournament-op-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.tournament-op-tab-btn{width:100%;text-align:left}}
+    .tournament-compact table{font-size:12px}.tournament-compact th,.tournament-compact td{padding:5px 7px;line-height:1.2;vertical-align:middle}.tournament-compact .btn{padding:5px 8px;font-size:11px}.tournament-compact select,.tournament-compact input{min-height:28px;padding:3px 6px;font-size:12px}.tournament-compact .small{font-size:10px;line-height:1.15}.tournament-compact details>summary{white-space:nowrap}</style>
     <h2>🏟️ Quản lý giải đấu</h2>
     <p class="muted">Trang này chỉ dùng để <strong>vận hành giải thật</strong>. Hãy làm lần lượt từ Bước 1 → Bước 5. Các thiết lập ít dùng đã chuyển sang tab <strong>⚙️ Thiết kế giải đấu</strong>.</p>
     {% if not td.get('db_ready', false) %}
@@ -719,7 +727,16 @@
         <span class="btn gray" style="cursor:default">Đã duyệt: {{ (td.get('members',[])|length) + (td.get('fee_unmatched',[])|length) }}</span>
       </div>
 
-      <div style="padding:15px;border:1px solid rgba(52,152,219,.3);border-radius:14px;margin-bottom:12px">
+
+      <div class="tournament-op-tabs" role="tablist" aria-label="Điều hành giải đấu">
+        <button type="button" class="tournament-op-tab-btn active" data-tournament-op-tab="registration">1️⃣ Đăng ký & HLV</button>
+        <button type="button" class="tournament-op-tab-btn" data-tournament-op-tab="stage1">2️⃣ GĐ1</button>
+        <button type="button" class="tournament-op-tab-btn" data-tournament-op-tab="potclub">3️⃣ Pot & CLB</button>
+        <button type="button" class="tournament-op-tab-btn" data-tournament-op-tab="league">4️⃣ League Phase</button>
+        <button type="button" class="tournament-op-tab-btn" data-tournament-op-tab="knockout">5️⃣ Knockout</button>
+        <button type="button" class="tournament-op-tab-btn" data-tournament-op-tab="tools">🛠 Xử lý trận</button>
+      </div>
+      <div class="tournament-op-tab-panel active" data-tournament-op-panel="registration" style="padding:15px;border:1px solid rgba(52,152,219,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">1️⃣ Đăng ký & chốt danh sách</h3>
         <p class="small">Duyệt HLV trước. Khi đủ danh sách, bấm <strong>Kết thúc đăng ký</strong>. Đây là việc duy nhất cần làm ở bước này.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -851,7 +868,7 @@
   {% if ops.get('ready') and ops.get('tournament') %}
     {% set ot=ops.get('tournament') %}{% set ev=ops.get('event_ops',{}) %}{% set tm=ev.get('timing',{}) %}{% set cd=ev.get('club_draft',{}) %}{% set ld=ev.get('league_draw',{}).get('state',{}) %}
     <div class="panel" style="margin-top:14px">
-      <div style="padding:15px;border:1px solid rgba(46,204,113,.3);border-radius:14px;margin-bottom:12px">
+      <div class="tournament-op-tab-panel" data-tournament-op-panel="stage1" style="padding:15px;border:1px solid rgba(46,204,113,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">2️⃣ Giai đoạn 1 — Random & thi đấu 6 trận</h3>
         <p class="small"><strong>Làm theo thứ tự:</strong> Bắt đầu GĐ1 → Random đối thủ → theo dõi tiến độ → kết thúc GĐ1.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -865,7 +882,7 @@
         <details style="margin-top:8px"><summary>⚠️ Trường hợp hết hạn mà còn trận thiếu</summary><div style="padding-top:8px"><form method="post" action="{{ url_for('admin_tournament_stage1_finish',tournament_id=ot.id) }}" onsubmit="return confirm('Các trận còn thiếu sẽ chuyển Chờ BTC xử lý. Tiếp tục?');"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="force" value="1"><button class="btn red" type="submit">Kết thúc & chuyển trận thiếu cho BTC</button></form></div></details>
       </div>
 
-      <div style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
+      <div class="tournament-op-tab-panel" data-tournament-op-panel="potclub" style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">3️⃣ Chia Pot & chọn CLB</h3>
         <p class="small"><strong>Làm theo thứ tự:</strong> Chia 3 Pot → Khóa Pot → mở sự kiện Top 10 → Random CLB phần còn lại.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -878,7 +895,7 @@
         <details style="margin-top:8px"><summary>Admin xử lý khi HLV vắng mặt</summary><div style="padding-top:8px"><form method="post" action="{{ url_for('admin_tournament_club_draft_force',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn" type="submit">🎲 Random/chốt thay HLV</button></form></div></details>
       </div>
 
-      <div style="padding:15px;border:1px solid rgba(155,89,182,.32);border-radius:14px;margin-bottom:12px">
+      <div class="tournament-op-tab-panel" data-tournament-op-panel="league" style="padding:15px;border:1px solid rgba(155,89,182,.32);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">4️⃣ Giai đoạn 2 — League Phase</h3>
         <p class="small"><strong>Làm theo thứ tự:</strong> Bắt đầu lễ bốc thăm → bốc lần lượt Pot 1 → 2 → 3 cho từng HLV → thi đấu → khóa BXH.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -892,7 +909,7 @@
         <details style="margin-top:8px"><summary>⚠️ Khóa GĐ2 khi còn trận thiếu</summary><div style="padding-top:8px"><form method="post" action="{{ url_for('admin_tournament_league_finish',tournament_id=ot.id) }}" onsubmit="return confirm('Các trận thiếu sẽ chuyển Chờ BTC xử lý. Tiếp tục?');"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="force" value="1"><button class="btn red" type="submit">Khóa & chuyển trận thiếu cho BTC</button></form></div></details>
       </div>
 
-      <div style="padding:15px;border:1px solid rgba(231,76,60,.3);border-radius:14px;margin-bottom:12px">
+      <div class="tournament-op-tab-panel" data-tournament-op-panel="knockout" style="padding:15px;border:1px solid rgba(231,76,60,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">5️⃣ Knockout → Chung kết</h3>
         <p class="small">Sau khi khóa BXH GĐ2, chọn <strong>một</strong> thể thức. Hệ thống tự sinh bracket và tự đẩy người thắng khi đủ kết quả.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -902,13 +919,35 @@
         {% set kf=ops.get('knockout_flow',{}) %}<p class="small">Vòng hiện tại: <strong>{{ kf.get('current_round','Chưa sinh')|upper }}</strong>{% if kf.get('completed') %} · 🏆 Giải đã hoàn tất{% endif %}</p>
       </div>
 
-      <details><summary><strong>🛠️ Sửa kết quả / xử lý trận khi có sự cố</strong></summary>
+      <div class="tournament-op-tab-panel" data-tournament-op-panel="tools">
+      <details open><summary><strong>🛠️ Sửa kết quả / xử lý trận khi có sự cố</strong></summary>
         <div style="padding-top:10px">{% if ops.get('matches') %}<div class="admin-table-wrap tournament-compact"><table><thead><tr><th>GĐ</th><th>Cặp</th><th>Trạng thái</th><th>Kết quả</th></tr></thead><tbody>{% for m in ops.get('matches')[-30:] %}<tr><td>{{ m.stage_code }} {{ m.round_code or '' }}</td><td>{{ m.home_name }} – {{ m.away_name }}</td><td>{{ m.status }}</td><td><form method="post" action="{{ url_for('admin_tournament_match_result',match_id=m.id) }}" style="display:flex;gap:5px;align-items:center;flex-wrap:wrap"><input type="hidden" name="_admin_tab" value="tournaments"><input name="home_score" type="number" min="0" value="{{ m.home_score or 0 }}" style="width:52px"><span>–</span><input name="away_score" type="number" min="0" value="{{ m.away_score or 0 }}" style="width:52px">{% if m.stage_code=='knockout' %}<small>Pen</small><input name="home_pen" type="number" min="0" value="{{ m.home_pen if m.home_pen is not none else '' }}" placeholder="—" style="width:46px"><span>–</span><input name="away_pen" type="number" min="0" value="{{ m.away_pen if m.away_pen is not none else '' }}" placeholder="—" style="width:46px">{% endif %}<button class="btn" type="submit">Lưu</button></form></td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="small">Chưa có trận.</p>{% endif %}</div>
       </details>
+      </div>
     </div>
   {% endif %}
 </section>
 {% endif %}
+<script>
+(function(){
+  const root=document.querySelector('[data-admin-panel="tournaments"]');
+  if(!root) return;
+  const buttons=[...root.querySelectorAll('[data-tournament-op-tab]')];
+  const panels=[...root.querySelectorAll('[data-tournament-op-panel]')];
+  if(!buttons.length) return;
+  const key='pesArenaAdminTournamentOpsTab';
+  function activate(name){
+    if(!panels.some(p=>p.dataset.tournamentOpPanel===name)) name='registration';
+    buttons.forEach(b=>b.classList.toggle('active',b.dataset.tournamentOpTab===name));
+    panels.forEach(p=>p.classList.toggle('active',p.dataset.tournamentOpPanel===name));
+    try{localStorage.setItem(key,name)}catch(e){}
+  }
+  buttons.forEach(b=>b.addEventListener('click',()=>activate(b.dataset.tournamentOpTab)));
+  let saved='registration';
+  try{saved=localStorage.getItem(key)||saved}catch(e){}
+  activate(saved);
+})();
+</script>
 
 {% if can_admin('system_features_manage') %}
 <section class="admin-tab-panel" data-admin-panel="tournament-design">
