@@ -17,7 +17,7 @@ STAGE_LABELS = {
 }
 ROUND_ORDER = ["playoff", "r16", "qf", "sf", "final"]
 
-# V1.4.87 - Lịch thủ công + Host rảnh + tinh gọn giao diện GĐ1.
+# V1.4.88 - Tạo phòng trực tiếp + mời đúng đối thủ; dọn gói deploy.
 STAGE1_ALLOWED_TIERS = {"S+", "S"}
 TOURNAMENT_ROOM_PREFIX = "TOURNAMENT_ROOM|"
 
@@ -936,7 +936,19 @@ def register_routes(context):
         meta={"tournament_id":str(tournament_id),"tournament_match_id":str(match_id),"stage_code":match.get("stage_code"),"home_user_id":str(match.get("home_user_id")),"away_user_id":str(match.get("away_user_id")),"home_name":dm.get("home_name"),"away_name":dm.get("away_name")}
         row=execute_query(db.table("match_rooms").insert({"invite_id":None,"host_user_id":uid,"guest_user_id":None,"team_tier":"TOURNAMENT_GD1" if match.get("stage_code")=="stage1" else "TOURNAMENT","match_mode":MATCH_MODE_FRIENDLY,"friendly_tier":None,"status":"waiting_ready","guest_ready":False,"note":_room_note(meta),"state_expires_at":None,"updated_at":now_iso()}),"ops_tournament_room_create",attempts=2)
         room=(row.data or [{}])[0]
-        flash("Đã vào Phòng thi đấu của trận giải. Đang chờ đối thủ.","success")
+        opponent_uid = str(match.get("away_user_id") if uid==str(match.get("home_user_id")) else match.get("home_user_id"))
+        try:
+            creator = (user.get("display_name") or user.get("username") or "Đối thủ")
+            create_user_notification(
+                opponent_uid,
+                "🏟️ Đối thủ đã tạo phòng giải",
+                f"{creator} đã tạo phòng cho trận của bạn. Bấm để vào phòng thi đấu.",
+                url_for("room_detail", room_id=room.get("id")),
+                "tournament_room_invite",
+            )
+        except Exception as exc:
+            app.logger.warning("Không gửi được lời mời phòng giải: %s", exc)
+        flash("Đã tạo phòng và mời đúng đối thủ. Đang chờ đối thủ vào phòng.","success")
         return redirect(url_for("room_detail",room_id=room.get("id")))
 
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/random-stage1-clubs')

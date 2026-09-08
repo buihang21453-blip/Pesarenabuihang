@@ -1,0 +1,7 @@
+PES Arena V1.4.88
+
+- Trận giải có thể tạo phòng ngay, KHÔNG cần đặt lịch trước.
+- Nút: Tạo phòng & mời đối thủ.
+- Hệ thống tạo phòng gắn tournament_match_id và gửi thông báo cho đúng đối thủ.
+- Toàn bộ kết quả phòng giải vẫn ghi vào dữ liệu giải đấu, không sang Rank/Giao hữu.
+- Dữ liệu giải nằm trên Supabase; dọn ZIP không xóa dữ liệu HLV/trận.

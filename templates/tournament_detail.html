@@ -41,7 +41,7 @@
 {% else %}<div class="td-empty">Chưa có HLV nào vào Phòng thi đấu.</div>{% endfor %}
 </div>
 {% if member %}<h3 style="margin-top:16px">Trận của tôi</h3><div style="overflow:auto"><table class="td-table"><thead><tr><th>Giai đoạn</th><th>Đối thủ</th><th>Lịch hẹn</th><th>Phòng</th></tr></thead><tbody>
-{% for m in matches if m.status in ['pending','scheduled'] and (member.user_id|string==m.home_user_id|string or member.user_id|string==m.away_user_id|string) %}{% set opp=m.away_name if member.user_id|string==m.home_user_id|string else m.home_name %}<tr><td>{{ 'GĐ1' if m.stage_code=='stage1' else m.stage_code }}</td><td><strong>{{ opp }}</strong></td><td>{{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa hẹn' }}</td><td><form method="post" action="{{ url_for('tournament_match_room_enter',tournament_id=tournament.id,match_id=m.id) }}"><button class="btn green" type="submit">Vào phòng thi đấu</button></form></td></tr>{% endfor %}
+{% for m in matches if m.status in ['pending','scheduled'] and (member.user_id|string==m.home_user_id|string or member.user_id|string==m.away_user_id|string) %}{% set opp=m.away_name if member.user_id|string==m.home_user_id|string else m.home_name %}<tr><td>{{ 'GĐ1' if m.stage_code=='stage1' else m.stage_code }}</td><td><strong>{{ opp }}</strong></td><td>{{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa hẹn' }}</td><td><form method="post" action="{{ url_for('tournament_match_room_enter',tournament_id=tournament.id,match_id=m.id) }}"><button class="btn green" type="submit">Tạo phòng & mời đối thủ</button></form></td></tr>{% endfor %}
 </tbody></table></div>{% endif %}
 </section>
 <section class="td-section" id="stage1"><h2>⚽ GĐ1</h2>
