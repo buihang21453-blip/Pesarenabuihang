@@ -1,0 +1,18 @@
+PES Arena V1.4.83
+
+1. Admin > Thiết kế giải đấu > Xem như HLV thật:
+- Chọn HLV thực đang tham gia.
+- Xem đúng dữ liệu mà HLV đó nhìn thấy.
+- Chế độ chỉ xem, toàn bộ thao tác ghi dữ liệu bị khóa.
+- Muốn test thao tác thật hãy dùng Tournament Test Mode.
+
+2. Đồng hồ giải đấu:
+- Admin cấu hình Khai mạc/Bắt đầu GĐ1.
+- Có thể để trống các mốc: thưởng sớm +3 ngày, hết GĐ1 +7 ngày, gia hạn +9 ngày.
+- HLV thấy đồng hồ đếm ngược tới khai mạc.
+- Khi còn thời gian thưởng sớm, HLV thấy thêm đồng hồ đếm ngược thưởng sớm.
+
+3. Thưởng sớm:
+- Tách thành mục riêng trong Admin.
+- Có thể thêm nhiều mức thưởng.
+- Có trường hạn riêng; mặc định gợi ý theo mốc thưởng sớm GĐ1.

@@ -641,6 +641,28 @@ def register_routes(context):
             flash("Không tìm thấy giải đấu.","error"); return redirect(url_for("tournaments"))
         return render_template('tournament_detail.html', **data)
 
+
+    @app.get('/admin/tournaments/<tournament_id>/preview-player')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_preview_player(tournament_id):
+        user_id=str(request.args.get("user_id") or "").strip()
+        if not user_id:
+            flash("Hãy chọn HLV cần xem.","warning")
+            return redirect_admin("tournaments")
+        members=_all_members(tournament_id)
+        preview_member=next((m for m in members if str(m.get("user_id"))==user_id),None)
+        if not preview_member:
+            flash("HLV này không còn trong danh sách giải.","error")
+            return redirect_admin("tournaments")
+        data=_detail_payload(tournament_id,user_id)
+        if not data:
+            flash("Không tìm thấy giải đấu.","error")
+            return redirect_admin("tournaments")
+        data.update({"preview_mode":True,"preview_user":preview_member})
+        return render_template('tournament_detail.html', **data)
+
     @app.post('/admin/tournaments/<tournament_id>/members/<user_id>/remove')
     @login_required
     @admin_required

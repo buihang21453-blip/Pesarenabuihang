@@ -9,8 +9,9 @@
 .td-room-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}.td-room-card{padding:14px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:#0b1824}.td-room-card strong{display:block;font-size:16px;margin:5px 0}.td-pool{display:flex;flex-wrap:wrap;gap:7px}.td-pool span{padding:6px 9px;border-radius:999px;background:#10283a;border:1px solid rgba(255,255,255,.1);font-size:12px}
 .td-event{margin-top:14px;padding:15px;border:1px solid rgba(241,202,104,.28);border-radius:16px;background:linear-gradient(135deg,rgba(241,202,104,.08),rgba(13,36,54,.65))}.td-event h2{margin:0 0 8px;color:#f1ca68;font-size:18px}.td-countdown{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.td-countdown span{min-width:74px;text-align:center;padding:10px 8px;border-radius:10px;background:#06131f;border:1px solid rgba(255,255,255,.12);font-weight:900;color:#fff}.td-countdown small{display:block;color:#8799a7;font-weight:500;margin-top:2px}.td-event-log{display:grid;gap:6px;margin-top:10px}.td-event-log div{padding:8px 10px;background:#091a29;border-radius:8px;color:#cbd7df;font-size:12px}.td-ticket{display:inline-flex;padding:5px 8px;border-radius:999px;background:rgba(241,202,104,.14);border:1px solid rgba(241,202,104,.3);color:#f1ca68;font-size:12px;font-weight:800}.td-reveal{padding:18px;text-align:center;border:1px dashed rgba(241,202,104,.35);border-radius:12px;background:#091a29}.td-opponents{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.td-opponent{padding:12px;border-radius:10px;background:#0a1d2c;border:1px solid rgba(255,255,255,.1);text-align:center}.td-opponent b{display:block;color:#f1ca68}.td-draft-current{padding:12px;border-radius:12px;background:#091a29;border:1px solid rgba(46,204,113,.25);margin:10px 0}.td-candidate{font-size:24px;font-weight:900;color:#f1ca68;margin:8px 0}
 @media(max-width:650px){.td-opponents{grid-template-columns:1fr}.td-countdown span{min-width:64px;flex:1}}
-</style>{% endblock %}
+.td-preview-banner{margin-bottom:12px;padding:12px 14px;border:1px solid rgba(241,202,104,.38);border-radius:12px;background:#2a210d;color:#f7df95}.td-preview-banner strong{color:#fff}.td-preview-banner small{display:block;margin-top:4px;color:#d9c98d}</style>{% endblock %}
 {% block content %}<div class="td-shell">
+{% if preview_mode|default(false) %}<div class="td-preview-banner"><strong>👁️ ĐANG XEM NHƯ HLV: {{ preview_user.display_name or preview_user.username or preview_user.user_id }}</strong><small>Chế độ chỉ xem · dữ liệu là của giải thật · mọi thao tác ghi dữ liệu đã bị khóa để tránh ảnh hưởng HLV.</small></div>{% endif %}
 <div class="td-head"><h1>🏆 {{ tournament.name }}</h1><div class="td-meta"><span>{{ tournament.status|upper }}</span><span>•</span><span>{{ 'Đang tham gia' if member else 'Người xem' }}</span>{% if member %}<span>• Pot {{ member.pot_no or '—' }}</span><span>• {{ member.fixed_club_name or 'Chưa chọn CLB' }}</span>{% endif %}</div></div>
 {% set ev = event_ops|default({}) %}{% set tm = ev.get('timing',{}) %}{% set timing = tm.get('config',{}) %}
 {% if timing.get('stage1_start_at') or timing.get('stage1_end_at') or timing.get('league_end_at') %}
@@ -19,6 +20,7 @@
   {% elif timing.get('stage1_end_at') and not tm.get('stage1_end',{}).get('expired') %}<p>GĐ1 đang diễn ra · thời gian còn lại:</p><div class="td-countdown" data-countdown="{{ timing.get('stage1_end_at') }}"><span data-d>0<small>Ngày</small></span><span data-h>0<small>Giờ</small></span><span data-m>0<small>Phút</small></span><span data-s>0<small>Giây</small></span></div>
   {% elif timing.get('stage1_extension_end_at') and not tm.get('stage1_extension_end',{}).get('expired') %}<p>🔴 GĐ1 đang trong thời gian gia hạn:</p><div class="td-countdown" data-countdown="{{ timing.get('stage1_extension_end_at') }}"><span data-d>0<small>Ngày</small></span><span data-h>0<small>Giờ</small></span><span data-m>0<small>Phút</small></span><span data-s>0<small>Giây</small></span></div>
   {% elif timing.get('league_end_at') and not tm.get('league_end',{}).get('expired') %}<p>League Phase · thời gian còn lại:</p><div class="td-countdown" data-countdown="{{ timing.get('league_end_at') }}"><span data-d>0<small>Ngày</small></span><span data-h>0<small>Giờ</small></span><span data-m>0<small>Phút</small></span><span data-s>0<small>Giây</small></span></div>{% endif %}
+  {% if timing.get('stage1_early_end_at') and not tm.get('stage1_early_end',{}).get('expired') %}<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)"><p>🎁 Thưởng hoàn thành sớm còn:</p><div class="td-countdown" data-countdown="{{ timing.get('stage1_early_end_at') }}"><span data-d>0<small>Ngày</small></span><span data-h>0<small>Giờ</small></span><span data-m>0<small>Phút</small></span><span data-s>0<small>Giây</small></span></div></div>{% endif %}
   {% if member and me_progress and me_progress.remaining>0 and tm.get('stage1_early_end',{}).get('expired') and not tm.get('stage1_end',{}).get('expired') %}<p style="color:#f1ca68">⚠️ Bạn cần hoàn thành nốt <strong>{{ me_progress.remaining }} trận</strong> còn lại trong thời gian GĐ1.</p>{% endif %}
 </section>{% endif %}
 {% if member %}<section class="td-schedule-attn {{ availability.status }}">
@@ -120,6 +122,21 @@
   function tick(box){var t=Date.parse(box.dataset.countdown||'');if(!isFinite(t))return;var sec=Math.max(0,Math.floor((t-Date.now())/1000));var d=Math.floor(sec/86400),h=Math.floor((sec%86400)/3600),m=Math.floor((sec%3600)/60),s=sec%60;var a=box.querySelector('[data-d]'),b=box.querySelector('[data-h]'),c=box.querySelector('[data-m]'),e=box.querySelector('[data-s]');if(a)a.childNodes[0].nodeValue=d;if(b)b.childNodes[0].nodeValue=h;if(c)c.childNodes[0].nodeValue=m;if(e)e.childNodes[0].nodeValue=s;}
   var boxes=[].slice.call(document.querySelectorAll('[data-countdown]'));boxes.forEach(tick);setInterval(function(){boxes.forEach(tick)},1000);
 })();
+{% if preview_mode|default(false) %}
+(function(){
+  document.querySelectorAll('.td-shell form').forEach(function(form){
+    form.addEventListener('submit',function(e){e.preventDefault();alert('Chế độ Xem như HLV chỉ cho phép quan sát. Hãy dùng Test Mode nếu muốn thử thao tác thật.');});
+    form.querySelectorAll('input,select,textarea,button').forEach(function(el){el.disabled=true;});
+  });
+  document.querySelectorAll('.td-shell a[href]').forEach(function(a){
+    var href=a.getAttribute('href')||'';
+    if(href.charAt(0)==='#') return;
+    a.setAttribute('aria-disabled','true');
+    a.style.opacity='.55';
+    a.addEventListener('click',function(e){e.preventDefault();alert('Liên kết này bị khóa trong chế độ Xem như HLV.');});
+  });
+})();
+{% endif %}
 </script>{% endblock %}
 <script>
 (function(){
