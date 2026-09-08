@@ -1,0 +1,15 @@
+PES Arena V1.4.76 — Khôi phục layout Quản lý giải đấu
+
+Nguyên nhân xác định bằng so sánh V1.4.69 và V1.4.70:
+- V1.4.69: bố cục bình thường.
+- V1.4.70: phần HLV đã thu tiền chưa có tài khoản thêm một thẻ </div> đóng thừa,
+  làm Bước 2–5 thoát khỏi container đúng.
+- Các bản 1.4.71–1.4.75 đã thêm CSS bù cho HTML sai nên giao diện vẫn không ổn định.
+
+V1.4.76:
+- Giữ logic/tính năng mới nhất từ V1.4.75.
+- Khôi phục cấu trúc HTML và CSS khu Quản lý giải đấu theo V1.4.69.
+- Xóa các CSS vá layout 1.4.71–1.4.75.
+- Sửa thẻ div đóng thừa.
+- Giữ Ghép TK với toàn bộ tài khoản player trên web, kể cả pending/rejected/banned.
+- Không có SQL mới.
