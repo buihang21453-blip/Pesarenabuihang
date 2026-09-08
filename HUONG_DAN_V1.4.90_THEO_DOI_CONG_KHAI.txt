@@ -1,0 +1,8 @@
+PES Arena V1.4.90
+
+- /tournaments hien dong ho dem nguoc toi luc khai mac Giai doan 1.
+- Nguoi choi co tai khoan PES Arena du khong tham gia giai van xem duoc cac phan cong khai.
+- Them nut theo doi nhanh: Phong thi dau, GD1, Lich dau, BXH, Knockout.
+- Moi thanh phan bam truc tiep vao dung khu tren trang chi tiet giai.
+- Quyen thao tac thi dau van chi danh cho HLV thuoc giai.
+- Khong thay doi du lieu giai, khong can SQL moi.

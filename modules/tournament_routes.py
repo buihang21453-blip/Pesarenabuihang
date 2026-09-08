@@ -111,6 +111,17 @@ def register_routes(context):
         )
         return rows[0] if rows else None
 
+    def _tournament_timing_preview(tournament_id):
+        if not tournament_id:
+            return {}
+        rows, _ = _safe_rows(
+            db.table("tournament_settings").select("setting_value")
+            .eq("tournament_id", tournament_id).eq("setting_key", "competition_timing").limit(1),
+            "tournament_timing_preview",
+        )
+        value = (rows[0].get("setting_value") if rows else {}) or {}
+        return value if isinstance(value, dict) else {}
+
     def _member_for_user(tournament_id, user_id):
         if not tournament_id or not user_id:
             return None
@@ -282,7 +293,16 @@ def register_routes(context):
                     "tournament_member_count",
                 )
                 item["member_count"] = len(member_rows)
-                item["phase_name"] = "Registration" if item.get("status") in {"registration", "upcoming"} else "League Phase"
+                timing = _tournament_timing_preview(item.get("id"))
+                item["stage1_start_at"] = timing.get("stage1_start_at")
+                item["stage1_early_end_at"] = timing.get("stage1_early_end_at")
+                status = (item.get("status") or "").lower()
+                if status in {"registration", "upcoming"}:
+                    item["phase_name"] = "Sắp khai mạc" if item.get("stage1_start_at") else "Đăng ký"
+                elif status == "completed":
+                    item["phase_name"] = "Đã kết thúc"
+                else:
+                    item["phase_name"] = "Đang diễn ra"
         return render_template(
             'tournaments.html',
             tournament_open=opened,
