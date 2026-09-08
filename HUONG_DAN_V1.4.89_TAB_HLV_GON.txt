@@ -1,0 +1,11 @@
+PES Arena V1.4.89
+
+Giao diện HLV được gom thành 6 tab:
+1. Trung tâm: Phòng thi đấu, Host đang rảnh, Trận của tôi.
+2. GĐ1: Pool CLB, 3 đối thủ, tiến độ, BXH GĐ1, đua hoàn thành sớm.
+3. Lịch thi đấu: lịch của tôi, thêm giờ thủ công, lịch đối thủ.
+4. GĐ2: chọn/random CLB, bốc thăm League Phase, BXH League.
+5. Knockout: bracket các vòng loại trực tiếp.
+6. Thông tin: danh sách Host và thưởng.
+
+Mặc định mở vào tab Trung tâm. Các nút liên kết như Đặt lịch ngay tự chuyển đúng tab.

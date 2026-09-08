@@ -17,6 +17,7 @@ STAGE_LABELS = {
 }
 ROUND_ORDER = ["playoff", "r16", "qf", "sf", "final"]
 
+# V1.4.89 - Giao diện HLV chia 6 tab gọn: Trung tâm, GĐ1, Lịch, GĐ2, Knockout, Thông tin.
 # V1.4.88 - Tạo phòng trực tiếp + mời đúng đối thủ; dọn gói deploy.
 STAGE1_ALLOWED_TIERS = {"S+", "S"}
 TOURNAMENT_ROOM_PREFIX = "TOURNAMENT_ROOM|"
