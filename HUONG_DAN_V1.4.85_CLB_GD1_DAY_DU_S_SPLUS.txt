@@ -1,4 +1,4 @@
-PES Arena V1.4.85 - CLB GĐ1 đầy đủ Tier S+ / S
+PES Arena V1.4.86 - CLB GĐ1 đầy đủ Tier S+ / S
 
 - GĐ1 đọc trực tiếp bảng teams trên Supabase (is_active=true).
 - Hiển thị toàn bộ CLB có Tier S+ hoặc S, không dùng danh sách teams_data.py cũ để giới hạn lựa chọn.

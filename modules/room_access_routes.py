@@ -145,6 +145,24 @@ def register_routes(context):
 
     def build_room_template_context(room):
         viewer = current_user() or {}
+        tournament_meta = None
+        tournament_match = None
+        tournament_result_proposal = {}
+        note = str(room.get("note") or "")
+        if note.startswith("TOURNAMENT_ROOM|"):
+            try:
+                import json
+                tournament_meta = json.loads(note[len("TOURNAMENT_ROOM|"):])
+                tid = str(tournament_meta.get("tournament_id") or "")
+                mid = str(tournament_meta.get("tournament_match_id") or "")
+                if tid and mid:
+                    mr = execute_query(db.table("tournament_matches").select("*").eq("id",mid).eq("tournament_id",tid).limit(1),"room_tournament_match_context",attempts=2)
+                    tournament_match = (mr.data or [None])[0]
+                    sr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key",f"match_result_proposal:{mid}").limit(1),"room_tournament_result_context",attempts=2)
+                    tournament_result_proposal = ((sr.data or [{}])[0].get("setting_value") or {})
+            except Exception as exc:
+                app.logger.warning("Tournament room context failed room=%s: %s", room.get("id"), exc)
+                tournament_meta = None
         daily_limit_message = None
         if room.get("status") == "waiting_ready" and room.get("match_mode") != MATCH_MODE_FRIENDLY:
             daily_limit_message = daily_rank_block_message(
@@ -170,6 +188,10 @@ def register_routes(context):
             "viewer_is_host": _same_user_id(viewer.get("id"), room.get("host_user_id")),
             "viewer_is_guest": _same_user_id(viewer.get("id"), room.get("guest_user_id")),
             "parsec_room": build_room_parsec_context(room, viewer),
+            "tournament_meta": tournament_meta,
+            "tournament_match": tournament_match,
+            "tournament_result_proposal": tournament_result_proposal,
+            "is_tournament_room": bool(tournament_meta),
         }
 
 

@@ -1,0 +1,8 @@
+PES Arena V1.4.86
+- Phòng tạo từ trận giải đấu giữ toàn bộ vòng đời trong dữ liệu giải.
+- Chủ phòng nhập kết quả bằng tay.
+- Đối thủ xác nhận hoặc báo sai kết quả.
+- Khi xác nhận, tournament_matches chuyển completed và BXH giải cập nhật.
+- Route kết quả Rank/Giao hữu bị chặn đối với phòng giải.
+- Pool CLB GĐ1 hiển thị dạng bảng trong Admin, có cột Chọn / CLB / Tier / Điểm.
+- Tier và Điểm chỉ nằm ở Admin; phía HLV/người xem không hiển thị.

@@ -1,0 +1,27 @@
+{% if is_tournament_room and tournament_meta and tournament_match %}
+<div class="panel" style="margin:12px 0;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px">
+  <strong>🏆 TRẬN GIẢI ĐẤU · {{ (tournament_meta.stage_code or 'stage1')|upper }}</strong>
+  <p class="small" style="margin:5px 0 10px">Phòng này chỉ ghi dữ liệu vào giải đấu. Không tính Rank và không phải Giao hữu.</p>
+  {% set pr=tournament_result_proposal or {} %}
+  {% if room.status in ['friendly_playing','playing'] and room_room_viewer_is_host %}
+  <form method="post" action="{{ url_for('tournament_room_submit_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
+    <label>{{ room.host_name or 'Chủ phòng' }}<input type="number" min="0" max="99" name="host_score" value="0" required></label>
+    <strong style="padding-bottom:10px">-</strong>
+    <label>{{ room.guest_name or 'Đối thủ' }}<input type="number" min="0" max="99" name="guest_score" value="0" required></label>
+    <button class="btn green" type="submit">Gửi kết quả</button>
+  </form>
+  {% elif room.status == 'waiting_result_confirm' %}
+    <div style="font-size:28px;font-weight:800;margin:8px 0">{{ room.host_score }} - {{ room.guest_score }}</div>
+    {% if room_viewer_is_guest or current_user.role == 'admin' %}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <form method="post" action="{{ url_for('tournament_room_confirm_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}"><button class="btn green" type="submit">✓ Xác nhận kết quả</button></form>
+        <form method="post" action="{{ url_for('tournament_room_dispute_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="display:flex;gap:6px;flex-wrap:wrap"><input name="reason" maxlength="300" placeholder="Lý do sai kết quả"><button class="btn red" type="submit">⚠ Báo sai kết quả</button></form>
+      </div>
+    {% else %}<p class="small">Đang chờ đối thủ xác nhận kết quả.</p>{% endif %}
+  {% elif tournament_match.status == 'completed' or room.status == 'confirmed' %}
+    <strong>✅ Trận đã hoàn tất: {{ tournament_match.home_score }} - {{ tournament_match.away_score }}</strong>
+  {% elif tournament_match.status == 'disputed' or room.status == 'disputed' %}
+    <strong>⚠ Kết quả đang chờ Admin xử lý.</strong>
+  {% endif %}
+</div>
+{% endif %}

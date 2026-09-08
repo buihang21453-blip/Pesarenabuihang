@@ -32,6 +32,9 @@ def register_routes(context):
     def room_submit_result(room_id):
         user = current_user()
         room = get_room(room_id)
+        if room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            flash("Phòng giải đấu dùng luồng kết quả riêng của giải.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:
             flash("Không tìm thấy phòng.", "danger")
@@ -191,6 +194,9 @@ def register_routes(context):
     def room_confirm_result(room_id):
         user = current_user()
         room = get_room(room_id)
+        if room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            flash("Phòng giải đấu dùng luồng kết quả riêng của giải.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:
             flash("Không tìm thấy phòng.", "danger")
@@ -287,6 +293,9 @@ def register_routes(context):
     def room_dispute_result(room_id):
         user = current_user()
         room = get_room(room_id)
+        if room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            flash("Phòng giải đấu dùng luồng kết quả riêng của giải.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
 
         if not room:
             flash("Không tìm thấy phòng.", "danger")

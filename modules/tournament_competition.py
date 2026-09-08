@@ -17,7 +17,7 @@ STAGE_LABELS = {
 }
 ROUND_ORDER = ["playoff", "r16", "qf", "sf", "final"]
 
-# V1.4.85 - GĐ1 đọc CLB trực tiếp từ bảng teams (Supabase), không dùng teams_data.py cũ.
+# V1.4.86 - GĐ1 đọc CLB trực tiếp từ bảng teams (Supabase), không dùng teams_data.py cũ.
 STAGE1_ALLOWED_TIERS = {"S+", "S"}
 TOURNAMENT_ROOM_PREFIX = "TOURNAMENT_ROOM|"
 
@@ -947,6 +947,101 @@ def register_routes(context):
         a,b=random.sample(pool,2)
         execute_query(db.table("match_rooms").update({"host_team":a["name"],"guest_team":b["name"],"host_team_overall":a.get("overall") or None,"guest_team_overall":b.get("overall") or None,"team_tier":"TOURNAMENT_GD1","match_mode":MATCH_MODE_FRIENDLY,"status":"friendly_playing","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_stage1_random_clubs",attempts=2)
         flash(f'GĐ1 Random: {a["name"]} vs {b["name"]}.',"success")
+        return redirect(url_for("room_detail",room_id=room_id))
+
+    def _tournament_result_key(match_id):
+        return f"match_result_proposal:{match_id}"
+
+    def _tournament_result_proposal(tournament_id, match_id):
+        return _setting(tournament_id, _tournament_result_key(match_id), {}) or {}
+
+    def _save_tournament_result_proposal(tournament_id, match_id, value):
+        execute_query(
+            db.table("tournament_settings").upsert({
+                "tournament_id": tournament_id,
+                "setting_key": _tournament_result_key(match_id),
+                "setting_value": value,
+                "updated_at": now_iso(),
+            }, on_conflict="tournament_id,setting_key"),
+            "ops_tournament_result_proposal", attempts=2,
+        )
+
+    def _room_match_or_error(tournament_id, room_id):
+        room=get_room(room_id); meta=_room_meta(room)
+        if not room or not meta or str(meta.get("tournament_id"))!=str(tournament_id):
+            return None,None,None
+        match_id=str(meta.get("tournament_match_id") or "")
+        match,_=_one(db.table("tournament_matches").select("*").eq("id",match_id).eq("tournament_id",tournament_id),"ops_tournament_result_match")
+        return room,meta,match
+
+    @app.post('/tournaments/<tournament_id>/rooms/<room_id>/submit-result')
+    @login_required
+    def tournament_room_submit_result(tournament_id,room_id):
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        room,meta,match=_room_match_or_error(tournament_id,room_id)
+        if not room or not match:
+            flash("Không tìm thấy phòng/trận giải.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id))
+        if uid!=str(room.get("host_user_id")) and not is_admin_user(user):
+            flash("Chỉ chủ phòng mới được nhập kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        if str(match.get("status")) in {"completed","cancelled"}:
+            flash("Trận này đã hoàn tất.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        try:
+            hs=max(0,min(99,int(request.form.get("host_score") or 0))); gs=max(0,min(99,int(request.form.get("guest_score") or 0)))
+        except Exception:
+            flash("Tỷ số không hợp lệ.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        host_uid=str(room.get("host_user_id") or ""); guest_uid=str(room.get("guest_user_id") or "")
+        if not guest_uid:
+            flash("Phòng chưa đủ 2 HLV.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        if host_uid==str(match.get("home_user_id")):
+            home_score,away_score=hs,gs
+        else:
+            home_score,away_score=gs,hs
+        proposal={
+            "status":"waiting_confirm", "submitted_by":uid,
+            "host_score":hs,"guest_score":gs,"home_score":home_score,"away_score":away_score,
+            "submitted_at":now_iso(),
+        }
+        _save_tournament_result_proposal(tournament_id,match.get("id"),proposal)
+        execute_query(db.table("match_rooms").update({"host_score":hs,"guest_score":gs,"status":"waiting_result_confirm","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_room_wait_confirm",attempts=2)
+        execute_query(db.table("tournament_matches").update({"status":"playing","updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_match_wait_confirm",attempts=2)
+        flash("Đã gửi kết quả. Đang chờ đối thủ xác nhận.","success")
+        return redirect(url_for("room_detail",room_id=room_id))
+
+    @app.post('/tournaments/<tournament_id>/rooms/<room_id>/confirm-result')
+    @login_required
+    def tournament_room_confirm_result(tournament_id,room_id):
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        room,meta,match=_room_match_or_error(tournament_id,room_id)
+        if not room or not match:
+            flash("Không tìm thấy phòng/trận giải.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id))
+        if uid!=str(room.get("guest_user_id")) and not is_admin_user(user):
+            flash("Chỉ đối thủ mới được xác nhận kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        prop=_tournament_result_proposal(tournament_id,match.get("id"))
+        if prop.get("status")!="waiting_confirm":
+            flash("Không có kết quả nào đang chờ xác nhận.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        hs=int(prop.get("home_score") or 0); aw=int(prop.get("away_score") or 0)
+        winner=match.get("home_user_id") if hs>aw else (match.get("away_user_id") if aw>hs else None)
+        execute_query(db.table("tournament_matches").update({"home_score":hs,"away_score":aw,"winner_user_id":winner,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_confirm",attempts=2)
+        prop.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
+        execute_query(db.table("match_rooms").update({"status":"confirmed","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_room_confirmed",attempts=2)
+        flash("Đã xác nhận kết quả. BXH giải đã được cập nhật.","success")
+        return redirect(url_for("room_detail",room_id=room_id))
+
+    @app.post('/tournaments/<tournament_id>/rooms/<room_id>/dispute-result')
+    @login_required
+    def tournament_room_dispute_result(tournament_id,room_id):
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        room,meta,match=_room_match_or_error(tournament_id,room_id)
+        if not room or not match:
+            flash("Không tìm thấy phòng/trận giải.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id))
+        if uid!=str(room.get("guest_user_id")) and not is_admin_user(user):
+            flash("Chỉ đối thủ mới được báo sai kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        prop=_tournament_result_proposal(tournament_id,match.get("id"))
+        prop.update({"status":"disputed","disputed_by":uid,"disputed_at":now_iso(),"reason":(request.form.get("reason") or "Sai kết quả").strip()[:300]})
+        _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
+        execute_query(db.table("tournament_matches").update({"status":"disputed","updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_dispute",attempts=2)
+        execute_query(db.table("match_rooms").update({"status":"disputed","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_room_dispute",attempts=2)
+        flash("Đã báo sai kết quả. Admin sẽ xử lý.","warning")
         return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/club/select')

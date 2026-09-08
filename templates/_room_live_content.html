@@ -82,7 +82,7 @@
         {% endif %}
 
             {% if room.has_guest %}
-                {% if room.status == 'waiting_result_confirm' %}
+                {% if room.status == 'waiting_result_confirm' and not is_tournament_room %}
                     <div class="room-result-review" aria-label="Tỷ số đang chờ xác nhận">
                         <div class="room-result-score">{{ room.host_score }} <span>-</span> {{ room.guest_score }}</div>
                         {% if room_viewer_is_guest or current_user.role == 'admin' %}
@@ -424,7 +424,9 @@
 
     {% endif %}
 
-    {% if room.status == "friendly_playing" and ((room.team_tier == "random3_pick1" and system_features.friendly_random3_enabled) or (room.team_tier != "random3_pick1" and system_features.friendly_enabled)) %}
+    {% include "partials/tournament_room_result.html" %}
+
+{% if not is_tournament_room and room.status == "friendly_playing" and ((room.team_tier == "random3_pick1" and system_features.friendly_random3_enabled) or (room.team_tier != "random3_pick1" and system_features.friendly_enabled)) %}
     <div class="friendly-match-banner">
         <h3>🤝 Trận giao hữu Tier {{ room.friendly_tier }}</h3>
         <p>Không lưu lịch sử • Không cộng/trừ RP • Hai đội không trùng nhau.</p>
