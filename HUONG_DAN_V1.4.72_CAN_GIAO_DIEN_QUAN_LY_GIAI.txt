@@ -1,0 +1,9 @@
+PES Arena V1.4.72
+
+- Can lai khu Quan ly giai dau, dung het chieu ngang hop ly.
+- Bo gioi han 760px cua system-toggle-grid rieng trong tab Quan ly giai.
+- Form Them HLV truc tiep va Them vao Da duyet khong con nut bi keo to.
+- Nut thao tac trong Quan ly giai chuyen sang kich thuoc compact 28-32px.
+- Bang rong van cuon ngang ben trong, khong day ca trang lech trai/phai.
+- Responsive cho desktop/tablet/mobile.
+- Khong co SQL moi.

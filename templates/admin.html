@@ -703,10 +703,11 @@
   {% set ops = tournament_ops_admin|default({}) %}
   <div class="panel">
     <style>
-      .tournament-admin-panel{min-width:0;max-width:100%;overflow:hidden}
-      .tournament-admin-panel>.panel{min-width:0;max-width:100%;overflow:hidden}
-      .tournament-admin-panel .admin-table-wrap{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px}
-      .tournament-admin-panel .admin-table-wrap table{width:max-content;min-width:100%;max-width:none}
+      .tournament-admin-panel{min-width:0;width:100%;max-width:100%;margin-left:0;margin-right:0;overflow:visible;box-sizing:border-box}
+      .tournament-admin-panel>.panel{min-width:0;width:100%;max-width:100%;margin:0;overflow:visible;box-sizing:border-box}
+      .tournament-admin-panel>.panel>*{max-width:100%;box-sizing:border-box}
+      .tournament-admin-panel .admin-table-wrap{width:100%;max-width:100%;margin-left:0;margin-right:0;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px;box-sizing:border-box}
+      .tournament-admin-panel .admin-table-wrap table{width:max-content;min-width:100%;max-width:none;margin-left:0}
       .tournament-admin-panel .admin-table-wrap table th:last-child,
       .tournament-admin-panel .admin-table-wrap table td:last-child{min-width:0!important;width:auto}
       .tournament-admin-panel form{max-width:100%}
@@ -718,6 +719,25 @@
       .tournament-compact select,.tournament-compact input{min-height:28px;padding:3px 6px;font-size:12px}
       .tournament-compact .small{font-size:10px;line-height:1.15}
       .tournament-compact details>summary{white-space:nowrap}
+      /* V1.4.72 - can lai khu Quan ly giai + nut compact */
+      .tournament-admin-panel .system-toggle-grid{width:100%;max-width:none;box-sizing:border-box}
+      .tournament-admin-panel .btn,
+      .tournament-admin-panel button.btn,
+      .tournament-admin-panel a.btn,
+      .tournament-admin-panel summary.btn{min-height:32px!important;padding:6px 10px!important;border-radius:8px!important;font-size:12px!important;line-height:1.15!important;box-shadow:none!important;white-space:nowrap;width:auto}
+      .tournament-admin-panel .tournament-compact .btn,
+      .tournament-admin-panel .tournament-compact button.btn,
+      .tournament-admin-panel .tournament-compact summary.btn{min-height:28px!important;padding:4px 7px!important;font-size:11px!important;border-radius:7px!important}
+      .tournament-admin-panel .tournament-direct-add{grid-template-columns:minmax(220px,420px) auto 1fr;align-items:end;gap:8px;margin-top:8px}
+      .tournament-admin-panel .tournament-direct-add>button{justify-self:start;align-self:end}
+      .tournament-admin-panel .tournament-fee-add{grid-template-columns:repeat(4,minmax(120px,1fr)) auto;align-items:end;gap:8px}
+      .tournament-admin-panel .tournament-fee-add>button{justify-self:start;align-self:end}
+      .tournament-admin-panel [style*="padding:15px"]{box-sizing:border-box;max-width:100%}
+      .tournament-admin-panel details>div{box-sizing:border-box;max-width:100%}
+      @media(max-width:1180px){
+        .tournament-admin-panel .tournament-fee-add{grid-template-columns:repeat(2,minmax(0,1fr))}
+        .tournament-admin-panel .tournament-fee-add>button{grid-column:auto;width:max-content}
+      }
       @media(max-width:1200px){
         .tournament-admin-panel>.panel{padding:12px}
         .tournament-admin-panel .tournament-compact th,.tournament-admin-panel .tournament-compact td{padding:4px 6px;font-size:11px}
@@ -725,6 +745,8 @@
       }
       @media(max-width:720px){
         .tournament-admin-panel>.panel{padding:9px;border-radius:12px}
+        .tournament-admin-panel .tournament-direct-add,.tournament-admin-panel .tournament-fee-add{grid-template-columns:1fr}
+        .tournament-admin-panel .tournament-direct-add>button,.tournament-admin-panel .tournament-fee-add>button{width:max-content;max-width:100%}
         .tournament-admin-panel h2{font-size:20px}
         .tournament-admin-panel h3{font-size:15px}
         .tournament-admin-panel .admin-table-wrap{padding:3px;border-radius:10px}
@@ -759,7 +781,7 @@
         </div>
         <details style="margin-top:12px" {% if td.get('pending') %}open{% endif %}><summary><strong>👥 Danh sách đăng ký / duyệt HLV</strong></summary>
           <div style="padding-top:10px">
-            <form method="post" action="{{ url_for('admin_tournament_member_add', tournament_id=tour.id) }}" class="system-toggle-grid"><input type="hidden" name="_admin_tab" value="tournaments"><label><span>Thêm HLV trực tiếp</span><select name="user_id" required><option value="">-- Chọn HLV --</option>{% for player in players|sort(attribute='display_name') %}<option value="{{ player.id }}">{{ player.display_name }}</option>{% endfor %}</select></label><button class="btn green" type="submit">Thêm vào giải</button></form>
+            <form method="post" action="{{ url_for('admin_tournament_member_add', tournament_id=tour.id) }}" class="system-toggle-grid tournament-direct-add"><input type="hidden" name="_admin_tab" value="tournaments"><label><span>Thêm HLV trực tiếp</span><select name="user_id" required><option value="">-- Chọn HLV --</option>{% for player in players|sort(attribute='display_name') %}<option value="{{ player.id }}">{{ player.display_name }}</option>{% endfor %}</select></label><button class="btn green" type="submit">Thêm vào giải</button></form>
             {% if td.get('pending') %}<h4>Chờ duyệt ({{ td.get('pending')|length }})</h4><div class="admin-table-wrap tournament-compact"><table><thead><tr><th style="width:44px;text-align:center">STT</th><th>HLV</th><th>Zalo</th><th>Host</th><th>Đã thu</th><th>Phân bổ</th><th>Thiếu / Dư</th><th>Thao tác</th></tr></thead><tbody>{% for row in td.get('pending',[]) %}<tr><td style="text-align:center;font-weight:700">{{ loop.index }}</td><td><strong>{{ row.display_name }}</strong></td><td>{{ row.zalo_name|default('—',true) }}</td><td>{{ '✓ Có' if row.has_host else '—' }} {{ row.host_region|default('',true) }}</td><td><form method="post" action="{{ url_for('admin_tournament_registration_finance_quick',registration_id=row.id) }}" style="display:flex;gap:4px;align-items:center"><input type="hidden" name="_admin_tab" value="tournaments"><select name="amount_paid" onchange="this.form.submit()"><option value="0" {{ 'selected' if row.amount_paid|int==0 else '' }}>0k</option><option value="50000" {{ 'selected' if row.amount_paid|int==50000 else '' }}>50k</option><option value="100000" {{ 'selected' if row.amount_paid|int==100000 else '' }}>100k</option><option value="200000" {{ 'selected' if row.amount_paid|int==200000 else '' }}>200k</option></select></form></td><td><span class="small">Giải: {{ [row.amount_paid|int,50000]|min // 1000 }}k</span><br><span class="small">TN: {{ [[row.amount_paid|int-50000,0]|max,50000]|min // 1000 }}k</span></td><td>{% if row.amount_missing|int>0 %}<span style="color:#e67e22">Thiếu {{ row.amount_missing//1000 }}k</span>{% elif row.amount_surplus|int>0 %}<span style="color:#e74c3c">Cần hoàn {{ row.amount_surplus//1000 }}k</span>{% else %}<span style="color:#27ae60">✓ Đủ</span>{% endif %}</td><td style="display:flex;gap:4px;flex-wrap:wrap"><details><summary class="btn gray">✎</summary><form method="post" action="{{ url_for('admin_tournament_registration_profile_update',registration_id=row.id) }}" style="position:absolute;z-index:5;background:#101820;border:1px solid #455;padding:8px;display:grid;gap:5px;min-width:220px"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="tournament_id" value="{{ tour.id }}"><input type="hidden" name="user_id" value="{{ row.user_id }}"><input name="zalo_name" value="{{ row.zalo_name|default('',true) }}" placeholder="Tên Zalo"><select name="host_region"><option value="Bắc" {{ 'selected' if row.host_region=='Bắc' else '' }}>Bắc</option><option value="Trung" {{ 'selected' if row.host_region=='Trung' else '' }}>Trung</option><option value="Nam" {{ 'selected' if row.host_region=='Nam' else '' }}>Nam</option></select><select name="host_choice"><option value="yes" {{ 'selected' if row.has_host else '' }}>Có Host</option><option value="no" {{ 'selected' if not row.has_host else '' }}>Không Host</option></select><button class="btn green" type="submit">Lưu</button></form></details><form method="post" action="{{ url_for('admin_tournament_registration_approve',registration_id=row.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn green" type="submit">✓ Duyệt</button></form><form method="post" action="{{ url_for('admin_tournament_registration_reject',registration_id=row.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn red" type="submit">Từ chối</button></form><form method="post" action="{{ url_for('admin_tournament_registration_cancel',registration_id=row.id) }}" onsubmit="return confirm('Hủy đơn đăng ký này?');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn" type="submit">↺ Hủy đơn</button></form></td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="small">Không có đơn đang chờ duyệt.</p>{% endif %}
             {% set approved_members = ops.get('members',[]) if ops.get('members') else td.get('members',[]) %}
             <h4>Đã duyệt ({{ approved_members|length + td.get('fee_unmatched',[])|length }})</h4>
@@ -814,14 +836,14 @@
 
             <div style="margin-top:10px;padding:10px;border:1px dashed rgba(241,196,15,.35);border-radius:10px;background:rgba(241,196,15,.03)">
               <strong>+ Thêm HLV đã đóng tiền nhưng chưa có tài khoản</strong>
-              <form method="post" action="{{ url_for('admin_tournament_fee_unmatched_add',tournament_id=tour.id) }}" class="system-toggle-grid" style="align-items:end;margin-top:6px"><input type="hidden" name="_admin_tab" value="tournaments"><label><span>Tên HLV / người chuyển</span><input name="payer_name" required></label><label><span>Zalo / liên hệ</span><input name="zalo_contact"></label><label><span>Đã thu</span><select name="amount_paid" required><option value="50000">50k</option><option value="100000" selected>100k</option><option value="200000">200k</option></select></label><label><span>Ghi chú</span><input name="note"></label><button class="btn green" type="submit">+ Thêm vào Đã duyệt</button></form>
+              <form method="post" action="{{ url_for('admin_tournament_fee_unmatched_add',tournament_id=tour.id) }}" class="system-toggle-grid tournament-fee-add" style="align-items:end;margin-top:6px"><input type="hidden" name="_admin_tab" value="tournaments"><label><span>Tên HLV / người chuyển</span><input name="payer_name" required></label><label><span>Zalo / liên hệ</span><input name="zalo_contact"></label><label><span>Đã thu</span><select name="amount_paid" required><option value="50000">50k</option><option value="100000" selected>100k</option><option value="200000">200k</option></select></label><label><span>Ghi chú</span><input name="note"></label><button class="btn green" type="submit">+ Thêm vào Đã duyệt</button></form>
             </div>
           </div>
         </details>
 
         <div style="display:none">
           <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><h4 style="margin:0">💵 Đã nhận tiền – chưa có tài khoản web ({{ td.get('fee_unmatched',[])|length }})</h4><span class="small">Lưu trước, ghép vào HLV sau khi họ có tài khoản.</span></div>
-          <form method="post" action="{{ url_for('admin_tournament_fee_unmatched_add',tournament_id=tour.id) }}" class="system-toggle-grid" style="align-items:end;margin-top:8px"><input type="hidden" name="_admin_tab" value="tournaments"><label><span>Tên người chuyển / HLV</span><input name="payer_name" required></label><label><span>Zalo / liên hệ</span><input name="zalo_contact"></label><label><span>Đã thu</span><select name="amount_paid" required><option value="50000">50k</option><option value="100000" selected>100k</option><option value="200000">200k</option></select></label><label><span>Ghi chú</span><input name="note"></label><button class="btn green" type="submit">+ Thêm</button></form>
+          <form method="post" action="{{ url_for('admin_tournament_fee_unmatched_add',tournament_id=tour.id) }}" class="system-toggle-grid tournament-fee-add" style="align-items:end;margin-top:8px"><input type="hidden" name="_admin_tab" value="tournaments"><label><span>Tên người chuyển / HLV</span><input name="payer_name" required></label><label><span>Zalo / liên hệ</span><input name="zalo_contact"></label><label><span>Đã thu</span><select name="amount_paid" required><option value="50000">50k</option><option value="100000" selected>100k</option><option value="200000">200k</option></select></label><label><span>Ghi chú</span><input name="note"></label><button class="btn green" type="submit">+ Thêm</button></form>
           {% if td.get('fee_unmatched') %}<div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table><thead><tr><th>Người chuyển</th><th>Liên hệ</th><th>Đã thu</th><th>Ghi chú</th><th>Ghép HLV</th></tr></thead><tbody>{% set fee_rows_link = td.get('pending',[]) + td.get('approved',[]) %}{% for fee in td.get('fee_unmatched',[]) %}<tr><td><strong>{{ fee.payer_name }}</strong></td><td>{{ fee.zalo_contact|default('—',true) }}</td><td><strong>{{ fee.amount_paid//1000 }}k</strong></td><td>{{ fee.note|default('—',true) }}</td><td><form method="post" action="{{ url_for('admin_tournament_fee_unmatched_link',fee_id=fee.id) }}" style="display:flex;gap:4px"><input type="hidden" name="_admin_tab" value="tournaments"><select name="registration_id" required><option value="">-- Chọn HLV --</option>{% for rr in fee_rows_link %}<option value="{{ rr.id }}">{{ rr.display_name }}</option>{% endfor %}</select><button class="btn green" type="submit">Ghép</button></form><form method="post" action="{{ url_for('admin_tournament_fee_unmatched_remove',fee_id=fee.id) }}" style="display:inline-block;margin-top:3px"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn red" type="submit">Bỏ</button></form></td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="small" style="margin:7px 0 0">Chưa có khoản tiền nào đang chờ ghép.</p>{% endif %}
         </div></div>
 
