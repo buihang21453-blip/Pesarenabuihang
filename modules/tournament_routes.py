@@ -399,6 +399,114 @@ def register_routes(context):
         flash("Đã lưu kích thước và vị trí ảnh Giải đấu.", "success")
         return redirect_admin("tournaments")
 
+    @app.post('/tournaments/<tournament_id>/profile')
+    @login_required
+    def tournament_profile_update(tournament_id):
+        user = current_user() or {}
+        registration = _registration_for_user(tournament_id, user.get("id"))
+        if not registration or registration.get("status") not in {"pending", "approved"}:
+            flash("Bạn chưa có đăng ký đang hoạt động trong giải này.", "warning")
+            return redirect(url_for("tournaments"))
+        host_choice = (request.form.get("host_choice") or "").strip().lower()
+        host_region = (request.form.get("host_region") or "").strip()
+        zalo_name = (request.form.get("zalo_name") or "").strip()
+        if host_choice not in {"yes", "no"} or host_region not in {"Bắc", "Trung", "Nam"} or not zalo_name:
+            flash("Hãy nhập đủ Tên Zalo, Khu vực và lựa chọn Host.", "warning")
+            return redirect(url_for("tournaments"))
+        payload = {"has_host": host_choice == "yes", "host_region": host_region, "zalo_name": zalo_name[:80]}
+        execute_query(db.table("tournament_registrations").update(payload).eq("id", registration.get("id")), "tournament_profile_update", attempts=2)
+        # Keep member snapshot aligned when present.
+        try:
+            execute_query(db.table("tournament_members").update({"zalo_name": zalo_name[:80]}).eq("tournament_id", tournament_id).eq("user_id", user.get("id")), "tournament_member_profile_sync", attempts=1)
+        except Exception:
+            pass
+        flash("Đã cập nhật thông tin giải đấu của bạn.", "success")
+        return redirect(url_for("tournaments"))
+
+    @app.post('/admin/tournaments/registrations/<registration_id>/profile')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_registration_profile_update(registration_id):
+        host_choice = (request.form.get("host_choice") or "").strip().lower()
+        host_region = (request.form.get("host_region") or "").strip()
+        zalo_name = (request.form.get("zalo_name") or "").strip()
+        if host_choice not in {"yes", "no"} or host_region not in {"Bắc", "Trung", "Nam"}:
+            flash("Thông tin Khu vực/Host không hợp lệ.", "warning")
+            return redirect_admin("tournaments")
+        rows, _ = _safe_rows(db.table("tournament_registrations").select("tournament_id,user_id").eq("id", registration_id).limit(1), "admin_tournament_profile_lookup")
+        if not rows:
+            flash("Không tìm thấy đăng ký HLV.", "error")
+            return redirect_admin("tournaments")
+        reg = rows[0]
+        payload = {"has_host": host_choice == "yes", "host_region": host_region, "zalo_name": zalo_name[:80]}
+        execute_query(db.table("tournament_registrations").update(payload).eq("id", registration_id), "admin_tournament_profile_update", attempts=2)
+        try:
+            execute_query(db.table("tournament_members").update({"zalo_name": zalo_name[:80]}).eq("tournament_id", reg.get("tournament_id")).eq("user_id", reg.get("user_id")), "admin_tournament_member_profile_sync", attempts=1)
+        except Exception:
+            pass
+        log_admin_action("Cập nhật thông tin HLV giải đấu", "tournament_registration", target_id=registration_id, details=payload)
+        flash("Đã cập nhật Khu vực / Host / Zalo của HLV.", "success")
+        return redirect_admin("tournaments")
+
+    @app.get('/admin/tournaments/<tournament_id>/export.xlsx')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_export_excel(tournament_id):
+        from io import BytesIO
+        from flask import send_file
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment
+
+        regs, _ = _safe_rows(db.table("tournament_registrations").select("*").eq("tournament_id", tournament_id).order("registered_at"), "tournament_export_regs")
+        regs = [_decorate_finance(row) for row in _decorate_registration_rows(regs)]
+        unmatched, _ = _safe_rows(db.table("tournament_fee_unmatched").select("*").eq("tournament_id", tournament_id).neq("status", "linked").order("created_at"), "tournament_export_unmatched")
+        tours, _ = _safe_rows(db.table("tournaments").select("name").eq("id", tournament_id).limit(1), "tournament_export_name")
+        tour_name = (tours[0].get("name") if tours else "PES Arena") or "PES Arena"
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "HLV"
+        headers = ["STT","HLV","Trạng thái","Zalo","Khu vực","Host","Đã thu","Phí giải","Trách nhiệm","Thiếu","Cần hoàn thừa","Đã hoàn","Khấu trừ TN","Ghi chú"]
+        ws.append(headers)
+        for c in ws[1]: c.font = Font(bold=True); c.alignment = Alignment(horizontal="center")
+        active_regs=[r for r in regs if r.get("status") in {"pending","approved"}]
+        for i,r in enumerate(active_regs,1):
+            paid=int(r.get("amount_paid") or 0)
+            fee=min(paid,50000)
+            resp=max(0,min(paid-50000,50000))
+            ws.append([i,r.get("display_name") or "", "Đã duyệt" if r.get("status")=="approved" else "Chờ duyệt", r.get("zalo_name") or "", r.get("host_region") or "", "Có" if r.get("has_host") else "Không", paid, fee, resp, int(r.get("amount_missing") or 0), int(r.get("amount_surplus") or 0), int(r.get("amount_refunded") or 0), int(r.get("responsibility_deducted") or 0), r.get("payment_note") or ""])
+        for col in "GHIJKLM":
+            for cell in ws[col][1:]: cell.number_format = '#,##0" đ"'
+        widths=[6,24,14,22,12,10,14,14,14,14,16,14,14,30]
+        for idx,w in enumerate(widths,1): ws.column_dimensions[chr(64+idx) if idx<=26 else 'A'].width=w
+        ws.freeze_panes="A2"
+
+        wu=wb.create_sheet("Tiền chưa ghép TK")
+        uheaders=["STT","Người chuyển / HLV","Zalo / liên hệ","Số tiền","Ghi chú","Trạng thái"]
+        wu.append(uheaders)
+        for c in wu[1]: c.font=Font(bold=True); c.alignment=Alignment(horizontal="center")
+        for i,row in enumerate(unmatched,1): wu.append([i,row.get("payer_name") or "",row.get("zalo_contact") or "",int(row.get("amount_paid") or 0),row.get("note") or "",row.get("status") or "waiting"])
+        for cell in wu['D'][1:]: cell.number_format='#,##0" đ"'
+        for col,w in zip(['A','B','C','D','E','F'],[6,28,24,16,35,14]): wu.column_dimensions[col].width=w
+        wu.freeze_panes="A2"
+
+        ws2=wb.create_sheet("Tổng hợp")
+        total=sum(int(r.get("amount_paid") or 0) for r in active_regs)
+        fee_total=sum(min(int(r.get("amount_paid") or 0),50000) for r in active_regs)
+        resp_total=sum(max(0,min(int(r.get("amount_paid") or 0)-50000,50000)) for r in active_regs)
+        surplus=sum(int(r.get("amount_surplus") or 0) for r in active_regs)
+        missing=sum(int(r.get("amount_missing") or 0) for r in active_regs)
+        for row in [("Giải",tour_name),("Số HLV",len(active_regs)),("Tổng đã thu",total),("Tiền giải",fee_total),("Tiền trách nhiệm",resp_total),("Cần hoàn thừa",surplus),("Còn thiếu",missing),("Tiền chưa ghép tài khoản",sum(int(x.get("amount_paid") or 0) for x in unmatched))]: ws2.append(row)
+        ws2.column_dimensions['A'].width=28; ws2.column_dimensions['B'].width=28
+        for cell in ws2['A']: cell.font=Font(bold=True)
+        for cell in ws2['B'][2:]:
+            if isinstance(cell.value,(int,float)): cell.number_format='#,##0" đ"'
+
+        output=BytesIO(); wb.save(output); output.seek(0)
+        return send_file(output, as_attachment=True, download_name=f"PES_Arena_Le_Phi_Giai_{tournament_id}.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
     @app.post('/admin/tournaments/registrations/<registration_id>/finance/quick')
     @login_required
     @admin_required

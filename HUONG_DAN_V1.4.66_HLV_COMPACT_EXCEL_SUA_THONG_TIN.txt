@@ -1,0 +1,9 @@
+PES Arena V1.4.66
+
+- Bảng HLV trong Admin được thu gọn để hiển thị nhiều hàng hơn.
+- Xuất Excel toàn bộ đăng ký, tiền giải và tiền chưa ghép tài khoản.
+- Khu Tiền đã nhận - chưa có tài khoản web luôn hiển thị ở Bước 1.
+- Admin sửa được Tên Zalo / Khu vực / Có Host của HLV.
+- HLV pending hoặc đã duyệt tự sửa các thông tin trên tại trang Giải đấu.
+- HLV được Admin thêm trực tiếp có thể bổ sung thông tin của mình.
+- Không có SQL mới. Cần dependency openpyxl đã thêm vào requirements.txt.
