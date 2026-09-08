@@ -1,0 +1,8 @@
+PES Arena V1.4.71
+
+- Fix giao diện Quản lý giải đấu bị tràn khỏi màn hình.
+- Bỏ ép cột thao tác cuối tối thiểu 420px riêng trong tab Quản lý giải đấu.
+- Mỗi bảng tự cuộn ngang bên trong khi màn hình không đủ rộng, không kéo tràn toàn trang.
+- Panel, details, form giới hạn theo chiều rộng màn hình.
+- Thu gọn thêm padding/font ở màn hình <=1200px và <=720px.
+- Không có SQL mới.

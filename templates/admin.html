@@ -698,11 +698,38 @@
 
 
 {% if can_admin('system_features_manage') %}
-<section class="admin-tab-panel" data-admin-panel="tournaments">
+<section class="admin-tab-panel tournament-admin-panel" data-admin-panel="tournaments">
   {% set td = tournament_admin_data|default({}) %}
   {% set ops = tournament_ops_admin|default({}) %}
   <div class="panel">
-    <style>.tournament-compact table{font-size:12px}.tournament-compact th,.tournament-compact td{padding:5px 7px;line-height:1.2;vertical-align:middle}.tournament-compact .btn{padding:5px 8px;font-size:11px}.tournament-compact select,.tournament-compact input{min-height:28px;padding:3px 6px;font-size:12px}.tournament-compact .small{font-size:10px;line-height:1.15}.tournament-compact details>summary{white-space:nowrap}</style>
+    <style>
+      .tournament-admin-panel{min-width:0;max-width:100%;overflow:hidden}
+      .tournament-admin-panel>.panel{min-width:0;max-width:100%;overflow:hidden}
+      .tournament-admin-panel .admin-table-wrap{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px}
+      .tournament-admin-panel .admin-table-wrap table{width:max-content;min-width:100%;max-width:none}
+      .tournament-admin-panel .admin-table-wrap table th:last-child,
+      .tournament-admin-panel .admin-table-wrap table td:last-child{min-width:0!important;width:auto}
+      .tournament-admin-panel form{max-width:100%}
+      .tournament-admin-panel details{max-width:100%}
+      .tournament-admin-panel details>summary{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+      .tournament-compact table{font-size:12px}
+      .tournament-compact th,.tournament-compact td{padding:5px 7px;line-height:1.2;vertical-align:middle}
+      .tournament-compact .btn{padding:5px 8px;font-size:11px;min-height:30px}
+      .tournament-compact select,.tournament-compact input{min-height:28px;padding:3px 6px;font-size:12px}
+      .tournament-compact .small{font-size:10px;line-height:1.15}
+      .tournament-compact details>summary{white-space:nowrap}
+      @media(max-width:1200px){
+        .tournament-admin-panel>.panel{padding:12px}
+        .tournament-admin-panel .tournament-compact th,.tournament-admin-panel .tournament-compact td{padding:4px 6px;font-size:11px}
+        .tournament-admin-panel .tournament-compact .btn{padding:4px 7px;font-size:10px}
+      }
+      @media(max-width:720px){
+        .tournament-admin-panel>.panel{padding:9px;border-radius:12px}
+        .tournament-admin-panel h2{font-size:20px}
+        .tournament-admin-panel h3{font-size:15px}
+        .tournament-admin-panel .admin-table-wrap{padding:3px;border-radius:10px}
+      }
+    </style>
     <h2>🏟️ Quản lý giải đấu</h2>
     <p class="muted">Trang này chỉ dùng để <strong>vận hành giải thật</strong>. Hãy làm lần lượt từ Bước 1 → Bước 5. Các thiết lập ít dùng đã chuyển sang tab <strong>⚙️ Thiết kế giải đấu</strong>.</p>
     {% if not td.get('db_ready', false) %}
