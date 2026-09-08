@@ -296,6 +296,48 @@ def register_routes(context):
                 timing = _tournament_timing_preview(item.get("id"))
                 item["stage1_start_at"] = timing.get("stage1_start_at")
                 item["stage1_early_end_at"] = timing.get("stage1_early_end_at")
+                # Public Stage 1 standings for the tournament landing page.
+                member_rows_full, _ = _safe_rows(
+                    db.table("tournament_members").select("user_id").eq("tournament_id", item.get("id")).eq("status", "active"),
+                    "tournament_public_ranking_members",
+                )
+                member_ids = [str(r.get("user_id")) for r in member_rows_full if r.get("user_id")]
+                names = {}
+                if member_ids:
+                    user_rows, _ = _safe_rows(
+                        db.table("users").select("id,username,display_name").in_("id", member_ids),
+                        "tournament_public_ranking_users",
+                    )
+                    names = {str(u.get("id")): (u.get("display_name") or u.get("username") or "HLV") for u in user_rows}
+                ranking = {uid: {"user_id": uid, "display_name": names.get(uid, "HLV"), "played": 0, "wins": 0, "draws": 0, "losses": 0, "gf": 0, "ga": 0, "gd": 0, "points": 0} for uid in member_ids}
+                match_rows, _ = _safe_rows(
+                    db.table("tournament_matches").select("home_user_id,away_user_id,home_score,away_score,status,stage_code").eq("tournament_id", item.get("id")).eq("stage_code", "stage1").eq("status", "completed"),
+                    "tournament_public_ranking_matches",
+                )
+                for match in match_rows:
+                    h, a = str(match.get("home_user_id")), str(match.get("away_user_id"))
+                    if h not in ranking or a not in ranking:
+                        continue
+                    try:
+                        hs, as_ = int(match.get("home_score") or 0), int(match.get("away_score") or 0)
+                    except Exception:
+                        continue
+                    H, A = ranking[h], ranking[a]
+                    H["played"] += 1; A["played"] += 1
+                    H["gf"] += hs; H["ga"] += as_; A["gf"] += as_; A["ga"] += hs
+                    if hs > as_:
+                        H["wins"] += 1; H["points"] += 3; A["losses"] += 1
+                    elif hs < as_:
+                        A["wins"] += 1; A["points"] += 3; H["losses"] += 1
+                    else:
+                        H["draws"] += 1; A["draws"] += 1; H["points"] += 1; A["points"] += 1
+                public_ranking = list(ranking.values())
+                for row in public_ranking:
+                    row["gd"] = row["gf"] - row["ga"]
+                public_ranking.sort(key=lambda r: (r["points"], r["gd"], r["gf"], r["wins"]), reverse=True)
+                for idx, row in enumerate(public_ranking, 1):
+                    row["rank"] = idx
+                item["public_stage1_ranking"] = public_ranking
                 status = (item.get("status") or "").lower()
                 if status in {"registration", "upcoming"}:
                     item["phase_name"] = "Sắp khai mạc" if item.get("stage1_start_at") else "Đăng ký"
