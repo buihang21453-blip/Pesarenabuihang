@@ -189,7 +189,7 @@ def register_routes(context):
         registrations = [_decorate_finance(row) for row in _decorate_registration_rows(registrations)]
         unmatched, _ = _safe_rows(
             db.table("tournament_fee_unmatched").select("*")
-            .eq("tournament_id", tournament_id).neq("status", "linked").order("created_at", desc=True),
+            .eq("tournament_id", tournament_id).eq("status", "waiting").order("created_at", desc=True),
             "admin_tournament_fee_unmatched",
         )
         data["fee_unmatched"] = unmatched
@@ -538,7 +538,7 @@ def register_routes(context):
 
         regs, _ = _safe_rows(db.table("tournament_registrations").select("*").eq("tournament_id", tournament_id).order("registered_at"), "tournament_export_regs")
         regs = [_decorate_finance(row) for row in _decorate_registration_rows(regs)]
-        unmatched, _ = _safe_rows(db.table("tournament_fee_unmatched").select("*").eq("tournament_id", tournament_id).neq("status", "linked").order("created_at"), "tournament_export_unmatched")
+        unmatched, _ = _safe_rows(db.table("tournament_fee_unmatched").select("*").eq("tournament_id", tournament_id).eq("status", "waiting").order("created_at"), "tournament_export_unmatched")
         tours, _ = _safe_rows(db.table("tournaments").select("name").eq("id", tournament_id).limit(1), "tournament_export_name")
         tour_name = (tours[0].get("name") if tours else "PES Arena") or "PES Arena"
 
@@ -771,8 +771,14 @@ def register_routes(context):
     @admin_required
     @admin_permission_required("system_features_manage")
     def admin_tournament_fee_unmatched_remove(fee_id):
-        execute_query(db.table("tournament_fee_unmatched").update({"status":"cancelled"}).eq("id", fee_id), "fee_unmatched_cancel", attempts=2)
-        flash("Đã bỏ khoản tiền chờ ghép.", "success")
+        # V1.4.80: đây là bản ghi tạm cho HLV đã nộp tiền nhưng CHƯA ghép tài khoản.
+        # Admin bấm Xóa nghĩa là bỏ hẳn bản ghi khỏi danh sách theo dõi, không phải
+        # chỉ đổi sang cancelled (vì cancelled trước đây vẫn bị query lại và tiếp tục hiện).
+        execute_query(
+            db.table("tournament_fee_unmatched").delete().eq("id", fee_id),
+            "fee_unmatched_delete", attempts=2
+        )
+        flash("Đã xóa HLV chưa ghép tài khoản khỏi danh sách.", "success")
         return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/access')
