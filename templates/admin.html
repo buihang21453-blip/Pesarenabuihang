@@ -976,7 +976,7 @@
     <details open><summary><strong>GĐ1 & thời gian</strong></summary><div style="padding-top:10px"><form method="post" action="{{ url_for('admin_tournament_stage1_settings',tournament_id=ot.id) }}" class="system-toggle-grid"><input type="hidden" name="_admin_tab" value="tournament-design"><label>Số trận/HLV<input name="match_target" type="number" min="5" max="6" value="6"></label><label>Tối thiểu đối thủ<input name="min_opponents" type="number" value="3"></label><label>Tối đa trận/cùng HLV<input name="max_per_opponent" type="number" value="2"></label><button class="btn" type="submit">Lưu luật GĐ1</button></form>
 <div style="margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:12px" data-stage1-club-pool>
 <strong>⚽ Pool CLB GĐ1 · Chỉ Tier S+ và S</strong>
-<p class="small">Chỉ các CLB Tier <strong>S+</strong> và <strong>S</strong> được phép dùng ở GĐ1. Bạn tự tích/bỏ từng đội; Random chỉ lấy trong các đội đang được tích.</p>
+<p class="small">Hiển thị <strong>toàn bộ CLB đang hoạt động</strong> thuộc Tier <strong>S+</strong> và <strong>S</strong> từ dữ liệu teams của web. Bạn tự tích/bỏ từng đội; Random chỉ lấy trong các đội đang được tích.</p>
 {% set selected_names = ops.get('stage1_club_pool',[])|map(attribute='name')|list %}
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 10px">
   <span class="small"><strong>Đang chọn: <span data-stage1-club-count>{{ selected_names|length }}</span> / {{ ops.get('stage1_team_options',[])|length }} CLB</strong></span>

@@ -1,0 +1,8 @@
+PES Arena V1.4.85 - CLB GĐ1 đầy đủ Tier S+ / S
+
+- GĐ1 đọc trực tiếp bảng teams trên Supabase (is_active=true).
+- Hiển thị toàn bộ CLB có Tier S+ hoặc S, không dùng danh sách teams_data.py cũ để giới hạn lựa chọn.
+- Admin tự tích/bỏ từng CLB.
+- Có nút Chọn toàn bộ S+, Chọn toàn bộ S, Chọn cả S+ và S, Bỏ chọn tất cả.
+- Random GĐ1 chỉ lấy trong Pool đã lưu.
+- Nút reset lấy lại toàn bộ S+/S theo dữ liệu teams hiện tại.

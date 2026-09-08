@@ -53,8 +53,11 @@ def register_routes(context):
                 )
                 raw = ((setting.data or [{}])[0].get("setting_value") or {}).get("clubs") or []
                 if not raw:
-                    from teams_data import TEAMS
-                    raw = TEAMS[:10]
+                    try:
+                        raw = [x for x in _load_teams_from_supabase() if str(x.get("tier") or "").strip().upper() in {"S+", "S"}]
+                    except Exception:
+                        from teams_data import TEAMS
+                        raw = [x for x in TEAMS if str(x.get("tier") or "").strip().upper() in {"S+", "S"}]
                 pool = []
                 for c in raw:
                     name = (c.get("display") or c.get("name") or "").strip() if isinstance(c, dict) else str(c).strip()
