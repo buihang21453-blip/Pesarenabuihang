@@ -1,0 +1,8 @@
+PES Arena V1.4.84 - CLB GĐ1 Tier S+ / S
+
+- GĐ1 chỉ hiển thị CLB thuộc Tier S+ và Tier S.
+- Admin tự tích hoặc bỏ tích từng CLB.
+- Nút nhanh: Chọn toàn bộ S+, Chọn toàn bộ S, Chọn cả S+ và S, Bỏ chọn tất cả.
+- Random CLB GĐ1 chỉ dùng các CLB đang được Admin tích.
+- Tối thiểu phải chọn 2 CLB.
+- Dữ liệu hiện tại: 6 CLB Tier S+ và 2 CLB Tier S.

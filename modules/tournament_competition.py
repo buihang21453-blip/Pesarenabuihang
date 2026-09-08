@@ -18,7 +18,9 @@ STAGE_LABELS = {
 ROUND_ORDER = ["playoff", "r16", "qf", "sf", "final"]
 
 # V1.4.81 - GĐ1 dùng Pool CLB riêng do Admin quản lý.
-DEFAULT_STAGE1_CLUBS = [dict(x) for x in TEAMS[:10]]
+STAGE1_ALLOWED_TIERS = {"S+", "S"}
+STAGE1_ELIGIBLE_CLUBS = [dict(x) for x in TEAMS if str(x.get("tier") or "").strip().upper() in STAGE1_ALLOWED_TIERS]
+DEFAULT_STAGE1_CLUBS = [dict(x) for x in STAGE1_ELIGIBLE_CLUBS]
 TOURNAMENT_ROOM_PREFIX = "TOURNAMENT_ROOM|"
 
 
@@ -532,7 +534,7 @@ def register_routes(context):
                 "matches":matches,"hosts":hosts,"clubs":clubs,"me_progress":me_progress,"rewards":_reward_summary(tournament_id,user_id),"availability":availability,
                 "event_ops":ops_events,"knockout_flow":_setting(tournament_id,"knockout_flow",{}) or {},
                 "stage1_club_pool":_stage1_club_pool(tournament_id),"tournament_rooms":_tournament_rooms(tournament_id),
-                "all_team_options":TEAMS,"league_config":_setting(tournament_id,"league_config",{}) or {}}
+                "all_team_options":TEAMS,"stage1_team_options":STAGE1_ELIGIBLE_CLUBS,"league_config":_setting(tournament_id,"league_config",{}) or {}}
 
     def _tournament_scale(tournament_id):
         """Planned/actual match volume for Admin after registration closes."""
@@ -716,11 +718,16 @@ def register_routes(context):
         selected=request.form.getlist("clubs")
         if not selected:
             flash("GĐ1 phải có ít nhất 2 CLB trong Pool.","error"); return redirect_admin("tournaments")
-        lookup={x.get("display"):x for x in TEAMS}
+        lookup={x.get("display"):x for x in STAGE1_ELIGIBLE_CLUBS}
         clubs=[]
         for name in selected:
             info=lookup.get(name)
-            if info: clubs.append({"display":name,"overall":int(info.get("overall") or 0)})
+            if info:
+                clubs.append({
+                    "display":name,
+                    "overall":int(info.get("overall") or 0),
+                    "tier":str(info.get("tier") or "").strip().upper(),
+                })
         if len(clubs)<2:
             flash("GĐ1 phải có ít nhất 2 CLB hợp lệ.","error"); return redirect_admin("tournaments")
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"stage1_club_pool","setting_value":{"clubs":clubs,"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_stage1_club_pool_save",attempts=2)
@@ -732,7 +739,7 @@ def register_routes(context):
     @admin_permission_required("system_features_manage")
     def admin_tournament_stage1_clubs_reset(tournament_id):
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"stage1_club_pool","setting_value":{"clubs":DEFAULT_STAGE1_CLUBS,"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_stage1_club_pool_reset",attempts=2)
-        flash("Đã khôi phục 10 CLB mạnh nhất cho GĐ1.","success"); return redirect_admin("tournaments")
+        flash(f"Đã chọn lại toàn bộ {len(DEFAULT_STAGE1_CLUBS)} CLB Tier S+ và S cho GĐ1.","success"); return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/matches/add')
     @login_required
@@ -822,8 +829,13 @@ def register_routes(context):
             else:
                 info=c or {}
             name=(info.get("display") or info.get("name") or "").strip()
-            if name and not any(x["name"]==name for x in clean):
-                clean.append({"name":name,"overall":int(info.get("overall") or 0)})
+            canonical=next((x for x in STAGE1_ELIGIBLE_CLUBS if x.get("display")==name),None)
+            if canonical and not any(x["name"]==name for x in clean):
+                clean.append({
+                    "name":name,
+                    "overall":int(canonical.get("overall") or 0),
+                    "tier":str(canonical.get("tier") or "").strip().upper(),
+                })
         return clean
 
     def _room_meta(room):
