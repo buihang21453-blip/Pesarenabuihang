@@ -17,7 +17,7 @@ STAGE_LABELS = {
 }
 ROUND_ORDER = ["playoff", "r16", "qf", "sf", "final"]
 
-# V1.4.91 - Khóa phòng Tournament khỏi Rank/Friendly; lịch linh động theo từng ngày; sắp lại GĐ1.
+# V1.4.92 - Tự khai mạc GĐ1 theo giờ + kiểm tra sẵn sàng + animation khai mạc theo HLV.
 # V1.4.89 - Giao diện HLV chia 6 tab gọn: Trung tâm, GĐ1, Lịch, GĐ2, Knockout, Thông tin.
 # V1.4.88 - Tạo phòng trực tiếp + mời đúng đối thủ; dọn gói deploy.
 STAGE1_ALLOWED_TIERS = {"S+", "S"}
@@ -504,6 +504,39 @@ def register_routes(context):
         reveals=_setting(tournament_id,"league_player_reveals",{}) or {}
         return {"state":state,"player_reveals":reveals}
 
+    def _stage1_readiness(tournament_id):
+        members=_all_members(tournament_id)
+        member_ids=[str(m.get("user_id")) for m in members if m.get("user_id")]
+        n=len(member_ids)
+        stage=_stage(tournament_id,"stage1") or {}
+        target=max(1,int(stage.get("match_target") or 6))
+        min_opp=max(1,int(stage.get("min_opponents") or 3))
+        expected=(n*target)//2 if n else 0
+        matches=[m for m in _matches(tournament_id,"stage1") if m.get("status")!="cancelled"]
+        per={uid:{"matches":0,"opponents":set()} for uid in member_ids}
+        for m in matches:
+            h=str(m.get("home_user_id") or ""); a=str(m.get("away_user_id") or "")
+            if h in per:
+                per[h]["matches"]+=1
+                if a: per[h]["opponents"].add(a)
+            if a in per:
+                per[a]["matches"]+=1
+                if h: per[a]["opponents"].add(h)
+        bad=[uid for uid,v in per.items() if v["matches"]!=target or len(v["opponents"])<min_opp]
+        pool=_stage1_club_pool(tournament_id) or []
+        cfg=_setting(tournament_id,"competition_timing",{}) or {}
+        checks={
+            "members": n>=4 and n%2==0,
+            "matches": len(matches)==expected and not bad,
+            "clubs": len(pool)>=2,
+            "timing": bool(cfg.get("stage1_start_at")),
+        }
+        return {
+            "ready":all(checks.values()),"checks":checks,"member_count":n,"target":target,
+            "expected_matches":expected,"actual_matches":len(matches),"club_count":len(pool),
+            "bad_player_count":len(bad),
+        }
+
     def _sync_competition_deadlines(tournament_id):
         cfg=_setting(tournament_id,"competition_timing",{}) or {}
         state=_setting(tournament_id,"deadline_sync",{}) or {}
@@ -511,9 +544,14 @@ def register_routes(context):
         s1start=_parse_iso(cfg.get("stage1_start_at"))
         if s1start and s1start.tzinfo is None: s1start=s1start.replace(tzinfo=vn)
         if s1start and now>=s1start and not state.get("stage1_started"):
-            execute_query(db.table("tournaments").update({"registration_open":False,"status":"active","updated_at":now_iso()}).eq("id",tournament_id),"ops_auto_s1_tournament",attempts=2)
-            execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","stage1"),"ops_auto_s1_stage",attempts=2)
-            state["stage1_started"]=now_iso()
+            readiness=_stage1_readiness(tournament_id)
+            if readiness.get("ready"):
+                execute_query(db.table("tournaments").update({"registration_open":False,"status":"active","updated_at":now_iso()}).eq("id",tournament_id),"ops_auto_s1_tournament",attempts=2)
+                execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","stage1"),"ops_auto_s1_stage",attempts=2)
+                state["stage1_started"]=now_iso()
+                state.pop("stage1_blocked",None)
+            else:
+                state["stage1_blocked"]={"at":now_iso(),**readiness}
         lgstart=_parse_iso(cfg.get("league_start_at"))
         if lgstart and lgstart.tzinfo is None: lgstart=lgstart.replace(tzinfo=vn)
         if lgstart and now>=lgstart and not state.get("league_started"):
@@ -574,7 +612,8 @@ def register_routes(context):
                 "host_ready":host_ready,"my_has_host":bool(my_host_profile.get("has_host")),"my_host_ready":bool(host_ready_map.get(str(user_id))),
                 "event_ops":ops_events,"knockout_flow":_setting(tournament_id,"knockout_flow",{}) or {},
                 "stage1_club_pool":_stage1_club_pool(tournament_id),"tournament_rooms":_tournament_rooms(tournament_id),
-                "all_team_options":_stage1_eligible_clubs(),"stage1_team_options":_stage1_eligible_clubs(),"league_config":_setting(tournament_id,"league_config",{}) or {}}
+                "all_team_options":_stage1_eligible_clubs(),"stage1_team_options":_stage1_eligible_clubs(),"league_config":_setting(tournament_id,"league_config",{}) or {},
+                "stage1_readiness":_stage1_readiness(tournament_id)}
 
     def _tournament_scale(tournament_id):
         """Planned/actual match volume for Admin after registration closes."""
@@ -678,9 +717,18 @@ def register_routes(context):
     @app.get('/tournaments/<tournament_id>')
     @login_required
     def tournament_detail(tournament_id):
-        data=_detail_payload(tournament_id,(current_user() or {}).get("id"))
+        uid=str((current_user() or {}).get("id") or "")
+        data=_detail_payload(tournament_id,uid)
         if not data:
             flash("Không tìm thấy giải đấu.","error"); return redirect(url_for("tournaments"))
+        # Animation khai mạc chỉ tự hiện 1 lần/tài khoản HLV sau khi GĐ1 thực sự mở.
+        opening_seen=_setting(tournament_id,"opening_seen_v1",{}) or {}
+        stage1_open=any(str(x.get("stage_code"))=="stage1" and str(x.get("status"))=="open" for x in (data.get("stages") or []))
+        should_show=bool(data.get("member") and stage1_open and uid and not opening_seen.get(uid))
+        data["show_opening_animation"]=should_show
+        if should_show:
+            opening_seen[uid]=now_iso()
+            execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"opening_seen_v1","setting_value":opening_seen,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_opening_seen",attempts=2)
         return render_template('tournament_detail.html', **data)
 
 

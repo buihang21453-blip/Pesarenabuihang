@@ -1,0 +1,7 @@
+PES Arena V1.4.92
+- GĐ1 tự mở theo stage1_start_at khi hệ thống được truy cập sau giờ khai mạc.
+- Chỉ mở khi kiểm tra sẵn sàng: số HLV hợp lệ, đủ lịch GĐ1, Pool CLB >= 2, đã đặt giờ.
+- Với 16 HLV, 6 trận/HLV: cần đủ 48 trận GĐ1.
+- Animation CHAMPION LEAGUE ARENA tự hiện lần đầu cho từng HLV khi GĐ1 đã mở.
+- Có nút Xem lễ khai mạc để xem lại animation.
+- Không cần SQL mới.
