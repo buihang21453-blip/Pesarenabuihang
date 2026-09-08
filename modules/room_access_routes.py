@@ -168,6 +168,7 @@ def register_routes(context):
         tournament_meta = None
         tournament_match = None
         tournament_result_proposal = {}
+        tournament_stage1_pool = []
         note = str(room.get("note") or "")
         if note.startswith("TOURNAMENT_ROOM|"):
             try:
@@ -180,6 +181,9 @@ def register_routes(context):
                     tournament_match = (mr.data or [None])[0]
                     sr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key",f"match_result_proposal:{mid}").limit(1),"room_tournament_result_context",attempts=2)
                     tournament_result_proposal = ((sr.data or [{}])[0].get("setting_value") or {})
+                    pr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key","stage1_club_pool").limit(1),"room_tournament_stage1_pool_context",attempts=2)
+                    pool_state = ((pr.data or [{}])[0].get("setting_value") or {})
+                    tournament_stage1_pool = pool_state.get("clubs") or []
             except Exception as exc:
                 app.logger.warning("Tournament room context failed room=%s: %s", room.get("id"), exc)
                 tournament_meta = None
@@ -211,6 +215,8 @@ def register_routes(context):
             "tournament_meta": tournament_meta,
             "tournament_match": tournament_match,
             "tournament_result_proposal": tournament_result_proposal,
+            "tournament_stage1_pool": tournament_stage1_pool,
+            "tournament_stage1_pool_count": len(tournament_stage1_pool),
             "is_tournament_room": bool(tournament_meta),
         }
 

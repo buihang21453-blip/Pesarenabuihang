@@ -1023,6 +1023,10 @@ def register_routes(context):
             flash("Không tìm thấy phòng GĐ1.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
         if uid not in {str(room.get("host_user_id")),str(room.get("guest_user_id"))}:
             flash("Bạn không thuộc phòng này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
+        if uid != str(room.get("host_user_id")) and not is_admin_user(user):
+            flash("Chỉ chủ phòng mới được Random CLB.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        if str(meta.get("stage_code") or "") != "stage1":
+            flash("Random CLB GĐ1 chỉ dùng cho trận Giai đoạn 1.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         if not room.get("guest_user_id"):
             flash("Phòng chưa đủ 2 HLV.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         pool=_stage1_club_pool(tournament_id)
