@@ -17,7 +17,7 @@ STAGE_LABELS = {
 }
 ROUND_ORDER = ["playoff", "r16", "qf", "sf", "final"]
 
-# V1.4.86 - GĐ1 đọc CLB trực tiếp từ bảng teams (Supabase), không dùng teams_data.py cũ.
+# V1.4.87 - Lịch thủ công + Host rảnh + tinh gọn giao diện GĐ1.
 STAGE1_ALLOWED_TIERS = {"S+", "S"}
 TOURNAMENT_ROOM_PREFIX = "TOURNAMENT_ROOM|"
 
@@ -558,8 +558,17 @@ def register_routes(context):
         clubs,_=_rows(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).order("name"),"ops_clubs")
         me_progress=next((r for r in s1 if str(r["user_id"])==str(user_id)),None)
         ops_events=_event_ops_payload(tournament_id,user_id)
+        host_ready_map=_setting(tournament_id,"host_live_ready",{}) or {}
+        members_all=_all_members(tournament_id)
+        host_ready=[]
+        for hm in members_all:
+            huid=str(hm.get("user_id") or "")
+            if hm.get("has_host") and host_ready_map.get(huid):
+                host_ready.append({"user_id":huid,"display_name":hm.get("display_name") or "HLV","region":hm.get("host_region") or "—"})
+        my_host_profile=next((hm for hm in members_all if str(hm.get("user_id"))==str(user_id)),{})
         return {"tournament":tour,"member":member,"stages":stages,"stage1_ranking":s1,"league_ranking":league,"combined_ranking":_combined_ranking(tournament_id),
                 "matches":matches,"hosts":hosts,"clubs":clubs,"me_progress":me_progress,"rewards":_reward_summary(tournament_id,user_id),"availability":availability,
+                "host_ready":host_ready,"my_has_host":bool(my_host_profile.get("has_host")),"my_host_ready":bool(host_ready_map.get(str(user_id))),
                 "event_ops":ops_events,"knockout_flow":_setting(tournament_id,"knockout_flow",{}) or {},
                 "stage1_club_pool":_stage1_club_pool(tournament_id),"tournament_rooms":_tournament_rooms(tournament_id),
                 "all_team_options":_stage1_eligible_clubs(),"stage1_team_options":_stage1_eligible_clubs(),"league_config":_setting(tournament_id,"league_config",{}) or {}}
@@ -1386,12 +1395,53 @@ def register_routes(context):
                 vn_tz=timezone(timedelta(hours=7)); dt=datetime.fromisoformat(raw).astimezone(vn_tz); iso=dt.isoformat()
                 if iso in allowed: selected.append(iso)
             except Exception: pass
-        # Replace only this HLV's rolling availability; this schedule applies to every opponent.
+        # Giữ lại các giờ thủ công; form checkbox chỉ thay các slot chuẩn.
+        existing=_availability_rows(tournament_id,[uid])
+        custom_existing=[r.get("slot_iso") for r in existing if r.get("slot_iso") not in allowed]
         execute_query(db.table("tournament_availability_slots").delete().eq("tournament_id",tournament_id).eq("user_id",uid),"ops_availability_clear",attempts=2)
-        for iso in sorted(set(selected)):
+        final_slots=sorted(set(selected+custom_existing))
+        for iso in final_slots:
             execute_query(db.table("tournament_availability_slots").insert({"tournament_id":tournament_id,"user_id":uid,"slot_at":iso,"created_at":now_iso(),"updated_at":now_iso()}),"ops_availability_insert",attempts=2)
-        flash(f"Đã lưu lịch thi đấu của bạn: {len(set(selected))} khung giờ trong 3 ngày gần nhất.","success")
+        flash(f"Đã lưu lịch thi đấu của bạn: {len(final_slots)} khung giờ trong 3 ngày gần nhất.","success")
         return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+
+    @app.post('/tournaments/<tournament_id>/availability/custom')
+    @login_required
+    def tournament_availability_custom_add(tournament_id):
+        uid=(current_user() or {}).get("id")
+        if not _member(tournament_id,uid):
+            flash("Bạn chưa phải HLV của giải đấu này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        raw=(request.form.get("custom_slot") or "").strip()
+        vn_tz=timezone(timedelta(hours=7)); now=datetime.now(vn_tz)
+        try:
+            dt=datetime.fromisoformat(raw)
+            if dt.tzinfo is None: dt=dt.replace(tzinfo=vn_tz)
+            else: dt=dt.astimezone(vn_tz)
+        except Exception:
+            flash("Giờ thủ công không hợp lệ.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        if dt<=now or dt.date()>now.date()+timedelta(days=2):
+            flash("Chỉ được thêm giờ trong Hôm nay, Ngày mai hoặc Ngày kia và phải là giờ tương lai.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        iso=dt.replace(second=0,microsecond=0).isoformat()
+        current={r.get("slot_iso") for r in _availability_rows(tournament_id,[uid])}
+        if iso not in current:
+            execute_query(db.table("tournament_availability_slots").insert({"tournament_id":tournament_id,"user_id":uid,"slot_at":iso,"created_at":now_iso(),"updated_at":now_iso()}),"ops_availability_custom_insert",attempts=2)
+        flash("Đã thêm khung giờ thủ công.","success")
+        return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+
+    @app.post('/tournaments/<tournament_id>/host-ready')
+    @login_required
+    def tournament_host_ready_toggle(tournament_id):
+        uid=str((current_user() or {}).get("id") or "")
+        prof=next((x for x in _all_members(tournament_id) if str(x.get("user_id"))==uid),None)
+        if not prof or not prof.get("has_host"):
+            flash("Chỉ HLV đã đăng ký có Host mới dùng được mục này.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
+        state=_setting(tournament_id,"host_live_ready",{}) or {}
+        ready=(request.form.get("ready") or "") in {"1","true","on","yes"}
+        if ready: state[uid]=now_iso()
+        else: state.pop(uid,None)
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"host_live_ready","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_host_live_ready",attempts=2)
+        flash("Đã cập nhật trạng thái Host đang rảnh.","success")
+        return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
 
     @app.post('/tournaments/matches/<match_id>/schedule-from-availability')
     @login_required

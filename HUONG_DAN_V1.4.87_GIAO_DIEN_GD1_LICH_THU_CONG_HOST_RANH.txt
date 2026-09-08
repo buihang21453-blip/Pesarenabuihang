@@ -1,0 +1,24 @@
+PES Arena V1.4.87
+
+1. Đặt lịch thi đấu
+- Giữ lịch 3 ngày và các slot có sẵn.
+- Thêm khung giờ thủ công bằng datetime-local.
+- Giờ thủ công phải là tương lai và nằm trong Hôm nay / Ngày mai / Ngày kia.
+- Khi lưu lại các checkbox chuẩn, giờ thủ công đã thêm vẫn được giữ.
+
+2. Giao diện GĐ1
+- Bỏ chữ "Random đối thủ" khỏi tiêu đề GĐ1 phía HLV.
+- CLB GĐ1 chỉ hiện tên CLB.
+- Không hiện Tier hoặc Overall/điểm CLB phía HLV.
+- Admin vẫn quản lý Tier/điểm trong bảng Pool CLB GĐ1.
+- Mở đối thủ GĐ1 hiển thị đủ 3 đối thủ cùng lúc.
+
+3. Phòng thi đấu
+- Đưa Phòng thi đấu lên đầu menu và lên khu trung tâm ngay sau tổng quan.
+- Hiển thị phòng giải, HLV đang chờ, cặp đấu và trận của tôi.
+
+4. Host đang rảnh
+- HLV đã đăng ký Có Host có checkbox "Tôi đang rảnh để Host".
+- Khi tích, tên HLV + khu vực xuất hiện ở khu Phòng thi đấu.
+- Khi bỏ tích, HLV biến mất khỏi danh sách Host đang rảnh.
+- Không cần SQL mới; trạng thái dùng tournament_settings.
