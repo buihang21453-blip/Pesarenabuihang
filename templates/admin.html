@@ -714,8 +714,9 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px">
         <span class="btn gray" style="cursor:default">🏆 {{ tour.name }}</span>
         <span class="btn {{ 'green' if tour.registration_open else 'gray' }}" style="cursor:default">Đăng ký: {{ 'ĐANG MỞ' if tour.registration_open else 'ĐÃ ĐÓNG' }}</span>
-        <span class="btn gray" style="cursor:default">HLV đã duyệt: {{ td.get('members',[])|length }}</span>
+        <span class="btn green" style="cursor:default;font-weight:700">Tổng đăng ký: {{ (td.get('members',[])|length) + (td.get('pending',[])|length) }}</span>
         <span class="btn gray" style="cursor:default">Chờ duyệt: {{ td.get('pending',[])|length }}</span>
+        <span class="btn gray" style="cursor:default">Đã duyệt: {{ td.get('members',[])|length }}</span>
       </div>
 
       <div style="padding:15px;border:1px solid rgba(52,152,219,.3);border-radius:14px;margin-bottom:12px">
