@@ -6,6 +6,9 @@ Pot, club lock, scheduling, hosts, progress, knockout/two legs and early rewards
 from datetime import datetime, timezone, timedelta
 import uuid
 import random
+import json
+
+from teams_data import TEAMS
 
 STAGE_LABELS = {
     "stage1": "GĐ1 · Phân hạng",
@@ -13,6 +16,10 @@ STAGE_LABELS = {
     "knockout": "Knockout",
 }
 ROUND_ORDER = ["playoff", "r16", "qf", "sf", "final"]
+
+# V1.4.81 - GĐ1 dùng Pool CLB riêng do Admin quản lý.
+DEFAULT_STAGE1_CLUBS = [dict(x) for x in TEAMS[:10]]
+TOURNAMENT_ROOM_PREFIX = "TOURNAMENT_ROOM|"
 
 
 def register_routes(context):
@@ -523,7 +530,9 @@ def register_routes(context):
         ops_events=_event_ops_payload(tournament_id,user_id)
         return {"tournament":tour,"member":member,"stages":stages,"stage1_ranking":s1,"league_ranking":league,"combined_ranking":_combined_ranking(tournament_id),
                 "matches":matches,"hosts":hosts,"clubs":clubs,"me_progress":me_progress,"rewards":_reward_summary(tournament_id,user_id),"availability":availability,
-                "event_ops":ops_events,"knockout_flow":_setting(tournament_id,"knockout_flow",{}) or {}}
+                "event_ops":ops_events,"knockout_flow":_setting(tournament_id,"knockout_flow",{}) or {},
+                "stage1_club_pool":_stage1_club_pool(tournament_id),"tournament_rooms":_tournament_rooms(tournament_id),
+                "all_team_options":TEAMS,"league_config":_setting(tournament_id,"league_config",{}) or {}}
 
     def _tournament_scale(tournament_id):
         """Planned/actual match volume for Admin after registration closes."""
@@ -677,6 +686,32 @@ def register_routes(context):
         execute_query(db.table("tournament_stages").update({"match_target":target,"min_opponents":min_opp,"max_matches_per_opponent":max_same,"updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","stage1"),"ops_stage1_settings",attempts=2)
         flash("Đã lưu luật GĐ1.","success"); return redirect_admin("tournaments")
 
+    @app.post('/admin/tournaments/<tournament_id>/stage1/clubs')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_stage1_clubs(tournament_id):
+        selected=request.form.getlist("clubs")
+        if not selected:
+            flash("GĐ1 phải có ít nhất 2 CLB trong Pool.","error"); return redirect_admin("tournaments")
+        lookup={x.get("display"):x for x in TEAMS}
+        clubs=[]
+        for name in selected:
+            info=lookup.get(name)
+            if info: clubs.append({"display":name,"overall":int(info.get("overall") or 0)})
+        if len(clubs)<2:
+            flash("GĐ1 phải có ít nhất 2 CLB hợp lệ.","error"); return redirect_admin("tournaments")
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"stage1_club_pool","setting_value":{"clubs":clubs,"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_stage1_club_pool_save",attempts=2)
+        flash(f"Đã lưu Pool {len(clubs)} CLB cho GĐ1.","success"); return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/stage1/clubs/reset')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_stage1_clubs_reset(tournament_id):
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"stage1_club_pool","setting_value":{"clubs":DEFAULT_STAGE1_CLUBS,"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_stage1_club_pool_reset",attempts=2)
+        flash("Đã khôi phục 10 CLB mạnh nhất cho GĐ1.","success"); return redirect_admin("tournaments")
+
     @app.post('/admin/tournaments/<tournament_id>/matches/add')
     @login_required
     @admin_required
@@ -727,6 +762,11 @@ def register_routes(context):
     @admin_permission_required("system_features_manage")
     def admin_tournament_generate_pots(tournament_id):
         pot_count=max(1,min(8,int(request.form.get("pot_count") or 4)))
+        club_count=max(2,min(64,int(request.form.get("club_count") or len(_all_members(tournament_id)) or 10)))
+        league_cfg=_setting(tournament_id,"league_config",{}) or {}
+        league_cfg["club_count"]=club_count
+        league_cfg["pot_count"]=pot_count
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"league_config","setting_value":league_cfg,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_config_pot_clubs",attempts=2)
         ranking=_ranking(tournament_id,"stage1")
         if not ranking:
             flash("Chưa có HLV để chia Pot.","error"); return redirect_admin("tournaments")
@@ -735,7 +775,7 @@ def register_routes(context):
             pot=min(pot_count,(i//size)+1)
             execute_query(db.table("tournament_members").update({"pot_no":pot,"seed_no":i+1}).eq("tournament_id",tournament_id).eq("user_id",row["user_id"]),"ops_pot_update",attempts=2)
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"pots_locked","setting_value":{"locked":False,"pot_count":pot_count},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_pot_setting",attempts=2)
-        flash(f"Đã chia {pot_count} Pot theo BXH GĐ1.","success"); return redirect_admin("tournaments")
+        flash(f"Đã cấu hình GĐ2: {pot_count} Pot · {club_count} CLB và chia Pot theo BXH GĐ1.","success"); return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/pot/lock')
     @login_required
@@ -749,6 +789,101 @@ def register_routes(context):
     def _setting(tournament_id,key,default=None):
         row,_=_one(db.table("tournament_settings").select("setting_value").eq("tournament_id",tournament_id).eq("setting_key",key),"ops_setting")
         return (row or {}).get("setting_value",default)
+
+    def _stage1_club_pool(tournament_id):
+        state=_setting(tournament_id,"stage1_club_pool",{}) or {}
+        clubs=state.get("clubs") or DEFAULT_STAGE1_CLUBS
+        clean=[]
+        for c in clubs:
+            if isinstance(c,str):
+                info=next((x for x in TEAMS if x.get("display")==c),None) or {"display":c,"overall":0}
+            else:
+                info=c or {}
+            name=(info.get("display") or info.get("name") or "").strip()
+            if name and not any(x["name"]==name for x in clean):
+                clean.append({"name":name,"overall":int(info.get("overall") or 0)})
+        return clean
+
+    def _room_meta(room):
+        note=str((room or {}).get("note") or "")
+        if not note.startswith(TOURNAMENT_ROOM_PREFIX): return None
+        try: return json.loads(note[len(TOURNAMENT_ROOM_PREFIX):])
+        except Exception: return None
+
+    def _room_note(meta):
+        return TOURNAMENT_ROOM_PREFIX + json.dumps(meta,ensure_ascii=False,separators=(",",":"))
+
+    def _tournament_rooms(tournament_id):
+        rows,_=_rows(db.table("match_rooms").select("*").order("updated_at",desc=True).limit(120),"ops_tournament_rooms")
+        matches={str(m.get("id")):m for m in _decorate_matches(tournament_id,_matches(tournament_id))}
+        out=[]
+        for r in rows:
+            meta=_room_meta(r)
+            if not meta or str(meta.get("tournament_id"))!=str(tournament_id): continue
+            mid=str(meta.get("tournament_match_id") or "")
+            m=matches.get(mid) or {}
+            host=get_user(r.get("host_user_id")) if r.get("host_user_id") else None
+            guest=get_user(r.get("guest_user_id")) if r.get("guest_user_id") else None
+            expected_home=m.get("home_name") or meta.get("home_name") or "HLV 1"
+            expected_away=m.get("away_name") or meta.get("away_name") or "HLV 2"
+            r["tournament_meta"]=meta; r["tournament_match"]=m
+            r["host_name"]=(host or {}).get("display_name") or (host or {}).get("username") or expected_home
+            r["guest_name"]=(guest or {}).get("display_name") or (guest or {}).get("username") or None
+            r["expected_home_name"]=expected_home; r["expected_away_name"]=expected_away
+            if r.get("guest_user_id"):
+                r["public_label"]=f'{r["host_name"]} vs {r["guest_name"] or expected_away}'
+                r["public_status"]="Đang thi đấu" if r.get("status") in {"playing","friendly_playing"} else "Đủ 2 HLV"
+            else:
+                expected = expected_away if str(r.get("host_user_id"))==str(m.get("home_user_id")) else expected_home
+                r["public_label"]=f'{r["host_name"]} · chờ {expected}'
+                r["public_status"]="Chờ đối thủ"
+            out.append(r)
+        return out
+
+    @app.post('/tournaments/<tournament_id>/matches/<match_id>/room')
+    @login_required
+    def tournament_match_room_enter(tournament_id,match_id):
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        match,_=_one(db.table("tournament_matches").select("*").eq("id",match_id).eq("tournament_id",tournament_id),"ops_tournament_room_match")
+        if not match or uid not in {str(match.get("home_user_id")),str(match.get("away_user_id"))}:
+            flash("Bạn không thuộc trận đấu này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
+        existing=None
+        for r in _tournament_rooms(tournament_id):
+            if str((r.get("tournament_meta") or {}).get("tournament_match_id"))==str(match_id) and r.get("status") not in {"completed","cancelled"}: existing=r; break
+        if existing:
+            if uid not in {str(existing.get("host_user_id")),str(existing.get("guest_user_id"))}:
+                if existing.get("guest_user_id"):
+                    flash("Phòng đã đủ 2 HLV.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
+                execute_query(db.table("match_rooms").update({"guest_user_id":uid,"guest_ready":True,"updated_at":now_iso()}).eq("id",existing.get("id")),"ops_tournament_room_join",attempts=2)
+            return redirect(url_for("room_detail",room_id=existing.get("id")))
+        active=active_room_for_user(uid)
+        if active:
+            flash("Bạn đang ở một phòng đấu khác. Hãy thoát phòng đó trước.","warning"); return redirect(url_for("room_detail",room_id=active.get("id")))
+        dm=_decorate_matches(tournament_id,[match])[0]
+        meta={"tournament_id":str(tournament_id),"tournament_match_id":str(match_id),"stage_code":match.get("stage_code"),"home_user_id":str(match.get("home_user_id")),"away_user_id":str(match.get("away_user_id")),"home_name":dm.get("home_name"),"away_name":dm.get("away_name")}
+        row=execute_query(db.table("match_rooms").insert({"invite_id":None,"host_user_id":uid,"guest_user_id":None,"team_tier":"TOURNAMENT_GD1" if match.get("stage_code")=="stage1" else "TOURNAMENT","match_mode":MATCH_MODE_FRIENDLY,"friendly_tier":None,"status":"waiting_ready","guest_ready":False,"note":_room_note(meta),"state_expires_at":None,"updated_at":now_iso()}),"ops_tournament_room_create",attempts=2)
+        room=(row.data or [{}])[0]
+        flash("Đã vào Phòng thi đấu của trận giải. Đang chờ đối thủ.","success")
+        return redirect(url_for("room_detail",room_id=room.get("id")))
+
+    @app.post('/tournaments/<tournament_id>/rooms/<room_id>/random-stage1-clubs')
+    @login_required
+    def tournament_room_random_stage1_clubs(tournament_id,room_id):
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        room=get_room(room_id); meta=_room_meta(room)
+        if not room or not meta or str(meta.get("tournament_id"))!=str(tournament_id):
+            flash("Không tìm thấy phòng GĐ1.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
+        if uid not in {str(room.get("host_user_id")),str(room.get("guest_user_id"))}:
+            flash("Bạn không thuộc phòng này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
+        if not room.get("guest_user_id"):
+            flash("Phòng chưa đủ 2 HLV.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        pool=_stage1_club_pool(tournament_id)
+        if len(pool)<2:
+            flash("Pool CLB GĐ1 chưa đủ 2 đội.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        a,b=random.sample(pool,2)
+        execute_query(db.table("match_rooms").update({"host_team":a["name"],"guest_team":b["name"],"host_team_overall":a.get("overall") or None,"guest_team_overall":b.get("overall") or None,"team_tier":"TOURNAMENT_GD1","match_mode":MATCH_MODE_FRIENDLY,"status":"friendly_playing","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_stage1_random_clubs",attempts=2)
+        flash(f'GĐ1 Random: {a["name"]} vs {b["name"]}.',"success")
+        return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/club/select')
     @login_required

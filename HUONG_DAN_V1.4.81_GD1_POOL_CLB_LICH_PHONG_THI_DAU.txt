@@ -1,0 +1,19 @@
+PES Arena V1.4.81
+
+1. GĐ1
+- Mặc định Pool 10 CLB mạnh nhất.
+- Admin có thể tích thêm/bớt CLB trong Thiết kế giải đấu > GĐ1 & thời gian.
+- HLV Random CLB chỉ từ Pool GĐ1.
+
+2. Lịch thi đấu
+- HLV xem lịch của mình và lịch rảnh của đối thủ trong 3 ngày gần nhất.
+- Có thể chốt giờ trùng ngay trong mục Lịch thi đấu.
+
+3. Phòng thi đấu
+- Có tab Phòng thi đấu trong trang giải.
+- Khi 1 HLV vào: công khai tên HLV và người đang chờ.
+- Khi đủ 2 HLV: công khai A vs B.
+- Chỉ 2 HLV thuộc trận mới được tạo/vào phòng của trận đó.
+
+4. GĐ2
+- Admin chọn số Pot và số CLB GĐ2 trong Thiết kế giải đấu.

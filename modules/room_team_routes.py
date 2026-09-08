@@ -35,6 +35,50 @@ def register_routes(context):
             flash("Phòng đã được quay đội hoặc đã tạo trận.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
+        # V1.4.81: phòng GĐ1 của giải dùng đúng Pool CLB do Admin chọn,
+        # không đi qua Random Rank/Giao hữu thông thường.
+        tournament_note = str(room.get("note") or "")
+        if tournament_note.startswith("TOURNAMENT_ROOM|"):
+            try:
+                import json
+                meta = json.loads(tournament_note.split("|", 1)[1])
+            except Exception:
+                meta = {}
+            if str(meta.get("stage_code") or "") == "stage1":
+                tid = str(meta.get("tournament_id") or "")
+                setting = execute_query(
+                    db.table("tournament_settings").select("setting_value")
+                    .eq("tournament_id", tid).eq("setting_key", "stage1_club_pool").limit(1),
+                    "room_tournament_stage1_pool", attempts=2,
+                )
+                raw = ((setting.data or [{}])[0].get("setting_value") or {}).get("clubs") or []
+                if not raw:
+                    from teams_data import TEAMS
+                    raw = TEAMS[:10]
+                pool = []
+                for c in raw:
+                    name = (c.get("display") or c.get("name") or "").strip() if isinstance(c, dict) else str(c).strip()
+                    overall = int(c.get("overall") or 0) if isinstance(c, dict) else 0
+                    if name and not any(x["name"] == name for x in pool):
+                        pool.append({"name": name, "overall": overall})
+                if len(pool) < 2:
+                    flash("Pool CLB GĐ1 chưa đủ 2 đội. Hãy báo Admin kiểm tra.", "danger")
+                    return redirect(url_for("room_detail", room_id=room_id))
+                import random as _random
+                a, b = _random.sample(pool, 2)
+                execute_query(
+                    db.table("match_rooms").update({
+                        "host_team": a["name"], "guest_team": b["name"],
+                        "host_team_overall": a.get("overall") or None,
+                        "guest_team_overall": b.get("overall") or None,
+                        "team_tier": "TOURNAMENT_GD1", "match_mode": MATCH_MODE_FRIENDLY,
+                        "status": "friendly_playing", "updated_at": now_iso(),
+                    }).eq("id", room_id).eq("status", "waiting_ready"),
+                    "room_tournament_stage1_random", attempts=2,
+                )
+                flash(f'GĐ1 Random: {a["name"]} vs {b["name"]}.', "success")
+                return redirect(url_for("room_detail", room_id=room_id))
+
         match_mode = (request.form.get("match_mode") or MATCH_MODE_RANKED).strip().lower()
         if match_mode == MATCH_MODE_FRIENDLY and not system_feature_enabled("friendly_enabled"):
             flash("Tính năng Giao hữu đang tạm tắt.", "warning")

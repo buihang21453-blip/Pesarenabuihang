@@ -456,7 +456,7 @@
                         {% endfor %}
                     </select>
                     <p class="small">Hai CLB khác nhau trong cùng Tier. Không lưu lịch sử, không tính RP.</p>
-                    <button class="btn gold" type="submit">🎲 Quay đội Giao hữu</button>
+                    <button class="btn gold" type="submit">{% if room.note and room.note.startswith('TOURNAMENT_ROOM|') %}🎲 Random CLB GĐ1{% else %}🎲 Quay đội Giao hữu{% endif %}</button>
                 </form>
                 {% endif %}
             </div>
