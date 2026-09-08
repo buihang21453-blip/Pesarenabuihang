@@ -1,0 +1,15 @@
+PES Arena V1.4.65
+
+1. Chay SQL_V1.4.65_MIGRATION_TRACKER.sql tren Supabase SQL Editor.
+   File nay tu tao schema_migrations va bao dam cau truc le phi V1.4.64 ton tai.
+
+2. Admin > Database / SQL
+   - ✅: cau truc migration da co trong DB.
+   - ❌: SQL tuong ung dang thieu / cau truc chua ton tai.
+
+3. Admin > Quan ly giai dau > Buoc 1
+   - Bang Cho duyet va Da duyet deu co cot Da thu.
+   - Chon nhanh 0k / 50k / 100k / 200k.
+   - He thong tu tach 50k le phi + 50k trach nhiem.
+   - 200k => du 100k, vao danh sach can hoan.
+   - Tong hop tu dong: Tong da thu / Tien giai / Trach nhiem / Can hoan thua / Con thieu.

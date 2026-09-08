@@ -268,6 +268,36 @@ def register_routes(context):
         ip_device_status["account_ip_count"] = sum(1 for user in admin_users if user.get("known_ips"))
         ip_device_status["duplicate_group_count"] = len(duplicate_ip_groups)
 
+        def _probe_sql(label, query_factory):
+            try:
+                execute_query(query_factory(), f"migration_probe:{label}", attempts=1)
+                return True, None
+            except Exception as exc:
+                return False, str(exc)
+
+        migration_checks = []
+        migration_specs = [
+            ("V1.4.30", "02_GIAI_DAU_MODULE_DAY_DU_V1.4.30.sql", "Tournament core", lambda: db.table("tournaments").select("id").limit(1)),
+            ("V1.4.34", "04_DANG_KY_HOST_KHU_VUC_THANH_TOAN_V1.4.34.sql", "Đăng ký Host/Khu vực/Thanh toán", lambda: db.table("tournament_registrations").select("has_host,host_region,payment_status").limit(1)),
+            ("V1.4.37", "05_TEN_ZALO_HLV_GIAI_DAU_V1.4.37.sql", "Tên Zalo HLV", lambda: db.table("tournament_registrations").select("zalo_name").limit(1)),
+            ("V1.4.47", "SQL_CU/SQL_DAT_LICH_THI_DAU_3_NGAY_V1.4.47.sql", "Đặt lịch 3 ngày", lambda: db.table("tournament_availability_slots").select("id").limit(1)),
+            ("V1.4.60", "SQL_CU/SQL_V1.4.60_QUEN_MAT_KHAU_SDT_ZALO.sql", "Quên mật khẩu / lịch sử yêu cầu", lambda: db.table("password_reset_requests").select("zalo_phone_snapshot").limit(1)),
+            ("V1.4.64", "SQL_CU/SQL_V1.4.64_LE_PHI_GIAI.sql", "Quản lý lệ phí giải", lambda: db.table("tournament_registrations").select("amount_paid,fee_amount,responsibility_amount,amount_refunded").limit(1)),
+            ("V1.4.64", "SQL_CU/SQL_V1.4.64_LE_PHI_GIAI.sql", "Tiền chờ ghép tài khoản", lambda: db.table("tournament_fee_unmatched").select("id").limit(1)),
+            ("V1.4.65", "SQL_V1.4.65_MIGRATION_TRACKER.sql", "SQL Migration Tracker", lambda: db.table("schema_migrations").select("migration_key").limit(1)),
+        ]
+        for version, filename, title, factory in migration_specs:
+            ok, error = _probe_sql(filename, factory)
+            migration_checks.append({
+                "version": version, "filename": filename, "title": title,
+                "ok": ok, "error": error,
+            })
+        migration_summary = {
+            "total": len(migration_checks),
+            "ok": sum(1 for m in migration_checks if m["ok"]),
+            "missing": sum(1 for m in migration_checks if not m["ok"]),
+        }
+
         return render_template(
             "admin.html",
             admin_users=admin_users,
@@ -295,6 +325,8 @@ def register_routes(context):
             duplicate_ip_groups=duplicate_ip_groups,
             duplicate_ip_user_count=duplicate_ip_user_count,
             ip_device_status=ip_device_status,
+            migration_checks=migration_checks,
+            migration_summary=migration_summary,
             pending_disputes=pending_disputes,
             can_create_test_account=has_admin_permission(current_user(), "users_edit"),
             can_import_accounts_csv=has_admin_permission(current_user(), "accounts_import"),

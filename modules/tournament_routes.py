@@ -197,6 +197,18 @@ def register_routes(context):
         data["approved"] = [row for row in registrations if row.get("status") == "approved"]
         data["rejected"] = [row for row in registrations if row.get("status") == "rejected"]
 
+        finance_rows = data["pending"] + data["approved"]
+        data["finance_summary"] = {
+            "player_count": len(finance_rows),
+            "total_collected": sum(int(r.get("amount_paid") or 0) for r in finance_rows),
+            "tournament_fee_collected": sum(min(int(r.get("amount_paid") or 0), int(r.get("fee_amount") or 50000)) for r in finance_rows),
+            "responsibility_collected": sum(max(0, min(int(r.get("amount_paid") or 0) - int(r.get("fee_amount") or 50000), int(r.get("responsibility_amount") or 50000))) for r in finance_rows),
+            "total_missing": sum(int(r.get("amount_missing") or 0) for r in finance_rows),
+            "total_surplus": sum(int(r.get("amount_surplus") or 0) for r in finance_rows),
+            "total_refunded": sum(int(r.get("amount_refunded") or 0) for r in finance_rows),
+            "surplus_players": [r for r in finance_rows if int(r.get("amount_surplus") or 0) > 0],
+        }
+
         members, _ = _safe_rows(
             db.table("tournament_members").select("*")
             .eq("tournament_id", tournament_id).order("approved_at"),
@@ -385,6 +397,32 @@ def register_routes(context):
         cache_delete("_tournament_design_settings_cached")
         log_admin_action("Cập nhật bố cục ảnh Giải đấu", "system", details=payload)
         flash("Đã lưu kích thước và vị trí ảnh Giải đấu.", "success")
+        return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/registrations/<registration_id>/finance/quick')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_registration_finance_quick(registration_id):
+        raw = str(request.form.get("amount_paid") or "0").replace(",", "").replace(".", "").strip()
+        try:
+            amount = max(0, int(raw))
+        except ValueError:
+            amount = 0
+        if amount not in {0, 50000, 100000, 200000}:
+            flash("Mức thu nhanh không hợp lệ.", "warning")
+            return redirect_admin("tournaments")
+        payload = {
+            "amount_paid": amount,
+            "fee_amount": 50000,
+            "responsibility_amount": 50000,
+            "payment_status": "verified" if amount > 0 else "unreported",
+            "payment_updated_at": now_iso(),
+            "payment_updated_by": (current_user() or {}).get("id"),
+        }
+        execute_query(db.table("tournament_registrations").update(payload).eq("id", registration_id), "admin_tournament_finance_quick", attempts=2)
+        log_admin_action("Cập nhật nhanh lệ phí giải", "tournament_registration", target_id=registration_id, details=payload)
+        flash(f"Đã ghi nhận {amount:,}đ.".replace(",", "."), "success")
         return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/registrations/<registration_id>/finance')

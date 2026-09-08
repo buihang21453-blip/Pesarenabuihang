@@ -49,7 +49,7 @@ def register_routes(context):
         if ids:
             urows, _ = _rows(db.table("users").select("id,username,display_name,avatar_url").in_("id", ids), "ops_member_users")
             users = {str(u.get("id")):u for u in urows}
-            rrows, _ = _rows(db.table("tournament_registrations").select("user_id,zalo_name,has_host,host_region,payment_status,status,registered_at").eq("tournament_id", tournament_id).in_("user_id", ids), "ops_member_registration_profiles")
+            rrows, _ = _rows(db.table("tournament_registrations").select("id,user_id,zalo_name,has_host,host_region,payment_status,status,registered_at,amount_paid,fee_amount,responsibility_amount,responsibility_deducted,amount_refunded,payment_note").eq("tournament_id", tournament_id).in_("user_id", ids), "ops_member_registration_profiles")
             profiles = {str(x.get("user_id")):x for x in rrows if x.get("user_id")}
         for r in rows:
             uid=str(r.get("user_id"))
@@ -62,6 +62,21 @@ def register_routes(context):
             r["host_region"] = prof.get("host_region") or "—"
             r["payment_status"] = prof.get("payment_status") or "—"
             r["registered_at"] = prof.get("registered_at")
+            r["registration_id"] = prof.get("id")
+            paid = int(prof.get("amount_paid") or 0)
+            fee_amount = int(prof.get("fee_amount") or 50000)
+            responsibility_amount = int(prof.get("responsibility_amount") or 50000)
+            refunded = int(prof.get("amount_refunded") or 0)
+            r["amount_paid"] = paid
+            r["fee_amount"] = fee_amount
+            r["responsibility_amount"] = responsibility_amount
+            r["responsibility_deducted"] = int(prof.get("responsibility_deducted") or 0)
+            r["amount_refunded"] = refunded
+            r["payment_note"] = prof.get("payment_note") or ""
+            required = fee_amount + responsibility_amount
+            r["required_amount"] = required
+            r["amount_missing"] = max(0, required - paid)
+            r["amount_surplus"] = max(0, paid - required - refunded)
         return rows
 
     def _matches(tournament_id, stage_code=None, statuses=None):
