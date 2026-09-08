@@ -1,0 +1,12 @@
+PES Arena V1.4.91
+
+- Phòng tạo từ trận giải dùng match_mode=tournament, không dùng Rank/Friendly.
+- Chỉ đúng 2 HLV trong tournament_match_id được vào phòng; Admin có quyền quản lý.
+- Link chia sẻ phòng thường không thể đưa HLV thứ ba vào phòng giải.
+- Phòng Tournament cũ được tự chuẩn hóa khi mở lại.
+- Phòng thi đấu nằm tại tab Trung tâm.
+- Tab GĐ1: BXH GĐ1 -> Đua hoàn thành sớm -> CLB GĐ1 / Đối thủ.
+- Ẩn bảng Tiến độ toàn giải.
+- Lịch: Hôm nay / Ngày mai / Ngày kia hiện Thứ + ngày.
+- Mỗi ngày có mục Thêm giờ: chọn Từ giờ -> Đến giờ; hệ thống tạo các mốc 30 phút để tìm giờ trùng linh động.
+- Không cần SQL mới.

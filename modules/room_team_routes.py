@@ -74,8 +74,8 @@ def register_routes(context):
                         "host_team": a["name"], "guest_team": b["name"],
                         "host_team_overall": a.get("overall") or None,
                         "guest_team_overall": b.get("overall") or None,
-                        "team_tier": "TOURNAMENT_GD1", "match_mode": MATCH_MODE_FRIENDLY,
-                        "status": "friendly_playing", "updated_at": now_iso(),
+                        "team_tier": "TOURNAMENT_GD1", "match_mode": "tournament",
+                        "status": "playing", "updated_at": now_iso(),
                     }).eq("id", room_id).eq("status", "waiting_ready"),
                     "room_tournament_stage1_random", attempts=2,
                 )

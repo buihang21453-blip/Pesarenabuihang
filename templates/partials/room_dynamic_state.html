@@ -175,8 +175,8 @@
                         <em>-</em>
                         <span>{{ room.guest_score if room.guest_score is not none else 0 }}</span>
                     </div>
-                    <div class="room-center-state-pill">{{ 'Giao hữu' if room.status == 'friendly_playing' else 'Đang thi đấu' }}</div>
-                    {% if room.status == 'playing' and room_viewer_is_guest %}
+                    <div class="room-center-state-pill">{{ 'Giải đấu' if is_tournament_room else ('Giao hữu' if room.status == 'friendly_playing' else 'Đang thi đấu') }}</div>
+                    {% if room.status == 'playing' and not is_tournament_room and room_viewer_is_guest %}
                     <div class="room-center-primary-actions room-action-zone">
                         <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}"
                               data-modal-tone="danger"

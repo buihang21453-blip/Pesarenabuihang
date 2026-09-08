@@ -17,6 +17,7 @@ STAGE_LABELS = {
 }
 ROUND_ORDER = ["playoff", "r16", "qf", "sf", "final"]
 
+# V1.4.91 - Khóa phòng Tournament khỏi Rank/Friendly; lịch linh động theo từng ngày; sắp lại GĐ1.
 # V1.4.89 - Giao diện HLV chia 6 tab gọn: Trung tâm, GĐ1, Lịch, GĐ2, Knockout, Thông tin.
 # V1.4.88 - Tạo phòng trực tiếp + mời đúng đối thủ; dọn gói deploy.
 STAGE1_ALLOWED_TIERS = {"S+", "S"}
@@ -238,7 +239,8 @@ def register_routes(context):
                 dt=datetime(d.year,d.month,d.day,hour,0,tzinfo=vn_tz)
                 if dt>datetime.now(vn_tz):
                     slots.append({"iso":dt.isoformat(),"time":f"{hour:02d}:00"})
-            days.append({"date":d.isoformat(),"label":label,"weekday":d.strftime("%d/%m"),"slots":slots})
+            weekday_names=("Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy","Chủ nhật")
+            days.append({"date":d.isoformat(),"label":label,"weekday":f"{weekday_names[d.weekday()]} · {d.strftime('%d/%m')}","slots":slots})
         return days
 
     def _availability_rows(tournament_id, user_ids=None):
@@ -925,17 +927,29 @@ def register_routes(context):
         for r in _tournament_rooms(tournament_id):
             if str((r.get("tournament_meta") or {}).get("tournament_match_id"))==str(match_id) and r.get("status") not in {"completed","cancelled"}: existing=r; break
         if existing:
-            if uid not in {str(existing.get("host_user_id")),str(existing.get("guest_user_id"))}:
-                if existing.get("guest_user_id"):
-                    flash("Phòng đã đủ 2 HLV.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
-                execute_query(db.table("match_rooms").update({"guest_user_id":uid,"guest_ready":True,"updated_at":now_iso()}).eq("id",existing.get("id")),"ops_tournament_room_join",attempts=2)
-            return redirect(url_for("room_detail",room_id=existing.get("id")))
+            allowed={str(match.get("home_user_id")),str(match.get("away_user_id"))}
+            host_id=str(existing.get("host_user_id") or ""); guest_id=str(existing.get("guest_user_id") or "")
+            if host_id not in allowed:
+                execute_query(db.table("match_rooms").update({"status":"cancelled","updated_at":now_iso()}).eq("id",existing.get("id")),"ops_tournament_room_cancel_invalid_host",attempts=2)
+                existing=None
+            else:
+                patch={"match_mode":"tournament","team_tier":"TOURNAMENT_GD1" if match.get("stage_code")=="stage1" else "TOURNAMENT","updated_at":now_iso()}
+                if existing.get("status")=="friendly_playing": patch["status"]="playing"
+                if guest_id and guest_id not in allowed:
+                    patch.update({"guest_user_id":None,"guest_ready":False,"guest_team":None,"guest_team_overall":None})
+                    guest_id=""
+                execute_query(db.table("match_rooms").update(patch).eq("id",existing.get("id")),"ops_tournament_room_normalize",attempts=2)
+                if uid not in {host_id,guest_id}:
+                    if guest_id:
+                        flash("Phòng đã đủ 2 HLV.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
+                    execute_query(db.table("match_rooms").update({"guest_user_id":uid,"guest_ready":True,"updated_at":now_iso()}).eq("id",existing.get("id")),"ops_tournament_room_join",attempts=2)
+                return redirect(url_for("room_detail",room_id=existing.get("id")))
         active=active_room_for_user(uid)
         if active:
             flash("Bạn đang ở một phòng đấu khác. Hãy thoát phòng đó trước.","warning"); return redirect(url_for("room_detail",room_id=active.get("id")))
         dm=_decorate_matches(tournament_id,[match])[0]
         meta={"tournament_id":str(tournament_id),"tournament_match_id":str(match_id),"stage_code":match.get("stage_code"),"home_user_id":str(match.get("home_user_id")),"away_user_id":str(match.get("away_user_id")),"home_name":dm.get("home_name"),"away_name":dm.get("away_name")}
-        row=execute_query(db.table("match_rooms").insert({"invite_id":None,"host_user_id":uid,"guest_user_id":None,"team_tier":"TOURNAMENT_GD1" if match.get("stage_code")=="stage1" else "TOURNAMENT","match_mode":MATCH_MODE_FRIENDLY,"friendly_tier":None,"status":"waiting_ready","guest_ready":False,"note":_room_note(meta),"state_expires_at":None,"updated_at":now_iso()}),"ops_tournament_room_create",attempts=2)
+        row=execute_query(db.table("match_rooms").insert({"invite_id":None,"host_user_id":uid,"guest_user_id":None,"team_tier":"TOURNAMENT_GD1" if match.get("stage_code")=="stage1" else "TOURNAMENT","match_mode":"tournament","friendly_tier":None,"status":"waiting_ready","guest_ready":False,"note":_room_note(meta),"state_expires_at":None,"updated_at":now_iso()}),"ops_tournament_room_create",attempts=2)
         room=(row.data or [{}])[0]
         opponent_uid = str(match.get("away_user_id") if uid==str(match.get("home_user_id")) else match.get("home_user_id"))
         try:
@@ -944,7 +958,7 @@ def register_routes(context):
                 opponent_uid,
                 "🏟️ Đối thủ đã tạo phòng giải",
                 f"{creator} đã tạo phòng cho trận của bạn. Bấm để vào phòng thi đấu.",
-                url_for("room_detail", room_id=room.get("id")),
+                url_for("tournament_match_room_enter", tournament_id=tournament_id, match_id=match_id),
                 "tournament_room_invite",
             )
         except Exception as exc:
@@ -967,7 +981,7 @@ def register_routes(context):
         if len(pool)<2:
             flash("Pool CLB GĐ1 chưa đủ 2 đội.","error"); return redirect(url_for("room_detail",room_id=room_id))
         a,b=random.sample(pool,2)
-        execute_query(db.table("match_rooms").update({"host_team":a["name"],"guest_team":b["name"],"host_team_overall":a.get("overall") or None,"guest_team_overall":b.get("overall") or None,"team_tier":"TOURNAMENT_GD1","match_mode":MATCH_MODE_FRIENDLY,"status":"friendly_playing","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_stage1_random_clubs",attempts=2)
+        execute_query(db.table("match_rooms").update({"host_team":a["name"],"guest_team":b["name"],"host_team_overall":a.get("overall") or None,"guest_team_overall":b.get("overall") or None,"team_tier":"TOURNAMENT_GD1","match_mode":"tournament","status":"playing","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_stage1_random_clubs",attempts=2)
         flash(f'GĐ1 Random: {a["name"]} vs {b["name"]}.',"success")
         return redirect(url_for("room_detail",room_id=room_id))
 
@@ -1424,21 +1438,35 @@ def register_routes(context):
         uid=(current_user() or {}).get("id")
         if not _member(tournament_id,uid):
             flash("Bạn chưa phải HLV của giải đấu này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
-        raw=(request.form.get("custom_slot") or "").strip()
+        day_raw=(request.form.get("day_date") or "").strip()
+        start_raw=(request.form.get("start_time") or "").strip()
+        end_raw=(request.form.get("end_time") or "").strip()
         vn_tz=timezone(timedelta(hours=7)); now=datetime.now(vn_tz)
         try:
-            dt=datetime.fromisoformat(raw)
-            if dt.tzinfo is None: dt=dt.replace(tzinfo=vn_tz)
-            else: dt=dt.astimezone(vn_tz)
+            day=datetime.fromisoformat(day_raw).date()
+            sh,sm=[int(x) for x in start_raw.split(":",1)]
+            eh,em=[int(x) for x in end_raw.split(":",1)]
+            start=datetime(day.year,day.month,day.day,sh,sm,tzinfo=vn_tz)
+            end=datetime(day.year,day.month,day.day,eh,em,tzinfo=vn_tz)
         except Exception:
-            flash("Giờ thủ công không hợp lệ.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
-        if dt<=now or dt.date()>now.date()+timedelta(days=2):
-            flash("Chỉ được thêm giờ trong Hôm nay, Ngày mai hoặc Ngày kia và phải là giờ tương lai.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
-        iso=dt.replace(second=0,microsecond=0).isoformat()
+            flash("Giờ thêm không hợp lệ.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        allowed_days={d["date"] for d in _availability_days()}
+        if day.isoformat() not in allowed_days or end<=start:
+            flash("Hãy chọn đúng Hôm nay, Ngày mai hoặc Ngày kia và giờ kết thúc phải sau giờ bắt đầu.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        # Lưu theo bước 30 phút để hai HLV có thể tìm được giờ trùng linh động trong khoảng đã chọn.
+        slots=[]; cursor=start.replace(second=0,microsecond=0)
+        while cursor<=end and len(slots)<49:
+            if cursor>now: slots.append(cursor.isoformat())
+            cursor += timedelta(minutes=30)
+        if not slots:
+            flash("Khoảng giờ này đã qua hoặc không còn giờ hợp lệ.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
         current={r.get("slot_iso") for r in _availability_rows(tournament_id,[uid])}
-        if iso not in current:
+        added=0
+        for iso in slots:
+            if iso in current: continue
             execute_query(db.table("tournament_availability_slots").insert({"tournament_id":tournament_id,"user_id":uid,"slot_at":iso,"created_at":now_iso(),"updated_at":now_iso()}),"ops_availability_custom_insert",attempts=2)
-        flash("Đã thêm khung giờ thủ công.","success")
+            current.add(iso); added+=1
+        flash(f"Đã thêm giờ linh động {start.strftime('%H:%M')}–{end.strftime('%H:%M')} ({added} mốc).","success")
         return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
 
     @app.post('/tournaments/<tournament_id>/host-ready')

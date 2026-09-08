@@ -171,7 +171,7 @@
                     {% endif %}
                 {% else %}
                     <img class="room-center-vs-image" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/VS.webp" alt="VS" loading="eager">
-                    {% if room.status == 'playing' and room.match_mode != 'friendly' and (room_room_viewer_is_host or current_user.role == 'admin') %}
+                    {% if room.status == 'playing' and not is_tournament_room and room.match_mode != 'friendly' and (room_room_viewer_is_host or current_user.role == 'admin') %}
                         <div class="room-center-score-panel">
                             <h3 class="room-score-title">Kết quả trận đấu</h3>
                             <form method="post" action="{{ url_for('room_submit_result', room_id=room.id) }}" class="room-score-form room-center-score-form">
@@ -188,7 +188,7 @@
                                 <button class="btn green room-submit-result-btn" type="submit">Gửi Kết Quả</button>
                             </form>
                         </div>
-                    {% elif room.status == 'playing' and room.match_mode != 'friendly' and room_viewer_is_guest %}
+                    {% elif room.status == 'playing' and not is_tournament_room and room.match_mode != 'friendly' and room_viewer_is_guest %}
                         <div class="room-center-primary-actions room-action-zone">
                             <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}"
                                   data-modal-tone="danger"
@@ -425,9 +425,9 @@
             </div>
         </section>
 
-        <div class="room-mode-dock-slot" aria-label="Bộ chọn chế độ thi đấu">
+        {% if not is_tournament_room %}<div class="room-mode-dock-slot" aria-label="Bộ chọn chế độ thi đấu">
             {% include "partials/room_mode_selector_strip.html" %}
-        </div>
+        </div>{% endif %}
 
         <aside class="room-side-rail room-arena-right-rail" aria-label="Thông tin bổ sung của phòng">
             {% include "partials/parsec_room_panel.html" %}

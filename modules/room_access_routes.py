@@ -52,6 +52,26 @@ def register_routes(context):
             flash("Link phòng không còn tồn tại hoặc phòng đã bị xóa.", "danger")
             return redirect(url_for("dashboard"))
 
+        # Phòng Tournament không dùng cơ chế link chia sẻ của Rank/Giao hữu.
+        # Chỉ route của trận giải mới được phép gán đúng đối thủ vào phòng.
+        note = str(room.get("note") or "")
+        if note.startswith("TOURNAMENT_ROOM|"):
+            try:
+                import json
+                meta = json.loads(note[len("TOURNAMENT_ROOM|"):])
+            except Exception:
+                meta = {}
+            uid = str(user.get("id") or "")
+            allowed = {str(meta.get("home_user_id") or ""), str(meta.get("away_user_id") or "")}
+            if uid not in allowed and not is_admin_user(user):
+                flash("Đây là phòng của trận giải đấu. Chỉ đúng 2 HLV của trận mới được vào.", "danger")
+                return redirect(url_for("tournaments"))
+            tid = str(meta.get("tournament_id") or "")
+            mid = str(meta.get("tournament_match_id") or "")
+            if tid and mid and not is_admin_user(user):
+                return redirect(url_for("tournament_match_room_enter", tournament_id=tid, match_id=mid))
+            return redirect(url_for("room_detail", room_id=room_id))
+
         user_id = user.get("id")
         if user_id in {room.get("host_user_id"), room.get("guest_user_id")} or is_admin_user(user):
             return redirect(url_for("room_detail", room_id=room_id))
@@ -164,7 +184,7 @@ def register_routes(context):
                 app.logger.warning("Tournament room context failed room=%s: %s", room.get("id"), exc)
                 tournament_meta = None
         daily_limit_message = None
-        if room.get("status") == "waiting_ready" and room.get("match_mode") != MATCH_MODE_FRIENDLY:
+        if room.get("status") == "waiting_ready" and room.get("match_mode") not in {MATCH_MODE_FRIENDLY, "tournament"} and not tournament_meta:
             daily_limit_message = daily_rank_block_message(
                 room.get("host_user_id"), room.get("guest_user_id")
             )
@@ -215,7 +235,18 @@ def register_routes(context):
             flash("Chủ phòng đã Offline nên phòng được đóng. Khách không bị ảnh hưởng.", "warning")
             return redirect(url_for("rooms"))
 
-        if user["id"] not in [room["host_user_id"], room["guest_user_id"]] and not is_admin_user(user):
+        note = str(room.get("note") or "")
+        if note.startswith("TOURNAMENT_ROOM|") and not is_admin_user(user):
+            try:
+                import json
+                meta = json.loads(note[len("TOURNAMENT_ROOM|"):])
+            except Exception:
+                meta = {}
+            allowed={str(meta.get("home_user_id") or ""),str(meta.get("away_user_id") or "")}
+            if str(user.get("id") or "") not in allowed:
+                flash("Đây là phòng của trận giải đấu. Chỉ đúng 2 HLV của trận mới được vào.", "danger")
+                return redirect(url_for("tournaments"))
+        elif user["id"] not in [room["host_user_id"], room["guest_user_id"]] and not is_admin_user(user):
             flash("Bạn không thuộc phòng này.", "danger")
             return redirect(url_for("rooms"))
 
@@ -238,10 +269,19 @@ def register_routes(context):
             response = make_response("", 204)
             response.headers["X-PES-Polling-Stop"] = "host_browser_offline"
             return response
-        is_room_member = (
-            _same_user_id(user.get("id"), room.get("host_user_id"))
-            or _same_user_id(user.get("id"), room.get("guest_user_id"))
-        )
+        note = str(room.get("note") or "")
+        if note.startswith("TOURNAMENT_ROOM|"):
+            try:
+                import json
+                meta = json.loads(note[len("TOURNAMENT_ROOM|"):])
+            except Exception:
+                meta = {}
+            is_room_member = str(user.get("id") or "") in {str(meta.get("home_user_id") or ""),str(meta.get("away_user_id") or "")}
+        else:
+            is_room_member = (
+                _same_user_id(user.get("id"), room.get("host_user_id"))
+                or _same_user_id(user.get("id"), room.get("guest_user_id"))
+            )
         if not is_room_member and not is_admin_user(user):
             return "", 403
 
