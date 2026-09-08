@@ -703,8 +703,13 @@
   {% set ops = tournament_ops_admin|default({}) %}
   <div class="panel">
     <style>
-      .tournament-admin-panel{min-width:0;width:100%;max-width:100%;margin-left:0;margin-right:0;overflow:visible;box-sizing:border-box}
-      .tournament-admin-panel>.panel{min-width:0;width:100%;max-width:100%;margin:0;overflow:visible;box-sizing:border-box}
+      /* V1.4.73 - khoa cuon ngang toan trang Admin; chi bang duoc cuon noi bo */
+      html,body{max-width:100%;overflow-x:hidden!important}
+      .player-main{min-width:0!important;overflow-x:hidden!important}
+      .tournament-admin-panel{min-width:0;width:100%;max-width:100%;margin-left:0!important;margin-right:0!important;overflow-x:clip!important;box-sizing:border-box;transform:none!important;left:auto!important}
+      .tournament-admin-panel>.panel{min-width:0;width:100%;max-width:100%;margin:0!important;overflow-x:clip!important;box-sizing:border-box;transform:none!important;left:auto!important}
+      .tournament-stage-block{position:relative!important;left:0!important;right:auto!important;transform:none!important;margin-left:0!important;margin-right:0!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;overflow-x:clip!important}
+      .tournament-stage-block>div[style*="display:flex"]{max-width:100%;padding-left:0!important;margin-left:0!important}
       .tournament-admin-panel>.panel>*{max-width:100%;box-sizing:border-box}
       .tournament-admin-panel .admin-table-wrap{width:100%;max-width:100%;margin-left:0;margin-right:0;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px;box-sizing:border-box}
       .tournament-admin-panel .admin-table-wrap table{width:max-content;min-width:100%;max-width:none;margin-left:0}
@@ -724,16 +729,23 @@
       .tournament-admin-panel .btn,
       .tournament-admin-panel button.btn,
       .tournament-admin-panel a.btn,
-      .tournament-admin-panel summary.btn{min-height:32px!important;padding:6px 10px!important;border-radius:8px!important;font-size:12px!important;line-height:1.15!important;box-shadow:none!important;white-space:nowrap;width:auto}
+      .tournament-admin-panel summary.btn{min-height:30px!important;height:auto!important;padding:5px 9px!important;border-radius:7px!important;font-size:11px!important;line-height:1.1!important;box-shadow:none!important;white-space:nowrap;width:auto!important;min-width:0!important}
       .tournament-admin-panel .tournament-compact .btn,
       .tournament-admin-panel .tournament-compact button.btn,
-      .tournament-admin-panel .tournament-compact summary.btn{min-height:28px!important;padding:4px 7px!important;font-size:11px!important;border-radius:7px!important}
+      .tournament-admin-panel .tournament-compact summary.btn{min-height:27px!important;height:auto!important;padding:4px 7px!important;font-size:10.5px!important;border-radius:6px!important;min-width:0!important}
       .tournament-admin-panel .tournament-direct-add{grid-template-columns:minmax(220px,420px) auto 1fr;align-items:end;gap:8px;margin-top:8px}
       .tournament-admin-panel .tournament-direct-add>button{justify-self:start;align-self:end}
       .tournament-admin-panel .tournament-fee-add{grid-template-columns:repeat(4,minmax(120px,1fr)) auto;align-items:end;gap:8px}
       .tournament-admin-panel .tournament-fee-add>button{justify-self:start;align-self:end}
       .tournament-admin-panel [style*="padding:15px"]{box-sizing:border-box;max-width:100%}
       .tournament-admin-panel details>div{box-sizing:border-box;max-width:100%}
+
+      @media(min-width:851px){
+        body[data-page="admin"] .player-main{width:calc(100vw - 230px)!important;max-width:calc(100vw - 230px)!important;margin-left:230px!important;padding-left:22px!important;padding-right:22px!important;box-sizing:border-box!important}
+      }
+      @media(max-width:850px){
+        body[data-page="admin"] .player-main{width:100vw!important;max-width:100vw!important;margin-left:0!important}
+      }
       @media(max-width:1180px){
         .tournament-admin-panel .tournament-fee-add{grid-template-columns:repeat(2,minmax(0,1fr))}
         .tournament-admin-panel .tournament-fee-add>button{grid-column:auto;width:max-content}
@@ -900,7 +912,7 @@
   {% if ops.get('ready') and ops.get('tournament') %}
     {% set ot=ops.get('tournament') %}{% set ev=ops.get('event_ops',{}) %}{% set tm=ev.get('timing',{}) %}{% set cd=ev.get('club_draft',{}) %}{% set ld=ev.get('league_draw',{}).get('state',{}) %}
     <div class="panel" style="margin-top:14px">
-      <div style="padding:15px;border:1px solid rgba(46,204,113,.3);border-radius:14px;margin-bottom:12px">
+      <div class="tournament-stage-block" style="padding:15px;border:1px solid rgba(46,204,113,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">2️⃣ Giai đoạn 1 — Random & thi đấu 6 trận</h3>
         <p class="small"><strong>Làm theo thứ tự:</strong> Bắt đầu GĐ1 → Random đối thủ → theo dõi tiến độ → kết thúc GĐ1.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -914,7 +926,7 @@
         <details style="margin-top:8px"><summary>⚠️ Trường hợp hết hạn mà còn trận thiếu</summary><div style="padding-top:8px"><form method="post" action="{{ url_for('admin_tournament_stage1_finish',tournament_id=ot.id) }}" onsubmit="return confirm('Các trận còn thiếu sẽ chuyển Chờ BTC xử lý. Tiếp tục?');"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="force" value="1"><button class="btn red" type="submit">Kết thúc & chuyển trận thiếu cho BTC</button></form></div></details>
       </div>
 
-      <div style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
+      <div class="tournament-stage-block" style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">3️⃣ Chia Pot & chọn CLB</h3>
         <p class="small"><strong>Làm theo thứ tự:</strong> Chia 3 Pot → Khóa Pot → mở sự kiện Top 10 → Random CLB phần còn lại.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -927,7 +939,7 @@
         <details style="margin-top:8px"><summary>Admin xử lý khi HLV vắng mặt</summary><div style="padding-top:8px"><form method="post" action="{{ url_for('admin_tournament_club_draft_force',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn" type="submit">🎲 Random/chốt thay HLV</button></form></div></details>
       </div>
 
-      <div style="padding:15px;border:1px solid rgba(155,89,182,.32);border-radius:14px;margin-bottom:12px">
+      <div class="tournament-stage-block" style="padding:15px;border:1px solid rgba(155,89,182,.32);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">4️⃣ Giai đoạn 2 — League Phase</h3>
         <p class="small"><strong>Làm theo thứ tự:</strong> Bắt đầu lễ bốc thăm → bốc lần lượt Pot 1 → 2 → 3 cho từng HLV → thi đấu → khóa BXH.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -941,7 +953,7 @@
         <details style="margin-top:8px"><summary>⚠️ Khóa GĐ2 khi còn trận thiếu</summary><div style="padding-top:8px"><form method="post" action="{{ url_for('admin_tournament_league_finish',tournament_id=ot.id) }}" onsubmit="return confirm('Các trận thiếu sẽ chuyển Chờ BTC xử lý. Tiếp tục?');"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="force" value="1"><button class="btn red" type="submit">Khóa & chuyển trận thiếu cho BTC</button></form></div></details>
       </div>
 
-      <div style="padding:15px;border:1px solid rgba(231,76,60,.3);border-radius:14px;margin-bottom:12px">
+      <div class="tournament-stage-block" style="padding:15px;border:1px solid rgba(231,76,60,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">5️⃣ Knockout → Chung kết</h3>
         <p class="small">Sau khi khóa BXH GĐ2, chọn <strong>một</strong> thể thức. Hệ thống tự sinh bracket và tự đẩy người thắng khi đủ kết quả.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">

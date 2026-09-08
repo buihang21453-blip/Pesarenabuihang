@@ -1,0 +1,7 @@
+PES Arena V1.4.73
+
+- Fix khu GĐ1 / Chia Pot / League Phase / Knockout bị trượt sang trái, mất nội dung sau sidebar.
+- Khóa cuộn ngang của toàn trang Admin; bảng rộng chỉ cuộn trong chính bảng.
+- Căn vùng Admin theo đúng chiều rộng màn hình trừ sidebar.
+- Thu gọn thêm các nút vận hành giải.
+- Không có SQL mới.
