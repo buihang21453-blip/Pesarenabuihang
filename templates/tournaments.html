@@ -101,10 +101,10 @@
           <div class="tournament-public-ranking" id="ranking">
             <div class="tournament-public-ranking-head">
               <div>
-                <h4>📊 BXH GĐ1</h4>
-                <p>Người ngoài chỉ theo dõi BXH, thành tích, 5 trận gần nhất và win rate của từng HLV.</p>
+                <h4>📊 BXH</h4>
+                <p>BXH chính của giải · kết quả GĐ1 và GĐ2 được cộng liên tục vào cùng một bảng.</p>
               </div>
-              <a href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#stage1">Xem chi tiết →</a>
+              <a href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#ranking">Xem chi tiết →</a>
             </div>
             <div class="tournament-public-ranking-wrap">
               <table>
@@ -112,8 +112,12 @@
                   <tr>
                     <th>Rank</th>
                     <th>Tên HLV</th>
+                    <th>Trận</th>
                     <th>Điểm</th>
                     <th>Thành tích</th>
+                    <th>BT</th>
+                    <th>BB</th>
+                    <th>Hiệu số</th>
                     <th>5 trận gần nhất</th>
                     <th>Win rate</th>
                   </tr>
@@ -123,6 +127,7 @@
                   <tr>
                     <td><span class="rank-number{% if r.rank == 1 %} top-1{% elif r.rank == 2 %} top-2{% elif r.rank == 3 %} top-3{% endif %}">{{ r.rank }}</span></td>
                     <td><span class="coach-name">{{ r.display_name }}</span>{% if current_user and current_user.id|string == r.user_id|string %} <small style="color:#f1ca68;font-weight:850">Bạn</small>{% endif %}</td>
+                    <td><strong>{{ r.played }}</strong></td>
                     <td><span class="points">{{ r.points }}</span></td>
                     <td>
                       <div class="leaderboard-record">
@@ -131,6 +136,9 @@
                         <span class="record-chip record-chip-loss">{{ r.losses }}B</span>
                       </div>
                     </td>
+                    <td><strong>{{ r.gf }}</strong></td>
+                    <td><strong>{{ r.ga }}</strong></td>
+                    <td><strong>{{ '+' if r.gd > 0 else '' }}{{ r.gd }}</strong></td>
                     <td>
                       <div class="leaderboard-form" aria-label="5 trận gần nhất của {{ r.display_name }}">
                         {% for item in r.recent_form|reverse %}
@@ -144,7 +152,7 @@
                     <td><strong class="leaderboard-winrate">{{ r.winrate }}%</strong></td>
                   </tr>
                   {% else %}
-                  <tr><td colspan="6" class="empty-row">Chưa có dữ liệu BXH.</td></tr>
+                  <tr><td colspan="10" class="empty-row">Chưa có dữ liệu BXH.</td></tr>
                   {% endfor %}
                 </tbody>
               </table>

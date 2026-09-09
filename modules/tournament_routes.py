@@ -306,7 +306,7 @@ def register_routes(context):
                 timing = _tournament_timing_preview(item.get("id"))
                 item["stage1_start_at"] = timing.get("stage1_start_at")
                 item["stage1_early_end_at"] = timing.get("stage1_early_end_at")
-                # Public Stage 1 standings for the tournament landing page.
+                # Public main tournament standings (Stage 1 + League Phase) for the tournament landing page.
                 member_rows_full, _ = _safe_rows(
                     db.table("tournament_members").select("user_id").eq("tournament_id", item.get("id")).eq("status", "active"),
                     "tournament_public_ranking_members",
@@ -339,7 +339,7 @@ def register_routes(context):
                 match_rows, _ = _safe_rows(
                     db.table("tournament_matches")
                     .select("home_user_id,away_user_id,home_score,away_score,status,stage_code,completed_at,updated_at,created_at")
-                    .eq("tournament_id", item.get("id")).eq("stage_code", "stage1").eq("status", "completed"),
+                    .eq("tournament_id", item.get("id")).in_("stage_code", ["stage1", "league"]).eq("status", "completed"),
                     "tournament_public_ranking_matches",
                 )
                 completed_matches = []
