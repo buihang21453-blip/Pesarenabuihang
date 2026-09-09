@@ -1,4 +1,4 @@
-"""Tournament Test Mode V1.4.102.
+"""Tournament Test Mode V1.4.103.
 
 A fully isolated sandbox stored as JSON. It never writes Rank matches, tournament
 production matches, Zcoin, Lucky Box or real tournament members.
@@ -14,22 +14,16 @@ SANDBOX_TABLE = "tournament_test_sandboxes"
 def register_routes(context):
     globals().update(context)
 
-    def _is_localhost_request():
-        """Allow the tournament sandbox on a developer machine without extra env flags.
-
-        This does not relax production: only loopback hosts are accepted. The sandbox
-        still writes only to tournament_test_sandboxes and never to Rank/tournament
-        production match tables.
-        """
-        host = (request.host or "").split(":", 1)[0].strip().lower()
-        return host in {"127.0.0.1", "localhost", "::1"}
-
     def test_center_only(fn):
+        """Allow the tournament sandbox on the deployed site for authorized admins.
+
+        Every route using this decorator is already protected by login_required,
+        admin_required and the system_features_manage permission. The sandbox writes
+        only to tournament_test_sandboxes; it must never create Rank matches, mutate
+        real tournament matches, RP, Zcoin or real tournament membership.
+        """
         @wraps(fn)
         def wrapped(*args, **kwargs):
-            if not (is_test_mode() or _is_localhost_request()):
-                flash("Test Center chỉ mở trên localhost hoặc môi trường Test an toàn; production vẫn bị khóa.", "warning")
-                return redirect(url_for("admin", tab="tournaments"))
             return fn(*args, **kwargs)
         return wrapped
 
