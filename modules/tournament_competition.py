@@ -627,13 +627,17 @@ def register_routes(context):
             if hm.get("has_host") and host_ready_map.get(huid):
                 host_ready.append({"user_id":huid,"display_name":hm.get("display_name") or "HLV","region":hm.get("host_region") or "—"})
         my_host_profile=next((hm for hm in members_all if str(hm.get("user_id"))==str(user_id)),{})
+        c1_test_matches=_c1_test_confirmed_matches(tournament_id)
+        c1_test_ranking=_c1_test_ranking(tournament_id)
         return {"tournament":tour,"member":member,"stages":stages,"stage1_ranking":s1,"league_ranking":league,"combined_ranking":_combined_ranking(tournament_id),
                 "matches":matches,"hosts":hosts,"clubs":clubs,"me_progress":me_progress,"rewards":_reward_summary(tournament_id,user_id),"availability":availability,
                 "host_ready":host_ready,"my_has_host":bool(my_host_profile.get("has_host")),"my_host_ready":bool(host_ready_map.get(str(user_id))),
                 "event_ops":ops_events,"knockout_flow":_setting(tournament_id,"knockout_flow",{}) or {},
                 "stage1_club_pool":_stage1_club_pool(tournament_id),"tournament_rooms":_tournament_rooms(tournament_id),
                 "all_team_options":_stage1_eligible_clubs(),"stage1_team_options":_stage1_eligible_clubs(),"league_config":_setting(tournament_id,"league_config",{}) or {},
-                "stage1_readiness":_stage1_readiness(tournament_id)}
+                "stage1_readiness":_stage1_readiness(tournament_id),
+                "c1_test_stage1_ranking":c1_test_ranking,
+                "c1_test_recent_matches":c1_test_matches[:5]}
 
     def _tournament_scale(tournament_id):
         """Planned/actual match volume for Admin after registration closes."""
@@ -1049,6 +1053,111 @@ def register_routes(context):
         order={uid:i for i,uid in enumerate(ids)}
         rows.sort(key=lambda r:order.get(str(r.get("id")),99))
         return rows
+
+    def _c1_test_confirmed_matches(tournament_id):
+        test_users=_c1_test_users(tournament_id)
+        if not test_users:
+            return []
+        ids={str(x.get("id")) for x in test_users}
+        rows,_=_rows(
+            db.table("match_rooms").select("id,host_user_id,guest_user_id,host_name,guest_name,host_score,guest_score,status,updated_at,created_at,note").order("updated_at",desc=True).limit(300),
+            "ops_c1_test_confirmed_matches",
+        )
+        matches=[]
+        for room in rows:
+            meta=_room_meta(room)
+            if not meta or str(meta.get("tournament_id") or "")!=str(tournament_id) or not meta.get("test_sandbox_room"):
+                continue
+            host_uid=str(room.get("host_user_id") or "")
+            guest_uid=str(room.get("guest_user_id") or "")
+            if host_uid not in ids or guest_uid not in ids:
+                continue
+            result=meta.get("test_result") or {}
+            if str(result.get("status") or "")!="confirmed":
+                continue
+            try:
+                hs=int(result.get("host_score") if result.get("host_score") is not None else room.get("host_score") or 0)
+                gs=int(result.get("guest_score") if result.get("guest_score") is not None else room.get("guest_score") or 0)
+            except Exception:
+                continue
+            matches.append({
+                "room_id":str(room.get("id") or ""),
+                "host_user_id":host_uid,
+                "guest_user_id":guest_uid,
+                "host_name":room.get("host_name") or (get_user(host_uid) or {}).get("display_name") or "Test A",
+                "guest_name":room.get("guest_name") or (get_user(guest_uid) or {}).get("display_name") or "Test B",
+                "host_score":hs,
+                "guest_score":gs,
+                "confirmed_at":result.get("confirmed_at") or room.get("updated_at") or room.get("created_at"),
+            })
+        def _parse(value):
+            if not value:
+                return datetime.min.replace(tzinfo=timezone.utc)
+            try:
+                return datetime.fromisoformat(str(value).replace("Z","+00:00"))
+            except Exception:
+                return datetime.min.replace(tzinfo=timezone.utc)
+        matches.sort(key=lambda x:_parse(x.get("confirmed_at")), reverse=True)
+        return matches
+
+    def _c1_test_ranking(tournament_id):
+        users=_c1_test_users(tournament_id)
+        if not users:
+            return []
+        ranking={}
+        order={str(u.get("id")):idx for idx,u in enumerate(users,1)}
+        for u in users:
+            uid=str(u.get("id") or "")
+            ranking[uid]={
+                "user_id":uid,
+                "display_name":u.get("display_name") or u.get("username") or "HLV Test",
+                "played":0,
+                "wins":0,
+                "draws":0,
+                "losses":0,
+                "gf":0,
+                "ga":0,
+                "gd":0,
+                "points":0,
+                "recent_form":[],
+                "winrate":0,
+            }
+        matches=_c1_test_confirmed_matches(tournament_id)
+        for m in matches:
+            h=m["host_user_id"]; a=m["guest_user_id"]; hs=int(m["host_score"]); gs=int(m["guest_score"])
+            H=ranking.get(h); A=ranking.get(a)
+            if not H or not A:
+                continue
+            H["played"] += 1; A["played"] += 1
+            H["gf"] += hs; H["ga"] += gs; A["gf"] += gs; A["ga"] += hs
+            if hs > gs:
+                H["wins"] += 1; H["points"] += 3; A["losses"] += 1
+            elif hs < gs:
+                A["wins"] += 1; A["points"] += 3; H["losses"] += 1
+            else:
+                H["draws"] += 1; A["draws"] += 1; H["points"] += 1; A["points"] += 1
+        for m in matches:
+            pairs=((m["host_user_id"],m["host_score"],m["guest_score"]),(m["guest_user_id"],m["guest_score"],m["host_score"]))
+            for uid,mine,theirs in pairs:
+                row=ranking.get(uid)
+                if not row or len(row["recent_form"])>=5:
+                    continue
+                if mine > theirs:
+                    pill={"code":"win","short":"T","label":"Thắng"}
+                elif mine < theirs:
+                    pill={"code":"loss","short":"B","label":"Bại"}
+                else:
+                    pill={"code":"draw","short":"H","label":"Hòa"}
+                row["recent_form"].append(pill)
+        out=list(ranking.values())
+        for row in out:
+            row["gd"]=row["gf"]-row["ga"]
+            total=row["wins"]+row["draws"]+row["losses"]
+            row["winrate"]=round((row["wins"] / total) * 100, 1) if total else 0
+        out.sort(key=lambda r:(r["points"],r["gd"],r["gf"],r["wins"],-order.get(r["user_id"],99)), reverse=True)
+        for idx,row in enumerate(out,1):
+            row["rank"]=idx
+        return out
 
     def _stage1_random_history_key(user_id):
         return f"stage1_random_history:{str(user_id)}"
@@ -1692,7 +1801,7 @@ def register_routes(context):
             flash("Không có kết quả Test đang chờ xác nhận.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         result.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); meta["test_result"]=result
         execute_query(db.table("match_rooms").update({"status":"confirmed","note":_room_note(meta),"updated_at":now_iso()}).eq("id",room_id),"ops_c1_test_confirm_result",attempts=2)
-        flash("Đã xác nhận kết quả TEST. Không có dữ liệu nào được cộng vào BXH C1 hoặc Rank.","success")
+        flash("Đã xác nhận kết quả TEST. BXH TEST C1 đã cập nhật, nhưng không ảnh hưởng BXH C1 thật hoặc Rank.","success")
         return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/test-dispute-result')
