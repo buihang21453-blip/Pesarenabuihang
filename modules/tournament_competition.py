@@ -1036,11 +1036,15 @@ def register_routes(context):
             members=_all_members(t.get("id"))
             if fallback is None:
                 fallback=(t,members)
+            # Chỉ coi là "đã cấu hình Pool 16" khi Admin thực sự đã lưu
+            # stage1_club_pool cho đúng tournament này. Không dùng fallback mặc định
+            # vì fallback làm mọi giải đều trông như có 16 đội và Admin dễ mở nhầm giải.
             try:
-                pool=_stage1_club_pool(t.get("id"))
+                saved=_setting(t.get("id"),"stage1_club_pool",{}) or {}
+                saved_pool=list(saved.get("clubs") or [])
             except Exception:
-                pool=[]
-            if len(pool)==16:
+                saved_pool=[]
+            if len(saved_pool)==16:
                 return t,members
         return fallback if fallback else (None,[])
 
@@ -1110,9 +1114,10 @@ def register_routes(context):
         existing=_c1_open_room_for_user(tid,uid)
         if existing:
             return redirect(url_for("room_detail",room_id=existing.get("id")))
+        me=next((m for m in members if str(m.get("user_id"))==uid),None)
         active=active_room_for_user(uid)
         if active:
-            # V1.4.109: Admin có thể đang mắc trong một phòng C1 rỗng được tạo
+            # V1.4.110: Admin có thể đang mắc trong một phòng C1 rỗng được tạo
             # trước khi sửa logic chọn tournament. Tự gắn lại phòng rỗng đó vào
             # đúng giải C1 hiện tại để không tiếp tục thấy Pool 0/16.
             active_meta=_room_meta(active)
@@ -1132,7 +1137,6 @@ def register_routes(context):
                 return redirect(url_for("room_detail",room_id=active.get("id")))
             flash("Bạn đang ở một phòng đấu khác. Hãy thoát phòng đó trước.","warning")
             return redirect(url_for("room_detail",room_id=active.get("id")))
-        me=next((m for m in members if str(m.get("user_id"))==uid),None)
         name=(me or {}).get("display_name") or user.get("display_name") or user.get("username") or ("Admin" if is_admin_user(user) else "HLV")
         meta={
             "tournament_id":tid,"tournament_match_id":"","stage_code":"",
@@ -1294,13 +1298,13 @@ def register_routes(context):
             flash("Bạn không thuộc phòng này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
         if uid != str(room.get("host_user_id")) and not is_admin_user(user):
             flash("Chỉ chủ phòng mới được Random CLB.","warning"); return redirect(url_for("room_detail",room_id=room_id))
-        if str(meta.get("stage_code") or "") != "stage1":
-            flash("Random CLB GĐ1 chỉ dùng cho trận Giai đoạn 1.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        if str(meta.get("stage_code") or "") != "stage1" and not bool(meta.get("admin_test_room")):
+            flash("Random CLB này dùng cho GĐ1 hoặc phòng test của Admin.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         if not room.get("guest_user_id"):
             flash("Phòng chưa đủ 2 HLV.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         pool=_stage1_club_pool(tournament_id)
-        if len(pool)<2:
-            flash("Pool CLB GĐ1 chưa đủ 2 đội.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        if len(pool)!=16:
+            flash(f"Pool C1 phải có đúng 16 CLB. Hiện đang có {len(pool)}/16 đội.","error"); return redirect(url_for("room_detail",room_id=room_id))
         a,b=random.sample(pool,2)
         execute_query(db.table("match_rooms").update({"host_team":a["name"],"guest_team":b["name"],"host_team_overall":a.get("overall") or None,"guest_team_overall":b.get("overall") or None,"team_tier":"TOURNAMENT_GD1","match_mode":"tournament","status":"playing","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_stage1_random_clubs",attempts=2)
         flash(f'GĐ1 Random: {a["name"]} vs {b["name"]}.',"success")

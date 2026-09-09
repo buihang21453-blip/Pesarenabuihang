@@ -465,18 +465,24 @@
                 <span>❌ Không Random 3 chọn 1</span>
                 <span>❌ Không Random Select Match</span>
             </div>
-            {% if room.status == 'waiting_ready' and not room.has_guest %}
-                <p class="small tournament-room-wait">Đang chờ HLV C1 được mời vào phòng.</p>
-            {% elif room.status == 'waiting_ready' and room.has_guest and not room.host_team %}
-                {% if room_room_viewer_is_host or current_user.role == 'admin' %}
-                <form method="post" action="{{ url_for('tournament_room_random_stage1_clubs', tournament_id=tournament_meta.tournament_id, room_id=room.id) }}" data-room-async="1" class="tournament-random-action">
-                    <button class="btn gold tournament-random-btn" type="submit">🎲 RANDOM CLB</button>
-                </form>
-                {% else %}
-                <p class="small tournament-room-wait">Đã đủ 2 HLV · Chờ chủ phòng Random CLB.</p>
-                {% endif %}
-            {% elif room.status == 'playing' %}
+            {% if room.status == 'playing' %}
                 <p class="small tournament-room-live">🔴 CLB đã được Random · Trận đấu đang diễn ra.</p>
+            {% else %}
+                <div class="tournament-random-action">
+                {% if not room.has_guest %}
+                    <button class="btn gray tournament-random-btn" type="button" disabled>🎲 RANDOM CLB · Chờ đối thủ vào phòng</button>
+                {% elif (tournament_stage1_pool_count or 0) != 16 %}
+                    <button class="btn gray tournament-random-btn" type="button" disabled>🎲 RANDOM CLB · Admin chưa đủ 16 đội</button>
+                {% elif room.host_team %}
+                    <button class="btn gray tournament-random-btn" type="button" disabled>✅ Đã Random CLB</button>
+                {% elif room_room_viewer_is_host or current_user.role == 'admin' %}
+                    <form method="post" action="{{ url_for('tournament_room_random_stage1_clubs', tournament_id=tournament_meta.tournament_id, room_id=room.id) }}" data-room-async="1">
+                        <button class="btn gold tournament-random-btn" type="submit">🎲 RANDOM CLB</button>
+                    </form>
+                {% else %}
+                    <button class="btn gray tournament-random-btn" type="button" disabled>🎲 RANDOM CLB · Chờ chủ phòng quay đội</button>
+                {% endif %}
+                </div>
             {% endif %}
         </div>
     </div>

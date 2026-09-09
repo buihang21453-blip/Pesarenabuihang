@@ -408,18 +408,24 @@
         <div class="room-mode-card">
             <h3>🏆 Phòng giải đấu</h3>
             <p class="small">Chế độ duy nhất: <strong>Random CLB</strong>. Không có Random 3 chọn 1 hoặc Random Selection Match.</p>
-            {% if room.status == 'waiting_ready' and not room.has_guest %}
-                <p class="small">Đang chờ HLV C1 được mời vào phòng.</p>
-            {% elif room.status == 'waiting_ready' and room.has_guest and not room.host_team %}
-                {% if room_room_viewer_is_host or current_user.role == 'admin' %}
-                <form method="post" action="{{ url_for('tournament_room_random_stage1_clubs', tournament_id=tournament_meta.tournament_id, room_id=room.id) }}" data-room-async="1">
-                    <button class="btn gold" type="submit">🎲 Random CLB</button>
-                </form>
+            {% if room.status == 'playing' %}
+                <p class="small">🔴 CLB đã được Random · Trận đấu đang diễn ra.</p>
+            {% else %}
+                <div style="display:flex;justify-content:center;margin-top:12px">
+                {% if not room.has_guest %}
+                    <button class="btn gray" type="button" disabled>🎲 RANDOM CLB · Chờ đối thủ vào phòng</button>
+                {% elif (tournament_stage1_pool_count or 0) != 16 %}
+                    <button class="btn gray" type="button" disabled>🎲 RANDOM CLB · Admin chưa đủ 16 đội</button>
+                {% elif room.host_team %}
+                    <button class="btn gray" type="button" disabled>✅ Đã Random CLB</button>
+                {% elif room_room_viewer_is_host or current_user.role == 'admin' %}
+                    <form method="post" action="{{ url_for('tournament_room_random_stage1_clubs', tournament_id=tournament_meta.tournament_id, room_id=room.id) }}" data-room-async="1">
+                        <button class="btn gold" type="submit">🎲 RANDOM CLB</button>
+                    </form>
                 {% else %}
-                <p class="small">Đã đủ 2 HLV. Chờ chủ phòng Random CLB.</p>
+                    <button class="btn gray" type="button" disabled>🎲 RANDOM CLB · Chờ chủ phòng quay đội</button>
                 {% endif %}
-            {% elif room.status == 'playing' %}
-                <p class="small">CLB đã được Random. Trận đấu đang diễn ra.</p>
+                </div>
             {% endif %}
         </div>
     </div>

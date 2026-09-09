@@ -185,17 +185,30 @@ def register_routes(context):
                     member_ids = [str(x.get("user_id")) for x in member_rows if x.get("user_id")]
                     tournament_viewer_is_member = str(viewer.get("id") or "") in member_ids
                     if member_ids:
-                        ur = execute_query(db.table("users").select("id,username,display_name").in_("id",member_ids),"room_tournament_member_users_context",attempts=2)
+                        ur = execute_query(db.table("users").select("id,username,display_name,is_online,last_seen_at").in_("id",member_ids),"room_tournament_member_users_context",attempts=2)
                         users = {str(x.get("id")):dict(x) for x in (ur.data or [])}
+                        active_rooms = list_rooms()
+                        busy_ids = set()
+                        for ar in active_rooms:
+                            if ar.get("status") in {"playing", "friendly_playing"}:
+                                if ar.get("host_user_id"):
+                                    busy_ids.add(str(ar.get("host_user_id")))
+                                if ar.get("guest_user_id"):
+                                    busy_ids.add(str(ar.get("guest_user_id")))
                         for member_id in member_ids:
                             if member_id == str(room.get("host_user_id") or ""):
                                 continue
                             u = users.get(member_id) or {}
+                            is_online = bool(is_user_online_now(u))
+                            is_busy = member_id in busy_ids
                             tournament_invite_members.append({
                                 "user_id":member_id,
                                 "display_name":u.get("display_name") or u.get("username") or "HLV",
+                                "is_online":is_online,
+                                "is_busy":is_busy,
+                                "presence_label":"Đang thi đấu" if is_busy else ("Online" if is_online else "Offline"),
                             })
-                        tournament_invite_members.sort(key=lambda x:(x.get("display_name") or "").casefold())
+                        tournament_invite_members.sort(key=lambda x:(0 if x.get("is_online") and not x.get("is_busy") else 1 if x.get("is_busy") else 2, (x.get("display_name") or "").casefold()))
                     pr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key","stage1_club_pool").limit(1),"room_tournament_stage1_pool_context",attempts=2)
                     pool_state = ((pr.data or [{}])[0].get("setting_value") or {})
                     tournament_stage1_pool = pool_state.get("clubs") or []

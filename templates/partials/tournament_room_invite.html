@@ -1,4 +1,7 @@
 {% if is_tournament_room and tournament_meta %}
+<style>
+.c1-player-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:10px}.c1-player-card{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.025)}.c1-player-main{min-width:0}.c1-player-main strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.c1-presence{font-size:12px;font-weight:800}.c1-presence.online{color:#33d17a}.c1-presence.busy{color:#ff6b6b}.c1-presence.offline{color:#9aa7b7}.c1-player-card .btn{white-space:nowrap}.c1-invite-title{margin-top:10px;font-size:13px;font-weight:800}.c1-invite-note{margin-top:6px}
+</style>
 <div class="panel" style="margin:12px 0;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px" id="c1InvitePanel">
   <strong>🏆 PHÒNG THI ĐẤU C1</strong>
   {% if tournament_match %}
@@ -6,22 +9,30 @@
   {% elif tournament_meta.admin_test_room %}
     <div class="small" style="margin-top:5px;color:#f6c453">👑 Phòng test của Admin · Có thể mời HLV C1 để kiểm tra thao tác, nhưng <strong>không ghi kết quả vào BXH/giải</strong>.</div>
   {% else %}
-    <div class="small" style="margin-top:5px">Vào phòng trước, sau đó chọn một HLV C1 để mời thi đấu. Khi hai HLV có trận hợp lệ, hệ thống tự gắn đúng trận C1.</div>
+    <div class="small" style="margin-top:5px">Vào phòng trước rồi mời một HLV đang tham gia C1. Nếu hai HLV có trận C1 hợp lệ, hệ thống tự gắn đúng trận.</div>
   {% endif %}
 
   {% if room.status == 'waiting_ready' and room_room_viewer_is_host and not room.guest_user_id %}
-    <form method="post" action="{{ url_for('c1_room_invite',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:10px">
-      <label style="min-width:250px;flex:1"><span class="small">Mời HLV C1</span>
-        <select name="opponent_user_id" required style="width:100%">
-          <option value="">— Chọn HLV —</option>
-          {% for p in tournament_invite_members %}
-            <option value="{{ p.user_id }}" {% if tournament_meta.invited_user_id|string == p.user_id|string %}selected{% endif %}>{{ p.display_name }}</option>
-          {% endfor %}
-        </select>
-      </label>
-      <button class="btn green" type="submit">📨 Mời đối thủ</button>
-    </form>
-    {% if tournament_meta.invited_user_id %}<div class="small" style="margin-top:7px">⏳ Đã gửi lời mời. Đang chờ đối thủ vào phòng.</div>{% endif %}
+    <div class="c1-invite-title">Mời HLV đang tham gia giải C1</div>
+    <div class="c1-player-list">
+      {% for p in tournament_invite_members %}
+      <div class="c1-player-card">
+        <div class="c1-player-main">
+          <strong>{{ p.display_name }}</strong>
+          <span class="c1-presence {{ 'busy' if p.is_busy else ('online' if p.is_online else 'offline') }}">
+            {{ '🔴' if p.is_busy else ('🟢' if p.is_online else '⚪') }} {{ p.presence_label }}
+          </span>
+        </div>
+        <form method="post" action="{{ url_for('c1_room_invite',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}">
+          <input type="hidden" name="opponent_user_id" value="{{ p.user_id }}">
+          <button class="btn green" type="submit" {% if p.is_busy %}disabled title="HLV đang thi đấu"{% endif %}>📨 Mời đấu</button>
+        </form>
+      </div>
+      {% else %}
+      <div class="small">Chưa có HLV C1 nào khác trong danh sách.</div>
+      {% endfor %}
+    </div>
+    {% if tournament_meta.invited_user_id %}<div class="small c1-invite-note">⏳ Đã gửi lời mời. Đang chờ đối thủ vào phòng.</div>{% endif %}
   {% elif room.guest_user_id %}
     <div class="small" style="margin-top:8px">✅ Đã đủ 2 người trong phòng C1.</div>
   {% endif %}
