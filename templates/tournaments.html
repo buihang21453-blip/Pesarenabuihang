@@ -197,6 +197,22 @@
                           </form>
                         </div>
                         <div class="tournament-admin-detail-card">
+                          <h5>📅 Khung giờ đã đăng ký</h5>
+                          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:12px">
+                            {% for d in ap.availability_days|default([]) %}
+                            <div style="padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:#071522">
+                              <strong style="font-size:12px;color:#f1ca68">{{ d.label }}</strong>
+                              <div class="small">{{ d.weekday }}</div>
+                              <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
+                                {% for tm in ap.availability_by_day.get(d.date,[]) %}
+                                  <span style="padding:4px 6px;border-radius:6px;background:#0d2a3d;font-size:11px">{{ tm }}</span>
+                                {% else %}
+                                  <span class="small">Chưa đăng ký giờ rảnh.</span>
+                                {% endfor %}
+                              </div>
+                            </div>
+                            {% endfor %}
+                          </div>
                           <h5>⚔️ Đối thủ · Lịch thi đấu · Lịch sử trận</h5>
                           <div class="tournament-admin-match-list">
                             {% for m in ap.matches|default([]) %}

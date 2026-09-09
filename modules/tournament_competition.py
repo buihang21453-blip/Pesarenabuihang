@@ -246,7 +246,7 @@ def register_routes(context):
                         "label":f"{hour:02d}:00 – {hour+1:02d}:00",
                     })
             weekday_names=("Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy","Chủ nhật")
-            days.append({"date":d.isoformat(),"label":label,"weekday":f"{weekday_names[d.weekday()]} · {d.strftime('%d/%m')}","slots":slots})
+            days.append({"date":d.isoformat(),"label":label,"weekday":f"{weekday_names[d.weekday()]} · {d.strftime('%d/%m')}","is_weekend":d.weekday()>=5,"slots":slots})
         return days
 
     def _availability_rows(tournament_id, user_ids=None):

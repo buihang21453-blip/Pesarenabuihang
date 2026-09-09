@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 """Independent Tournament module routes.
 
@@ -338,6 +338,43 @@ def register_routes(context):
                         .eq("tournament_id", item.get("id")).order("created_at"),
                         "tournament_central_admin_matches",
                     )
+                    availability_rows, _ = _safe_rows(
+                        db.table("tournament_availability_slots").select("user_id,slot_at")
+                        .eq("tournament_id", item.get("id")).in_("user_id", member_ids).order("slot_at"),
+                        "tournament_central_admin_availability",
+                    )
+                    vn_tz = timezone(timedelta(hours=7))
+                    now_vn = datetime.now(vn_tz)
+                    day_defs = []
+                    day_labels = ("Hôm nay", "Ngày mai", "Ngày kia")
+                    weekday_names = ("Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy","Chủ nhật")
+                    for offset, label in enumerate(day_labels):
+                        d = now_vn.date() + timedelta(days=offset)
+                        day_defs.append({
+                            "date": d.isoformat(),
+                            "label": label,
+                            "weekday": f"{weekday_names[d.weekday()]} · {d.strftime('%d/%m')}",
+                            "is_weekend": d.weekday() >= 5,
+                        })
+                    per_player_availability = {uid: {d["date"]: [] for d in day_defs} for uid in member_ids}
+                    for av in availability_rows:
+                        uid = str(av.get("user_id") or "")
+                        if uid not in per_player_availability:
+                            continue
+                        try:
+                            dt = datetime.fromisoformat(str(av.get("slot_at") or "").replace("Z","+00:00"))
+                            if dt.tzinfo is None:
+                                dt = dt.replace(tzinfo=vn_tz)
+                            dt = dt.astimezone(vn_tz)
+                        except Exception:
+                            continue
+                        day_key = dt.date().isoformat()
+                        if day_key in per_player_availability[uid] and dt > now_vn:
+                            per_player_availability[uid][day_key].append(dt.strftime("%H:%M"))
+                    for uid in per_player_availability:
+                        for day_key in per_player_availability[uid]:
+                            per_player_availability[uid][day_key] = sorted(set(per_player_availability[uid][day_key]))
+
                     per_player_matches = {uid: [] for uid in member_ids}
                     for am in admin_match_rows:
                         h, a = str(am.get("home_user_id") or ""), str(am.get("away_user_id") or "")
@@ -364,6 +401,8 @@ def register_routes(context):
                             "pot_no": mem.get("pot_no"),
                             "fixed_club_name": mem.get("fixed_club_name") or "",
                             "matches": per_player_matches.get(uid, []),
+                            "availability_days": day_defs,
+                            "availability_by_day": per_player_availability.get(uid, {}),
                         }
                 ranking = {
                     uid: {
