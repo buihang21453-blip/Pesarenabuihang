@@ -1338,14 +1338,28 @@ def register_routes(context):
         return TOURNAMENT_ROOM_PREFIX + json.dumps(meta,ensure_ascii=False,separators=(",",":"))
 
     def _tournament_rooms(tournament_id):
-        rows,_=_rows(db.table("match_rooms").select("*").order("updated_at",desc=True).limit(120),"ops_tournament_rooms")
+        # Chỉ hiển thị các phòng C1 đang thực sự hoạt động. Phòng đã hoàn tất/đóng
+        # không được chất đống ở Trung tâm. Nếu một trận từng sinh nhiều phòng, chỉ
+        # lấy phòng mới nhất của tournament_match_id đó.
+        rows,_=_rows(db.table("match_rooms").select("*").order("updated_at",desc=True).limit(160),"ops_tournament_rooms")
         matches={str(m.get("id")):m for m in _decorate_matches(tournament_id,_matches(tournament_id))}
-        out=[]
+        active_statuses={"waiting_ready","playing","friendly_playing","waiting_result_confirm","disputed"}
+        out=[]; seen_match_ids=set()
         for r in rows:
+            if str(r.get("status") or "") not in active_statuses:
+                continue
             meta=_room_meta(r)
             if not meta or str(meta.get("tournament_id"))!=str(tournament_id): continue
             mid=str(meta.get("tournament_match_id") or "")
+            if not mid or mid in seen_match_ids:
+                continue
             m=matches.get(mid) or {}
+            if not m:
+                continue
+            # Trận đã completed/cancelled thì phòng không còn là phòng đang hoạt động.
+            if str(m.get("status") or "") in {"completed","cancelled"}:
+                continue
+            seen_match_ids.add(mid)
             host=get_user(r.get("host_user_id")) if r.get("host_user_id") else None
             guest=get_user(r.get("guest_user_id")) if r.get("guest_user_id") else None
             expected_home=m.get("home_name") or meta.get("home_name") or "HLV 1"
@@ -1356,7 +1370,14 @@ def register_routes(context):
             r["expected_home_name"]=expected_home; r["expected_away_name"]=expected_away
             if r.get("guest_user_id"):
                 r["public_label"]=f'{r["host_name"]} vs {r["guest_name"] or expected_away}'
-                r["public_status"]="Đang thi đấu" if r.get("status") in {"playing","friendly_playing"} else "Đủ 2 HLV"
+                if r.get("status") in {"playing","friendly_playing"}:
+                    r["public_status"]="Đang thi đấu"
+                elif r.get("status")=="waiting_result_confirm":
+                    r["public_status"]="Chờ xác nhận kết quả"
+                elif r.get("status")=="disputed":
+                    r["public_status"]="Đang xử lý kết quả"
+                else:
+                    r["public_status"]="Đủ 2 HLV"
             else:
                 expected = expected_away if str(r.get("host_user_id"))==str(m.get("home_user_id")) else expected_home
                 r["public_label"]=f'{r["host_name"]} · chờ {expected}'
@@ -2259,8 +2280,10 @@ def register_routes(context):
                     selected.append(iso)
             except Exception:
                 continue
-        selected=sorted(set(selected))
         key=f"c1_test_availability_{uid}" if is_test else f"admin_test_availability_{uid}"
+        previous=_setting(tournament_id,key,{}) or {}
+        custom_existing=[str(x) for x in (previous.get("slots") or []) if str(x) not in allowed]
+        selected=sorted(set(selected+custom_existing))
         execute_query(
             db.table("tournament_settings").upsert({
                 "tournament_id":tournament_id,
@@ -2270,7 +2293,7 @@ def register_routes(context):
             },on_conflict="tournament_id,setting_key"),
             "ops_admin_test_availability",attempts=2,
         )
-        flash(f"Đã lưu {len(selected)} khung giờ TEST (mỗi khung 1 giờ). Không ảnh hưởng lịch của 16 HLV chính thức.","success")
+        flash(f"Đã lưu {len(selected)} khung giờ TEST. Giờ linh hoạt đã thêm trước đó vẫn được giữ nguyên.","success")
         return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
 
     @app.post('/tournaments/<tournament_id>/availability/simple')
@@ -2314,8 +2337,12 @@ def register_routes(context):
     @app.post('/tournaments/<tournament_id>/availability/custom')
     @login_required
     def tournament_availability_custom_add(tournament_id):
-        uid=(current_user() or {}).get("id")
-        if not _member(tournament_id,uid):
+        user=current_user() or {}
+        uid=str(user.get("id") or "")
+        member=_member(tournament_id,uid)
+        is_test=_is_c1_test_user(tournament_id,uid)
+        is_admin_view=is_admin_user(user) and not member
+        if not member and not is_test and not is_admin_view:
             flash("Bạn chưa phải HLV của giải đấu này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
         day_raw=(request.form.get("day_date") or "").strip()
         start_raw=(request.form.get("start_time") or "").strip()
@@ -2328,24 +2355,31 @@ def register_routes(context):
             start=datetime(day.year,day.month,day.day,sh,sm,tzinfo=vn_tz)
             end=datetime(day.year,day.month,day.day,eh,em,tzinfo=vn_tz)
         except Exception:
-            flash("Giờ thêm không hợp lệ.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            flash("Giờ linh hoạt không hợp lệ.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
         allowed_days={d["date"] for d in _availability_days()}
         if day.isoformat() not in allowed_days or end<=start:
-            flash("Hãy chọn đúng Hôm nay, Ngày mai hoặc Ngày kia và giờ kết thúc phải sau giờ bắt đầu.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
-        # Lưu theo bước 30 phút để hai HLV có thể tìm được giờ trùng linh động trong khoảng đã chọn.
+            flash("Hãy chọn Hôm nay, Ngày mai hoặc Ngày kia và giờ kết thúc phải sau giờ bắt đầu.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        # Bước 30 phút để hỗ trợ giờ linh hoạt, ví dụ 18:30–20:30.
         slots=[]; cursor=start.replace(second=0,microsecond=0)
         while cursor<=end and len(slots)<49:
             if cursor>now: slots.append(cursor.isoformat())
             cursor += timedelta(minutes=30)
         if not slots:
             flash("Khoảng giờ này đã qua hoặc không còn giờ hợp lệ.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
-        current={r.get("slot_iso") for r in _availability_rows(tournament_id,[uid])}
-        added=0
-        for iso in slots:
-            if iso in current: continue
-            execute_query(db.table("tournament_availability_slots").insert({"tournament_id":tournament_id,"user_id":uid,"slot_at":iso,"created_at":now_iso(),"updated_at":now_iso()}),"ops_availability_custom_insert",attempts=2)
-            current.add(iso); added+=1
-        flash(f"Đã thêm giờ linh động {start.strftime('%H:%M')}–{end.strftime('%H:%M')} ({added} mốc).","success")
+        if member:
+            current={r.get("slot_iso") for r in _availability_rows(tournament_id,[uid])}
+            added=0
+            for iso in slots:
+                if iso in current: continue
+                execute_query(db.table("tournament_availability_slots").insert({"tournament_id":tournament_id,"user_id":uid,"slot_at":iso,"created_at":now_iso(),"updated_at":now_iso()}),"ops_availability_custom_insert",attempts=2)
+                current.add(iso); added+=1
+        else:
+            key=f"c1_test_availability_{uid}" if is_test else f"admin_test_availability_{uid}"
+            state=_setting(tournament_id,key,{}) or {}
+            current={str(x) for x in (state.get("slots") or [])}
+            before=len(current); current.update(slots); added=len(current)-before
+            execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":key,"setting_value":{"slots":sorted(current),"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_test_availability_custom",attempts=2)
+        flash(f"Đã thêm giờ linh hoạt {start.strftime('%H:%M')}–{end.strftime('%H:%M')} ({added} mốc 30 phút).","success")
         return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
 
     @app.post('/tournaments/<tournament_id>/host-ready')
