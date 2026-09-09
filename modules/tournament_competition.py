@@ -742,14 +742,36 @@ def register_routes(context):
         data=_detail_payload(tournament_id,uid)
         if not data:
             flash("Không tìm thấy giải đấu.","error"); return redirect(url_for("tournaments"))
-        # Admin vào giải bằng chính tài khoản Admin, không mượn danh tính HLV khác.
+        # Admin vào giao diện C1 bằng chính tài khoản Admin, không mượn danh tính HLV khác.
+        # Đây chỉ là participant-view ở tầng giao diện; tuyệt đối không insert Admin vào
+        # tournament_members và không tạo trận/BXH giả cho Admin. Giữ đủ shape của member
+        # để template HLV dùng an toàn, tránh lỗi khi đọc pot_no/fixed_club_name.
         if is_admin_user(user) and not data.get("member"):
+            admin_name=(user.get("display_name") or user.get("username") or user.get("name") or "Admin")
             data["member"]={
+                "id":None,
+                "tournament_id":tournament_id,
                 "user_id":uid,
-                "display_name":user.get("display_name") or user.get("username") or "Admin",
+                "display_name":admin_name,
+                "username":user.get("username") or "admin",
+                "pot_no":None,
+                "fixed_club_id":None,
+                "fixed_club_name":"",
+                "has_host":False,
+                "host_region":"",
+                "status":"admin_view",
                 "is_admin_participant_view":True,
             }
             data["admin_participant_view"]=True
+            # Admin xem chính giao diện HLV nhưng không có lịch/trận cá nhân thật.
+            # Rebuild các payload phụ theo danh tính Admin để template không dùng dữ liệu
+            # của một HLV khác và cũng không phát sinh ghi dữ liệu vào giải.
+            try:
+                data["availability"]=_availability_payload(tournament_id,uid,data.get("matches") or [])
+            except Exception:
+                data["availability"]={"days":_availability_days(),"mine":[],"mine_set":set(),"status":"missing","slot_count":0,"day_ranges":{},"day_chips":{}}
+            data["me_progress"]=None
+            data["rewards"]=_reward_summary(tournament_id,uid)
         # Animation khai mạc chỉ tự hiện 1 lần/tài khoản HLV sau khi GĐ1 thực sự mở.
         opening_seen=_setting(tournament_id,"opening_seen_v1",{}) or {}
         stage1_open=any(str(x.get("stage_code"))=="stage1" and str(x.get("status"))=="open" for x in (data.get("stages") or []))
