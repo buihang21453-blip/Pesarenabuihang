@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.121"
+APP_VERSION = "V1.4.122"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -613,6 +613,11 @@ def get_system_features():
             features.update({key: bool(value) for key, value in raw.items() if key in features})
     except Exception as exc:
         print(f"get_system_features warning: {exc}")
+
+    # V1.4.122: Rank đơn là chế độ cốt lõi của Phòng đấu thường và luôn được mở.
+    # Giữ nguyên giới hạn Rank/ngày và các chặn an toàn khi người chơi đang có
+    # một trận C1 hoạt động; chỉ loại bỏ khả năng setting cũ vô tình khóa Rank.
+    features["rank_standard_enabled"] = True
 
     ttl_cache_set("system_features", dict(features), 45)
     return cache_set(request_key, dict(features))
