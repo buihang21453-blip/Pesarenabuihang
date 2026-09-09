@@ -378,14 +378,20 @@ def register_routes(context):
                     per_player_matches = {uid: [] for uid in member_ids}
                     for am in admin_match_rows:
                         h, a = str(am.get("home_user_id") or ""), str(am.get("away_user_id") or "")
+                        home_name = names.get(h, "HLV")
+                        away_name = names.get(a, "HLV")
                         if h in per_player_matches:
                             row = dict(am)
-                            row["opponent_name"] = names.get(a, "HLV")
+                            row["home_name"] = home_name
+                            row["away_name"] = away_name
+                            row["opponent_name"] = away_name
                             row["is_home_for_player"] = True
                             per_player_matches[h].append(row)
                         if a in per_player_matches:
                             row = dict(am)
-                            row["opponent_name"] = names.get(h, "HLV")
+                            row["home_name"] = home_name
+                            row["away_name"] = away_name
+                            row["opponent_name"] = home_name
                             row["is_home_for_player"] = False
                             per_player_matches[a].append(row)
                     for uid in member_ids:

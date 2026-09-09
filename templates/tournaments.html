@@ -34,9 +34,14 @@
 .tournament-admin-profile-form input,.tournament-admin-profile-form select{background:#06131f;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px}
 .tournament-admin-match-list{display:grid;gap:8px;max-height:420px;overflow:auto}
 .tournament-admin-match{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 10px;border-radius:10px;background:#0b2031;border:1px solid rgba(255,255,255,.08)}
-.tournament-admin-score{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.tournament-admin-score input{width:52px;text-align:center;background:#06131f;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:7px;padding:7px}
-@media(max-width:900px){.tournament-admin-detail-grid{grid-template-columns:1fr}.tournament-admin-match{grid-template-columns:1fr}}
+.tournament-admin-score{display:grid;grid-template-columns:minmax(90px,1fr) 54px auto 54px minmax(90px,1fr) auto;align-items:center;gap:6px;min-width:460px}
+.tournament-admin-score input{width:54px;text-align:center;background:#06131f;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:7px;padding:7px}
+.tournament-admin-score-name{font-size:11px;font-weight:900;color:#dce7ef;line-height:1.15}
+.tournament-admin-score-name.away{text-align:right}
+.tournament-admin-pen-row{grid-column:1/-1;display:flex;justify-content:flex-end;gap:5px;align-items:center;font-size:11px;color:#91a3b1}
+.tournament-admin-pen-row input{width:54px}
+@media(max-width:900px){.tournament-admin-detail-grid{grid-template-columns:1fr}.tournament-admin-match{grid-template-columns:1fr}.tournament-admin-score{min-width:0}}
+@media(max-width:700px){.tournament-admin-score{grid-template-columns:1fr 48px auto 48px 1fr}.tournament-admin-score .btn{grid-column:1/-1}.tournament-admin-score-name{font-size:10px}}
 </style>
 {% endblock %}
 
@@ -225,14 +230,22 @@
                               <form class="tournament-admin-score" method="post" action="{{ url_for('admin_tournament_match_result',match_id=m.id) }}">
                                 <input type="hidden" name="return_to" value="central">
                                 <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
-                                <input type="number" min="0" name="home_score" value="{{ m.home_score if m.home_score is not none else '' }}" required>
+                                <span class="tournament-admin-score-name">{{ m.home_name }}<br><small>Chủ nhà</small></span>
+                                <input type="number" min="0" name="home_score" value="{{ m.home_score if m.home_score is not none else '' }}" required aria-label="Tỷ số {{ m.home_name }}">
                                 <strong>-</strong>
-                                <input type="number" min="0" name="away_score" value="{{ m.away_score if m.away_score is not none else '' }}" required>
-                                {% if m.stage_code=='knockout' %}
-                                  <input type="number" min="0" name="home_pen" value="{{ m.home_pen if m.home_pen is not none else '' }}" placeholder="Pen">
-                                  <input type="number" min="0" name="away_pen" value="{{ m.away_pen if m.away_pen is not none else '' }}" placeholder="Pen">
-                                {% endif %}
+                                <input type="number" min="0" name="away_score" value="{{ m.away_score if m.away_score is not none else '' }}" required aria-label="Tỷ số {{ m.away_name }}">
+                                <span class="tournament-admin-score-name away">{{ m.away_name }}<br><small>Khách</small></span>
                                 <button class="btn gold" type="submit">{{ 'Sửa tỷ số' if m.status=='completed' else 'Nhập tỷ số' }}</button>
+                                {% if m.stage_code=='knockout' %}
+                                <div class="tournament-admin-pen-row">
+                                  <span>Penalty:</span>
+                                  <strong>{{ m.home_name }}</strong>
+                                  <input type="number" min="0" name="home_pen" value="{{ m.home_pen if m.home_pen is not none else '' }}" placeholder="Pen">
+                                  <strong>-</strong>
+                                  <input type="number" min="0" name="away_pen" value="{{ m.away_pen if m.away_pen is not none else '' }}" placeholder="Pen">
+                                  <strong>{{ m.away_name }}</strong>
+                                </div>
+                                {% endif %}
                               </form>
                             </div>
                             {% else %}
