@@ -1,4 +1,4 @@
-"""Tournament Test Mode V1.4.101.
+"""Tournament Test Mode V1.4.102.
 
 A fully isolated sandbox stored as JSON. It never writes Rank matches, tournament
 production matches, Zcoin, Lucky Box or real tournament members.
@@ -14,11 +14,21 @@ SANDBOX_TABLE = "tournament_test_sandboxes"
 def register_routes(context):
     globals().update(context)
 
+    def _is_localhost_request():
+        """Allow the tournament sandbox on a developer machine without extra env flags.
+
+        This does not relax production: only loopback hosts are accepted. The sandbox
+        still writes only to tournament_test_sandboxes and never to Rank/tournament
+        production match tables.
+        """
+        host = (request.host or "").split(":", 1)[0].strip().lower()
+        return host in {"127.0.0.1", "localhost", "::1"}
+
     def test_center_only(fn):
         @wraps(fn)
         def wrapped(*args, **kwargs):
-            if not is_test_mode():
-                flash("Test Center chỉ hoạt động khi APP_ENV=development/test và PES_ARENA_TEST_MODE được bật an toàn.", "warning")
+            if not (is_test_mode() or _is_localhost_request()):
+                flash("Test Center chỉ mở trên localhost hoặc môi trường Test an toàn; production vẫn bị khóa.", "warning")
                 return redirect(url_for("admin", tab="tournaments"))
             return fn(*args, **kwargs)
         return wrapped
@@ -568,6 +578,7 @@ def register_routes(context):
     @login_required
     @admin_required
     @admin_permission_required("system_features_manage")
+    @test_center_only
     def admin_tournament_test_public():
         state, ready = _load_state()
         players = state.get("players") or []
@@ -598,6 +609,19 @@ def register_routes(context):
     @test_center_only
     def admin_tournament_test_center():
         state, ready = _load_state()
+        # First visit on localhost should be immediately usable: seed 16 sandbox HLVs.
+        if len(state.get("players") or []) < 2:
+            state = _build_full_simulation(16, 6, 3)
+            state["current_stage"] = "stage1"
+            state["test_stage_open"] = True
+            players_seed = state.get("players") or []
+            duel_seed = _duel(state)
+            if len(players_seed) >= 2:
+                duel_seed["player_a"] = players_seed[0]["id"]
+                duel_seed["player_b"] = players_seed[1]["id"]
+                _duel_event(state, "Tự tạo 16 HLV sandbox để bắt đầu kiểm tra trên localhost")
+            _save_state(state)
+            ready = True
         players = state.get("players") or []
         duel = _duel(state)
         return render_template('tournament_test_center.html', state=state, sandbox_ready=ready,
