@@ -452,13 +452,66 @@ def register_routes(context):
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("dashboard"))
 
-        if user["id"] not in [room.get("host_user_id"), room.get("guest_user_id")]:
+        if not (_same_user_id(user.get("id"), room.get("host_user_id")) or _same_user_id(user.get("id"), room.get("guest_user_id"))):
             flash("Bạn không thuộc phòng này.", "danger")
             return redirect(url_for("dashboard"))
 
         if room.get("status") not in {"waiting_ready", "friendly_playing"}:
             flash("Không thể rời phòng khi trận xếp hạng đang thi đấu hoặc đang chờ xác nhận kết quả.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
+
+        # Phòng C1 có vòng đời riêng và tuyệt đối không áp dụng phạt bỏ cuộc/RP
+        # ở bước chờ Sẵn Sàng. Đồng thời phải giữ nguyên metadata Tournament.
+        tournament_note = str(room.get("note") or "")
+        is_tournament_room = tournament_note.startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament"
+        if is_tournament_room and room.get("status") == "waiting_ready":
+            if _same_user_id(user.get("id"), room.get("guest_user_id")):
+                new_note = tournament_note
+                if tournament_note.startswith("TOURNAMENT_ROOM|"):
+                    try:
+                        import json
+                        meta = json.loads(tournament_note[len("TOURNAMENT_ROOM|"):])
+                        meta["invited_user_id"] = ""
+                        # Phòng mở/test chưa gắn trận có thể mời người khác sau khi khách rời.
+                        if not str(meta.get("tournament_match_id") or ""):
+                            meta["away_user_id"] = ""
+                            meta["away_name"] = ""
+                        new_note = "TOURNAMENT_ROOM|" + json.dumps(meta, ensure_ascii=False, separators=(",", ":"))
+                    except Exception:
+                        new_note = tournament_note
+                execute_query(
+                    db.table("match_rooms").update({
+                        "guest_user_id": None,
+                        "guest_ready": False,
+                        "guest_team": None,
+                        "guest_team_overall": None,
+                        "guest_team_logo_url": None,
+                        "guest_team_league": None,
+                        "host_team": None,
+                        "host_team_overall": None,
+                        "host_team_logo_url": None,
+                        "host_team_league": None,
+                        "status": "waiting_ready",
+                        "match_id": None,
+                        "invite_id": None,
+                        "note": new_note,
+                        "state_expires_at": None,
+                        "updated_at": now_iso(),
+                    }).eq("id", room_id),
+                    "c1_guest_leave_keep_room",
+                )
+                flash("Bạn đã rời Phòng C1. Không ảnh hưởng RP/Rank.", "success")
+                return redirect(url_for("dashboard"))
+            execute_query(
+                db.table("match_rooms").update({
+                    "status": "cancelled",
+                    "guest_ready": False,
+                    "updated_at": now_iso(),
+                }).eq("id", room_id),
+                "c1_host_close_room",
+            )
+            flash("Bạn đã đóng Phòng C1. Không ảnh hưởng RP/Rank.", "success")
+            return redirect(url_for("dashboard"))
 
         # Nếu một trong hai người đã chạm giới hạn Rank ngày thì phòng không còn
         # được phép bắt đầu trận mới. Mọi người được rời phòng an toàn, kể cả khi
@@ -474,7 +527,7 @@ def register_routes(context):
         # chưa Sẵn Sàng. Kiểm tra tại backend để không thể né phạt bằng POST
         # trực tiếp vào endpoint /leave hoặc do giao diện vừa bị thay đổi trạng thái.
         if room.get("status") == "waiting_ready" and bool(room.get("guest_ready")):
-            if user["id"] == room.get("guest_user_id"):
+            if _same_user_id(user.get("id"), room.get("guest_user_id")):
                 flash("Bạn đã Sẵn Sàng. Thoát lúc này được tính là bỏ cuộc và trừ 20 RP.", "warning")
             else:
                 flash("Khách đã Sẵn Sàng. Chủ phòng thoát lúc này được tính là bỏ cuộc và trừ 20 RP.", "warning")

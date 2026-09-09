@@ -1361,9 +1361,31 @@ def register_routes(context):
             flash("Phòng đã đủ 2 HLV.","warning"); return redirect(url_for("c1_rooms",tournament_id=tournament_id))
         active=active_room_for_user(uid)
         if active and str(active.get("id"))!=str(room_id):
-            flash("Bạn đang ở một phòng đấu khác.","warning"); return redirect(url_for("room_detail",room_id=active.get("id")))
-        execute_query(db.table("match_rooms").update({"guest_user_id":uid,"guest_ready":True,"updated_at":now_iso()}).eq("id",room_id),"ops_c1_room_accept",attempts=2)
-        flash("Đã vào Phòng đấu C1.","success")
+            # Người được mời có thể đã tự mở một phòng trống trước đó. Khi họ
+            # chủ động nhận lời C1, đóng phòng trống của chính họ rồi nhập phòng
+            # người mời; không để 2 tài khoản mắc ở hai phòng riêng.
+            can_close_solo = (
+                str(active.get("host_user_id") or "")==uid
+                and not active.get("guest_user_id")
+                and str(active.get("status") or "")=="waiting_ready"
+            )
+            if can_close_solo:
+                old_invite_id=active.get("invite_id")
+                execute_query(db.table("match_rooms").update({
+                    "status":"cancelled","guest_ready":False,"updated_at":now_iso(),
+                }).eq("id",active.get("id")),"ops_c1_accept_close_receiver_solo_room",attempts=2)
+                if old_invite_id:
+                    try:
+                        execute_query(db.table("match_invites").update({
+                            "status":"cancelled","updated_at":now_iso(),
+                        }).eq("id",old_invite_id).eq("status","pending"),"ops_c1_accept_cancel_receiver_old_invite",attempts=1)
+                    except Exception:
+                        pass
+            else:
+                flash("Bạn đang ở một phòng đấu khác có đối thủ/đã bắt đầu. Hãy kết thúc phòng đó trước.","warning")
+                return redirect(url_for("room_detail",room_id=active.get("id")))
+        execute_query(db.table("match_rooms").update({"guest_user_id":uid,"guest_ready":False,"updated_at":now_iso()}).eq("id",room_id),"ops_c1_room_accept",attempts=2)
+        flash("Đã vào Phòng đấu C1. Hãy bấm Sẵn sàng khi chuẩn bị xong.","success")
         return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/matches/<match_id>/room')
@@ -1448,6 +1470,8 @@ def register_routes(context):
             flash("Random CLB này dùng cho GĐ1 hoặc phòng test của Admin.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         if not room.get("guest_user_id"):
             flash("Phòng chưa đủ 2 HLV.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        if not bool(room.get("guest_ready")):
+            flash("Đội khách chưa Sẵn sàng. Hãy chờ đối thủ bấm Sẵn sàng trước khi quay đội.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         pool=_stage1_club_pool(tournament_id)
         if len(pool)!=16:
             flash(f"Pool C1 phải có đúng 16 CLB. Hiện đang có {len(pool)}/16 đội.","error"); return redirect(url_for("room_detail",room_id=room_id))

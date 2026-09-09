@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.117"
+APP_VERSION = "V1.4.118"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -6570,6 +6570,14 @@ def send_invite():
 
     sender_room = state.get("room_a")
     receiver_room = state.get("room_b")
+    sender_room_is_c1 = bool(sender_room and (str(sender_room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(sender_room.get("match_mode") or "").lower() == "tournament"))
+    receiver_room_is_c1 = bool(receiver_room and (str(receiver_room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(receiver_room.get("match_mode") or "").lower() == "tournament"))
+    if sender_room_is_c1:
+        flash("Bạn đang ở Phòng đấu C1. Hãy thoát/đóng Phòng C1 trước khi gửi lời mời Rank.", "warning")
+        return redirect(url_for("dashboard"))
+    if receiver_room_is_c1:
+        flash("Người chơi này đang ở Phòng đấu C1 nên chưa thể nhận lời mời Rank.", "warning")
+        return redirect(url_for("players"))
     if state.get("match_a"):
         flash("Bạn đang có trận chưa hoàn tất nên chưa thể gửi lời mời.", "warning")
         return redirect(url_for("dashboard"))
@@ -7061,6 +7069,10 @@ def respond_invite(invite_id):
 
     receiver_match = active_match_for_user(user["id"])
     receiver_room = active_room_for_user(user["id"])
+    receiver_room_is_c1 = bool(receiver_room and (str(receiver_room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(receiver_room.get("match_mode") or "").lower() == "tournament"))
+    if receiver_room_is_c1:
+        flash("Bạn đang ở Phòng đấu C1. Hãy thoát/đóng Phòng C1 trước khi nhận lời mời Rank.", "warning")
+        return redirect(url_for("dashboard"))
     if receiver_match:
         flash("Bạn đang có trận chưa hoàn tất nên không thể nhận lời mời.", "warning")
         return redirect(url_for("dashboard"))
@@ -7070,6 +7082,15 @@ def respond_invite(invite_id):
 
     inviter_id = invite.get("from_user_id")
     inviter_room = active_room_for_user(inviter_id)
+    inviter_room_is_c1 = bool(inviter_room and (str(inviter_room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(inviter_room.get("match_mode") or "").lower() == "tournament"))
+    if inviter_room_is_c1:
+        execute_query(
+            db.table("match_invites").update({"status":"cancelled","updated_at":now_iso()}).eq("id", invite_id),
+            "cancel_rank_invite_sender_in_c1",
+            attempts=2,
+        )
+        flash("Người mời đang ở Phòng đấu C1 nên lời mời Rank đã được hủy.", "warning")
+        return redirect(url_for("dashboard"))
     if active_match_for_user(inviter_id) or (inviter_room and not is_solo_waiting_room(inviter_room, inviter_id)):
         execute_query(
             db.table("match_invites").update({

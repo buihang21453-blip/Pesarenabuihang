@@ -40,7 +40,7 @@ def register_routes(context):
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("rooms"))
 
-        if user["id"] != room["host_user_id"] and not is_admin_user(user):
+        if not _same_user_id(user.get("id"), room.get("host_user_id")) and not is_admin_user(user):
             flash("Chỉ chủ phòng mới được nhập kết quả.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
@@ -202,7 +202,7 @@ def register_routes(context):
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("rooms"))
 
-        if user["id"] != room["guest_user_id"] and not is_admin_user(user):
+        if not _same_user_id(user.get("id"), room.get("guest_user_id")) and not is_admin_user(user):
             flash("Chỉ người được mời mới được xác nhận kết quả.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
@@ -301,7 +301,7 @@ def register_routes(context):
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("rooms"))
 
-        if user["id"] != room["guest_user_id"]:
+        if not _same_user_id(user.get("id"), room.get("guest_user_id")):
             flash("Chỉ người được mời mới được báo tranh chấp.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 

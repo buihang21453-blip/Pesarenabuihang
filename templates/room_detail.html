@@ -207,6 +207,11 @@
                                     <span class="room-center-random-title room-random-button-label">🎲 QUAY ĐỘI</span>
                                     <span class="room-center-random-sub">Chờ đối thủ vào phòng</span>
                                 </button>
+                            {% elif not room.guest_ready %}
+                                <button class="room-center-random-trigger disabled c1-random-center" type="button" disabled>
+                                    <span class="room-center-random-title room-random-button-label">🎲 QUAY ĐỘI</span>
+                                    <span class="room-center-random-sub">Chờ đội khách bấm Sẵn sàng</span>
+                                </button>
                             {% elif (tournament_stage1_pool_count or 0) != 16 %}
                                 <button class="room-center-random-trigger disabled c1-random-center" type="button" disabled>
                                     <span class="room-center-random-title room-random-button-label">🎲 QUAY ĐỘI</span>
@@ -233,6 +238,15 @@
                         </div>
                         {% if room_viewer_is_guest %}
                         <div class="room-center-primary-actions room-action-zone">
+                            {% if not room.guest_ready %}
+                            <form method="post" action="{{ url_for('room_guest_ready', room_id=room.id) }}">
+                                <button class="btn green room-center-action-btn" type="submit">Sẵn Sàng</button>
+                            </form>
+                            {% else %}
+                            <form method="post" action="{{ url_for('room_guest_unready', room_id=room.id) }}">
+                                <button class="btn gray room-center-action-btn" type="submit">Hủy Sẵn Sàng</button>
+                            </form>
+                            {% endif %}
                             <form method="post" action="{{ url_for('room_leave', room_id=room.id) }}">
                                 <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
@@ -524,6 +538,8 @@
                 <div class="tournament-random-action">
                 {% if not room.has_guest %}
                     <button class="btn gray tournament-random-btn" type="button" disabled>🎲 RANDOM CLB · Chờ đối thủ vào phòng</button>
+                {% elif not room.guest_ready %}
+                    <button class="btn gray tournament-random-btn" type="button" disabled>🎲 RANDOM CLB · Chờ khách Sẵn sàng</button>
                 {% elif (tournament_stage1_pool_count or 0) != 16 %}
                     <button class="btn gray tournament-random-btn" type="button" disabled>🎲 RANDOM CLB · Admin chưa đủ 16 đội</button>
                 {% elif room.host_team %}

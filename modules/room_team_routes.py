@@ -16,7 +16,7 @@ def register_routes(context):
         if not room:
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("rooms"))
-        if user["id"] != room["host_user_id"] and not is_admin_user(user):
+        if not _same_user_id(user.get("id"), room.get("host_user_id")) and not is_admin_user(user):
             flash("Chỉ chủ phòng mới được quay đội.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
         if room["status"] != "waiting_ready":
@@ -513,17 +513,18 @@ def register_routes(context):
     def room_guest_unready(room_id):
         user = current_user()
         room = get_room(room_id)
-        if not room or user.get("id") != room.get("guest_user_id"):
+        if not room or not _same_user_id(user.get("id"), room.get("guest_user_id")):
             flash("Bạn không thuộc phòng đấu này.", "danger")
             return redirect(url_for("dashboard"))
         if room.get("status") != "waiting_ready":
             flash("Không thể hủy sẵn sàng ở trạng thái hiện tại.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
+        is_tournament_room = str(room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament"
+        patch = {"guest_ready": False, "updated_at": now_iso()}
+        if not is_tournament_room:
+            patch["note"] = "Khách đã hủy sẵn sàng."
         execute_query(
-            db.table("match_rooms").update({
-                "guest_ready": False,
-                "note": "Khách đã hủy sẵn sàng.",
-            }).eq("id", room_id).eq("status", "waiting_ready"),
+            db.table("match_rooms").update(patch).eq("id", room_id).eq("status", "waiting_ready"),
             "room_guest_unready",
         )
         cache_delete("_rz_rooms_all")
@@ -537,31 +538,33 @@ def register_routes(context):
     def room_guest_ready(room_id):
         user = current_user()
         room = get_room(room_id)
-        if not room or user.get("id") != room.get("guest_user_id"):
+        if not room or not _same_user_id(user.get("id"), room.get("guest_user_id")):
             flash("Bạn không thuộc phòng đấu này.", "danger")
             return redirect(url_for("dashboard"))
         if room.get("status") != "waiting_ready":
             flash("Không thể đổi trạng thái sẵn sàng lúc này.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
-        limit_message = daily_rank_block_message(room.get("host_user_id"), room.get("guest_user_id"))
-        if limit_message:
-            # Đảm bảo phòng không mắc kẹt ở trạng thái đã cam kết thi đấu.
-            execute_query(
-                db.table("match_rooms").update({
-                    "guest_ready": False,
-                    "note": "Đã chạm giới hạn trận Rank trong ngày. Có thể rời phòng không bị trừ RP.",
-                    "updated_at": now_iso(),
-                }).eq("id", room_id).eq("status", "waiting_ready"),
-                "block_guest_ready_daily_limit",
-                attempts=2,
-            )
-            flash(limit_message, "warning")
-            return redirect(url_for("room_detail", room_id=room_id))
+        is_tournament_room = str(room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament"
+        if not is_tournament_room:
+            limit_message = daily_rank_block_message(room.get("host_user_id"), room.get("guest_user_id"))
+            if limit_message:
+                # Đảm bảo phòng không mắc kẹt ở trạng thái đã cam kết thi đấu.
+                execute_query(
+                    db.table("match_rooms").update({
+                        "guest_ready": False,
+                        "note": "Đã chạm giới hạn trận Rank trong ngày. Có thể rời phòng không bị trừ RP.",
+                        "updated_at": now_iso(),
+                    }).eq("id", room_id).eq("status", "waiting_ready"),
+                    "block_guest_ready_daily_limit",
+                    attempts=2,
+                )
+                flash(limit_message, "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+        patch = {"guest_ready": True, "updated_at": now_iso()}
+        if not is_tournament_room:
+            patch["note"] = "Khách đã sẵn sàng. Chủ phòng có thể quay đội."
         execute_query(
-            db.table("match_rooms").update({
-                "guest_ready": True,
-                "note": "Khách đã sẵn sàng. Chủ phòng có thể quay đội.",
-            }).eq("id", room_id).eq("status", "waiting_ready"),
+            db.table("match_rooms").update(patch).eq("id", room_id).eq("status", "waiting_ready"),
             "room_guest_ready",
         )
         cache_delete("_rz_rooms_all")
