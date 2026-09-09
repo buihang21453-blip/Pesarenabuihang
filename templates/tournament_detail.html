@@ -105,27 +105,36 @@
 
 {% if member %}
 {% if admin_participant_view|default(false) %}<div class="td-preview-banner" style="margin-bottom:12px;border-color:rgba(69,181,255,.35)"><strong>🧪 ADMIN TEST LỊCH NHƯ HLV</strong><small>Giờ rảnh bên dưới chỉ lưu cho tài khoản Admin trong vùng test, không ảnh hưởng 16 HLV thật.</small></div>{% endif %}
-<form method="post" action="{{ url_for('admin_tournament_test_availability_simple_save',tournament_id=tournament.id) if (admin_participant_view|default(false) or c1_test_account|default(false)) else url_for('tournament_availability_simple_save',tournament_id=tournament.id) }}" class="td-simple-schedule">
-  <div class="td-simple-days">
+<form method="post" action="{{ url_for('admin_tournament_test_availability_simple_save',tournament_id=tournament.id) if (admin_participant_view|default(false) or c1_test_account|default(false)) else url_for('tournament_availability_save',tournament_id=tournament.id) }}" class="td-fixed-schedule" data-fixed-schedule>
+  <div class="td-av-days">
   {% for day in availability.days %}
-    {% set r = availability.day_ranges.get(day.date,{}) %}
-    <div class="td-simple-day">
-      <div class="td-simple-head"><strong>{{ day.label }}</strong><span>{{ day.weekday }}</span></div>
-      <div class="td-simple-range">
-        <label>Từ<input type="time" name="start_{{ loop.index0 }}" value="{{ r.get('start','') }}"></label>
-        <span class="td-range-arrow">→</span>
-        <label>Đến<input type="time" name="end_{{ loop.index0 }}" value="{{ r.get('end','') }}"></label>
+    <div class="td-av-day">
+      <div class="td-av-day-head">
+        <div><strong>{{ day.label }}</strong><span>{{ day.weekday }}</span></div>
+        <div class="td-av-day-tools"><label class="td-av-all"><input type="checkbox" data-select-all-day> Tích toàn bộ</label></div>
       </div>
-      {% set chips = availability.day_chips.get(day.date,[]) %}
-      <div class="td-saved-times">{% for t in chips %}<span>{{ t }}</span>{% else %}<small>Chưa chọn giờ</small>{% endfor %}</div>
+      <div class="td-av-slots">
+        {% for slot in day.slots %}
+        <label class="td-av-slot"><input type="checkbox" name="slots" value="{{ slot.iso }}" {{ 'checked' if slot.iso in availability.mine_set else '' }}><span>{{ slot.label or slot.time }}</span></label>
+        {% else %}<small>Không còn khung giờ nào trong ngày này.</small>{% endfor %}
+      </div>
     </div>
   {% endfor %}
   </div>
-  <div class="td-simple-save"><button class="btn" type="submit">💾 Lưu giờ rảnh của tôi</button></div>
+  <div class="td-av-save"><button class="btn green" type="submit">💾 Lưu giờ rảnh của tôi</button><small>Mỗi khung = 1 giờ · chỉ áp dụng Hôm nay / Ngày mai / Ngày kia.</small></div>
 </form>
 
 <h3 style="margin-top:20px">Lịch của đối thủ</h3>
 <p style="color:#91a3b1;font-size:12px">Không cần gửi đề xuất hay chốt lịch. Hai HLV chỉ cần xem giờ rảnh của nhau rồi tự liên hệ qua Zalo để thống nhất giờ đá.</p>
+{% if c1_test_account|default(false) %}
+  {% set ts = c1_test_schedule|default({}) %}{% set opp = ts.get('opponent') %}
+  {% if opp %}<div class="td-schedule-list"><article class="td-schedule-card is-mine">
+    <div class="td-schedule-top"><div class="td-player"><strong>Bạn</strong></div><div class="td-vs">VS</div><div class="td-player away"><strong>{{ opp.display_name or opp.username or 'HLV Test' }}</strong></div></div>
+    {% if ts.get('overlap') %}<div class="td-schedule-status overlap">✅ <strong>Giờ cả hai cùng rảnh</strong></div><div class="td-overlap-list">{% for x in ts.get('overlap',[]) %}<span class="btn green" style="pointer-events:none">{{ x.label }}</span>{% endfor %}</div>{% endif %}
+    <div class="td-schedule-status"><strong>Giờ rảnh của {{ opp.display_name or opp.username or 'HLV Test' }}:</strong></div>
+    <div class="td-opponent-slots">{% for x in ts.get('opponent_slots',[]) %}<span>{{ x.label }}</span>{% else %}<small>Đối thủ Test chưa cập nhật giờ rảnh trong 3 ngày gần nhất.</small>{% endfor %}</div>
+  </article></div>{% else %}<div class="td-empty">Admin chưa cấu hình đủ 2 Tài khoản Test C1.</div>{% endif %}
+{% else %}
 <div class="td-schedule-list">
 {% set ns = namespace(count=0) %}
 {% for m in matches if m.status in ['pending','scheduled'] %}
@@ -143,6 +152,7 @@
 {% endfor %}
 {% if ns.count == 0 %}<div class="td-empty">Bạn chưa có đối thủ cần xem lịch.</div>{% endif %}
 </div>
+{% endif %}
 {% else %}<div class="td-empty">Khán giả có thể xem giải nhưng chỉ HLV tham gia hoặc Admin Test mới được thao tác lịch.</div>{% endif %}
 </section>
 <section class="td-section" id="host" data-tab-panel="info"><h2>Danh sách Host của giải</h2><div class="td-clubs">{% for h in hosts %}<div class="td-club"><strong>{{ h.name }}</strong><br><small>{{ h.region }} · {{ h.status }}</small></div>{% endfor %}</div></section>
@@ -200,7 +210,20 @@
   });
 })();
 {% endif %}
-</script>{% endblock %}
+</script>
+<script>
+document.querySelectorAll('[data-fixed-schedule]').forEach(function(form){
+  form.querySelectorAll('[data-select-all-day]').forEach(function(toggle){
+    var day=toggle.closest('.td-av-day');
+    var boxes=day ? Array.from(day.querySelectorAll('input[name="slots"]')) : [];
+    function sync(){ toggle.checked=boxes.length>0 && boxes.every(function(b){return b.checked;}); toggle.indeterminate=boxes.some(function(b){return b.checked;}) && !toggle.checked; }
+    toggle.addEventListener('change',function(){ boxes.forEach(function(b){b.checked=toggle.checked;}); sync(); });
+    boxes.forEach(function(b){b.addEventListener('change',sync);});
+    sync();
+  });
+});
+</script>
+{% endblock %}
 <script>
 (function(){
   document.querySelectorAll('[data-av-day]').forEach(function(day){

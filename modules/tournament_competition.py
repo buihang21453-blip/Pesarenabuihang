@@ -239,7 +239,12 @@ def register_routes(context):
             for hour in hours:
                 dt=datetime(d.year,d.month,d.day,hour,0,tzinfo=vn_tz)
                 if dt>datetime.now(vn_tz):
-                    slots.append({"iso":dt.isoformat(),"time":f"{hour:02d}:00"})
+                    slots.append({
+                        "iso":dt.isoformat(),
+                        "time":f"{hour:02d}:00",
+                        "end_time":f"{hour+1:02d}:00",
+                        "label":f"{hour:02d}:00 – {hour+1:02d}:00",
+                    })
             weekday_names=("Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy","Chủ nhật")
             days.append({"date":d.isoformat(),"label":label,"weekday":f"{weekday_names[d.weekday()]} · {d.strftime('%d/%m')}","slots":slots})
         return days
@@ -311,6 +316,66 @@ def register_routes(context):
                 day_ranges[d["date"]]={"start":"","end":""}
                 day_chips[d["date"]]=[]
         return {"days":days,"mine":mine,"mine_set":mine_set,"status":status,"slot_count":len(mine_set),"day_ranges":day_ranges,"day_chips":day_chips}
+
+    def _c1_test_availability_slots(tournament_id,user_id):
+        state=_setting(tournament_id,f"c1_test_availability_{str(user_id)}",{}) or {}
+        allowed={slot["iso"] for day in _availability_days() for slot in day["slots"]}
+        raw=list(state.get("slots") or [])
+        # Migration from the previous Test C1 range format: convert only to official
+        # one-hour slots, so old sandbox data remains useful after this update.
+        if not raw and state.get("ranges"):
+            vn_tz=timezone(timedelta(hours=7))
+            for day in _availability_days():
+                r=(state.get("ranges") or {}).get(day["date"],{}) or {}
+                start=str(r.get("start") or ""); end=str(r.get("end") or "")
+                if not start or not end:
+                    continue
+                try:
+                    sh,sm=[int(x) for x in start.split(":",1)]; eh,em=[int(x) for x in end.split(":",1)]
+                    d=datetime.fromisoformat(day["date"]).date()
+                    start_dt=datetime(d.year,d.month,d.day,sh,sm,tzinfo=vn_tz)
+                    end_dt=datetime(d.year,d.month,d.day,eh,em,tzinfo=vn_tz)
+                    for slot in day["slots"]:
+                        dt=datetime.fromisoformat(slot["iso"])
+                        if start_dt <= dt < end_dt:
+                            raw.append(slot["iso"])
+                except Exception:
+                    continue
+        return sorted({str(x) for x in raw if str(x) in allowed})
+
+    def _c1_test_availability_payload(tournament_id,user_id):
+        uid=str(user_id or "")
+        days=_availability_days()
+        mine=_c1_test_availability_slots(tournament_id,uid)
+        mine_set=set(mine)
+        test_users=_c1_test_users(tournament_id)
+        opponent=next((u for u in test_users if str(u.get("id"))!=uid),None)
+        opp_uid=str((opponent or {}).get("id") or "")
+        opp_slots=_c1_test_availability_slots(tournament_id,opp_uid) if opp_uid else []
+        opp_set=set(opp_slots)
+        overlap=sorted(mine_set & opp_set)
+        slot_lookup={slot["iso"]:slot for day in days for slot in day["slots"]}
+        def decorated(values):
+            out=[]
+            for iso in values:
+                try:
+                    dt=datetime.fromisoformat(iso)
+                    slot=slot_lookup.get(iso) or {}
+                    out.append({"iso":iso,"label":f"{dt.strftime('%d/%m')} · {slot.get('label') or dt.strftime('%H:%M')}"})
+                except Exception:
+                    continue
+            return out
+        vn_tz=timezone(timedelta(hours=7)); today=datetime.now(vn_tz).date()
+        dates=[]
+        for iso in mine:
+            try: dates.append(datetime.fromisoformat(iso).astimezone(vn_tz).date())
+            except Exception: pass
+        status="missing" if not dates else ("expiring" if max(dates)<=today else "active")
+        return {
+            "days":days,"mine":decorated(mine),"mine_set":mine_set,"status":status,"slot_count":len(mine_set),
+            "opponent":opponent,"opponent_slots":decorated(opp_slots),"overlap":decorated(overlap),
+            "day_ranges":{},"day_chips":{},
+        }
 
     def _parse_iso(value):
         if not value:
@@ -776,23 +841,12 @@ def register_routes(context):
             # tournament_availability_slots của 16 HLV thật.
             days=_availability_days()
             admin_av=_setting(tournament_id,f"admin_test_availability_{uid}",{}) or {}
-            day_ranges={}
-            day_chips={}
-            slot_count=0
-            for d in days:
-                saved=(admin_av.get("ranges") or {}).get(d["date"],{}) or {}
-                start=str(saved.get("start") or "")
-                end=str(saved.get("end") or "")
-                day_ranges[d["date"]]={"start":start,"end":end}
-                chips=[]
-                if start and end:
-                    chips=[f"{start} → {end}"]
-                    slot_count += 1
-                day_chips[d["date"]]=chips
+            allowed={slot["iso"] for day in days for slot in day["slots"]}
+            saved_slots=sorted({str(x) for x in (admin_av.get("slots") or []) if str(x) in allowed})
             data["availability"]={
-                "days":days,"mine":[],"mine_set":set(),
-                "status":"active" if slot_count else "missing",
-                "slot_count":slot_count,"day_ranges":day_ranges,"day_chips":day_chips,
+                "days":days,"mine":[],"mine_set":set(saved_slots),
+                "status":"active" if saved_slots else "missing",
+                "slot_count":len(saved_slots),"day_ranges":{},"day_chips":{},
             }
             data["admin_test_mode"]=True
             data["me_progress"]=None
@@ -808,18 +862,12 @@ def register_routes(context):
             }
             data["c1_test_account"]=True
             data["admin_participant_view"]=False
-            days=_availability_days()
-            test_av=_setting(tournament_id,f"c1_test_availability_{uid}",{}) or {}
-            day_ranges={}; day_chips={}; slot_count=0
-            for d in days:
-                saved=(test_av.get("ranges") or {}).get(d["date"],{}) or {}
-                start=str(saved.get("start") or ""); end=str(saved.get("end") or "")
-                day_ranges[d["date"]]={"start":start,"end":end}
-                chips=[]
-                if start and end:
-                    chips=[f"{start} → {end}"]; slot_count += 1
-                day_chips[d["date"]]=chips
-            data["availability"]={"days":days,"mine":[],"mine_set":set(),"status":"active" if slot_count else "missing","slot_count":slot_count,"day_ranges":day_ranges,"day_chips":day_chips}
+            data["availability"]=_c1_test_availability_payload(tournament_id,uid)
+            data["c1_test_schedule"]={
+                "opponent":data["availability"].get("opponent"),
+                "opponent_slots":data["availability"].get("opponent_slots",[]),
+                "overlap":data["availability"].get("overlap",[]),
+            }
             data["me_progress"]=None
             data["rewards"]={}
         # Animation khai mạc chỉ tự hiện 1 lần/tài khoản HLV sau khi GĐ1 thực sự mở.
@@ -2174,39 +2222,31 @@ def register_routes(context):
     def admin_tournament_test_availability_simple_save(tournament_id):
         user=current_user() or {}
         uid=str(user.get("id") or "")
-        if not is_admin_user(user) and not _is_c1_test_user(tournament_id,uid):
+        is_test=_is_c1_test_user(tournament_id,uid)
+        if not is_admin_user(user) and not is_test:
             flash("Bạn không có quyền lưu lịch Test C1.","error")
             return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
-        days=_availability_days()
-        ranges={}
-        for idx,d in enumerate(days):
-            start_raw=(request.form.get(f"start_{idx}") or "").strip()
-            end_raw=(request.form.get(f"end_{idx}") or "").strip()
-            if not start_raw and not end_raw:
-                ranges[d["date"]]={"start":"","end":""}
-                continue
-            if not start_raw or not end_raw:
-                flash(f"{d['label']}: hãy chọn đủ giờ Từ và Đến.","warning")
-                return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        allowed={slot["iso"] for day in _availability_days() for slot in day["slots"]}
+        selected=[]
+        for raw in request.form.getlist("slots"):
             try:
-                sh,sm=[int(x) for x in start_raw.split(":",1)]
-                eh,em=[int(x) for x in end_raw.split(":",1)]
-                if (eh,em) < (sh,sm):
-                    raise ValueError("end_before_start")
+                iso=datetime.fromisoformat(str(raw)).isoformat()
+                if iso in allowed:
+                    selected.append(iso)
             except Exception:
-                flash(f"{d['label']}: giờ không hợp lệ hoặc giờ Đến phải sau giờ Từ.","warning")
-                return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
-            ranges[d["date"]]={"start":start_raw,"end":end_raw}
+                continue
+        selected=sorted(set(selected))
+        key=f"c1_test_availability_{uid}" if is_test else f"admin_test_availability_{uid}"
         execute_query(
             db.table("tournament_settings").upsert({
                 "tournament_id":tournament_id,
-                "setting_key":f"admin_test_availability_{uid}" if is_admin_user(user) else f"c1_test_availability_{uid}",
-                "setting_value":{"ranges":ranges,"updated_at":now_iso()},
+                "setting_key":key,
+                "setting_value":{"slots":selected,"updated_at":now_iso()},
                 "updated_at":now_iso(),
             },on_conflict="tournament_id,setting_key"),
             "ops_admin_test_availability",attempts=2,
         )
-        flash("Đã lưu giờ rảnh TEST. Không ảnh hưởng lịch của 16 HLV chính thức.","success")
+        flash(f"Đã lưu {len(selected)} khung giờ TEST (mỗi khung 1 giờ). Không ảnh hưởng lịch của 16 HLV chính thức.","success")
         return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
 
     @app.post('/tournaments/<tournament_id>/availability/simple')
@@ -2239,7 +2279,7 @@ def register_routes(context):
             count=0
             while cursor<=end and count<49:
                 if cursor>now: final_slots.append(cursor.isoformat())
-                cursor += timedelta(minutes=30); count += 1
+                cursor += timedelta(hours=1); count += 1
         final_slots=sorted(set(final_slots))
         execute_query(db.table("tournament_availability_slots").delete().eq("tournament_id",tournament_id).eq("user_id",uid),"ops_availability_simple_clear",attempts=2)
         for iso in final_slots:
