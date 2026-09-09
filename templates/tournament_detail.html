@@ -149,8 +149,8 @@
   <p>Nếu bạn rảnh ngoài các slot chính thức, hãy thêm khoảng giờ riêng. Hai HLV vẫn tự liên hệ Zalo và thống nhất trước khi đá.</p>
   <form method="post" action="{{ url_for('tournament_availability_custom_add',tournament_id=tournament.id) }}" class="td-flexible-form">
     <label>Ngày<select name="day_date" required>{% for day in availability.days %}<option value="{{ day.date }}">{{ day.label }} · {{ day.weekday }}</option>{% endfor %}</select></label>
-    <label>Từ<input type="time" name="start_time" step="1800" required></label>
-    <label>Đến<input type="time" name="end_time" step="1800" required></label>
+    <label>Từ (24h)<input type="text" name="start_time" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="18:30" title="Nhập giờ 24h, ví dụ 18:30" autocomplete="off" required></label>
+    <label>Đến (24h)<input type="text" name="end_time" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="22:00" title="Nhập giờ 24h, ví dụ 22:00" autocomplete="off" required></label>
     <button class="btn gold" type="submit">＋ Thêm giờ linh hoạt</button>
   </form>
 </div>
