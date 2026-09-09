@@ -766,10 +766,29 @@ def register_routes(context):
             # Admin xem chính giao diện HLV nhưng không có lịch/trận cá nhân thật.
             # Rebuild các payload phụ theo danh tính Admin để template không dùng dữ liệu
             # của một HLV khác và cũng không phát sinh ghi dữ liệu vào giải.
-            try:
-                data["availability"]=_availability_payload(tournament_id,uid,data.get("matches") or [])
-            except Exception:
-                data["availability"]={"days":_availability_days(),"mine":[],"mine_set":set(),"status":"missing","slot_count":0,"day_ranges":{},"day_chips":{}}
+            # Admin có vùng lịch TEST riêng để thao tác như HLV nhưng không ghi vào
+            # tournament_availability_slots của 16 HLV thật.
+            days=_availability_days()
+            admin_av=_setting(tournament_id,f"admin_test_availability_{uid}",{}) or {}
+            day_ranges={}
+            day_chips={}
+            slot_count=0
+            for d in days:
+                saved=(admin_av.get("ranges") or {}).get(d["date"],{}) or {}
+                start=str(saved.get("start") or "")
+                end=str(saved.get("end") or "")
+                day_ranges[d["date"]]={"start":start,"end":end}
+                chips=[]
+                if start and end:
+                    chips=[f"{start} → {end}"]
+                    slot_count += 1
+                day_chips[d["date"]]=chips
+            data["availability"]={
+                "days":days,"mine":[],"mine_set":set(),
+                "status":"active" if slot_count else "missing",
+                "slot_count":slot_count,"day_ranges":day_ranges,"day_chips":day_chips,
+            }
+            data["admin_test_mode"]=True
             data["me_progress"]=None
             data["rewards"]=_reward_summary(tournament_id,uid)
         # Animation khai mạc chỉ tự hiện 1 lần/tài khoản HLV sau khi GĐ1 thực sự mở.
@@ -1777,6 +1796,43 @@ def register_routes(context):
         for iso in final_slots:
             execute_query(db.table("tournament_availability_slots").insert({"tournament_id":tournament_id,"user_id":uid,"slot_at":iso,"created_at":now_iso(),"updated_at":now_iso()}),"ops_availability_insert",attempts=2)
         flash(f"Đã lưu lịch thi đấu của bạn: {len(final_slots)} khung giờ trong 3 ngày gần nhất.","success")
+        return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+
+    @app.post('/admin/tournaments/<tournament_id>/test-availability/simple')
+    @login_required
+    @admin_required
+    def admin_tournament_test_availability_simple_save(tournament_id):
+        uid=str((current_user() or {}).get("id") or "")
+        days=_availability_days()
+        ranges={}
+        for idx,d in enumerate(days):
+            start_raw=(request.form.get(f"start_{idx}") or "").strip()
+            end_raw=(request.form.get(f"end_{idx}") or "").strip()
+            if not start_raw and not end_raw:
+                ranges[d["date"]]={"start":"","end":""}
+                continue
+            if not start_raw or not end_raw:
+                flash(f"{d['label']}: hãy chọn đủ giờ Từ và Đến.","warning")
+                return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            try:
+                sh,sm=[int(x) for x in start_raw.split(":",1)]
+                eh,em=[int(x) for x in end_raw.split(":",1)]
+                if (eh,em) < (sh,sm):
+                    raise ValueError("end_before_start")
+            except Exception:
+                flash(f"{d['label']}: giờ không hợp lệ hoặc giờ Đến phải sau giờ Từ.","warning")
+                return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            ranges[d["date"]]={"start":start_raw,"end":end_raw}
+        execute_query(
+            db.table("tournament_settings").upsert({
+                "tournament_id":tournament_id,
+                "setting_key":f"admin_test_availability_{uid}",
+                "setting_value":{"ranges":ranges,"updated_at":now_iso()},
+                "updated_at":now_iso(),
+            },on_conflict="tournament_id,setting_key"),
+            "ops_admin_test_availability",attempts=2,
+        )
+        flash("Đã lưu giờ rảnh TEST của Admin. Không ảnh hưởng lịch của 16 HLV.","success")
         return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
 
     @app.post('/tournaments/<tournament_id>/availability/simple')

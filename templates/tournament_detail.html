@@ -17,7 +17,7 @@
 .td-preview-banner{margin-bottom:12px;padding:12px 14px;border:1px solid rgba(241,202,104,.38);border-radius:12px;background:#2a210d;color:#f7df95}.td-preview-banner strong{color:#fff}.td-preview-banner small{display:block;margin-top:4px;color:#d9c98d}</style>{% endblock %}
 {% block content %}<div class="td-shell">
 {% if preview_mode|default(false) %}<div class="td-preview-banner"><strong>👁️ ĐANG XEM NHƯ HLV: {{ preview_user.display_name or preview_user.username or preview_user.user_id }}</strong><small>Chế độ chỉ xem · dữ liệu là của giải thật · mọi thao tác ghi dữ liệu đã bị khóa để tránh ảnh hưởng HLV.</small></div>{% endif %}
-{% if admin_participant_view|default(false) %}<div class="td-preview-banner" style="border-color:rgba(241,202,104,.35)"><strong>👑 ADMIN ĐANG VÀO GIẢI BẰNG CHÍNH TÀI KHOẢN ADMIN</strong><small>Giao diện C1 thật · không giả danh HLV khác · Admin không được tự thêm vào BXH/trận chính thức của 16 HLV.</small></div>{% endif %}
+{% if admin_participant_view|default(false) %}<div class="td-preview-banner" style="border-color:rgba(241,202,104,.35)"><strong>👑 ADMIN TEST TOÀN BỘ GIAO DIỆN C1</strong><small>Dùng chính tài khoản Admin · mở đủ GĐ1, Lịch, GĐ2, Knockout và Phòng C1 · dữ liệu test của Admin không thêm vào BXH/trận chính thức của 16 HLV.</small></div>{% endif %}
 {% if member %}<section class="td-opening" data-opening {% if not show_opening_animation|default(false) %}hidden{% endif %}><div class="td-opening-stars" aria-hidden="true">{% for i in range(12) %}<i style="left:{{ 5 + (i*8)%92 }}%;top:{{ (i*13)%35 }}px"></i>{% endfor %}</div><span class="td-opening-cup">🏆</span><div class="td-opening-kicker">PES ARENA · 2026/2027</div><h2>CHAMPION LEAGUE ARENA</h2><p>GIAI ĐOẠN 1 CHÍNH THỨC BẮT ĐẦU</p><button class="btn gold" type="button" data-opening-close>⚽ VÀO GIẢI ĐẤU</button></section>{% endif %}
 <div class="td-head"><h1>🏆 {{ tournament.name }}</h1><div class="td-meta"><span>{{ tournament.status|upper }}</span><span>•</span><span>{{ 'Đang tham gia' if member else 'Người xem' }}</span>{% if member %}<span>• Pot {{ member.pot_no or '—' }}</span><span>• {{ member.fixed_club_name or 'Chưa chọn CLB' }}</span>{% endif %}</div></div>
 {% set ev = event_ops|default({}) %}{% set tm = ev.get('timing',{}) %}{% set timing = tm.get('config',{}) %}
@@ -96,8 +96,9 @@
 <h3 style="margin-top:16px">BXH tổng GĐ1 + GĐ2</h3><div style="overflow:auto"><table class="td-table"><thead><tr><th>#</th><th>HLV</th><th>Tr</th><th>HS</th><th>Điểm</th></tr></thead><tbody>{% for r in combined_ranking %}<tr><td>{{ r.rank }}</td><td>{{ r.display_name }}</td><td>{{ r.played }}</td><td>{{ r.gd }}</td><td><b>{{ r.points }}</b></td></tr>{% endfor %}</tbody></table></div></section>
 <section class="td-section" id="schedule" data-tab-panel="schedule"><h2>📅 Lịch thi đấu / Giờ rảnh</h2>
 
-{% if member and not admin_participant_view|default(false) %}
-<form method="post" action="{{ url_for('tournament_availability_simple_save',tournament_id=tournament.id) }}" class="td-simple-schedule">
+{% if member %}
+{% if admin_participant_view|default(false) %}<div class="td-preview-banner" style="margin-bottom:12px;border-color:rgba(69,181,255,.35)"><strong>🧪 ADMIN TEST LỊCH NHƯ HLV</strong><small>Giờ rảnh bên dưới chỉ lưu cho tài khoản Admin trong vùng test, không ảnh hưởng 16 HLV thật.</small></div>{% endif %}
+<form method="post" action="{{ url_for('admin_tournament_test_availability_simple_save',tournament_id=tournament.id) if admin_participant_view|default(false) else url_for('tournament_availability_simple_save',tournament_id=tournament.id) }}" class="td-simple-schedule">
   <div class="td-simple-days">
   {% for day in availability.days %}
     {% set r = availability.day_ranges.get(day.date,{}) %}
@@ -135,7 +136,7 @@
 {% endfor %}
 {% if ns.count == 0 %}<div class="td-empty">Bạn chưa có đối thủ cần xem lịch.</div>{% endif %}
 </div>
-{% elif admin_participant_view|default(false) %}<div class="td-empty">👑 Admin đang xem giao diện giải bằng chính tài khoản Admin. Lịch cá nhân chỉ áp dụng cho 16 HLV thi đấu chính thức.</div>{% else %}<div class="td-empty">Khán giả có thể xem giải nhưng chỉ HLV tham gia mới được đặt lịch thi đấu.</div>{% endif %}
+{% else %}<div class="td-empty">Khán giả có thể xem giải nhưng chỉ HLV tham gia hoặc Admin Test mới được thao tác lịch.</div>{% endif %}
 </section>
 <section class="td-section" id="host" data-tab-panel="info"><h2>Danh sách Host của giải</h2><div class="td-clubs">{% for h in hosts %}<div class="td-club"><strong>{{ h.name }}</strong><br><small>{{ h.region }} · {{ h.status }}</small></div>{% endfor %}</div></section>
 <section class="td-section" id="knockout" data-tab-panel="knockout"><h2>🏆 Knockout / Bracket</h2>{% set kf=knockout_flow|default({}) %}<p style="color:#91a3b1;font-size:12px">{{ 'Có Play-off · ' if kf.get('use_playoff') else 'Không Play-off · ' }}Các vòng trước Chung kết đá 2 lượt và tính tổng tỷ số. Chung kết Bo3; trận 3 là trận phân định có hiệp phụ/pen nếu cần.</p>{% if kf.get('champion_user_id') %}<div class="td-reveal"><h3>🏆 GIẢI ĐẤU ĐÃ HOÀN TẤT</h3><p>Nhà vô địch đã được xác định.</p></div>{% endif %}{% for code,label in [('playoff','PLAY-OFF'),('r16','VÒNG 1/8'),('qf','TỨ KẾT'),('sf','BÁN KẾT'),('final','CHUNG KẾT')] %}{% set ns=namespace(any=false) %}{% for m in matches if m.stage_code=='knockout' and m.round_code==code %}{% if not ns.any %}<h3 style="margin-top:16px">{{ label }}</h3>{% set ns.any=true %}{% endif %}<div class="td-match"><span>{{ 'Trận' if code=='final' else 'Lượt' }} {{ m.leg_no }}</span><strong>{{ m.home_name }} {{ m.home_score if m.home_score is not none else '—' }}{% if m.home_pen is not none %} ({{ m.home_pen }}){% endif %}</strong><strong>{% if m.away_pen is not none %}({{ m.away_pen }}) {% endif %}{{ m.away_score if m.away_score is not none else '—' }} {{ m.away_name }}</strong><small>{{ 'Chờ BTC xử lý' if m.status=='disputed' else m.status }}</small></div>{% endfor %}{% endfor %}</section>
