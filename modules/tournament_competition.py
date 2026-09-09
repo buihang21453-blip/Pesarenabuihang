@@ -726,7 +726,7 @@ def register_routes(context):
                 "all_team_options":_stage1_eligible_clubs(),"stage1_team_options":_stage1_eligible_clubs(),"league_config":_setting(tournament_id,"league_config",{}) or {},
                 "stage1_readiness":_stage1_readiness(tournament_id),
                 "c1_test_stage1_ranking":c1_test_ranking,
-                "c1_test_recent_matches":c1_test_matches[:5]}
+                "c1_test_recent_matches":c1_test_matches[:5],"tournament_members":members_all,"tournament_member_map":{str(x.get("user_id")):x for x in members_all}}
 
     def _tournament_scale(tournament_id):
         """Planned/actual match volume for Admin after registration closes."""
@@ -835,6 +835,7 @@ def register_routes(context):
         uid=str((current_user() or {}).get("id") or "")
         user=current_user() or {}
         data=_detail_payload(tournament_id,uid)
+        data["can_admin_manage_tournament"]=bool(is_admin_user(user)) if data else False
         if not data:
             flash("Không tìm thấy giải đấu.","error"); return redirect(url_for("tournaments"))
         # Admin vào giao diện C1 bằng chính tài khoản Admin, không mượn danh tính HLV khác.
@@ -1072,7 +1073,10 @@ def register_routes(context):
             try: _maybe_advance_knockout(match.get("tournament_id"))
             except Exception as exc: app.logger.warning("Knockout auto advance failed: %s",exc)
         log_admin_action("Cập nhật kết quả trận giải","tournament_match",details={"match_id":match_id,"score":f"{hs}-{aw}"})
-        flash("Đã lưu kết quả trận giải.","success"); return redirect_admin("tournaments")
+        flash("Đã lưu kết quả trận giải.","success")
+        if (request.form.get("return_to") or "").strip() == "tournament":
+            return redirect(url_for("tournament_detail", tournament_id=match.get("tournament_id")) + "#bxh")
+        return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/pot/generate')
     @login_required

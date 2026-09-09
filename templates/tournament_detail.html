@@ -14,7 +14,23 @@
 @media(max-width:650px){.td-opponents{grid-template-columns:1fr}.td-countdown span{min-width:64px;flex:1}}
 
 .td-opening{position:relative;margin-bottom:14px;border:1px solid rgba(241,202,104,.35);border-radius:18px;overflow:hidden;background:radial-gradient(circle at 50% 20%,rgba(241,202,104,.18),rgba(5,17,27,.98) 55%);padding:28px 18px;text-align:center}.td-opening[hidden]{display:none}.td-opening-kicker{font-size:12px;letter-spacing:.18em;color:#f1ca68;font-weight:900}.td-opening h2{font-size:clamp(25px,5vw,48px);margin:8px 0;color:#fff}.td-opening p{margin:0 auto 18px;color:#c5d0d8;max-width:720px}.td-opening-cup{font-size:54px;display:block;animation:tdCup 1.7s ease-in-out infinite alternate}.td-opening-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden}.td-opening-stars i{position:absolute;width:7px;height:14px;border-radius:2px;background:#f1ca68;opacity:.65;animation:tdFall 2.8s linear infinite}.td-opening-stars i:nth-child(2n){background:#fff}.td-opening-stars i:nth-child(3n){animation-delay:.8s}.td-opening-stars i:nth-child(4n){animation-delay:1.4s}@keyframes tdCup{from{transform:translateY(0) scale(1)}to{transform:translateY(-5px) scale(1.05)}}@keyframes tdFall{from{transform:translateY(-50px) rotate(0);opacity:0}20%{opacity:.8}to{transform:translateY(260px) rotate(260deg);opacity:0}}@media(prefers-reduced-motion:reduce){.td-opening-cup,.td-opening-stars i{animation:none}}
-.td-preview-banner{margin-bottom:12px;padding:12px 14px;border:1px solid rgba(241,202,104,.38);border-radius:12px;background:#2a210d;color:#f7df95}.td-preview-banner strong{color:#fff}.td-preview-banner small{display:block;margin-top:4px;color:#d9c98d}.td-form-pills{display:flex;gap:6px;flex-wrap:wrap}.td-form-pill{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid rgba(255,255,255,.1)}.td-form-pill.win{background:rgba(46,204,113,.18);border-color:rgba(46,204,113,.4);color:#8df0a6}.td-form-pill.draw{background:rgba(241,202,104,.14);border-color:rgba(241,202,104,.35);color:#f1ca68}.td-form-pill.loss{background:rgba(255,86,86,.16);border-color:rgba(255,86,86,.38);color:#ff9b9b}.td-form-pill.empty{background:#0d2436;color:#6f8290}.td-test-note{margin:10px 0 12px;padding:11px 12px;border-radius:11px;border:1px solid rgba(46,204,113,.25);background:rgba(16,37,26,.9);color:#dce8df;font-size:12px}.td-recent-test{display:grid;gap:8px}.td-recent-test-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;background:#091a29;border:1px solid rgba(255,255,255,.08)}.td-recent-test-row strong{color:#f1ca68}.td-winrate{font-weight:900;color:#f1ca68}</style>{% endblock %}
+.td-preview-banner{margin-bottom:12px;padding:12px 14px;border:1px solid rgba(241,202,104,.38);border-radius:12px;background:#2a210d;color:#f7df95}.td-preview-banner strong{color:#fff}.td-preview-banner small{display:block;margin-top:4px;color:#d9c98d}.td-form-pills{display:flex;gap:6px;flex-wrap:wrap}.td-form-pill{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid rgba(255,255,255,.1)}.td-form-pill.win{background:rgba(46,204,113,.18);border-color:rgba(46,204,113,.4);color:#8df0a6}.td-form-pill.draw{background:rgba(241,202,104,.14);border-color:rgba(241,202,104,.35);color:#f1ca68}.td-form-pill.loss{background:rgba(255,86,86,.16);border-color:rgba(255,86,86,.38);color:#ff9b9b}.td-form-pill.empty{background:#0d2436;color:#6f8290}.td-test-note{margin:10px 0 12px;padding:11px 12px;border-radius:11px;border:1px solid rgba(46,204,113,.25);background:rgba(16,37,26,.9);color:#dce8df;font-size:12px}.td-recent-test{display:grid;gap:8px}.td-recent-test-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;background:#091a29;border:1px solid rgba(255,255,255,.08)}.td-recent-test-row strong{color:#f1ca68}.td-winrate{font-weight:900;color:#f1ca68}
+.td-rank-player-btn{appearance:none;border:0;background:none;padding:0;color:#f5f7fa;font:inherit;font-weight:900;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(241,202,104,.45);text-underline-offset:3px}
+.td-rank-player-btn:hover{color:#f1ca68}
+.td-admin-player-panel{display:none;margin-top:14px;padding:16px;border:1px solid rgba(241,202,104,.28);border-radius:14px;background:#091a29}
+.td-admin-player-panel.is-open{display:block}
+.td-admin-player-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.td-admin-player-grid{display:grid;grid-template-columns:minmax(250px,.8fr) minmax(420px,1.7fr);gap:14px}
+.td-admin-player-card{border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:12px;background:#071622}
+.td-admin-player-card h4{margin:0 0 10px;color:#f1ca68}
+.td-admin-match-list{display:grid;gap:8px}
+.td-admin-match{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px;border-radius:10px;background:#0b2031;border:1px solid rgba(255,255,255,.08)}
+.td-admin-score-form{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.td-admin-score-form input{width:54px;text-align:center;background:#06131f;color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:7px;padding:7px}
+.td-admin-profile-form{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.td-admin-profile-form input,.td-admin-profile-form select{background:#06131f;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:9px}
+@media(max-width:800px){.td-admin-player-grid{grid-template-columns:1fr}.td-admin-match{grid-template-columns:1fr}}
+</style>{% endblock %}
 {% block content %}<div class="td-shell">
 {% if preview_mode|default(false) %}<div class="td-preview-banner"><strong>👁️ ĐANG XEM NHƯ HLV: {{ preview_user.display_name or preview_user.username or preview_user.user_id }}</strong><small>Chế độ chỉ xem · dữ liệu là của giải thật · mọi thao tác ghi dữ liệu đã bị khóa để tránh ảnh hưởng HLV.</small></div>{% endif %}
 {% if admin_participant_view|default(false) %}<div class="td-preview-banner" style="border-color:rgba(241,202,104,.35)"><strong>👑 ADMIN TEST TOÀN BỘ GIAO DIỆN C1</strong><small>Dùng chính tài khoản Admin · mở đủ GĐ1, Lịch, GĐ2, Knockout và Phòng C1 · dữ liệu test của Admin không thêm vào BXH/trận chính thức của 16 HLV.</small></div>{% endif %}
@@ -68,7 +84,82 @@
 </tbody></table></div>{% endif %}
 <h3 class="td-central-ranking-title" style="margin-top:22px">🏆 BXH GIẢI ĐẤU</h3>
 <p style="color:#91a3b1;font-size:12px;margin-top:-4px">BXH duy nhất của giải · GĐ1/GĐ2 được hệ thống tự cộng vào cùng một bảng sau khi kết quả được xác nhận.</p>
-<div style="overflow:auto"><table class="td-table td-central-ranking"><thead><tr><th>#</th><th>HLV</th><th>Trận</th><th>Thắng</th><th>Hòa</th><th>Thua</th><th>BT</th><th>BB</th><th>Hiệu số</th><th>Điểm</th></tr></thead><tbody>{% for r in combined_ranking %}<tr{% if member and member.user_id|string==r.user_id|string %} class="is-me"{% endif %}><td><strong>{{ r.rank }}</strong></td><td><strong>{{ r.display_name }}</strong></td><td>{{ r.played }}</td><td>{{ r.wins }}</td><td>{{ r.draws }}</td><td>{{ r.losses }}</td><td>{{ r.gf }}</td><td>{{ r.ga }}</td><td><strong>{{ '+' if r.gd > 0 else '' }}{{ r.gd }}</strong></td><td><b>{{ r.points }}</b></td></tr>{% else %}<tr><td colspan="10">Chưa có dữ liệu BXH.</td></tr>{% endfor %}</tbody></table></div>
+<div style="overflow:auto"><table class="td-table td-central-ranking"><thead><tr><th>#</th><th>HLV</th><th>Trận</th><th>Thắng</th><th>Hòa</th><th>Thua</th><th>BT</th><th>BB</th><th>Hiệu số</th><th>Điểm</th></tr></thead><tbody>{% for r in combined_ranking %}<tr{% if member and member.user_id|string==r.user_id|string %} class="is-me"{% endif %}><td><strong>{{ r.rank }}</strong></td><td>{% if can_admin_manage_tournament|default(false) %}<button type="button" class="td-rank-player-btn" data-admin-player-open="{{ r.user_id }}">{{ r.display_name }}</button>{% else %}<strong>{{ r.display_name }}</strong>{% endif %}</td><td>{{ r.played }}</td><td>{{ r.wins }}</td><td>{{ r.draws }}</td><td>{{ r.losses }}</td><td>{{ r.gf }}</td><td>{{ r.ga }}</td><td><strong>{{ '+' if r.gd > 0 else '' }}{{ r.gd }}</strong></td><td><b>{{ r.points }}</b></td></tr>{% else %}<tr><td colspan="10">Chưa có dữ liệu BXH.</td></tr>{% endfor %}</tbody></table></div>
+
+{% if can_admin_manage_tournament|default(false) %}
+<div id="td-admin-player-panels">
+{% for p in tournament_members|default([]) %}
+  <div class="td-admin-player-panel" data-admin-player-panel="{{ p.user_id }}">
+    <div class="td-admin-player-head">
+      <div><strong style="font-size:18px">👤 {{ p.display_name }}</strong><div style="font-size:12px;color:#91a3b1">Bấm trực tiếp trên BXH để quản lý HLV này.</div></div>
+      <button type="button" class="btn gray" data-admin-player-close>Đóng</button>
+    </div>
+    <div class="td-admin-player-grid">
+      <div class="td-admin-player-card">
+        <h4>🧾 Thông tin HLV</h4>
+        <div style="display:grid;gap:6px;font-size:13px;margin-bottom:10px">
+          <div><strong>Zalo:</strong> {{ p.zalo_name or '—' }}</div>
+          <div><strong>Host:</strong> {{ 'Có Host' if p.has_host else 'Không Host' }}</div>
+          <div><strong>Khu vực:</strong> {{ p.host_region or '—' }}</div>
+          <div><strong>Pot:</strong> {{ p.pot_no or '—' }}</div>
+          <div><strong>CLB:</strong> {{ p.fixed_club_name or '—' }}</div>
+        </div>
+        <form class="td-admin-profile-form" method="post" action="{{ url_for('admin_tournament_registration_profile_update',registration_id=(p.registration_id or p.id or 'none')) }}">
+          <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+          <input type="hidden" name="user_id" value="{{ p.user_id }}">
+          <input type="hidden" name="return_to" value="tournament">
+          <input name="zalo_name" value="{{ p.zalo_name|default('',true) }}" placeholder="Tên Zalo" style="grid-column:1/-1">
+          <select name="host_region">
+            <option value="Bắc" {{ 'selected' if p.host_region=='Bắc' else '' }}>Bắc</option>
+            <option value="Trung" {{ 'selected' if p.host_region=='Trung' else '' }}>Trung</option>
+            <option value="Nam" {{ 'selected' if p.host_region=='Nam' else '' }}>Nam</option>
+          </select>
+          <select name="host_choice">
+            <option value="yes" {{ 'selected' if p.has_host else '' }}>Có Host</option>
+            <option value="no" {{ 'selected' if not p.has_host else '' }}>Không Host</option>
+          </select>
+          <button class="btn green" type="submit" style="grid-column:1/-1">💾 Lưu thông tin</button>
+        </form>
+      </div>
+
+      <div class="td-admin-player-card">
+        <h4>⚔️ Đối thủ · Lịch thi đấu · Lịch sử</h4>
+        <div class="td-admin-match-list">
+        {% for m in matches if (m.home_user_id|string==p.user_id|string or m.away_user_id|string==p.user_id|string) %}
+          {% set is_home = m.home_user_id|string==p.user_id|string %}
+          {% set opp = m.away_name if is_home else m.home_name %}
+          <div class="td-admin-match">
+            <div>
+              <div><strong>{{ 'GĐ1' if m.stage_code=='stage1' else ('GĐ2' if m.stage_code=='league' else (m.round_code|upper if m.round_code else 'Knockout')) }} · vs {{ opp }}</strong></div>
+              <div style="font-size:12px;color:#91a3b1;margin-top:3px">
+                📅 {{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa đặt lịch' }}
+                · {{ 'Đã hoàn thành' if m.status=='completed' else 'Chờ thi đấu' }}
+              </div>
+              {% if m.status=='completed' %}
+              <div style="margin-top:5px;font-weight:900">Kết quả: {{ m.home_score }} - {{ m.away_score }}{% if m.home_pen is not none and m.away_pen is not none %} · Pen {{ m.home_pen }} - {{ m.away_pen }}{% endif %}</div>
+              {% endif %}
+            </div>
+            <form class="td-admin-score-form" method="post" action="{{ url_for('admin_tournament_match_result',match_id=m.id) }}"><input type="hidden" name="return_to" value="tournament"><input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+              <input type="number" min="0" name="home_score" value="{{ m.home_score if m.home_score is not none else '' }}" required aria-label="Tỷ số chủ">
+              <strong>-</strong>
+              <input type="number" min="0" name="away_score" value="{{ m.away_score if m.away_score is not none else '' }}" required aria-label="Tỷ số khách">
+              {% if m.stage_code=='knockout' %}
+              <input type="number" min="0" name="home_pen" value="{{ m.home_pen if m.home_pen is not none else '' }}" placeholder="Pen">
+              <input type="number" min="0" name="away_pen" value="{{ m.away_pen if m.away_pen is not none else '' }}" placeholder="Pen">
+              {% endif %}
+              <button class="btn gold" type="submit">{{ 'Sửa tỷ số' if m.status=='completed' else 'Nhập tỷ số' }}</button>
+            </form>
+          </div>
+        {% else %}
+          <div class="td-empty">HLV này chưa có cặp đấu.</div>
+        {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+</div>
+{% endif %}
 </section>
 {% if member %}
 <section class="td-section" id="my-opponents" data-tab-panel="opponents"><h2>👥 Đối thủ của tôi</h2>
@@ -253,6 +344,23 @@ document.querySelectorAll('[data-fixed-schedule]').forEach(function(form){
     sync();
   });
 });
+</script>
+
+<script>
+(function(){
+  function closeAll(){
+    document.querySelectorAll('[data-admin-player-panel]').forEach(function(p){p.classList.remove('is-open');});
+  }
+  document.querySelectorAll('[data-admin-player-open]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var id=btn.getAttribute('data-admin-player-open');
+      var panel=document.querySelector('[data-admin-player-panel="'+CSS.escape(id)+'"]');
+      closeAll();
+      if(panel){panel.classList.add('is-open');panel.scrollIntoView({behavior:'smooth',block:'nearest'});}
+    });
+  });
+  document.querySelectorAll('[data-admin-player-close]').forEach(function(btn){btn.addEventListener('click',closeAll);});
+})();
 </script>
 {% endblock %}
 <script>

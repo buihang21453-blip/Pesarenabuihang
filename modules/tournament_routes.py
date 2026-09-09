@@ -645,6 +645,8 @@ def register_routes(context):
             pass
         log_admin_action("Cập nhật thông tin HLV giải đấu", "tournament_registration", target_id=reg_id, details=payload)
         flash("Đã cập nhật Khu vực / Host / Zalo của HLV.", "success")
+        if (request.form.get("return_to") or "").strip() == "tournament" and tournament_id:
+            return redirect(url_for("tournament_detail", tournament_id=tournament_id) + "#bxh")
         return redirect_admin("tournaments")
 
     @app.get('/admin/tournaments/<tournament_id>/export.xlsx')
