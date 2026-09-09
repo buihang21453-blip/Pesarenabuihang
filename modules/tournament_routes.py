@@ -1,3 +1,5 @@
+from datetime import datetime
+
 """Independent Tournament module routes.
 
 V1.4.27 introduces the first real Tournament database core:
@@ -100,6 +102,14 @@ def register_routes(context):
             "tournament_list",
         )
         return rows, error
+
+    def _parse_tournament_dt(raw):
+        if not raw:
+            return None
+        try:
+            return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        except Exception:
+            return None
 
     def _registration_for_user(tournament_id, user_id):
         if not tournament_id or not user_id:
@@ -309,11 +319,30 @@ def register_routes(context):
                         "tournament_public_ranking_users",
                     )
                     names = {str(u.get("id")): (u.get("display_name") or u.get("username") or "HLV") for u in user_rows}
-                ranking = {uid: {"user_id": uid, "display_name": names.get(uid, "HLV"), "played": 0, "wins": 0, "draws": 0, "losses": 0, "gf": 0, "ga": 0, "gd": 0, "points": 0} for uid in member_ids}
+                ranking = {
+                    uid: {
+                        "user_id": uid,
+                        "display_name": names.get(uid, "HLV"),
+                        "played": 0,
+                        "wins": 0,
+                        "draws": 0,
+                        "losses": 0,
+                        "gf": 0,
+                        "ga": 0,
+                        "gd": 0,
+                        "points": 0,
+                        "recent_form": [],
+                        "winrate": 0,
+                    }
+                    for uid in member_ids
+                }
                 match_rows, _ = _safe_rows(
-                    db.table("tournament_matches").select("home_user_id,away_user_id,home_score,away_score,status,stage_code").eq("tournament_id", item.get("id")).eq("stage_code", "stage1").eq("status", "completed"),
+                    db.table("tournament_matches")
+                    .select("home_user_id,away_user_id,home_score,away_score,status,stage_code,completed_at,updated_at,created_at")
+                    .eq("tournament_id", item.get("id")).eq("stage_code", "stage1").eq("status", "completed"),
                     "tournament_public_ranking_matches",
                 )
+                completed_matches = []
                 for match in match_rows:
                     h, a = str(match.get("home_user_id")), str(match.get("away_user_id"))
                     if h not in ranking or a not in ranking:
@@ -331,9 +360,39 @@ def register_routes(context):
                         A["wins"] += 1; A["points"] += 3; H["losses"] += 1
                     else:
                         H["draws"] += 1; A["draws"] += 1; H["points"] += 1; A["points"] += 1
+                    completed_matches.append({
+                        "home_user_id": h,
+                        "away_user_id": a,
+                        "home_score": hs,
+                        "away_score": as_,
+                        "completed_at": match.get("completed_at") or match.get("updated_at") or match.get("created_at"),
+                    })
+
+                completed_matches.sort(
+                    key=lambda m: _parse_tournament_dt(m.get("completed_at")) or datetime.min,
+                    reverse=True,
+                )
+                for match in completed_matches:
+                    for uid, mine, theirs in (
+                        (match["home_user_id"], match["home_score"], match["away_score"]),
+                        (match["away_user_id"], match["away_score"], match["home_score"]),
+                    ):
+                        row = ranking.get(uid)
+                        if not row or len(row["recent_form"]) >= 5:
+                            continue
+                        if mine > theirs:
+                            pill = {"code": "win", "short": "T", "label": "Thắng"}
+                        elif mine < theirs:
+                            pill = {"code": "loss", "short": "B", "label": "Bại"}
+                        else:
+                            pill = {"code": "draw", "short": "H", "label": "Hòa"}
+                        row["recent_form"].append(pill)
+
                 public_ranking = list(ranking.values())
                 for row in public_ranking:
                     row["gd"] = row["gf"] - row["ga"]
+                    total = row["wins"] + row["draws"] + row["losses"]
+                    row["winrate"] = round((row["wins"] / total) * 100, 1) if total else 0
                 public_ranking.sort(key=lambda r: (r["points"], r["gd"], r["gf"], r["wins"]), reverse=True)
                 for idx, row in enumerate(public_ranking, 1):
                     row["rank"] = idx
