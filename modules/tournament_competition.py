@@ -1007,7 +1007,14 @@ def register_routes(context):
         matches=_decorate_matches(tid,_matches(tid))
         mine=[m for m in matches if member and uid in {str(m.get("home_user_id")),str(m.get("away_user_id"))}]
         rooms=_tournament_rooms(tid)
-        return render_template("c1_rooms.html", tournament=selected, member=member, members=members, matches=mine, tournament_rooms=rooms, is_c1_admin=admin)
+        room_by_match={}
+        for r in rooms:
+            if r.get("status") in {"completed","cancelled","confirmed"}:
+                continue
+            mid=str((r.get("tournament_meta") or {}).get("tournament_match_id") or "")
+            if mid and mid not in room_by_match:
+                room_by_match[mid]=r
+        return render_template("c1_rooms.html", tournament=selected, member=member, members=members, matches=mine, tournament_rooms=rooms, room_by_match=room_by_match, is_c1_admin=admin)
 
     @app.post('/tournaments/<tournament_id>/matches/<match_id>/room')
     @login_required
@@ -1044,20 +1051,37 @@ def register_routes(context):
         meta={"tournament_id":str(tournament_id),"tournament_match_id":str(match_id),"stage_code":match.get("stage_code"),"home_user_id":str(match.get("home_user_id")),"away_user_id":str(match.get("away_user_id")),"home_name":dm.get("home_name"),"away_name":dm.get("away_name")}
         row=execute_query(db.table("match_rooms").insert({"invite_id":None,"host_user_id":uid,"guest_user_id":None,"team_tier":"TOURNAMENT_GD1" if match.get("stage_code")=="stage1" else "TOURNAMENT","match_mode":"tournament","friendly_tier":None,"status":"waiting_ready","guest_ready":False,"note":_room_note(meta),"state_expires_at":None,"updated_at":now_iso()}),"ops_tournament_room_create",attempts=2)
         room=(row.data or [{}])[0]
-        opponent_uid = str(match.get("away_user_id") if uid==str(match.get("home_user_id")) else match.get("home_user_id"))
+        flash("Đã tạo Phòng đấu C1. Khi sẵn sàng, hãy bấm Mời đối thủ ngay trong phòng.","success")
+        return redirect(url_for("room_detail",room_id=room.get("id")))
+
+    @app.post('/tournaments/<tournament_id>/rooms/<room_id>/invite-opponent')
+    @login_required
+    def tournament_room_invite_opponent(tournament_id,room_id):
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        room,meta,match=_room_match_or_error(tournament_id,room_id)
+        if not room or not match:
+            flash("Không tìm thấy phòng/trận C1.","error"); return redirect(url_for("c1_rooms",tournament_id=tournament_id))
+        if uid!=str(room.get("host_user_id")) and not is_admin_user(user):
+            flash("Chỉ chủ phòng mới được mời đối thủ.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        if room.get("guest_user_id"):
+            flash("Đối thủ đã ở trong phòng.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        opponent_uid=str(match.get("away_user_id") if uid==str(match.get("home_user_id")) else match.get("home_user_id"))
+        dm=_decorate_matches(tournament_id,[match])[0]
+        opponent_name=dm.get("away_name") if uid==str(match.get("home_user_id")) else dm.get("home_name")
+        creator=user.get("display_name") or user.get("username") or "Đối thủ"
         try:
-            creator = (user.get("display_name") or user.get("username") or "Đối thủ")
             create_user_notification(
                 opponent_uid,
-                "🏟️ Đối thủ đã tạo phòng giải",
-                f"{creator} đã tạo phòng cho trận của bạn. Bấm để vào phòng thi đấu.",
-                url_for("tournament_match_room_enter", tournament_id=tournament_id, match_id=match_id),
+                "🏆 Lời mời thi đấu C1",
+                f"{creator} đang chờ bạn trong Phòng đấu C1. Bấm để vào phòng thi đấu.",
+                url_for("tournament_match_room_enter", tournament_id=tournament_id, match_id=match.get("id")),
                 "tournament_room_invite",
             )
+            flash(f"Đã gửi lời mời tới {opponent_name or 'đối thủ'}.","success")
         except Exception as exc:
-            app.logger.warning("Không gửi được lời mời phòng giải: %s", exc)
-        flash("Đã tạo phòng và mời đúng đối thủ. Đang chờ đối thủ vào phòng.","success")
-        return redirect(url_for("room_detail",room_id=room.get("id")))
+            app.logger.warning("Không gửi được lời mời phòng C1: %s", exc)
+            flash("Không gửi được thông báo mời. Đối thủ vẫn có thể vào từ tab Phòng đấu C1.","warning")
+        return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/random-stage1-clubs')
     @login_required
