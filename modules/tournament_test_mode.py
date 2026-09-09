@@ -1,4 +1,4 @@
-"""Tournament Test Mode V1.4.34.
+"""Tournament Test Mode V1.4.101.
 
 A fully isolated sandbox stored as JSON. It never writes Rank matches, tournament
 production matches, Zcoin, Lucky Box or real tournament members.
@@ -6,12 +6,22 @@ production matches, Zcoin, Lucky Box or real tournament members.
 from datetime import datetime, timezone, timedelta
 import random
 import uuid
+from functools import wraps
 
 SANDBOX_TABLE = "tournament_test_sandboxes"
 
 
 def register_routes(context):
     globals().update(context)
+
+    def test_center_only(fn):
+        @wraps(fn)
+        def wrapped(*args, **kwargs):
+            if not is_test_mode():
+                flash("Test Center chỉ hoạt động khi APP_ENV=development/test và PES_ARENA_TEST_MODE được bật an toàn.", "warning")
+                return redirect(url_for("admin", tab="tournaments"))
+            return fn(*args, **kwargs)
+        return wrapped
 
     def _empty_state():
         return {
@@ -33,6 +43,8 @@ def register_routes(context):
             "availability_bookings": {},
             "journey_mode": False,
             "journey_player_id": None,
+            "test_stage_open": False,
+            "duel_test": {"player_a": None, "player_b": None, "room": None, "invite": None, "reports": {}, "dispute": False, "final_result": None, "events": []},
             "hosts": [
                 {"id":"host-bac","name":"Host Test Bắc","region":"Bắc","status":"available"},
                 {"id":"host-trung","name":"Host Test Trung","region":"Trung","status":"available"},
@@ -475,6 +487,45 @@ def register_routes(context):
             if p: return p.get("id")
         return players[0].get("id") if players else "spectator"
 
+    def _duel(state):
+        row = state.get("duel_test")
+        if not isinstance(row, dict):
+            row = {}
+        base = {"player_a": None, "player_b": None, "room": None, "invite": None, "reports": {}, "dispute": False, "final_result": None, "events": []}
+        base.update(row)
+        state["duel_test"] = base
+        return base
+
+    def _duel_event(state, text):
+        duel = _duel(state)
+        events = list(duel.get("events") or [])
+        events.append({"at": datetime.now(timezone.utc).isoformat(), "text": str(text)})
+        duel["events"] = events[-30:]
+
+    def _apply_duel_result(state, score_a, score_b):
+        duel = _duel(state)
+        a, b = duel.get("player_a"), duel.get("player_b")
+        if not a or not b:
+            return
+        stage = state.get("current_stage")
+        key = "league_matches" if stage == "league" else "stage1_matches"
+        matches = list(state.get(key) or [])
+        match = next((m for m in matches if {m.get("home"), m.get("away")} == {a, b}), None)
+        if not match:
+            match = {"id": f"duel-{uuid.uuid4().hex[:8]}", "round": 1, "home": a, "away": b, "status": "pending"}
+            matches.append(match)
+        if match.get("home") == a:
+            match["home_score"], match["away_score"] = int(score_a), int(score_b)
+        else:
+            match["home_score"], match["away_score"] = int(score_b), int(score_a)
+        match["status"] = "completed"
+        state[key] = matches
+        players = state.get("players") or []
+        if key == "league_matches":
+            state["league_ranking"] = _ranking(players, matches)
+        else:
+            state["stage1_ranking"] = _ranking(players, matches)
+
     def _stage_context(state, stage, view_as):
         players=state.get("players") or []
         stage = stage if stage in STAGE_KEYS else (state.get("current_stage") if state.get("current_stage") in STAGE_KEYS else "registration")
@@ -537,7 +588,158 @@ def register_routes(context):
             stage1_matches=_decorate_matches(state.get("stage1_matches") or [], players),
             league_matches=_decorate_matches(state.get("league_matches") or [], players),
             journey_player_id=state.get("journey_player_id"), journey_mode=bool(state.get("journey_mode")),
+            duel=_duel(state), test_stage_open=bool(state.get("test_stage_open")),
         )
+
+    @app.get('/admin/tournament-test-center')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center():
+        state, ready = _load_state()
+        players = state.get("players") or []
+        duel = _duel(state)
+        return render_template('tournament_test_center.html', state=state, sandbox_ready=ready,
+            players=players, duel=duel, stages=STAGES,
+            stage_label=dict(STAGES).get(state.get("current_stage"), state.get("current_stage")),
+            player_a=next((p for p in players if p.get("id")==duel.get("player_a")), None),
+            player_b=next((p for p in players if p.get("id")==duel.get("player_b")), None))
+
+    @app.post('/admin/tournament-test-center/setup')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center_setup():
+        state, _ = _load_state()
+        if len(state.get("players") or []) < 2:
+            state = _build_full_simulation(16, 6, 3)
+        players = state.get("players") or []
+        valid = {p.get("id") for p in players}
+        a = (request.form.get("player_a") or "").strip() or players[0]["id"]
+        b = (request.form.get("player_b") or "").strip() or players[1]["id"]
+        if a not in valid or b not in valid or a == b:
+            flash("HLV A và HLV B phải là hai HLV Test khác nhau.", "warning")
+            return redirect(url_for('admin_tournament_test_center'))
+        duel = _duel(state)
+        duel.update({"player_a":a,"player_b":b,"room":None,"invite":None,"reports":{},"dispute":False,"final_result":None,"events":[]})
+        stage=(request.form.get("stage") or "stage1").strip()
+        state["current_stage"] = stage if stage in STAGE_KEYS else "stage1"
+        state["test_stage_open"] = request.form.get("stage_open") == "1"
+        _duel_event(state, f"Đã chọn {_player_name(a,players)} và {_player_name(b,players)}")
+        _save_state(state)
+        flash("Đã sẵn sàng Test Center 2 HLV.", "success")
+        return redirect(url_for('admin_tournament_test_center'))
+
+    @app.post('/admin/tournament-test-center/stage/<stage>/<action>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center_stage(stage, action):
+        state, _ = _load_state()
+        if stage not in STAGE_KEYS:
+            flash("Giai đoạn Test không hợp lệ.", "error")
+            return redirect(url_for('admin_tournament_test_center'))
+        state["current_stage"] = stage
+        state["test_stage_open"] = action == "open"
+        _duel_event(state, f"Admin {'MỞ' if state['test_stage_open'] else 'KHÓA'} {dict(STAGES).get(stage,stage)}")
+        _save_state(state)
+        return redirect(url_for('admin_tournament_test_center'))
+
+    @app.post('/admin/tournament-test-center/duel/<action>/<player_id>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center_duel(action, player_id):
+        state, _ = _load_state(); duel = _duel(state); players=state.get("players") or []
+        a,b=duel.get("player_a"),duel.get("player_b")
+        if player_id not in {a,b}:
+            flash("HLV không thuộc cặp Test hiện tại.", "error")
+            return redirect(url_for('admin_tournament_test_center'))
+        other = b if player_id == a else a
+        if action in {"create_room","invite"} and not state.get("test_stage_open"):
+            flash("Admin chưa mở giai đoạn, HLV chưa được phép tạo/mời phòng.", "warning")
+        elif action == "create_room":
+            duel["room"] = {"id":f"test-room-{uuid.uuid4().hex[:8]}","created_by":player_id,"room_type":"tournament","tournament_match":True,"stage":state.get("current_stage"),"members":[player_id],"status":"waiting"}
+            duel["invite"] = None; duel["reports"]={}; duel["dispute"]=False; duel["final_result"]=None
+            _duel_event(state, f"{_player_name(player_id,players)} tạo phòng Tournament")
+        elif action == "invite":
+            if not duel.get("room"):
+                flash("Hãy tạo phòng trước.", "warning")
+            else:
+                duel["invite"]={"from":player_id,"to":other,"status":"pending"}
+                _duel_event(state, f"{_player_name(player_id,players)} mời {_player_name(other,players)}")
+        elif action == "accept":
+            inv=duel.get("invite") or {}
+            if inv.get("to") != player_id or inv.get("status") != "pending":
+                flash("Không có lời mời hợp lệ cho HLV này.", "warning")
+            elif not duel.get("room"):
+                flash("Phòng Test không còn tồn tại.", "warning")
+            else:
+                inv["status"]="accepted"; duel["invite"]=inv
+                members=list(duel["room"].get("members") or [])
+                if player_id not in members: members.append(player_id)
+                duel["room"]["members"]=members; duel["room"]["status"]="ready"
+                duel["room"]["room_type"]="tournament"; duel["room"]["tournament_match"]=True
+                _duel_event(state, f"{_player_name(player_id,players)} nhận lời và vào cùng phòng Tournament")
+        _save_state(state)
+        return redirect(url_for('admin_tournament_test_public', view_as=player_id, stage=state.get("current_stage")))
+
+    @app.post('/admin/tournament-test-center/report/<player_id>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center_report(player_id):
+        state,_=_load_state(); duel=_duel(state); players=state.get("players") or []
+        if player_id not in {duel.get("player_a"),duel.get("player_b")}:
+            flash("HLV không thuộc cặp Test.","error"); return redirect(url_for('admin_tournament_test_center'))
+        try:
+            sa=max(0,min(30,int(request.form.get("score_a") or 0))); sb=max(0,min(30,int(request.form.get("score_b") or 0)))
+        except Exception:
+            flash("Tỷ số không hợp lệ.","warning"); return redirect(url_for('admin_tournament_test_public',view_as=player_id,stage=state.get("current_stage")))
+        reports=dict(duel.get("reports") or {}); reports[player_id]={"score_a":sa,"score_b":sb}; duel["reports"]=reports
+        _duel_event(state, f"{_player_name(player_id,players)} báo kết quả {sa}-{sb}")
+        a,b=duel.get("player_a"),duel.get("player_b")
+        if a in reports and b in reports:
+            ra,rb=reports[a],reports[b]
+            if ra["score_a"]==rb["score_a"] and ra["score_b"]==rb["score_b"]:
+                duel["dispute"]=False; duel["final_result"]={"score_a":ra["score_a"],"score_b":ra["score_b"],"source":"players"}
+                _apply_duel_result(state,ra["score_a"],ra["score_b"]); _duel_event(state,"Hai HLV báo giống nhau: tự động chốt kết quả")
+            else:
+                duel["dispute"]=True; duel["final_result"]=None; _duel_event(state,"Phát hiện kết quả khác nhau: chuyển Admin xử lý")
+        _save_state(state)
+        return redirect(url_for('admin_tournament_test_public',view_as=player_id,stage=state.get("current_stage")))
+
+    @app.post('/admin/tournament-test-center/resolve')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center_resolve():
+        state,_=_load_state(); duel=_duel(state)
+        try:
+            sa=max(0,min(30,int(request.form.get("score_a") or 0))); sb=max(0,min(30,int(request.form.get("score_b") or 0)))
+        except Exception:
+            flash("Tỷ số Admin nhập không hợp lệ.","warning"); return redirect(url_for('admin_tournament_test_center'))
+        duel["dispute"]=False; duel["final_result"]={"score_a":sa,"score_b":sb,"source":"admin"}
+        _apply_duel_result(state,sa,sb); _duel_event(state,f"Admin chốt kết quả {sa}-{sb}")
+        _save_state(state); flash("Admin đã chốt kết quả và tính lại BXH Test.","success")
+        return redirect(url_for('admin_tournament_test_center'))
+
+    @app.post('/admin/tournament-test-center/reset-duel')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center_reset_duel():
+        state,_=_load_state(); duel=_duel(state); a,b=duel.get("player_a"),duel.get("player_b")
+        state["duel_test"]={"player_a":a,"player_b":b,"room":None,"invite":None,"reports":{},"dispute":False,"final_result":None,"events":[]}
+        _save_state(state); flash("Đã reset kịch bản 2 HLV, giữ nguyên cặp đang chọn.","success")
+        return redirect(url_for('admin_tournament_test_center'))
 
     @app.post('/admin/tournament-test-mode/create-players')
     @login_required
