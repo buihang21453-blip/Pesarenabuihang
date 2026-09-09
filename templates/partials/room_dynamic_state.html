@@ -1,5 +1,5 @@
-{% set room_room_viewer_is_host = (current_user.id|string == room.host_user_id|string) %}
-{% set room_viewer_is_guest = (room.guest_user_id and current_user.id|string == room.guest_user_id|string) %}
+{% set room_room_viewer_is_host = viewer_is_host|default(false) %}
+{% set room_viewer_is_guest = viewer_is_guest|default(false) %}
 {% from "_avatar_macros.html" import player_avatar %}
 <div id="roomDynamicState" data-state-key="{{ room.status }}|{{ room.host_team }}|{{ room.guest_team }}|{{ room.guest_ready }}|{{ room.host_score }}|{{ room.guest_score }}|{{ room.rematch_host_ready }}|{{ room.rematch_guest_ready }}|{{ room.rematch_host_declined }}|{{ room.rematch_guest_declined }}|{{ room.rematch_expired }}|{{ room.state_expires_at }}|{{ room.dispute.status if room.dispute else '' }}|{{ room.dispute.updated_at if room.dispute else '' }}">
 <style>
@@ -107,7 +107,7 @@
                         {% set _guest_id = room.guest_user_id|string %}
                         {% set _submitted_by = room.submitted_by_id|string %}
                         {% set _host_id = room.host_user_id|string %}
-                        {% set _can_review_result = (_viewer_id == _guest_id and _viewer_id != _submitted_by) %}
+                        {% set _can_review_result = (room_viewer_is_guest and _viewer_id != _submitted_by) %}
                         {% if _can_review_result %}
                         <div class="room-result-actions">
                             <form method="post" action="{{ url_for('room_confirm_result', room_id=room.id) }}" data-room-async="1">

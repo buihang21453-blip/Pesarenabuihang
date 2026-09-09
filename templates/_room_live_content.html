@@ -1,5 +1,5 @@
-{% set room_room_viewer_is_host = (current_user.id|string == room.host_user_id|string) %}
-{% set room_viewer_is_guest = (room.guest_user_id and current_user.id|string == room.guest_user_id|string) %}
+{% set room_room_viewer_is_host = viewer_is_host|default(false) %}
+{% set room_viewer_is_guest = viewer_is_guest|default(false) %}
 {% from "_avatar_macros.html" import player_avatar %}
 {# Nội dung động của phòng. API state render lại riêng fragment này. #}
         <section class="room-side-card room-team-card home">
