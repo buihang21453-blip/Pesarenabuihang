@@ -1050,6 +1050,71 @@ def register_routes(context):
         rows.sort(key=lambda r:order.get(str(r.get("id")),99))
         return rows
 
+    def _stage1_random_history_key(user_id):
+        return f"stage1_random_history:{str(user_id)}"
+
+    def _stage1_random_history(tournament_id,user_id):
+        state=_setting(tournament_id,_stage1_random_history_key(user_id),{}) or {}
+        entries=list(state.get("entries") or [])
+        # Giữ một bản ghi cho mỗi trận/phòng; dữ liệu cũ nếu có trùng CLB vẫn được
+        # bảo toàn để lần random sau loại CLB đó khỏi pool của chính HLV.
+        return entries
+
+    def _stage1_used_club_names(tournament_id,user_id):
+        uid=str(user_id or "")
+        used={
+            str(x.get("club") or "").strip()
+            for x in _stage1_random_history(tournament_id,uid)
+            if str(x.get("club") or "").strip()
+        }
+        # Backfill từ các phòng C1 đã từng random trước khi có cơ chế history.
+        # Nhờ vậy deploy bản fix giữa mùa vẫn tránh quay lại những CLB đã ra trước đó
+        # nếu phòng cũ còn lưu host_team/guest_team.
+        try:
+            rooms,_=_rows(
+                db.table("match_rooms").select("host_user_id,guest_user_id,host_team,guest_team,note")
+                .limit(500),
+                "ops_stage1_random_history_backfill",
+            )
+            for r in rooms:
+                meta=_room_meta(r)
+                if not meta or str(meta.get("tournament_id") or "")!=str(tournament_id):
+                    continue
+                if str(meta.get("stage_code") or "") not in {"stage1", ""} and not bool(meta.get("admin_test_room")):
+                    continue
+                if str(r.get("host_user_id") or "")==uid and str(r.get("host_team") or "").strip():
+                    used.add(str(r.get("host_team")).strip())
+                if str(r.get("guest_user_id") or "")==uid and str(r.get("guest_team") or "").strip():
+                    used.add(str(r.get("guest_team")).strip())
+        except Exception as exc:
+            app.logger.warning("Không backfill được lịch sử CLB GĐ1: %s", exc)
+        return used
+
+    def _save_stage1_random_history(tournament_id,user_id,club_name,room_id=None,match_id=None):
+        key=_stage1_random_history_key(user_id)
+        state=_setting(tournament_id,key,{}) or {}
+        entries=list(state.get("entries") or [])
+        token=str(match_id or room_id or "")
+        # Không ghi lặp cùng một trận/phòng nếu request bị submit hai lần.
+        if token and any(str(x.get("token") or "")==token for x in entries):
+            return
+        entries.append({
+            "token":token,
+            "room_id":str(room_id or ""),
+            "match_id":str(match_id or ""),
+            "club":str(club_name or "").strip(),
+            "random_at":now_iso(),
+        })
+        execute_query(
+            db.table("tournament_settings").upsert({
+                "tournament_id":tournament_id,
+                "setting_key":key,
+                "setting_value":{"entries":entries,"updated_at":now_iso()},
+                "updated_at":now_iso(),
+            },on_conflict="tournament_id,setting_key"),
+            "ops_stage1_random_history_save",attempts=2,
+        )
+
     def _stage1_club_pool(tournament_id):
         state=_setting(tournament_id,"stage1_club_pool",{}) or {}
         eligible=_stage1_eligible_clubs()
@@ -1475,9 +1540,25 @@ def register_routes(context):
         pool=_stage1_club_pool(tournament_id)
         if len(pool)!=16:
             flash(f"Pool C1 phải có đúng 16 CLB. Hiện đang có {len(pool)}/16 đội.","error"); return redirect(url_for("room_detail",room_id=room_id))
-        a,b=random.sample(pool,2)
+        # Một phòng chỉ được random đúng một lần để tránh reroll làm sai lịch sử 6 trận.
+        if room.get("host_team") or room.get("guest_team"):
+            flash("Phòng này đã quay CLB rồi. Không thể quay lại trong cùng một trận.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+
+        host_uid=str(room.get("host_user_id") or "")
+        guest_uid=str(room.get("guest_user_id") or "")
+        host_used=_stage1_used_club_names(tournament_id,host_uid)
+        guest_used=_stage1_used_club_names(tournament_id,guest_uid)
+        host_available=[c for c in pool if c.get("name") not in host_used]
+        guest_available=[c for c in pool if c.get("name") not in guest_used]
+        pairs=[(a,b) for a in host_available for b in guest_available if a.get("name")!=b.get("name")]
+        if not pairs:
+            flash("Không còn cặp CLB hợp lệ để random mà không trùng lịch sử của 2 HLV. Hãy kiểm tra lại lịch sử GĐ1/pool CLB.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        a,b=random.choice(pairs)
         execute_query(db.table("match_rooms").update({"host_team":a["name"],"guest_team":b["name"],"host_team_overall":a.get("overall") or None,"guest_team_overall":b.get("overall") or None,"team_tier":"TOURNAMENT_GD1","match_mode":"tournament","status":"playing","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_stage1_random_clubs",attempts=2)
-        flash(f'GĐ1 Random: {a["name"]} vs {b["name"]}.',"success")
+        match_id=meta.get("match_id") or meta.get("tournament_match_id")
+        _save_stage1_random_history(tournament_id,host_uid,a["name"],room_id=room_id,match_id=match_id)
+        _save_stage1_random_history(tournament_id,guest_uid,b["name"],room_id=room_id,match_id=match_id)
+        flash(f'GĐ1 Random: {a["name"]} vs {b["name"]}. Mỗi HLV sẽ không bị lặp lại CLB đã ra trong 6 trận GĐ1.',"success")
         return redirect(url_for("room_detail",room_id=room_id))
 
     def _tournament_result_key(match_id):
