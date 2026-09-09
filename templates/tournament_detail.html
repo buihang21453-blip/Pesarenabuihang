@@ -39,8 +39,8 @@
 <p style="color:#91a3b1;font-size:12px">Khu trung tâm để theo dõi phòng giải, HLV đang chờ và Host đang rảnh.</p>
 {% if my_has_host %}<form method="post" action="{{ url_for('tournament_host_ready_toggle',tournament_id=tournament.id) }}" style="margin:8px 0 12px"><label style="display:inline-flex;align-items:center;gap:8px"><input type="checkbox" name="ready" value="1" {% if my_host_ready %}checked{% endif %} onchange="this.form.submit()"> <strong>🟢 Tôi đang rảnh để Host</strong></label></form>{% endif %}
 <div class="td-host-ready"><strong style="width:100%;color:#f1ca68">Host đang rảnh</strong>{% for h in host_ready %}<span class="td-host-chip">🟢 {{ h.display_name }} · {{ h.region }}</span>{% else %}<small style="color:#91a3b1">Hiện chưa có Host nào tích đang rảnh.</small>{% endfor %}</div>
-<details class="td-host-guide">
-  <summary>🎮 HƯỚNG DẪN TEST HOST</summary>
+<div class="td-host-guide">
+  <div style="font-weight:900;color:#f1ca68">🎮 HƯỚNG DẪN TEST HOST</div>
   <ol>
     <li>Vào Discord: <a href="https://discord.gg/VTmJBNvx" target="_blank" rel="noopener">discord.gg/VTmJBNvx</a></li>
     <li>Kết nối tay cầm.</li>
@@ -51,7 +51,7 @@
     <li>Nếu đối thủ xác nhận OK thì thoát trận test và bắt đầu chọn đội thi đấu chính thức.</li>
   </ol>
   <p class="td-host-guide-note">📌 Trận test chỉ để kiểm tra Host/kết nối, không tính kết quả.</p>
-</details>
+</div>
 <div class="td-room-list">
 {% for r in tournament_rooms %}
   <article class="td-room-card"><small>PHÒNG GIẢI · {{ (r.tournament_match.stage_code or 'stage1')|upper }}</small><strong>{{ r.public_label }}</strong><span>{{ r.public_status }}</span>{% if r.host_team and r.guest_team %}<p>{{ r.host_team }} ⚔ {{ r.guest_team }}</p>{% endif %}
