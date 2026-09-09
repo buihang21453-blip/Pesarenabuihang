@@ -169,6 +169,9 @@ def register_routes(context):
         tournament_match = None
         tournament_result_proposal = {}
         tournament_stage1_pool = []
+        tournament_invite_members = []
+        tournament_viewer_is_member = False
+        tournament_viewer_is_admin = bool(is_admin_user(viewer))
         note = str(room.get("note") or "")
         if note.startswith("TOURNAMENT_ROOM|"):
             try:
@@ -176,14 +179,31 @@ def register_routes(context):
                 tournament_meta = json.loads(note[len("TOURNAMENT_ROOM|"):])
                 tid = str(tournament_meta.get("tournament_id") or "")
                 mid = str(tournament_meta.get("tournament_match_id") or "")
+                if tid:
+                    memr = execute_query(db.table("tournament_members").select("user_id,status").eq("tournament_id",tid).eq("status","active"),"room_tournament_members_context",attempts=2)
+                    member_rows = [dict(x) for x in (memr.data or [])]
+                    member_ids = [str(x.get("user_id")) for x in member_rows if x.get("user_id")]
+                    tournament_viewer_is_member = str(viewer.get("id") or "") in member_ids
+                    if member_ids:
+                        ur = execute_query(db.table("users").select("id,username,display_name").in_("id",member_ids),"room_tournament_member_users_context",attempts=2)
+                        users = {str(x.get("id")):dict(x) for x in (ur.data or [])}
+                        for member_id in member_ids:
+                            if member_id == str(room.get("host_user_id") or ""):
+                                continue
+                            u = users.get(member_id) or {}
+                            tournament_invite_members.append({
+                                "user_id":member_id,
+                                "display_name":u.get("display_name") or u.get("username") or "HLV",
+                            })
+                        tournament_invite_members.sort(key=lambda x:(x.get("display_name") or "").casefold())
+                    pr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key","stage1_club_pool").limit(1),"room_tournament_stage1_pool_context",attempts=2)
+                    pool_state = ((pr.data or [{}])[0].get("setting_value") or {})
+                    tournament_stage1_pool = pool_state.get("clubs") or []
                 if tid and mid:
                     mr = execute_query(db.table("tournament_matches").select("*").eq("id",mid).eq("tournament_id",tid).limit(1),"room_tournament_match_context",attempts=2)
                     tournament_match = (mr.data or [None])[0]
                     sr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key",f"match_result_proposal:{mid}").limit(1),"room_tournament_result_context",attempts=2)
                     tournament_result_proposal = ((sr.data or [{}])[0].get("setting_value") or {})
-                    pr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key","stage1_club_pool").limit(1),"room_tournament_stage1_pool_context",attempts=2)
-                    pool_state = ((pr.data or [{}])[0].get("setting_value") or {})
-                    tournament_stage1_pool = pool_state.get("clubs") or []
             except Exception as exc:
                 app.logger.warning("Tournament room context failed room=%s: %s", room.get("id"), exc)
                 tournament_meta = None
@@ -217,6 +237,9 @@ def register_routes(context):
             "tournament_result_proposal": tournament_result_proposal,
             "tournament_stage1_pool": tournament_stage1_pool,
             "tournament_stage1_pool_count": len(tournament_stage1_pool),
+            "tournament_invite_members": tournament_invite_members,
+            "tournament_viewer_is_member": tournament_viewer_is_member,
+            "tournament_viewer_is_admin": tournament_viewer_is_admin,
             "is_tournament_room": bool(tournament_meta),
         }
 

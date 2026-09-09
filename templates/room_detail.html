@@ -444,22 +444,8 @@
 .tournament-only-random-card{border:1px solid rgba(245,184,55,.35);background:linear-gradient(135deg,rgba(245,184,55,.08),rgba(255,255,255,.02));}
 .tournament-room-mode-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}.tournament-room-mode-head h3{margin:0 0 6px}.tournament-pool-badge{display:inline-flex;align-items:center;min-height:32px;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.16);font-size:12px;font-weight:700}.tournament-mode-rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}.tournament-mode-rules span{padding:9px 10px;border:1px solid rgba(255,255,255,.1);border-radius:9px;font-size:13px}.tournament-random-action{display:flex;justify-content:center;margin-top:14px}.tournament-random-btn{min-width:220px;font-size:16px;font-weight:800}.tournament-room-wait,.tournament-room-live{text-align:center;margin:14px 0 0;font-weight:700}@media(max-width:640px){.tournament-mode-rules{grid-template-columns:1fr}.tournament-room-mode-head{display:block}.tournament-pool-badge{margin-top:8px}}
 </style>
-    {% if is_tournament_room and tournament_meta and tournament_match %}
-<div class="panel" style="margin:12px 0;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px">
-  <strong>🏆 PHÒNG THI ĐẤU C1</strong>
-  {% set my_uid=current_user.id|string %}
-  {% set opponent_name = tournament_meta.away_name if my_uid == tournament_meta.home_user_id|string else tournament_meta.home_name %}
-  <div class="small" style="margin-top:5px">Đối thủ: <strong>{{ opponent_name }}</strong> · Phòng này thuộc đúng trận C1 hiện tại.</div>
-  {% if room.status == 'waiting_ready' and room_room_viewer_is_host and not room.guest_user_id %}
-    <form method="post" action="{{ url_for('tournament_room_invite_opponent',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="margin-top:10px">
-      <button class="btn green" type="submit">📨 Mời {{ opponent_name }} vào thi đấu</button>
-    </form>
-  {% elif room.guest_user_id %}
-    <div class="small" style="margin-top:8px">✅ Đối thủ đã vào phòng.</div>
-  {% endif %}
-</div>
-{% endif %}
-{% if is_tournament_room and tournament_meta and tournament_match %}
+    {% include "partials/tournament_room_invite.html" %}
+{% if is_tournament_room and tournament_meta %}
     <div class="room-mode-grid tournament-only-random-grid">
         <div class="room-mode-card tournament-only-random-card">
             <div class="tournament-room-mode-head">
@@ -476,7 +462,7 @@
                 <span>❌ Không Random Select Match</span>
             </div>
             {% if room.status == 'waiting_ready' and not room.has_guest %}
-                <p class="small tournament-room-wait">Đang chờ đúng đối thủ của trận giải vào phòng.</p>
+                <p class="small tournament-room-wait">Đang chờ HLV C1 được mời vào phòng.</p>
             {% elif room.status == 'waiting_ready' and room.has_guest and not room.host_team %}
                 {% if room_room_viewer_is_host or current_user.role == 'admin' %}
                 <form method="post" action="{{ url_for('tournament_room_random_stage1_clubs', tournament_id=tournament_meta.tournament_id, room_id=room.id) }}" data-room-async="1" class="tournament-random-action">

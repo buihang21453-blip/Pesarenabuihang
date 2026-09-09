@@ -963,13 +963,9 @@
 
     {% if ops.get('ready') and ops.get('tournament') %}{% set ot=ops.get('tournament') %}
     <div style="margin-top:18px;padding:14px;border:1px solid rgba(241,202,104,.28);border-radius:12px;background:rgba(241,202,104,.06)">
-      <strong>👁️ Xem như HLV thật</strong>
-      <p class="small">Chọn một HLV đang tham gia để xem đúng màn hình, lịch, đối thủ, tiến độ và các nút họ đang thấy. Đây là chế độ chỉ xem nên không làm thay đổi dữ liệu giải.</p>
-      <form method="get" action="{{ url_for('admin_tournament_preview_player',tournament_id=ot.id) }}" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
-        <label style="min-width:240px">HLV cần xem<select name="user_id" required><option value="">-- Chọn HLV --</option>{% for m in ops.get('members',[]) %}<option value="{{ m.user_id }}">{{ m.display_name }}</option>{% endfor %}</select></label>
-        <button class="btn gold" type="submit">👁️ Mở góc nhìn HLV</button>
-      </form>
-      <p class="small" style="margin-top:8px">Muốn thử bấm nút và chạy luồng thật: dùng <strong>Tournament Test Mode</strong> với HLV giả.</p>
+      <strong>👑 Admin tham gia giao diện C1 bằng chính tài khoản Admin</strong>
+      <p class="small">Không cần chọn “Xem như HLV”. Admin có thể mở Giải đấu và Phòng đấu C1 như một người dùng bình thường; quyền quản trị vẫn nằm ở khu Admin.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn gold" href="{{ url_for('tournament_detail',tournament_id=ot.id) }}">🏟️ Vào Giải đấu</a><form method="post" action="{{ url_for('c1_room_open') }}"><input type="hidden" name="tournament_id" value="{{ot.id}}"><button class="btn green" type="submit">🎮 Vào Phòng đấu C1</button></form></div>
     </div>
 
     <h3 style="margin-top:22px">🧩 Cấu hình thể thức</h3>

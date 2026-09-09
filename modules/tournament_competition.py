@@ -738,9 +738,18 @@ def register_routes(context):
     @login_required
     def tournament_detail(tournament_id):
         uid=str((current_user() or {}).get("id") or "")
+        user=current_user() or {}
         data=_detail_payload(tournament_id,uid)
         if not data:
             flash("Không tìm thấy giải đấu.","error"); return redirect(url_for("tournaments"))
+        # Admin vào giải bằng chính tài khoản Admin, không mượn danh tính HLV khác.
+        if is_admin_user(user) and not data.get("member"):
+            data["member"]={
+                "user_id":uid,
+                "display_name":user.get("display_name") or user.get("username") or "Admin",
+                "is_admin_participant_view":True,
+            }
+            data["admin_participant_view"]=True
         # Animation khai mạc chỉ tự hiện 1 lần/tài khoản HLV sau khi GĐ1 thực sự mở.
         opening_seen=_setting(tournament_id,"opening_seen_v1",{}) or {}
         stage1_open=any(str(x.get("stage_code"))=="stage1" and str(x.get("status"))=="open" for x in (data.get("stages") or []))
@@ -984,37 +993,171 @@ def register_routes(context):
             out.append(r)
         return out
 
+    def _c1_accessible_tournament(user, requested_id=None):
+        uid=str((user or {}).get("id") or "")
+        admin=is_admin_user(user or {})
+        tours,_=_rows(db.table("tournaments").select("*").eq("is_visible",True).order("created_at",desc=True),"c1_accessible_tournaments")
+        for t in tours:
+            if requested_id and str(t.get("id"))!=str(requested_id):
+                continue
+            members=_all_members(t.get("id"))
+            if admin or any(str(m.get("user_id"))==uid for m in members):
+                return t,members
+        return None,[]
+
+    def _c1_pair_match(tournament_id, user_a, user_b):
+        pair={str(user_a or ""),str(user_b or "")}
+        if "" in pair or len(pair)!=2:
+            return None
+        priority={"playing":0,"scheduled":1,"pending":2,"disputed":3}
+        candidates=[]
+        for m in _matches(tournament_id):
+            if {str(m.get("home_user_id") or ""),str(m.get("away_user_id") or "")} != pair:
+                continue
+            status=str(m.get("status") or "pending")
+            if status in {"completed","cancelled"}:
+                continue
+            candidates.append((priority.get(status,9),m))
+        candidates.sort(key=lambda x:x[0])
+        return candidates[0][1] if candidates else None
+
+    def _c1_open_room_for_user(tournament_id, user_id):
+        for r in _tournament_rooms(tournament_id):
+            if str(user_id) in {str(r.get("host_user_id") or ""),str(r.get("guest_user_id") or "")} and r.get("status") not in {"completed","cancelled","confirmed"}:
+                return r
+        return None
+
+    def _c1_pending_invite_room(tournament_id, user_id):
+        uid=str(user_id or "")
+        for r in _tournament_rooms(tournament_id):
+            if r.get("status") in {"completed","cancelled","confirmed"} or r.get("guest_user_id"):
+                continue
+            meta=r.get("tournament_meta") or _room_meta(r) or {}
+            if str(meta.get("invited_user_id") or "")==uid:
+                return r
+        return None
+
     @app.get('/c1-rooms')
     @login_required
     def c1_rooms():
         user=current_user() or {}; uid=str(user.get("id") or "")
-        admin=is_admin_user(user)
-        tours,_=_rows(db.table("tournaments").select("*").eq("is_visible",True).order("created_at",desc=True),"c1_rooms_tournaments")
-        selected_id=str(request.args.get("tournament_id") or "").strip()
-        selected=None
-        for t in tours:
-            if selected_id and str(t.get("id"))!=selected_id:
-                continue
-            members=_all_members(t.get("id"))
-            if admin or any(str(m.get("user_id"))==uid for m in members):
-                selected=t; break
+        selected,members=_c1_accessible_tournament(user,request.args.get("tournament_id"))
         if not selected:
             flash("Phòng đấu C1 chỉ dành cho HLV đang nằm trong danh sách giải và Admin.","warning")
             return redirect(url_for("tournaments"))
         tid=selected.get("id")
-        members=_all_members(tid)
+        pending=_c1_pending_invite_room(tid,uid)
+        if pending:
+            return redirect(url_for("c1_room_accept",tournament_id=tid,room_id=pending.get("id")))
+        active=_c1_open_room_for_user(tid,uid)
+        if active:
+            return redirect(url_for("room_detail",room_id=active.get("id")))
+        # Trang dự phòng khi người dùng mở URL trực tiếp. Nút sidebar dùng POST và vào phòng ngay.
         member=next((m for m in members if str(m.get("user_id"))==uid),None)
-        matches=_decorate_matches(tid,_matches(tid))
-        mine=[m for m in matches if member and uid in {str(m.get("home_user_id")),str(m.get("away_user_id"))}]
-        rooms=_tournament_rooms(tid)
-        room_by_match={}
-        for r in rooms:
-            if r.get("status") in {"completed","cancelled","confirmed"}:
-                continue
-            mid=str((r.get("tournament_meta") or {}).get("tournament_match_id") or "")
-            if mid and mid not in room_by_match:
-                room_by_match[mid]=r
-        return render_template("c1_rooms.html", tournament=selected, member=member, members=members, matches=mine, tournament_rooms=rooms, room_by_match=room_by_match, is_c1_admin=admin)
+        return render_template("c1_rooms.html",tournament=selected,member=member,members=members,is_c1_admin=is_admin_user(user))
+
+    @app.post('/c1-rooms/open')
+    @login_required
+    def c1_room_open():
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        selected,members=_c1_accessible_tournament(user,request.form.get("tournament_id"))
+        if not selected:
+            flash("Bạn không có quyền vào Phòng đấu C1.","error")
+            return redirect(url_for("tournaments"))
+        tid=str(selected.get("id"))
+        pending=_c1_pending_invite_room(tid,uid)
+        if pending:
+            return redirect(url_for("c1_room_accept",tournament_id=tid,room_id=pending.get("id")))
+        existing=_c1_open_room_for_user(tid,uid)
+        if existing:
+            return redirect(url_for("room_detail",room_id=existing.get("id")))
+        active=active_room_for_user(uid)
+        if active:
+            flash("Bạn đang ở một phòng đấu khác. Hãy thoát phòng đó trước.","warning")
+            return redirect(url_for("room_detail",room_id=active.get("id")))
+        me=next((m for m in members if str(m.get("user_id"))==uid),None)
+        name=(me or {}).get("display_name") or user.get("display_name") or user.get("username") or ("Admin" if is_admin_user(user) else "HLV")
+        meta={
+            "tournament_id":tid,"tournament_match_id":"","stage_code":"",
+            "home_user_id":uid,"away_user_id":"","home_name":name,"away_name":"",
+            "invited_user_id":"","c1_open_room":True,"admin_test_room":bool(is_admin_user(user) and not me),
+        }
+        row=execute_query(db.table("match_rooms").insert({
+            "invite_id":None,"host_user_id":uid,"guest_user_id":None,"team_tier":"TOURNAMENT",
+            "match_mode":"tournament","friendly_tier":None,"status":"waiting_ready","guest_ready":False,
+            "note":_room_note(meta),"state_expires_at":None,"updated_at":now_iso(),
+        }),"ops_c1_open_room_create",attempts=2)
+        room=(row.data or [{}])[0]
+        flash("Đã vào Phòng đấu C1. Hãy chọn một HLV C1 để mời thi đấu.","success")
+        return redirect(url_for("room_detail",room_id=room.get("id")))
+
+    @app.post('/tournaments/<tournament_id>/rooms/<room_id>/invite')
+    @login_required
+    def c1_room_invite(tournament_id,room_id):
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        room=get_room(room_id); meta=_room_meta(room)
+        if not room or not meta or str(meta.get("tournament_id"))!=str(tournament_id):
+            flash("Không tìm thấy Phòng đấu C1.","error"); return redirect(url_for("c1_rooms"))
+        if uid!=str(room.get("host_user_id")) and not is_admin_user(user):
+            flash("Chỉ chủ phòng được mời đối thủ.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        if room.get("guest_user_id"):
+            flash("Phòng đã có đủ 2 HLV.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        opponent_uid=str(request.form.get("opponent_user_id") or "").strip()
+        members=_all_members(tournament_id)
+        opponent=next((m for m in members if str(m.get("user_id"))==opponent_uid),None)
+        if not opponent or opponent_uid==str(room.get("host_user_id")):
+            flash("Chỉ được mời HLV đang tham gia C1.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        host_uid=str(room.get("host_user_id") or "")
+        match=_c1_pair_match(tournament_id,host_uid,opponent_uid)
+        host_member=next((m for m in members if str(m.get("user_id"))==host_uid),None)
+        if not match and not is_admin_user(user):
+            flash("HLV này không có trận C1 đang chờ thi đấu với bạn.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        if match:
+            dm=_decorate_matches(tournament_id,[match])[0]
+            meta.update({
+                "tournament_match_id":str(match.get("id")),"stage_code":match.get("stage_code") or "",
+                "home_user_id":str(match.get("home_user_id") or ""),"away_user_id":str(match.get("away_user_id") or ""),
+                "home_name":dm.get("home_name") or "HLV 1","away_name":dm.get("away_name") or "HLV 2",
+                "admin_test_room":False,
+            })
+        else:
+            meta.update({
+                "tournament_match_id":"","stage_code":"","home_user_id":host_uid,"away_user_id":opponent_uid,
+                "home_name":(host_member or {}).get("display_name") or user.get("display_name") or "Admin",
+                "away_name":opponent.get("display_name") or "HLV","admin_test_room":True,
+            })
+        meta["invited_user_id"]=opponent_uid
+        execute_query(db.table("match_rooms").update({"note":_room_note(meta),"match_mode":"tournament","team_tier":"TOURNAMENT","updated_at":now_iso()}).eq("id",room_id),"ops_c1_room_bind_invite",attempts=2)
+        creator=(host_member or {}).get("display_name") or user.get("display_name") or user.get("username") or "Admin"
+        try:
+            create_user_notification(opponent_uid,"🏆 Lời mời thi đấu C1",f"{creator} đang mời bạn vào Phòng đấu C1.",url_for("c1_room_accept",tournament_id=tournament_id,room_id=room_id),"tournament_room_invite")
+            flash(f"Đã gửi lời mời tới {opponent.get('display_name') or 'HLV'}.","success")
+        except Exception as exc:
+            app.logger.warning("Không gửi được lời mời C1: %s",exc)
+            flash("Đã chọn đối thủ nhưng không gửi được thông báo. Hãy bảo đối thủ mở Phòng đấu C1.","warning")
+        return redirect(url_for("room_detail",room_id=room_id))
+
+    @app.get('/tournaments/<tournament_id>/rooms/<room_id>/accept')
+    @login_required
+    def c1_room_accept(tournament_id,room_id):
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        room=get_room(room_id); meta=_room_meta(room)
+        if not room or not meta or str(meta.get("tournament_id"))!=str(tournament_id):
+            flash("Phòng C1 không còn tồn tại.","error"); return redirect(url_for("c1_rooms"))
+        if uid==str(room.get("host_user_id")):
+            return redirect(url_for("room_detail",room_id=room_id))
+        if str(meta.get("invited_user_id") or "")!=uid and not is_admin_user(user):
+            flash("Phòng này không mời tài khoản của bạn.","error"); return redirect(url_for("c1_rooms",tournament_id=tournament_id))
+        if not is_admin_user(user) and not _member(tournament_id,uid):
+            flash("Chỉ HLV trong danh sách C1 mới được vào phòng.","error"); return redirect(url_for("tournaments"))
+        if room.get("guest_user_id") and str(room.get("guest_user_id"))!=uid:
+            flash("Phòng đã đủ 2 HLV.","warning"); return redirect(url_for("c1_rooms",tournament_id=tournament_id))
+        active=active_room_for_user(uid)
+        if active and str(active.get("id"))!=str(room_id):
+            flash("Bạn đang ở một phòng đấu khác.","warning"); return redirect(url_for("room_detail",room_id=active.get("id")))
+        execute_query(db.table("match_rooms").update({"guest_user_id":uid,"guest_ready":True,"updated_at":now_iso()}).eq("id",room_id),"ops_c1_room_accept",attempts=2)
+        flash("Đã vào Phòng đấu C1.","success")
+        return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/matches/<match_id>/room')
     @login_required

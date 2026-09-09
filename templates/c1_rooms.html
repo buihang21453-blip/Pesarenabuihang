@@ -2,50 +2,16 @@
 {% block title %}Phòng đấu C1 - PES Arena{% endblock %}
 {% block content %}
 <style>
-.c1-wrap{display:grid;gap:14px}.c1-hero,.c1-card{background:#0c1722;border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:16px}.c1-hero{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.c1-match-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}.c1-match{border:1px solid rgba(255,255,255,.09);border-radius:13px;padding:14px;background:rgba(255,255,255,.025)}.c1-line{display:flex;justify-content:space-between;gap:10px;align-items:center}.c1-opponent{font-size:18px;font-weight:800;margin:7px 0}.c1-meta{color:#91a3b1;font-size:13px;display:grid;gap:4px}.c1-tag{display:inline-block;padding:4px 8px;border-radius:999px;background:#12304a;font-size:12px}.c1-action{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}.c1-admin{display:flex;gap:8px;align-items:end;flex-wrap:wrap}.c1-admin select{min-width:220px}.c1-flow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:#b8c6d2}.c1-flow b{color:#fff}.c1-arrow{opacity:.5}@media(max-width:700px){.c1-match-grid{grid-template-columns:1fr}}
+.c1-enter{max-width:760px;margin:20px auto;background:#0c1722;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:22px}.c1-enter h1{margin:4px 0 8px}.c1-enter p{color:#9fb0be;line-height:1.6}.c1-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 </style>
-<div class="c1-wrap">
-<section class="c1-hero">
-  <div><small>CHAMPION LEAGUE ARENA</small><h1 style="margin:4px 0">🏆 Phòng đấu C1</h1><p style="margin:0;color:#91a3b1">Đây là khu vực <strong>vào phòng để thi đấu</strong>. Chỉ HLV trong danh sách C1 và Admin được truy cập.</p></div>
-  <a class="btn" href="{{ url_for('tournament_detail',tournament_id=tournament.id) }}">← Giải đấu</a>
-</section>
-
-<section class="c1-card">
-  <div class="c1-flow"><b>Chọn trận</b><span class="c1-arrow">→</span><b>Vào/Tạo phòng</b><span class="c1-arrow">→</span><b>Mời đúng đối thủ</b><span class="c1-arrow">→</span><b>Thi đấu</b><span class="c1-arrow">→</span><b>Gửi & xác nhận kết quả</b></div>
-</section>
-
-{% if is_c1_admin %}
-<section class="c1-card"><strong>👁 Admin xem giải dưới vai trò HLV</strong><form class="c1-admin" method="get" action="{{ url_for('admin_tournament_preview_player',tournament_id=tournament.id) }}"><label><span class="small">Chọn HLV</span><select name="user_id" required>{% for m in members %}<option value="{{m.user_id}}">{{m.display_name}}</option>{% endfor %}</select></label><button class="btn gold" type="submit">Xem như HLV</button></form></section>
-{% endif %}
-
-<section class="c1-card">
-  <h2 style="margin-top:0">⚽ Trận C1 của tôi</h2>
-  {% if member %}
-  <div class="c1-match-grid">
-    {% for m in matches if m.status not in ['cancelled'] %}
-      {% set is_home = member.user_id|string == m.home_user_id|string %}
-      {% set opponent = m.away_name if is_home else m.home_name %}
-      {% set zalo = m.away_zalo_name if is_home else m.home_zalo_name %}
-      {% set active_room = room_by_match.get(m.id|string) %}
-      <article class="c1-match">
-        <div class="c1-line"><span class="c1-tag">{{ 'GĐ1' if m.stage_code=='stage1' else ('GĐ2' if m.stage_code=='league' else (m.round_code|upper if m.round_code else 'Knockout')) }}</span><span class="small">{{m.status}}</span></div>
-        <div class="c1-opponent">VS {{ opponent }}</div>
-        <div class="c1-meta"><span>💬 Zalo: {{ zalo or '—' }}</span>{% if active_room %}<span>🏟️ Phòng: {{ active_room.public_label }} · {{ active_room.public_status }}</span>{% else %}<span>🏟️ Chưa tạo phòng</span>{% endif %}</div>
-        <div class="c1-action">
-          {% if m.status in ['pending','scheduled','playing','disputed'] %}
-          <form method="post" action="{{ url_for('tournament_match_room_enter',tournament_id=tournament.id,match_id=m.id) }}"><button class="btn green" type="submit">{{ 'Vào phòng đấu' if active_room else 'Tạo phòng đấu' }}</button></form>
-          {% elif m.status == 'completed' %}
-          <span class="c1-tag">✅ Đã hoàn tất {{m.home_score}} - {{m.away_score}}</span>
-          {% endif %}
-        </div>
-      </article>
-    {% else %}<p>Chưa có trận C1 được xếp cho bạn.</p>{% endfor %}
+<section class="c1-enter">
+  <small>CHAMPION LEAGUE ARENA</small>
+  <h1>🏆 Phòng đấu C1</h1>
+  <p>Bấm <strong>Vào phòng đấu C1</strong> để vào một phòng thi đấu giống phòng Rank. Sau khi vào phòng, bạn chọn và mời HLV trong danh sách C1.</p>
+  {% if is_c1_admin and not member %}<p>👑 Admin đang vào bằng chính tài khoản Admin. Đây không phải chế độ “Xem như HLV” khác.</p>{% endif %}
+  <div class="c1-actions">
+    <form method="post" action="{{ url_for('c1_room_open') }}"><input type="hidden" name="tournament_id" value="{{ tournament.id }}"><button class="btn green" type="submit">🎮 Vào phòng đấu C1</button></form>
+    <a class="btn" href="{{ url_for('tournament_detail',tournament_id=tournament.id) }}">← Giải đấu</a>
   </div>
-  {% else %}
-    <p>Admin hãy chọn <strong>Xem như HLV</strong> để kiểm tra đúng hành trình thi đấu của một HLV.</p>
-  {% endif %}
 </section>
-
-<section class="c1-card"><strong>Quy tắc phòng C1:</strong> phòng được gắn với đúng một trận giải; chỉ đúng 2 HLV của trận được vào. Trong phòng không có Rank, Giao hữu, Random 3 chọn 1 hay Random Select Match. CLB lấy từ pool 16 đội Tier S/S+ của giải và kết quả chỉ lưu vào C1.</section>
-</div>
 {% endblock %}

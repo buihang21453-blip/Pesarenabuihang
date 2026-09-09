@@ -398,28 +398,14 @@
     <div class="panel room-extra-controls">
     <h2 class="room-control-title">Điều khiển phòng</h2>
 
-    {% if is_tournament_room and tournament_meta and tournament_match %}
-<div class="panel" style="margin:12px 0;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px">
-  <strong>🏆 PHÒNG THI ĐẤU C1</strong>
-  {% set my_uid=current_user.id|string %}
-  {% set opponent_name = tournament_meta.away_name if my_uid == tournament_meta.home_user_id|string else tournament_meta.home_name %}
-  <div class="small" style="margin-top:5px">Đối thủ: <strong>{{ opponent_name }}</strong> · Phòng này thuộc đúng trận C1 hiện tại.</div>
-  {% if room.status == 'waiting_ready' and room_room_viewer_is_host and not room.guest_user_id %}
-    <form method="post" action="{{ url_for('tournament_room_invite_opponent',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="margin-top:10px">
-      <button class="btn green" type="submit">📨 Mời {{ opponent_name }} vào thi đấu</button>
-    </form>
-  {% elif room.guest_user_id %}
-    <div class="small" style="margin-top:8px">✅ Đối thủ đã vào phòng.</div>
-  {% endif %}
-</div>
-{% endif %}
-{% if is_tournament_room and tournament_meta and tournament_match %}
+    {% include "partials/tournament_room_invite.html" %}
+{% if is_tournament_room and tournament_meta %}
     <div class="room-mode-grid">
         <div class="room-mode-card">
             <h3>🏆 Phòng giải đấu</h3>
             <p class="small">Chế độ duy nhất: <strong>Random CLB</strong>. Không có Random 3 chọn 1 hoặc Random Selection Match.</p>
             {% if room.status == 'waiting_ready' and not room.has_guest %}
-                <p class="small">Đang chờ đúng đối thủ của trận giải vào phòng.</p>
+                <p class="small">Đang chờ HLV C1 được mời vào phòng.</p>
             {% elif room.status == 'waiting_ready' and room.has_guest and not room.host_team %}
                 {% if room_room_viewer_is_host or current_user.role == 'admin' %}
                 <form method="post" action="{{ url_for('tournament_room_random_stage1_clubs', tournament_id=tournament_meta.tournament_id, room_id=room.id) }}" data-room-async="1">
