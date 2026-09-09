@@ -93,7 +93,11 @@ function toggleTheme(){
         </div>
 
         <form id="quickCreateRoomForm" method="post" action="{{ url_for('create_open_room') }}" hidden></form>
-        <form id="quickCreateC1RoomForm" method="post" action="{{ url_for('c1_room_open') }}" hidden></form>
+        <form id="quickCreateC1RoomForm" method="post" action="{{ url_for('c1_room_open') }}" hidden>
+            {% if request.view_args and request.view_args.get('tournament_id') %}
+            <input type="hidden" name="tournament_id" value="{{ request.view_args.get('tournament_id') }}">
+            {% endif %}
+        </form>
 
     </aside>
 

@@ -997,13 +997,40 @@ def register_routes(context):
         uid=str((user or {}).get("id") or "")
         admin=is_admin_user(user or {})
         tours,_=_rows(db.table("tournaments").select("*").eq("is_visible",True).order("created_at",desc=True),"c1_accessible_tournaments")
+
+        # Khi route truyền tournament_id thì luôn dùng đúng giải đó.
+        if requested_id:
+            for t in tours:
+                if str(t.get("id")) != str(requested_id):
+                    continue
+                members=_all_members(t.get("id"))
+                if admin or any(str(m.get("user_id"))==uid for m in members):
+                    return t,members
+            return None,[]
+
+        # HLV thường: ưu tiên giải mà chính HLV đang là thành viên active.
+        if not admin:
+            for t in tours:
+                members=_all_members(t.get("id"))
+                if any(str(m.get("user_id"))==uid for m in members):
+                    return t,members
+            return None,[]
+
+        # Admin bấm Phòng đấu C1 từ sidebar không có tournament_id.
+        # Ưu tiên giải đã cấu hình đúng Pool 16 CLB S/S+ để tránh mở nhầm
+        # tournament/test khác và hiển thị sai "Pool GĐ1: 0 CLB".
+        fallback=None
         for t in tours:
-            if requested_id and str(t.get("id"))!=str(requested_id):
-                continue
             members=_all_members(t.get("id"))
-            if admin or any(str(m.get("user_id"))==uid for m in members):
+            if fallback is None:
+                fallback=(t,members)
+            try:
+                pool=_stage1_club_pool(t.get("id"))
+            except Exception:
+                pool=[]
+            if len(pool)==16:
                 return t,members
-        return None,[]
+        return fallback if fallback else (None,[])
 
     def _c1_pair_match(tournament_id, user_a, user_b):
         pair={str(user_a or ""),str(user_b or "")}
