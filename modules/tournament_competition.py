@@ -1158,26 +1158,43 @@ def register_routes(context):
         me=next((m for m in members if str(m.get("user_id"))==uid),None)
         active=active_room_for_user(uid)
         if active:
-            # V1.4.110: Admin có thể đang mắc trong một phòng C1 rỗng được tạo
-            # trước khi sửa logic chọn tournament. Tự gắn lại phòng rỗng đó vào
-            # đúng giải C1 hiện tại để không tiếp tục thấy Pool 0/16.
+            # Không được tái sử dụng/phóng người dùng từ Phòng thường sang Phòng C1.
+            # Chỉ xử lý lại nếu active thực sự là phòng Tournament.
             active_meta=_room_meta(active)
-            if (is_admin_user(user) and active_meta and not active.get("guest_user_id")
-                    and str(active.get("host_user_id") or "")==uid
-                    and str(active_meta.get("tournament_id") or "")!=tid):
-                active_meta.update({
-                    "tournament_id":tid,"tournament_match_id":"","stage_code":"",
-                    "invited_user_id":"","away_user_id":"","away_name":"",
-                    "c1_open_room":True,"admin_test_room":bool(not me),
-                })
-                execute_query(db.table("match_rooms").update({
-                    "note":_room_note(active_meta),"match_mode":"tournament",
-                    "team_tier":"TOURNAMENT","updated_at":now_iso(),
-                }).eq("id",active.get("id")),"ops_c1_rebind_empty_admin_room",attempts=2)
-                flash("Đã đồng bộ lại Phòng C1 với đúng giải hiện tại.","success")
+            active_is_c1 = bool(active_meta) or str(active.get("match_mode") or "").lower()=="tournament"
+            if active_is_c1:
+                # Admin có thể đang mắc trong một phòng C1 rỗng được gắn nhầm giải.
+                if (is_admin_user(user) and active_meta and not active.get("guest_user_id")
+                        and str(active.get("host_user_id") or "")==uid
+                        and str(active_meta.get("tournament_id") or "")!=tid):
+                    active_meta.update({
+                        "tournament_id":tid,"tournament_match_id":"","stage_code":"",
+                        "invited_user_id":"","away_user_id":"","away_name":"",
+                        "c1_open_room":True,"admin_test_room":bool(not me),
+                    })
+                    execute_query(db.table("match_rooms").update({
+                        "note":_room_note(active_meta),"match_mode":"tournament",
+                        "team_tier":"TOURNAMENT","updated_at":now_iso(),
+                    }).eq("id",active.get("id")),"ops_c1_rebind_empty_admin_room",attempts=2)
+                    flash("Đã đồng bộ lại Phòng C1 với đúng giải hiện tại.","success")
+                    return redirect(url_for("room_detail",room_id=active.get("id")))
                 return redirect(url_for("room_detail",room_id=active.get("id")))
-            flash("Bạn đang ở một phòng đấu khác. Hãy thoát phòng đó trước.","warning")
-            return redirect(url_for("room_detail",room_id=active.get("id")))
+
+            # Nếu đang có phòng thường trống do chính mình tạo, đóng phòng đó trước
+            # rồi tạo Phòng C1 mới. Nếu phòng thường đã có đối thủ/đang đá thì chặn,
+            # tuyệt đối không redirect nhầm sang loại phòng kia.
+            can_close_empty_normal = (
+                str(active.get("host_user_id") or "")==uid
+                and not active.get("guest_user_id")
+                and str(active.get("status") or "")=="waiting_ready"
+            )
+            if can_close_empty_normal:
+                execute_query(db.table("match_rooms").update({
+                    "status":"cancelled","updated_at":now_iso(),
+                }).eq("id",active.get("id")),"ops_switch_normal_to_c1_room",attempts=2)
+            else:
+                flash("Bạn đang có Phòng đấu thường đang hoạt động. Hãy kết thúc hoặc thoát phòng thường trước khi vào Phòng đấu C1.","warning")
+                return redirect(url_for("c1_rooms",tournament_id=tid))
         name=(me or {}).get("display_name") or user.get("display_name") or user.get("username") or ("Admin" if is_admin_user(user) else "HLV")
         meta={
             "tournament_id":tid,"tournament_match_id":"","stage_code":"",

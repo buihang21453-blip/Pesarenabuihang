@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.4.114"
+APP_VERSION = "V1.4.115"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -6126,7 +6126,30 @@ def create_open_room():
     cleanup_duplicate_waiting_rooms(user["id"])
     existing = active_room_for_user(user["id"])
     if existing:
-        return redirect(url_for("room_detail", room_id=existing["id"]))
+        existing_note = str(existing.get("note") or "")
+        is_existing_tournament = existing_note.startswith("TOURNAMENT_ROOM|") or str(existing.get("match_mode") or "").lower() == "tournament"
+        if not is_existing_tournament:
+            return redirect(url_for("room_detail", room_id=existing["id"]))
+
+        # Phòng thường và Phòng C1 là hai luồng độc lập. Nếu chỉ còn một phòng C1
+        # trống do chính người dùng tạo, tự đóng phòng trống đó để chuyển sang Rank.
+        # Không tự phá phòng C1 đã có đối thủ/đang thi đấu.
+        can_close_empty_c1 = (
+            str(existing.get("host_user_id") or "") == str(user.get("id") or "")
+            and not existing.get("guest_user_id")
+            and str(existing.get("status") or "") == "waiting_ready"
+        )
+        if can_close_empty_c1:
+            execute_query(
+                db.table("match_rooms").update({
+                    "status": "cancelled",
+                    "updated_at": now_iso(),
+                }).eq("id", existing.get("id")),
+                "switch_c1_to_normal_room",
+            )
+        else:
+            flash("Bạn đang có Phòng đấu C1 đang hoạt động. Hãy kết thúc hoặc thoát phòng C1 trước khi vào Phòng đấu thường.", "warning")
+            return redirect(url_for("rooms"))
     if active_match_for_user(user["id"]):
         flash("Bạn đang có trận chưa hoàn tất.", "warning")
         return redirect(url_for("dashboard"))
