@@ -1074,7 +1074,10 @@ def register_routes(context):
             except Exception as exc: app.logger.warning("Knockout auto advance failed: %s",exc)
         log_admin_action("Cập nhật kết quả trận giải","tournament_match",details={"match_id":match_id,"score":f"{hs}-{aw}"})
         flash("Đã lưu kết quả trận giải.","success")
-        if (request.form.get("return_to") or "").strip() == "tournament":
+        return_to = (request.form.get("return_to") or "").strip()
+        if return_to == "central":
+            return redirect(url_for("tournaments") + "#ranking")
+        if return_to == "tournament":
             return redirect(url_for("tournament_detail", tournament_id=match.get("tournament_id")) + "#bxh")
         return redirect_admin("tournaments")
 

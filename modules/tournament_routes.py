@@ -295,7 +295,9 @@ def register_routes(context):
             db_ready = not bool(error)
             user = current_user() or {}
             user_id = user.get("id")
+            can_admin_manage_tournament = bool(is_admin_user(user))
             for item in tournament_rows:
+                item["can_admin_manage"] = can_admin_manage_tournament
                 item["my_registration"] = _registration_for_user(item.get("id"), user_id)
                 item["my_member"] = _member_for_user(item.get("id"), user_id)
                 member_rows, _ = _safe_rows(
@@ -308,7 +310,7 @@ def register_routes(context):
                 item["stage1_early_end_at"] = timing.get("stage1_early_end_at")
                 # Public main tournament standings (Stage 1 + League Phase) for the tournament landing page.
                 member_rows_full, _ = _safe_rows(
-                    db.table("tournament_members").select("user_id").eq("tournament_id", item.get("id")).eq("status", "active"),
+                    db.table("tournament_members").select("*").eq("tournament_id", item.get("id")).eq("status", "active"),
                     "tournament_public_ranking_members",
                 )
                 member_ids = [str(r.get("user_id")) for r in member_rows_full if r.get("user_id")]
@@ -319,6 +321,50 @@ def register_routes(context):
                         "tournament_public_ranking_users",
                     )
                     names = {str(u.get("id")): (u.get("display_name") or u.get("username") or "HLV") for u in user_rows}
+
+                # Admin quản lý trực tiếp ngay trên BXH Trung tâm.
+                # Chỉ nạp dữ liệu quản trị khi tài khoản hiện tại là Admin.
+                item["central_admin_players"] = {}
+                if can_admin_manage_tournament and member_ids:
+                    reg_rows, _ = _safe_rows(
+                        db.table("tournament_registrations").select("*")
+                        .eq("tournament_id", item.get("id")).in_("user_id", member_ids),
+                        "tournament_central_admin_profiles",
+                    )
+                    reg_map = {str(r.get("user_id")): r for r in reg_rows if r.get("user_id")}
+                    member_map = {str(m.get("user_id")): m for m in member_rows_full if m.get("user_id")}
+                    admin_match_rows, _ = _safe_rows(
+                        db.table("tournament_matches").select("*")
+                        .eq("tournament_id", item.get("id")).order("created_at"),
+                        "tournament_central_admin_matches",
+                    )
+                    per_player_matches = {uid: [] for uid in member_ids}
+                    for am in admin_match_rows:
+                        h, a = str(am.get("home_user_id") or ""), str(am.get("away_user_id") or "")
+                        if h in per_player_matches:
+                            row = dict(am)
+                            row["opponent_name"] = names.get(a, "HLV")
+                            row["is_home_for_player"] = True
+                            per_player_matches[h].append(row)
+                        if a in per_player_matches:
+                            row = dict(am)
+                            row["opponent_name"] = names.get(h, "HLV")
+                            row["is_home_for_player"] = False
+                            per_player_matches[a].append(row)
+                    for uid in member_ids:
+                        reg = reg_map.get(uid) or {}
+                        mem = member_map.get(uid) or {}
+                        item["central_admin_players"][uid] = {
+                            "user_id": uid,
+                            "display_name": names.get(uid, "HLV"),
+                            "registration_id": reg.get("id"),
+                            "zalo_name": reg.get("zalo_name") or mem.get("zalo_name") or "",
+                            "has_host": bool(reg.get("has_host")),
+                            "host_region": reg.get("host_region") or "—",
+                            "pot_no": mem.get("pot_no"),
+                            "fixed_club_name": mem.get("fixed_club_name") or "",
+                            "matches": per_player_matches.get(uid, []),
+                        }
                 ranking = {
                     uid: {
                         "user_id": uid,
@@ -645,7 +691,10 @@ def register_routes(context):
             pass
         log_admin_action("Cập nhật thông tin HLV giải đấu", "tournament_registration", target_id=reg_id, details=payload)
         flash("Đã cập nhật Khu vực / Host / Zalo của HLV.", "success")
-        if (request.form.get("return_to") or "").strip() == "tournament" and tournament_id:
+        return_to = (request.form.get("return_to") or "").strip()
+        if return_to == "central" and tournament_id:
+            return redirect(url_for("tournaments") + "#ranking")
+        if return_to == "tournament" and tournament_id:
             return redirect(url_for("tournament_detail", tournament_id=tournament_id) + "#bxh")
         return redirect_admin("tournaments")
 
