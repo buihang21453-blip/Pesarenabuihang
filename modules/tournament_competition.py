@@ -722,7 +722,9 @@ def register_routes(context):
             m["stage1_target"]=pr.get("target",6)
             m["stage1_percent"]=pr.get("percent",0)
             m["stage1_points"]=pr.get("points",0)
-        payload.update({"ready":True,"tournament":tour,"members":members,"progress":progress,"combined_ranking":_combined_ranking(tid),"knockout_flow":_setting(tid,"knockout_flow",{}) or {},"scale":_tournament_scale(tid)})
+        test_ids=_c1_test_user_ids(tid)
+        test_users=_c1_test_users(tid) if test_ids else []
+        payload.update({"ready":True,"tournament":tour,"members":members,"progress":progress,"combined_ranking":_combined_ranking(tid),"knockout_flow":_setting(tid,"knockout_flow",{}) or {},"scale":_tournament_scale(tid),"c1_test_user_ids":test_ids,"c1_test_users":test_users})
         return payload
 
     @app.context_processor
@@ -791,6 +793,31 @@ def register_routes(context):
             data["admin_test_mode"]=True
             data["me_progress"]=None
             data["rewards"]=_reward_summary(tournament_id,uid)
+        elif _is_c1_test_user(tournament_id,uid) and not data.get("member"):
+            test_name=(user.get("display_name") or user.get("username") or "HLV Test")
+            data["member"]={
+                "id":None,"tournament_id":tournament_id,"user_id":uid,
+                "display_name":test_name,"username":user.get("username") or "test",
+                "pot_no":None,"fixed_club_id":None,"fixed_club_name":"",
+                "has_host":False,"host_region":"","status":"c1_test",
+                "is_c1_test_account":True,
+            }
+            data["c1_test_account"]=True
+            data["admin_participant_view"]=False
+            days=_availability_days()
+            test_av=_setting(tournament_id,f"c1_test_availability_{uid}",{}) or {}
+            day_ranges={}; day_chips={}; slot_count=0
+            for d in days:
+                saved=(test_av.get("ranges") or {}).get(d["date"],{}) or {}
+                start=str(saved.get("start") or ""); end=str(saved.get("end") or "")
+                day_ranges[d["date"]]={"start":start,"end":end}
+                chips=[]
+                if start and end:
+                    chips=[f"{start} → {end}"]; slot_count += 1
+                day_chips[d["date"]]=chips
+            data["availability"]={"days":days,"mine":[],"mine_set":set(),"status":"active" if slot_count else "missing","slot_count":slot_count,"day_ranges":day_ranges,"day_chips":day_chips}
+            data["me_progress"]=None
+            data["rewards"]={}
         # Animation khai mạc chỉ tự hiện 1 lần/tài khoản HLV sau khi GĐ1 thực sự mở.
         opening_seen=_setting(tournament_id,"opening_seen_v1",{}) or {}
         stage1_open=any(str(x.get("stage_code"))=="stage1" and str(x.get("status"))=="open" for x in (data.get("stages") or []))
@@ -801,6 +828,33 @@ def register_routes(context):
             execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"opening_seen_v1","setting_value":opening_seen,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_opening_seen",attempts=2)
         return render_template('tournament_detail.html', **data)
 
+
+    @app.post('/admin/tournaments/<tournament_id>/c1-test-accounts')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_c1_test_accounts(tournament_id):
+        requested=[]
+        for key in ("test_user_1","test_user_2"):
+            value=str(request.form.get(key) or "").strip()
+            if value and value not in requested:
+                requested.append(value)
+        requested=requested[:2]
+        official={str(m.get("user_id")) for m in _all_members(tournament_id)}
+        overlap=[uid for uid in requested if uid in official]
+        if overlap:
+            flash("Không thể dùng HLV chính thức làm tài khoản Test C1. Hãy chọn tài khoản ngoài danh sách 16 HLV.","error")
+            return redirect_admin("tournaments")
+        valid=[]
+        if requested:
+            rows,_=_rows(db.table("users").select("id").in_("id",requested),"ops_validate_c1_test_accounts")
+            valid=[str(r.get("id")) for r in rows if str(r.get("id") or "") in requested]
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,"setting_key":C1_TEST_ACCOUNTS_KEY,
+            "setting_value":{"user_ids":valid,"updated_at":now_iso()},"updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_save_c1_test_accounts",attempts=2)
+        flash(f"Đã lưu {len(valid)} tài khoản Test C1. Các tài khoản này không được thêm vào BXH/trận chính thức.","success")
+        return redirect_admin("tournaments")
 
     @app.get('/admin/tournaments/<tournament_id>/preview-player')
     @login_required
@@ -978,6 +1032,24 @@ def register_routes(context):
         row,_=_one(db.table("tournament_settings").select("setting_value").eq("tournament_id",tournament_id).eq("setting_key",key),"ops_setting")
         return (row or {}).get("setting_value",default)
 
+    C1_TEST_ACCOUNTS_KEY = "c1_test_accounts_v1"
+
+    def _c1_test_user_ids(tournament_id):
+        state=_setting(tournament_id,C1_TEST_ACCOUNTS_KEY,{}) or {}
+        return [str(x) for x in (state.get("user_ids") or []) if str(x).strip()][:2]
+
+    def _is_c1_test_user(tournament_id,user_id):
+        return str(user_id or "") in set(_c1_test_user_ids(tournament_id))
+
+    def _c1_test_users(tournament_id):
+        ids=_c1_test_user_ids(tournament_id)
+        if not ids:
+            return []
+        rows,_=_rows(db.table("users").select("id,username,display_name,is_online,last_seen_at").in_("id",ids),"ops_c1_test_users")
+        order={uid:i for i,uid in enumerate(ids)}
+        rows.sort(key=lambda r:order.get(str(r.get("id")),99))
+        return rows
+
     def _stage1_club_pool(tournament_id):
         state=_setting(tournament_id,"stage1_club_pool",{}) or {}
         eligible=_stage1_eligible_clubs()
@@ -1057,7 +1129,7 @@ def register_routes(context):
                 if str(t.get("id")) != str(requested_id):
                     continue
                 members=_all_members(t.get("id"))
-                if admin or any(str(m.get("user_id"))==uid for m in members):
+                if admin or _is_c1_test_user(t.get("id"),uid) or any(str(m.get("user_id"))==uid for m in members):
                     return t,members
             return None,[]
 
@@ -1067,6 +1139,9 @@ def register_routes(context):
                 members=_all_members(t.get("id"))
                 if any(str(m.get("user_id"))==uid for m in members):
                     return t,members
+            for t in tours:
+                if _is_c1_test_user(t.get("id"),uid):
+                    return t,_all_members(t.get("id"))
             return None,[]
 
         # Admin bấm Phòng đấu C1 từ sidebar không có tournament_id.
@@ -1149,6 +1224,7 @@ def register_routes(context):
             flash("Bạn không có quyền vào Phòng đấu C1.","error")
             return redirect(url_for("tournaments"))
         tid=str(selected.get("id"))
+        is_test_account=_is_c1_test_user(tid,uid)
         pending=_c1_pending_invite_room(tid,uid)
         if pending:
             return redirect(url_for("c1_room_accept",tournament_id=tid,room_id=pending.get("id")))
@@ -1199,7 +1275,9 @@ def register_routes(context):
         meta={
             "tournament_id":tid,"tournament_match_id":"","stage_code":"",
             "home_user_id":uid,"away_user_id":"","home_name":name,"away_name":"",
-            "invited_user_id":"","c1_open_room":True,"admin_test_room":bool(is_admin_user(user) and not me),
+            "invited_user_id":"","c1_open_room":True,
+            "admin_test_room":bool((is_admin_user(user) and not me) or is_test_account),
+            "test_sandbox_room":bool(is_test_account),
         }
         row=execute_query(db.table("match_rooms").insert({
             "invite_id":None,"host_user_id":uid,"guest_user_id":None,"team_tier":"TOURNAMENT",
@@ -1223,14 +1301,23 @@ def register_routes(context):
             flash("Phòng đã có đủ 2 HLV.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         opponent_uid=str(request.form.get("opponent_user_id") or "").strip()
         members=_all_members(tournament_id)
-        opponent=next((m for m in members if str(m.get("user_id"))==opponent_uid),None)
-        if not opponent or opponent_uid==str(room.get("host_user_id")):
-            flash("Chỉ được mời HLV đang tham gia C1.","error"); return redirect(url_for("room_detail",room_id=room_id))
         host_uid=str(room.get("host_user_id") or "")
-        match=_c1_pair_match(tournament_id,host_uid,opponent_uid)
-        host_member=next((m for m in members if str(m.get("user_id"))==host_uid),None)
-        if not match and not is_admin_user(user):
-            flash("HLV này không có trận C1 đang chờ thi đấu với bạn.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        test_room=bool(meta.get("test_sandbox_room")) or _is_c1_test_user(tournament_id,host_uid)
+        if test_room:
+            test_users=_c1_test_users(tournament_id)
+            opponent=next((m for m in test_users if str(m.get("id"))==opponent_uid),None)
+            host_member=next((m for m in test_users if str(m.get("id"))==host_uid),None)
+            if not opponent or opponent_uid==host_uid:
+                flash("Phòng Test C1 chỉ được mời tài khoản Test C1 còn lại.","error"); return redirect(url_for("room_detail",room_id=room_id))
+            match=None
+        else:
+            opponent=next((m for m in members if str(m.get("user_id"))==opponent_uid),None)
+            if not opponent or opponent_uid==host_uid:
+                flash("Chỉ được mời HLV đang tham gia C1.","error"); return redirect(url_for("room_detail",room_id=room_id))
+            match=_c1_pair_match(tournament_id,host_uid,opponent_uid)
+            host_member=next((m for m in members if str(m.get("user_id"))==host_uid),None)
+            if not match and not is_admin_user(user):
+                flash("HLV này không có trận C1 đang chờ thi đấu với bạn.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         if match:
             dm=_decorate_matches(tournament_id,[match])[0]
             meta.update({
@@ -1242,8 +1329,9 @@ def register_routes(context):
         else:
             meta.update({
                 "tournament_match_id":"","stage_code":"","home_user_id":host_uid,"away_user_id":opponent_uid,
-                "home_name":(host_member or {}).get("display_name") or user.get("display_name") or "Admin",
-                "away_name":opponent.get("display_name") or "HLV","admin_test_room":True,
+                "home_name":(host_member or {}).get("display_name") or user.get("display_name") or "HLV Test",
+                "away_name":opponent.get("display_name") or opponent.get("username") or "HLV Test","admin_test_room":True,
+                "test_sandbox_room":bool(test_room),
             })
         meta["invited_user_id"]=opponent_uid
         execute_query(db.table("match_rooms").update({"note":_room_note(meta),"match_mode":"tournament","team_tier":"TOURNAMENT","updated_at":now_iso()}).eq("id",room_id),"ops_c1_room_bind_invite",attempts=2)
@@ -1267,8 +1355,8 @@ def register_routes(context):
             return redirect(url_for("room_detail",room_id=room_id))
         if str(meta.get("invited_user_id") or "")!=uid and not is_admin_user(user):
             flash("Phòng này không mời tài khoản của bạn.","error"); return redirect(url_for("c1_rooms",tournament_id=tournament_id))
-        if not is_admin_user(user) and not _member(tournament_id,uid):
-            flash("Chỉ HLV trong danh sách C1 mới được vào phòng.","error"); return redirect(url_for("tournaments"))
+        if not is_admin_user(user) and not _member(tournament_id,uid) and not (meta.get("test_sandbox_room") and _is_c1_test_user(tournament_id,uid)):
+            flash("Chỉ HLV chính thức hoặc tài khoản Test C1 được cấp quyền mới vào phòng.","error"); return redirect(url_for("tournaments"))
         if room.get("guest_user_id") and str(room.get("guest_user_id"))!=uid:
             flash("Phòng đã đủ 2 HLV.","warning"); return redirect(url_for("c1_rooms",tournament_id=tournament_id))
         active=active_room_for_user(uid)
@@ -1461,6 +1549,58 @@ def register_routes(context):
         execute_query(db.table("tournament_matches").update({"status":"disputed","updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_dispute",attempts=2)
         execute_query(db.table("match_rooms").update({"status":"disputed","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_room_dispute",attempts=2)
         flash("Đã báo sai kết quả. Admin sẽ xử lý.","warning")
+        return redirect(url_for("room_detail",room_id=room_id))
+
+    def _c1_test_room_or_error(tournament_id, room_id):
+        room=get_room(room_id); meta=_room_meta(room)
+        if not room or not meta or str(meta.get("tournament_id"))!=str(tournament_id) or not meta.get("test_sandbox_room"):
+            return None,None
+        return room,meta
+
+    @app.post('/tournaments/<tournament_id>/rooms/<room_id>/test-submit-result')
+    @login_required
+    def c1_test_room_submit_result(tournament_id,room_id):
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        room,meta=_c1_test_room_or_error(tournament_id,room_id)
+        if not room or uid!=str(room.get("host_user_id") or "") or not _is_c1_test_user(tournament_id,uid):
+            flash("Chỉ chủ phòng Test C1 được gửi kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        if not room.get("guest_user_id"):
+            flash("Phòng Test chưa đủ 2 người.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        try:
+            hs=max(0,min(99,int(request.form.get("host_score") or 0))); gs=max(0,min(99,int(request.form.get("guest_score") or 0)))
+        except Exception:
+            flash("Tỷ số không hợp lệ.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        meta["test_result"]={"status":"waiting_confirm","host_score":hs,"guest_score":gs,"submitted_by":uid,"submitted_at":now_iso()}
+        execute_query(db.table("match_rooms").update({"host_score":hs,"guest_score":gs,"status":"waiting_result_confirm","note":_room_note(meta),"updated_at":now_iso()}).eq("id",room_id),"ops_c1_test_submit_result",attempts=2)
+        flash("Đã gửi kết quả TEST. Chờ tài khoản Test còn lại xác nhận.","success")
+        return redirect(url_for("room_detail",room_id=room_id))
+
+    @app.post('/tournaments/<tournament_id>/rooms/<room_id>/test-confirm-result')
+    @login_required
+    def c1_test_room_confirm_result(tournament_id,room_id):
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        room,meta=_c1_test_room_or_error(tournament_id,room_id)
+        if not room or uid!=str(room.get("guest_user_id") or "") or not _is_c1_test_user(tournament_id,uid):
+            flash("Chỉ đối thủ Test C1 được xác nhận.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        result=meta.get("test_result") or {}
+        if result.get("status")!="waiting_confirm":
+            flash("Không có kết quả Test đang chờ xác nhận.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+        result.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); meta["test_result"]=result
+        execute_query(db.table("match_rooms").update({"status":"confirmed","note":_room_note(meta),"updated_at":now_iso()}).eq("id",room_id),"ops_c1_test_confirm_result",attempts=2)
+        flash("Đã xác nhận kết quả TEST. Không có dữ liệu nào được cộng vào BXH C1 hoặc Rank.","success")
+        return redirect(url_for("room_detail",room_id=room_id))
+
+    @app.post('/tournaments/<tournament_id>/rooms/<room_id>/test-dispute-result')
+    @login_required
+    def c1_test_room_dispute_result(tournament_id,room_id):
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        room,meta=_c1_test_room_or_error(tournament_id,room_id)
+        if not room or uid!=str(room.get("guest_user_id") or "") or not _is_c1_test_user(tournament_id,uid):
+            flash("Chỉ đối thủ Test C1 được báo sai kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        result=meta.get("test_result") or {}
+        result.update({"status":"disputed","disputed_by":uid,"disputed_at":now_iso(),"reason":(request.form.get("reason") or "Sai kết quả").strip()[:300]}); meta["test_result"]=result
+        execute_query(db.table("match_rooms").update({"status":"disputed","note":_room_note(meta),"updated_at":now_iso()}).eq("id",room_id),"ops_c1_test_dispute_result",attempts=2)
+        flash("Đã tạo tranh chấp TEST. Không ảnh hưởng trận/BXH thật.","warning")
         return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/club/select')
@@ -1817,9 +1957,12 @@ def register_routes(context):
 
     @app.post('/admin/tournaments/<tournament_id>/test-availability/simple')
     @login_required
-    @admin_required
     def admin_tournament_test_availability_simple_save(tournament_id):
-        uid=str((current_user() or {}).get("id") or "")
+        user=current_user() or {}
+        uid=str(user.get("id") or "")
+        if not is_admin_user(user) and not _is_c1_test_user(tournament_id,uid):
+            flash("Bạn không có quyền lưu lịch Test C1.","error")
+            return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
         days=_availability_days()
         ranges={}
         for idx,d in enumerate(days):
@@ -1843,13 +1986,13 @@ def register_routes(context):
         execute_query(
             db.table("tournament_settings").upsert({
                 "tournament_id":tournament_id,
-                "setting_key":f"admin_test_availability_{uid}",
+                "setting_key":f"admin_test_availability_{uid}" if is_admin_user(user) else f"c1_test_availability_{uid}",
                 "setting_value":{"ranges":ranges,"updated_at":now_iso()},
                 "updated_at":now_iso(),
             },on_conflict="tournament_id,setting_key"),
             "ops_admin_test_availability",attempts=2,
         )
-        flash("Đã lưu giờ rảnh TEST của Admin. Không ảnh hưởng lịch của 16 HLV.","success")
+        flash("Đã lưu giờ rảnh TEST. Không ảnh hưởng lịch của 16 HLV chính thức.","success")
         return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
 
     @app.post('/tournaments/<tournament_id>/availability/simple')

@@ -1,5 +1,31 @@
-{% if is_tournament_room and tournament_meta and tournament_match %}
+{% if is_tournament_room and tournament_meta and (tournament_match or tournament_meta.test_sandbox_room) %}
 <div class="panel" style="margin:12px 0;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px">
+  {% if tournament_meta.test_sandbox_room %}
+  <strong>🧪 TRẬN TEST C1 · SANDBOX</strong>
+  <p class="small" style="margin:5px 0 10px;color:#f6c453">Dùng để kiểm tra luồng thật của Phòng C1. Kết quả này <strong>không ghi vào tournament_matches, BXH C1 hoặc Rank</strong>.</p>
+  {% set tr=tournament_meta.test_result or {} %}
+  {% if room.status == 'playing' and room_room_viewer_is_host %}
+  <form method="post" action="{{ url_for('c1_test_room_submit_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
+    <label>{{ room.host_name or 'Test A' }}<input type="number" min="0" max="99" name="host_score" value="0" required></label>
+    <strong style="padding-bottom:10px">-</strong>
+    <label>{{ room.guest_name or 'Test B' }}<input type="number" min="0" max="99" name="guest_score" value="0" required></label>
+    <button class="btn green" type="submit">Gửi kết quả TEST</button>
+  </form>
+  {% elif room.status == 'waiting_result_confirm' %}
+    <div style="font-size:28px;font-weight:800;margin:8px 0">{{ room.host_score }} - {{ room.guest_score }}</div>
+    {% if room_viewer_is_guest %}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <form method="post" action="{{ url_for('c1_test_room_confirm_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}"><button class="btn green" type="submit">✓ Xác nhận kết quả TEST</button></form>
+        <form method="post" action="{{ url_for('c1_test_room_dispute_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="display:flex;gap:6px;flex-wrap:wrap"><input name="reason" maxlength="300" placeholder="Lý do sai kết quả"><button class="btn red" type="submit">⚠ Báo sai kết quả</button></form>
+      </div>
+    {% else %}<p class="small">Đang chờ tài khoản Test còn lại xác nhận.</p>{% endif %}
+  {% elif room.status == 'confirmed' %}
+    <strong>✅ Kết quả TEST đã xác nhận: {{ tr.host_score|default(room.host_score) }} - {{ tr.guest_score|default(room.guest_score) }}</strong>
+  {% elif room.status == 'disputed' %}
+    <strong>⚠ Kết quả TEST đang ở trạng thái tranh chấp.</strong>
+    {% if tr.reason %}<p class="small">Lý do: {{ tr.reason }}</p>{% endif %}
+  {% endif %}
+  {% else %}
   <strong>🏆 TRẬN GIẢI ĐẤU · {{ (tournament_meta.stage_code or 'stage1')|upper }}</strong>
   <p class="small" style="margin:5px 0 10px">Phòng này chỉ ghi dữ liệu vào giải đấu. Không tính Rank và không phải Giao hữu.</p>
   {% set pr=tournament_result_proposal or {} %}
@@ -22,6 +48,7 @@
     <strong>✅ Trận đã hoàn tất: {{ tournament_match.home_score }} - {{ tournament_match.away_score }}</strong>
   {% elif tournament_match.status == 'disputed' or room.status == 'disputed' %}
     <strong>⚠ Kết quả đang chờ Admin xử lý.</strong>
+  {% endif %}
   {% endif %}
 </div>
 {% endif %}

@@ -182,8 +182,13 @@ def register_routes(context):
                 if tid:
                     memr = execute_query(db.table("tournament_members").select("user_id,status").eq("tournament_id",tid).eq("status","active"),"room_tournament_members_context",attempts=2)
                     member_rows = [dict(x) for x in (memr.data or [])]
-                    member_ids = [str(x.get("user_id")) for x in member_rows if x.get("user_id")]
-                    tournament_viewer_is_member = str(viewer.get("id") or "") in member_ids
+                    official_member_ids = [str(x.get("user_id")) for x in member_rows if x.get("user_id")]
+                    member_ids = list(official_member_ids)
+                    if tournament_meta.get("test_sandbox_room"):
+                        tr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key","c1_test_accounts_v1").limit(1),"room_c1_test_accounts_context",attempts=2)
+                        ts = ((tr.data or [{}])[0].get("setting_value") or {})
+                        member_ids = [str(x) for x in (ts.get("user_ids") or []) if str(x).strip()][:2]
+                    tournament_viewer_is_member = str(viewer.get("id") or "") in official_member_ids
                     if member_ids:
                         ur = execute_query(db.table("users").select("id,username,display_name,is_online,last_seen_at").in_("id",member_ids),"room_tournament_member_users_context",attempts=2)
                         users = {str(x.get("id")):dict(x) for x in (ur.data or [])}

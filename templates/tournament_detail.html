@@ -98,7 +98,7 @@
 
 {% if member %}
 {% if admin_participant_view|default(false) %}<div class="td-preview-banner" style="margin-bottom:12px;border-color:rgba(69,181,255,.35)"><strong>🧪 ADMIN TEST LỊCH NHƯ HLV</strong><small>Giờ rảnh bên dưới chỉ lưu cho tài khoản Admin trong vùng test, không ảnh hưởng 16 HLV thật.</small></div>{% endif %}
-<form method="post" action="{{ url_for('admin_tournament_test_availability_simple_save',tournament_id=tournament.id) if admin_participant_view|default(false) else url_for('tournament_availability_simple_save',tournament_id=tournament.id) }}" class="td-simple-schedule">
+<form method="post" action="{{ url_for('admin_tournament_test_availability_simple_save',tournament_id=tournament.id) if (admin_participant_view|default(false) or c1_test_account|default(false)) else url_for('tournament_availability_simple_save',tournament_id=tournament.id) }}" class="td-simple-schedule">
   <div class="td-simple-days">
   {% for day in availability.days %}
     {% set r = availability.day_ranges.get(day.date,{}) %}
