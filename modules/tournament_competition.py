@@ -55,7 +55,8 @@ def register_routes(context):
         return out
 
     def _default_stage1_clubs():
-        return [dict(x) for x in _stage1_eligible_clubs()]
+        # C1 Arena dùng đúng tối đa 16 CLB Tier S+/S mạnh nhất từ nguồn teams thật.
+        return [dict(x) for x in _stage1_eligible_clubs()[:16]]
 
     def _rows(query, label):
         try:
@@ -823,8 +824,8 @@ def register_routes(context):
     @admin_permission_required("system_features_manage")
     def admin_tournament_stage1_clubs(tournament_id):
         selected=request.form.getlist("clubs")
-        if not selected:
-            flash("GĐ1 phải có ít nhất 2 CLB trong Pool.","error"); return redirect_admin("tournaments")
+        if len(selected)!=16:
+            flash(f"Hãy chọn đúng 16 CLB Tier S/S+ cho phòng C1. Hiện đang chọn {len(selected)} đội.","error"); return redirect_admin("tournaments")
         lookup={x.get("display"):x for x in _stage1_eligible_clubs(force=True)}
         clubs=[]
         for name in selected:
@@ -835,8 +836,8 @@ def register_routes(context):
                     "overall":int(info.get("overall") or 0),
                     "tier":str(info.get("tier") or "").strip().upper(),
                 })
-        if len(clubs)<2:
-            flash("GĐ1 phải có ít nhất 2 CLB hợp lệ.","error"); return redirect_admin("tournaments")
+        if len(clubs)!=16:
+            flash(f"Phòng C1 yêu cầu chọn đúng 16 CLB Tier S/S+. Hiện đang chọn {len(clubs)} đội.","error"); return redirect_admin("tournaments")
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"stage1_club_pool","setting_value":{"clubs":clubs,"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_stage1_club_pool_save",attempts=2)
         flash(f"Đã lưu Pool {len(clubs)} CLB cho GĐ1.","success"); return redirect_admin("tournaments")
 
@@ -847,7 +848,7 @@ def register_routes(context):
     def admin_tournament_stage1_clubs_reset(tournament_id):
         defaults=_default_stage1_clubs()
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"stage1_club_pool","setting_value":{"clubs":defaults,"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_stage1_club_pool_reset",attempts=2)
-        flash(f"Đã chọn lại toàn bộ {len(defaults)} CLB Tier S+ và S từ dữ liệu teams hiện tại.","success"); return redirect_admin("tournaments")
+        flash(f"Đã chọn lại {len(defaults)} CLB Tier S+ và S mạnh nhất cho C1.","success"); return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/matches/add')
     @login_required
@@ -930,7 +931,7 @@ def register_routes(context):
     def _stage1_club_pool(tournament_id):
         state=_setting(tournament_id,"stage1_club_pool",{}) or {}
         eligible=_stage1_eligible_clubs()
-        clubs=state.get("clubs") or _default_stage1_clubs()
+        clubs=(state.get("clubs") or _default_stage1_clubs())[:16]
         clean=[]
         for c in clubs:
             if isinstance(c,str):
@@ -982,6 +983,31 @@ def register_routes(context):
                 r["public_status"]="Chờ đối thủ"
             out.append(r)
         return out
+
+    @app.get('/c1-rooms')
+    @login_required
+    def c1_rooms():
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        admin=is_admin_user(user)
+        tours,_=_rows(db.table("tournaments").select("*").eq("is_visible",True).order("created_at",desc=True),"c1_rooms_tournaments")
+        selected_id=str(request.args.get("tournament_id") or "").strip()
+        selected=None
+        for t in tours:
+            if selected_id and str(t.get("id"))!=selected_id:
+                continue
+            members=_all_members(t.get("id"))
+            if admin or any(str(m.get("user_id"))==uid for m in members):
+                selected=t; break
+        if not selected:
+            flash("Phòng đấu C1 chỉ dành cho HLV đang nằm trong danh sách giải và Admin.","warning")
+            return redirect(url_for("tournaments"))
+        tid=selected.get("id")
+        members=_all_members(tid)
+        member=next((m for m in members if str(m.get("user_id"))==uid),None)
+        matches=_decorate_matches(tid,_matches(tid))
+        mine=[m for m in matches if member and uid in {str(m.get("home_user_id")),str(m.get("away_user_id"))}]
+        rooms=_tournament_rooms(tid)
+        return render_template("c1_rooms.html", tournament=selected, member=member, members=members, matches=mine, tournament_rooms=rooms, is_c1_admin=admin)
 
     @app.post('/tournaments/<tournament_id>/matches/<match_id>/room')
     @login_required

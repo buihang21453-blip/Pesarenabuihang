@@ -93,7 +93,7 @@
 {% endif %}
 <h3 style="margin-top:16px">BXH League Phase</h3><div style="overflow:auto"><table class="td-table"><thead><tr><th>#</th><th>HLV</th><th>Pot</th><th>CLB</th><th>Tr</th><th>HS</th><th>Điểm</th></tr></thead><tbody>{% for r in league_ranking %}<tr><td>{{ r.rank }}</td><td>{{ r.display_name }}</td><td>{{ r.pot_no or '—' }}</td><td>{{ r.club or '—' }}</td><td>{{ r.played }}</td><td>{{ r.gd }}</td><td>{{ r.points }}</td></tr>{% endfor %}</tbody></table></div>
 <h3 style="margin-top:16px">BXH tổng GĐ1 + GĐ2</h3><div style="overflow:auto"><table class="td-table"><thead><tr><th>#</th><th>HLV</th><th>Tr</th><th>HS</th><th>Điểm</th></tr></thead><tbody>{% for r in combined_ranking %}<tr><td>{{ r.rank }}</td><td>{{ r.display_name }}</td><td>{{ r.played }}</td><td>{{ r.gd }}</td><td><b>{{ r.points }}</b></td></tr>{% endfor %}</tbody></table></div></section>
-<section class="td-section" id="schedule" data-tab-panel="schedule"><h2>📅 {{ 'Lịch thi đấu của tôi' if member and availability.slot_count else 'Đặt lịch thi đấu' }}</h2>
+<section class="td-section" id="schedule" data-tab-panel="schedule"><h2>📅 Lịch thi đấu / Giờ rảnh</h2>
 
 {% if member %}
 <form method="post" action="{{ url_for('tournament_availability_simple_save',tournament_id=tournament.id) }}" class="td-simple-schedule">
@@ -112,32 +112,27 @@
     </div>
   {% endfor %}
   </div>
-  <div class="td-simple-save"><button class="btn" type="submit">💾 Lưu lịch thi đấu</button></div>
+  <div class="td-simple-save"><button class="btn" type="submit">💾 Lưu giờ rảnh của tôi</button></div>
 </form>
 
-<h3 style="margin-top:20px">Lịch đối thủ</h3>
-<p style="color:#91a3b1;font-size:12px">Bạn có thể xem lịch của từng đối thủ. Nếu chưa trùng, hãy tích thêm giờ phù hợp ở lịch của mình phía trên rồi lưu lại.</p>
+<h3 style="margin-top:20px">Lịch của đối thủ</h3>
+<p style="color:#91a3b1;font-size:12px">Không cần gửi đề xuất hay chốt lịch. Hai HLV chỉ cần xem giờ rảnh của nhau rồi tự liên hệ qua Zalo để thống nhất giờ đá.</p>
 <div class="td-schedule-list">
 {% set ns = namespace(count=0) %}
 {% for m in matches if m.status in ['pending','scheduled'] %}
   {% if member.user_id|string == m.home_user_id|string or member.user_id|string == m.away_user_id|string %}
     {% set ns.count = ns.count + 1 %}
     {% set opp_name = m.away_name if member.user_id|string == m.home_user_id|string else m.home_name %}
+    {% set opp_zalo = m.away_zalo_name if member.user_id|string == m.home_user_id|string else m.home_zalo_name %}
     <article class="td-schedule-card is-mine">
-      <div class="td-schedule-top"><div class="td-player"><strong>Bạn</strong></div><div class="td-vs">VS</div><div class="td-player away"><strong>{{ opp_name }}</strong></div></div>
-      {% if m.status == 'scheduled' %}
-        <div class="td-schedule-status">✅ <strong>Đã chốt:</strong> {{ (m.scheduled_at|string)|replace('T',' ') }}</div>
-      {% elif m.availability_overlap %}
-        <div class="td-schedule-status overlap">✅ <strong>Có {{ m.availability_overlap|length }} giờ trùng</strong></div>
-        <div class="td-overlap-list">{% for x in m.availability_overlap %}<form method="post" action="{{ url_for('tournament_schedule_from_availability',match_id=m.id) }}"><input type="hidden" name="slot_at" value="{{ x.iso }}"><button class="btn green" type="submit">{{ x.label }} · Chốt lịch</button></form>{% endfor %}</div>
-      {% else %}
-        <div class="td-schedule-status">⚠️ <strong>Chưa có giờ trùng.</strong> Xem lịch {{ opp_name }} và cập nhật lịch của bạn nếu có thể.</div>
-        <div class="td-opponent-slots">{% for x in m.opponent_availability %}<span>{{ x.slot_label }}</span>{% else %}<small>{{ opp_name }} chưa đặt lịch trong 3 ngày gần nhất.</small>{% endfor %}</div>
-      {% endif %}
+      <div class="td-schedule-top"><div class="td-player"><strong>Bạn</strong></div><div class="td-vs">VS</div><div class="td-player away"><strong>{{ opp_name }}</strong>{% if opp_zalo %}<small>💬 Zalo: {{ opp_zalo }}</small>{% endif %}</div></div>
+      {% if m.availability_overlap %}<div class="td-schedule-status overlap">✅ <strong>Giờ cả hai cùng rảnh</strong></div><div class="td-overlap-list">{% for x in m.availability_overlap %}<span class="btn green" style="pointer-events:none">{{ x.label }}</span>{% endfor %}</div>{% endif %}
+      <div class="td-schedule-status"><strong>Giờ rảnh của {{ opp_name }}:</strong></div>
+      <div class="td-opponent-slots">{% for x in m.opponent_availability %}<span>{{ x.slot_label }}</span>{% else %}<small>{{ opp_name }} chưa cập nhật giờ rảnh trong 3 ngày gần nhất.</small>{% endfor %}</div>
     </article>
   {% endif %}
 {% endfor %}
-{% if ns.count == 0 %}<div class="td-empty">Bạn chưa có đối thủ cần sắp lịch.</div>{% endif %}
+{% if ns.count == 0 %}<div class="td-empty">Bạn chưa có đối thủ cần xem lịch.</div>{% endif %}
 </div>
 {% else %}<div class="td-empty">Khán giả có thể xem giải nhưng chỉ HLV tham gia mới được đặt lịch thi đấu.</div>{% endif %}
 </section>
