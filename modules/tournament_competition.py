@@ -940,7 +940,8 @@ def register_routes(context):
     def _stage1_club_pool(tournament_id):
         state=_setting(tournament_id,"stage1_club_pool",{}) or {}
         eligible=_stage1_eligible_clubs()
-        clubs=(state.get("clubs") or _default_stage1_clubs())[:16]
+        saved_clubs=list(state.get("clubs") or [])
+        clubs=(saved_clubs or _default_stage1_clubs())[:16]
         clean=[]
         for c in clubs:
             if isinstance(c,str):
@@ -949,11 +950,22 @@ def register_routes(context):
                 info=c or {}
             name=(info.get("display") or info.get("name") or "").strip()
             canonical=next((x for x in eligible if x.get("display")==name),None)
-            if canonical and not any(x["name"]==name for x in clean):
+            # Không làm mất Pool 16 CLB đã được Admin lưu chỉ vì nguồn teams
+            # hiện tại đổi cách viết tên/metadata. Saved pool là nguồn sự thật của C1.
+            if canonical:
+                final_overall=int(canonical.get("overall") or info.get("overall") or 0)
+                final_tier=str(canonical.get("tier") or info.get("tier") or "").strip().upper()
+            else:
+                final_overall=int(info.get("overall") or 0)
+                final_tier=str(info.get("tier") or "").strip().upper()
+            # Nếu đây là pool Admin đã lưu thì không loại CLB chỉ vì metadata nguồn teams
+            # bị đổi/thiếu ở lần đọc sau. Pool đã lưu là cấu hình chính thức của giải.
+            saved_pool_entry = bool(saved_clubs)
+            if name and (saved_pool_entry or final_tier in STAGE1_ALLOWED_TIERS) and not any(x["name"]==name for x in clean):
                 clean.append({
                     "name":name,
-                    "overall":int(canonical.get("overall") or 0),
-                    "tier":str(canonical.get("tier") or "").strip().upper(),
+                    "overall":final_overall,
+                    "tier":final_tier,
                 })
         return clean
 
@@ -1100,6 +1112,24 @@ def register_routes(context):
             return redirect(url_for("room_detail",room_id=existing.get("id")))
         active=active_room_for_user(uid)
         if active:
+            # V1.4.109: Admin có thể đang mắc trong một phòng C1 rỗng được tạo
+            # trước khi sửa logic chọn tournament. Tự gắn lại phòng rỗng đó vào
+            # đúng giải C1 hiện tại để không tiếp tục thấy Pool 0/16.
+            active_meta=_room_meta(active)
+            if (is_admin_user(user) and active_meta and not active.get("guest_user_id")
+                    and str(active.get("host_user_id") or "")==uid
+                    and str(active_meta.get("tournament_id") or "")!=tid):
+                active_meta.update({
+                    "tournament_id":tid,"tournament_match_id":"","stage_code":"",
+                    "invited_user_id":"","away_user_id":"","away_name":"",
+                    "c1_open_room":True,"admin_test_room":bool(not me),
+                })
+                execute_query(db.table("match_rooms").update({
+                    "note":_room_note(active_meta),"match_mode":"tournament",
+                    "team_tier":"TOURNAMENT","updated_at":now_iso(),
+                }).eq("id",active.get("id")),"ops_c1_rebind_empty_admin_room",attempts=2)
+                flash("Đã đồng bộ lại Phòng C1 với đúng giải hiện tại.","success")
+                return redirect(url_for("room_detail",room_id=active.get("id")))
             flash("Bạn đang ở một phòng đấu khác. Hãy thoát phòng đó trước.","warning")
             return redirect(url_for("room_detail",room_id=active.get("id")))
         me=next((m for m in members if str(m.get("user_id"))==uid),None)

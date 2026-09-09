@@ -316,16 +316,20 @@
             {% else %}
                 <img class="room-center-vs-image" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/VS.webp" alt="VS" loading="eager">
                 {% if room_room_viewer_is_host or current_user.role == 'admin' %}
-                <div class="room-quick-match-row room-action-zone">
+                {% if not is_tournament_room %}<div class="room-quick-match-row room-action-zone">
                     {% if system_features.get('quick_match_enabled', true) %}
                     <button class="btn room-center-action-btn room-quick-match-btn room-quick-match-{{ quick_match_config.get('color', 'blue') }}" type="button"
                             data-quick-match-url="{{ url_for('quick_match_invite') }}">
                         <span class="quick-match-icon">⚡</span><span class="quick-match-label">TÌM NHANH</span>
                     </button>
                     {% endif %}
-                </div>
+                </div>{% endif %}
                 <div class="room-center-primary-actions room-action-zone">
+                    {% if is_tournament_room and tournament_meta %}
+                    <a class="btn gold room-center-action-btn" href="#c1InvitePanel">Mời HLV C1</a>
+                    {% else %}
                     <a class="btn gold room-center-action-btn" href="{{ url_for('players') }}">Mời Đấu</a>
+                    {% endif %}
                     <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
                           data-modal-tone="warning"
                           data-modal-icon="🚪"
