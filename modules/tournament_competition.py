@@ -87,7 +87,7 @@ def register_routes(context):
         users = {}
         profiles = {}
         if ids:
-            urows, _ = _rows(db.table("users").select("id,username,display_name,avatar_url").in_("id", ids), "ops_member_users")
+            urows, _ = _rows(db.table("users").select("id,username,display_name,avatar_url,is_online,last_seen_at").in_("id", ids), "ops_member_users")
             users = {str(u.get("id")):u for u in urows}
             rrows, _ = _rows(db.table("tournament_registrations").select("id,user_id,zalo_name,has_host,host_region,payment_status,status,registered_at,amount_paid,fee_amount,responsibility_amount,responsibility_deducted,amount_refunded,payment_note").eq("tournament_id", tournament_id).in_("user_id", ids), "ops_member_registration_profiles")
             profiles = {str(x.get("user_id")):x for x in rrows if x.get("user_id")}
@@ -684,19 +684,43 @@ def register_routes(context):
         clubs,_=_rows(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).order("name"),"ops_clubs")
         me_progress=next((r for r in s1 if str(r["user_id"])==str(user_id)),None)
         ops_events=_event_ops_payload(tournament_id,user_id)
-        host_ready_map=_setting(tournament_id,"host_live_ready",{}) or {}
         members_all=_all_members(tournament_id)
+
+        # V1.4.123: Host đang rảnh được xác định hoàn toàn tự động.
+        # Điều kiện: tài khoản có Host + đang online thật + không nằm trong bất kỳ phòng đấu đang hoạt động nào.
+        member_ids={str(hm.get("user_id") or "") for hm in members_all if hm.get("user_id")}
+        busy_user_ids=set()
+        if member_ids:
+            active_room_statuses=["waiting_ready","playing","friendly_playing","waiting_result_confirm","disputed","confirmed"]
+            active_rooms,_=_rows(
+                db.table("match_rooms")
+                .select("host_user_id,guest_user_id,status")
+                .in_("status",active_room_statuses)
+                .limit(500),
+                "ops_available_hosts_active_rooms",
+            )
+            for ar in active_rooms:
+                hid=str(ar.get("host_user_id") or "")
+                gid=str(ar.get("guest_user_id") or "")
+                if hid in member_ids: busy_user_ids.add(hid)
+                if gid in member_ids: busy_user_ids.add(gid)
+
         host_ready=[]
         for hm in members_all:
             huid=str(hm.get("user_id") or "")
-            if hm.get("has_host") and host_ready_map.get(huid):
-                host_ready.append({"user_id":huid,"display_name":hm.get("display_name") or "HLV","region":hm.get("host_region") or "—"})
+            user_row=hm.get("user") or {}
+            if hm.get("has_host") and is_user_online_now(user_row) and huid not in busy_user_ids:
+                host_ready.append({
+                    "user_id":huid,
+                    "display_name":hm.get("display_name") or "HLV",
+                    "region":hm.get("host_region") or "—",
+                })
         my_host_profile=next((hm for hm in members_all if str(hm.get("user_id"))==str(user_id)),{})
         c1_test_matches=_c1_test_confirmed_matches(tournament_id)
         c1_test_ranking=_c1_test_ranking(tournament_id)
         return {"tournament":tour,"member":member,"stages":stages,"stage1_ranking":s1,"league_ranking":league,"combined_ranking":_combined_ranking(tournament_id),
                 "matches":matches,"hosts":hosts,"clubs":clubs,"me_progress":me_progress,"rewards":_reward_summary(tournament_id,user_id),"availability":availability,
-                "host_ready":host_ready,"my_has_host":bool(my_host_profile.get("has_host")),"my_host_ready":bool(host_ready_map.get(str(user_id))),
+                "host_ready":host_ready,"my_has_host":bool(my_host_profile.get("has_host")),"my_host_ready":False,
                 "event_ops":ops_events,"knockout_flow":_setting(tournament_id,"knockout_flow",{}) or {},
                 "stage1_club_pool":_stage1_club_pool(tournament_id),"tournament_rooms":_tournament_rooms(tournament_id),
                 "all_team_options":_stage1_eligible_clubs(),"stage1_team_options":_stage1_eligible_clubs(),"league_config":_setting(tournament_id,"league_config",{}) or {},
