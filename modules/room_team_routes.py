@@ -35,10 +35,14 @@ def register_routes(context):
             flash("Phòng đã được quay đội hoặc đã tạo trận.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
-        # V1.4.81: phòng GĐ1 của giải dùng đúng Pool CLB do Admin chọn,
-        # không đi qua Random Rank/Giao hữu thông thường.
+        # Phòng C1 có vòng đời riêng. Tuyệt đối không được rơi xuống logic Rank/Giao hữu.
         tournament_note = str(room.get("note") or "")
-        if tournament_note.startswith("TOURNAMENT_ROOM|"):
+        is_tournament_room = tournament_note.startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower()=="tournament"
+        if is_tournament_room:
+            # Nếu metadata cũ bị mất nhưng match_mode vẫn là tournament, dừng tại đây thay vì fallback Rank.
+            if not tournament_note.startswith("TOURNAMENT_ROOM|"):
+                flash("Phòng C1 đang thiếu dữ liệu trận giải. Hãy quay lại Phòng đấu C1 và mở lại đúng trận.","warning")
+                return redirect(url_for("room_detail", room_id=room_id))
             try:
                 import json
                 meta = json.loads(tournament_note.split("|", 1)[1])
@@ -81,6 +85,9 @@ def register_routes(context):
                 )
                 flash(f'GĐ1 Random: {a["name"]} vs {b["name"]}.', "success")
                 return redirect(url_for("room_detail", room_id=room_id))
+
+            flash("Đây là Phòng đấu C1. Không thể chuyển sang Rank/Giao hữu từ phòng này.","warning")
+            return redirect(url_for("room_detail", room_id=room_id))
 
         match_mode = (request.form.get("match_mode") or MATCH_MODE_RANKED).strip().lower()
         if match_mode == MATCH_MODE_FRIENDLY and not system_feature_enabled("friendly_enabled"):

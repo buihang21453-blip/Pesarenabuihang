@@ -11,8 +11,8 @@
         <img class="room-stage-arena-logo" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/pes-arena-room-logo.webp" alt="PES Arena" loading="eager">
         <div class="room-stage-title-wrap">
             <div>
-                <h1 class="room-stage-title">PHÒNG ĐẤU <span class="room-code-badge">#{{ room.room_code }}</span></h1>
-                <p class="room-stage-subtitle">{{ room.match_mode_label }} • 1 vs 1</p>
+                <h1 class="room-stage-title">{% if is_tournament_room %}PHÒNG ĐẤU C1{% else %}PHÒNG ĐẤU{% endif %} <span class="room-code-badge">#{{ room.room_code }}</span></h1>
+                <p class="room-stage-subtitle">{% if is_tournament_room %}C1 • RANDOM CLB • 1 vs 1{% else %}{{ room.match_mode_label }} • 1 vs 1{% endif %}</p>
             </div>
         </div>
         {% if room.status == 'waiting_ready' and not room.has_guest and (room_room_viewer_is_host or current_user.role == 'admin') %}

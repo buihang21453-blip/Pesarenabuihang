@@ -56,6 +56,9 @@ def register_routes(context):
         # Chỉ route của trận giải mới được phép gán đúng đối thủ vào phòng.
         note = str(room.get("note") or "")
         if note.startswith("TOURNAMENT_ROOM|"):
+            # C1 always wins over any stale Rank fields/cached room state.
+            room["match_mode"] = "tournament"
+            room["match_mode_label"] = "C1"
             try:
                 import json
                 meta = json.loads(note[len("TOURNAMENT_ROOM|"):])
@@ -174,6 +177,9 @@ def register_routes(context):
         tournament_viewer_is_admin = bool(is_admin_user(viewer))
         note = str(room.get("note") or "")
         if note.startswith("TOURNAMENT_ROOM|"):
+            # C1 always wins over any stale Rank fields/cached room state.
+            room["match_mode"] = "tournament"
+            room["match_mode_label"] = "C1"
             try:
                 import json
                 tournament_meta = json.loads(note[len("TOURNAMENT_ROOM|"):])
@@ -318,6 +324,23 @@ def register_routes(context):
             return response
         note = str(room.get("note") or "")
         if note.startswith("TOURNAMENT_ROOM|"):
+            # C1 always wins over any stale Rank fields/cached room state.
+            room["match_mode"] = "tournament"
+            room["match_mode_label"] = "C1"
+            if str(room.get("team_tier") or "").upper() not in {"TOURNAMENT_GD1","TOURNAMENT"}:
+                room["team_tier"] = "TOURNAMENT"
+            try:
+                execute_query(
+                    db.table("match_rooms").update({
+                        "match_mode":"tournament",
+                        "team_tier":room.get("team_tier") or "TOURNAMENT",
+                        "updated_at":now_iso(),
+                    }).eq("id",room.get("id")),
+                    "normalize_c1_room_mode",
+                    attempts=1,
+                )
+            except Exception as exc:
+                app.logger.warning("C1 room mode normalize failed room=%s: %s", room.get("id"), exc)
             try:
                 import json
                 meta = json.loads(note[len("TOURNAMENT_ROOM|"):])

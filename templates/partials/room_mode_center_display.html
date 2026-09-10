@@ -28,7 +28,7 @@
     {% set room_mode_state = room.status|replace('_',' ')|title %}
 {% endif %}
 
-<div class="room-selected-mode-hero {{ 'mode-random-selection' if room_mode_random_selection else ('mode-random3' if room_mode_random3 else 'mode-ranked') }} {{ 'is-compact' if room.status not in ['waiting_ready'] else '' }}" aria-label="Chế độ thi đấu đang chọn: {{ room_mode_label }}">
+<div class="room-selected-mode-hero {{ 'mode-tournament' if is_tournament_room else ('mode-random-selection' if room_mode_random_selection else ('mode-random3' if room_mode_random3 else 'mode-ranked')) }} {{ 'is-compact' if room.status not in ['waiting_ready'] else '' }}" aria-label="Chế độ thi đấu đang chọn: {{ room_mode_label }}">
     <div class="room-selected-mode-kicker">CHẾ ĐỘ THI ĐẤU</div>
     <div class="room-selected-mode-logo-shell" aria-hidden="true">
         <img class="room-selected-mode-logo" src="{{ mode_logo_base }}{{ room_mode_logo_index }}.webp" alt="Logo chế độ {{ room_mode_label }}" loading="lazy" decoding="async">
