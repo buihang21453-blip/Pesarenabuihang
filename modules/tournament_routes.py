@@ -384,6 +384,20 @@ def register_routes(context):
                         for day_key in per_player_availability[uid]:
                             per_player_availability[uid][day_key] = sorted(set(per_player_availability[uid][day_key]))
 
+                    item["central_admin_schedule_matches"] = []
+                    for am in admin_match_rows:
+                        if not am.get("scheduled_at"):
+                            continue
+                        item["central_admin_schedule_matches"].append({
+                            "id": am.get("id"),
+                            "stage_code": am.get("stage_code"),
+                            "round_code": am.get("round_code"),
+                            "home_name": names.get(str(am.get("home_user_id") or ""), "HLV"),
+                            "away_name": names.get(str(am.get("away_user_id") or ""), "HLV"),
+                            "scheduled_at": am.get("scheduled_at"),
+                            "status": am.get("status"),
+                        })
+
                     per_player_matches = {uid: [] for uid in member_ids}
                     for am in admin_match_rows:
                         h, a = str(am.get("home_user_id") or ""), str(am.get("away_user_id") or "")
@@ -403,6 +417,7 @@ def register_routes(context):
                             row["opponent_name"] = home_name
                             row["is_home_for_player"] = False
                             per_player_matches[a].append(row)
+                    item["central_admin_schedule_matches"].sort(key=lambda x: str(x.get("scheduled_at") or ""))
                     for uid in member_ids:
                         reg = reg_map.get(uid) or {}
                         mem = member_map.get(uid) or {}
