@@ -955,6 +955,57 @@ def register_routes(context):
             upcoming_3day_matches.append(row)
         upcoming_3day_matches.sort(key=lambda x: str(x.get("scheduled_at_vn") or ""))
 
+        # V1.5.10: Admin theo dõi HLV nào đã khai giờ rảnh, đã có lịch, hoặc chưa đăng ký.
+        member_ids=[str(m.get("user_id")) for m in members if m.get("user_id")]
+        availability_rows=_availability_rows(tid, member_ids) if member_ids else []
+        availability_by_user={}
+        for slot in availability_rows:
+            availability_by_user.setdefault(str(slot.get("user_id") or ""), []).append(slot)
+
+        scheduled_by_user={}
+        for match in upcoming_3day_matches:
+            for side in ("home_user_id","away_user_id"):
+                suid=str(match.get(side) or "")
+                if not suid:
+                    continue
+                scheduled_by_user.setdefault(suid, []).append(match)
+
+        availability_status_rows=[]
+        registered_count=0
+        scheduled_exempt_count=0
+        missing_count=0
+        for member in members:
+            muid=str(member.get("user_id") or "")
+            slots=availability_by_user.get(muid, [])
+            scheduled=scheduled_by_user.get(muid, [])
+            if scheduled:
+                status_code="scheduled"
+                status_label="📅 Đã có lịch · Không cần đăng ký"
+                scheduled_exempt_count += 1
+            elif slots:
+                status_code="registered"
+                status_label="✅ Đã đăng ký"
+                registered_count += 1
+            else:
+                status_code="missing"
+                status_label="🔴 Chưa đăng ký"
+                missing_count += 1
+            availability_status_rows.append({
+                "user_id":muid,
+                "display_name":member.get("display_name") or "HLV",
+                "zalo_name":member.get("zalo_name") or "",
+                "has_host":bool(member.get("has_host")),
+                "host_region":member.get("host_region") or "—",
+                "status_code":status_code,
+                "status_label":status_label,
+                "slots":slots,
+                "slot_labels":[x.get("slot_label") for x in slots if x.get("slot_label")],
+                "slot_count":len(slots),
+                "scheduled_matches":scheduled,
+                "scheduled_count":len(scheduled),
+            })
+        availability_status_rows.sort(key=lambda x: ({"missing":0,"registered":1,"scheduled":2}.get(x.get("status_code"),9), (x.get("display_name") or "").lower()))
+
         payload.update({
             "ready":True,"tournament":tour,"members":members,"progress":progress,
             "combined_ranking":_combined_ranking(tid),
@@ -971,6 +1022,10 @@ def register_routes(context):
                 "to_label":last_day.strftime("%d/%m/%Y"),
             },
             "active_c1_rooms":payload.get("tournament_rooms") or [],
+            "availability_status_rows":availability_status_rows,
+            "availability_registered_count":registered_count,
+            "availability_scheduled_exempt_count":scheduled_exempt_count,
+            "availability_missing_count":missing_count,
         })
         return payload
 

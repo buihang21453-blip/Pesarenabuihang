@@ -1,0 +1,7 @@
+PES ARENA V1.5.10 - ADMIN THEO DOI GIO RANH C1
+
+- Admin C1 có bảng riêng theo dõi giờ rảnh của từng HLV trong 3 ngày tới.
+- Phân biệt 3 trạng thái: Đã đăng ký / Đã có lịch nên không cần đăng ký / Chưa đăng ký.
+- Hiển thị toàn bộ các mốc giờ rảnh đã khai, lịch đấu 3 ngày tới và trạng thái Host.
+- Có bộ lọc nhanh Tất cả / Đã đăng ký / Đã có lịch / Chưa đăng ký.
+- Không thay đổi cơ chế gate của HLV: chưa có lịch nhưng chỉ cần khai ít nhất 1 giờ rảnh là đủ quyền vào C1 và xem BXH.
