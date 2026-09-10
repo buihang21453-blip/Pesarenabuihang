@@ -518,12 +518,14 @@
 
 
 <style>
+.tournament-c1-host-layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,.85fr);gap:12px;align-items:stretch}.tournament-c1-host-layout .tournament-only-random-grid{margin:0}.tournament-c1-host-layout .tournament-host-guide{height:100%;box-sizing:border-box}.tournament-c1-host-layout .tournament-host-guide ol{margin-bottom:0}@media(max-width:900px){.tournament-c1-host-layout{grid-template-columns:1fr}.tournament-c1-host-layout .tournament-host-guide{margin-top:0!important}}
 .room-center-c1-random-wrap{display:flex;justify-content:center;width:100%}.c1-random-center{width:min(330px,92%);min-height:88px;border:1px solid rgba(245,184,55,.55);box-shadow:0 0 22px rgba(245,184,55,.12)}.c1-random-center:not(.disabled){cursor:pointer;border-color:#f5b837;box-shadow:0 0 30px rgba(245,184,55,.25)}
 .tournament-only-random-card{border:1px solid rgba(245,184,55,.35);background:linear-gradient(135deg,rgba(245,184,55,.08),rgba(255,255,255,.02));}
 .tournament-room-mode-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}.tournament-room-mode-head h3{margin:0 0 6px}.tournament-pool-badge{display:inline-flex;align-items:center;min-height:32px;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.16);font-size:12px;font-weight:700}.tournament-mode-rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}.tournament-mode-rules span{padding:9px 10px;border:1px solid rgba(255,255,255,.1);border-radius:9px;font-size:13px}.tournament-random-action{display:flex;justify-content:center;margin-top:14px}.tournament-random-btn{min-width:220px;font-size:16px;font-weight:800}.tournament-room-wait,.tournament-room-live{text-align:center;margin:14px 0 0;font-weight:700}@media(max-width:640px){.tournament-mode-rules{grid-template-columns:1fr}.tournament-room-mode-head{display:block}.tournament-pool-badge{margin-top:8px}}
 </style>
     {% include "partials/tournament_room_invite.html" %}
 {% if is_tournament_room and tournament_meta %}
+    <div class="tournament-c1-host-layout">
     <div class="room-mode-grid tournament-only-random-grid">
         <div class="room-mode-card tournament-only-random-card">
             <div class="tournament-room-mode-head">
@@ -563,7 +565,7 @@
         </div>
     </div>
 
-    <details class="td-host-guide" style="margin-top:12px;padding:13px 14px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:#091a29">
+    <details class="td-host-guide tournament-host-guide" style="margin-top:0;padding:13px 14px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:#091a29">
         <summary style="cursor:pointer;font-weight:900;color:#f1ca68;list-style:none">🎮 HƯỚNG DẪN TEST HOST</summary>
         <div style="margin-top:10px;color:#dce6ed;font-size:13px;line-height:1.6">
             <div>1. Vào Discord: <a href="https://discord.gg/VTmJBNvx" target="_blank" rel="noopener" style="color:#7bb7ff">discord.gg/VTmJBNvx</a></div>
@@ -575,6 +577,7 @@
             <div>7. Nếu đối thủ xác nhận OK thì thoát trận test và bắt đầu chọn đội thi đấu chính thức.</div>
         </div>
     </details>
+    </div>
     {% endif %}
 
 
