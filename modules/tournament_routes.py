@@ -309,7 +309,14 @@ def register_routes(context):
                 item["stage1_start_at"] = timing.get("stage1_start_at")
                 item["stage1_early_end_at"] = timing.get("stage1_early_end_at")
                 start_dt = _parse_tournament_dt(item.get("stage1_start_at"))
-                item["show_stage1_start_countdown"] = bool(start_dt and start_dt > datetime.now())
+                if start_dt:
+                    if start_dt.tzinfo is None:
+                        now_for_start = datetime.now()
+                    else:
+                        now_for_start = datetime.now(start_dt.tzinfo)
+                    item["show_stage1_start_countdown"] = start_dt > now_for_start
+                else:
+                    item["show_stage1_start_countdown"] = False
                 # Public main tournament standings (Stage 1 + League Phase) for the tournament landing page.
                 member_rows_full, _ = _safe_rows(
                     db.table("tournament_members").select("*").eq("tournament_id", item.get("id")).eq("status", "active"),
