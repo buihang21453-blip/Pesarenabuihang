@@ -21,6 +21,27 @@
 @media(max-width:980px){.tournament-section-grid{grid-template-columns:1fr}.tournament-component-grid{grid-template-columns:repeat(2,1fr)}.tournament-filterbar{grid-template-columns:1fr 1fr}.tournament-hero:after{opacity:.62}.tournament-card-media{height:260px}}
 @media(max-width:620px){.tournament-hero{padding:22px 18px}.tournament-status-tabs{grid-template-columns:1fr}.tournament-quick-watch{grid-template-columns:repeat(2,1fr)}.tournament-filterbar{grid-template-columns:1fr}.tournament-component-grid{grid-template-columns:1fr}.tournament-info{align-items:flex-start;flex-direction:column}.tournament-hero:after{opacity:.30}.tournament-card-media{height:220px}.tournament-card-actions{grid-template-columns:1fr}}
 .tournament-register-box{grid-column:1/-1;margin-top:12px;padding:16px;border:1px solid rgba(231,190,88,.28);border-radius:14px;background:rgba(4,15,25,.86)}.tournament-register-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.tournament-register-box h4{margin:0;color:#f1ca68;font-size:16px}.tournament-register-box>p{margin:7px 0 12px;color:#91a1b0;font-size:12px;line-height:1.5}.tournament-register-step{margin-top:8px;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.07)}.tournament-register-step>strong{display:block;margin-bottom:8px;color:#e6edf4;font-size:13px}.tournament-choice-grid{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.tournament-choice{position:relative;display:inline-flex;align-items:center;gap:6px;color:#c4d0db;cursor:pointer;font-size:13px;line-height:1.2}.tournament-choice input{position:absolute;opacity:0;pointer-events:none}.tournament-choice:before{content:"";display:grid;place-items:center;width:14px;height:14px;box-sizing:border-box;border:1px solid #627487;border-radius:3px;background:#071522;color:#071522;font-size:10px;font-weight:950}.tournament-choice:has(input:checked):before{content:"✓";border-color:#d8a534;background:#d8a534;color:#091521}.tournament-choice:has(input:focus-visible):before{outline:2px solid rgba(216,165,52,.35);outline-offset:2px}.tournament-zalo-input{width:100%;max-width:420px;padding:9px 10px;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:#071522;color:#e7edf3}.tournament-register-step small{display:block;margin-top:5px;color:#7f8e9b}.tournament-help-stack{display:grid;gap:8px;margin-top:10px}.tournament-help-stack details{border:1px solid rgba(255,255,255,.11);border-radius:9px;background:#071522;overflow:hidden}.tournament-help-stack summary{list-style:none;cursor:pointer;padding:10px 12px;color:#e8edf3;font-weight:850;font-size:13px}.tournament-help-stack summary::-webkit-details-marker{display:none}.tournament-help-stack summary:after{content:"⌄";float:right;color:#d8a534}.tournament-help-stack details[open] summary:after{content:"⌃"}.tournament-help-body{padding:0 13px 12px;color:#aab8c4;font-size:12px;line-height:1.55}.tournament-help-body ul{margin:7px 0 0;padding-left:18px}.tournament-help-body li{margin:5px 0}.tournament-help-body strong{color:#f1ca68}.tournament-schedule-info{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;padding:10px 12px;border-left:3px solid #d8a534;border-radius:8px;background:rgba(216,165,52,.055);color:#b9c5cf;font-size:12px;line-height:1.55}.tournament-schedule-info b{color:#f2ce70}.tournament-schedule-info .wide{grid-column:1/-1}.tournament-rules{margin:0}.tournament-rules summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid rgba(231,190,88,.28);border-radius:8px;background:rgba(231,190,88,.07);color:#f0c965;font-size:12px;font-weight:850}.tournament-rules summary::-webkit-details-marker{display:none}.tournament-rules[open] summary{margin-bottom:9px}.tournament-rules-body{padding:11px 12px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#071522;color:#aebbc6;font-size:12px;line-height:1.55}.tournament-rules-body b{color:#f2d171}.tournament-rules-body p{margin:5px 0}.tournament-payment{display:grid;grid-template-columns:160px 1fr;gap:14px;align-items:center}.tournament-payment-qr{padding:7px;border-radius:11px;background:#fff}.tournament-payment-qr img{display:block;width:100%;border-radius:7px}.tournament-payment-copy b{color:#f2cb68}.tournament-payment-copy p{margin:5px 0;color:#94a4b3;font-size:12px;line-height:1.5}.tournament-payment-copy code{display:block;margin-top:8px;padding:8px;border:1px dashed #49617a;border-radius:8px;color:#ffd36c;background:#071522}.tournament-submit-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:13px;flex-wrap:wrap}.tournament-submit-row label{display:flex;align-items:flex-start;gap:8px;color:#bdc8d3;font-size:12px;line-height:1.45}.tournament-submit-row input{margin-top:2px;accent-color:#d8a534}@media(max-width:620px){.tournament-choice-grid{gap:12px}.tournament-schedule-info{grid-template-columns:1fr}.tournament-schedule-info .wide{grid-column:auto}.tournament-payment{grid-template-columns:1fr}.tournament-payment-qr{max-width:190px;margin:auto}}
+
+.tournament-rank-name-btn{appearance:none;border:0;background:transparent;padding:0;color:#f1f5f9;font:inherit;font-weight:900;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(241,202,104,.45);text-underline-offset:3px}
+.tournament-rank-name-btn:hover{color:#f1ca68}
+.tournament-admin-detail-row{display:none}
+.tournament-admin-detail-row.is-open{display:table-row}
+.tournament-admin-detail-cell{padding:14px!important;background:#06131f!important}
+.tournament-admin-detail-grid{display:grid;grid-template-columns:minmax(240px,.75fr) minmax(520px,1.8fr);gap:14px;text-align:left}
+.tournament-admin-detail-card{border:1px solid rgba(255,255,255,.10);border-radius:12px;background:#091a29;padding:13px}
+.tournament-admin-detail-card h5{margin:0 0 10px;color:#f1ca68;font-size:15px}
+.tournament-admin-profile-form{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.tournament-admin-profile-form input,.tournament-admin-profile-form select{background:#06131f;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px}
+.tournament-admin-match-list{display:grid;gap:8px;max-height:420px;overflow:auto}
+.tournament-admin-match{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 10px;border-radius:10px;background:#0b2031;border:1px solid rgba(255,255,255,.08)}
+.tournament-admin-score{display:grid;grid-template-columns:minmax(90px,1fr) 54px auto 54px minmax(90px,1fr) auto;align-items:center;gap:6px;min-width:460px}
+.tournament-admin-score input{width:54px;text-align:center;background:#06131f;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:7px;padding:7px}
+.tournament-admin-score-name{font-size:11px;font-weight:900;color:#dce7ef;line-height:1.15}
+.tournament-admin-score-name.away{text-align:right}
+.tournament-admin-pen-row{grid-column:1/-1;display:flex;justify-content:flex-end;gap:5px;align-items:center;font-size:11px;color:#91a3b1}
+.tournament-admin-pen-row input{width:54px}
+@media(max-width:900px){.tournament-admin-detail-grid{grid-template-columns:1fr}.tournament-admin-match{grid-template-columns:1fr}.tournament-admin-score{min-width:0}}
+@media(max-width:700px){.tournament-admin-score{grid-template-columns:1fr 48px auto 48px 1fr}.tournament-admin-score .btn{grid-column:1/-1}.tournament-admin-score-name{font-size:10px}}
 </style>
 {% endblock %}
 
@@ -77,7 +98,7 @@
           <div class="tournament-card-meta">
             <span>👥 {{ tournament.member_count|default(0) }} HLV</span><span>•</span><span>◯ {{ tournament.phase_name|default('Đang diễn ra') }}</span>
           </div>
-          {% if tournament.stage1_start_at and tournament.phase_name == 'Sắp khai mạc' %}
+          {% if tournament.stage1_start_at %}
           <div class="tournament-public-countdown" data-public-countdown="{{ tournament.stage1_start_at }}">
             <div class="label"><span>⏱️ Khai mạc GĐ1 sau</span><small>Ai cũng có thể theo dõi</small></div>
             <div class="timer"><div class="unit"><b data-cd-d>0</b><span>Ngày</span></div><div class="unit"><b data-cd-h>0</b><span>Giờ</span></div><div class="unit"><b data-cd-m>0</b><span>Phút</span></div><div class="unit"><b data-cd-s>0</b><span>Giây</span></div></div>
@@ -101,10 +122,10 @@
           <div class="tournament-public-ranking" id="ranking">
             <div class="tournament-public-ranking-head">
               <div>
-                <h4>📊 BXH GĐ1</h4>
-                <p>Người ngoài chỉ theo dõi BXH, thành tích, 5 trận gần nhất và win rate của từng HLV.</p>
+                <h4>📊 BXH</h4>
+                <p>BXH chính của giải · kết quả GĐ1 và GĐ2 được cộng liên tục vào cùng một bảng.</p>
               </div>
-              <a href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#stage1">Xem chi tiết →</a>
+              <a href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#ranking">Xem chi tiết →</a>
             </div>
             <div class="tournament-public-ranking-wrap">
               <table>
@@ -112,8 +133,12 @@
                   <tr>
                     <th>Rank</th>
                     <th>Tên HLV</th>
+                    <th>Trận</th>
                     <th>Điểm</th>
                     <th>Thành tích</th>
+                    <th>BT</th>
+                    <th>BB</th>
+                    <th>Hiệu số</th>
                     <th>5 trận gần nhất</th>
                     <th>Win rate</th>
                   </tr>
@@ -122,7 +147,8 @@
                   {% for r in tournament.public_stage1_ranking %}
                   <tr>
                     <td><span class="rank-number{% if r.rank == 1 %} top-1{% elif r.rank == 2 %} top-2{% elif r.rank == 3 %} top-3{% endif %}">{{ r.rank }}</span></td>
-                    <td><span class="coach-name">{{ r.display_name }}</span>{% if current_user and current_user.id|string == r.user_id|string %} <small style="color:#f1ca68;font-weight:850">Bạn</small>{% endif %}</td>
+                    <td>{% if tournament.can_admin_manage %}<button type="button" class="tournament-rank-name-btn" data-central-player-toggle="{{ tournament.id }}-{{ r.user_id }}">{{ r.display_name }}</button>{% else %}<span class="coach-name">{{ r.display_name }}</span>{% endif %}{% if current_user and current_user.id|string == r.user_id|string %} <small style="color:#f1ca68;font-weight:850">Bạn</small>{% endif %}</td>
+                    <td><strong>{{ r.played }}</strong></td>
                     <td><span class="points">{{ r.points }}</span></td>
                     <td>
                       <div class="leaderboard-record">
@@ -131,6 +157,9 @@
                         <span class="record-chip record-chip-loss">{{ r.losses }}B</span>
                       </div>
                     </td>
+                    <td><strong>{{ r.gf }}</strong></td>
+                    <td><strong>{{ r.ga }}</strong></td>
+                    <td><strong>{{ '+' if r.gd > 0 else '' }}{{ r.gd }}</strong></td>
                     <td>
                       <div class="leaderboard-form" aria-label="5 trận gần nhất của {{ r.display_name }}">
                         {% for item in r.recent_form|reverse %}
@@ -143,8 +172,93 @@
                     </td>
                     <td><strong class="leaderboard-winrate">{{ r.winrate }}%</strong></td>
                   </tr>
+                  {% if tournament.can_admin_manage %}
+                  {% set ap = tournament.central_admin_players.get(r.user_id|string, {}) %}
+                  <tr class="tournament-admin-detail-row" data-central-player-panel="{{ tournament.id }}-{{ r.user_id }}">
+                    <td colspan="10" class="tournament-admin-detail-cell">
+                      <div class="tournament-admin-detail-grid">
+                        <div class="tournament-admin-detail-card">
+                          <h5>👤 {{ r.display_name }} · Thông tin</h5>
+                          <div class="small"><strong>Zalo:</strong> {{ ap.zalo_name or '—' }}</div>
+                          <div class="small"><strong>Host:</strong> {{ '✅ Có Host' if ap.has_host else '❌ Không Host' }}</div>
+                          <div class="small"><strong>Khu vực:</strong> {{ ap.host_region or '—' }}</div>
+                          <div class="small"><strong>Pot:</strong> {{ ap.pot_no or '—' }}</div>
+                          <div class="small"><strong>CLB:</strong> {{ ap.fixed_club_name or '—' }}</div>
+                          <form class="tournament-admin-profile-form" method="post" action="{{ url_for('admin_tournament_registration_profile_update',registration_id=(ap.registration_id or 'none')) }}">
+                            <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+                            <input type="hidden" name="user_id" value="{{ r.user_id }}">
+                            <input type="hidden" name="return_to" value="central">
+                            <input name="zalo_name" value="{{ ap.zalo_name|default('',true) }}" placeholder="Tên Zalo" style="grid-column:1/-1">
+                            <select name="host_region">
+                              <option value="Bắc" {{ 'selected' if ap.host_region=='Bắc' else '' }}>Bắc</option>
+                              <option value="Trung" {{ 'selected' if ap.host_region=='Trung' else '' }}>Trung</option>
+                              <option value="Nam" {{ 'selected' if ap.host_region=='Nam' else '' }}>Nam</option>
+                            </select>
+                            <select name="host_choice">
+                              <option value="yes" {{ 'selected' if ap.has_host else '' }}>Có Host</option>
+                              <option value="no" {{ 'selected' if not ap.has_host else '' }}>Không Host</option>
+                            </select>
+                            <button class="btn green" type="submit" style="grid-column:1/-1">💾 Lưu thông tin</button>
+                          </form>
+                        </div>
+                        <div class="tournament-admin-detail-card">
+                          <h5>📅 Khung giờ đã đăng ký</h5>
+                          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:12px">
+                            {% for d in ap.availability_days|default([]) %}
+                            <div style="padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:#071522">
+                              <strong style="font-size:12px;color:#f1ca68">{{ d.label }}</strong>
+                              <div class="small">{{ d.weekday }}</div>
+                              <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
+                                {% for tm in ap.availability_by_day.get(d.date,[]) %}
+                                  <span style="padding:4px 6px;border-radius:6px;background:#0d2a3d;font-size:11px">{{ tm }}</span>
+                                {% else %}
+                                  <span class="small">Chưa đăng ký giờ rảnh.</span>
+                                {% endfor %}
+                              </div>
+                            </div>
+                            {% endfor %}
+                          </div>
+                          <h5>⚔️ Đối thủ · Lịch thi đấu · Lịch sử trận</h5>
+                          <div class="tournament-admin-match-list">
+                            {% for m in ap.matches|default([]) %}
+                            <div class="tournament-admin-match">
+                              <div>
+                                <strong>{{ 'GĐ1' if m.stage_code=='stage1' else ('GĐ2' if m.stage_code=='league' else (m.round_code|upper if m.round_code else 'Knockout')) }} · vs {{ m.opponent_name }}</strong>
+                                <div class="small">📅 {{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa đặt lịch' }} · {{ 'Đã hoàn thành' if m.status=='completed' else 'Chờ thi đấu' }}</div>
+                                {% if m.status=='completed' %}<div class="small"><strong>Tỷ số:</strong> {{ m.home_score }} - {{ m.away_score }}{% if m.home_pen is not none and m.away_pen is not none %} · Pen {{ m.home_pen }} - {{ m.away_pen }}{% endif %}</div>{% endif %}
+                              </div>
+                              <form class="tournament-admin-score" method="post" action="{{ url_for('admin_tournament_match_result',match_id=m.id) }}">
+                                <input type="hidden" name="return_to" value="central">
+                                <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+                                <span class="tournament-admin-score-name">{{ m.home_name }}<br><small>Chủ nhà</small></span>
+                                <input type="number" min="0" name="home_score" value="{{ m.home_score if m.home_score is not none else '' }}" required aria-label="Tỷ số {{ m.home_name }}">
+                                <strong>-</strong>
+                                <input type="number" min="0" name="away_score" value="{{ m.away_score if m.away_score is not none else '' }}" required aria-label="Tỷ số {{ m.away_name }}">
+                                <span class="tournament-admin-score-name away">{{ m.away_name }}<br><small>Khách</small></span>
+                                <button class="btn gold" type="submit">{{ 'Sửa tỷ số' if m.status=='completed' else 'Nhập tỷ số' }}</button>
+                                {% if m.stage_code=='knockout' %}
+                                <div class="tournament-admin-pen-row">
+                                  <span>Penalty:</span>
+                                  <strong>{{ m.home_name }}</strong>
+                                  <input type="number" min="0" name="home_pen" value="{{ m.home_pen if m.home_pen is not none else '' }}" placeholder="Pen">
+                                  <strong>-</strong>
+                                  <input type="number" min="0" name="away_pen" value="{{ m.away_pen if m.away_pen is not none else '' }}" placeholder="Pen">
+                                  <strong>{{ m.away_name }}</strong>
+                                </div>
+                                {% endif %}
+                              </form>
+                            </div>
+                            {% else %}
+                            <div class="small">HLV này chưa có cặp đấu.</div>
+                            {% endfor %}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endif %}
                   {% else %}
-                  <tr><td colspan="6" class="empty-row">Chưa có dữ liệu BXH.</td></tr>
+                  <tr><td colspan="10" class="empty-row">Chưa có dữ liệu BXH.</td></tr>
                   {% endfor %}
                 </tbody>
               </table>
@@ -261,5 +375,18 @@
     });
   });
 })();
+</script>
+
+<script>
+document.addEventListener('click',function(e){
+  var btn=e.target.closest('[data-central-player-toggle]');
+  if(!btn) return;
+  var key=btn.getAttribute('data-central-player-toggle');
+  var panel=document.querySelector('[data-central-player-panel="'+CSS.escape(key)+'"]');
+  document.querySelectorAll('[data-central-player-panel]').forEach(function(row){
+    if(row!==panel) row.classList.remove('is-open');
+  });
+  if(panel) panel.classList.toggle('is-open');
+});
 </script>
 {% endblock %}

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 """Independent Tournament module routes.
 
@@ -295,7 +295,9 @@ def register_routes(context):
             db_ready = not bool(error)
             user = current_user() or {}
             user_id = user.get("id")
+            can_admin_manage_tournament = bool(is_admin_user(user))
             for item in tournament_rows:
+                item["can_admin_manage"] = can_admin_manage_tournament
                 item["my_registration"] = _registration_for_user(item.get("id"), user_id)
                 item["my_member"] = _member_for_user(item.get("id"), user_id)
                 member_rows, _ = _safe_rows(
@@ -306,9 +308,9 @@ def register_routes(context):
                 timing = _tournament_timing_preview(item.get("id"))
                 item["stage1_start_at"] = timing.get("stage1_start_at")
                 item["stage1_early_end_at"] = timing.get("stage1_early_end_at")
-                # Public Stage 1 standings for the tournament landing page.
+                # Public main tournament standings (Stage 1 + League Phase) for the tournament landing page.
                 member_rows_full, _ = _safe_rows(
-                    db.table("tournament_members").select("user_id").eq("tournament_id", item.get("id")).eq("status", "active"),
+                    db.table("tournament_members").select("*").eq("tournament_id", item.get("id")).eq("status", "active"),
                     "tournament_public_ranking_members",
                 )
                 member_ids = [str(r.get("user_id")) for r in member_rows_full if r.get("user_id")]
@@ -319,6 +321,95 @@ def register_routes(context):
                         "tournament_public_ranking_users",
                     )
                     names = {str(u.get("id")): (u.get("display_name") or u.get("username") or "HLV") for u in user_rows}
+
+                # Admin quản lý trực tiếp ngay trên BXH Trung tâm.
+                # Chỉ nạp dữ liệu quản trị khi tài khoản hiện tại là Admin.
+                item["central_admin_players"] = {}
+                if can_admin_manage_tournament and member_ids:
+                    reg_rows, _ = _safe_rows(
+                        db.table("tournament_registrations").select("*")
+                        .eq("tournament_id", item.get("id")).in_("user_id", member_ids),
+                        "tournament_central_admin_profiles",
+                    )
+                    reg_map = {str(r.get("user_id")): r for r in reg_rows if r.get("user_id")}
+                    member_map = {str(m.get("user_id")): m for m in member_rows_full if m.get("user_id")}
+                    admin_match_rows, _ = _safe_rows(
+                        db.table("tournament_matches").select("*")
+                        .eq("tournament_id", item.get("id")).order("created_at"),
+                        "tournament_central_admin_matches",
+                    )
+                    availability_rows, _ = _safe_rows(
+                        db.table("tournament_availability_slots").select("user_id,slot_at")
+                        .eq("tournament_id", item.get("id")).in_("user_id", member_ids).order("slot_at"),
+                        "tournament_central_admin_availability",
+                    )
+                    vn_tz = timezone(timedelta(hours=7))
+                    now_vn = datetime.now(vn_tz)
+                    day_defs = []
+                    day_labels = ("Hôm nay", "Ngày mai", "Ngày kia")
+                    weekday_names = ("Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy","Chủ nhật")
+                    for offset, label in enumerate(day_labels):
+                        d = now_vn.date() + timedelta(days=offset)
+                        day_defs.append({
+                            "date": d.isoformat(),
+                            "label": label,
+                            "weekday": f"{weekday_names[d.weekday()]} · {d.strftime('%d/%m')}",
+                            "is_weekend": d.weekday() >= 5,
+                        })
+                    per_player_availability = {uid: {d["date"]: [] for d in day_defs} for uid in member_ids}
+                    for av in availability_rows:
+                        uid = str(av.get("user_id") or "")
+                        if uid not in per_player_availability:
+                            continue
+                        try:
+                            dt = datetime.fromisoformat(str(av.get("slot_at") or "").replace("Z","+00:00"))
+                            if dt.tzinfo is None:
+                                dt = dt.replace(tzinfo=vn_tz)
+                            dt = dt.astimezone(vn_tz)
+                        except Exception:
+                            continue
+                        day_key = dt.date().isoformat()
+                        if day_key in per_player_availability[uid] and dt > now_vn:
+                            per_player_availability[uid][day_key].append(dt.strftime("%H:%M"))
+                    for uid in per_player_availability:
+                        for day_key in per_player_availability[uid]:
+                            per_player_availability[uid][day_key] = sorted(set(per_player_availability[uid][day_key]))
+
+                    per_player_matches = {uid: [] for uid in member_ids}
+                    for am in admin_match_rows:
+                        h, a = str(am.get("home_user_id") or ""), str(am.get("away_user_id") or "")
+                        home_name = names.get(h, "HLV")
+                        away_name = names.get(a, "HLV")
+                        if h in per_player_matches:
+                            row = dict(am)
+                            row["home_name"] = home_name
+                            row["away_name"] = away_name
+                            row["opponent_name"] = away_name
+                            row["is_home_for_player"] = True
+                            per_player_matches[h].append(row)
+                        if a in per_player_matches:
+                            row = dict(am)
+                            row["home_name"] = home_name
+                            row["away_name"] = away_name
+                            row["opponent_name"] = home_name
+                            row["is_home_for_player"] = False
+                            per_player_matches[a].append(row)
+                    for uid in member_ids:
+                        reg = reg_map.get(uid) or {}
+                        mem = member_map.get(uid) or {}
+                        item["central_admin_players"][uid] = {
+                            "user_id": uid,
+                            "display_name": names.get(uid, "HLV"),
+                            "registration_id": reg.get("id"),
+                            "zalo_name": reg.get("zalo_name") or mem.get("zalo_name") or "",
+                            "has_host": bool(reg.get("has_host")),
+                            "host_region": reg.get("host_region") or "—",
+                            "pot_no": mem.get("pot_no"),
+                            "fixed_club_name": mem.get("fixed_club_name") or "",
+                            "matches": per_player_matches.get(uid, []),
+                            "availability_days": day_defs,
+                            "availability_by_day": per_player_availability.get(uid, {}),
+                        }
                 ranking = {
                     uid: {
                         "user_id": uid,
@@ -339,7 +430,7 @@ def register_routes(context):
                 match_rows, _ = _safe_rows(
                     db.table("tournament_matches")
                     .select("home_user_id,away_user_id,home_score,away_score,status,stage_code,completed_at,updated_at,created_at")
-                    .eq("tournament_id", item.get("id")).eq("stage_code", "stage1").eq("status", "completed"),
+                    .eq("tournament_id", item.get("id")).in_("stage_code", ["stage1", "league"]).eq("status", "completed"),
                     "tournament_public_ranking_matches",
                 )
                 completed_matches = []
@@ -645,6 +736,11 @@ def register_routes(context):
             pass
         log_admin_action("Cập nhật thông tin HLV giải đấu", "tournament_registration", target_id=reg_id, details=payload)
         flash("Đã cập nhật Khu vực / Host / Zalo của HLV.", "success")
+        return_to = (request.form.get("return_to") or "").strip()
+        if return_to == "central" and tournament_id:
+            return redirect(url_for("tournaments") + "#ranking")
+        if return_to == "tournament" and tournament_id:
+            return redirect(url_for("tournament_detail", tournament_id=tournament_id) + "#bxh")
         return redirect_admin("tournaments")
 
     @app.get('/admin/tournaments/<tournament_id>/export.xlsx')

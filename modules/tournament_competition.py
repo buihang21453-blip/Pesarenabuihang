@@ -87,7 +87,7 @@ def register_routes(context):
         users = {}
         profiles = {}
         if ids:
-            urows, _ = _rows(db.table("users").select("id,username,display_name,avatar_url").in_("id", ids), "ops_member_users")
+            urows, _ = _rows(db.table("users").select("id,username,display_name,avatar_url,is_online,last_seen_at").in_("id", ids), "ops_member_users")
             users = {str(u.get("id")):u for u in urows}
             rrows, _ = _rows(db.table("tournament_registrations").select("id,user_id,zalo_name,has_host,host_region,payment_status,status,registered_at,amount_paid,fee_amount,responsibility_amount,responsibility_deducted,amount_refunded,payment_note").eq("tournament_id", tournament_id).in_("user_id", ids), "ops_member_registration_profiles")
             profiles = {str(x.get("user_id")):x for x in rrows if x.get("user_id")}
@@ -127,6 +127,30 @@ def register_routes(context):
             q=q.in_("status", statuses)
         rows,_=_rows(q.order("created_at"), "ops_matches")
         return rows
+
+    def _stage1_pair_completed_count(tournament_id, user_a, user_b, exclude_match_id=None):
+        """Số trận GĐ1 đã hoàn thành giữa đúng 2 HLV, bất kể ai là chủ/khách."""
+        a=str(user_a or ""); b=str(user_b or "")
+        count=0
+        for row in _matches(tournament_id, "stage1"):
+            if exclude_match_id and str(row.get("id"))==str(exclude_match_id):
+                continue
+            if str(row.get("status") or "")!="completed":
+                continue
+            h=str(row.get("home_user_id") or ""); aw=str(row.get("away_user_id") or "")
+            if {h,aw}=={a,b}:
+                count+=1
+        return count
+
+    def _stage1_pair_is_complete(tournament_id, match, exclude_current=False):
+        if not match or str(match.get("stage_code") or "")!="stage1":
+            return False
+        return _stage1_pair_completed_count(
+            tournament_id,
+            match.get("home_user_id"),
+            match.get("away_user_id"),
+            match.get("id") if exclude_current else None,
+        ) >= 2
 
     def _ranking(tournament_id, stage_code):
         members=_all_members(tournament_id)
@@ -246,7 +270,7 @@ def register_routes(context):
                         "label":f"{hour:02d}:00 – {hour+1:02d}:00",
                     })
             weekday_names=("Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy","Chủ nhật")
-            days.append({"date":d.isoformat(),"label":label,"weekday":f"{weekday_names[d.weekday()]} · {d.strftime('%d/%m')}","slots":slots})
+            days.append({"date":d.isoformat(),"label":label,"weekday":f"{weekday_names[d.weekday()]} · {d.strftime('%d/%m')}","is_weekend":d.weekday()>=5,"slots":slots})
         return days
 
     def _availability_rows(tournament_id, user_ids=None):
@@ -684,25 +708,49 @@ def register_routes(context):
         clubs,_=_rows(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).order("name"),"ops_clubs")
         me_progress=next((r for r in s1 if str(r["user_id"])==str(user_id)),None)
         ops_events=_event_ops_payload(tournament_id,user_id)
-        host_ready_map=_setting(tournament_id,"host_live_ready",{}) or {}
         members_all=_all_members(tournament_id)
+
+        # V1.4.123: Host đang rảnh được xác định hoàn toàn tự động.
+        # Điều kiện: tài khoản có Host + đang online thật + không nằm trong bất kỳ phòng đấu đang hoạt động nào.
+        member_ids={str(hm.get("user_id") or "") for hm in members_all if hm.get("user_id")}
+        busy_user_ids=set()
+        if member_ids:
+            active_room_statuses=["waiting_ready","playing","friendly_playing","waiting_result_confirm","disputed","confirmed"]
+            active_rooms,_=_rows(
+                db.table("match_rooms")
+                .select("host_user_id,guest_user_id,status")
+                .in_("status",active_room_statuses)
+                .limit(500),
+                "ops_available_hosts_active_rooms",
+            )
+            for ar in active_rooms:
+                hid=str(ar.get("host_user_id") or "")
+                gid=str(ar.get("guest_user_id") or "")
+                if hid in member_ids: busy_user_ids.add(hid)
+                if gid in member_ids: busy_user_ids.add(gid)
+
         host_ready=[]
         for hm in members_all:
             huid=str(hm.get("user_id") or "")
-            if hm.get("has_host") and host_ready_map.get(huid):
-                host_ready.append({"user_id":huid,"display_name":hm.get("display_name") or "HLV","region":hm.get("host_region") or "—"})
+            user_row=hm.get("user") or {}
+            if hm.get("has_host") and is_user_online_now(user_row) and huid not in busy_user_ids:
+                host_ready.append({
+                    "user_id":huid,
+                    "display_name":hm.get("display_name") or "HLV",
+                    "region":hm.get("host_region") or "—",
+                })
         my_host_profile=next((hm for hm in members_all if str(hm.get("user_id"))==str(user_id)),{})
         c1_test_matches=_c1_test_confirmed_matches(tournament_id)
         c1_test_ranking=_c1_test_ranking(tournament_id)
         return {"tournament":tour,"member":member,"stages":stages,"stage1_ranking":s1,"league_ranking":league,"combined_ranking":_combined_ranking(tournament_id),
                 "matches":matches,"hosts":hosts,"clubs":clubs,"me_progress":me_progress,"rewards":_reward_summary(tournament_id,user_id),"availability":availability,
-                "host_ready":host_ready,"my_has_host":bool(my_host_profile.get("has_host")),"my_host_ready":bool(host_ready_map.get(str(user_id))),
+                "host_ready":host_ready,"my_has_host":bool(my_host_profile.get("has_host")),"my_host_ready":False,
                 "event_ops":ops_events,"knockout_flow":_setting(tournament_id,"knockout_flow",{}) or {},
                 "stage1_club_pool":_stage1_club_pool(tournament_id),"tournament_rooms":_tournament_rooms(tournament_id),
                 "all_team_options":_stage1_eligible_clubs(),"stage1_team_options":_stage1_eligible_clubs(),"league_config":_setting(tournament_id,"league_config",{}) or {},
                 "stage1_readiness":_stage1_readiness(tournament_id),
                 "c1_test_stage1_ranking":c1_test_ranking,
-                "c1_test_recent_matches":c1_test_matches[:5]}
+                "c1_test_recent_matches":c1_test_matches[:5],"tournament_members":members_all,"tournament_member_map":{str(x.get("user_id")):x for x in members_all}}
 
     def _tournament_scale(tournament_id):
         """Planned/actual match volume for Admin after registration closes."""
@@ -811,6 +859,7 @@ def register_routes(context):
         uid=str((current_user() or {}).get("id") or "")
         user=current_user() or {}
         data=_detail_payload(tournament_id,uid)
+        data["can_admin_manage_tournament"]=bool(is_admin_user(user)) if data else False
         if not data:
             flash("Không tìm thấy giải đấu.","error"); return redirect(url_for("tournaments"))
         # Admin vào giao diện C1 bằng chính tài khoản Admin, không mượn danh tính HLV khác.
@@ -1033,6 +1082,10 @@ def register_routes(context):
         match,_=_one(db.table("tournament_matches").select("*").eq("id",match_id),"ops_match_result_lookup")
         if not match:
             flash("Không tìm thấy trận.","error"); return redirect_admin("tournaments")
+        if str(match.get("stage_code") or "")=="stage1" and str(match.get("status") or "")!="completed":
+            if _stage1_pair_completed_count(match.get("tournament_id"), match.get("home_user_id"), match.get("away_user_id"), exclude_match_id=match.get("id")) >= 2:
+                flash("Cặp HLV này đã hoàn thành đủ 2 trận. Không thể tính thêm kết quả GĐ1.","warning")
+                return redirect_admin("tournaments")
         hs=max(0,int(request.form.get("home_score") or 0)); aw=max(0,int(request.form.get("away_score") or 0))
         hp=request.form.get("home_pen"); ap=request.form.get("away_pen")
         payload={"home_score":hs,"away_score":aw,"home_pen":int(hp) if hp not in (None,'') else None,"away_pen":int(ap) if ap not in (None,'') else None,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}
@@ -1048,7 +1101,13 @@ def register_routes(context):
             try: _maybe_advance_knockout(match.get("tournament_id"))
             except Exception as exc: app.logger.warning("Knockout auto advance failed: %s",exc)
         log_admin_action("Cập nhật kết quả trận giải","tournament_match",details={"match_id":match_id,"score":f"{hs}-{aw}"})
-        flash("Đã lưu kết quả trận giải.","success"); return redirect_admin("tournaments")
+        flash("Đã lưu kết quả trận giải.","success")
+        return_to = (request.form.get("return_to") or "").strip()
+        if return_to == "central":
+            return redirect(url_for("tournaments") + "#ranking")
+        if return_to == "tournament":
+            return redirect(url_for("tournament_detail", tournament_id=match.get("tournament_id")) + "#bxh")
+        return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/pot/generate')
     @login_required
@@ -1314,14 +1373,28 @@ def register_routes(context):
         return TOURNAMENT_ROOM_PREFIX + json.dumps(meta,ensure_ascii=False,separators=(",",":"))
 
     def _tournament_rooms(tournament_id):
-        rows,_=_rows(db.table("match_rooms").select("*").order("updated_at",desc=True).limit(120),"ops_tournament_rooms")
+        # Chỉ hiển thị các phòng C1 đang thực sự hoạt động. Phòng đã hoàn tất/đóng
+        # không được chất đống ở Trung tâm. Nếu một trận từng sinh nhiều phòng, chỉ
+        # lấy phòng mới nhất của tournament_match_id đó.
+        rows,_=_rows(db.table("match_rooms").select("*").order("updated_at",desc=True).limit(160),"ops_tournament_rooms")
         matches={str(m.get("id")):m for m in _decorate_matches(tournament_id,_matches(tournament_id))}
-        out=[]
+        active_statuses={"waiting_ready","playing","friendly_playing","waiting_result_confirm","disputed"}
+        out=[]; seen_match_ids=set()
         for r in rows:
+            if str(r.get("status") or "") not in active_statuses:
+                continue
             meta=_room_meta(r)
             if not meta or str(meta.get("tournament_id"))!=str(tournament_id): continue
             mid=str(meta.get("tournament_match_id") or "")
+            if not mid or mid in seen_match_ids:
+                continue
             m=matches.get(mid) or {}
+            if not m:
+                continue
+            # Trận đã completed/cancelled thì phòng không còn là phòng đang hoạt động.
+            if str(m.get("status") or "") in {"completed","cancelled"}:
+                continue
+            seen_match_ids.add(mid)
             host=get_user(r.get("host_user_id")) if r.get("host_user_id") else None
             guest=get_user(r.get("guest_user_id")) if r.get("guest_user_id") else None
             expected_home=m.get("home_name") or meta.get("home_name") or "HLV 1"
@@ -1332,7 +1405,14 @@ def register_routes(context):
             r["expected_home_name"]=expected_home; r["expected_away_name"]=expected_away
             if r.get("guest_user_id"):
                 r["public_label"]=f'{r["host_name"]} vs {r["guest_name"] or expected_away}'
-                r["public_status"]="Đang thi đấu" if r.get("status") in {"playing","friendly_playing"} else "Đủ 2 HLV"
+                if r.get("status") in {"playing","friendly_playing"}:
+                    r["public_status"]="Đang thi đấu"
+                elif r.get("status")=="waiting_result_confirm":
+                    r["public_status"]="Chờ xác nhận kết quả"
+                elif r.get("status")=="disputed":
+                    r["public_status"]="Đang xử lý kết quả"
+                else:
+                    r["public_status"]="Đủ 2 HLV"
             else:
                 expected = expected_away if str(r.get("host_user_id"))==str(m.get("home_user_id")) else expected_home
                 r["public_label"]=f'{r["host_name"]} · chờ {expected}'
@@ -1617,6 +1697,9 @@ def register_routes(context):
         match,_=_one(db.table("tournament_matches").select("*").eq("id",match_id).eq("tournament_id",tournament_id),"ops_tournament_room_match")
         if not match or uid not in {str(match.get("home_user_id")),str(match.get("away_user_id"))}:
             flash("Bạn không thuộc trận đấu này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
+        if _stage1_pair_is_complete(tournament_id, match):
+            flash("Cặp HLV này đã hoàn thành đủ 2 trận.","warning")
+            return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
         existing=None
         for r in _tournament_rooms(tournament_id):
             if str((r.get("tournament_meta") or {}).get("tournament_match_id"))==str(match_id) and r.get("status") not in {"completed","cancelled"}: existing=r; break
@@ -1743,20 +1826,6 @@ def register_routes(context):
         match,_=_one(db.table("tournament_matches").select("*").eq("id",match_id).eq("tournament_id",tournament_id),"ops_tournament_result_match")
         return room,meta,match
 
-    def _stage1_pair_completed_count(tournament_id, user_a, user_b, exclude_match_id=None):
-        a=str(user_a or ""); b=str(user_b or "")
-        if not a or not b or a==b:
-            return 0
-        rows=_matches(tournament_id,"stage1",["completed"])
-        count=0
-        for m in rows:
-            if exclude_match_id and str(m.get("id") or "")==str(exclude_match_id):
-                continue
-            pair={str(m.get("home_user_id") or ""),str(m.get("away_user_id") or "")}
-            if pair=={a,b}:
-                count += 1
-        return count
-
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/submit-result')
     @login_required
     def tournament_room_submit_result(tournament_id,room_id):
@@ -1768,16 +1837,9 @@ def register_routes(context):
             flash("Chỉ chủ phòng mới được nhập kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
         if str(match.get("status")) in {"completed","cancelled"}:
             flash("Trận này đã hoàn tất.","warning"); return redirect(url_for("room_detail",room_id=room_id))
-        if str(match.get("stage_code") or "")=="stage1":
-            pair_count=_stage1_pair_completed_count(
-                tournament_id,
-                match.get("home_user_id"),
-                match.get("away_user_id"),
-                exclude_match_id=match.get("id"),
-            )
-            if pair_count >= 2:
-                flash("Cặp HLV này đã hoàn thành đủ 2 trận.","warning")
-                return redirect(url_for("room_detail",room_id=room_id))
+        if _stage1_pair_is_complete(tournament_id, match):
+            flash("Cặp HLV này đã hoàn thành đủ 2 trận. Kết quả này không được tính.","warning")
+            return redirect(url_for("room_detail",room_id=room_id))
         try:
             hs=max(0,min(99,int(request.form.get("host_score") or 0))); gs=max(0,min(99,int(request.form.get("guest_score") or 0)))
         except Exception:
@@ -1812,16 +1874,9 @@ def register_routes(context):
         prop=_tournament_result_proposal(tournament_id,match.get("id"))
         if prop.get("status")!="waiting_confirm":
             flash("Không có kết quả nào đang chờ xác nhận.","warning"); return redirect(url_for("room_detail",room_id=room_id))
-        if str(match.get("stage_code") or "")=="stage1":
-            pair_count=_stage1_pair_completed_count(
-                tournament_id,
-                match.get("home_user_id"),
-                match.get("away_user_id"),
-                exclude_match_id=match.get("id"),
-            )
-            if pair_count >= 2:
-                flash("Cặp HLV này đã hoàn thành đủ 2 trận.","warning")
-                return redirect(url_for("room_detail",room_id=room_id))
+        if _stage1_pair_is_complete(tournament_id, match):
+            flash("Cặp HLV này đã hoàn thành đủ 2 trận. Kết quả này không được tính.","warning")
+            return redirect(url_for("room_detail",room_id=room_id))
         hs=int(prop.get("home_score") or 0); aw=int(prop.get("away_score") or 0)
         winner=match.get("home_user_id") if hs>aw else (match.get("away_user_id") if aw>hs else None)
         execute_query(db.table("tournament_matches").update({"home_score":hs,"away_score":aw,"winner_user_id":winner,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_confirm",attempts=2)
@@ -2269,8 +2324,10 @@ def register_routes(context):
                     selected.append(iso)
             except Exception:
                 continue
-        selected=sorted(set(selected))
         key=f"c1_test_availability_{uid}" if is_test else f"admin_test_availability_{uid}"
+        previous=_setting(tournament_id,key,{}) or {}
+        custom_existing=[str(x) for x in (previous.get("slots") or []) if str(x) not in allowed]
+        selected=sorted(set(selected+custom_existing))
         execute_query(
             db.table("tournament_settings").upsert({
                 "tournament_id":tournament_id,
@@ -2280,7 +2337,7 @@ def register_routes(context):
             },on_conflict="tournament_id,setting_key"),
             "ops_admin_test_availability",attempts=2,
         )
-        flash(f"Đã lưu {len(selected)} khung giờ TEST (mỗi khung 1 giờ). Không ảnh hưởng lịch của 16 HLV chính thức.","success")
+        flash(f"Đã lưu {len(selected)} khung giờ TEST. Giờ linh hoạt đã thêm trước đó vẫn được giữ nguyên.","success")
         return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
 
     @app.post('/tournaments/<tournament_id>/availability/simple')
@@ -2324,8 +2381,12 @@ def register_routes(context):
     @app.post('/tournaments/<tournament_id>/availability/custom')
     @login_required
     def tournament_availability_custom_add(tournament_id):
-        uid=(current_user() or {}).get("id")
-        if not _member(tournament_id,uid):
+        user=current_user() or {}
+        uid=str(user.get("id") or "")
+        member=_member(tournament_id,uid)
+        is_test=_is_c1_test_user(tournament_id,uid)
+        is_admin_view=is_admin_user(user) and not member
+        if not member and not is_test and not is_admin_view:
             flash("Bạn chưa phải HLV của giải đấu này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
         day_raw=(request.form.get("day_date") or "").strip()
         start_raw=(request.form.get("start_time") or "").strip()
@@ -2338,24 +2399,31 @@ def register_routes(context):
             start=datetime(day.year,day.month,day.day,sh,sm,tzinfo=vn_tz)
             end=datetime(day.year,day.month,day.day,eh,em,tzinfo=vn_tz)
         except Exception:
-            flash("Giờ thêm không hợp lệ.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            flash("Giờ linh hoạt không hợp lệ.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
         allowed_days={d["date"] for d in _availability_days()}
         if day.isoformat() not in allowed_days or end<=start:
-            flash("Hãy chọn đúng Hôm nay, Ngày mai hoặc Ngày kia và giờ kết thúc phải sau giờ bắt đầu.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
-        # Lưu theo bước 30 phút để hai HLV có thể tìm được giờ trùng linh động trong khoảng đã chọn.
+            flash("Hãy chọn Hôm nay, Ngày mai hoặc Ngày kia và giờ kết thúc phải sau giờ bắt đầu.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        # Bước 30 phút để hỗ trợ giờ linh hoạt, ví dụ 18:30–20:30.
         slots=[]; cursor=start.replace(second=0,microsecond=0)
         while cursor<=end and len(slots)<49:
             if cursor>now: slots.append(cursor.isoformat())
             cursor += timedelta(minutes=30)
         if not slots:
             flash("Khoảng giờ này đã qua hoặc không còn giờ hợp lệ.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
-        current={r.get("slot_iso") for r in _availability_rows(tournament_id,[uid])}
-        added=0
-        for iso in slots:
-            if iso in current: continue
-            execute_query(db.table("tournament_availability_slots").insert({"tournament_id":tournament_id,"user_id":uid,"slot_at":iso,"created_at":now_iso(),"updated_at":now_iso()}),"ops_availability_custom_insert",attempts=2)
-            current.add(iso); added+=1
-        flash(f"Đã thêm giờ linh động {start.strftime('%H:%M')}–{end.strftime('%H:%M')} ({added} mốc).","success")
+        if member:
+            current={r.get("slot_iso") for r in _availability_rows(tournament_id,[uid])}
+            added=0
+            for iso in slots:
+                if iso in current: continue
+                execute_query(db.table("tournament_availability_slots").insert({"tournament_id":tournament_id,"user_id":uid,"slot_at":iso,"created_at":now_iso(),"updated_at":now_iso()}),"ops_availability_custom_insert",attempts=2)
+                current.add(iso); added+=1
+        else:
+            key=f"c1_test_availability_{uid}" if is_test else f"admin_test_availability_{uid}"
+            state=_setting(tournament_id,key,{}) or {}
+            current={str(x) for x in (state.get("slots") or [])}
+            before=len(current); current.update(slots); added=len(current)-before
+            execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":key,"setting_value":{"slots":sorted(current),"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_test_availability_custom",attempts=2)
+        flash(f"Đã thêm giờ linh hoạt {start.strftime('%H:%M')}–{end.strftime('%H:%M')} ({added} mốc 30 phút).","success")
         return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
 
     @app.post('/tournaments/<tournament_id>/host-ready')
