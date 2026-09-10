@@ -1049,8 +1049,8 @@ def register_routes(context):
             }
             data["me_progress"]=None
             data["rewards"]={}
-        # V1.5.7: HLV thật phải có lịch đã chốt trong 3 ngày tới HOẶC đã khai ít nhất
-        # một giờ rảnh thì mới vào được khu C1/BXH. Admin và tài khoản TEST được miễn gate.
+        # V1.5.8: HLV thật được vào C1/BXH khi có lịch đã chốt trong 3 ngày tới HOẶC
+        # chỉ cần đã khai ít nhất 1 giờ rảnh. Admin và tài khoản TEST được miễn gate.
         public_ranking=list(data.get("combined_ranking") or [])
         data["availability_gate_locked"]=False
         data["availability_gate_reason"]=""

@@ -1,0 +1,21 @@
+PES ARENA V1.5.8 - C1 THI DAU GOM TAB + QUYEN GIO RANH
+
+1. Gop 3 tab HLV cu:
+   - Phong thi dau
+   - Doi thu cua toi
+   - Lich thi dau
+   thanh mot tab duy nhat: "🎮 Thi đấu".
+
+2. Khi vao tab Thi dau, HLV thay lien tuc cac khoi:
+   - Phong thi dau / Host
+   - Doi thu cua toi
+   - Lich thi dau / Gio ranh
+   Khong xoa chuc nang cu, chi gom lai giao dien.
+
+3. Chot lai dieu kien vao C1 / xem BXH:
+   - Co lich thi dau da chot trong 3 ngay toi: DUOC VAO.
+   - Chua co lich nhung da khai it nhat 1 gio ranh: DUOC VAO.
+   - Chua co ca hai: BI GIU TAI MAN DANG KY GIO RANH.
+
+4. Khong them SQL moi.
+5. Khong thay doi Room/Rank/Shop/Season va cac module ngoai C1.
