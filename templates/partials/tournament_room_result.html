@@ -12,23 +12,13 @@
     <button class="btn green" type="submit">Gửi kết quả TEST</button>
   </form>
   {% elif room.status == 'waiting_result_confirm' %}
-    <div class="room-result-review tournament-result-review" aria-label="Tỷ số TEST C1 đang chờ xác nhận">
-      <div class="room-result-score">{{ room.host_score if room.host_score is not none else 0 }} <span>-</span> {{ room.guest_score if room.guest_score is not none else 0 }}</div>
-      <div class="room-result-waiting" style="margin-bottom:10px">🧪 KẾT QUẢ TEST C1 · CHỜ XÁC NHẬN</div>
-      {% if room_viewer_is_guest %}
-        <div class="room-result-actions">
-          <form method="post" action="{{ url_for('c1_test_room_confirm_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}"><button class="room-result-btn confirm" type="submit">✓ XÁC NHẬN</button></form>
-          <details class="room-result-dispute">
-            <summary class="room-result-btn disagree">× KHÔNG ĐỒNG Ý</summary>
-            <form class="dispute-form room-result-dispute-form" method="post" action="{{ url_for('c1_test_room_dispute_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}">
-              <label>Lý do không đồng ý</label>
-              <select name="reason" required><option value="">-- Chọn lý do --</option><option value="Sai tỷ số">Sai tỷ số</option><option value="Sai người thắng">Sai người thắng</option><option value="Trận bị gián đoạn">Trận bị gián đoạn</option><option value="Lý do khác">Lý do khác</option></select>
-              <button class="btn red" type="submit">Gửi cho Admin</button>
-            </form>
-          </details>
-        </div>
-      {% else %}<div class="room-result-waiting">Đã gửi kết quả · Đang chờ đối thủ xác nhận</div>{% endif %}
-    </div>
+    <div style="font-size:28px;font-weight:800;margin:8px 0">{{ room.host_score }} - {{ room.guest_score }}</div>
+    {% if room_viewer_is_guest %}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <form method="post" action="{{ url_for('c1_test_room_confirm_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}"><button class="btn green" type="submit">✓ Xác nhận kết quả TEST</button></form>
+        <form method="post" action="{{ url_for('c1_test_room_dispute_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="display:flex;gap:6px;flex-wrap:wrap"><input name="reason" maxlength="300" placeholder="Lý do sai kết quả"><button class="btn red" type="submit">⚠ Báo sai kết quả</button></form>
+      </div>
+    {% else %}<p class="small">Đang chờ tài khoản Test còn lại xác nhận.</p>{% endif %}
   {% elif room.status == 'confirmed' %}
     <strong>✅ Kết quả TEST đã xác nhận: {{ tr.host_score|default(room.host_score) }} - {{ tr.guest_score|default(room.guest_score) }}</strong>
     <p class="small" style="margin:6px 0 0;color:#9ad9a9">BXH TEST C1 đã cập nhật. Kết quả này chỉ hiện ở khu TEST, không cộng vào BXH C1 thật hoặc Rank.</p>
@@ -48,37 +38,13 @@
     <button class="btn green" type="submit">Gửi kết quả</button>
   </form>
   {% elif room.status == 'waiting_result_confirm' %}
-    <div class="room-result-review tournament-result-review" aria-label="Tỷ số giải C1 đang chờ xác nhận">
-      <div class="room-result-score">{{ room.host_score if room.host_score is not none else 0 }} <span>-</span> {{ room.guest_score if room.guest_score is not none else 0 }}</div>
-      <div class="room-result-waiting" style="margin-bottom:10px">🏆 KẾT QUẢ TRẬN C1 · CHỜ XÁC NHẬN</div>
-      {% if room_viewer_is_guest or current_user.role == 'admin' %}
-        <div class="room-result-actions">
-          <form method="post" action="{{ url_for('tournament_room_confirm_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}">
-            <button class="room-result-btn confirm" type="submit">✓ XÁC NHẬN</button>
-          </form>
-          <details class="room-result-dispute">
-            <summary class="room-result-btn disagree">× KHÔNG ĐỒNG Ý</summary>
-            <form class="dispute-form room-result-dispute-form room-action-confirm-form" method="post" action="{{ url_for('tournament_room_dispute_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}"
-                  data-modal-tone="warning" data-modal-icon="⚠" data-modal-title="Báo sai kết quả?"
-                  data-modal-message="Trận C1 sẽ tạm dừng và chuyển tới Admin xử lý."
-                  data-modal-note="CHỜ ADMIN XỬ LÝ" data-modal-confirm-label="Gửi báo sai">
-              <label>Lý do không đồng ý</label>
-              <select name="reason" required>
-                <option value="">-- Chọn lý do --</option>
-                <option value="Sai tỷ số">Sai tỷ số</option>
-                <option value="Sai người thắng">Sai người thắng</option>
-                <option value="Trận bị gián đoạn">Trận bị gián đoạn</option>
-                <option value="Kết quả nhập không đúng thỏa thuận">Kết quả nhập không đúng thỏa thuận</option>
-                <option value="Lý do khác">Lý do khác</option>
-              </select>
-              <button class="btn red" type="submit">Gửi cho Admin</button>
-            </form>
-          </details>
-        </div>
-      {% else %}
-        <div class="room-result-waiting">Đã gửi kết quả · Đang chờ đối thủ xác nhận</div>
-      {% endif %}
-    </div>
+    <div style="font-size:28px;font-weight:800;margin:8px 0">{{ room.host_score }} - {{ room.guest_score }}</div>
+    {% if room_viewer_is_guest or current_user.role == 'admin' %}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <form method="post" action="{{ url_for('tournament_room_confirm_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}"><button class="btn green" type="submit">✓ Xác nhận kết quả</button></form>
+        <form method="post" action="{{ url_for('tournament_room_dispute_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="display:flex;gap:6px;flex-wrap:wrap"><input name="reason" maxlength="300" placeholder="Lý do sai kết quả"><button class="btn red" type="submit">⚠ Báo sai kết quả</button></form>
+      </div>
+    {% else %}<p class="small">Đang chờ đối thủ xác nhận kết quả.</p>{% endif %}
   {% elif tournament_match.status == 'completed' or room.status == 'confirmed' %}
     <strong>✅ Trận đã hoàn tất: {{ tournament_match.home_score }} - {{ tournament_match.away_score }}</strong>
   {% elif tournament_match.status == 'disputed' or room.status == 'disputed' %}

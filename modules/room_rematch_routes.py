@@ -228,22 +228,6 @@ def register_routes(context):
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("dashboard"))
 
-        # C1/tournament rooms have their own match lifecycle. Never let the generic
-        # Rank rematch flow normalize a tournament room back to ranked mode.
-        room_note = str(room.get("note") or "")
-        is_tournament_room = room_note.startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament"
-        if is_tournament_room:
-            try:
-                import json
-                meta = json.loads(room_note[len("TOURNAMENT_ROOM|"):]) if room_note.startswith("TOURNAMENT_ROOM|") else {}
-            except Exception:
-                meta = {}
-            tournament_id = str(meta.get("tournament_id") or "")
-            flash("Trận C1 đã hoàn tất. Hãy mở trận tiếp theo từ mục Đối thủ/Phòng thi đấu của giải.", "info")
-            if tournament_id:
-                return redirect(url_for("tournament_detail", tournament_id=tournament_id) + "#rooms")
-            return redirect(url_for("tournaments"))
-
         if user["id"] not in [room["host_user_id"], room["guest_user_id"]]:
             flash("Bạn không thuộc phòng này.", "danger")
             return redirect(url_for("dashboard"))
@@ -383,22 +367,6 @@ def register_routes(context):
         if not room:
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("dashboard"))
-
-        # C1/tournament rooms have their own match lifecycle. Never let the generic
-        # Rank rematch flow normalize a tournament room back to ranked mode.
-        room_note = str(room.get("note") or "")
-        is_tournament_room = room_note.startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament"
-        if is_tournament_room:
-            try:
-                import json
-                meta = json.loads(room_note[len("TOURNAMENT_ROOM|"):]) if room_note.startswith("TOURNAMENT_ROOM|") else {}
-            except Exception:
-                meta = {}
-            tournament_id = str(meta.get("tournament_id") or "")
-            flash("Trận C1 đã hoàn tất. Hãy mở trận tiếp theo từ mục Đối thủ/Phòng thi đấu của giải.", "info")
-            if tournament_id:
-                return redirect(url_for("tournament_detail", tournament_id=tournament_id) + "#rooms")
-            return redirect(url_for("tournaments"))
 
         if user["id"] not in [room["host_user_id"], room["guest_user_id"]]:
             flash("Bạn không thuộc phòng này.", "danger")

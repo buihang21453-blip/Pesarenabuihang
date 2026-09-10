@@ -351,12 +351,6 @@
                             </form>
                         </div>
                         {% elif room.status == 'confirmed' and (room_room_viewer_is_host or room_viewer_is_guest) %}
-                        {% if is_tournament_room and tournament_meta %}
-                        <div class="room-center-primary-actions room-action-zone">
-                            <a class="btn gold room-center-action-btn" href="{{ url_for('tournament_detail', tournament_id=tournament_meta.tournament_id) }}#rooms">🏆 Trận tiếp theo</a>
-                            <a class="btn gray room-center-action-btn" href="{{ url_for('tournament_detail', tournament_id=tournament_meta.tournament_id) }}">Về giải đấu</a>
-                        </div>
-                        {% else %}
                         {% set current_has_rematch_ready = (room_room_viewer_is_host and room.rematch_host_ready) or (room_viewer_is_guest and room.rematch_guest_ready) %}
                         <div class="room-center-primary-actions room-action-zone">
                             <form method="post" action="{{ url_for('room_rematch', room_id=room.id) }}">
@@ -372,7 +366,6 @@
                                 <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
                             </form>
                         </div>
-                        {% endif %}
                         {% elif room.status not in ['playing', 'waiting_result_confirm'] %}
                         <div class="room-center-state-pill">{{ room.status|replace('_',' ')|title }}</div>
                         {% endif %}
