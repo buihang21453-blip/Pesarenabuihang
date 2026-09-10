@@ -226,25 +226,41 @@
                               <div>
                                 <strong>{{ 'GĐ1' if m.stage_code=='stage1' else ('GĐ2' if m.stage_code=='league' else (m.round_code|upper if m.round_code else 'Knockout')) }} · vs {{ m.opponent_name }}</strong>
                                 <div class="small">📅 {{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa đặt lịch' }} · {{ 'Đã hoàn thành' if m.status=='completed' else 'Chờ thi đấu' }}</div>
-                                {% if m.status=='completed' %}<div class="small"><strong>Tỷ số:</strong> {{ m.home_score }} - {{ m.away_score }}{% if m.home_pen is not none and m.away_pen is not none %} · Pen {{ m.home_pen }} - {{ m.away_pen }}{% endif %}</div>{% endif %}
+                                {% if m.status=='completed' %}<div class="small"><strong>Tỷ số:</strong> {% if m.is_home_for_player %}{{ m.home_score }} - {{ m.away_score }}{% else %}{{ m.away_score }} - {{ m.home_score }}{% endif %}{% if m.home_pen is not none and m.away_pen is not none %} · Pen {% if m.is_home_for_player %}{{ m.home_pen }} - {{ m.away_pen }}{% else %}{{ m.away_pen }} - {{ m.home_pen }}{% endif %}{% endif %}</div>{% endif %}
                               </div>
                               <form class="tournament-admin-score" method="post" action="{{ url_for('admin_tournament_match_result',match_id=m.id) }}" data-auto-score-form>
                                 <input type="hidden" name="return_to" value="central">
                                 <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
-                                <span class="tournament-admin-score-name">{{ m.home_name }}<br><small>Chủ nhà</small></span>
-                                <input type="number" min="0" name="home_score" value="{{ m.home_score if m.home_score is not none else 0 }}" required aria-label="Tỷ số {{ m.home_name }}" data-auto-score>
-                                <strong>-</strong>
-                                <input type="number" min="0" name="away_score" value="{{ m.away_score if m.away_score is not none else 0 }}" required aria-label="Tỷ số {{ m.away_name }}" data-auto-score>
-                                <span class="tournament-admin-score-name away">{{ m.away_name }}<br><small>Khách</small></span>
+                                {% if m.is_home_for_player %}
+                                  <span class="tournament-admin-score-name">{{ r.display_name }}<br><small>HLV đang xem</small></span>
+                                  <input type="number" min="0" name="home_score" value="{{ m.home_score if m.home_score is not none else 0 }}" required aria-label="Tỷ số {{ r.display_name }}" data-auto-score>
+                                  <strong>-</strong>
+                                  <input type="number" min="0" name="away_score" value="{{ m.away_score if m.away_score is not none else 0 }}" required aria-label="Tỷ số {{ m.opponent_name }}" data-auto-score>
+                                  <span class="tournament-admin-score-name away">{{ m.opponent_name }}<br><small>Đối thủ</small></span>
+                                {% else %}
+                                  <span class="tournament-admin-score-name">{{ r.display_name }}<br><small>HLV đang xem</small></span>
+                                  <input type="number" min="0" name="away_score" value="{{ m.away_score if m.away_score is not none else 0 }}" required aria-label="Tỷ số {{ r.display_name }}" data-auto-score>
+                                  <strong>-</strong>
+                                  <input type="number" min="0" name="home_score" value="{{ m.home_score if m.home_score is not none else 0 }}" required aria-label="Tỷ số {{ m.opponent_name }}" data-auto-score>
+                                  <span class="tournament-admin-score-name away">{{ m.opponent_name }}<br><small>Đối thủ</small></span>
+                                {% endif %}
                                 <span class="tournament-auto-save-state" data-auto-save-state>{{ 'Đã lưu' if m.status=='completed' else 'Chưa lưu' }}</span>
                                 {% if m.stage_code=='knockout' %}
                                 <div class="tournament-admin-pen-row">
                                   <span>Penalty:</span>
-                                  <strong>{{ m.home_name }}</strong>
-                                  <input type="number" min="0" name="home_pen" data-auto-score value="{{ m.home_pen if m.home_pen is not none else '' }}" placeholder="Pen">
-                                  <strong>-</strong>
-                                  <input type="number" min="0" name="away_pen" data-auto-score value="{{ m.away_pen if m.away_pen is not none else '' }}" placeholder="Pen">
-                                  <strong>{{ m.away_name }}</strong>
+                                  {% if m.is_home_for_player %}
+                                    <strong>{{ r.display_name }}</strong>
+                                    <input type="number" min="0" name="home_pen" data-auto-score value="{{ m.home_pen if m.home_pen is not none else '' }}" placeholder="Pen">
+                                    <strong>-</strong>
+                                    <input type="number" min="0" name="away_pen" data-auto-score value="{{ m.away_pen if m.away_pen is not none else '' }}" placeholder="Pen">
+                                    <strong>{{ m.opponent_name }}</strong>
+                                  {% else %}
+                                    <strong>{{ r.display_name }}</strong>
+                                    <input type="number" min="0" name="away_pen" data-auto-score value="{{ m.away_pen if m.away_pen is not none else '' }}" placeholder="Pen">
+                                    <strong>-</strong>
+                                    <input type="number" min="0" name="home_pen" data-auto-score value="{{ m.home_pen if m.home_pen is not none else '' }}" placeholder="Pen">
+                                    <strong>{{ m.opponent_name }}</strong>
+                                  {% endif %}
                                 </div>
                                 {% endif %}
                               </form>
