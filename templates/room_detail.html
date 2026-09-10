@@ -528,7 +528,7 @@
         <div class="room-mode-card tournament-only-random-card">
             <div class="tournament-room-mode-head">
                 <div>
-                    <h3>🏆 PHÒNG THI ĐẤU GIẢI</h3>
+                    <h3>🏆 PHÒNG ĐẤU C1</h3>
                     <p class="small"><strong>CHẾ ĐỘ DUY NHẤT: 🎲 RANDOM CLB</strong></p>
                 </div>
                 <span class="tournament-pool-badge">Pool C1: {{ tournament_stage1_pool_count or 0 }}/16 CLB đã chọn</span>
@@ -562,6 +562,19 @@
             {% endif %}
         </div>
     </div>
+
+    <details class="td-host-guide" style="margin-top:12px;padding:13px 14px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:#091a29">
+        <summary style="cursor:pointer;font-weight:900;color:#f1ca68;list-style:none">🎮 HƯỚNG DẪN TEST HOST</summary>
+        <div style="margin-top:10px;color:#dce6ed;font-size:13px;line-height:1.6">
+            <div>1. Vào Discord: <a href="https://discord.gg/VTmJBNvx" target="_blank" rel="noopener" style="color:#7bb7ff">discord.gg/VTmJBNvx</a></div>
+            <div>2. Kết nối tay cầm.</div>
+            <div>3. Vào chế độ <strong>Giao hữu</strong>.</div>
+            <div>4. Chọn 2 đội bất kỳ để test.</div>
+            <div>5. Không chỉnh đội hình, vào trận luôn.</div>
+            <div>6. Đá thử khoảng 5 phút trong game để kiểm tra độ ổn định, lag và delay tay cầm.</div>
+            <div>7. Nếu đối thủ xác nhận OK thì thoát trận test và bắt đầu chọn đội thi đấu chính thức.</div>
+        </div>
+    </details>
     {% endif %}
 
 
