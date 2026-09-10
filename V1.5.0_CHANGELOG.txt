@@ -1,0 +1,9 @@
+PES ARENA V1.5.0 - TOURNAMENT UI RESTRUCTURE
+
+1. Trang Giải đấu trở thành danh sách giải đấu gọn, sẵn sàng mở rộng nhiều giải sau này.
+2. Trang chi tiết giải gom thành 3 luồng chính: BXH & Kết quả / Thi đấu / Lịch & Thông tin.
+3. Admin có thêm tab Điều hành riêng.
+4. Phân quyền hiển thị theo vai trò.
+5. BXH và kết quả gần đây nằm chung một nơi, không lặp module.
+6. Giữ nguyên lõi Phòng đấu C1, tournament_match_id, Random CLB và xác nhận kết quả.
+7. Phiên bản hiển thị: V1.5.0.

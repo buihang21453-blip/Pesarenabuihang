@@ -42,6 +42,9 @@
 .tournament-admin-pen-row input{width:54px}
 @media(max-width:900px){.tournament-admin-detail-grid{grid-template-columns:1fr}.tournament-admin-match{grid-template-columns:1fr}.tournament-admin-score{min-width:0}}
 @media(max-width:700px){.tournament-admin-score{grid-template-columns:1fr 48px auto 48px 1fr}.tournament-admin-score .btn{grid-column:1/-1}.tournament-admin-score-name{font-size:10px}}
+
+/* V1.5.0: Tournament index is a clean list of tournaments. Details live inside each tournament. */
+.tournament-filterbar{display:none!important}.tournament-public-ranking{display:none!important}.tournament-section-grid{max-width:980px;margin:18px auto 0}.tournament-section-card{box-shadow:0 16px 38px rgba(0,0,0,.22)}.tournament-card-media{height:190px}.tournament-card-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.tournament-workspace:before{content:"CHỌN GIẢI ĐẤU";display:block;max-width:980px;margin:0 auto 10px;color:#f1ca68;font-size:13px;font-weight:950;letter-spacing:.12em}.tournament-workspace:after{content:"Mỗi giải là một khu riêng. Vào giải để xem BXH, thi đấu, lịch và các thông tin theo đúng quyền tài khoản.";display:block;max-width:980px;margin:14px auto 0;color:#81909d;font-size:12px;text-align:center}@media(max-width:700px){.tournament-card-actions{grid-template-columns:1fr}}
 </style>
 {% endblock %}
 
