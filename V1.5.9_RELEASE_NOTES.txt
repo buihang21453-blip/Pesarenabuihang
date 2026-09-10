@@ -1,0 +1,6 @@
+PES ARENA V1.5.9 - C1 ROOM + HOST GUIDE SIDE BY SIDE
+
+- PHÒNG ĐẤU C1 và HƯỚNG DẪN TEST HOST nằm sát cạnh nhau trên desktop.
+- Hai khung chia đều chiều ngang 50/50, khoảng cách 8px.
+- Màn hình <= 900px tự động xếp dọc.
+- Không thay đổi nội dung hay logic chức năng khác.
