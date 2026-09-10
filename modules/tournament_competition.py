@@ -302,6 +302,31 @@ def register_routes(context):
                 continue
         return out
 
+    def _has_upcoming_scheduled_match_3day(user_id, matches):
+        """True when this HLV already has a scheduled tournament match in the rolling 3 VN days."""
+        vn_tz=timezone(timedelta(hours=7))
+        now=datetime.now(vn_tz)
+        last_day=now.date()+timedelta(days=2)
+        uid=str(user_id or "")
+        for m in (matches or []):
+            if uid not in {str(m.get("home_user_id") or ""),str(m.get("away_user_id") or "")}:
+                continue
+            if str(m.get("status") or "") not in {"pending","scheduled"}:
+                continue
+            raw=m.get("scheduled_at")
+            if not raw:
+                continue
+            try:
+                dt=datetime.fromisoformat(str(raw).replace("Z","+00:00"))
+                if dt.tzinfo is None:
+                    dt=dt.replace(tzinfo=vn_tz)
+                dt_vn=dt.astimezone(vn_tz)
+            except Exception:
+                continue
+            if dt_vn>=now and dt_vn.date()<=last_day:
+                return True
+        return False
+
     def _availability_payload(tournament_id,user_id,matches):
         ids={str(user_id)}
         for m in matches:
@@ -1024,10 +1049,23 @@ def register_routes(context):
             }
             data["me_progress"]=None
             data["rewards"]={}
-        # V1.5.5: dữ liệu toàn giải là Admin-only. HLV chỉ nhận đúng phần của mình.
-        if not is_admin_user(user) and data.get("member"):
+        # V1.5.7: HLV thật phải có lịch đã chốt trong 3 ngày tới HOẶC đã khai ít nhất
+        # một giờ rảnh thì mới vào được khu C1/BXH. Admin và tài khoản TEST được miễn gate.
+        public_ranking=list(data.get("combined_ranking") or [])
+        data["availability_gate_locked"]=False
+        data["availability_gate_reason"]=""
+        if not is_admin_user(user) and data.get("member") and not data.get("c1_test_account"):
             own_matches=[m for m in (data.get("matches") or []) if uid in {str(m.get("home_user_id") or ""),str(m.get("away_user_id") or "")}]
             own_rooms=[r for r in (data.get("tournament_rooms") or []) if uid in {str(r.get("host_user_id") or ""),str(r.get("guest_user_id") or "")}]
+            has_upcoming_schedule=_has_upcoming_scheduled_match_3day(uid, own_matches)
+            has_availability=bool((data.get("availability") or {}).get("slot_count"))
+            gate_locked=not has_upcoming_schedule and not has_availability
+            data["availability_gate_locked"]=gate_locked
+            data["availability_gate_reason"]="Bạn chưa có lịch thi đấu đã chốt và chưa đăng ký giờ rảnh trong 3 ngày tới." if gate_locked else ""
+            data["has_upcoming_scheduled_match_3day"]=has_upcoming_schedule
+
+            # Dữ liệu toàn giải vẫn Admin-only. HLV chỉ nhận dữ liệu cá nhân; BXH là ngoại lệ
+            # được phép xem sau khi vượt qua gate giờ rảnh/lịch thi đấu.
             me=data.get("member")
             data["matches"]=own_matches
             data["tournament_rooms"]=own_rooms
@@ -1037,7 +1075,7 @@ def register_routes(context):
             data["host_ready"]=[]
             data["stage1_ranking"]=[]
             data["league_ranking"]=[]
-            data["combined_ranking"]=[]
+            data["combined_ranking"]=[] if gate_locked else public_ranking
             data["knockout_flow"]={}
             data["c1_test_stage1_ranking"]=[]
             data["c1_test_recent_matches"]=[]
@@ -2635,6 +2673,11 @@ def register_routes(context):
                 if cursor>now: final_slots.append(cursor.isoformat())
                 cursor += timedelta(hours=1); count += 1
         final_slots=sorted(set(final_slots))
+        if not final_slots:
+            own_matches=_matches(tournament_id)
+            if not _has_upcoming_scheduled_match_3day(uid, own_matches):
+                flash("Hãy đăng ký ít nhất một giờ rảnh trong 3 ngày tới để vào giải đấu.","warning")
+                return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
         execute_query(db.table("tournament_availability_slots").delete().eq("tournament_id",tournament_id).eq("user_id",uid),"ops_availability_simple_clear",attempts=2)
         for iso in final_slots:
             execute_query(db.table("tournament_availability_slots").insert({"tournament_id":tournament_id,"user_id":uid,"slot_at":iso,"created_at":now_iso(),"updated_at":now_iso()}),"ops_availability_simple_insert",attempts=2)

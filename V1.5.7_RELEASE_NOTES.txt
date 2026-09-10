@@ -1,0 +1,11 @@
+PES ARENA V1.5.7 — C1 GATE GIỜ RẢNH 3 NGÀY
+
+- HLV thật muốn vào khu C1 và xem BXH phải thỏa 1 trong 2 điều kiện:
+  1) Đã có ít nhất 1 trận được chốt lịch trong Hôm nay / Ngày mai / Ngày kia; hoặc
+  2) Đã đăng ký ít nhất 1 giờ rảnh trong 3 ngày đó.
+- Nếu chưa đủ điều kiện, trang C1 chỉ hiển thị màn “Lịch thi đấu / Giờ rảnh” bắt buộc.
+- Form gồm 3 ngày Hôm nay / Ngày mai / Ngày kia, giờ Từ – Đến; chỉ cần điền 1 ngày, không yêu cầu số giờ tối thiểu.
+- Sau khi lưu thành công, HLV được mở lại khu C1 và BXH ngay.
+- Admin và tài khoản Test C1 không bị gate.
+- Dữ liệu toàn giải vẫn Admin-only; BXH là ngoại lệ dành cho HLV đã vượt gate.
+- Không thêm bảng SQL mới: dùng tournament_availability_slots hiện có.
