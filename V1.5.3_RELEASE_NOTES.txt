@@ -1,0 +1,17 @@
+PES ARENA V1.5.3 — C1 GIAI ĐOẠN 2
+
+1. Thưởng hoàn thành sớm
+- Top 1: 2 vé Random CLB.
+- Top 2–3: 1 vé Random CLB.
+- Hạng 4–16: không có vé; hệ thống Random mặc định.
+
+2. Pool Random CLB
+- Khóa đúng 24 CLB / 3 Pot đã chốt.
+- CLB legacy ngoài danh sách không còn được đưa vào Random GĐ2.
+
+3. Admin C1
+- Khu Điều hành giải đấu tiếp tục là trung tâm quản trị toàn bộ HLV, trận, lịch, phòng, BXH, tiến độ, Pot, Random CLB, League/Knockout.
+- Bổ sung hiển thị 3 Pot CLB chính thức ngay trong khu Điều hành vòng.
+
+4. SQL
+- SQL_CU/SQL_V1.5.3_C1_GD2_CLUB_POOL.sql bổ sung pot_no cho tournament_clubs.

@@ -1,4 +1,4 @@
-"""Tournament competition operations (V1.4.30).
+"""Tournament competition operations (V1.5.3).
 
 Independent from Rank/Season. Handles stages, tournament-only matches, ranking,
 Pot, club lock, scheduling, hosts, progress, knockout/two legs and early rewards.
@@ -22,6 +22,16 @@ ROUND_ORDER = ["playoff", "r16", "qf", "sf", "final"]
 # V1.4.88 - Tạo phòng trực tiếp + mời đúng đối thủ; dọn gói deploy.
 STAGE1_ALLOWED_TIERS = {"S+", "S"}
 TOURNAMENT_ROOM_PREFIX = "TOURNAMENT_ROOM|"
+
+# V1.5.3 — C1 official Stage 2 club pool.
+# This is intentionally independent from the HLV ranking pots used for league scheduling.
+C1_CLUB_POTS = {
+    1: ["Bayern", "Real Madrid", "Barcelona", "PSG", "Liverpool", "Man City", "Arsenal", "Inter"],
+    2: ["Atlético Madrid", "Man United", "Aston Villa", "Napoli", "Roma", "Fenerbahçe", "Galatasaray", "Dortmund"],
+    3: ["PSV", "Villarreal", "Real Betis", "Lille", "Lens", "Como", "Porto", "RB Leipzig"],
+}
+C1_CLUB_POOL = [name for pot in C1_CLUB_POTS.values() for name in pot]
+C1_CLUB_POT_BY_NAME = {name: pot for pot, names in C1_CLUB_POTS.items() for name in names}
 
 
 def register_routes(context):
@@ -447,7 +457,7 @@ def register_routes(context):
         for r in out:
             if r["eligible"] and r["early_eligible"]:
                 rank+=1; r["finish_rank"]=rank
-                r["tickets"]=3 if rank==1 else (2 if rank<=3 else (1 if rank<=10 else 0))
+                r["tickets"]=2 if rank==1 else (1 if rank<=3 else 0)
             else:
                 r["finish_rank"]=None; r["tickets"]=0
         return out
@@ -570,10 +580,27 @@ def register_routes(context):
             "league_end":_countdown_info(cfg.get("league_end_at")),
         }
 
+    def _sync_c1_club_pool(tournament_id):
+        """Ensure the official C1 random pool is exactly the 24 approved clubs."""
+        existing,_=_rows(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id),"ops_club_pool_sync_read")
+        by_name={str(x.get("name") or "").casefold():x for x in existing}
+        for name in C1_CLUB_POOL:
+            key="c1-"+name.casefold().replace(" ","-").replace("é","e").replace("í","i").replace("ç","c")
+            row=by_name.get(name.casefold())
+            payload={"tournament_id":tournament_id,"club_key":key,"name":name,"is_available":True}
+            if row:
+                execute_query(db.table("tournament_clubs").update({"name":name,"is_available":True}).eq("id",row.get("id")),"ops_club_pool_sync_update",attempts=2)
+            else:
+                execute_query(db.table("tournament_clubs").upsert(payload,on_conflict="tournament_id,club_key"),"ops_club_pool_sync_insert",attempts=2)
+        # Any legacy club remains in history but is excluded from the official random pool.
+        for row in existing:
+            if str(row.get("name") or "") not in C1_CLUB_POOL and row.get("is_available"):
+                execute_query(db.table("tournament_clubs").update({"is_available":False}).eq("id",row.get("id")),"ops_club_pool_disable_legacy",attempts=2)
+
     def _available_clubs(tournament_id, skipped=None):
         skipped=set(str(x) for x in (skipped or []))
         clubs,_=_rows(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("is_available",True).order("name"),"ops_club_pool")
-        return [c for c in clubs if not c.get("selected_by") and str(c.get("id")) not in skipped]
+        return [c for c in clubs if str(c.get("name") or "") in C1_CLUB_POOL and not c.get("selected_by") and str(c.get("id")) not in skipped]
 
     def _club_assign(tournament_id,user_id,club):
         execute_query(db.table("tournament_clubs").update({"selected_by":user_id,"selected_at":now_iso()}).eq("id",club.get("id")).is_("selected_by","null"),"ops_draft_reserve",attempts=2)
@@ -841,7 +868,7 @@ def register_routes(context):
             m["stage1_points"]=pr.get("points",0)
         test_ids=_c1_test_user_ids(tid)
         test_users=_c1_test_users(tid) if test_ids else []
-        payload.update({"ready":True,"tournament":tour,"members":members,"progress":progress,"combined_ranking":_combined_ranking(tid),"knockout_flow":_setting(tid,"knockout_flow",{}) or {},"scale":_tournament_scale(tid),"c1_test_user_ids":test_ids,"c1_test_users":test_users})
+        payload.update({"ready":True,"tournament":tour,"members":members,"progress":progress,"combined_ranking":_combined_ranking(tid),"knockout_flow":_setting(tid,"knockout_flow",{}) or {},"scale":_tournament_scale(tid),"c1_test_user_ids":test_ids,"c1_test_users":test_users,"c1_club_pots":C1_CLUB_POTS,"c1_club_pool":C1_CLUB_POOL})
         return payload
 
     @app.context_processor
@@ -2252,18 +2279,20 @@ def register_routes(context):
     @admin_required
     @admin_permission_required("system_features_manage")
     def admin_tournament_club_draft_start(tournament_id):
-        ranking=[x for x in _completion_ranking(tournament_id) if x.get("eligible") and x.get("early_eligible")][:10]
+        _sync_c1_club_pool(tournament_id)
+        # V1.5.3: only Top 1–3 receive reroll tickets. Hạng 4–16 are system-random.
+        ranking=[x for x in _completion_ranking(tournament_id) if x.get("eligible") and x.get("early_eligible")][:3]
         order=[str(x.get("user_id")) for x in ranking]
         entries={}
         for i,row in enumerate(ranking,1):
-            tickets=3 if i==1 else (2 if i<=3 else 1)
+            tickets=2 if i==1 else 1
             entries[str(row.get("user_id"))]={"tickets_total":tickets,"tickets_remaining":tickets,"skipped":[],"candidate":None,"status":"waiting","finish_rank":i}
         if not order:
             flash("Chưa có HLV để mở chọn CLB.","error"); return redirect_admin("tournaments")
         entries[order[0]]["status"]="active"
         state={"active":True,"completed":False,"order":order,"current_index":0,"entries":entries,"history":[{"at":now_iso(),"user_id":order[0],"action":"TURN_OPEN","message":"Mở lượt Top 1 (10 phút)."}],"deadline_at":(datetime.now(timezone(timedelta(hours=7)))+timedelta(minutes=10)).isoformat()}
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_draft_start",attempts=2)
-        flash("Đã mở sự kiện chọn CLB Top 10. Top 1 có 10 phút; Top 2–10 có 5 phút.","success"); return redirect_admin("tournaments")
+        flash("Đã mở Random CLB thưởng sớm: Top 1 có 2 vé; Top 2–3 có 1 vé. Hạng 4–16 sẽ do hệ thống Random.","success"); return redirect_admin("tournaments")
 
     @app.post('/tournaments/<tournament_id>/club-draft/random')
     @login_required
@@ -2332,7 +2361,9 @@ def register_routes(context):
     @admin_required
     @admin_permission_required("system_features_manage")
     def admin_tournament_assign_remaining_clubs(tournament_id):
-        members=[m for m in _all_members(tournament_id) if not m.get("fixed_club_name")]
+        _sync_c1_club_pool(tournament_id)
+        # V1.5.3: hạng 4–16 / các HLV chưa có CLB được hệ thống random mặc định.
+        members=[m for m in _all_members(tournament_id) if not m.get("fixed_club_name")][:16]
         random.shuffle(members); count=0
         for m in members:
             pool=_available_clubs(tournament_id)
