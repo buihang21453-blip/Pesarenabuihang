@@ -32,7 +32,7 @@
 .tournament-admin-detail-card h5{margin:0 0 10px;color:#f1ca68;font-size:15px}
 .tournament-admin-profile-form{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
 .tournament-admin-profile-form input,.tournament-admin-profile-form select{background:#06131f;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px}
-.tournament-admin-match-list{display:grid;gap:8px;max-height:420px;overflow:auto}
+.tournament-admin-match-list{display:grid;gap:8px;max-height:420px;overflow:auto}.tournament-bulk-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px;padding:8px 10px;border-radius:9px;background:#071522;border:1px solid rgba(241,202,104,.18)}.tournament-bulk-toolbar label{display:flex;align-items:center;gap:6px;font-size:12px;color:#dce7ef}.tournament-bulk-toolbar input[type=checkbox]{width:15px;height:15px}.tournament-bulk-pick{display:flex;align-items:center;gap:6px}.tournament-bulk-pick input{width:15px;height:15px}
 .tournament-admin-match{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 10px;border-radius:10px;background:#0b2031;border:1px solid rgba(255,255,255,.08)}
 .tournament-admin-score{display:grid;grid-template-columns:minmax(90px,1fr) 54px auto 54px minmax(90px,1fr) auto;align-items:center;gap:6px;min-width:460px}
 .tournament-admin-score input{width:54px;text-align:center;background:#06131f;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:7px;padding:7px}
@@ -219,10 +219,16 @@
                             {% endfor %}
                           </div>
                           <h5>⚔️ Đối thủ · Lịch thi đấu · Lịch sử trận</h5>
+                          <form id="bulk-result-{{ tournament.id }}-{{ r.user_id }}" method="post" action="{{ url_for('admin_tournament_bulk_match_result',tournament_id=tournament.id) }}"></form>
+                          <div class="tournament-bulk-toolbar">
+                            <label><input type="checkbox" data-bulk-select-all="{{ tournament.id }}-{{ r.user_id }}"> Chọn tất cả trận đang hiển thị</label>
+                            <button class="btn gold" type="submit" form="bulk-result-{{ tournament.id }}-{{ r.user_id }}">💾 Lưu các tỷ số đã chọn</button>
+                          </div>
                           <div class="tournament-admin-match-list">
                             {% for m in ap.matches|default([]) %}
-                            <div class="tournament-admin-match">
+                            <div class="tournament-admin-match" data-bulk-row="{{ tournament.id }}-{{ r.user_id }}" data-match-id="{{ m.id }}">
                               <div>
+                                <label class="tournament-bulk-pick"><input type="checkbox" data-bulk-pick="{{ tournament.id }}-{{ r.user_id }}"> Chọn lưu cùng lúc</label>
                                 <strong>{{ 'GĐ1' if m.stage_code=='stage1' else ('GĐ2' if m.stage_code=='league' else (m.round_code|upper if m.round_code else 'Knockout')) }} · vs {{ m.opponent_name }}</strong>
                                 <div class="small">📅 {{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa đặt lịch' }} · {{ 'Đã hoàn thành' if m.status=='completed' else 'Chờ thi đấu' }}</div>
                                 {% if m.status=='completed' %}<div class="small"><strong>Tỷ số:</strong> {{ m.home_score }} - {{ m.away_score }}{% if m.home_pen is not none and m.away_pen is not none %} · Pen {{ m.home_pen }} - {{ m.away_pen }}{% endif %}</div>{% endif %}
@@ -231,18 +237,18 @@
                                 <input type="hidden" name="return_to" value="central">
                                 <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
                                 <span class="tournament-admin-score-name">{{ m.home_name }}<br><small>Chủ nhà</small></span>
-                                <input type="number" min="0" name="home_score" value="{{ m.home_score if m.home_score is not none else '' }}" required aria-label="Tỷ số {{ m.home_name }}">
+                                <input type="number" min="0" name="home_score" data-bulk-home-score value="{{ m.home_score if m.home_score is not none else '' }}" required aria-label="Tỷ số {{ m.home_name }}">
                                 <strong>-</strong>
-                                <input type="number" min="0" name="away_score" value="{{ m.away_score if m.away_score is not none else '' }}" required aria-label="Tỷ số {{ m.away_name }}">
+                                <input type="number" min="0" name="away_score" data-bulk-away-score value="{{ m.away_score if m.away_score is not none else '' }}" required aria-label="Tỷ số {{ m.away_name }}">
                                 <span class="tournament-admin-score-name away">{{ m.away_name }}<br><small>Khách</small></span>
                                 <button class="btn gold" type="submit">{{ 'Sửa tỷ số' if m.status=='completed' else 'Nhập tỷ số' }}</button>
                                 {% if m.stage_code=='knockout' %}
                                 <div class="tournament-admin-pen-row">
                                   <span>Penalty:</span>
                                   <strong>{{ m.home_name }}</strong>
-                                  <input type="number" min="0" name="home_pen" value="{{ m.home_pen if m.home_pen is not none else '' }}" placeholder="Pen">
+                                  <input type="number" min="0" name="home_pen" data-bulk-home-pen value="{{ m.home_pen if m.home_pen is not none else '' }}" placeholder="Pen">
                                   <strong>-</strong>
-                                  <input type="number" min="0" name="away_pen" value="{{ m.away_pen if m.away_pen is not none else '' }}" placeholder="Pen">
+                                  <input type="number" min="0" name="away_pen" data-bulk-away-pen value="{{ m.away_pen if m.away_pen is not none else '' }}" placeholder="Pen">
                                   <strong>{{ m.away_name }}</strong>
                                 </div>
                                 {% endif %}
@@ -388,5 +394,56 @@ document.addEventListener('click',function(e){
   });
   if(panel) panel.classList.toggle('is-open');
 });
+</script>
+
+<script>
+(function(){
+  document.querySelectorAll('[data-bulk-select-all]').forEach(function(master){
+    master.addEventListener('change', function(){
+      var key = master.getAttribute('data-bulk-select-all');
+      document.querySelectorAll('[data-bulk-pick="'+CSS.escape(key)+'"]').forEach(function(cb){
+        cb.checked = master.checked;
+      });
+    });
+  });
+
+  document.querySelectorAll('form[id^="bulk-result-"]').forEach(function(form){
+    form.addEventListener('submit', function(ev){
+      form.querySelectorAll('[data-generated-bulk]').forEach(function(x){x.remove();});
+      var key = form.id.replace('bulk-result-','');
+      var selected = document.querySelectorAll('[data-bulk-row="'+CSS.escape(key)+'"] [data-bulk-pick]:checked');
+      if(!selected.length){
+        ev.preventDefault();
+        alert('Hãy tích ít nhất 1 trận cần lưu tỷ số.');
+        return;
+      }
+      var invalid = false;
+      selected.forEach(function(cb){
+        var row = cb.closest('[data-bulk-row]');
+        var hs = row.querySelector('[data-bulk-home-score]');
+        var aw = row.querySelector('[data-bulk-away-score]');
+        if(!hs || !aw || hs.value==='' || aw.value===''){
+          invalid = true;
+          return;
+        }
+        [
+          ['match_id', row.getAttribute('data-match-id')],
+          ['home_score', hs.value],
+          ['away_score', aw.value],
+          ['home_pen', (row.querySelector('[data-bulk-home-pen]')||{}).value || ''],
+          ['away_pen', (row.querySelector('[data-bulk-away-pen]')||{}).value || '']
+        ].forEach(function(pair){
+          var input=document.createElement('input');
+          input.type='hidden'; input.name=pair[0]; input.value=pair[1]; input.setAttribute('data-generated-bulk','1');
+          form.appendChild(input);
+        });
+      });
+      if(invalid){
+        ev.preventDefault();
+        alert('Các trận đã chọn phải nhập đủ tỷ số hai bên.');
+      }
+    });
+  });
+})();
 </script>
 {% endblock %}

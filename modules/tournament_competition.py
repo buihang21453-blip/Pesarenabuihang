@@ -1109,6 +1109,99 @@ def register_routes(context):
             return redirect(url_for("tournament_detail", tournament_id=match.get("tournament_id")) + "#bxh")
         return redirect_admin("tournaments")
 
+
+    @app.post('/admin/tournaments/<tournament_id>/matches/bulk-result')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_bulk_match_result(tournament_id):
+        match_ids = [str(x).strip() for x in request.form.getlist("match_id") if str(x).strip()]
+        home_scores = request.form.getlist("home_score")
+        away_scores = request.form.getlist("away_score")
+        home_pens = request.form.getlist("home_pen")
+        away_pens = request.form.getlist("away_pen")
+        if not match_ids:
+            flash("Hãy tích ít nhất 1 trận cần lưu tỷ số.","warning")
+            return redirect(url_for("tournaments") + "#ranking")
+        if len(match_ids) != len(home_scores) or len(match_ids) != len(away_scores):
+            flash("Dữ liệu tỷ số hàng loạt không hợp lệ.","error")
+            return redirect(url_for("tournaments") + "#ranking")
+
+        saved = 0
+        skipped = 0
+        for idx, match_id in enumerate(match_ids):
+            match,_ = _one(
+                db.table("tournament_matches").select("*").eq("id",match_id).eq("tournament_id",tournament_id),
+                "ops_bulk_match_lookup",
+            )
+            if not match:
+                skipped += 1
+                continue
+            try:
+                hs = max(0, int(home_scores[idx] or 0))
+                aw = max(0, int(away_scores[idx] or 0))
+            except Exception:
+                skipped += 1
+                continue
+
+            # GĐ1: không cho tạo kết quả thứ 3 cho cùng một cặp.
+            if str(match.get("stage_code") or "")=="stage1" and str(match.get("status") or "")!="completed":
+                if _stage1_pair_completed_count(
+                    tournament_id,
+                    match.get("home_user_id"),
+                    match.get("away_user_id"),
+                    exclude_match_id=match.get("id"),
+                ) >= 2:
+                    skipped += 1
+                    continue
+
+            hp_raw = home_pens[idx] if idx < len(home_pens) else ""
+            ap_raw = away_pens[idx] if idx < len(away_pens) else ""
+            hp = int(hp_raw) if str(hp_raw).strip() != "" else None
+            ap = int(ap_raw) if str(ap_raw).strip() != "" else None
+
+            winner = None
+            if hs > aw:
+                winner = match.get("home_user_id")
+            elif aw > hs:
+                winner = match.get("away_user_id")
+            elif hp is not None and ap is not None:
+                if hp > ap:
+                    winner = match.get("home_user_id")
+                elif ap > hp:
+                    winner = match.get("away_user_id")
+
+            payload = {
+                "home_score": hs,
+                "away_score": aw,
+                "home_pen": hp,
+                "away_pen": ap,
+                "winner_user_id": winner,
+                "status": "completed",
+                "completed_at": now_iso(),
+                "updated_at": now_iso(),
+            }
+            execute_query(
+                db.table("tournament_matches").update(payload).eq("id",match_id),
+                "ops_bulk_match_result",
+                attempts=2,
+            )
+            saved += 1
+
+        try:
+            if saved:
+                _maybe_advance_knockout(tournament_id)
+        except Exception as exc:
+            app.logger.warning("Bulk result knockout advance failed: %s", exc)
+
+        if saved and skipped:
+            flash(f"Đã lưu {saved} trận. Bỏ qua {skipped} trận không hợp lệ/đã đủ giới hạn.","success")
+        elif saved:
+            flash(f"Đã lưu cùng lúc {saved} kết quả trận đấu.","success")
+        else:
+            flash("Không có trận nào được lưu. Hãy kiểm tra tỷ số hoặc giới hạn 2 trận/cặp.","warning")
+        return redirect(url_for("tournaments") + "#ranking")
+
     @app.post('/admin/tournaments/<tournament_id>/pot/generate')
     @login_required
     @admin_required
