@@ -1,0 +1,15 @@
+PES ARENA V1.5.11 - C1 ROOM / HOST GUIDE LAYOUT
+
+FILES CHANGED
+- app.py
+- templates/room_detail.html
+- V1.5.11_RELEASE_NOTES.txt
+
+CHANGES
+1. Nâng APP_VERSION từ V1.5.10 lên V1.5.11.
+2. Trong đúng trang PHÒNG ĐẤU C1, đặt 2 khung trên cùng một hàng:
+   - Bên trái: 🏆 PHÒNG ĐẤU C1
+   - Bên phải: 🎮 HƯỚNG DẪN TEST HOST
+3. Desktop: chia đều 50/50, khoảng cách 8px, ép layout bằng CSS scoped riêng cho C1 để tránh style khác ghi đè.
+4. Mobile/tablet <= 900px: tự xếp dọc 1 cột.
+5. Giữ nguyên đầy đủ 7 bước HƯỚNG DẪN TEST HOST và toàn bộ logic C1/Room/Random/Host hiện có.
