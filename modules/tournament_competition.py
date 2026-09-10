@@ -896,6 +896,40 @@ def register_routes(context):
         # V1.5.5: Trung tâm C1 Admin là nơi duy nhất nạp toàn bộ dữ liệu vận hành giải.
         host_list=[m for m in members if m.get("has_host")]
         host_list.sort(key=lambda x: ((x.get("host_region") or ""), (x.get("display_name") or "").lower()))
+
+        # V1.5.6: Admin xem lịch thi đấu đã chốt của TOÀN BỘ HLV trong 3 ngày tới
+        # theo ngày Việt Nam: Hôm nay / Ngày mai / Ngày kia.
+        vn_tz=timezone(timedelta(hours=7))
+        now_vn=datetime.now(vn_tz)
+        last_day=now_vn.date()+timedelta(days=2)
+        day_label_map={
+            now_vn.date():"Hôm nay",
+            now_vn.date()+timedelta(days=1):"Ngày mai",
+            now_vn.date()+timedelta(days=2):"Ngày kia",
+        }
+        upcoming_3day_matches=[]
+        for match in (payload.get("matches") or []):
+            raw=match.get("scheduled_at")
+            if not raw:
+                continue
+            try:
+                dt=datetime.fromisoformat(str(raw).replace("Z","+00:00"))
+                if dt.tzinfo is None:
+                    dt=dt.replace(tzinfo=vn_tz)
+                dt_vn=dt.astimezone(vn_tz)
+            except Exception:
+                continue
+            if dt_vn < now_vn or dt_vn.date() > last_day:
+                continue
+            row=dict(match)
+            row["scheduled_at_vn"]=dt_vn.isoformat()
+            row["schedule_date"]=dt_vn.date().isoformat()
+            row["schedule_day_label"]=day_label_map.get(dt_vn.date(),dt_vn.strftime("%d/%m"))
+            row["schedule_date_label"]=dt_vn.strftime("%d/%m/%Y")
+            row["schedule_time_label"]=dt_vn.strftime("%H:%M")
+            upcoming_3day_matches.append(row)
+        upcoming_3day_matches.sort(key=lambda x: str(x.get("scheduled_at_vn") or ""))
+
         payload.update({
             "ready":True,"tournament":tour,"members":members,"progress":progress,
             "combined_ranking":_combined_ranking(tid),
@@ -904,6 +938,13 @@ def register_routes(context):
             "c1_club_pots":C1_CLUB_POTS,"c1_club_pool":C1_CLUB_POOL,
             "host_list":host_list,"host_count":len(host_list),
             "all_matches":payload.get("matches") or [],
+            "upcoming_3day_matches":upcoming_3day_matches,
+            "upcoming_3day_window":{
+                "from":now_vn.date().isoformat(),
+                "to":last_day.isoformat(),
+                "from_label":now_vn.strftime("%d/%m/%Y"),
+                "to_label":last_day.strftime("%d/%m/%Y"),
+            },
             "active_c1_rooms":payload.get("tournament_rooms") or [],
         })
         return payload

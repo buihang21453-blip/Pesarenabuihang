@@ -1,0 +1,9 @@
+PES ARENA V1.5.6 - C1 ADMIN 3-DAY SCHEDULE
+
+1. Admin > Giải đấu C1 có thêm bảng "Lịch thi đấu của tất cả HLV trong 3 ngày tới".
+2. Cửa sổ 3 ngày dùng giờ Việt Nam: Hôm nay, Ngày mai, Ngày kia.
+3. Chỉ lấy các trận đã có scheduled_at và chưa qua giờ thi đấu.
+4. Hiển thị: ngày, giờ, giai đoạn/vòng, 2 HLV, dấu Host/khu vực, Host được gán và trạng thái trận.
+5. Dữ liệu này chỉ được nạp trong payload Admin C1; không mở thêm dữ liệu toàn giải cho HLV thường.
+6. Giữ nguyên các chức năng V1.5.5, Random CLB, Pot, vé reroll, Host và Room/Rank.
+7. APP_VERSION nâng lên V1.5.6.
