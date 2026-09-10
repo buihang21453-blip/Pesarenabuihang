@@ -98,7 +98,7 @@
           <div class="tournament-card-meta">
             <span>👥 {{ tournament.member_count|default(0) }} HLV</span><span>•</span><span>◯ {{ tournament.phase_name|default('Đang diễn ra') }}</span>
           </div>
-          {% if tournament.stage1_start_at %}
+          {% if tournament.show_stage1_start_countdown %}
           <div class="tournament-public-countdown" data-public-countdown="{{ tournament.stage1_start_at }}">
             <div class="label"><span>⏱️ Khai mạc GĐ1 sau</span><small>Ai cũng có thể theo dõi</small></div>
             <div class="timer"><div class="unit"><b data-cd-d>0</b><span>Ngày</span></div><div class="unit"><b data-cd-h>0</b><span>Giờ</span></div><div class="unit"><b data-cd-m>0</b><span>Phút</span></div><div class="unit"><b data-cd-s>0</b><span>Giây</span></div></div>
