@@ -893,7 +893,19 @@ def register_routes(context):
             m["stage1_points"]=pr.get("points",0)
         test_ids=_c1_test_user_ids(tid)
         test_users=_c1_test_users(tid) if test_ids else []
-        payload.update({"ready":True,"tournament":tour,"members":members,"progress":progress,"combined_ranking":_combined_ranking(tid),"knockout_flow":_setting(tid,"knockout_flow",{}) or {},"scale":_tournament_scale(tid),"c1_test_user_ids":test_ids,"c1_test_users":test_users,"c1_club_pots":C1_CLUB_POTS,"c1_club_pool":C1_CLUB_POOL})
+        # V1.5.5: Trung tâm C1 Admin là nơi duy nhất nạp toàn bộ dữ liệu vận hành giải.
+        host_list=[m for m in members if m.get("has_host")]
+        host_list.sort(key=lambda x: ((x.get("host_region") or ""), (x.get("display_name") or "").lower()))
+        payload.update({
+            "ready":True,"tournament":tour,"members":members,"progress":progress,
+            "combined_ranking":_combined_ranking(tid),
+            "knockout_flow":_setting(tid,"knockout_flow",{}) or {},
+            "scale":_tournament_scale(tid),"c1_test_user_ids":test_ids,"c1_test_users":test_users,
+            "c1_club_pots":C1_CLUB_POTS,"c1_club_pool":C1_CLUB_POOL,
+            "host_list":host_list,"host_count":len(host_list),
+            "all_matches":payload.get("matches") or [],
+            "active_c1_rooms":payload.get("tournament_rooms") or [],
+        })
         return payload
 
     @app.context_processor
@@ -971,6 +983,24 @@ def register_routes(context):
             }
             data["me_progress"]=None
             data["rewards"]={}
+        # V1.5.5: dữ liệu toàn giải là Admin-only. HLV chỉ nhận đúng phần của mình.
+        if not is_admin_user(user) and data.get("member"):
+            own_matches=[m for m in (data.get("matches") or []) if uid in {str(m.get("home_user_id") or ""),str(m.get("away_user_id") or "")}]
+            own_rooms=[r for r in (data.get("tournament_rooms") or []) if uid in {str(r.get("host_user_id") or ""),str(r.get("guest_user_id") or "")}]
+            me=data.get("member")
+            data["matches"]=own_matches
+            data["tournament_rooms"]=own_rooms
+            data["tournament_members"]=[me] if me else []
+            data["tournament_member_map"]={uid:me} if me else {}
+            data["hosts"]=[]
+            data["host_ready"]=[]
+            data["stage1_ranking"]=[]
+            data["league_ranking"]=[]
+            data["combined_ranking"]=[]
+            data["knockout_flow"]={}
+            data["c1_test_stage1_ranking"]=[]
+            data["c1_test_recent_matches"]=[]
+
         # Animation khai mạc chỉ tự hiện 1 lần/tài khoản HLV sau khi GĐ1 thực sự mở.
         opening_seen=_setting(tournament_id,"opening_seen_v1",{}) or {}
         stage1_open=any(str(x.get("stage_code"))=="stage1" and str(x.get("status"))=="open" for x in (data.get("stages") or []))
@@ -1662,7 +1692,9 @@ def register_routes(context):
             return redirect(url_for("room_detail",room_id=active.get("id")))
         # Trang dự phòng khi người dùng mở URL trực tiếp. Nút sidebar dùng POST và vào phòng ngay.
         member=next((m for m in members if str(m.get("user_id"))==uid),None)
-        return render_template("c1_rooms.html",tournament=selected,member=member,members=members,is_c1_admin=is_admin_user(user))
+        # V1.5.5: participant fallback page must not leak the full C1 roster.
+        visible_members=members if is_admin_user(user) else ([member] if member else [])
+        return render_template("c1_rooms.html",tournament=selected,member=member,members=visible_members,is_c1_admin=is_admin_user(user))
 
     @app.post('/c1-rooms/open')
     @login_required

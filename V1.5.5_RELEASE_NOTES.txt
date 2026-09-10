@@ -1,0 +1,24 @@
+PES ARENA V1.5.5 - C1 ADMIN CENTRALIZATION + HOST LIST
+======================================================
+
+1. C1 Admin Centralization
+- Admin > Giải đấu > C1 là trung tâm nhận toàn bộ dữ liệu vận hành của giải.
+- Bổ sung bảng toàn bộ lịch/trận C1 và danh sách phòng C1 đang hoạt động ngay trong Admin.
+- Không còn yêu cầu Admin phải mở giao diện HLV để xem toàn giải.
+
+2. Danh sách Host
+- Tạo khu Danh sách Host riêng trong Admin C1.
+- Chỉ liệt kê các HLV có has_host = true.
+- Hiển thị rõ: ✅ Host, khu vực, Zalo và trạng thái online/offline.
+- Bảng HLV hiện tại vẫn giữ dấu ✅ Có Host / ❌ Không Host.
+
+3. Siết quyền dữ liệu C1
+- Admin vẫn nhận full roster, full matches, BXH, phòng, host và dữ liệu vận hành.
+- HLV thường khi vào trang giải chỉ nhận trận/phòng của chính mình.
+- HLV thường không còn nhận payload toàn bộ roster, host list, BXH toàn giải, knockout flow và full room list.
+- Trang /c1-rooms của HLV không còn nhận toàn bộ danh sách 16 HLV để render.
+
+4. Không thay đổi
+- Không thay đổi Room/Rank/Season/Shop.
+- Không thay đổi luật Random CLB V1.5.4.
+- Không thay đổi pool 24 CLB / 3 Pot và vé thưởng sớm.

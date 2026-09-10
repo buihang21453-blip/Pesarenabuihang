@@ -914,12 +914,30 @@
       </div>
 
       <div style="padding:15px;border:1px solid rgba(46,204,113,.25);border-radius:14px;margin-bottom:12px">
-        <h3 style="margin:0 0 6px">📅 Lịch & Phòng C1</h3>
-        <p class="small">Đi thẳng tới khu giải để kiểm tra lịch HLV, phòng đang hoạt động và xử lý trận cần thi đấu.</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <a class="btn gold" href="{{ url_for('tournament_detail',tournament_id=tour.id) }}">📅 Xem lịch & giao diện giải</a>
-          <form method="post" action="{{ url_for('c1_room_open') }}"><input type="hidden" name="tournament_id" value="{{ tour.id }}"><button class="btn green" type="submit">🎮 Mở Phòng đấu C1</button></form>
-        </div>
+        <h3 style="margin:0 0 6px">🖥️ Danh sách Host của giải</h3>
+        <p class="small">Chỉ Admin thấy danh sách này. HLV có Host luôn được đánh dấu ✅ Host và hiển thị khu vực.</p>
+        {% set host_rows=ops.get('host_list',[]) %}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><span class="btn green" style="cursor:default">✅ Có Host: {{ ops.get('host_count',0) }}/{{ ops.get('members',[])|length }}</span></div>
+        <div class="admin-table-wrap tournament-compact"><table><thead><tr><th>#</th><th>HLV</th><th>Host</th><th>Khu vực</th><th>Zalo</th><th>Trạng thái</th></tr></thead><tbody>
+        {% for h in host_rows %}<tr><td>{{ loop.index }}</td><td><strong>{{ h.display_name }}</strong></td><td><strong>✅ Host</strong></td><td>{{ h.host_region|default('—',true) }}</td><td>{{ h.zalo_name|default('—',true) }}</td><td>{{ '🟢 Online' if h.user and h.user.is_online else '⚪ Offline' }}</td></tr>{% endfor %}
+        {% if not host_rows %}<tr><td colspan="6" class="small">Chưa có HLV nào đăng ký Host.</td></tr>{% endif %}
+        </tbody></table></div>
+      </div>
+
+      <div style="padding:15px;border:1px solid rgba(46,204,113,.25);border-radius:14px;margin-bottom:12px">
+        <h3 style="margin:0 0 6px">📅 Lịch thi đấu & Phòng C1 · Admin</h3>
+        <p class="small">Toàn bộ lịch, trạng thái trận và phòng đang hoạt động được theo dõi ngay trong Giải đấu C1. Không cần mở giao diện HLV để xem toàn giải.</p>
+        {% set all_c1_matches=ops.get('all_matches',[]) %}
+        {% set active_c1_rooms=ops.get('active_c1_rooms',[]) %}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><span class="btn gray" style="cursor:default">Tổng trận: {{ all_c1_matches|length }}</span><span class="btn {{ 'green' if active_c1_rooms else 'gray' }}" style="cursor:default">Phòng đang hoạt động: {{ active_c1_rooms|length }}</span></div>
+        <details open><summary><strong>🎮 Phòng C1 đang hoạt động</strong></summary><div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table><thead><tr><th>#</th><th>Cặp đấu</th><th>Chủ phòng</th><th>Khách</th><th>Trạng thái</th><th>Vào phòng</th></tr></thead><tbody>
+        {% for r in active_c1_rooms %}<tr><td>{{ loop.index }}</td><td>{{ r.public_label|default('—',true) }}</td><td>{{ r.host_name|default('—',true) }}</td><td>{{ r.guest_name|default('Chưa vào',true) }}</td><td>{{ r.public_status|default(r.status,true) }}</td><td><a class="btn gray" href="{{ url_for('room_detail',room_id=r.id) }}">Mở</a></td></tr>{% endfor %}
+        {% if not active_c1_rooms %}<tr><td colspan="6" class="small">Không có phòng C1 nào đang hoạt động.</td></tr>{% endif %}
+        </tbody></table></div></details>
+        <details style="margin-top:8px"><summary><strong>📋 Toàn bộ lịch/trận của giải ({{ all_c1_matches|length }})</strong></summary><div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table><thead><tr><th>#</th><th>Giai đoạn</th><th>HLV 1</th><th>HLV 2</th><th>Lịch</th><th>Tỷ số</th><th>Trạng thái</th></tr></thead><tbody>
+        {% for m in all_c1_matches %}<tr><td>{{ loop.index }}</td><td>{{ m.stage_code|default('—',true) }}</td><td>{{ m.home_name|default('HLV 1',true) }}</td><td>{{ m.away_name|default('HLV 2',true) }}</td><td>{{ m.scheduled_at|default('Chưa chốt',true) }}</td><td>{% if m.home_score is not none and m.away_score is not none %}<strong>{{ m.home_score }} - {{ m.away_score }}</strong>{% else %}—{% endif %}</td><td>{{ m.status|default('pending',true) }}</td></tr>{% endfor %}
+        {% if not all_c1_matches %}<tr><td colspan="7" class="small">Chưa sinh lịch thi đấu.</td></tr>{% endif %}
+        </tbody></table></div></details>
       </div>
 
       <h3 style="margin:18px 0 10px">🎯 Điều hành vòng hiện tại</h3>
