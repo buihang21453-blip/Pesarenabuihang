@@ -1101,6 +1101,8 @@ def register_routes(context):
             try: _maybe_advance_knockout(match.get("tournament_id"))
             except Exception as exc: app.logger.warning("Knockout auto advance failed: %s",exc)
         log_admin_action("Cập nhật kết quả trận giải","tournament_match",details={"match_id":match_id,"score":f"{hs}-{aw}"})
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return ("", 204)
         flash("Đã lưu kết quả trận giải.","success")
         return_to = (request.form.get("return_to") or "").strip()
         if return_to == "central":
