@@ -943,11 +943,29 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <form method="post" action="{{ url_for('admin_tournament_generate_pots',tournament_id=ot.id) }}" style="display:flex;gap:6px;align-items:end;flex-wrap:wrap"><input type="hidden" name="_admin_tab" value="tournaments"><label class="small">Số Pot<input name="pot_count" type="number" min="1" max="8" value="{{ ops.get('league_config',{}).get('pot_count',3) }}" style="width:70px"></label><label class="small">Số CLB<input name="club_count" type="number" min="2" max="64" value="{{ ops.get('league_config',{}).get('club_count',ops.get('members',[])|length or 10) }}" style="width:80px"></label><button class="btn" type="submit">① Chia Pot</button></form>
           <form method="post" action="{{ url_for('admin_tournament_lock_pots',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn" name="locked" value="1" type="submit">② 🔒 Khóa Pot</button></form>
-          <form method="post" action="{{ url_for('admin_tournament_club_draft_start',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gold" type="submit">③ Mở Random CLB Top 1–3</button></form>
-          <form method="post" action="{{ url_for('admin_tournament_assign_remaining_clubs',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gray" type="submit">④ Random CLB hạng 4–16</button></form>
+          <form method="post" action="{{ url_for('admin_tournament_club_draft_start',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gold" type="submit">③ Mở Random CLB 16 HLV</button></form>
+          <form method="post" action="{{ url_for('admin_tournament_assign_remaining_clubs',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gray" type="submit">④ Hệ thống Random hạng 4–16</button></form>
         </div>
         {% if cd.get('order') %}<p class="small">Lượt Top 1–3: {{ cd.get('current_index',0)+1 }}/{{ cd.get('order')|length }} · Còn {{ cd.get('countdown',{}).get('minutes',0) }}:{{ '%02d'|format(cd.get('countdown',{}).get('seconds',0)) }} · {{ 'Đang chạy' if cd.get('active') else 'Đã xong' }}</p>{% endif %}
         <details style="margin-top:8px"><summary><strong>⚽ Pool Random CLB chính thức · 24 CLB</strong></summary><div style="padding-top:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">{% for pot_no, club_names in ops.get('c1_club_pots',{}).items() %}<div style="padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px"><strong>Pot {{ pot_no }}</strong><div class="small" style="margin-top:5px">{{ club_names|join(' · ') }}</div></div>{% endfor %}</div></details>
+        {% set draft_rows=ev.get('club_draft_admin_rows',[]) %}
+        <details open style="margin-top:10px"><summary><strong>🎯 Theo dõi Random CLB · 16 HLV</strong></summary>
+          <div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table>
+            <thead><tr><th>#</th><th>HLV</th><th>Cơ chế</th><th>Vé</th><th>CLB hiện tại</th><th>Pot CLB</th><th>Reroll</th><th>Trạng thái</th></tr></thead>
+            <tbody>
+            {% for r in draft_rows %}
+              <tr>
+                <td><strong>{{ r.position }}</strong></td><td>{{ r.display_name }}</td>
+                <td>{{ '🎟 Thưởng sớm' if r.allocation_type=='EARLY_REWARD' else '⚙️ Hệ thống' }}</td>
+                <td>{{ r.tickets_remaining }}/{{ r.tickets_total }}</td>
+                <td><strong>{{ r.club or 'Chưa Random' }}</strong></td><td>{{ ('Pot ' ~ r.club_pot) if r.club_pot else '—' }}</td>
+                <td>{{ r.reroll_count }}</td><td>{{ 'Đã chốt' if r.status=='selected' else ('Đang lượt' if r.status=='active' else ('Chờ hệ thống' if r.status=='pending_system' else 'Chờ')) }}</td>
+              </tr>
+              {% if r.history %}<tr><td></td><td colspan="7"><details><summary class="small">Lịch sử {{ r.history|length }} sự kiện</summary><div class="small" style="padding:6px 0">{% for h in r.history %}<div>• {{ h.at }} · {{ h.message }}</div>{% endfor %}</div></details></td></tr>{% endif %}
+            {% endfor %}
+            {% if not draft_rows %}<tr><td colspan="8" class="small">Chưa mở cơ chế Random CLB 16 HLV.</td></tr>{% endif %}
+            </tbody></table></div>
+        </details>
         <details style="margin-top:8px"><summary>Admin xử lý khi HLV vắng mặt</summary><div style="padding-top:8px"><form method="post" action="{{ url_for('admin_tournament_club_draft_force',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn" type="submit">🎲 Random/chốt thay HLV</button></form></div></details>
       </div>
 

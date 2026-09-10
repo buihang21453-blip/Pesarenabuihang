@@ -1,0 +1,17 @@
+PES ARENA V1.5.4 — C1 GĐ2 RANDOM CLB 16 HLV
+
+1. Cơ chế phân 16 HLV
+- Khóa danh sách tối đa 16 HLV vào một state Random CLB thống nhất.
+- Top 1: 2 vé Random CLB.
+- Top 2–3: 1 vé Random CLB.
+- Hạng 4–16: 0 vé, hệ thống Random và chốt tự động.
+- Pool chỉ dùng đúng 24 CLB C1 thuộc 3 Pot đã chốt ở V1.5.3.
+
+2. Admin theo dõi trực tiếp
+- Hiển thị đủ 16 HLV trong tab Chia Pot & chọn CLB.
+- Hiển thị cơ chế phân, vé còn/tổng, CLB hiện tại, Pot CLB, số lần reroll và trạng thái.
+- Có lịch sử riêng theo từng HLV: mở lượt, Random, bỏ CLB, reroll, chốt, Admin xử lý, hệ thống Random.
+
+3. An toàn phạm vi
+- Không thay đổi Room/Rank/Season/Shop và các module ngoài C1.
+- APP_VERSION nâng lên V1.5.4.

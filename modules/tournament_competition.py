@@ -1,4 +1,4 @@
-"""Tournament competition operations (V1.5.3).
+"""Tournament competition operations (V1.5.4).
 
 Independent from Rank/Season. Handles stages, tournament-only matches, ranking,
 Pot, club lock, scheduling, hosts, progress, knockout/two legs and early rewards.
@@ -707,6 +707,30 @@ def register_routes(context):
             execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"deadline_sync","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_deadline_sync_persist",attempts=2)
         return state
 
+    def _club_draft_admin_rows(tournament_id):
+        """Admin-only audit view for the 16 C1 club allocations."""
+        state=_club_draft_state(tournament_id,False) or {}
+        members={str(m.get("user_id")):m for m in _all_members(tournament_id)}
+        history=state.get("history") or []
+        rows=[]
+        order=[str(x) for x in (state.get("all_order") or state.get("order") or [])][:16]
+        for pos,uid in enumerate(order,1):
+            entry=(state.get("entries") or {}).get(uid) or {}
+            member=members.get(uid) or {}
+            club=entry.get("selected_club") or member.get("fixed_club_name") or (entry.get("candidate") or {}).get("name") or ""
+            user_history=[h for h in history if str(h.get("user_id") or "")==uid]
+            rerolls=[h for h in user_history if h.get("action") in {"SKIP","REROLL"}]
+            rows.append({
+                "position":pos,"user_id":uid,"display_name":member.get("display_name") or "HLV",
+                "allocation_type":"EARLY_REWARD" if pos<=3 else "SYSTEM",
+                "tickets_total":int(entry.get("tickets_total") or (2 if pos==1 else (1 if pos<=3 else 0))),
+                "tickets_remaining":int(entry.get("tickets_remaining") or 0),
+                "club":club,"club_pot":C1_CLUB_POT_BY_NAME.get(club),
+                "status":entry.get("status") or ("selected" if member.get("fixed_club_name") else "waiting"),
+                "reroll_count":len(rerolls),"history":user_history,
+            })
+        return rows
+
     def _event_ops_payload(tournament_id,user_id=None):
         _sync_competition_deadlines(tournament_id)
         cr=_completion_ranking(tournament_id)
@@ -714,7 +738,8 @@ def register_routes(context):
         s1_reveals=_setting(tournament_id,"stage1_player_reveals",{}) or {}
         league_draw=_league_draw_payload(tournament_id)
         return {"timing":_timing_payload(tournament_id),"completion_ranking":cr,"my_completion":mine,
-                "club_draft":_club_draft_state(tournament_id),"stage1_reveals":s1_reveals,"league_draw":league_draw}
+                "club_draft":_club_draft_state(tournament_id),"club_draft_admin_rows":_club_draft_admin_rows(tournament_id),
+                "stage1_reveals":s1_reveals,"league_draw":league_draw}
 
     def _reward_summary(tournament_id,user_id):
         rules,_=_rows(db.table("tournament_reward_rules").select("*").eq("tournament_id",tournament_id).eq("enabled",True).order("priority"),"ops_rewards")
@@ -2280,17 +2305,27 @@ def register_routes(context):
     @admin_permission_required("system_features_manage")
     def admin_tournament_club_draft_start(tournament_id):
         _sync_c1_club_pool(tournament_id)
-        # V1.5.3: only Top 1–3 receive reroll tickets. Hạng 4–16 are system-random.
-        ranking=[x for x in _completion_ranking(tournament_id) if x.get("eligible") and x.get("early_eligible")][:3]
-        order=[str(x.get("user_id")) for x in ranking]
-        entries={}
-        for i,row in enumerate(ranking,1):
-            tickets=2 if i==1 else 1
-            entries[str(row.get("user_id"))]={"tickets_total":tickets,"tickets_remaining":tickets,"skipped":[],"candidate":None,"status":"waiting","finish_rank":i}
-        if not order:
+        # V1.5.4: build one fixed 16-HLV allocation list. Top 1 gets 2 tickets,
+        # Top 2–3 get 1 ticket; positions 4–16 are assigned automatically by the system.
+        completion=_completion_ranking(tournament_id)
+        eligible=[x for x in completion if x.get("eligible")]
+        seen={str(x.get("user_id")) for x in eligible}
+        fallback=[m for m in _all_members(tournament_id) if str(m.get("user_id")) not in seen]
+        allocation=(eligible+fallback)[:16]
+        all_order=[str(x.get("user_id")) for x in allocation if x.get("user_id")]
+        if not all_order:
             flash("Chưa có HLV để mở chọn CLB.","error"); return redirect_admin("tournaments")
-        entries[order[0]]["status"]="active"
-        state={"active":True,"completed":False,"order":order,"current_index":0,"entries":entries,"history":[{"at":now_iso(),"user_id":order[0],"action":"TURN_OPEN","message":"Mở lượt Top 1 (10 phút)."}],"deadline_at":(datetime.now(timezone(timedelta(hours=7)))+timedelta(minutes=10)).isoformat()}
+        reward_order=all_order[:3]
+        entries={}
+        for i,uid in enumerate(all_order,1):
+            tickets=2 if i==1 else (1 if i<=3 else 0)
+            entries[uid]={"tickets_total":tickets,"tickets_remaining":tickets,"skipped":[],"candidate":None,
+                          "status":"waiting" if i<=3 else "pending_system","finish_rank":i,
+                          "allocation_type":"EARLY_REWARD" if i<=3 else "SYSTEM"}
+        entries[reward_order[0]]["status"]="active"
+        state={"active":True,"completed":False,"order":reward_order,"all_order":all_order,"current_index":0,"entries":entries,
+               "history":[{"at":now_iso(),"user_id":reward_order[0],"action":"TURN_OPEN","message":"Mở lượt Top 1 (10 phút)."}],
+               "deadline_at":(datetime.now(timezone(timedelta(hours=7)))+timedelta(minutes=10)).isoformat(),"system_assigned":False}
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_draft_start",attempts=2)
         flash("Đã mở Random CLB thưởng sớm: Top 1 có 2 vé; Top 2–3 có 1 vé. Hạng 4–16 sẽ do hệ thống Random.","success"); return redirect_admin("tournaments")
 
@@ -2324,7 +2359,9 @@ def register_routes(context):
             nxt=str(state["order"][state["current_index"]]); state["entries"][nxt]["status"]="active"; mins=5
             state["deadline_at"]=(datetime.now(timezone(timedelta(hours=7)))+timedelta(minutes=mins)).isoformat(); state.setdefault("history",[]).append({"at":now_iso(),"user_id":nxt,"action":"TURN_OPEN","message":"Mở lượt HLV tiếp theo (5 phút)."})
         else:
-            state["active"]=False; state["completed"]=True; state["deadline_at"]=None
+            state["active"]=False; state["deadline_at"]=None
+            all_order=[str(x) for x in (state.get("all_order") or state.get("order") or [])]
+            state["completed"]=bool(all_order) and all((state.get("entries") or {}).get(x,{}).get("status")=="selected" for x in all_order)
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_draft_advance",attempts=2)
 
     @app.post('/tournaments/<tournament_id>/club-draft/accept')
@@ -2362,14 +2399,30 @@ def register_routes(context):
     @admin_permission_required("system_features_manage")
     def admin_tournament_assign_remaining_clubs(tournament_id):
         _sync_c1_club_pool(tournament_id)
-        # V1.5.3: hạng 4–16 / các HLV chưa có CLB được hệ thống random mặc định.
-        members=[m for m in _all_members(tournament_id) if not m.get("fixed_club_name")][:16]
-        random.shuffle(members); count=0
-        for m in members:
+        state=_club_draft_state(tournament_id,False) or {}
+        all_order=[str(x) for x in (state.get("all_order") or [])][:16]
+        if len(all_order)<4:
+            flash("Hãy mở cơ chế Random CLB 16 HLV trước.","warning"); return redirect_admin("tournaments")
+        count=0
+        for pos,uid in enumerate(all_order[3:16],4):
+            entry=(state.get("entries") or {}).get(uid) or {}
+            member=_member(tournament_id,uid) or {}
+            if member.get("fixed_club_name"):
+                entry["selected_club"]=member.get("fixed_club_name"); entry["status"]="selected"
+                state["entries"][uid]=entry; continue
             pool=_available_clubs(tournament_id)
             if not pool: break
-            club=random.choice(pool); _club_assign(tournament_id,str(m.get("user_id")),club); count+=1
-        flash(f"Đã Random CLB cho {count} HLV còn lại.","success"); return redirect_admin("tournaments")
+            club=random.choice(pool); _club_assign(tournament_id,uid,club); count+=1
+            entry["candidate"]={"id":str(club.get("id")),"name":club.get("name")}; entry["selected_club"]=club.get("name"); entry["status"]="selected"
+            entry["tickets_total"]=0; entry["tickets_remaining"]=0; entry["allocation_type"]="SYSTEM"
+            state["entries"][uid]=entry
+            state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":"SYSTEM_RANDOM","club":club.get("name"),
+                                                  "message":f"Hạng {pos}: hệ thống Random và chốt {club.get('name')}."})
+        state["system_assigned"]=all((state.get("entries") or {}).get(uid,{}).get("status")=="selected" for uid in all_order[3:16])
+        if state.get("system_assigned") and all((state.get("entries") or {}).get(uid,{}).get("status")=="selected" for uid in all_order[:3]):
+            state["completed"]=True
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_draft_system_assign_save",attempts=2)
+        flash(f"Đã Random/chốt CLB cho {count} HLV thuộc hạng 4–16.","success"); return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/league-draw/start')
     @login_required
