@@ -1731,21 +1731,32 @@ def register_routes(context):
     @login_required
     @admin_required
     def admin_tournament_generate_pots(tournament_id):
-        pot_count=max(1,min(8,int(request.form.get("pot_count") or 4)))
-        club_count=max(2,min(64,int(request.form.get("club_count") or len(_all_members(tournament_id)) or 10)))
+        # GĐ2 chính thức: 16 HLV chia cố định 3 Pot theo BXH GĐ1 = 5 / 6 / 5.
+        pot_count=3
+        club_count=max(2,min(64,int(request.form.get("club_count") or len(_all_members(tournament_id)) or 16)))
         league_cfg=_setting(tournament_id,"league_config",{}) or {}
         league_cfg["club_count"]=club_count
-        league_cfg["pot_count"]=pot_count
+        league_cfg["pot_count"]=3
+        league_cfg["pot_sizes"]=[5,6,5]
+        league_cfg["pot_format"]="5-6-5"
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"league_config","setting_value":league_cfg,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_config_pot_clubs",attempts=2)
         ranking=_ranking(tournament_id,"stage1")
         if not ranking:
             flash("Chưa có HLV để chia Pot.","error"); return redirect_admin("tournaments")
-        size=(len(ranking)+pot_count-1)//pot_count
+        if len(ranking)!=16:
+            flash(f"GĐ2 cấu hình 5–6–5 yêu cầu đúng 16 HLV, hiện có {len(ranking)} HLV.","error")
+            return redirect_admin("tournaments")
+        cut1=5; cut2=11
         for i,row in enumerate(ranking):
-            pot=min(pot_count,(i//size)+1)
+            pot=1 if i<cut1 else (2 if i<cut2 else 3)
             execute_query(db.table("tournament_members").update({"pot_no":pot,"seed_no":i+1}).eq("tournament_id",tournament_id).eq("user_id",row["user_id"]),"ops_pot_update",attempts=2)
-        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"pots_locked","setting_value":{"locked":False,"pot_count":pot_count},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_pot_setting",attempts=2)
-        flash(f"Đã cấu hình GĐ2: {pot_count} Pot · {club_count} CLB và chia Pot theo BXH GĐ1.","success"); return redirect_admin("tournaments")
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,"setting_key":"pots_locked",
+            "setting_value":{"locked":False,"pot_count":3,"pot_sizes":[5,6,5],"pot_format":"5-6-5"},
+            "updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_pot_setting",attempts=2)
+        flash(f"Đã chia GĐ2 đúng 3 Pot 5–6–5 theo BXH GĐ1: Pot 1 = 5 HLV · Pot 2 = 6 HLV · Pot 3 = 5 HLV · {club_count} CLB.","success")
+        return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/pot/lock')
     @login_required
@@ -3339,7 +3350,11 @@ def register_routes(context):
         members=_all_members(tournament_id)
         pots={int(m.get("pot_no") or 0) for m in members if int(m.get("pot_no") or 0)>0}
         if len(pots)!=3:
-            flash("GĐ2 chính thức dùng đúng 3 Pot. Hãy chia 3 Pot trước khi sinh lịch.","error"); return redirect_admin("tournaments")
+            flash("GĐ2 chính thức dùng đúng 3 Pot. Hãy chia 3 Pot 5–6–5 trước khi sinh lịch.","error"); return redirect_admin("tournaments")
+        pot_counts={p:sum(1 for m in members if int(m.get("pot_no") or 0)==p) for p in (1,2,3)}
+        if [pot_counts.get(1,0),pot_counts.get(2,0),pot_counts.get(3,0)] != [5,6,5]:
+            flash(f"Sai cấu trúc Pot GĐ2: hiện là {pot_counts.get(1,0)}–{pot_counts.get(2,0)}–{pot_counts.get(3,0)}. Cần chia lại đúng 5–6–5.","error")
+            return redirect_admin("tournaments")
         existing_completed=_matches(tournament_id,"league",["completed"])
         if existing_completed:
             flash("League Phase đã có kết quả; không thể sinh lại tự động.","error"); return redirect_admin("tournaments")
@@ -3353,6 +3368,8 @@ def register_routes(context):
             "setting_key":"league_config",
             "setting_value":{
                 "pot_count":3,
+                "pot_sizes":[5,6,5],
+                "pot_format":"5-6-5",
                 "matches_per_hlv":4,
                 "three_pot_matches":3,
                 "wildcard_matches":1,

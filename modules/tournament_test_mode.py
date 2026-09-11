@@ -872,10 +872,15 @@ def register_routes(context):
             flash("Hãy sinh GĐ1 trước.","warning"); return redirect(url_for('admin_tournament_test_mode'))
         pot_count=3 if int(request.form.get("pot_count") or 4) == 3 else 4
         pots=[[] for _ in range(pot_count)]
-        chunk=(len(ranking)+pot_count-1)//pot_count
-        for i,row in enumerate(ranking):
-            p=min(i//chunk,pot_count-1)
-            pots[p].append({"user_id":row["user_id"],"display_name":row["display_name"],"seed":i+1,"pot":p+1})
+        if pot_count==3 and len(ranking)==16:
+            for i,row in enumerate(ranking):
+                p=0 if i<5 else (1 if i<11 else 2)
+                pots[p].append({"user_id":row["user_id"],"display_name":row["display_name"],"seed":i+1,"pot":p+1})
+        else:
+            chunk=(len(ranking)+pot_count-1)//pot_count
+            for i,row in enumerate(ranking):
+                p=min(i//chunk,pot_count-1)
+                pots[p].append({"user_id":row["user_id"],"display_name":row["display_name"],"seed":i+1,"pot":p+1})
         state["pots"]=pots; state["pot_count"]=pot_count; _save_state(state)
         flash(f"Đã chia {pot_count} Pot theo BXH GĐ1.","success")
         return redirect(url_for('admin_tournament_test_mode'))

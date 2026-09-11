@@ -1,0 +1,8 @@
+PES ARENA V1.5.60
+
+- GĐ2 chính thức: 16 HLV chia 3 Pot theo BXH GĐ1 = 5–6–5.
+- Pot 1: hạng 1–5; Pot 2: hạng 6–11; Pot 3: hạng 12–16.
+- Bỏ cách chia ceil 6–6–4.
+- Backend chặn sinh lịch nếu Pot không đúng 5–6–5.
+- Giữ 4 trận/HLV: 3 lượt ưu tiên phủ 3 Pot + 1 Random, không lặp đối thủ.
+- Test mode 16 HLV/3 Pot dùng cùng cấu trúc 5–6–5.
