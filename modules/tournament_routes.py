@@ -1,4 +1,5 @@
 from datetime import datetime, timezone, timedelta
+import json
 
 """Independent Tournament module routes.
 
@@ -285,7 +286,7 @@ def register_routes(context):
 
 
 
-    # V1.5.52 - Dữ liệu cá nhân C1 được dựng ngay tại /tournaments để phần
+    # V1.5.53 - Dữ liệu cá nhân C1 được dựng ngay tại /tournaments để phần
     # Đối thủ / Giờ rảnh / Lịch đối thủ nằm đúng ở trang danh sách giải.
     def _landing_setting(tournament_id, key, default=None):
         rows, _ = _safe_rows(
@@ -385,12 +386,88 @@ def register_routes(context):
         league_draw=_landing_setting(tournament_id,'league_draw_v2',{}) or {}
         league_reveals=_landing_setting(tournament_id,'league_player_reveals',{}) or {}
         league_mine=(league_draw.get('revealed') or {}).get(uid,[]) if isinstance(league_draw,dict) else []
+
+        # V1.5.53: dữ liệu Trung tâm C1 được đưa ra /tournaments.
+        # Trang landing giờ là nơi theo dõi tiến trình, Host, phòng đang chạy và trận của HLV.
+        timing=_tournament_timing_preview(tournament_id)
+        vn_tz=timezone(timedelta(hours=7))
+        now_vn=datetime.now(vn_tz)
+        def _future(raw):
+            dt=_parse_tournament_dt(raw)
+            if not dt: return False
+            if dt.tzinfo is None: dt=dt.replace(tzinfo=vn_tz)
+            return dt.astimezone(vn_tz)>now_vn
+        progress_label=''; progress_deadline=None
+        if _future(timing.get('stage1_start_at')):
+            progress_label='GĐ1 bắt đầu sau:'; progress_deadline=timing.get('stage1_start_at')
+        elif _future(timing.get('stage1_end_at')):
+            progress_label='GĐ1 đang diễn ra · thời gian còn lại:'; progress_deadline=timing.get('stage1_end_at')
+        elif _future(timing.get('stage1_extension_end_at')):
+            progress_label='🔴 GĐ1 đang trong thời gian gia hạn:'; progress_deadline=timing.get('stage1_extension_end_at')
+        elif _future(timing.get('league_end_at')):
+            progress_label='League Phase · thời gian còn lại:'; progress_deadline=timing.get('league_end_at')
+        early_deadline=timing.get('stage1_early_end_at') if _future(timing.get('stage1_early_end_at')) else None
+
+        all_members,_=_safe_rows(db.table('tournament_members').select('user_id').eq('tournament_id',tournament_id).eq('status','active'),'tournament_landing_center_members')
+        all_ids=[str(x.get('user_id')) for x in all_members if x.get('user_id')]
+        all_users=[]; all_regs=[]
+        if all_ids:
+            all_users,_=_safe_rows(db.table('users').select('id,username,display_name,is_online,last_seen_at').in_('id',all_ids),'tournament_landing_center_users')
+            all_regs,_=_safe_rows(db.table('tournament_registrations').select('user_id,has_host,host_region').eq('tournament_id',tournament_id).in_('user_id',all_ids),'tournament_landing_center_regs')
+        all_user_map={str(x.get('id')):x for x in all_users}
+        reg_map={str(x.get('user_id')):x for x in all_regs}
+
+        room_rows,_=_safe_rows(db.table('match_rooms').select('*').order('updated_at',desc=True).limit(160),'tournament_landing_center_rooms')
+        tournament_match_rows,_=_safe_rows(db.table('tournament_matches').select('*').eq('tournament_id',tournament_id),'tournament_landing_center_match_rows')
+        match_map={str(x.get('id')):x for x in tournament_match_rows}
+        busy=set(); active_room_statuses={'waiting_ready','playing','friendly_playing','waiting_result_confirm','disputed','confirmed'}
+        for r in room_rows:
+            if str(r.get('status') or '') in active_room_statuses:
+                if r.get('host_user_id'): busy.add(str(r.get('host_user_id')))
+                if r.get('guest_user_id'): busy.add(str(r.get('guest_user_id')))
+        host_ready=[]
+        for mid in all_ids:
+            rr=reg_map.get(mid) or {}; uu=all_user_map.get(mid) or {}
+            if rr.get('has_host') and is_user_online_now(uu) and mid not in busy:
+                host_ready.append({'user_id':mid,'display_name':uu.get('display_name') or uu.get('username') or 'HLV','region':rr.get('host_region') or '—'})
+
+        center_rooms=[]; seen_match_ids=set()
+        room_active={'waiting_ready','playing','friendly_playing','waiting_result_confirm','disputed'}
+        prefix='TOURNAMENT_ROOM|'
+        for r in room_rows:
+            if str(r.get('status') or '') not in room_active: continue
+            note=str(r.get('note') or '')
+            if not note.startswith(prefix): continue
+            try: meta=json.loads(note[len(prefix):])
+            except Exception: continue
+            if str(meta.get('tournament_id') or '')!=str(tournament_id): continue
+            mid=str(meta.get('tournament_match_id') or '')
+            if not mid or mid in seen_match_ids: continue
+            mm=match_map.get(mid) or {}
+            if not mm or str(mm.get('status') or '') in {'completed','cancelled'}: continue
+            seen_match_ids.add(mid)
+            hid=str(r.get('host_user_id') or ''); gid=str(r.get('guest_user_id') or '')
+            hn=(all_user_map.get(hid) or {}).get('display_name') or (all_user_map.get(hid) or {}).get('username') or names.get(hid,'HLV')
+            gn=(all_user_map.get(gid) or {}).get('display_name') or (all_user_map.get(gid) or {}).get('username') or names.get(gid,'')
+            home_name=names.get(str(mm.get('home_user_id') or ''),'HLV')
+            away_name=names.get(str(mm.get('away_user_id') or ''),'HLV')
+            if gid:
+                public_label=f'{hn} vs {gn or away_name}'
+                st=str(r.get('status') or '')
+                public_status='Đang thi đấu' if st in {'playing','friendly_playing'} else ('Chờ xác nhận kết quả' if st=='waiting_result_confirm' else ('Đang xử lý kết quả' if st=='disputed' else 'Đủ 2 HLV'))
+            else:
+                expected=away_name if hid==str(mm.get('home_user_id') or '') else home_name
+                public_label=f'{hn} · chờ {expected}'; public_status='Chờ đối thủ'
+            center_rooms.append({'id':r.get('id'),'status':r.get('status'),'host_user_id':r.get('host_user_id'),'guest_user_id':r.get('guest_user_id'),'host_team':r.get('host_team'),'guest_team':r.get('guest_team'),'public_label':public_label,'public_status':public_status,'tournament_match':mm})
+
         return {
             'member': member or {'user_id':uid}, 'is_test':is_test, 'days':days, 'mine_set':mine_set,
             'matches':decorated, 'names':names, 'zalos':zalos,
             'stage1_opened':bool(s1_reveals.get(uid)), 'league_mine':league_mine,
             'league_opened':bool(league_reveals.get(uid)), 'test_opponent':test_opponent,
             'test_opponent_days':test_opp_days,
+            'progress_label':progress_label,'progress_deadline':progress_deadline,'early_deadline':early_deadline,
+            'host_ready':host_ready,'center_rooms':center_rooms,
         }
 
     @app.get('/tournaments')
