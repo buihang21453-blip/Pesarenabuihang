@@ -327,6 +327,43 @@ def register_routes(context):
                 return True
         return False
 
+    def _group_opponent_availability(raw_items, mine_set):
+        """Group an opponent's availability into the official rolling 3-day columns.
+
+        Each returned slot also carries ``is_overlap`` so the template can highlight
+        the hours where both coaches are free without changing any scheduling data.
+        """
+        vn_tz=timezone(timedelta(hours=7))
+        days=_availability_days()
+        grouped={d["date"]:[] for d in days}
+        mine_set=set(mine_set or [])
+        for item in (raw_items or []):
+            iso=(item or {}).get("slot_iso") or (item or {}).get("iso")
+            if not iso:
+                continue
+            try:
+                dt=datetime.fromisoformat(str(iso).replace("Z","+00:00"))
+                if dt.tzinfo is None:
+                    dt=dt.replace(tzinfo=vn_tz)
+                dt=dt.astimezone(vn_tz)
+            except Exception:
+                continue
+            day_key=dt.date().isoformat()
+            if day_key not in grouped:
+                continue
+            end=dt+timedelta(hours=1)
+            grouped[day_key].append({
+                "iso":iso,
+                "label":f"{dt.strftime('%H:%M')} – {end.strftime('%H:%M')}",
+                "is_overlap":iso in mine_set,
+            })
+        out=[]
+        for d in days:
+            row=dict(d)
+            row["opponent_slots"]=sorted(grouped.get(d["date"],[]), key=lambda x:x["iso"])
+            out.append(row)
+        return out
+
     def _availability_payload(tournament_id,user_id,matches):
         ids={str(user_id)}
         for m in matches:
@@ -344,6 +381,7 @@ def register_routes(context):
             overlap=sorted(mine_set & opp_set)
             m["opponent_availability"]=opp_rows
             m["availability_overlap"]=[{"iso":x,"label":datetime.fromisoformat(x).strftime("%d/%m · %H:%M")} for x in overlap]
+            m["opponent_availability_days"]=_group_opponent_availability(opp_rows,mine_set)
         vn_tz=timezone(timedelta(hours=7)); today=datetime.now(vn_tz).date()
         slot_dates=[]
         for x in mine_set:
@@ -527,9 +565,11 @@ def register_routes(context):
             try: dates.append(datetime.fromisoformat(iso).astimezone(vn_tz).date())
             except Exception: pass
         status="missing" if not dates else ("expiring" if max(dates)<=today else "active")
+        decorated_opp=decorated(opp_slots)
         return {
             "days":days,"mine":decorated(mine),"mine_set":mine_set,"status":status,"slot_count":len(mine_set),
-            "opponent":opponent,"opponent_slots":decorated(opp_slots),"overlap":decorated(overlap),
+            "opponent":opponent,"opponent_slots":decorated_opp,"overlap":decorated(overlap),
+            "opponent_days":_group_opponent_availability(decorated_opp,mine_set),
             "day_ranges":{},"day_chips":{},
         }
 
@@ -1400,6 +1440,7 @@ def register_routes(context):
             data["c1_test_schedule"]={
                 "opponent":data["availability"].get("opponent"),
                 "opponent_slots":data["availability"].get("opponent_slots",[]),
+                "opponent_days":data["availability"].get("opponent_days",[]),
                 "overlap":data["availability"].get("overlap",[]),
             }
             data["me_progress"]=None
