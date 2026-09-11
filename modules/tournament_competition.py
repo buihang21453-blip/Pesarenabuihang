@@ -2661,6 +2661,7 @@ def register_routes(context):
 
         pair_ids={str(current_match.get("home_user_id") or ""),str(current_match.get("away_user_id") or "")}
         sibling=None
+        same_pair_candidates=[]
         for candidate in _matches(tournament_id, current_match.get("stage_code")):
             cid=str(candidate.get("id") or "")
             if not cid or cid==current_match_id:
@@ -2668,20 +2669,26 @@ def register_routes(context):
             cpair={str(candidate.get("home_user_id") or ""),str(candidate.get("away_user_id") or "")}
             if cpair != pair_ids:
                 continue
-
-            # Với GĐ1 ưu tiên đúng leg còn lại của cặp. Với stage khác, vẫn chỉ
-            # lấy trận chưa hoàn tất của đúng cặp nếu có.
             status=str(candidate.get("status") or "").lower()
             if status in {"completed","cancelled"}:
                 continue
+            same_pair_candidates.append(candidate)
 
+        # C1 GĐ1 có 2 lượt. Chọn leg kế tiếp theo leg_no trước, không phụ thuộc
+        # thứ tự Supabase trả về; tránh bấm Trận 2 nhưng lấy nhầm bản ghi khác.
+        if same_pair_candidates:
             if str(current_match.get("stage_code") or "")=="stage1":
                 cur_leg=int(current_match.get("leg_no") or 1)
-                cand_leg=int(candidate.get("leg_no") or 1)
-                if cand_leg==cur_leg:
-                    continue
-            sibling=candidate
-            break
+                wanted_leg=2 if cur_leg==1 else 1
+                sibling=next(
+                    (c for c in same_pair_candidates if int(c.get("leg_no") or 1)==wanted_leg),
+                    None,
+                )
+            if not sibling:
+                sibling=sorted(
+                    same_pair_candidates,
+                    key=lambda c:(int(c.get("leg_no") or 999),str(c.get("created_at") or ""),str(c.get("id") or "")),
+                )[0]
 
         if not sibling:
             # Không còn leg nào -> cặp đã hoàn tất.
@@ -2730,11 +2737,26 @@ def register_routes(context):
             "away_name":dm.get("away_name"),
             "previous_match_ids":history,
             "current_leg_no":int(sibling.get("leg_no") or 2),
+            # Token thay đổi mỗi lần mở leg mới để polling Host/Guest chắc chắn
+            # nhận đây là một phiên trận mới dù hai HLV vẫn ở nguyên phòng.
+            "transition_token":now_iso(),
         })
+
+        # Đưa Trận 2 về pending trước rồi mới mở lại room. Như vậy Host/Guest
+        # không thể nhìn thấy room leg 2 nhưng tournament_match vẫn còn state cũ.
+        if str(sibling.get("status") or "") != "pending":
+            execute_query(
+                db.table("tournament_matches").update({
+                    "status":"pending",
+                    "updated_at":now_iso(),
+                }).eq("id",sibling.get("id")).eq("tournament_id",tournament_id),
+                "ops_c1_next_same_room_match2_pending_preopen",
+                attempts=2,
+            )
 
         # Reset CHỈ trạng thái của trận trong room; không xóa kết quả trận 1.
         next_started_at=now_iso()
-        execute_query(
+        room_update_result=execute_query(
             db.table("match_rooms").update({
                 "note":_room_note(meta),
                 "status":"waiting_ready",
@@ -2750,12 +2772,23 @@ def register_routes(context):
                 "match_mode":"tournament",
                 "team_tier":"TOURNAMENT_GD1" if sibling.get("stage_code")=="stage1" else "TOURNAMENT",
                 "updated_at":next_started_at,
-            }).eq("id",room_id),
+            }).eq("id",room_id).eq("status","confirmed"),
             "ops_c1_next_same_room_reset_for_leg2",
             attempts=2,
         )
+        if not (room_update_result.data or []):
+            # Có request khác vừa đổi trạng thái: đọc lại DB thay vì giả định đã mở Trận 2.
+            latest_room=get_room(room_id)
+            latest_meta=_room_meta(latest_room) if latest_room else {}
+            if not (
+                latest_room
+                and str(latest_room.get("status") or "")=="waiting_ready"
+                and str((latest_meta or {}).get("tournament_match_id") or "")==str(sibling.get("id") or "")
+            ):
+                flash("Chưa thể mở Trận 2 vì trạng thái phòng vừa thay đổi. Hãy bấm Trận 2 lại một lần.","warning")
+                return redirect(url_for("room_detail",room_id=room_id))
 
-        # V1.5.24: xác nhận DB đã thực sự chuyển room sang Trận 2 trước khi báo thành công.
+        # V1.5.28: xác nhận DB đã thực sự chuyển room sang Trận 2 trước khi báo thành công.
         verified,_=_one(
             db.table("match_rooms").select("id,status,guest_ready,host_user_id,guest_user_id,note,updated_at").eq("id",room_id),
             "ops_c1_next_same_room_verify_leg2",
@@ -2786,17 +2819,6 @@ def register_routes(context):
             )
         except Exception as exc:
             app.logger.warning("C1 game2 guest notification failed room=%s: %s",room_id,exc)
-
-        # Bảo đảm match 2 ở trạng thái pending trước khi bắt đầu lại.
-        if str(sibling.get("status") or "") not in {"pending"}:
-            execute_query(
-                db.table("tournament_matches").update({
-                    "status":"pending",
-                    "updated_at":now_iso(),
-                }).eq("id",sibling.get("id")),
-                "ops_c1_next_same_room_match2_pending",
-                attempts=2,
-            )
 
         flash("🏆 Đã chuyển sang Trận 2. Đội khách hãy bấm Sẵn Sàng.","success")
         return redirect(url_for("room_detail",room_id=room_id))

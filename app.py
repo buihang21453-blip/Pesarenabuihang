@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.5.27"
+APP_VERSION = "V1.5.28"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -5353,6 +5353,10 @@ def build_room_state_key(room):
         str(room.get("rematch_guest_declined")),
         str(room.get("rematch_expired")),
         str(room.get("state_expires_at")),
+        # C1 chuyển Trận 1 -> Trận 2 có thể giữ nguyên 2 HLV và nhiều trường
+        # phòng. Note lại chứa tournament_match_id/leg hiện tại, nên phải đưa
+        # dấu vân tay của note vào state key để máy khách luôn nhận ra lần đổi leg.
+        hashlib.sha1(str(room.get("note") or "").encode("utf-8")).hexdigest()[:16],
         str((room.get("dispute") or {}).get("status")),
         str((room.get("dispute") or {}).get("updated_at")),
         str(room.get("parsec_link")),

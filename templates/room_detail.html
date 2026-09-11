@@ -844,6 +844,7 @@ let currentRoomGuestId = {{ (room.guest_user_id|default('', true))|tojson }};
 let currentRoomStatus = {{ room.status|tojson }};
 const currentRoomUserIsHost = {{ (room_room_viewer_is_host or current_user.role == 'admin')|tojson }};
 const currentRoomUserIsGuest = {{ (room_viewer_is_guest)|tojson }};
+const currentRoomIsTournament = {{ (is_tournament_room)|tojson }};
 const currentRoomPath = {{ url_for('room_detail', room_id=room.id)|tojson }};
 
 let roomCountdownSeconds = 0;
@@ -979,8 +980,9 @@ function getRoomStateInterval() {
     if (currentRoomStatus === "playing") return currentRoomUserIsGuest ? 4500 : 10000;
     if (currentRoomStatus === "friendly_playing") return 15000;
     if (currentRoomStatus === "waiting_result_confirm") return currentRoomUserIsGuest ? 3000 : 6000;
-    if (currentRoomStatus === "waiting_ready") return 6000;
-    if (currentRoomStatus === "confirmed") return 8000;
+    if (currentRoomStatus === "waiting_ready") return currentRoomIsTournament ? 2500 : 6000;
+    // C1: khách đang ở màn “Chờ Chủ phòng mở Trận 2” phải nhận lần đổi leg nhanh.
+    if (currentRoomStatus === "confirmed") return currentRoomIsTournament ? 2000 : 8000;
     return 15000;
 }
 

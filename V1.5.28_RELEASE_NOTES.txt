@@ -1,0 +1,23 @@
+PES ARENA V1.5.28
+
+FIX: C1 - Chủ phòng mở Trận 2 nhưng khách vẫn đứng ở “Chờ Chủ phòng mở Trận 2”.
+
+Phạm vi:
+- modules/tournament_competition.py
+- app.py
+- templates/room_detail.html
+
+Thay đổi:
+1. Chọn đúng leg còn lại của cùng cặp HLV theo leg_no, không phụ thuộc thứ tự query.
+2. Đưa tournament_match Trận 2 về pending trước khi mở lại room.
+3. Chỉ reset room từ trạng thái confirmed -> waiting_ready và kiểm tra kết quả update/DB sau khi chuyển.
+4. Thêm transition_token vào metadata mỗi lần đổi leg.
+5. build_room_state_key thêm fingerprint của room note để Host/Guest nhận ra thay đổi tournament_match_id/leg ngay cả khi hai HLV vẫn ở nguyên phòng.
+6. Tăng tần suất polling riêng cho phòng C1 khi đang chờ mở Trận 2 / waiting_ready để khách cập nhật nhanh hơn.
+7. Đồng bộ APP_VERSION lên V1.5.28.
+
+Không thay đổi:
+- Database schema / SQL migration.
+- Logic Trận 1 và dữ liệu kết quả đã chốt.
+- Quick Match / Rank / Giao hữu.
+- Lịch đối thủ 3 ngày và live-overlap của V1.5.27.
