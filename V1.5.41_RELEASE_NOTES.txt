@@ -1,0 +1,8 @@
+PES ARENA V1.5.41 - C1 Match 2 Guest Ready / Host Random
+
+- C1 keeps the initial Match 1 flow unchanged: Guest must manually click Ready.
+- After Match N is confirmed and the room advances to Match N+1, guest_ready is now TRUE immediately.
+- Guest sees "Đã sẵn sàng" on Match 2+.
+- Host immediately sees the C1 Random CLB / quay quân action instead of waiting for Guest to click Ready again.
+- The legacy/manual Next Match fallback uses the same state, preventing inconsistent behavior between transition paths.
+- Teams, scores and match_id are still reset between legs; only the next-leg ready state changes.
