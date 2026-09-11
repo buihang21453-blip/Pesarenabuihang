@@ -296,25 +296,6 @@ def register_routes(context):
             user = current_user() or {}
             user_id = user.get("id")
             can_admin_manage_tournament = bool(is_admin_user(user))
-
-            # V1.5.49: Với HLV đã thuộc giải (hoặc TK test C1), /tournaments là chính
-            # giao diện giải đấu. Không bắt bấm thêm "Xem chi tiết". Chỉ auto-enter khi
-            # đăng ký đã đóng để không phá luồng đăng ký công khai.
-            test_tournament_ids = set()
-            if user_id and not can_admin_manage_tournament:
-                try:
-                    test_rows, _ = _safe_rows(
-                        db.table("tournament_settings").select("tournament_id,setting_value")
-                        .eq("setting_key", "c1_test_accounts_v1"),
-                        "tournament_landing_test_accounts",
-                    )
-                    for tr in test_rows:
-                        raw = tr.get("setting_value") or {}
-                        ids = raw.get("user_ids") if isinstance(raw, dict) else []
-                        if str(user_id) in {str(x) for x in (ids or [])}:
-                            test_tournament_ids.add(str(tr.get("tournament_id") or ""))
-                except Exception:
-                    test_tournament_ids = set()
             for item in tournament_rows:
                 item["can_admin_manage"] = can_admin_manage_tournament
                 item["my_registration"] = _registration_for_user(item.get("id"), user_id)
@@ -546,16 +527,6 @@ def register_routes(context):
                     item["phase_name"] = "Đã kết thúc"
                 else:
                     item["phase_name"] = "Đang diễn ra"
-        if opened and not can_admin_manage_tournament and user_id:
-            direct = next((
-                item for item in tournament_rows
-                if (item.get("my_member") or str(item.get("id") or "") in test_tournament_ids)
-                and not bool(item.get("registration_open"))
-                and str(item.get("status") or "").lower() not in {"completed","cancelled","archived"}
-            ), None)
-            if direct:
-                return redirect(url_for("tournament_detail", tournament_id=direct.get("id")))
-
         return render_template(
             'tournaments.html',
             tournament_open=opened,

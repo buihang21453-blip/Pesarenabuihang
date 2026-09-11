@@ -105,9 +105,9 @@
           </div>
           {% endif %}
           <div class="tournament-card-actions">
-            <a class="btn" href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}">◉ Xem giải đấu</a>
+            <a class="btn" href="{{ url_for('c1_rooms') }}">🎮 Phòng đấu C1</a>
             {% if tournament.my_member %}
-              <a class="btn" href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#schedule">▣ Lịch đấu</a>
+              <a class="btn" href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#schedule">📅 Lịch của tôi</a>
               <details class="tournament-profile-edit"><summary class="btn">✎ Thông tin giải</summary><form method="post" action="{{ url_for('tournament_profile_update', tournament_id=tournament.id) }}" style="margin-top:8px;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;display:grid;gap:8px;min-width:280px"><strong>Sửa thông tin của tôi</strong><input class="tournament-zalo-input" name="zalo_name" maxlength="80" placeholder="Tên Zalo" value="{{ tournament.my_registration.zalo_name if tournament.my_registration else '' }}" required><div class="tournament-choice-grid"><label class="tournament-choice"><input type="radio" name="host_choice" value="yes" {% if tournament.my_registration and tournament.my_registration.has_host %}checked{% endif %} required> Có Host</label><label class="tournament-choice"><input type="radio" name="host_choice" value="no" {% if not tournament.my_registration or not tournament.my_registration.has_host %}checked{% endif %} required> Không Host</label></div><div class="tournament-choice-grid">{% for region in ['Bắc','Trung','Nam'] %}<label class="tournament-choice"><input type="radio" name="host_region" value="{{ region }}" {% if tournament.my_registration and tournament.my_registration.host_region==region %}checked{% endif %} required> {{ region }}</label>{% endfor %}</div><button class="btn gold" type="submit">Lưu thông tin</button></form></details>
             {% elif tournament.my_registration and tournament.my_registration.status == 'pending' %}
               <div class="tournament-control"><strong>Đang chờ Admin duyệt</strong></div>
@@ -116,14 +116,13 @@
             {% elif tournament.registration_open %}
               <a class="btn gold" href="{{ url_for('tournaments', register=tournament.id) }}#register-{{ tournament.id }}">🏆 Đăng ký</a>
             {% else %}
-              <button class="btn" type="button" disabled>Đăng ký đã đóng</button>
+              <a class="btn" href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#schedule">📅 Lịch của tôi</a>
             {% endif %}
           </div>
           <div class="tournament-public-ranking" id="ranking">
             <div class="tournament-public-ranking-head">
               <div>
                 <h4>📊 BXH</h4>
-                <p>BXH chính của giải · kết quả GĐ1 và GĐ2 được cộng liên tục vào cùng một bảng.</p>
               </div>
               <a href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}{% if tournament.my_member and tournament.needs_availability_gate|default(false) %}#schedule{% else %}#ranking{% endif %}">{{ 'Đặt lịch thi đấu →' if tournament.my_member and tournament.needs_availability_gate|default(false) else 'Xem chi tiết →' }}</a>
             </div>
@@ -162,7 +161,7 @@
                   {% for sm in tournament.central_admin_schedule_matches|default([]) %}
                   <div class="tournament-admin-fixed-match">
                     <span>{{ 'GĐ1' if sm.stage_code=='stage1' else ('GĐ2' if sm.stage_code=='league' else (sm.round_code|upper if sm.round_code else 'Knockout')) }} · <strong>{{ sm.home_name }} vs {{ sm.away_name }}</strong></span>
-                    <span>{{ (sm.scheduled_at|string)[8:10] ~ '/' ~ (sm.scheduled_at|string)[5:7] ~ ' · ' ~ (sm.scheduled_at|string)[11:16] }}</span>
+                    <span>{{ (sm.scheduled_at|string)|replace('T',' ') }}</span>
                   </div>
                   {% else %}
                   <div class="small" style="margin-top:8px">Chưa có trận nào được hẹn giờ.</div>
@@ -269,7 +268,7 @@
                             <div class="tournament-admin-match">
                               <div>
                                 <strong>{{ 'GĐ1' if m.stage_code=='stage1' else ('GĐ2' if m.stage_code=='league' else (m.round_code|upper if m.round_code else 'Knockout')) }} · vs {{ m.opponent_name }}</strong>
-                                <div class="small">📅 {{ ((m.scheduled_at|string)[8:10] ~ '/' ~ (m.scheduled_at|string)[5:7] ~ ' · ' ~ (m.scheduled_at|string)[11:16]) if m.scheduled_at else 'Chưa đặt lịch' }} · {{ 'Đã hoàn thành' if m.status=='completed' else 'Chờ thi đấu' }}</div>
+                                <div class="small">📅 {{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa đặt lịch' }} · {{ 'Đã hoàn thành' if m.status=='completed' else 'Chờ thi đấu' }}</div>
                                 {% if m.status=='completed' %}<div class="small"><strong>Tỷ số:</strong> {% if m.is_home_for_player %}{{ m.home_score }} - {{ m.away_score }}{% else %}{{ m.away_score }} - {{ m.home_score }}{% endif %}{% if m.home_pen is not none and m.away_pen is not none %} · Pen {% if m.is_home_for_player %}{{ m.home_pen }} - {{ m.away_pen }}{% else %}{{ m.away_pen }} - {{ m.home_pen }}{% endif %}{% endif %}</div>{% endif %}
                               </div>
                               <form class="tournament-admin-score" method="post" action="{{ url_for('admin_tournament_match_result',match_id=m.id) }}" data-auto-score-form>
@@ -332,7 +331,7 @@
             <div class="tournament-register-step"><strong>1. Bạn có thể làm Host không?</strong><div class="tournament-choice-grid"><label class="tournament-choice"><input type="radio" name="host_choice" value="yes" required> Có Host</label><label class="tournament-choice"><input type="radio" name="host_choice" value="no" required> Không Host</label></div></div>
             <div class="tournament-register-step"><strong>2. Khu vực của bạn</strong><div class="tournament-choice-grid"><label class="tournament-choice"><input type="radio" name="host_region" value="Bắc" required> Bắc</label><label class="tournament-choice"><input type="radio" name="host_region" value="Trung" required> Trung</label><label class="tournament-choice"><input type="radio" name="host_region" value="Nam" required> Nam</label></div></div>
             <div class="tournament-register-step"><strong>3. Tên Zalo để các HLV liên hệ</strong><input class="tournament-zalo-input" type="text" name="zalo_name" maxlength="80" placeholder="Ví dụ: Nguyễn Văn A" value="{{ current_user.zalo_name or '' }}" required><small>Chỉ nhập tên hiển thị/tên tìm kiếm trên Zalo, không cần nhập số điện thoại.</small></div>
-            <div class="tournament-register-step"><strong>4. Khung giờ thi đấu chính thức</strong><div class="tournament-schedule-info"><div><b>📅 Thứ 2 – Thứ 6</b><br>☀️ 11:00 – 13:00<br>🌙 18:00 – 22:00</div><div><b>📅 Thứ 7 & Chủ nhật</b><br>Linh hoạt</div><div class="wide">🤝 Hai HLV chủ động liên hệ và thống nhất giờ thi đấu.<br>📌 Ngoài các khung giờ trên vẫn được phép thi đấu nếu cả hai HLV cùng đồng ý.</div></div>
+            <div class="tournament-register-step"><strong>4. Khung giờ thi đấu chính thức</strong><div class="tournament-schedule-info"><div><b>📅 Thứ 2 – Thứ 6</b><br>11:00 – 13:00<br>18:00 – 22:00</div><div><b>📅 Thứ 7 & Chủ nhật</b><br>Linh hoạt</div><div class="wide">🤝 Hai HLV chủ động liên hệ và thống nhất giờ thi đấu.<br>📌 Ngoài các khung giờ trên vẫn được phép thi đấu nếu cả hai HLV cùng đồng ý.</div></div>
               <div class="tournament-help-stack">
                 <details><summary>🏆 Thể thức thi đấu</summary><div class="tournament-help-body"><ul>
                   <li><strong>GĐ1 – Khởi động:</strong> Mỗi HLV đá 6 trận, gặp 3 HLV khác nhau do hệ thống Random, mỗi cặp 2 trận. Điểm giữ lại để xếp Pot và cộng sang GĐ2.</li>
