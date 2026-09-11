@@ -11,7 +11,7 @@
   {% if is_c1_admin and not member %}<p>👑 Admin đang vào bằng chính tài khoản Admin. Đây không phải chế độ “Xem như HLV” khác.</p>{% endif %}
   <div class="c1-actions">
     <form method="post" action="{{ url_for('c1_room_open') }}"><input type="hidden" name="tournament_id" value="{{ tournament.id }}"><button class="btn green" type="submit">🎮 Vào phòng đấu C1</button></form>
-    <a class="btn" href="{{ url_for('tournament_detail',tournament_id=tournament.id) }}">← Giải đấu</a>
+    <a class="btn" href="{{ url_for('tournaments') }}">← Giải đấu</a>
   </div>
 </section>
 {% endblock %}

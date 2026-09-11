@@ -1,0 +1,7 @@
+PES ARENA V1.5.54
+
+- Xóa nút “Xem chi tiết →” khỏi /tournaments vì nội dung HLV cần đã được đưa về hub chính.
+- Toàn bộ link/redirect người dùng từng quay về tournament_detail giờ quay về /tournaments (giữ anchor khi có).
+- GET /tournaments/<id> chỉ còn là route tương thích và redirect về /tournaments.
+- Nút Về giải đấu trong phòng C1, c1-rooms và các redirect lỗi/lịch/CLB/BXH đều quy về /tournaments.
+- Không xóa các POST route /tournaments/<id>/... vì tournament_id vẫn cần cho xử lý nghiệp vụ.

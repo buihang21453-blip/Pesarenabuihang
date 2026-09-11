@@ -564,7 +564,7 @@ def register_routes(context):
             tournament_id = str(meta.get("tournament_id") or "")
             flash("Trận C1 đã hoàn tất. Hãy mở trận tiếp theo từ mục Đối thủ/Phòng thi đấu của giải.", "info")
             if tournament_id:
-                return redirect(url_for("tournament_detail", tournament_id=tournament_id) + "#rooms")
+                return redirect(url_for('tournaments') + "#rooms")
             return redirect(url_for("tournaments"))
 
         if user["id"] not in [room["host_user_id"], room["guest_user_id"]]:

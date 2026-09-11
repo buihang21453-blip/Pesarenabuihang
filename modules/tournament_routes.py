@@ -286,7 +286,7 @@ def register_routes(context):
 
 
 
-    # V1.5.53 - Dữ liệu cá nhân C1 được dựng ngay tại /tournaments để phần
+    # V1.5.54 - Dữ liệu cá nhân C1 được dựng ngay tại /tournaments để phần
     # Đối thủ / Giờ rảnh / Lịch đối thủ nằm đúng ở trang danh sách giải.
     def _landing_setting(tournament_id, key, default=None):
         rows, _ = _safe_rows(
@@ -387,7 +387,7 @@ def register_routes(context):
         league_reveals=_landing_setting(tournament_id,'league_player_reveals',{}) or {}
         league_mine=(league_draw.get('revealed') or {}).get(uid,[]) if isinstance(league_draw,dict) else []
 
-        # V1.5.53: dữ liệu Trung tâm C1 được đưa ra /tournaments.
+        # V1.5.54: dữ liệu Trung tâm C1 được đưa ra /tournaments.
         # Trang landing giờ là nơi theo dõi tiến trình, Host, phòng đang chạy và trận của HLV.
         timing=_tournament_timing_preview(tournament_id)
         vn_tz=timezone(timedelta(hours=7))
@@ -959,7 +959,7 @@ def register_routes(context):
         if return_to == "central" and tournament_id:
             return redirect(url_for("tournaments") + "#ranking")
         if return_to == "tournament" and tournament_id:
-            return redirect(url_for("tournament_detail", tournament_id=tournament_id) + "#bxh")
+            return redirect(url_for('tournaments') + "#bxh")
         return redirect_admin("tournaments")
 
     @app.get('/admin/tournaments/<tournament_id>/export.xlsx')
