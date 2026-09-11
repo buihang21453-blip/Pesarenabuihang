@@ -360,7 +360,7 @@ def register_routes(context):
             })
             new_note = "TOURNAMENT_ROOM|" + json.dumps(meta, ensure_ascii=False, separators=(",", ":"))
 
-            # V1.5.42: fallback cũng copy đúng Rank: mở trận mới ở waiting_ready
+            # V1.5.43: fallback cũng copy đúng Rank: mở trận mới ở waiting_ready
             # với guest_ready=False; khách phải bấm Sẵn Sàng lại trong room.
             guest_ready_now = False
             execute_query(

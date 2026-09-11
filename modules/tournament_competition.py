@@ -2826,7 +2826,7 @@ def register_routes(context):
             db.table("match_rooms").update({
                 "note":_room_note(meta),
                 "status":"waiting_ready",
-                # V1.5.42: Copy đúng cơ chế Rank. Sang trận mới, khách phải bấm
+                # V1.5.43: Copy đúng cơ chế Rank. Sang trận mới, khách phải bấm
                 # Sẵn Sàng lại; chỉ khi guest_ready=True thì Host mới được Quay đội.
                 "guest_ready":False,
                 "host_team":None,
@@ -3051,7 +3051,7 @@ def register_routes(context):
         execute_query(db.table("tournament_matches").update({"home_score":hs,"away_score":aw,"winner_user_id":winner,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_confirm",attempts=2)
         prop.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
 
-        # V1.5.42: C1 copy đúng nhịp của Rank. Ngay khi kết quả Trận N được xác nhận,
+        # V1.5.43: C1 copy đúng nhịp của Rank. Ngay khi kết quả Trận N được xác nhận,
         # nếu đúng cặp còn Trận N+1 thì chuyển CHÍNH room hiện tại sang trận kế tiếp và
         # reset về waiting_ready. Không giữ room ở confirmed để người chơi phải bấm Đá Tiếp.
         pair_state=_pair_flow_state(tournament_id, match)
@@ -3111,7 +3111,7 @@ def register_routes(context):
             room_patch={
                 "note":_room_note(meta),
                 "status":"waiting_ready",
-                # V1.5.42: Giống Rank: trận mới bắt đầu ở Chờ Sẵn Sàng.
+                # V1.5.43: Giống Rank: trận mới bắt đầu ở Chờ Sẵn Sàng.
                 # Khách phải bấm Sẵn Sàng; Host chỉ được Quay đội sau đó.
                 "guest_ready":False,
                 "host_team":None,
@@ -3138,22 +3138,34 @@ def register_routes(context):
                 "ops_c1_confirm_auto_advance_same_room",attempts=2,
             )
             if not (moved.data or []):
+                cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
                 latest=get_room(room_id)
                 latest_meta=_room_meta(latest) if latest else {}
                 if not (
                     latest and str(latest.get("status") or "")=="waiting_ready"
                     and str((latest_meta or {}).get("tournament_match_id") or "")==str(next_match.get("id") or "")
                 ):
-                    # Kết quả trận cũ đã được ghi. Không được báo cặp hoàn tất chỉ vì reset room lỗi.
-                    execute_query(
-                        db.table("match_rooms").update({
-                            "status":"confirmed","guest_ready":False,"state_expires_at":None,"updated_at":now_iso(),
-                        }).eq("id",room_id),
-                        "ops_c1_confirm_auto_advance_fallback_confirmed",attempts=2,
+                    # V1.5.43: không quay về state `confirmed`/Đá Tiếp. Retry trực tiếp
+                    # trạng thái Rank-style theo room id; đây là idempotent vì room_patch
+                    # luôn trỏ đúng next_match và reset toàn bộ dữ liệu trận cũ.
+                    retry=execute_query(
+                        db.table("match_rooms").update(room_patch).eq("id",room_id),
+                        "ops_c1_confirm_auto_advance_retry_rank_style",attempts=2,
                     )
                     cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
-                    flash("Kết quả đã được xác nhận nhưng phòng chưa tự mở trận kế tiếp. Hãy tải lại phòng và bấm Đá Tiếp.","warning")
-                    return redirect(url_for("room_detail",room_id=room_id))
+                    latest=get_room(room_id)
+                    latest_meta=_room_meta(latest) if latest else {}
+                    if not (
+                        latest and str(latest.get("status") or "")=="waiting_ready"
+                        and not bool(latest.get("guest_ready"))
+                        and str((latest_meta or {}).get("tournament_match_id") or "")==str(next_match.get("id") or "")
+                    ):
+                        app.logger.error(
+                            "C1 auto advance failed room=%s next_match=%s retry_rows=%s",
+                            room_id, next_match.get("id"), len((retry.data or [])) if retry is not None else -1,
+                        )
+                        flash("Kết quả đã được xác nhận nhưng phòng chưa đồng bộ được Trận kế tiếp. Hãy tải lại phòng; hệ thống sẽ tự phục hồi, không cần bấm Đá Tiếp.","warning")
+                        return redirect(url_for("room_detail",room_id=room_id))
 
             cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
             flash(f"Đã xác nhận Trận {int(match.get('leg_no') or 1)}. Phòng đã chuyển sang Trận {int(next_match.get('leg_no') or (int(match.get('leg_no') or 1)+1))}. Đội khách hãy bấm Sẵn Sàng; sau đó Chủ phòng mới Quay đội.","success")

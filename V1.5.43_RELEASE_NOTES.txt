@@ -1,0 +1,8 @@
+PES ARENA V1.5.43 - C1 SINGLE RANK-STYLE FLOW
+
+- Loai bo nut Da Tiep khoi luong C1 giua cac tran.
+- C1 confirmed chi la ket thuc that su khi cap dau da du tran.
+- Neu phong C1 cu bi ket confirmed nhung con row tran tiep theo, phong tu phuc hoi ve waiting_ready.
+- Sau xac nhan ket qua: retry truc tiep Rank-style waiting_ready, guest_ready=false; khong fallback ve confirmed/Da Tiep.
+- Dong bo room_detail.html va _room_live_content.html de khong con hai logic render mau thuan.
+- CSS khong phai nguyen nhan; loi la do template/state machine cu con ton tai song song.
