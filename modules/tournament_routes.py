@@ -300,6 +300,14 @@ def register_routes(context):
                 item["can_admin_manage"] = can_admin_manage_tournament
                 item["my_registration"] = _registration_for_user(item.get("id"), user_id)
                 item["my_member"] = _member_for_user(item.get("id"), user_id)
+                item["needs_availability_gate"] = False
+                if item.get("my_member") and not can_admin_manage_tournament:
+                    av_rows, _ = _safe_rows(
+                        db.table("tournament_availability_slots").select("id")
+                        .eq("tournament_id", item.get("id")).eq("user_id", user_id),
+                        "tournament_landing_availability_gate",
+                    )
+                    item["needs_availability_gate"] = not bool(av_rows)
                 member_rows, _ = _safe_rows(
                     db.table("tournament_members").select("id").eq("tournament_id", item.get("id")).eq("status", "active"),
                     "tournament_member_count",

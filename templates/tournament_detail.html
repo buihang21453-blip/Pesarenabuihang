@@ -34,16 +34,15 @@
 </style>{% endblock %}
 {% block content %}<div class="td-shell">
 {% if preview_mode|default(false) %}<div class="td-preview-banner"><strong>👁️ ĐANG XEM NHƯ HLV: {{ preview_user.display_name or preview_user.username or preview_user.user_id }}</strong><small>Chế độ chỉ xem · dữ liệu là của giải thật · mọi thao tác ghi dữ liệu đã bị khóa để tránh ảnh hưởng HLV.</small></div>{% endif %}
-{% if c1_test_account|default(false) %}<div class="td-preview-banner" style="border-color:rgba(46,204,113,.35);background:#10251a;color:#cfead7"><strong>🧪 TÀI KHOẢN THỬ NGHIỆM</strong><small>Phòng đấu, random đội, gửi kết quả và xác nhận kết quả dùng cùng cơ chế với giải chính thức. Dữ liệu kiểm thử được lưu riêng và không ảnh hưởng 16 HLV chính thức.</small></div>{% endif %}
-{% if member %}<section class="td-opening" data-opening {% if not show_opening_animation|default(false) %}hidden{% endif %}><div class="td-opening-stars" aria-hidden="true">{% for i in range(12) %}<i style="left:{{ 5 + (i*8)%92 }}%;top:{{ (i*13)%35 }}px"></i>{% endfor %}</div><span class="td-opening-cup">🏆</span><div class="td-opening-kicker">PES ARENA · 2026/2027</div><h2>CHAMPION LEAGUE ARENA</h2><p>GIAI ĐOẠN 1 CHÍNH THỨC BẮT ĐẦU</p><button class="btn gold" type="button" data-opening-close>⚽ VÀO GIẢI ĐẤU</button></section>{% endif %}
+{% if member and not availability_gate_locked|default(false) %}<section class="td-opening" data-opening {% if not show_opening_animation|default(false) %}hidden{% endif %}><div class="td-opening-stars" aria-hidden="true">{% for i in range(12) %}<i style="left:{{ 5 + (i*8)%92 }}%;top:{{ (i*13)%35 }}px"></i>{% endfor %}</div><span class="td-opening-cup">🏆</span><div class="td-opening-kicker">PES ARENA · 2026/2027</div><h2>CHAMPION LEAGUE ARENA</h2><p>GIAI ĐOẠN 1 CHÍNH THỨC BẮT ĐẦU</p><button class="btn gold" type="button" data-opening-close>⚽ VÀO GIẢI ĐẤU</button></section>{% endif %}
 <div class="td-head"><h1>🏆 {{ tournament.name }}</h1>{% if not admin_participant_view|default(false) %}<div class="td-meta"><span>{{ tournament.status|upper }}</span><span>•</span><span>{{ 'Đang tham gia' if member else 'Người xem' }}</span>{% if member %}<span>• Pot {{ member.pot_no or '—' }}</span><span>• {{ member.fixed_club_name or 'Chưa chọn CLB' }}</span>{% endif %}</div>{% endif %}</div>
 {% if availability_gate_locked|default(false) %}
 <section class="td-gate" id="schedule">
   <div class="td-gate-lock">🔒</div>
-  <h2>ĐĂNG KÝ GIỜ RẢNH TRONG 3 NGÀY TỚI</h2>
-  <p>Để vào khu vực giải đấu C1 và xem BXH, nếu bạn chưa có lịch thi đấu thì chỉ cần đăng ký ít nhất 1 giờ rảnh trong Hôm nay / Ngày mai / Ngày kia.</p>
-  <p><strong>HLV đã có lịch thi đấu được chốt trong 3 ngày tới sẽ tự động được bỏ qua bước này.</strong></p>
-  <form method="post" action="{{ url_for('tournament_availability_simple_save',tournament_id=tournament.id) }}" class="td-gate-form">
+  <h2>📅 ĐẶT LỊCH THI ĐẤU</h2>
+  <p>Trước khi vào xem giải đấu, HLV bắt buộc phải khai báo giờ rảnh trong <strong>Hôm nay / Ngày mai / Ngày kia</strong>.</p>
+  <p><strong>Chỉ cần lưu ít nhất 1 khung giờ hợp lệ. Sau khi lưu, hệ thống sẽ tự mở nội dung giải đấu.</strong></p>
+  <form method="post" action="{{ url_for('admin_tournament_test_availability_simple_save',tournament_id=tournament.id) if c1_test_account|default(false) else url_for('tournament_availability_simple_save',tournament_id=tournament.id) }}" class="td-gate-form">
     <div class="td-gate-days">
       {% for day in availability.days %}
       <div class="td-gate-day">
@@ -56,8 +55,8 @@
       </div>
       {% endfor %}
     </div>
-    <div class="td-gate-submit"><button class="btn green" type="submit">✅ XÁC NHẬN GIỜ RẢNH & VÀO GIẢI</button></div>
-    <p class="td-gate-note">Chỉ cần điền 1 ngày. Không giới hạn khung giờ tối thiểu.</p>
+    <div class="td-gate-submit"><button class="btn green" type="submit">💾 LƯU GIỜ RẢNH & VÀO GIẢI ĐẤU</button></div>
+    <p class="td-gate-note">Bắt buộc điền ít nhất 1 ngày. Khi chưa lưu giờ rảnh, các nội dung bên trong giải vẫn bị khóa.</p>
   </form>
 </section>
 {% else %}
@@ -239,8 +238,8 @@
 {% if c1_test_account|default(false) %}
   {% set ts = c1_test_schedule|default({}) %}{% set opp = ts.get('opponent') %}
   {% if opp %}<div class="td-schedule-list"><article class="td-schedule-card is-mine">
-    <div class="td-schedule-top"><div class="td-player"><strong>Bạn</strong></div><div class="td-vs">VS</div><div class="td-player away"><strong>{{ opp.display_name or opp.username or 'HLV Test' }}</strong></div></div>
-    <div class="td-schedule-status"><strong>Giờ rảnh của {{ opp.display_name or opp.username or 'HLV Test' }}:</strong> <span style="color:#89dfa5">Giờ trùng với bạn sẽ được tô xanh.</span></div>
+    <div class="td-schedule-top"><div class="td-player"><strong>Bạn</strong></div><div class="td-vs">VS</div><div class="td-player away"><strong>{{ opp.display_name or opp.username or 'HLV' }}</strong></div></div>
+    <div class="td-schedule-status"><strong>Giờ rảnh của {{ opp.display_name or opp.username or 'HLV' }}:</strong> <span style="color:#89dfa5">Giờ trùng với bạn sẽ được tô xanh.</span></div>
     <div class="td-opponent-days">
       {% for day in ts.get('opponent_days',[]) %}
       <section class="td-opponent-day">

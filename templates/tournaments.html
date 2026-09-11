@@ -125,7 +125,7 @@
                 <h4>📊 BXH</h4>
                 <p>BXH chính của giải · kết quả GĐ1 và GĐ2 được cộng liên tục vào cùng một bảng.</p>
               </div>
-              <a href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#ranking">Xem chi tiết →</a>
+              <a href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}{% if tournament.my_member and tournament.needs_availability_gate|default(false) %}#schedule{% else %}#ranking{% endif %}">{{ 'Đặt lịch thi đấu →' if tournament.my_member and tournament.needs_availability_gate|default(false) else 'Xem chi tiết →' }}</a>
             </div>
             {% if tournament.can_admin_manage %}
             <details class="tournament-admin-all-schedule">

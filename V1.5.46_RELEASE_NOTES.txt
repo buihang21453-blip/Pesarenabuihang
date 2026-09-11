@@ -1,0 +1,9 @@
+PES ARENA V1.5.46 - BẮT BUỘC ĐẶT LỊCH TRƯỚC KHI VÀO GIẢI
+
+- HLV chưa lưu giờ rảnh bị khóa toàn bộ nội dung chi tiết giải đấu.
+- Bỏ ngoại lệ đã có lịch chốt: vẫn phải khai ít nhất 1 giờ rảnh.
+- Tài khoản thử nghiệm cũng đi qua cùng cổng lịch để kiểm thử đúng luồng HLV.
+- Admin được miễn gate.
+- Ẩn animation VÀO GIẢI ĐẤU khi gate còn khóa.
+- CTA trên /tournaments chuyển thành Đặt lịch thi đấu → khi HLV chưa khai lịch.
+- Sau khi lưu giờ rảnh hợp lệ, nội dung giải đấu tự mở.
