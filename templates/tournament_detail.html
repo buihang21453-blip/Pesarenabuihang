@@ -42,7 +42,7 @@
   <h2>📅 ĐẶT LỊCH THI ĐẤU</h2>
   <p>Trước khi vào xem giải đấu, HLV bắt buộc phải khai báo giờ rảnh trong <strong>Hôm nay / Ngày mai / Ngày kia</strong>.</p>
 
-  {% for flexday in availability.days if not flexday.is_weekend and not c1_test_account|default(false) %}
+  {% for flexday in availability.days if not flexday.is_weekend %}
   <form id="gate-flex-{{ flexday.date }}" method="post" action="{{ url_for('tournament_availability_custom_add',tournament_id=tournament.id) }}"></form>
   {% endfor %}
 
@@ -59,7 +59,7 @@
           <label class="td-av-slot"><input type="checkbox" name="slots" value="{{ slot.iso }}" {{ 'checked' if slot.iso in availability.mine_set else '' }}><span>{{ slot.label or slot.time }}</span></label>
           {% else %}<small>Không còn khung giờ nào trong ngày này.</small>{% endfor %}
         </div>
-        {% if not day.is_weekend and not c1_test_account|default(false) %}
+        {% if not day.is_weekend %}
         <div class="td-av-flex">
           <div class="td-av-flex-title">🕒 Giờ linh hoạt</div>
           <input type="hidden" name="day_date" value="{{ day.date }}" form="gate-flex-{{ day.date }}">
