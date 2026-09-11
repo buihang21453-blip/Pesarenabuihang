@@ -571,7 +571,7 @@ def register_routes(context):
         if not is_tournament_room:
             patch["note"] = "Khách đã sẵn sàng. Chủ phòng có thể quay đội."
 
-        # V1.5.34: C1 dùng đúng cơ chế Ready của Rank nhưng xác minh trực tiếp DB.
+        # V1.5.35: C1 dùng đúng cơ chế Ready của Rank nhưng xác minh trực tiếp DB.
         # Trước đây request có thể trả về thành công dù update theo status không tác động
         # dòng nào; Guest thấy thông báo đã sẵn sàng trong khi Host vẫn đọc False.
         if is_tournament_room:

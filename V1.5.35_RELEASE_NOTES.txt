@@ -1,0 +1,7 @@
+PES ARENA V1.5.35
+- Fix C1 Guest Ready/Host layout mismatch.
+- Loại bỏ auto-repair DB trong lúc render phòng.
+- C1 chỉ chuyển state ở backend nghiệp vụ; UI Host/Guest cùng đọc một state DB.
+- Xác minh DB sau chuyển trận và sau Ready fallback trước khi báo thành công.
+- Bỏ layout confirmed legacy hiển thị ĐỢI KHÁCH SẴN SÀNG.
+- Không đổi database schema.

@@ -3016,7 +3016,7 @@ def register_routes(context):
         execute_query(db.table("tournament_matches").update({"home_score":hs,"away_score":aw,"winner_user_id":winner,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_confirm",attempts=2)
         prop.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
 
-        # V1.5.34: C1 dùng đúng luồng phòng Rank cho trận kế tiếp; không hiện trạng thái trung gian.
+        # V1.5.35: C1 dùng đúng luồng phòng Rank cho trận kế tiếp; không hiện trạng thái trung gian.
         # Không có trạng thái trung gian "mở Trận 2" / "đồng bộ trận tiếp theo".
         # Còn trận -> reset chính room về waiting_ready; hết trận -> confirmed.
         # Đọc lịch trực tiếp sau khi chốt kết quả để tránh phụ thuộc trạng thái cũ của room.
@@ -3086,6 +3086,18 @@ def register_routes(context):
                 }).eq("id",room_id),
                 "ops_c1_continue_same_room", attempts=2,
             )
+            # V1.5.35: giống Rank - update xong phải đọc lại state thật trước khi cho UI đi tiếp.
+            verify_room=get_room(room_id)
+            verify_meta=_room_meta(verify_room) if verify_room else {}
+            if (
+                not verify_room
+                or str(verify_room.get("status") or "")!="waiting_ready"
+                or bool(verify_room.get("guest_ready"))
+                or str((verify_meta or {}).get("tournament_match_id") or "")!=str(next_match.get("id") or "")
+            ):
+                app.logger.error("C1 next match transition verify failed room=%s next_match=%s", room_id, next_match.get("id"))
+                flash("Không thể chuyển sang trận tiếp theo. Hãy tải lại phòng và thử lại.","error")
+                return redirect(url_for("room_detail",room_id=room_id))
             cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
             flash("✅ Đã xác nhận kết quả. Bạn bấm Sẵn Sàng để Chủ phòng quay đội.","success")
             return redirect(url_for("room_detail",room_id=room_id))

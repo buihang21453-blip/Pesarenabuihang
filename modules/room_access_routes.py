@@ -232,7 +232,7 @@ def register_routes(context):
                     mr = execute_query(db.table("tournament_matches").select("*").eq("id",mid).eq("tournament_id",tid).limit(1),"room_tournament_match_context",attempts=2)
                     tournament_match = (mr.data or [None])[0]
                     if tournament_match:
-                        # V1.5.34: trạng thái cặp đấu dựa trên số bản ghi lịch thực tế,
+                        # V1.5.35: trạng thái cặp đấu dựa trên số bản ghi lịch thực tế,
                         # không giả định GĐ1=2 hay GĐ2=1 trong UI.
                         pair_ids = {str(tournament_match.get("home_user_id") or ""), str(tournament_match.get("away_user_id") or "")}
                         stage_code = str(tournament_match.get("stage_code") or "")
@@ -255,75 +255,9 @@ def register_routes(context):
                         tournament_has_next_match = bool(next_rows)
                         tournament_pair_is_complete = bool(pair_rows) and not remaining_rows
 
-                        # V1.5.34 compatibility repair: chỉ dùng để cứu room bị kẹt từ các bản cũ.
-                        # Luồng mới bình thường đã chuyển trận ngay tại route xác nhận kết quả.
-                        if str(room.get("status") or "") == "confirmed" and not tournament_pair_is_complete:
-                            current_status=str(tournament_match.get("status") or "").lower()
-                            resume_match = tournament_match if current_status not in {"completed", "cancelled"} else (next_rows[0] if next_rows else None)
-                            if resume_match:
-                                history=list(tournament_meta.get("previous_match_ids") or [])
-                                old_mid=str(tournament_match.get("id") or "")
-                                if current_status=="completed" and old_mid and old_mid not in history:
-                                    history.append(old_mid)
-                                old_home_id=str(tournament_meta.get("home_user_id") or "")
-                                old_away_id=str(tournament_meta.get("away_user_id") or "")
-                                old_home_name=tournament_meta.get("home_name")
-                                old_away_name=tournament_meta.get("away_name")
-                                next_home_id=str(resume_match.get("home_user_id") or "")
-                                next_away_id=str(resume_match.get("away_user_id") or "")
-                                tournament_meta.update({
-                                    "tournament_match_id":str(resume_match.get("id") or ""),
-                                    "stage_code":resume_match.get("stage_code") or stage_code,
-                                    "home_user_id":next_home_id,
-                                    "away_user_id":next_away_id,
-                                    "home_name":old_home_name if next_home_id==old_home_id else (old_away_name if next_home_id==old_away_id else old_home_name),
-                                    "away_name":old_away_name if next_away_id==old_away_id else (old_home_name if next_away_id==old_home_id else old_away_name),
-                                    "previous_match_ids":history,
-                                    "current_leg_no":int(resume_match.get("leg_no") or 1),
-                                })
-                                repaired_note="TOURNAMENT_ROOM|"+json.dumps(tournament_meta,ensure_ascii=False,separators=(",",":"))
-                                execute_query(
-                                    db.table("match_rooms").update({
-                                        "note":repaired_note,
-                                        "status":"waiting_ready",
-                                        "guest_ready":False,
-                                        "match_id":None,
-                                        "host_team":None,
-                                        "guest_team":None,
-                                        "host_team_overall":None,
-                                        "guest_team_overall":None,
-                                        "host_team_logo_url":None,
-                                        "guest_team_logo_url":None,
-                                        "host_team_league":None,
-                                        "guest_team_league":None,
-                                        "host_score":None,
-                                        "guest_score":None,
-                                        "submitted_by_id":None,
-                                        "confirmed_by_id":None,
-                                        "invite_id":None,
-                                        "state_expires_at":None,
-                                        "match_mode":"tournament",
-                                        "team_tier":"TOURNAMENT_GD1" if str(resume_match.get("stage_code") or "")=="stage1" else "TOURNAMENT",
-                                        "updated_at":now_iso(),
-                                    }).eq("id",room.get("id")),
-                                    "room_tournament_v1532_repair_legacy_confirmed", attempts=2,
-                                )
-                                room.update({
-                                    "note":repaired_note,"status":"waiting_ready","guest_ready":False,"match_id":None,
-                                    "host_team":None,"guest_team":None,"host_team_overall":None,"guest_team_overall":None,
-                                    "host_team_logo_url":None,"guest_team_logo_url":None,"host_team_league":None,"guest_team_league":None,
-                                    "host_score":None,"guest_score":None,"submitted_by_id":None,"confirmed_by_id":None,
-                                    "match_mode":"tournament",
-                                    "team_tier":"TOURNAMENT_GD1" if str(resume_match.get("stage_code") or "")=="stage1" else "TOURNAMENT",
-                                })
-                                tournament_match=resume_match
-                                mid=str(resume_match.get("id") or "")
-                                tournament_pair_is_complete=False
-                                tournament_has_next_match=False
-                                try:
-                                    cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
-                                except Exception:
-                                    pass
+                        # V1.5.35: render chỉ ĐỌC trạng thái phòng, tuyệt đối không tự sửa DB.
+                        # Chuyển trận C1 chỉ được thực hiện trong route nghiệp vụ (xác nhận kết quả / ready),
+                        # giống Rank, để Host và Guest luôn nhìn cùng một state thật.
                     sr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key",f"match_result_proposal:{mid}").limit(1),"room_tournament_result_context",attempts=2)
                     tournament_result_proposal = ((sr.data or [{}])[0].get("setting_value") or {})
             except Exception as exc:

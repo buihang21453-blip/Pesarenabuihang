@@ -228,7 +228,7 @@ def register_routes(context):
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("dashboard"))
 
-        # C1 V1.5.34: nếu vì dữ liệu cũ/phản hồi chậm mà room vẫn còn ở confirmed
+        # C1 V1.5.35: nếu vì dữ liệu cũ/phản hồi chậm mà room vẫn còn ở confirmed
         # trong khi lịch còn trận, dùng đúng thao tác "Sẵn Sàng -> Host quay đội" như Rank.
         # Không chặn Tournament và không bắt HLV quay về trang giải để mở Trận 2.
         room_note = str(room.get("note") or "")
@@ -313,6 +313,22 @@ def register_routes(context):
                 "room_c1_continue_like_rank",
                 attempts=2,
             )
+            verified_room = get_room(room_id)
+            verified_note = str((verified_room or {}).get("note") or "")
+            try:
+                import json as _json
+                verified_meta = _json.loads(verified_note[len("TOURNAMENT_ROOM|"):]) if verified_note.startswith("TOURNAMENT_ROOM|") else {}
+            except Exception:
+                verified_meta = {}
+            if (
+                not verified_room
+                or str(verified_room.get("status") or "") != "waiting_ready"
+                or bool(verified_room.get("guest_ready")) != bool(guest_ready_now)
+                or str(verified_meta.get("tournament_match_id") or "") != str(next_match.get("id") or "")
+            ):
+                app.logger.error("C1 rank-style continue verify failed room=%s next_match=%s", room_id, next_match.get("id"))
+                flash("Chưa chuyển được phòng sang trận tiếp theo. Hãy tải lại và thử lại.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
             cache_delete("_rz_rooms_all")
             ttl_cache_delete("rooms_raw")
             flash("Bạn đã sẵn sàng. Chủ phòng có thể quay đội.", "success" if guest_ready_now else "info")
