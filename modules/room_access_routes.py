@@ -247,13 +247,41 @@ def register_routes(context):
                             and str(row.get("status") or "").lower() != "cancelled"
                         ]
                         pair_rows.sort(key=lambda row:(int(row.get("leg_no") or 999), str(row.get("created_at") or ""), str(row.get("id") or "")))
-                        tournament_pair_total_count = len(pair_rows)
+                        actual_pair_count = len(pair_rows)
                         tournament_pair_completed_count = sum(1 for row in pair_rows if str(row.get("status") or "").lower() == "completed")
                         remaining_rows = [row for row in pair_rows if str(row.get("status") or "").lower() not in {"completed","cancelled"}]
-                        tournament_pair_remaining_count = len(remaining_rows)
                         next_rows = [row for row in remaining_rows if str(row.get("id") or "") != str(tournament_match.get("id") or "")]
-                        tournament_has_next_match = bool(next_rows)
-                        tournament_pair_is_complete = bool(pair_rows) and not remaining_rows
+
+                        # V1.5.38: GĐ1 chính thức là 2 trận/cặp. Một số lịch cũ chỉ có
+                        # 1 row tournament_matches nên sau Trận 1 UI đã kết luận nhầm
+                        # "Cặp đấu đã hoàn tất". Render không sửa DB, nhưng phải hiểu
+                        # số trận kỳ vọng để vẫn mở nút Đá Tiếp; route rematch sẽ bù
+                        # leg còn thiếu một cách có kiểm soát khi người chơi bấm.
+                        expected_pair_count = actual_pair_count
+                        if stage_code == "stage1":
+                            expected_pair_count = max(2, actual_pair_count)
+                            try:
+                                st = execute_query(
+                                    db.table("tournament_stages").select("max_matches_per_opponent").eq("tournament_id",tid).eq("stage_code",stage_code).limit(1),
+                                    "room_tournament_pair_expected_count",
+                                    attempts=2,
+                                )
+                                strow = (st.data or [None])[0] if st is not None else None
+                                configured = int((strow or {}).get("max_matches_per_opponent") or 0)
+                                if configured > 0:
+                                    expected_pair_count = max(2, configured, actual_pair_count)
+                            except Exception:
+                                expected_pair_count = max(2, actual_pair_count)
+
+                        missing_scheduled_rows = max(0, expected_pair_count - actual_pair_count)
+                        tournament_pair_total_count = expected_pair_count
+                        tournament_pair_remaining_count = len(remaining_rows) + missing_scheduled_rows
+                        tournament_has_next_match = bool(next_rows) or missing_scheduled_rows > 0
+                        tournament_pair_is_complete = (
+                            tournament_pair_completed_count >= expected_pair_count
+                            and not remaining_rows
+                            and missing_scheduled_rows == 0
+                        )
 
                         # V1.5.35: render chỉ ĐỌC trạng thái phòng, tuyệt đối không tự sửa DB.
                         # Chuyển trận C1 chỉ được thực hiện trong route nghiệp vụ (xác nhận kết quả / ready),

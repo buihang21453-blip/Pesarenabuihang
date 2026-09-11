@@ -267,6 +267,62 @@ def register_routes(context):
             candidates.sort(key=lambda r: (int(r.get("leg_no") or 999), str(r.get("created_at") or ""), str(r.get("id") or "")))
             next_match = candidates[0] if candidates else None
 
+            # V1.5.38: cứu dữ liệu lịch GĐ1 cũ bị thiếu leg 2.
+            # Nếu trận hiện tại đã hoàn tất, cặp mới có 1 bản ghi nhưng luật GĐ1
+            # yêu cầu 2 trận/cặp thì tạo đúng leg còn thiếu ngay lúc bấm Đá Tiếp.
+            # Không tạo trong lúc render để tránh GET làm thay đổi dữ liệu.
+            if not next_match and tournament_id and stage_code == "stage1":
+                pair_rows = [
+                    r for r in rows
+                    if {str(r.get("home_user_id") or ""), str(r.get("away_user_id") or "")} == pair_ids
+                    and str(r.get("status") or "").lower() != "cancelled"
+                ]
+                expected_pair_count = 2
+                try:
+                    st = execute_query(
+                        db.table("tournament_stages").select("max_matches_per_opponent").eq("tournament_id", tournament_id).eq("stage_code", stage_code).limit(1),
+                        "room_c1_expected_pair_count",
+                        attempts=2,
+                    )
+                    strow = (st.data or [None])[0] if st is not None else None
+                    configured = int((strow or {}).get("max_matches_per_opponent") or 0)
+                    if configured > 0:
+                        expected_pair_count = max(2, configured)
+                except Exception:
+                    expected_pair_count = 2
+
+                completed_count = sum(1 for r in pair_rows if str(r.get("status") or "").lower() == "completed")
+                if len(pair_rows) < expected_pair_count and completed_count < expected_pair_count:
+                    used_legs = {int(r.get("leg_no") or 0) for r in pair_rows}
+                    missing_leg = next((leg for leg in range(1, expected_pair_count + 1) if leg not in used_legs), len(pair_rows) + 1)
+                    current_match = next((r for r in pair_rows if str(r.get("id") or "") == current_mid), None) or (pair_rows[0] if pair_rows else None)
+                    if current_match:
+                        # Lượt kế tiếp đảo sân so với trận hiện tại.
+                        new_home = current_match.get("away_user_id")
+                        new_away = current_match.get("home_user_id")
+                        round_code = str(current_match.get("round_code") or "") or None
+                        created = execute_query(
+                            db.table("tournament_matches").insert({
+                                "tournament_id": tournament_id,
+                                "stage_code": "stage1",
+                                "round_code": round_code,
+                                "home_user_id": new_home,
+                                "away_user_id": new_away,
+                                "status": "pending",
+                                "leg_no": missing_leg,
+                                "created_at": now_iso(),
+                                "updated_at": now_iso(),
+                            }),
+                            "room_c1_create_missing_stage1_leg",
+                            attempts=2,
+                        )
+                        next_match = (created.data or [None])[0] if created is not None else None
+                        if next_match:
+                            app.logger.warning(
+                                "C1 repaired missing stage1 leg room=%s tournament=%s pair=%s leg=%s",
+                                room_id, tournament_id, sorted(pair_ids), missing_leg,
+                            )
+
             if not next_match:
                 flash("✅ Cặp đấu đã hoàn tất.", "success")
                 return redirect(url_for("room_detail", room_id=room_id))

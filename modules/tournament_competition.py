@@ -155,19 +155,33 @@ def register_routes(context):
         return sorted(rows, key=lambda r:(int(r.get("leg_no") or 999), str(r.get("created_at") or ""), str(r.get("id") or "")))
 
     def _pair_flow_state(tournament_id, match):
-        """Trạng thái cặp đấu động: GĐ1 có thể 2 trận, GĐ2 có thể 1 trận."""
+        """Trạng thái cặp đấu theo luật thật, kể cả lịch cũ bị thiếu row leg 2."""
         rows=_pair_matches(tournament_id, match)
         completed=[r for r in rows if str(r.get("status") or "").lower()=="completed"]
         remaining=[r for r in rows if str(r.get("status") or "").lower() not in {"completed","cancelled"}]
         current_id=str((match or {}).get("id") or "")
         next_match=next((r for r in remaining if str(r.get("id") or "") != current_id), None)
+        expected_count=len(rows)
+        if str((match or {}).get("stage_code") or "")=="stage1":
+            expected_count=max(2,len(rows))
+            try:
+                st=_stage(tournament_id,"stage1") or {}
+                configured=int(st.get("max_matches_per_opponent") or 0)
+                if configured>0:
+                    expected_count=max(2,configured,len(rows))
+            except Exception:
+                expected_count=max(2,len(rows))
+        missing=max(0,expected_count-len(rows))
         return {
             "matches":rows,
-            "total_count":len(rows),
+            "total_count":expected_count,
+            "actual_count":len(rows),
+            "missing_count":missing,
             "completed_count":len(completed),
-            "remaining_count":len(remaining),
+            "remaining_count":len(remaining)+missing,
             "next_match":next_match,
-            "is_complete":bool(rows) and not remaining,
+            "has_next":bool(next_match) or missing>0,
+            "is_complete":len(completed)>=expected_count and not remaining and missing==0,
         }
 
     def _stage1_pair_completed_count(tournament_id, user_a, user_b, exclude_match_id=None):
@@ -2723,8 +2737,27 @@ def register_routes(context):
                     key=lambda c:(int(c.get("leg_no") or 999),str(c.get("created_at") or ""),str(c.get("id") or "")),
                 )[0]
 
+        if not sibling and str(current_match.get("stage_code") or "")=="stage1":
+            pair_state=_pair_flow_state(tournament_id,current_match)
+            if pair_state.get("missing_count",0)>0 and not pair_state.get("is_complete"):
+                used_legs={int(r.get("leg_no") or 0) for r in pair_state.get("matches",[])}
+                expected=int(pair_state.get("total_count") or 2)
+                missing_leg=next((leg for leg in range(1,expected+1) if leg not in used_legs),len(used_legs)+1)
+                created=execute_query(
+                    db.table("tournament_matches").insert({
+                        "tournament_id":tournament_id,"stage_code":"stage1",
+                        "round_code":current_match.get("round_code"),
+                        "home_user_id":current_match.get("away_user_id"),
+                        "away_user_id":current_match.get("home_user_id"),
+                        "status":"pending","leg_no":missing_leg,
+                        "created_at":now_iso(),"updated_at":now_iso(),
+                    }),
+                    "ops_c1_next_create_missing_stage1_leg",attempts=2,
+                )
+                sibling=(created.data or [None])[0] if created is not None else None
+
         if not sibling:
-            # Không còn leg nào -> cặp đã hoàn tất.
+            # Không còn leg nào và đã đủ số trận theo luật -> cặp đã hoàn tất.
             flash("✅ Cặp đấu C1 này đã hoàn tất đủ các trận.","success")
             return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
 
@@ -3016,13 +3049,13 @@ def register_routes(context):
         execute_query(db.table("tournament_matches").update({"home_score":hs,"away_score":aw,"winner_user_id":winner,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_confirm",attempts=2)
         prop.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
 
-        # V1.5.37: giống Rank thật sự: sau khi xác nhận kết quả, phòng chỉ về confirmed.
+        # V1.5.38: giống Rank thật sự: sau khi xác nhận kết quả, phòng chỉ về confirmed.
         # Nếu lịch còn trận của đúng cặp, giao diện hiện nút Đá Tiếp; khi bấm,
         # room_rematch_routes sẽ reset CHÍNH phòng này sang waiting_ready và gắn trận kế tiếp.
         # Không tự chuyển trận ngay trong route xác nhận để tránh state nửa cũ/nửa mới.
-        fresh_pair_rows=_pair_matches(tournament_id, match)
+        pair_state=_pair_flow_state(tournament_id, match)
         remaining_rows=[
-            r for r in fresh_pair_rows
+            r for r in pair_state.get("matches",[])
             if str(r.get("id") or "") != str(match.get("id") or "")
             and str(r.get("status") or "").lower() not in {"completed", "cancelled"}
         ]
@@ -3038,7 +3071,7 @@ def register_routes(context):
         )
         cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
 
-        if remaining_rows:
+        if remaining_rows or pair_state.get("has_next"):
             flash("Đã xác nhận kết quả. Nếu muốn đá tiếp, bấm Đá Tiếp.","success")
         else:
             flash("Đã xác nhận kết quả. Cặp đấu đã hoàn tất và BXH giải đã được cập nhật.","success")
