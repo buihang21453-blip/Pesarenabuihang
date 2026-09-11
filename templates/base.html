@@ -360,9 +360,11 @@ function renderInvitePopup(invite) {
         <div class="invite-modal-player">
             <div class="invite-modal-person">
                 ${renderAvatarHtml(invite.from_avatar_url, invite.from_name, 'lg', invite.from_achievement, invite.from_avatar_frame && invite.from_avatar_frame.image_url)}
-                <p><strong>${escapeHtml(invite.from_name)}</strong> đang mời bạn thi đấu.</p>
+                <p><strong>${escapeHtml(invite.from_name)}</strong> ${invite.invite_kind === 'c1' ? 'đang mời bạn vào Phòng đấu C1.' : 'đang mời bạn thi đấu.'}</p>
             </div>
-            <p class="small">Rank: ${escapeHtml(invite.from_rank)} • Điểm: ${escapeHtml(String(invite.from_points))} • Tier: ${escapeHtml(invite.tier)}</p>
+            ${invite.invite_kind === 'c1'
+                ? '<p class="small"><strong>🏆 CHAMPION LEAGUE ARENA · PHÒNG ĐẤU C1</strong></p>'
+                : `<p class="small">Rank: ${escapeHtml(invite.from_rank)} • Điểm: ${escapeHtml(String(invite.from_points))} • Tier: ${escapeHtml(invite.tier)}</p>`}
             <p class="small">Lời mời hết hạn sau <strong id="inviteCountdown">${escapeHtml(String(invite.expires_in_seconds || 0))}</strong> giây.</p>
         </div>
         <div class="invite-modal-actions">

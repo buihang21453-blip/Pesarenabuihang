@@ -1,0 +1,9 @@
+PES ARENA V1.5.12 - FIX C1 INVITE + GUEST READY
+
+- Sửa lỗi khách không nhận được lời mời Phòng đấu C1.
+- Lời mời C1 giờ tạo bản ghi match_invites để popup realtime toàn app nhận được.
+- Popup phân biệt rõ lời mời C1 với lời mời Rank.
+- Chấp nhận lời mời C1 đi đúng route C1, không rơi xuống logic Rank.
+- Sau khi chấp nhận, tài khoản khách được gán guest_user_id và nút Sẵn sàng được mở.
+- Từ chối/hết hạn lời mời C1 được dọn trạng thái riêng, không ảnh hưởng Rank.
+- Giữ user_notification để khách vẫn có lịch sử thông báo C1.

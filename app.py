@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.5.11"
+APP_VERSION = "V1.5.12"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -5243,7 +5243,7 @@ def api_pending_invites():
         # vừa hết hạn trong lúc xử lý, lời mời hợp lệ cũ hơn vẫn phải được trả về.
         result = execute_query(
             db.table("match_invites")
-              .select("id,from_user_id,to_user_id,tier,status,expires_at,created_at")
+              .select("id,from_user_id,to_user_id,tier,status,message,expires_at,created_at")
               .eq("to_user_id", user["id"])
               .eq("status", "pending")
               .order("created_at", desc=True)
@@ -5259,6 +5259,7 @@ def api_pending_invites():
                 continue
             sender = get_user(invite.get("from_user_id")) or {}
             decorate_player_achievements(sender)
+            is_c1_invite = str(invite.get("tier") or "") == "C1_TOURNAMENT"
             data.append({
                 "id": invite["id"],
                 "from_name": sender.get("display_name", "Unknown"),
@@ -5268,6 +5269,7 @@ def api_pending_invites():
                 "from_rank": get_rank_display(sender.get("rank_points", 0)),
                 "from_points": sender.get("rank_points", 0),
                 "tier": invite.get("tier") or SMART_RANDOM_MODE,
+                "invite_kind": "c1" if is_c1_invite else "rank",
                 "expires_in_seconds": int(invite.get("expires_in_seconds") or 0),
                 "accept_url": url_for("respond_invite", invite_id=invite["id"]),
                 "reject_url": url_for("respond_invite", invite_id=invite["id"]),
@@ -7049,6 +7051,48 @@ def respond_invite(invite_id):
     if invite["to_user_id"] != user["id"]:
         flash("Bạn không có quyền xử lý lời mời này.", "danger")
         return redirect(url_for("invites"))
+
+    # V1.5.12: lời mời C1 dùng chung popup realtime nhưng có luồng nhận riêng,
+    # tuyệt đối không rơi xuống logic Rank bên dưới.
+    if str(invite.get("tier") or "") == "C1_TOURNAMENT":
+        if invite.get("status") == "expired":
+            flash("Lời mời C1 đã hết hạn. Hãy nhờ đối thủ gửi lại.", "warning")
+            return redirect(url_for("tournaments"))
+        if invite.get("status") != "pending":
+            flash("Lời mời C1 này đã được xử lý.", "warning")
+            return redirect(url_for("tournaments"))
+        room_result = execute_query(
+            db.table("match_rooms").select("id,note,invite_id,status").eq("invite_id", invite_id).limit(1),
+            "respond_c1_invite_room",
+            attempts=2,
+        )
+        c1_room = (room_result.data or [None])[0]
+        if not c1_room:
+            execute_query(db.table("match_invites").update({"status":"cancelled","updated_at":now_iso()}).eq("id",invite_id),"cancel_orphan_c1_invite",attempts=1)
+            ttl_cache_delete("invites_raw"); cache_delete("_rz_invites_all"); cache_delete("_rz_current_pending_invites")
+            flash("Phòng C1 của lời mời không còn tồn tại.", "warning")
+            return redirect(url_for("tournaments"))
+        try:
+            import json as _json
+            raw_note = str(c1_room.get("note") or "")
+            c1_meta = _json.loads(raw_note[len("TOURNAMENT_ROOM|"):]) if raw_note.startswith("TOURNAMENT_ROOM|") else {}
+        except Exception:
+            c1_meta = {}
+        tournament_id = str(c1_meta.get("tournament_id") or "")
+        if not tournament_id or str(c1_meta.get("invited_user_id") or "") != str(user.get("id") or ""):
+            flash("Lời mời C1 không còn hợp lệ với tài khoản của bạn.", "danger")
+            return redirect(url_for("tournaments"))
+        if action == "reject":
+            execute_query(db.table("match_invites").update({"status":"rejected","updated_at":now_iso()}).eq("id",invite_id),"reject_c1_invite",attempts=1)
+            c1_meta["invited_user_id"] = ""
+            execute_query(db.table("match_rooms").update({"invite_id":None,"note":"TOURNAMENT_ROOM|"+_json.dumps(c1_meta,ensure_ascii=False,separators=(",",":")),"updated_at":now_iso()}).eq("id",c1_room.get("id")),"clear_rejected_c1_invite",attempts=1)
+            ttl_cache_delete("invites_raw"); cache_delete("_rz_invites_all"); cache_delete("_rz_current_pending_invites")
+            flash("Đã từ chối lời mời C1.", "success")
+            return redirect(url_for("tournaments"))
+        if action == "accept":
+            return redirect(url_for("c1_room_accept", tournament_id=tournament_id, room_id=c1_room.get("id")))
+        flash("Hành động không hợp lệ.", "danger")
+        return redirect(url_for("tournaments"))
 
     if invite["status"] == "expired":
         flash("Lời mời đã hết hạn sau 60 giây. Hãy nhờ đối thủ gửi lời mời mới.", "warning")
