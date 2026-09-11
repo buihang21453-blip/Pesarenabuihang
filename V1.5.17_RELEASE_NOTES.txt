@@ -1,0 +1,24 @@
+PES ARENA V1.5.17 - C1 SAME ROOM GAME 2
+
+Yêu cầu sửa:
+- "Trận tiếp theo" là Trận 2 của cùng cặp HLV C1, không phải một đối thủ khác.
+
+Cơ chế:
+1. Trận 1 được Guest xác nhận -> tournament_match Trận 1 vẫn completed.
+2. Bấm "🏆 Trận 2 · Tiếp tục trong phòng".
+3. Giữ nguyên match_rooms.id, Host và Guest.
+4. Chuyển metadata tournament_match_id sang leg còn lại của đúng cặp HLV.
+5. Reset room cho Trận 2:
+   - status -> waiting_ready
+   - guest_ready -> false
+   - xóa CLB của trận trước khỏi room
+   - xóa tỷ số hiển thị của trận trước khỏi room
+   - giữ nguyên Host + Guest
+6. Guest bấm Sẵn sàng lại.
+7. Host Random CLB mới và thi đấu Trận 2.
+8. Kết quả Trận 1 không bị xóa, BXH vẫn giữ nguyên.
+9. Sau khi hết leg của cặp thì mới báo cặp đấu đã hoàn tất.
+
+Bổ sung:
+- Nếu đã có room riêng bị sinh nhầm cho Trận 2, hệ thống đóng room đó để ép cặp tiếp tục trong room hiện tại.
+- Không thay đổi Room/Rank thường, RP, BXH logic, Host system hoặc giờ rảnh.

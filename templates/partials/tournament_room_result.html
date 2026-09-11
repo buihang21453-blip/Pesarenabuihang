@@ -80,7 +80,7 @@
       {% endif %}
     </div>
   {% elif tournament_match.status == 'completed' or room.status == 'confirmed' %}
-    <strong>✅ KẾT QUẢ ĐÃ ĐƯỢC CHỐT: {{ tournament_match.home_score }} - {{ tournament_match.away_score }}</strong><p class="small" style="margin:6px 0 0;color:#9ad9a9">Kết quả đã khóa với HLV. Chỉ Admin có quyền chỉnh sửa sau thời điểm này.</p>
+    <strong>✅ KẾT QUẢ ĐÃ ĐƯỢC CHỐT: {{ tournament_match.home_score }} - {{ tournament_match.away_score }}</strong><p class="small" style="margin:6px 0 0;color:#9ad9a9">Kết quả đã khóa với HLV. Nếu đây là Trận 1 của cặp, bấm “Trận 2 · Tiếp tục trong phòng” để giữ nguyên phòng và thi đấu lượt còn lại.</p>
   {% elif tournament_match.status == 'disputed' or room.status == 'disputed' %}
     <strong>⚠ KẾT QUẢ ĐANG TRANH CHẤP · CHỜ ADMIN C1 XỬ LÝ.</strong><p class="small" style="margin:6px 0 0">HLV không thể tự sửa kết quả trong trạng thái này.</p>
   {% endif %}

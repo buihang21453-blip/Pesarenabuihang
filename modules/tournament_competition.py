@@ -2145,48 +2145,144 @@ def register_routes(context):
     @app.get('/tournaments/<tournament_id>/rooms/<room_id>/next-match')
     @login_required
     def tournament_room_next_match(tournament_id, room_id):
-        """Mở trực tiếp trận C1 chưa hoàn tất tiếp theo của HLV."""
+        """
+        V1.5.17:
+        "Trận tiếp theo" = Trận 2 của CHÍNH cặp HLV hiện tại và vẫn ở nguyên room.
+        Không nhảy sang cặp đối thủ khác.
+        """
         user=current_user() or {}; uid=str(user.get("id") or "")
         room=get_room(room_id); meta=_room_meta(room)
         if not room or not meta or str(meta.get("tournament_id") or "") != str(tournament_id):
             flash("Không tìm thấy Phòng đấu C1 hiện tại.","error")
             return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
 
-        if uid not in {str(room.get("host_user_id") or ""), str(room.get("guest_user_id") or "")} and not is_admin_user(user):
+        host_uid=str(room.get("host_user_id") or "")
+        guest_uid=str(room.get("guest_user_id") or "")
+        if uid not in {host_uid,guest_uid} and not is_admin_user(user):
             flash("Bạn không thuộc Phòng đấu C1 này.","error")
             return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
 
         current_match_id=str(meta.get("tournament_match_id") or "")
-        candidates=[]
-        for match in _matches(tournament_id):
-            mid=str(match.get("id") or "")
-            if not mid or mid == current_match_id:
-                continue
-            if uid not in {str(match.get("home_user_id") or ""), str(match.get("away_user_id") or "")}:
-                continue
-            status=str(match.get("status") or "").lower()
-            if status in {"completed","cancelled","disputed"}:
-                continue
-            if _stage1_pair_is_complete(tournament_id, match):
-                continue
-            candidates.append(match)
+        current_match,_=_one(
+            db.table("tournament_matches").select("*").eq("id",current_match_id).eq("tournament_id",tournament_id),
+            "ops_c1_next_same_room_current_match",
+        )
+        if not current_match:
+            flash("Không tìm thấy trận C1 hiện tại.","error")
+            return redirect(url_for("room_detail",room_id=room_id))
 
-        if not candidates:
-            flash("Hiện chưa có trận C1 tiếp theo cần thi đấu.","info")
+        if str(current_match.get("status") or "") != "completed" or str(room.get("status") or "") != "confirmed":
+            flash("Chỉ chuyển sang Trận 2 sau khi kết quả Trận 1 đã được xác nhận.","warning")
+            return redirect(url_for("room_detail",room_id=room_id))
+
+        pair_ids={str(current_match.get("home_user_id") or ""),str(current_match.get("away_user_id") or "")}
+        sibling=None
+        for candidate in _matches(tournament_id, current_match.get("stage_code")):
+            cid=str(candidate.get("id") or "")
+            if not cid or cid==current_match_id:
+                continue
+            cpair={str(candidate.get("home_user_id") or ""),str(candidate.get("away_user_id") or "")}
+            if cpair != pair_ids:
+                continue
+
+            # Với GĐ1 ưu tiên đúng leg còn lại của cặp. Với stage khác, vẫn chỉ
+            # lấy trận chưa hoàn tất của đúng cặp nếu có.
+            status=str(candidate.get("status") or "").lower()
+            if status in {"completed","cancelled"}:
+                continue
+
+            if str(current_match.get("stage_code") or "")=="stage1":
+                cur_leg=int(current_match.get("leg_no") or 1)
+                cand_leg=int(candidate.get("leg_no") or 1)
+                if cand_leg==cur_leg:
+                    continue
+            sibling=candidate
+            break
+
+        if not sibling:
+            # Không còn leg nào -> cặp đã hoàn tất.
+            flash("✅ Cặp đấu C1 này đã hoàn tất đủ các trận.","success")
             return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
 
-        def _next_key(match):
-            scheduled=str(match.get("scheduled_at") or "")
-            created=str(match.get("created_at") or "")
-            return (0 if scheduled else 1, scheduled or created, created)
+        # Nếu trước đó đã lỡ sinh một room riêng cho leg 2, đóng room đó để bảo
+        # đảm cả cặp chỉ tiếp tục trong room hiện tại.
+        try:
+            rows,_=_rows(
+                db.table("match_rooms").select("id,note,status,host_user_id,guest_user_id").order("updated_at",desc=True).limit(300),
+                "ops_c1_next_same_room_duplicate_scan",
+            )
+            for other in rows:
+                if str(other.get("id") or "")==str(room_id):
+                    continue
+                ometa=_room_meta(other)
+                if not ometa or str(ometa.get("tournament_id") or "")!=str(tournament_id):
+                    continue
+                if str(ometa.get("tournament_match_id") or "")!=str(sibling.get("id") or ""):
+                    continue
+                if str(other.get("status") or "") not in {"completed","cancelled"}:
+                    execute_query(
+                        db.table("match_rooms").update({
+                            "status":"cancelled",
+                            "updated_at":now_iso(),
+                        }).eq("id",other.get("id")),
+                        "ops_c1_next_same_room_cancel_duplicate",
+                        attempts=2,
+                    )
+        except Exception as exc:
+            app.logger.warning("C1 next match duplicate room cleanup failed: %s",exc)
 
-        candidates.sort(key=_next_key)
-        target=candidates[0]
-        return redirect(url_for(
-            "tournament_match_room_enter",
-            tournament_id=tournament_id,
-            match_id=target.get("id"),
-        ))
+        # Đổi room hiện tại sang match/leg 2 nhưng giữ nguyên 2 HLV trong phòng.
+        history=list(meta.get("previous_match_ids") or [])
+        if current_match_id and current_match_id not in history:
+            history.append(current_match_id)
+
+        dm=_decorate_matches(tournament_id,[sibling])[0]
+        meta.update({
+            "tournament_match_id":str(sibling.get("id")),
+            "stage_code":sibling.get("stage_code"),
+            "home_user_id":str(sibling.get("home_user_id") or ""),
+            "away_user_id":str(sibling.get("away_user_id") or ""),
+            "home_name":dm.get("home_name"),
+            "away_name":dm.get("away_name"),
+            "previous_match_ids":history,
+            "current_leg_no":int(sibling.get("leg_no") or 2),
+        })
+
+        # Reset CHỈ trạng thái của trận trong room; không xóa kết quả trận 1.
+        execute_query(
+            db.table("match_rooms").update({
+                "note":_room_note(meta),
+                "status":"waiting_ready",
+                "guest_ready":False,
+                "host_team":None,
+                "guest_team":None,
+                "host_team_overall":None,
+                "guest_team_overall":None,
+                "host_score":None,
+                "guest_score":None,
+                "invite_id":None,
+                "state_expires_at":None,
+                "match_mode":"tournament",
+                "team_tier":"TOURNAMENT_GD1" if sibling.get("stage_code")=="stage1" else "TOURNAMENT",
+                "updated_at":now_iso(),
+            }).eq("id",room_id),
+            "ops_c1_next_same_room_reset_for_leg2",
+            attempts=2,
+        )
+
+        # Bảo đảm match 2 ở trạng thái pending trước khi bắt đầu lại.
+        if str(sibling.get("status") or "") not in {"pending"}:
+            execute_query(
+                db.table("tournament_matches").update({
+                    "status":"pending",
+                    "updated_at":now_iso(),
+                }).eq("id",sibling.get("id")),
+                "ops_c1_next_same_room_match2_pending",
+                attempts=2,
+            )
+
+        flash("🏆 Đã chuyển sang Trận 2 ngay trong phòng này. Đội khách hãy Sẵn sàng để Host Random CLB mới.","success")
+        return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/invite-opponent')
     @login_required
