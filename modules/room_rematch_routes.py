@@ -360,8 +360,9 @@ def register_routes(context):
             })
             new_note = "TOURNAMENT_ROOM|" + json.dumps(meta, ensure_ascii=False, separators=(",", ":"))
 
-            # Nếu Guest bấm nút Sẵn Sàng ở fallback confirmed, coi là ready ngay như Rank.
-            guest_ready_now = bool(user["id"] == room.get("guest_user_id"))
+            # V1.5.42: fallback cũng copy đúng Rank: mở trận mới ở waiting_ready
+            # với guest_ready=False; khách phải bấm Sẵn Sàng lại trong room.
+            guest_ready_now = False
             execute_query(
                 db.table("match_rooms").update({
                     "note": new_note,
@@ -407,7 +408,7 @@ def register_routes(context):
                 return redirect(url_for("room_detail", room_id=room_id))
             cache_delete("_rz_rooms_all")
             ttl_cache_delete("rooms_raw")
-            flash("Bạn đã sẵn sàng. Chủ phòng có thể quay đội.", "success" if guest_ready_now else "info")
+            flash("Đã chuyển sang trận tiếp theo. Đội khách hãy bấm Sẵn Sàng; sau đó Chủ phòng mới Quay đội.", "info")
             return redirect(url_for("room_detail", room_id=room_id))
 
         if user["id"] not in [room["host_user_id"], room["guest_user_id"]]:

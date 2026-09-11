@@ -2826,9 +2826,9 @@ def register_routes(context):
             db.table("match_rooms").update({
                 "note":_room_note(meta),
                 "status":"waiting_ready",
-                # V1.5.41: Từ Trận 2 trở đi, Khách được giữ ở trạng thái Đã sẵn sàng.
-                # Host vào thẳng bước Random CLB/Quay quân, đúng nhịp Rank mong muốn.
-                "guest_ready":True,
+                # V1.5.42: Copy đúng cơ chế Rank. Sang trận mới, khách phải bấm
+                # Sẵn Sàng lại; chỉ khi guest_ready=True thì Host mới được Quay đội.
+                "guest_ready":False,
                 "host_team":None,
                 "guest_team":None,
                 "host_team_overall":None,
@@ -3051,7 +3051,7 @@ def register_routes(context):
         execute_query(db.table("tournament_matches").update({"home_score":hs,"away_score":aw,"winner_user_id":winner,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_confirm",attempts=2)
         prop.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
 
-        # V1.5.41: C1 dùng đúng nhịp của Rank. Ngay khi kết quả Trận N được xác nhận,
+        # V1.5.42: C1 copy đúng nhịp của Rank. Ngay khi kết quả Trận N được xác nhận,
         # nếu đúng cặp còn Trận N+1 thì chuyển CHÍNH room hiện tại sang trận kế tiếp và
         # reset về waiting_ready. Không giữ room ở confirmed để người chơi phải bấm Đá Tiếp.
         pair_state=_pair_flow_state(tournament_id, match)
@@ -3111,9 +3111,9 @@ def register_routes(context):
             room_patch={
                 "note":_room_note(meta),
                 "status":"waiting_ready",
-                # V1.5.41: Route dự phòng cũng phải giống chuyển tự động:
-                # Khách sẵn sàng ngay, Host quay quân ngay.
-                "guest_ready":True,
+                # V1.5.42: Giống Rank: trận mới bắt đầu ở Chờ Sẵn Sàng.
+                # Khách phải bấm Sẵn Sàng; Host chỉ được Quay đội sau đó.
+                "guest_ready":False,
                 "host_team":None,
                 "guest_team":None,
                 "host_team_overall":None,
@@ -3156,7 +3156,7 @@ def register_routes(context):
                     return redirect(url_for("room_detail",room_id=room_id))
 
             cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
-            flash(f"Đã xác nhận Trận {int(match.get('leg_no') or 1)}. Phòng đã chuyển sang Trận {int(next_match.get('leg_no') or (int(match.get('leg_no') or 1)+1))} · Khách đã Sẵn Sàng, Chủ phòng có thể Random CLB ngay.","success")
+            flash(f"Đã xác nhận Trận {int(match.get('leg_no') or 1)}. Phòng đã chuyển sang Trận {int(next_match.get('leg_no') or (int(match.get('leg_no') or 1)+1))}. Đội khách hãy bấm Sẵn Sàng; sau đó Chủ phòng mới Quay đội.","success")
             return redirect(url_for("room_detail",room_id=room_id))
 
         # Chỉ khi không còn bất kỳ trận kế tiếp nào theo lịch/luật của đúng cặp mới kết thúc.
