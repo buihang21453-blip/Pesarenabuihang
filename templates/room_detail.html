@@ -3,7 +3,7 @@
 {% block content %}
 {% set room_room_viewer_is_host = viewer_is_host|default(false) %}
 {% set room_viewer_is_guest = viewer_is_guest|default(false) %}
-<div id="roomLiveShell" class="room-view-shell room-layout-v137" data-room-style="{{ room_visual_style|default('default') }}" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}" style="--room-mode-logo-bg-opacity: {{ (room_mode_logo_config.background_opacity|default(0)) / 100 }}; --room-mode-logo-scale: {{ (room_mode_logo_config.scale|default(100)) / 100 }}; --room-mode-dock-logo-scale: {{ (room_mode_logo_config.dock_scale|default(135)) / 100 }}; --room-panel-height: {{ room_panel_layout_config.panel_height|default(600) }}px; --room-center-stage-padding: {{ room_center_design_config.stage_padding|default(18) }}px; --room-center-stage-gap: {{ room_center_design_config.stage_gap|default(18) }}px; --room-center-mode-width: {{ room_center_design_config.mode_width|default(320) }}px; --room-center-mode-padding: {{ room_center_design_config.mode_padding|default(13) }}px; --room-center-vs-size: {{ room_center_design_config.vs_size|default(150) }}px; --room-center-score-width: {{ room_center_design_config.score_width|default(340) }}px; --room-center-score-padding: {{ room_center_design_config.score_padding|default(14) }}px; --room-center-score-input-height: {{ room_center_design_config.score_input_height|default(44) }}px; --room-center-action-height: {{ room_center_design_config.action_height|default(46) }}px;" data-center-bars="{{ 'visible' if room_panel_layout_config.center_bars_visible|default(true) else 'hidden' }}" data-center-layout="{{ room_center_design_config.vertical_layout|default('compact') }}">
+<div id="roomLiveShell" class="room-view-shell room-layout-v137" data-room-style="{{ room_visual_style|default('default') }}" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}" data-room-guest-id="{{ room.guest_user_id|default('', true)|e }}" style="--room-mode-logo-bg-opacity: {{ (room_mode_logo_config.background_opacity|default(0)) / 100 }}; --room-mode-logo-scale: {{ (room_mode_logo_config.scale|default(100)) / 100 }}; --room-mode-dock-logo-scale: {{ (room_mode_logo_config.dock_scale|default(135)) / 100 }}; --room-panel-height: {{ room_panel_layout_config.panel_height|default(600) }}px; --room-center-stage-padding: {{ room_center_design_config.stage_padding|default(18) }}px; --room-center-stage-gap: {{ room_center_design_config.stage_gap|default(18) }}px; --room-center-mode-width: {{ room_center_design_config.mode_width|default(320) }}px; --room-center-mode-padding: {{ room_center_design_config.mode_padding|default(13) }}px; --room-center-vs-size: {{ room_center_design_config.vs_size|default(150) }}px; --room-center-score-width: {{ room_center_design_config.score_width|default(340) }}px; --room-center-score-padding: {{ room_center_design_config.score_padding|default(14) }}px; --room-center-score-input-height: {{ room_center_design_config.score_input_height|default(44) }}px; --room-center-action-height: {{ room_center_design_config.action_height|default(46) }}px;" data-center-bars="{{ 'visible' if room_panel_layout_config.center_bars_visible|default(true) else 'hidden' }}" data-center-layout="{{ room_center_design_config.vertical_layout|default('compact') }}">
 
 {% include "_streak_animation.html" %}
 
@@ -827,6 +827,7 @@ function bindRoomShareButton() {
 }
 
 let currentRoomStateKey = {{ initial_room_state_key|tojson }};
+let currentRoomGuestId = {{ (room.guest_user_id|default('', true))|tojson }};
 let currentRoomStatus = {{ room.status|tojson }};
 const currentRoomUserIsHost = {{ (room_room_viewer_is_host or current_user.role == 'admin')|tojson }};
 const currentRoomUserIsGuest = {{ (room_viewer_is_guest)|tojson }};
@@ -1058,6 +1059,7 @@ function replaceRoomShellFromDocument(doc) {
     currentShell.replaceWith(nextShell);
     currentRoomStateKey = nextShell.dataset.roomStateKey || currentRoomStateKey;
     currentRoomStatus = nextShell.dataset.roomStatus || currentRoomStatus;
+    currentRoomGuestId = nextShell.dataset.roomGuestId || "";
     rebindRoomDynamicUi();
     return true;
 }
@@ -1254,7 +1256,8 @@ function checkRoomState() {
                 }
                 return;
             }
-            if (data.state_key !== currentRoomStateKey) {
+            const apiGuestId = String(data.guest_user_id || "");
+            if (apiGuestId !== String(currentRoomGuestId || "") || data.state_key !== currentRoomStateKey) {
                 await refreshRoomView();
             }
         })

@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.5.12"
+APP_VERSION = "V1.5.13"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -5335,6 +5335,7 @@ def build_room_state_key(room):
         # guest_user_id sẽ khiến chủ phòng nhận 204 và không làm mới giao diện.
         str(room.get("host_user_id")),
         str(room.get("guest_user_id")),
+        str(room.get("updated_at")),
         str(room.get("status")),
         str(room.get("host_team")),
         str(room.get("guest_team")),
@@ -5405,6 +5406,9 @@ def api_room_state(room_id):
         "ok": True,
         "state_key": state_key,
         "status": room.get("status"),
+        "guest_user_id": str(room.get("guest_user_id") or ""),
+        "has_guest": bool(room.get("guest_user_id")),
+        "updated_at": str(room.get("updated_at") or ""),
         "rematch_declined": bool(room.get("rematch_declined")),
         "rematch_declined_by_me": bool(rematch_declined_by_me),
         "rematch_expired": bool(room.get("rematch_expired")),

@@ -1,0 +1,9 @@
+PES ARENA V1.5.13 - FIX C1 GUEST APPEAR ON HOST
+
+- Fix: khách nhận lời mời C1 nhưng phía chủ phòng vẫn thấy "Đang chờ đối thủ".
+- Khi khách Accept, backend ghi guest_user_id và đọc lại DB để xác nhận trước khi báo thành công.
+- Chỉ chuyển match_invite sang accepted sau khi guest_user_id đã được lưu thành công.
+- Room state key bổ sung updated_at để chủ phòng chắc chắn nhận thay đổi.
+- API room state trả thêm guest_user_id / has_guest / updated_at.
+- Polling phía chủ ép refresh ngay khi guest_user_id thay đổi.
+- Không thay đổi logic Room/Rank thường và các module khác.

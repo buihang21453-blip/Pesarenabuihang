@@ -2022,14 +2022,36 @@ def register_routes(context):
                 flash("Bạn đang ở một phòng đấu khác có đối thủ/đã bắt đầu. Hãy kết thúc phòng đó trước.","warning")
                 return redirect(url_for("room_detail",room_id=active.get("id")))
         bound_invite_id=room.get("invite_id")
-        execute_query(db.table("match_rooms").update({"guest_user_id":uid,"guest_ready":False,"invite_id":None,"updated_at":now_iso()}).eq("id",room_id),"ops_c1_room_accept",attempts=2)
+        accepted_at=now_iso()
+        accept_result=execute_query(
+            db.table("match_rooms").update({
+                "guest_user_id":uid,
+                "guest_ready":False,
+                "invite_id":None,
+                "updated_at":accepted_at,
+            }).eq("id",room_id),
+            "ops_c1_room_accept",
+            attempts=2,
+        )
+        # V1.5.13: không báo nhận phòng thành công nếu guest_user_id chưa thật sự
+        # được ghi xuống DB. Điều này tránh tình trạng khách vào được URL nhưng
+        # phía chủ vẫn thấy "Đang chờ đối thủ".
+        verify_result=execute_query(
+            db.table("match_rooms").select("id,guest_user_id,guest_ready,updated_at").eq("id",room_id).limit(1),
+            "ops_c1_room_accept_verify",
+            attempts=2,
+        )
+        verified_room=(verify_result.data or [None])[0]
+        if not verified_room or str(verified_room.get("guest_user_id") or "") != uid:
+            flash("Chưa thể ghi nhận bạn vào vị trí Đội khách. Vui lòng bấm nhận lời mời lại.","error")
+            return redirect(url_for("c1_rooms",tournament_id=tournament_id))
         if bound_invite_id:
             try:
-                execute_query(db.table("match_invites").update({"status":"accepted","updated_at":now_iso()}).eq("id",bound_invite_id).eq("status","pending"),"ops_c1_realtime_invite_accept",attempts=1)
+                execute_query(db.table("match_invites").update({"status":"accepted","updated_at":accepted_at}).eq("id",bound_invite_id).eq("status","pending"),"ops_c1_realtime_invite_accept",attempts=1)
             except Exception:
                 pass
         ttl_cache_delete("invites_raw"); cache_delete("_rz_invites_all"); cache_delete("_rz_current_pending_invites")
-        flash("Đã vào Phòng đấu C1. Nút Sẵn sàng đã được mở cho Đội khách.","success")
+        flash("Đã vào Phòng đấu C1. Chủ phòng sẽ thấy bạn xuất hiện ngay; nút Sẵn sàng đã được mở.","success")
         return redirect(url_for("room_detail",room_id=room_id))
 
     @app.route('/tournaments/<tournament_id>/matches/<match_id>/room', methods=['GET','POST'])
