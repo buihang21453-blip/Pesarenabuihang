@@ -1,0 +1,9 @@
+PES ARENA V1.5.15 - C1 TWO HIDDEN TEST ACCOUNTS + ADMIN FULL ACCESS
+
+- Chọn tối đa 2 tài khoản làm Test A / Test B cho C1.
+- Test A/B nhìn thấy nhau và thao tác Phòng C1 như HLV thật.
+- HLV thật không thấy tài khoản/phòng/kết quả TEST.
+- TEST không chiếm suất 16 HLV, không vào lịch/BXH chính thức, không chiếm pool CLB thật, không ảnh hưởng Rank/RP.
+- Admin thấy tài khoản test, BXH test, kết quả test, phòng test.
+- Mọi action Admin trong module C1 chỉ cần admin_required; bỏ giới hạn system_features_manage.
+- Tab Điều hành giải đấu và Test Mode hiển thị cho mọi Admin.

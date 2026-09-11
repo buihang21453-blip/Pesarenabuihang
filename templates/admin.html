@@ -42,7 +42,7 @@
 {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">🧪 Tài khoản test & Import</button>{% endif %}
     {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">⚙️ Hệ thống</button>{% endif %}
     {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="database">🗄 Database / SQL{% if migration_summary and migration_summary.missing %} · ⚠️ {{ migration_summary.missing }}{% endif %}</button>{% endif %}
-    {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="season">🏆 Mùa giải</button><button class="admin-tab-button" type="button" data-admin-tab="tournaments">🏟️ Điều hành giải đấu</button><button class="admin-tab-button" type="button" data-admin-tab="tournament-test">🧪 Test Mode</button><button class="admin-tab-button" type="button" data-admin-tab="room-design">🎨 Thiết kế phòng đấu</button>{% endif %}
+    {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="season">🏆 Mùa giải</button>{% endif %}<button class="admin-tab-button" type="button" data-admin-tab="tournaments">🏟️ Điều hành giải đấu</button><button class="admin-tab-button" type="button" data-admin-tab="tournament-test">🧪 Test Mode</button>{% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="room-design">🎨 Thiết kế phòng đấu</button>{% endif %}
     {% if can_admin('rp_view') %}<button class="admin-tab-button" type="button" data-admin-tab="rp-tools">📈 Công cụ RP</button>{% endif %}
     <button class="admin-tab-button" type="button" data-admin-tab="economy">🪙 Zcoin & Gift Code</button>
     {% if can_admin('admin_logs_view') %}<button class="admin-tab-button" type="button" data-admin-tab="logs">🧾 Nhật ký</button>{% endif %}
@@ -697,7 +697,6 @@
 {% endif %}
 
 
-{% if can_admin('system_features_manage') %}
 <section class="admin-tab-panel" data-admin-panel="tournaments">
   {% set td = tournament_admin_data|default({}) %}
   {% set ops = tournament_ops_admin|default({}) %}
@@ -1125,7 +1124,6 @@
 
   {% endif %}
 </section>
-{% endif %}
 
 
 <script>
@@ -1148,7 +1146,6 @@
 })();
 </script>
 
-{% if can_admin('system_features_manage') %}
 <section class="admin-tab-panel" data-admin-panel="tournament-test">
   <div class="panel">
     <h2>🧪 Tournament Test Mode</h2>
@@ -1169,12 +1166,22 @@
         <label><span>Test B</span><select name="test_user_2"><option value="">-- Không chọn --</option>{% for player in players|sort(attribute='display_name') %}<option value="{{ player.id }}" {{ 'selected' if c1_test_ids|length>1 and c1_test_ids[1]|string==player.id|string else '' }}>{{ player.display_name }}</option>{% endfor %}</select></label>
         <button class="btn green" type="submit">💾 Lưu tài khoản Test C1</button>
       </form>
-      {% if ops.get('c1_test_users') %}<div class="small" style="margin-top:8px">Đang bật: {% for u in ops.get('c1_test_users') %}<strong>{{ u.display_name or u.username }}</strong>{% if not loop.last %} ↔ {% endif %}{% endfor %}</div>{% endif %}
+      {% if ops.get('c1_test_users') %}<div class="small" style="margin-top:8px">Đang bật: {% for u in ops.get('c1_test_users') %}<strong>🧪 {{ u.display_name or u.username }}</strong>{% if not loop.last %} ↔ {% endif %}{% endfor %}</div>{% endif %}
+      <div class="small" style="margin-top:8px;color:#cfead7"><strong>Quy tắc:</strong> Test A/B chỉ nhìn thấy nhau. HLV thật không thấy tài khoản/phòng/kết quả TEST. TEST không chiếm suất 16 HLV, không chiếm CLB pool thật và không vào BXH C1 thật.</div>
+      {% if ops.get('c1_test_users') %}
+      <details open style="margin-top:10px"><summary><strong>👑 Theo dõi TEST C1 — Admin toàn quyền</strong></summary>
+        <div class="small" style="padding:8px 0">Admin thấy toàn bộ dữ liệu TEST. Quyền Admin không bị gate lịch rảnh, thành viên, lời mời hay giai đoạn.</div>
+        <div class="admin-table-wrap tournament-compact"><table><thead><tr><th>HLV Test</th><th>Trận</th><th>W-D-L</th><th>GF-GA</th><th>Điểm TEST</th></tr></thead><tbody>
+        {% for r in ops.get('c1_test_ranking',[]) %}<tr><td>🧪 {{ r.display_name }}</td><td>{{ r.played }}</td><td>{{ r.wins }}-{{ r.draws }}-{{ r.losses }}</td><td>{{ r.gf }}-{{ r.ga }}</td><td><strong>{{ r.points }}</strong></td></tr>{% endfor %}
+        {% if not ops.get('c1_test_ranking') %}<tr><td colspan="5" class="small">Chưa có kết quả TEST.</td></tr>{% endif %}
+        </tbody></table></div>
+        <div class="small" style="margin-top:8px">Phòng TEST theo dõi được: <strong>{{ ops.get('c1_test_rooms',[])|length }}</strong> · Kết quả TEST đã xác nhận: <strong>{{ ops.get('c1_test_matches',[])|length }}</strong></div>
+      </details>
+      {% endif %}
     </div>
     {% endif %}
   </div>
 </section>
-{% endif %}
 
 {% if can_admin('system_features_manage') %}
 <section class="admin-tab-panel" data-admin-panel="database" hidden>

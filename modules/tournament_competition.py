@@ -1006,11 +1006,22 @@ def register_routes(context):
             })
         availability_status_rows.sort(key=lambda x: ({"missing":0,"registered":1,"scheduled":2}.get(x.get("status_code"),9), (x.get("display_name") or "").lower()))
 
+        test_ranking=_c1_test_ranking(tid) if test_ids else []
+        test_matches=_c1_test_confirmed_matches(tid) if test_ids else []
+        test_id_set=set(test_ids)
+        test_rooms=[]
+        for room in (payload.get("tournament_rooms") or []):
+            meta=room.get("tournament_meta") or _room_meta(room) or {}
+            participants={str(room.get("host_user_id") or ""),str(room.get("guest_user_id") or "")}
+            if meta.get("test_sandbox_room") or bool(participants & test_id_set):
+                test_rooms.append(room)
+
         payload.update({
             "ready":True,"tournament":tour,"members":members,"progress":progress,
             "combined_ranking":_combined_ranking(tid),
             "knockout_flow":_setting(tid,"knockout_flow",{}) or {},
             "scale":_tournament_scale(tid),"c1_test_user_ids":test_ids,"c1_test_users":test_users,
+            "c1_test_ranking":test_ranking,"c1_test_matches":test_matches,"c1_test_rooms":test_rooms,
             "c1_club_pots":C1_CLUB_POTS,"c1_club_pool":C1_CLUB_POOL,
             "host_list":host_list,"host_count":len(host_list),
             "all_matches":payload.get("matches") or [],
@@ -1149,7 +1160,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/c1-test-accounts')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_c1_test_accounts(tournament_id):
         requested=[]
         for key in ("test_user_1","test_user_2"):
@@ -1170,13 +1180,12 @@ def register_routes(context):
             "tournament_id":tournament_id,"setting_key":C1_TEST_ACCOUNTS_KEY,
             "setting_value":{"user_ids":valid,"updated_at":now_iso()},"updated_at":now_iso(),
         },on_conflict="tournament_id,setting_key"),"ops_save_c1_test_accounts",attempts=2)
-        flash(f"Đã lưu {len(valid)} tài khoản Test C1. Các tài khoản này không được thêm vào BXH/trận chính thức.","success")
+        flash(f"Đã lưu {len(valid)} tài khoản Test C1. Test A/B chỉ nhìn thấy nhau; HLV thường không thấy. Dữ liệu TEST không vào BXH, lịch, pool CLB hay trận chính thức.","success")
         return redirect_admin("tournaments")
 
     @app.get('/admin/tournaments/<tournament_id>/preview-player')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_preview_player(tournament_id):
         user_id=str(request.args.get("user_id") or "").strip()
         if not user_id:
@@ -1197,7 +1206,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/members/<user_id>/remove')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_member_remove(tournament_id,user_id):
         # V1.4.79: khi Admin xóa HLV ở giai đoạn đăng ký, phải đồng bộ cả
         # danh sách thi đấu và hồ sơ đăng ký. Không xóa tài khoản web / lịch sử tiền.
@@ -1221,7 +1229,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/stages/<stage_code>/status')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_stage_status(tournament_id,stage_code):
         status=(request.form.get("status") or "locked").strip()
         if status not in {"draft","open","locked","completed"}: status="locked"
@@ -1231,7 +1238,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/stage1/settings')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_stage1_settings(tournament_id):
         target=max(1,min(20,int(request.form.get("match_target") or 6)))
         min_opp=max(1,min(target,int(request.form.get("min_opponents") or 3)))
@@ -1242,7 +1248,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/stage1/clubs')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_stage1_clubs(tournament_id):
         selected=request.form.getlist("clubs")
         if len(selected)!=16:
@@ -1265,7 +1270,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/stage1/clubs/reset')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_stage1_clubs_reset(tournament_id):
         defaults=_default_stage1_clubs()
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"stage1_club_pool","setting_value":{"clubs":defaults,"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_stage1_club_pool_reset",attempts=2)
@@ -1274,7 +1278,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/matches/add')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_match_add(tournament_id):
         stage_code=(request.form.get("stage_code") or "stage1").strip()
         home=str(request.form.get("home_user_id") or "").strip(); away=str(request.form.get("away_user_id") or "").strip()
@@ -1293,7 +1296,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/matches/<match_id>/result')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_match_result(match_id):
         match,_=_one(db.table("tournament_matches").select("*").eq("id",match_id),"ops_match_result_lookup")
         if not match:
@@ -1379,7 +1381,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/matches/bulk-result')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_bulk_match_result(tournament_id):
         match_ids = [str(x).strip() for x in request.form.getlist("match_id") if str(x).strip()]
         home_scores = request.form.getlist("home_score")
@@ -1471,7 +1472,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/pot/generate')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_generate_pots(tournament_id):
         pot_count=max(1,min(8,int(request.form.get("pot_count") or 4)))
         club_count=max(2,min(64,int(request.form.get("club_count") or len(_all_members(tournament_id)) or 10)))
@@ -1492,7 +1492,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/pot/lock')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_lock_pots(tournament_id):
         locked=request.form.get("locked")=="1"
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"pots_locked","setting_value":{"locked":locked},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_pot_lock",attempts=2)
@@ -2406,7 +2405,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/club-selection')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_club_selection(tournament_id):
         opened=request.form.get("open")=="1"
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_selection","setting_value":{"open":opened},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_club_state",attempts=2)
@@ -2415,7 +2413,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/clubs/add')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_club_add(tournament_id):
         name=(request.form.get("name") or "").strip(); key=(request.form.get("club_key") or name.lower().replace(' ','-')).strip()
         if name:
@@ -2447,7 +2444,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/league/generate')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_league_generate(tournament_id):
         k=max(1,min(4,int(request.form.get("matches_per_pot") or 2)))
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"league_config","setting_value":{"matches_per_pot":k},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_config",attempts=2)
@@ -2479,7 +2475,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/registration-status')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_registration_status(tournament_id):
         opened=(request.form.get("open") or "0") == "1"
         tour=_tour(tournament_id) or {}
@@ -2499,7 +2494,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/stage1/start-now')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_stage1_start_now(tournament_id):
         now_value=now_iso()
         execute_query(db.table("tournaments").update({"registration_open":False,"status":"active","updated_at":now_value}).eq("id",tournament_id),"ops_stage1_start_tournament",attempts=2)
@@ -2518,7 +2512,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/timing')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_timing(tournament_id):
         def norm(name):
             raw=(request.form.get(name) or "").strip()
@@ -2540,7 +2533,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/stage1/random-generate')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_stage1_random_generate(tournament_id):
         members=[str(m.get("user_id")) for m in _all_members(tournament_id)]
         n=len(members)
@@ -2575,7 +2567,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/club-draft/start')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_club_draft_start(tournament_id):
         _sync_c1_club_pool(tournament_id)
         # V1.5.4: build one fixed 16-HLV allocation list. Top 1 gets 2 tickets,
@@ -2655,7 +2646,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/club-draft/force')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_club_draft_force(tournament_id):
         state=_club_draft_state(tournament_id,False); idx=int(state.get("current_index") or 0); order=state.get("order") or []
         if not state.get("active") or idx>=len(order):
@@ -2669,7 +2659,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/clubs/assign-remaining')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_assign_remaining_clubs(tournament_id):
         _sync_c1_club_pool(tournament_id)
         state=_club_draft_state(tournament_id,False) or {}
@@ -2700,7 +2689,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/league-draw/start')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_league_draw_start(tournament_id):
         members=sorted(_all_members(tournament_id),key=lambda m:(int(m.get("seed_no") or 9999),m.get("display_name") or ""))
         order=[str(m.get("user_id")) for m in members]
@@ -2714,7 +2702,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/league-draw/next')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_league_draw_next(tournament_id):
         state=_setting(tournament_id,"league_draw_v2",{}) or {}; order=state.get("order") or []; pots=state.get("pots") or [1,2,3]
         i=int(state.get("current_index") or 0); pi=int(state.get("pot_index") or 0)
@@ -3015,7 +3002,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/hosts/add')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_host_add(tournament_id):
         name=(request.form.get("name") or "").strip(); region=(request.form.get("region") or "Bắc").strip()
         if name:
@@ -3025,7 +3011,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/hosts/<host_id>/status')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_host_status(host_id):
         status=request.form.get("status") or "available"
         if status not in {"available","busy","offline"}: status="offline"
@@ -3035,7 +3020,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/stage1/extend')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_stage1_extend(tournament_id):
         cfg=_setting(tournament_id,"competition_timing",{}) or {}
         base=_parse_iso(cfg.get("stage1_end_at")) or datetime.now(timezone(timedelta(hours=7)))
@@ -3047,7 +3031,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/stage1/finish')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_stage1_finish(tournament_id):
         force=request.form.get("force")=="1"
         pending=[m for m in _matches(tournament_id,"stage1") if m.get("status")!="completed"]
@@ -3063,7 +3046,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/league/finish')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_league_finish(tournament_id):
         force=request.form.get("force")=="1"
         pending=[m for m in _matches(tournament_id,"league") if m.get("status")!="completed"]
@@ -3079,7 +3061,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/knockout/generate')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_knockout_generate(tournament_id):
         use_playoff=request.form.get("use_playoff")=="1"
         ranking=_combined_ranking(tournament_id)
@@ -3107,7 +3088,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/knockout/match')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_knockout_match(tournament_id):
         home=str(request.form.get("home_user_id") or ""); away=str(request.form.get("away_user_id") or "")
         rnd=request.form.get("round_code") or "playoff"; two=request.form.get("two_legged")=="1"
@@ -3122,7 +3102,6 @@ def register_routes(context):
     @app.post('/admin/tournaments/<tournament_id>/rewards/add')
     @login_required
     @admin_required
-    @admin_permission_required("system_features_manage")
     def admin_tournament_reward_add(tournament_id):
         payload={"tournament_id":tournament_id,"name":(request.form.get("name") or "Thưởng sớm").strip(),"stage_code":request.form.get("stage_code") or "stage1","reward_type":request.form.get("reward_type") or "zcoin","reward_value":request.form.get("reward_value") or "0","deadline_at":request.form.get("deadline_at") or None,"enabled":True,"priority":int(request.form.get("priority") or 100),"created_at":now_iso()}
         execute_query(db.table("tournament_reward_rules").insert(payload),"ops_reward_add",attempts=2)
