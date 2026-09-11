@@ -2585,7 +2585,7 @@ def register_routes(context):
         flash("Đã tạo Phòng đấu C1. Khi sẵn sàng, hãy bấm Mời đối thủ ngay trong phòng.","success")
         return redirect(url_for("room_detail",room_id=room.get("id")))
 
-    @app.get('/tournaments/<tournament_id>/rooms/<room_id>/next-match')
+    @app.post('/tournaments/<tournament_id>/rooms/<room_id>/next-match')
     @login_required
     def tournament_room_next_match(tournament_id, room_id):
         """
@@ -2601,9 +2601,9 @@ def register_routes(context):
 
         host_uid=str(room.get("host_user_id") or "")
         guest_uid=str(room.get("guest_user_id") or "")
-        if uid not in {host_uid,guest_uid} and not is_admin_user(user):
-            flash("Bạn không thuộc Phòng đấu C1 này.","error")
-            return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
+        if uid != host_uid and not is_admin_user(user):
+            flash("Chỉ Chủ phòng hoặc Admin mới được chuyển sang Trận 2.","warning")
+            return redirect(url_for("room_detail",room_id=room_id))
 
         current_match_id=str(meta.get("tournament_match_id") or "")
         current_match,_=_one(
@@ -2692,6 +2692,7 @@ def register_routes(context):
         })
 
         # Reset CHỈ trạng thái của trận trong room; không xóa kết quả trận 1.
+        next_started_at=now_iso()
         execute_query(
             db.table("match_rooms").update({
                 "note":_room_note(meta),
@@ -2707,11 +2708,43 @@ def register_routes(context):
                 "state_expires_at":None,
                 "match_mode":"tournament",
                 "team_tier":"TOURNAMENT_GD1" if sibling.get("stage_code")=="stage1" else "TOURNAMENT",
-                "updated_at":now_iso(),
-            }).eq("id",room_id),
+                "updated_at":next_started_at,
+            }).eq("id",room_id).eq("host_user_id",host_uid).eq("guest_user_id",guest_uid),
             "ops_c1_next_same_room_reset_for_leg2",
             attempts=2,
         )
+
+        # V1.5.24: xác nhận DB đã thực sự chuyển room sang Trận 2 trước khi báo thành công.
+        verified,_=_one(
+            db.table("match_rooms").select("id,status,guest_ready,host_user_id,guest_user_id,note,updated_at").eq("id",room_id),
+            "ops_c1_next_same_room_verify_leg2",
+        )
+        verified_meta=_room_meta(verified) if verified else {}
+        if (
+            not verified
+            or str(verified.get("status") or "")!="waiting_ready"
+            or bool(verified.get("guest_ready"))
+            or str(verified.get("host_user_id") or "")!=host_uid
+            or str(verified.get("guest_user_id") or "")!=guest_uid
+            or str(verified_meta.get("tournament_match_id") or "")!=str(sibling.get("id") or "")
+        ):
+            flash("Chưa thể chuyển phòng sang Trận 2. Vui lòng bấm lại sau vài giây.","error")
+            return redirect(url_for("room_detail",room_id=room_id))
+
+        # Dọn cache để cả Host và Guest nhận state waiting_ready ngay ở poll kế tiếp.
+        cache_delete("_rz_rooms_all")
+        cache_delete("_rz_current_pending_invites")
+        ttl_cache_delete("rooms_raw")
+        try:
+            create_user_notification(
+                guest_uid,
+                "🏆 Trận 2 đã sẵn sàng",
+                "Chủ phòng đã chuyển sang Trận 2. Hãy vào phòng và bấm Sẵn Sàng.",
+                url_for("room_detail",room_id=room_id),
+                "c1_game2_ready",
+            )
+        except Exception as exc:
+            app.logger.warning("C1 game2 guest notification failed room=%s: %s",room_id,exc)
 
         # Bảo đảm match 2 ở trạng thái pending trước khi bắt đầu lại.
         if str(sibling.get("status") or "") not in {"pending"}:
@@ -2724,7 +2757,7 @@ def register_routes(context):
                 attempts=2,
             )
 
-        flash("🏆 Đã chuyển sang Trận 2 ngay trong phòng này. Đội khách hãy Sẵn sàng để Host Random CLB mới.","success")
+        flash("🏆 Đã chuyển sang Trận 2. Đội khách hãy bấm Sẵn Sàng.","success")
         return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/invite-opponent')

@@ -314,7 +314,13 @@
                         {% elif room.status == 'confirmed' and (room_room_viewer_is_host or room_viewer_is_guest) %}
                         {% if is_tournament_room and tournament_meta %}
                         <div class="room-center-primary-actions room-action-zone">
-                            <a class="btn gold room-center-action-btn" href="{{ url_for('tournament_room_next_match', tournament_id=tournament_meta.tournament_id, room_id=room.id) }}">🏆 Trận 2 · Tiếp tục trong phòng</a>
+                            {% if room_room_viewer_is_host or current_user.role == 'admin' %}
+                            <form method="post" action="{{ url_for('tournament_room_next_match', tournament_id=tournament_meta.tournament_id, room_id=room.id) }}">
+                                <button class="btn gold room-center-action-btn" type="submit">🏆 Trận 2</button>
+                            </form>
+                            {% else %}
+                            <div class="room-center-state-pill">⏳ Chờ Chủ phòng mở Trận 2</div>
+                            {% endif %}
                             <a class="btn gray room-center-action-btn" href="{{ url_for('tournament_detail', tournament_id=tournament_meta.tournament_id) }}">Về giải đấu</a>
                         </div>
                         {% else %}
