@@ -37,8 +37,8 @@
     {% if tr.reason %}<p class="small">Lý do: {{ tr.reason }}</p>{% endif %}
   {% endif %}
   {% else %}
-  <strong>🏆 TRẬN GIẢI ĐẤU · {{ (tournament_meta.stage_code or 'stage1')|upper }}</strong>
-  <p class="small" style="margin:5px 0 10px">Phòng này chỉ ghi dữ liệu vào giải đấu. Không tính Rank và không phải Giao hữu.</p>
+  <strong>🏆 XÁC NHẬN KẾT QUẢ C1 · {{ (tournament_meta.stage_code or 'stage1')|upper }}</strong>
+  <p class="small" style="margin:5px 0 10px">Chủ phòng gửi tỷ số → Đội khách xác nhận hoặc báo sai → nếu tranh chấp, Admin C1 chốt kết quả. Không cộng/trừ RP và không ảnh hưởng Rank.</p>
   {% set pr=tournament_result_proposal or {} %}
   {% if room.status == 'playing' and room_room_viewer_is_host %}
   <form method="post" action="{{ url_for('tournament_room_submit_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
@@ -80,9 +80,9 @@
       {% endif %}
     </div>
   {% elif tournament_match.status == 'completed' or room.status == 'confirmed' %}
-    <strong>✅ Trận đã hoàn tất: {{ tournament_match.home_score }} - {{ tournament_match.away_score }}</strong>
+    <strong>✅ KẾT QUẢ ĐÃ ĐƯỢC CHỐT: {{ tournament_match.home_score }} - {{ tournament_match.away_score }}</strong><p class="small" style="margin:6px 0 0;color:#9ad9a9">Kết quả đã khóa với HLV. Chỉ Admin có quyền chỉnh sửa sau thời điểm này.</p>
   {% elif tournament_match.status == 'disputed' or room.status == 'disputed' %}
-    <strong>⚠ Kết quả đang chờ Admin xử lý.</strong>
+    <strong>⚠ KẾT QUẢ ĐANG TRANH CHẤP · CHỜ ADMIN C1 XỬ LÝ.</strong><p class="small" style="margin:6px 0 0">HLV không thể tự sửa kết quả trong trạng thái này.</p>
   {% endif %}
   {% endif %}
 </div>

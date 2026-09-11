@@ -1,0 +1,8 @@
+PES ARENA V1.5.14 - C1 RESULT CONFIRMATION
+
+- Chủ phòng C1 chỉ được gửi tỷ số khi room đang playing.
+- Khách xác nhận -> tournament_matches completed -> BXH C1 cập nhật.
+- Khách không đồng ý -> room + tournament match chuyển disputed.
+- Admin chốt tranh chấp -> đồng bộ tournament_matches, room C1 và result proposal.
+- Sau khi confirmed/admin_confirmed, HLV không thể tự sửa.
+- Luồng C1 không gọi RP/Rank, không ảnh hưởng streak/shutdown.

@@ -1313,6 +1313,54 @@ def register_routes(context):
             elif payload["away_pen"]>payload["home_pen"]: winner=match.get("away_user_id")
         payload["winner_user_id"]=winner
         execute_query(db.table("tournament_matches").update(payload).eq("id",match_id),"ops_match_result",attempts=2)
+
+        # V1.5.14: Admin chốt kết quả phải đồng bộ luôn Phòng đấu C1 liên kết.
+        try:
+            room_rows,_=_rows(
+                db.table("match_rooms").select("id,note,status,host_user_id,guest_user_id").order("updated_at",desc=True).limit(500),
+                "ops_admin_result_linked_c1_rooms",
+            )
+            for linked_room in room_rows:
+                linked_meta=_room_meta(linked_room)
+                if not linked_meta:
+                    continue
+                if str(linked_meta.get("tournament_match_id") or "") != str(match_id):
+                    continue
+                if str(linked_meta.get("tournament_id") or "") != str(match.get("tournament_id") or ""):
+                    continue
+
+                host_uid=str(linked_room.get("host_user_id") or "")
+                if host_uid == str(match.get("home_user_id") or ""):
+                    room_hs,room_gs=hs,aw
+                else:
+                    room_hs,room_gs=aw,hs
+
+                execute_query(
+                    db.table("match_rooms").update({
+                        "host_score":room_hs,
+                        "guest_score":room_gs,
+                        "status":"confirmed",
+                        "updated_at":now_iso(),
+                    }).eq("id",linked_room.get("id")),
+                    "ops_admin_result_sync_c1_room",
+                    attempts=2,
+                )
+
+                prop=_tournament_result_proposal(match.get("tournament_id"),match_id)
+                prop.update({
+                    "status":"admin_confirmed",
+                    "home_score":hs,
+                    "away_score":aw,
+                    "host_score":room_hs,
+                    "guest_score":room_gs,
+                    "confirmed_by":"admin",
+                    "confirmed_at":now_iso(),
+                })
+                _save_tournament_result_proposal(match.get("tournament_id"),match_id,prop)
+                break
+        except Exception as exc:
+            app.logger.warning("Sync Admin C1 result to room failed: %s",exc)
+
         if match.get("stage_code")=="knockout":
             try: _maybe_advance_knockout(match.get("tournament_id"))
             except Exception as exc: app.logger.warning("Knockout auto advance failed: %s",exc)
@@ -2210,6 +2258,8 @@ def register_routes(context):
             flash("Không tìm thấy phòng/trận giải.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id))
         if uid!=str(room.get("host_user_id")) and not is_admin_user(user):
             flash("Chỉ chủ phòng mới được nhập kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        if str(room.get("status") or "") != "playing":
+            flash("Chỉ được gửi kết quả khi trận C1 đang thi đấu.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         if str(match.get("status")) in {"completed","cancelled"}:
             flash("Trận này đã hoàn tất.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         if _stage1_pair_is_complete(tournament_id, match):
@@ -2246,6 +2296,8 @@ def register_routes(context):
             flash("Không tìm thấy phòng/trận giải.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id))
         if uid!=str(room.get("guest_user_id")) and not is_admin_user(user):
             flash("Chỉ đối thủ mới được xác nhận kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        if str(room.get("status") or "") != "waiting_result_confirm":
+            flash("Phòng C1 không còn kết quả chờ xác nhận.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         prop=_tournament_result_proposal(tournament_id,match.get("id"))
         if prop.get("status")!="waiting_confirm":
             flash("Không có kết quả nào đang chờ xác nhận.","warning"); return redirect(url_for("room_detail",room_id=room_id))
@@ -2269,7 +2321,11 @@ def register_routes(context):
             flash("Không tìm thấy phòng/trận giải.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id))
         if uid!=str(room.get("guest_user_id")) and not is_admin_user(user):
             flash("Chỉ đối thủ mới được báo sai kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
+        if str(room.get("status") or "") != "waiting_result_confirm":
+            flash("Phòng C1 không còn kết quả chờ xử lý.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         prop=_tournament_result_proposal(tournament_id,match.get("id"))
+        if prop.get("status")!="waiting_confirm":
+            flash("Kết quả này không còn ở trạng thái chờ xác nhận.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         prop.update({"status":"disputed","disputed_by":uid,"disputed_at":now_iso(),"reason":(request.form.get("reason") or "Sai kết quả").strip()[:300]})
         _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
         execute_query(db.table("tournament_matches").update({"status":"disputed","updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_dispute",attempts=2)
