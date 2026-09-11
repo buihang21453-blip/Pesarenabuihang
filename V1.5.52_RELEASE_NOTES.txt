@@ -1,0 +1,8 @@
+PES ARENA V1.5.52 - MOVE PLAYER SCHEDULE HUB TO /tournaments
+
+- Giữ nút Phòng đấu C1 đi thẳng vào phòng thật.
+- Chuyển khu "Đối thủ của tôi", "Lịch thi đấu / Giờ rảnh" và "Lịch của đối thủ" ra cuối trang /tournaments.
+- Loại bỏ các khu này khỏi /tournaments/<id> để không hiển thị trùng.
+- Nút "Lịch của tôi" tại card giải nhảy xuống đúng khu lịch ở /tournaments.
+- Form lưu giờ rảnh, giờ linh hoạt và mở đối thủ có return_to=tournaments để thao tác xong vẫn ở trang /tournaments.
+- Giữ giờ hiển thị 24h.

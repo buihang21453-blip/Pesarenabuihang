@@ -3488,6 +3488,11 @@ def register_routes(context):
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"stage1_player_reveals","setting_value":{},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_s1_reveal_reset",attempts=2)
         flash(f"Đã Random GĐ1: {len(edges)} cặp đối thủ · 2 trận/cặp.","success"); return redirect_admin("tournaments")
 
+    def _tournament_landing_return(tournament_id, anchor="schedule"):
+        if (request.form.get("return_to") or "").strip() == "tournaments":
+            return redirect(url_for("tournaments") + f"#{anchor}-{tournament_id}")
+        return redirect(url_for("tournament_detail", tournament_id=tournament_id) + f"#{anchor}")
+
     @app.post('/tournaments/<tournament_id>/stage1/reveal')
     @login_required
     def tournament_stage1_reveal(tournament_id):
@@ -3496,7 +3501,7 @@ def register_routes(context):
             flash("Bạn chưa thuộc giải đấu này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id))
         data=_setting(tournament_id,"stage1_player_reveals",{}) or {}; data[uid]=now_iso()
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"stage1_player_reveals","setting_value":data,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_s1_reveal",attempts=2)
-        return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#stage1")
+        return _tournament_landing_return(tournament_id,"opponents")
 
     @app.post('/admin/tournaments/<tournament_id>/club-draft/start')
     @login_required
@@ -3662,17 +3667,17 @@ def register_routes(context):
     def tournament_league_reveal(tournament_id):
         uid=str((current_user() or {}).get("id") or ""); draw=_setting(tournament_id,"league_draw_v2",{}) or {}
         if not (draw.get("revealed") or {}).get(uid):
-            flash("Đối thủ League Phase của bạn chưa được Admin bốc xong.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#league")
+            flash("Đối thủ League Phase của bạn chưa được Admin bốc xong.","warning"); return _tournament_landing_return(tournament_id,"opponents")
         data=_setting(tournament_id,"league_player_reveals",{}) or {}; data[uid]=now_iso()
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"league_player_reveals","setting_value":data,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_reveal",attempts=2)
-        return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#league")
+        return _tournament_landing_return(tournament_id,"opponents")
 
     @app.post('/tournaments/<tournament_id>/availability')
     @login_required
     def tournament_availability_save(tournament_id):
         uid=(current_user() or {}).get("id")
         if not _member(tournament_id,uid):
-            flash("Bạn chưa phải HLV của giải đấu này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            flash("Bạn chưa phải HLV của giải đấu này.","error"); return _tournament_landing_return(tournament_id,"schedule")
         allowed={slot["iso"] for day in _availability_days() for slot in day["slots"]}
         selected=[]
         for raw in request.form.getlist("slots"):
@@ -3688,7 +3693,7 @@ def register_routes(context):
         for iso in final_slots:
             execute_query(db.table("tournament_availability_slots").insert({"tournament_id":tournament_id,"user_id":uid,"slot_at":iso,"created_at":now_iso(),"updated_at":now_iso()}),"ops_availability_insert",attempts=2)
         flash(f"Đã lưu lịch thi đấu của bạn: {len(final_slots)} khung giờ trong 3 ngày gần nhất.","success")
-        return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        return _tournament_landing_return(tournament_id,"schedule")
 
     @app.post('/admin/tournaments/<tournament_id>/test-availability/simple')
     @login_required
@@ -3698,7 +3703,7 @@ def register_routes(context):
         is_test=_is_c1_test_user(tournament_id,uid)
         if not is_admin_user(user) and not is_test:
             flash("Bạn không có quyền lưu lịch kiểm thử.","error")
-            return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            return _tournament_landing_return(tournament_id,"schedule")
         days=_availability_days()
         allowed={slot["iso"] for day in days for slot in day["slots"]}
         selected=[]
@@ -3719,7 +3724,7 @@ def register_routes(context):
                     continue
                 if not start_raw or not end_raw:
                     flash(f"{d['label']}: hãy chọn đủ giờ Từ và Đến.","warning")
-                    return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+                    return _tournament_landing_return(tournament_id,"schedule")
                 try:
                     day=datetime.fromisoformat(d["date"]).date()
                     sh,sm=[int(x) for x in start_raw.split(":",1)]
@@ -3728,10 +3733,10 @@ def register_routes(context):
                     end=datetime(day.year,day.month,day.day,eh,em,tzinfo=vn_tz)
                 except Exception:
                     flash(f"{d['label']}: giờ không hợp lệ.","error")
-                    return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+                    return _tournament_landing_return(tournament_id,"schedule")
                 if end < start:
                     flash(f"{d['label']}: giờ Đến phải sau giờ Từ.","warning")
-                    return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+                    return _tournament_landing_return(tournament_id,"schedule")
                 cursor=start.replace(second=0,microsecond=0); count=0
                 while cursor<=end and count<49:
                     if cursor>now:
@@ -3743,7 +3748,7 @@ def register_routes(context):
         selected=sorted(set(selected+custom_existing))
         if is_test and not selected:
             flash("Hãy đăng ký ít nhất một giờ rảnh trong 3 ngày tới để vào giải đấu.","warning")
-            return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            return _tournament_landing_return(tournament_id,"schedule")
         execute_query(
             db.table("tournament_settings").upsert({
                 "tournament_id":tournament_id,
@@ -3754,14 +3759,14 @@ def register_routes(context):
             "ops_admin_test_availability",attempts=2,
         )
         flash(f"Đã lưu lịch thi đấu: {len(selected)} mốc giờ trong 3 ngày gần nhất.","success")
-        return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        return _tournament_landing_return(tournament_id,"schedule")
 
     @app.post('/tournaments/<tournament_id>/availability/simple')
     @login_required
     def tournament_availability_simple_save(tournament_id):
         uid=(current_user() or {}).get("id")
         if not _member(tournament_id,uid):
-            flash("Bạn chưa phải HLV của giải đấu này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            flash("Bạn chưa phải HLV của giải đấu này.","error"); return _tournament_landing_return(tournament_id,"schedule")
         vn_tz=timezone(timedelta(hours=7)); now=datetime.now(vn_tz)
         allowed_days={d["date"]:d for d in _availability_days()}
         final_slots=[]
@@ -3771,7 +3776,7 @@ def register_routes(context):
             if not start_raw and not end_raw:
                 continue
             if not start_raw or not end_raw:
-                flash(f"{d['label']}: hãy chọn đủ giờ Từ và Đến.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+                flash(f"{d['label']}: hãy chọn đủ giờ Từ và Đến.","warning"); return _tournament_landing_return(tournament_id,"schedule")
             try:
                 day=datetime.fromisoformat(d["date"]).date()
                 sh,sm=[int(x) for x in start_raw.split(":",1)]
@@ -3779,9 +3784,9 @@ def register_routes(context):
                 start=datetime(day.year,day.month,day.day,sh,sm,tzinfo=vn_tz)
                 end=datetime(day.year,day.month,day.day,eh,em,tzinfo=vn_tz)
             except Exception:
-                flash(f"{d['label']}: giờ không hợp lệ.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+                flash(f"{d['label']}: giờ không hợp lệ.","error"); return _tournament_landing_return(tournament_id,"schedule")
             if end<start:
-                flash(f"{d['label']}: giờ Đến phải sau giờ Từ.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+                flash(f"{d['label']}: giờ Đến phải sau giờ Từ.","warning"); return _tournament_landing_return(tournament_id,"schedule")
             cursor=start.replace(second=0,microsecond=0)
             count=0
             while cursor<=end and count<49:
@@ -3790,12 +3795,12 @@ def register_routes(context):
         final_slots=sorted(set(final_slots))
         if not final_slots:
             flash("Hãy đăng ký ít nhất một giờ rảnh trong 3 ngày tới để vào giải đấu.","warning")
-            return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            return _tournament_landing_return(tournament_id,"schedule")
         execute_query(db.table("tournament_availability_slots").delete().eq("tournament_id",tournament_id).eq("user_id",uid),"ops_availability_simple_clear",attempts=2)
         for iso in final_slots:
             execute_query(db.table("tournament_availability_slots").insert({"tournament_id":tournament_id,"user_id":uid,"slot_at":iso,"created_at":now_iso(),"updated_at":now_iso()}),"ops_availability_simple_insert",attempts=2)
         flash(f"Đã lưu lịch thi đấu: {len(final_slots)} mốc giờ trong 3 ngày gần nhất.","success")
-        return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        return _tournament_landing_return(tournament_id,"schedule")
 
     @app.post('/tournaments/<tournament_id>/availability/custom')
     @login_required
@@ -3806,7 +3811,7 @@ def register_routes(context):
         is_test=_is_c1_test_user(tournament_id,uid)
         is_admin_view=is_admin_user(user) and not member
         if not member and not is_test and not is_admin_view:
-            flash("Bạn chưa phải HLV của giải đấu này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            flash("Bạn chưa phải HLV của giải đấu này.","error"); return _tournament_landing_return(tournament_id,"schedule")
         day_raw=(request.form.get("day_date") or "").strip()
         start_raw=(request.form.get("start_time") or "").strip()
         end_raw=(request.form.get("end_time") or "").strip()
@@ -3818,17 +3823,17 @@ def register_routes(context):
             start=datetime(day.year,day.month,day.day,sh,sm,tzinfo=vn_tz)
             end=datetime(day.year,day.month,day.day,eh,em,tzinfo=vn_tz)
         except Exception:
-            flash("Giờ linh hoạt không hợp lệ.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            flash("Giờ linh hoạt không hợp lệ.","error"); return _tournament_landing_return(tournament_id,"schedule")
         allowed_days={d["date"] for d in _availability_days()}
         if day.isoformat() not in allowed_days or end<=start:
-            flash("Hãy chọn Hôm nay, Ngày mai hoặc Ngày kia và giờ kết thúc phải sau giờ bắt đầu.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            flash("Hãy chọn Hôm nay, Ngày mai hoặc Ngày kia và giờ kết thúc phải sau giờ bắt đầu.","warning"); return _tournament_landing_return(tournament_id,"schedule")
         # Bước 30 phút để hỗ trợ giờ linh hoạt, ví dụ 18:30–20:30.
         slots=[]; cursor=start.replace(second=0,microsecond=0)
         while cursor<=end and len(slots)<49:
             if cursor>now: slots.append(cursor.isoformat())
             cursor += timedelta(minutes=30)
         if not slots:
-            flash("Khoảng giờ này đã qua hoặc không còn giờ hợp lệ.","warning"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+            flash("Khoảng giờ này đã qua hoặc không còn giờ hợp lệ.","warning"); return _tournament_landing_return(tournament_id,"schedule")
         if member:
             current={r.get("slot_iso") for r in _availability_rows(tournament_id,[uid])}
             added=0
@@ -3843,7 +3848,7 @@ def register_routes(context):
             before=len(current); current.update(slots); added=len(current)-before
             execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":key,"setting_value":{"slots":sorted(current),"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_test_availability_custom",attempts=2)
         flash(f"Đã thêm giờ linh hoạt {start.strftime('%H:%M')}–{end.strftime('%H:%M')} ({added} mốc 30 phút).","success")
-        return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
+        return _tournament_landing_return(tournament_id,"schedule")
 
     @app.post('/tournaments/<tournament_id>/host-ready')
     @login_required

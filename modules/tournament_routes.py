@@ -284,6 +284,115 @@ def register_routes(context):
         return redirect(url_for("tournaments", register=tournament_id) + f"#register-{tournament_id}")
 
 
+
+    # V1.5.52 - Dữ liệu cá nhân C1 được dựng ngay tại /tournaments để phần
+    # Đối thủ / Giờ rảnh / Lịch đối thủ nằm đúng ở trang danh sách giải.
+    def _landing_setting(tournament_id, key, default=None):
+        rows, _ = _safe_rows(
+            db.table("tournament_settings").select("setting_value")
+            .eq("tournament_id", tournament_id).eq("setting_key", key),
+            f"tournament_landing_setting_{key}",
+        )
+        return (rows[0] or {}).get("setting_value", default) if rows else default
+
+    def _landing_availability_days():
+        vn_tz = timezone(timedelta(hours=7))
+        now = datetime.now(vn_tz)
+        labels = ("Hôm nay", "Ngày mai", "Ngày kia")
+        weekdays = ("Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy","Chủ nhật")
+        out=[]
+        for offset, label in enumerate(labels):
+            d=now.date()+timedelta(days=offset)
+            hours=[11,12,18,19,20,21] if d.weekday()<5 else list(range(11,22))
+            slots=[]
+            for hour in hours:
+                dt=datetime(d.year,d.month,d.day,hour,0,tzinfo=vn_tz)
+                if dt>now:
+                    slots.append({"iso":dt.isoformat(),"time":f"{hour:02d}:00","label":f"{hour:02d}:00 – {hour+1:02d}:00"})
+            out.append({"date":d.isoformat(),"label":label,"weekday":f"{weekdays[d.weekday()]} · {d.strftime('%d/%m')}","is_weekend":d.weekday()>=5,"slots":slots})
+        return out
+
+    def _landing_parse_slots(values):
+        vn_tz=timezone(timedelta(hours=7)); now=datetime.now(vn_tz); max_day=now.date()+timedelta(days=2)
+        out=[]
+        for raw in values or []:
+            try:
+                dt=datetime.fromisoformat(str(raw).replace('Z','+00:00'))
+                if dt.tzinfo is None: dt=dt.replace(tzinfo=vn_tz)
+                dt=dt.astimezone(vn_tz)
+                if dt>now and dt.date()<=max_day:
+                    out.append(dt.isoformat())
+            except Exception: pass
+        return sorted(set(out))
+
+    def _landing_group_slots(values, mine_set):
+        days=_landing_availability_days(); grouped={d['date']:[] for d in days}; mine_set=set(mine_set or [])
+        for iso in values or []:
+            try:
+                dt=datetime.fromisoformat(str(iso)); day=dt.date().isoformat()
+                if day in grouped:
+                    grouped[day].append({"iso":iso,"label":dt.strftime('%H:%M'),"is_overlap":iso in mine_set})
+            except Exception: pass
+        return [{**d,"opponent_slots":sorted(grouped[d['date']],key=lambda x:x['iso'])} for d in days]
+
+    def _landing_hub_payload(tournament_id, user, member):
+        uid=str((user or {}).get('id') or '')
+        test_state=_landing_setting(tournament_id,'c1_test_accounts_v1',{}) or {}
+        test_ids=[str(x) for x in (test_state.get('user_ids') or [])][:2]
+        is_test=uid in set(test_ids)
+        if not member and not is_test:
+            return None
+        days=_landing_availability_days()
+        if is_test:
+            av_state=_landing_setting(tournament_id,f'c1_test_availability_{uid}',{}) or {}
+            mine=_landing_parse_slots(av_state.get('slots') or [])
+        else:
+            av_rows,_=_safe_rows(db.table('tournament_availability_slots').select('slot_at').eq('tournament_id',tournament_id).eq('user_id',uid),'tournament_landing_mine_availability')
+            mine=_landing_parse_slots([r.get('slot_at') for r in av_rows])
+        mine_set=set(mine)
+
+        match_rows,_=_safe_rows(db.table('tournament_matches').select('*').eq('tournament_id',tournament_id).or_(f'home_user_id.eq.{uid},away_user_id.eq.{uid}').order('created_at'),'tournament_landing_my_matches') if member else ([],None)
+        ids={uid}
+        for m in match_rows:
+            if m.get('home_user_id'): ids.add(str(m.get('home_user_id')))
+            if m.get('away_user_id'): ids.add(str(m.get('away_user_id')))
+        if is_test: ids.update(test_ids)
+        user_rows,_=_safe_rows(db.table('users').select('id,username,display_name').in_('id',list(ids)),'tournament_landing_users') if ids else ([],None)
+        names={str(x.get('id')):(x.get('display_name') or x.get('username') or 'HLV') for x in user_rows}
+        reg_rows,_=_safe_rows(db.table('tournament_registrations').select('user_id,zalo_name').eq('tournament_id',tournament_id).in_('user_id',list(ids)),'tournament_landing_zalo') if ids else ([],None)
+        zalos={str(x.get('user_id')):(x.get('zalo_name') or '') for x in reg_rows}
+
+        decorated=[]
+        for m in match_rows:
+            row=dict(m); h=str(row.get('home_user_id') or ''); a=str(row.get('away_user_id') or '')
+            row['home_name']=names.get(h,'HLV'); row['away_name']=names.get(a,'HLV'); row['home_zalo_name']=zalos.get(h,''); row['away_zalo_name']=zalos.get(a,'')
+            oid=a if h==uid else h
+            opp_rows,_=_safe_rows(db.table('tournament_availability_slots').select('slot_at').eq('tournament_id',tournament_id).eq('user_id',oid),'tournament_landing_opp_availability')
+            opp=_landing_parse_slots([r.get('slot_at') for r in opp_rows])
+            row['opponent_availability_days']=_landing_group_slots(opp,mine_set)
+            decorated.append(row)
+
+        test_opponent=None; test_opp_days=[]
+        if is_test:
+            oid=next((x for x in test_ids if x!=uid),'')
+            test_opponent={"id":oid,"display_name":names.get(oid,'HLV')} if oid else None
+            if oid:
+                state=_landing_setting(tournament_id,f'c1_test_availability_{oid}',{}) or {}
+                opp=_landing_parse_slots(state.get('slots') or [])
+                test_opp_days=_landing_group_slots(opp,mine_set)
+
+        s1_reveals=_landing_setting(tournament_id,'stage1_player_reveals',{}) or {}
+        league_draw=_landing_setting(tournament_id,'league_draw_v2',{}) or {}
+        league_reveals=_landing_setting(tournament_id,'league_player_reveals',{}) or {}
+        league_mine=(league_draw.get('revealed') or {}).get(uid,[]) if isinstance(league_draw,dict) else []
+        return {
+            'member': member or {'user_id':uid}, 'is_test':is_test, 'days':days, 'mine_set':mine_set,
+            'matches':decorated, 'names':names, 'zalos':zalos,
+            'stage1_opened':bool(s1_reveals.get(uid)), 'league_mine':league_mine,
+            'league_opened':bool(league_reveals.get(uid)), 'test_opponent':test_opponent,
+            'test_opponent_days':test_opp_days,
+        }
+
     @app.get('/tournaments')
     @login_required
     def tournaments():
@@ -300,6 +409,7 @@ def register_routes(context):
                 item["can_admin_manage"] = can_admin_manage_tournament
                 item["my_registration"] = _registration_for_user(item.get("id"), user_id)
                 item["my_member"] = _member_for_user(item.get("id"), user_id)
+                item["landing_hub"] = _landing_hub_payload(item.get("id"), user, item.get("my_member"))
                 item["needs_availability_gate"] = False
                 if item.get("my_member") and not can_admin_manage_tournament:
                     av_rows, _ = _safe_rows(

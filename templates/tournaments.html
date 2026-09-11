@@ -42,6 +42,9 @@
 .tournament-admin-pen-row input{width:54px}
 @media(max-width:900px){.tournament-admin-detail-grid{grid-template-columns:1fr}.tournament-admin-match{grid-template-columns:1fr}.tournament-admin-score{min-width:0}}
 @media(max-width:700px){.tournament-admin-score{grid-template-columns:1fr 48px auto 48px 1fr}.tournament-admin-score .btn{grid-column:1/-1}.tournament-admin-score-name{font-size:10px}}
+
+/* V1.5.52 - Trung tâm lịch cá nhân nằm trực tiếp cuối /tournaments */
+.tournament-personal-hub{margin-top:18px;display:grid;gap:14px;scroll-margin-top:16px}.td-section{border:1px solid rgba(255,255,255,.1);border-radius:16px;background:#071522;padding:16px}.td-section h2{margin:0 0 12px;color:#f1ca68;font-size:18px}.td-opponents{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.td-opponent{padding:12px;border-radius:10px;background:#0a1d2c;border:1px solid rgba(255,255,255,.1);text-align:center}.td-opponent b{display:block;color:#f1ca68}.td-contact-line{margin-top:3px;color:#8799a7;font-size:11px}.td-empty{padding:16px;border:1px dashed rgba(255,255,255,.12);border-radius:10px;color:#91a3b1;text-align:center}.td-reveal{padding:18px;text-align:center;border:1px dashed rgba(241,202,104,.35);border-radius:12px;background:#091a29}.td-av-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.td-av-day{background:#091a29;border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:11px}.td-av-day-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:9px}.td-av-day-head strong{color:#f1ca68}.td-av-day-head span{color:#91a3b1;font-size:12px}.td-av-all{display:inline-flex;align-items:center;gap:6px;color:#dce7ef;font-size:12px;cursor:pointer;white-space:nowrap}.td-av-all input{width:15px;height:15px;accent-color:#1677ff}.td-av-slots{display:flex;flex-wrap:wrap;gap:7px}.td-av-slot input{display:none}.td-av-slot span{display:inline-block;padding:8px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.13);background:#06131f;color:#dce7ef;font-size:12px;cursor:pointer}.td-av-slot input:checked+span{background:#1677ff;border-color:#4d9bff;color:#fff;font-weight:800}.td-av-flex{margin-top:10px;padding-top:10px;border-top:1px dashed rgba(241,202,104,.25)}.td-av-flex-title{font-size:12px;font-weight:900;color:#f1ca68;margin-bottom:7px}.td-av-flex-fields{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:end}.td-av-flex-fields label{font-size:10px;color:#91a3b1}.td-av-flex-fields input{display:block;width:100%;margin-top:3px;background:#06131f;color:#e6edf3;border:1px solid rgba(255,255,255,.13);border-radius:7px;padding:7px;min-height:34px}.td-av-weekend-note{margin-top:10px;padding:8px;border-radius:8px;background:rgba(241,202,104,.08);color:#d9c98e;font-size:11px}.td-av-save{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}.td-av-save small{color:#91a3b1}.td-schedule-list{display:grid;gap:9px}.td-schedule-card{border:1px solid rgba(255,255,255,.09);background:#091a29;border-radius:12px;padding:11px 12px}.td-schedule-top{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}.td-player{text-align:left;font-size:13px}.td-player.away{text-align:right}.td-player small{display:block;color:#92a4b3;margin-top:2px;font-weight:400;font-size:11px}.td-vs{font-weight:900;color:#f1ca68;font-size:12px}.td-schedule-status{margin-top:8px;padding:8px 10px;border-radius:8px;background:#0d2436;color:#cbd7e0;font-size:12px}.td-schedule-status strong{color:#f1ca68}.td-opponent-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}.td-opponent-day{min-width:0;padding:11px;border-radius:11px;background:#071724;border:1px solid rgba(255,255,255,.10)}.td-opponent-day-head{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;margin-bottom:9px}.td-opponent-day-head strong{color:#f1ca68;font-size:14px}.td-opponent-day-head span{color:#b9c6d0;font-size:11px}.td-opponent-day-slots{display:flex;gap:7px;flex-wrap:wrap}.td-opponent-slot{display:inline-flex;padding:7px 10px;border-radius:8px;background:#0d2436;border:1px solid rgba(255,255,255,.11);color:#dfe9f0;font-size:11px;font-weight:700}.td-opponent-slot.is-overlap{background:rgba(31,168,84,.24);border-color:rgba(65,220,120,.72);color:#8ff0ad;font-weight:900}.td-opponent-empty{color:#6f8291;font-size:11px;padding:6px 0}@media(max-width:900px){.td-av-days,.td-opponent-days{grid-template-columns:1fr}.td-opponents{grid-template-columns:1fr}}
 </style>
 {% endblock %}
 
@@ -110,7 +113,7 @@
               <button class="btn" type="submit">🎮 Phòng đấu C1</button>
             </form>
             {% if tournament.my_member %}
-              <a class="btn" href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#schedule">📅 Lịch của tôi</a>
+              <a class="btn" href="{{ url_for('tournaments') }}#schedule-{{ tournament.id }}">📅 Lịch của tôi</a>
               <details class="tournament-profile-edit"><summary class="btn">✎ Thông tin giải</summary><form method="post" action="{{ url_for('tournament_profile_update', tournament_id=tournament.id) }}" style="margin-top:8px;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;display:grid;gap:8px;min-width:280px"><strong>Sửa thông tin của tôi</strong><input class="tournament-zalo-input" name="zalo_name" maxlength="80" placeholder="Tên Zalo" value="{{ tournament.my_registration.zalo_name if tournament.my_registration else '' }}" required><div class="tournament-choice-grid"><label class="tournament-choice"><input type="radio" name="host_choice" value="yes" {% if tournament.my_registration and tournament.my_registration.has_host %}checked{% endif %} required> Có Host</label><label class="tournament-choice"><input type="radio" name="host_choice" value="no" {% if not tournament.my_registration or not tournament.my_registration.has_host %}checked{% endif %} required> Không Host</label></div><div class="tournament-choice-grid">{% for region in ['Bắc','Trung','Nam'] %}<label class="tournament-choice"><input type="radio" name="host_region" value="{{ region }}" {% if tournament.my_registration and tournament.my_registration.host_region==region %}checked{% endif %} required> {{ region }}</label>{% endfor %}</div><button class="btn gold" type="submit">Lưu thông tin</button></form></details>
             {% elif tournament.my_registration and tournament.my_registration.status == 'pending' %}
               <div class="tournament-control"><strong>Đang chờ Admin duyệt</strong></div>
@@ -119,7 +122,7 @@
             {% elif tournament.registration_open %}
               <a class="btn gold" href="{{ url_for('tournaments', register=tournament.id) }}#register-{{ tournament.id }}">🏆 Đăng ký</a>
             {% else %}
-              <a class="btn" href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#schedule">📅 Lịch của tôi</a>
+              <a class="btn" href="{{ url_for('tournaments') }}#schedule-{{ tournament.id }}">📅 Lịch của tôi</a>
             {% endif %}
           </div>
           <div class="tournament-public-ranking" id="ranking">
@@ -366,6 +369,54 @@
       {% endfor %}
     </div>
     {% endif %}
+
+    {% for tournament in tournaments %}
+    {% set hub=tournament.landing_hub|default(none) %}
+    {% if tournament.name == 'CHAMPION LEAGUE ARENA' and hub %}
+    <div class="tournament-personal-hub" id="personal-hub-{{ tournament.id }}">
+      <section class="td-section" id="opponents-{{ tournament.id }}">
+        <h2>👥 Đối thủ của tôi</h2>
+        {% set myid=hub.member.user_id|string %}
+        {% if hub.is_test %}
+          {% if hub.test_opponent %}<div class="td-opponents"><div class="td-opponent"><small>ĐỐI THỦ</small><b>{{ hub.test_opponent.display_name }}</b></div></div>{% else %}<div class="td-empty">Chưa có đối thủ.</div>{% endif %}
+        {% elif hub.league_mine %}
+          {% if not hub.league_opened %}<div class="td-reveal"><h3>🎁 Đối thủ của bạn đã sẵn sàng</h3><form method="post" action="{{ url_for('tournament_league_reveal',tournament_id=tournament.id) }}"><input type="hidden" name="return_to" value="tournaments"><button class="btn gold" type="submit">MỞ ĐỐI THỦ CỦA TÔI</button></form></div>
+          {% else %}<div class="td-opponents">{% for o in hub.league_mine %}<div class="td-opponent"><small>ĐỐI THỦ {{ loop.index }}</small><b>{{ o.name }}</b></div>{% endfor %}</div>{% endif %}
+        {% elif not hub.stage1_opened %}
+          <div class="td-reveal"><h3>🎁 Đối thủ của bạn đã sẵn sàng</h3><form method="post" action="{{ url_for('tournament_stage1_reveal',tournament_id=tournament.id) }}"><input type="hidden" name="return_to" value="tournaments"><button class="btn gold" type="submit">MỞ ĐỐI THỦ CỦA TÔI</button></form></div>
+        {% else %}
+          <div class="td-opponents">{% set seen=[] %}{% for m in hub.matches if m.stage_code=='stage1' %}{% set opp=m.away_name if m.home_user_id|string==myid else m.home_name %}{% set oz=m.away_zalo_name if m.home_user_id|string==myid else m.home_zalo_name %}{% if opp not in seen %}{% if seen.append(opp) %}{% endif %}<div class="td-opponent"><small>ĐỐI THỦ {{ seen|length }}</small><b>{{ opp }}</b>{% if oz %}<div class="td-contact-line">💬 Zalo: <strong>{{ oz }}</strong></div>{% endif %}</div>{% endif %}{% else %}<div class="td-empty">Chưa có đối thủ GĐ1.</div>{% endfor %}</div>
+        {% endif %}
+      </section>
+
+      <section class="td-section" id="schedule-{{ tournament.id }}">
+        <h2>📅 Lịch thi đấu / Giờ rảnh</h2>
+        {% for day in hub.days if not day.is_weekend %}<form id="landing-flex-{{ tournament.id }}-{{ day.date }}" method="post" action="{{ url_for('tournament_availability_custom_add',tournament_id=tournament.id) }}"><input type="hidden" name="return_to" value="tournaments"></form>{% endfor %}
+        <form method="post" action="{{ url_for('admin_tournament_test_availability_simple_save',tournament_id=tournament.id) if hub.is_test else url_for('tournament_availability_save',tournament_id=tournament.id) }}" class="td-fixed-schedule" data-fixed-schedule>
+          <input type="hidden" name="return_to" value="tournaments">
+          <div class="td-av-days">
+          {% for day in hub.days %}
+            <div class="td-av-day">
+              <div class="td-av-day-head"><div><strong>{{ day.label }}</strong><span>{{ day.weekday }}</span></div><label class="td-av-all"><input type="checkbox" data-select-all-day> Tích toàn bộ</label></div>
+              <div class="td-av-slots">{% for slot in day.slots %}<label class="td-av-slot"><input type="checkbox" name="slots" value="{{ slot.iso }}" {{ 'checked' if slot.iso in hub.mine_set else '' }}><span>{{ slot.label }}</span></label>{% else %}<small>Không còn khung giờ nào trong ngày này.</small>{% endfor %}</div>
+              {% if not day.is_weekend %}<div class="td-av-flex"><div class="td-av-flex-title">🕒 Giờ linh hoạt</div><div class="td-av-flex-fields"><label>Từ (24h)<input type="text" name="start_time" form="landing-flex-{{ tournament.id }}-{{ day.date }}" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="18:30"></label><label>Đến (24h)<input type="text" name="end_time" form="landing-flex-{{ tournament.id }}-{{ day.date }}" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="22:00"></label><input type="hidden" name="day_date" value="{{ day.date }}" form="landing-flex-{{ tournament.id }}-{{ day.date }}"><button class="btn gold" type="submit" form="landing-flex-{{ tournament.id }}-{{ day.date }}">＋ Thêm</button></div></div>{% else %}<div class="td-av-weekend-note">🕒 Thứ 7 / Chủ nhật: giờ thi đấu linh hoạt sẵn, không cần khai báo thêm khoảng giờ riêng.</div>{% endif %}
+            </div>
+          {% endfor %}
+          </div>
+          <div class="td-av-save"><button class="btn green" type="submit">💾 Lưu giờ rảnh của tôi</button><small>Mỗi khung = 1 giờ · Hôm nay / Ngày mai / Ngày kia.</small></div>
+        </form>
+
+        <h3 style="margin-top:20px">Lịch của đối thủ</h3>
+        <p style="color:#91a3b1;font-size:12px">Hai HLV xem giờ rảnh của nhau rồi tự liên hệ qua Zalo để thống nhất giờ đá.</p>
+        {% if hub.is_test %}
+          {% if hub.test_opponent %}<div class="td-schedule-list"><article class="td-schedule-card"><div class="td-schedule-top"><div class="td-player"><strong>Bạn</strong></div><div class="td-vs">VS</div><div class="td-player away"><strong>{{ hub.test_opponent.display_name }}</strong></div></div><div class="td-schedule-status"><strong>Giờ rảnh của {{ hub.test_opponent.display_name }}:</strong> <span style="color:#89dfa5">Giờ trùng với bạn được tô xanh.</span></div><div class="td-opponent-days">{% for day in hub.test_opponent_days %}<section class="td-opponent-day"><div class="td-opponent-day-head"><strong>📅 {{ day.label }}</strong><span>{{ day.weekday }}</span></div><div class="td-opponent-day-slots">{% for x in day.opponent_slots %}<span class="td-opponent-slot{{ ' is-overlap' if x.is_overlap else '' }}">{{ x.label }}</span>{% else %}<span class="td-opponent-empty">Chưa có giờ rảnh.</span>{% endfor %}</div></section>{% endfor %}</div></article></div>{% endif %}
+        {% else %}
+          <div class="td-schedule-list">{% set sc=namespace(count=0) %}{% for m in hub.matches if m.status in ['pending','scheduled'] %}{% set sc.count=sc.count+1 %}{% set opp=m.away_name if m.home_user_id|string==myid else m.home_name %}{% set oz=m.away_zalo_name if m.home_user_id|string==myid else m.home_zalo_name %}<article class="td-schedule-card"><div class="td-schedule-top"><div class="td-player"><strong>Bạn</strong></div><div class="td-vs">VS</div><div class="td-player away"><strong>{{ opp }}</strong>{% if oz %}<small>💬 Zalo: {{ oz }}</small>{% endif %}</div></div><div class="td-schedule-status"><strong>Giờ rảnh của {{ opp }}:</strong> <span style="color:#89dfa5">Giờ trùng với bạn được tô xanh.</span></div><div class="td-opponent-days">{% for day in m.opponent_availability_days %}<section class="td-opponent-day"><div class="td-opponent-day-head"><strong>📅 {{ day.label }}</strong><span>{{ day.weekday }}</span></div><div class="td-opponent-day-slots">{% for x in day.opponent_slots %}<span class="td-opponent-slot{{ ' is-overlap' if x.is_overlap else '' }}">{{ x.label }}</span>{% else %}<span class="td-opponent-empty">Chưa có giờ rảnh.</span>{% endfor %}</div></section>{% endfor %}</div></article>{% endfor %}{% if sc.count==0 %}<div class="td-empty">Bạn chưa có đối thủ cần xem lịch.</div>{% endif %}</div>
+        {% endif %}
+      </section>
+    </div>
+    {% endif %}
+    {% endfor %}
   </div>
   {% endif %}
 </section>
@@ -514,5 +565,16 @@ document.addEventListener('click',function(e){
     });
   });
 })();
+</script>
+
+<script>
+document.querySelectorAll('[data-fixed-schedule]').forEach(function(form){
+  form.querySelectorAll('[data-select-all-day]').forEach(function(all){
+    all.addEventListener('change',function(){
+      var day=all.closest('.td-av-day'); if(!day) return;
+      day.querySelectorAll('.td-av-slot input[type="checkbox"]').forEach(function(cb){cb.checked=all.checked;});
+    });
+  });
+});
 </script>
 {% endblock %}
