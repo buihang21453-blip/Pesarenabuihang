@@ -162,7 +162,7 @@
                   {% for sm in tournament.central_admin_schedule_matches|default([]) %}
                   <div class="tournament-admin-fixed-match">
                     <span>{{ 'GĐ1' if sm.stage_code=='stage1' else ('GĐ2' if sm.stage_code=='league' else (sm.round_code|upper if sm.round_code else 'Knockout')) }} · <strong>{{ sm.home_name }} vs {{ sm.away_name }}</strong></span>
-                    <span>{{ (sm.scheduled_at|string)|replace('T',' ') }}</span>
+                    <span>{{ (sm.scheduled_at|string)[8:10] ~ '/' ~ (sm.scheduled_at|string)[5:7] ~ ' · ' ~ (sm.scheduled_at|string)[11:16] }}</span>
                   </div>
                   {% else %}
                   <div class="small" style="margin-top:8px">Chưa có trận nào được hẹn giờ.</div>
@@ -269,7 +269,7 @@
                             <div class="tournament-admin-match">
                               <div>
                                 <strong>{{ 'GĐ1' if m.stage_code=='stage1' else ('GĐ2' if m.stage_code=='league' else (m.round_code|upper if m.round_code else 'Knockout')) }} · vs {{ m.opponent_name }}</strong>
-                                <div class="small">📅 {{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa đặt lịch' }} · {{ 'Đã hoàn thành' if m.status=='completed' else 'Chờ thi đấu' }}</div>
+                                <div class="small">📅 {{ ((m.scheduled_at|string)[8:10] ~ '/' ~ (m.scheduled_at|string)[5:7] ~ ' · ' ~ (m.scheduled_at|string)[11:16]) if m.scheduled_at else 'Chưa đặt lịch' }} · {{ 'Đã hoàn thành' if m.status=='completed' else 'Chờ thi đấu' }}</div>
                                 {% if m.status=='completed' %}<div class="small"><strong>Tỷ số:</strong> {% if m.is_home_for_player %}{{ m.home_score }} - {{ m.away_score }}{% else %}{{ m.away_score }} - {{ m.home_score }}{% endif %}{% if m.home_pen is not none and m.away_pen is not none %} · Pen {% if m.is_home_for_player %}{{ m.home_pen }} - {{ m.away_pen }}{% else %}{{ m.away_pen }} - {{ m.home_pen }}{% endif %}{% endif %}</div>{% endif %}
                               </div>
                               <form class="tournament-admin-score" method="post" action="{{ url_for('admin_tournament_match_result',match_id=m.id) }}" data-auto-score-form>
