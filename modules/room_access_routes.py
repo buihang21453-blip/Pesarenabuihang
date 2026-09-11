@@ -199,6 +199,48 @@ def register_routes(context):
                         tr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key","c1_test_accounts_v1").limit(1),"room_c1_test_accounts_context",attempts=2)
                         ts = ((tr.data or [{}])[0].get("setting_value") or {})
                         member_ids = [str(x) for x in (ts.get("user_ids") or []) if str(x).strip()][:2]
+
+                        # V1.5.44: cứu các SANDBOX room bị kẹt ở confirmed bởi V1.5.44.
+                        # Rank sau khi xác nhận kết quả sẽ reset ngay chính room về waiting_ready.
+                        # TEST C1 cũng phải như vậy, nhưng lưu kết quả trong meta riêng để không ghi
+                        # tournament_matches/BXH C1 thật/Rank.
+                        if str(room.get("status") or "") == "confirmed":
+                            test_result=dict(tournament_meta.get("test_result") or {})
+                            if str(test_result.get("status") or "") == "confirmed":
+                                current_round=max(1,int(test_result.get("test_round_no") or tournament_meta.get("test_round_no") or 1))
+                                test_result["test_round_no"]=current_round
+                                test_result["result_id"]=test_result.get("result_id") or f"{room.get('id')}:test:{current_round}"
+                                history=list(tournament_meta.get("test_result_history") or [])
+                                result_id=str(test_result.get("result_id") or "")
+                                if not any(str(x.get("result_id") or "")==result_id for x in history):
+                                    history.append(test_result)
+                                tournament_meta["test_result_history"]=history[-100:]
+                                tournament_meta["test_round_no"]=current_round+1
+                                tournament_meta["test_result"]={}
+                                tournament_meta["transition_token"]=now_iso()
+                                sandbox_patch={
+                                    "note":"TOURNAMENT_ROOM|" + json.dumps(tournament_meta,ensure_ascii=False,separators=(",",":")),
+                                    "status":"waiting_ready","guest_ready":False,
+                                    "host_team":None,"guest_team":None,
+                                    "host_team_overall":None,"guest_team_overall":None,
+                                    "host_team_logo_url":None,"guest_team_logo_url":None,
+                                    "host_team_league":None,"guest_team_league":None,
+                                    "host_score":None,"guest_score":None,"match_id":None,
+                                    "submitted_by_id":None,"invite_id":None,"state_expires_at":None,
+                                    "match_mode":"tournament","team_tier":"TOURNAMENT","updated_at":now_iso(),
+                                }
+                                recovered=execute_query(
+                                    db.table("match_rooms").update(sandbox_patch).eq("id",room.get("id")).eq("status","confirmed"),
+                                    "room_c1_test_recover_confirmed_like_rank",attempts=2,
+                                )
+                                if recovered is not None and (recovered.data or []):
+                                    room.update(sandbox_patch)
+                                    cache_delete("_rz_rooms_all")
+                                    ttl_cache_delete("rooms_raw")
+                                    app.logger.warning(
+                                        "C1 TEST recovered confirmed room=%s -> test_round=%s waiting_ready",
+                                        room.get("id"), current_round+1,
+                                    )
                     tournament_viewer_is_member = str(viewer.get("id") or "") in official_member_ids
                     if member_ids:
                         ur = execute_query(db.table("users").select("id,username,display_name,is_online,last_seen_at").in_("id",member_ids),"room_tournament_member_users_context",attempts=2)
@@ -283,7 +325,7 @@ def register_routes(context):
                             and missing_scheduled_rows == 0
                         )
 
-                        # V1.5.43: tự phục hồi các phòng C1 bị kẹt ở `confirmed` bởi các bản cũ.
+                        # V1.5.44: tự phục hồi các phòng C1 bị kẹt ở `confirmed` bởi các bản cũ.
                         # Rank không có màn "Đá Tiếp": sau khi xác nhận Trận N, chính room cũ
                         # phải trở lại waiting_ready cho Trận N+1. Chỉ thực hiện recovery khi
                         # backend đã nhìn thấy một row trận kế tiếp thật sự; không tạo lịch trong GET.

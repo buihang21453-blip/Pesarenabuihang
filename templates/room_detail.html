@@ -359,7 +359,7 @@
                             <div class="room-center-state-pill">✅ Cặp đấu đã hoàn tất</div>
                             <a class="btn gray room-center-action-btn" href="{{ url_for('tournament_detail', tournament_id=tournament_meta.tournament_id) }}">Về giải đấu</a>
                             {% else %}
-                            {# V1.5.43: C1 không còn màn hậu trận "Đá Tiếp". Nếu còn trận kế tiếp,
+                            {# V1.5.44: C1 không còn màn hậu trận "Đá Tiếp". Nếu còn trận kế tiếp,
                                backend phải tự đưa chính room về waiting_ready giống Rank. #}
                             <div class="room-center-state-pill">Đang chuyển sang trận tiếp theo...</div>
                             {% endif %}

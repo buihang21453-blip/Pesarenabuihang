@@ -1,0 +1,7 @@
+PES ARENA V1.5.44 - C1 TEST SANDBOX COPY RANK FLOW
+
+- Fix TEST C1/SANDBOX bị kẹt ở status=confirmed và hiển thị "Đang chuyển sang trận tiếp theo..." cho cả hai bên.
+- Copy đúng nhịp Rank cho xác nhận kết quả TEST: lưu kết quả -> reset chính room về waiting_ready -> guest_ready=False -> khách bấm Sẵn Sàng -> chủ phòng Quay đội.
+- Lưu lịch sử kết quả TEST trong tournament_meta.test_result_history để BXH TEST vẫn cộng đủ các trận dù room được tái sử dụng.
+- Tự phục hồi phòng TEST cũ đang kẹt confirmed khi tải phòng; không cần tạo lại phòng.
+- Không ghi vào tournament_matches, BXH C1 thật hoặc Rank.

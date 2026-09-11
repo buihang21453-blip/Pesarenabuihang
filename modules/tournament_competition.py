@@ -2067,24 +2067,40 @@ def register_routes(context):
             guest_uid=str(room.get("guest_user_id") or "")
             if host_uid not in ids or guest_uid not in ids:
                 continue
-            result=meta.get("test_result") or {}
-            if str(result.get("status") or "")!="confirmed":
-                continue
-            try:
-                hs=int(result.get("host_score") if result.get("host_score") is not None else room.get("host_score") or 0)
-                gs=int(result.get("guest_score") if result.get("guest_score") is not None else room.get("guest_score") or 0)
-            except Exception:
-                continue
-            matches.append({
-                "room_id":str(room.get("id") or ""),
-                "host_user_id":host_uid,
-                "guest_user_id":guest_uid,
-                "host_name":room.get("host_name") or (get_user(host_uid) or {}).get("display_name") or "Test A",
-                "guest_name":room.get("guest_name") or (get_user(guest_uid) or {}).get("display_name") or "Test B",
-                "host_score":hs,
-                "guest_score":gs,
-                "confirmed_at":result.get("confirmed_at") or room.get("updated_at") or room.get("created_at"),
-            })
+
+            # V1.5.44: SANDBOX copy đúng Rank: sau khi xác nhận, room được reset ngay
+            # sang waiting_ready nên kết quả cũ phải nằm trong lịch sử meta riêng.
+            # Vẫn đọc test_result confirmed để tương thích dữ liệu V1.5.44 trở về trước.
+            results=list(meta.get("test_result_history") or [])
+            current_result=meta.get("test_result") or {}
+            if str(current_result.get("status") or "")=="confirmed":
+                results.append(current_result)
+
+            seen=set()
+            for result in results:
+                if str(result.get("status") or "confirmed")!="confirmed":
+                    continue
+                result_key=str(result.get("result_id") or result.get("confirmed_at") or "")
+                if result_key and result_key in seen:
+                    continue
+                if result_key:
+                    seen.add(result_key)
+                try:
+                    hs=int(result.get("host_score") if result.get("host_score") is not None else 0)
+                    gs=int(result.get("guest_score") if result.get("guest_score") is not None else 0)
+                except Exception:
+                    continue
+                matches.append({
+                    "room_id":str(room.get("id") or ""),
+                    "host_user_id":host_uid,
+                    "guest_user_id":guest_uid,
+                    "host_name":room.get("host_name") or (get_user(host_uid) or {}).get("display_name") or "Test A",
+                    "guest_name":room.get("guest_name") or (get_user(guest_uid) or {}).get("display_name") or "Test B",
+                    "host_score":hs,
+                    "guest_score":gs,
+                    "test_round_no":int(result.get("test_round_no") or 1),
+                    "confirmed_at":result.get("confirmed_at") or room.get("updated_at") or room.get("created_at"),
+                })
         def _parse(value):
             if not value:
                 return datetime.min.replace(tzinfo=timezone.utc)
@@ -2525,6 +2541,11 @@ def register_routes(context):
                 "away_name":opponent.get("display_name") or opponent.get("username") or "HLV Test","admin_test_room":True,
                 "test_sandbox_room":bool(test_room),
             })
+            if test_room:
+                # V1.5.44: SANDBOX có số thứ tự trận riêng, không đụng tournament_matches.
+                meta.setdefault("test_round_no",1)
+                meta.setdefault("test_result_history",[])
+                meta["test_result"]={}
         meta["invited_user_id"]=opponent_uid
         # V1.5.12: C1 phải tạo match_invites để popup realtime toàn app nhìn thấy.
         # Trước đây chỉ tạo user_notification nên khách không nhận popup và chưa vào
@@ -2826,7 +2847,7 @@ def register_routes(context):
             db.table("match_rooms").update({
                 "note":_room_note(meta),
                 "status":"waiting_ready",
-                # V1.5.43: Copy đúng cơ chế Rank. Sang trận mới, khách phải bấm
+                # V1.5.44: Copy đúng cơ chế Rank. Sang trận mới, khách phải bấm
                 # Sẵn Sàng lại; chỉ khi guest_ready=True thì Host mới được Quay đội.
                 "guest_ready":False,
                 "host_team":None,
@@ -3051,7 +3072,7 @@ def register_routes(context):
         execute_query(db.table("tournament_matches").update({"home_score":hs,"away_score":aw,"winner_user_id":winner,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_confirm",attempts=2)
         prop.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
 
-        # V1.5.43: C1 copy đúng nhịp của Rank. Ngay khi kết quả Trận N được xác nhận,
+        # V1.5.44: C1 copy đúng nhịp của Rank. Ngay khi kết quả Trận N được xác nhận,
         # nếu đúng cặp còn Trận N+1 thì chuyển CHÍNH room hiện tại sang trận kế tiếp và
         # reset về waiting_ready. Không giữ room ở confirmed để người chơi phải bấm Đá Tiếp.
         pair_state=_pair_flow_state(tournament_id, match)
@@ -3111,7 +3132,7 @@ def register_routes(context):
             room_patch={
                 "note":_room_note(meta),
                 "status":"waiting_ready",
-                # V1.5.43: Giống Rank: trận mới bắt đầu ở Chờ Sẵn Sàng.
+                # V1.5.44: Giống Rank: trận mới bắt đầu ở Chờ Sẵn Sàng.
                 # Khách phải bấm Sẵn Sàng; Host chỉ được Quay đội sau đó.
                 "guest_ready":False,
                 "host_team":None,
@@ -3145,7 +3166,7 @@ def register_routes(context):
                     latest and str(latest.get("status") or "")=="waiting_ready"
                     and str((latest_meta or {}).get("tournament_match_id") or "")==str(next_match.get("id") or "")
                 ):
-                    # V1.5.43: không quay về state `confirmed`/Đá Tiếp. Retry trực tiếp
+                    # V1.5.44: không quay về state `confirmed`/Đá Tiếp. Retry trực tiếp
                     # trạng thái Rank-style theo room id; đây là idempotent vì room_patch
                     # luôn trỏ đúng next_match và reset toàn bộ dữ liệu trận cũ.
                     retry=execute_query(
@@ -3226,7 +3247,12 @@ def register_routes(context):
             hs=max(0,min(99,int(request.form.get("host_score") or 0))); gs=max(0,min(99,int(request.form.get("guest_score") or 0)))
         except Exception:
             flash("Tỷ số không hợp lệ.","error"); return redirect(url_for("room_detail",room_id=room_id))
-        meta["test_result"]={"status":"waiting_confirm","host_score":hs,"guest_score":gs,"submitted_by":uid,"submitted_at":now_iso()}
+        test_round_no=max(1,int(meta.get("test_round_no") or 1))
+        meta["test_result"]={
+            "status":"waiting_confirm","host_score":hs,"guest_score":gs,
+            "submitted_by":uid,"submitted_at":now_iso(),"test_round_no":test_round_no,
+            "result_id":f"{room_id}:test:{test_round_no}",
+        }
         execute_query(db.table("match_rooms").update({"host_score":hs,"guest_score":gs,"status":"waiting_result_confirm","note":_room_note(meta),"updated_at":now_iso()}).eq("id",room_id),"ops_c1_test_submit_result",attempts=2)
         flash("Đã gửi kết quả TEST. Chờ tài khoản Test còn lại xác nhận.","success")
         return redirect(url_for("room_detail",room_id=room_id))
@@ -3241,9 +3267,46 @@ def register_routes(context):
         result=meta.get("test_result") or {}
         if result.get("status")!="waiting_confirm":
             flash("Không có kết quả Test đang chờ xác nhận.","warning"); return redirect(url_for("room_detail",room_id=room_id))
-        result.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); meta["test_result"]=result
-        execute_query(db.table("match_rooms").update({"status":"confirmed","note":_room_note(meta),"updated_at":now_iso()}).eq("id",room_id),"ops_c1_test_confirm_result",attempts=2)
-        flash("Đã xác nhận kết quả TEST. BXH TEST C1 đã cập nhật, nhưng không ảnh hưởng BXH C1 thật hoặc Rank.","success")
+        # V1.5.44: COPY NGUYÊN NHỊP RANK cho SANDBOX.
+        # Xác nhận Trận N -> lưu kết quả vào lịch sử TEST -> reset chính room về
+        # waiting_ready, guest_ready=False -> khách bấm Sẵn Sàng -> chủ Quay đội.
+        confirmed_at=now_iso()
+        test_round_no=max(1,int(result.get("test_round_no") or meta.get("test_round_no") or 1))
+        result.update({
+            "status":"confirmed","confirmed_by":uid,"confirmed_at":confirmed_at,
+            "test_round_no":test_round_no,
+            "result_id":result.get("result_id") or f"{room_id}:test:{test_round_no}",
+        })
+        history=list(meta.get("test_result_history") or [])
+        result_id=str(result.get("result_id") or "")
+        if not any(str(x.get("result_id") or "")==result_id for x in history):
+            history.append(dict(result))
+        meta["test_result_history"]=history[-100:]
+        meta["test_round_no"]=test_round_no+1
+        meta["test_result"]={}
+        meta["transition_token"]=confirmed_at
+
+        room_patch={
+            "status":"waiting_ready","guest_ready":False,
+            "host_team":None,"guest_team":None,
+            "host_team_overall":None,"guest_team_overall":None,
+            "host_team_logo_url":None,"guest_team_logo_url":None,
+            "host_team_league":None,"guest_team_league":None,
+            "host_score":None,"guest_score":None,"match_id":None,
+            "submitted_by_id":None,"confirmed_by_id":uid,
+            "invite_id":None,"state_expires_at":None,
+            "match_mode":"tournament","team_tier":"TOURNAMENT",
+            "note":_room_note(meta),"updated_at":confirmed_at,
+        }
+        updated=execute_query(
+            db.table("match_rooms").update(room_patch).eq("id",room_id).eq("status","waiting_result_confirm"),
+            "ops_c1_test_confirm_result_reset_like_rank",attempts=2,
+        )
+        if not (updated.data or []):
+            flash("Kết quả TEST đã được xác nhận nhưng phòng vừa thay đổi trạng thái. Hãy tải lại phòng.","warning")
+            return redirect(url_for("room_detail",room_id=room_id))
+        cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
+        flash(f"Đã xác nhận Trận TEST {test_round_no}. Phòng đã chuyển sang Trận TEST {test_round_no+1}: khách bấm Sẵn Sàng, chủ phòng chờ để Quay đội.","success")
         return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/test-dispute-result')
