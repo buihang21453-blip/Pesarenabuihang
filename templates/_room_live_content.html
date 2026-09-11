@@ -318,9 +318,16 @@
                             <div class="room-center-state-pill">✅ Cặp đấu đã hoàn tất</div>
                             <a class="btn gray room-center-action-btn" href="{{ url_for('tournament_detail', tournament_id=tournament_meta.tournament_id) }}">Về giải đấu</a>
                             {% else %}
-                            {# V1.5.35: confirmed không còn đóng vai trò màn Ready cho C1.
-                               Ready chỉ hiển thị ở waiting_ready giống Rank; tránh Host/Guest rơi vào 2 layout khác nhau. #}
-                            <a class="btn gray room-center-action-btn" href="{{ url_for('room_detail', room_id=room.id) }}">Tải lại phòng</a>
+                            {# V1.5.37: C1 dùng đúng UX Đá Tiếp như Rank.
+                               Bấm Đá Tiếp mới reset phòng sang waiting_ready của trận kế tiếp. #}
+                            {% if tournament_has_next_match %}
+                            <form method="post" action="{{ url_for('room_rematch', room_id=room.id) }}">
+                                <button class="btn gold room-center-action-btn" type="submit">Đá Tiếp</button>
+                            </form>
+                            {% else %}
+                            <div class="room-center-state-pill">✅ Cặp đấu đã hoàn tất</div>
+                            <a class="btn gray room-center-action-btn" href="{{ url_for('tournament_detail', tournament_id=tournament_meta.tournament_id) }}">Về giải đấu</a>
+                            {% endif %}
                             {% endif %}
                         </div>
                         {% else %}

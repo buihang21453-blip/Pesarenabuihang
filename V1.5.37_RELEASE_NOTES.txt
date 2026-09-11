@@ -1,0 +1,10 @@
+PES ARENA V1.5.37 - C1 Continue Flow Like Rank
+
+- Fix C1 after match 1: no more "Tải lại phòng" dead end.
+- After result confirmation, room goes to confirmed exactly like Rank.
+- If the same tournament pair still has another scheduled/pending match, both participants see "Đá Tiếp".
+- Pressing "Đá Tiếp" reuses the existing room_rematch tournament branch to attach the next tournament_match_id and reset the room to waiting_ready.
+- Guest pressing "Đá Tiếp" is treated as ready immediately; Host can roll teams. If Host presses first, Guest sees Sẵn Sàng normally.
+- If there is no remaining match for that pair/stage, show "Cặp đấu đã hoàn tất".
+- No SQL/database schema changes.
+- Based on V1.5.36 modular refactor; no rollback of modularization.
