@@ -1011,7 +1011,31 @@
           <form method="post" action="{{ url_for('admin_tournament_stage1_extend',tournament_id=ot.id) }}" onsubmit="return confirm('Gia hạn GĐ1 thêm 2 ngày?');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gray" type="submit">⏳ Gia hạn +2 ngày</button></form>
         </div>
         <p class="small" style="margin-top:9px">Thời gian còn lại: <strong>{{ tm.get('stage1_end',{}).get('days',0) }} ngày {{ tm.get('stage1_end',{}).get('hours',0) }} giờ</strong></p>
-        <details style="margin-top:8px"><summary><strong>📊 Xem tiến độ GĐ1 & Top hoàn thành sớm</strong></summary><div style="padding-top:10px"><div class="admin-table-wrap tournament-compact"><table><thead><tr><th>HLV</th><th>Trận</th><th>Đối thủ</th><th>Điểm</th><th>Tiến độ</th></tr></thead><tbody>{% for r in ops.get('progress',[]) %}<tr><td>{{ r.display_name }}</td><td>{{ r.played }}/{{ r.target }}</td><td>{{ r.opponent_count }}</td><td>{{ r.points }}</td><td>{{ r.percent }}%</td></tr>{% endfor %}</tbody></table></div><div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table><thead><tr><th>Top</th><th>HLV</th><th>Vé Random</th><th>Hoàn tất</th><th>Trong 3 ngày</th></tr></thead><tbody>{% for r in ev.get('completion_ranking',[])[:16] %}<tr><td>{{ r.finish_rank or '—' }}</td><td>{{ r.display_name }}</td><td>{{ r.tickets }}</td><td>{{ r.completed_at or 'Chưa' }}</td><td>{{ '✓' if r.early_eligible else '—' }}</td></tr>{% endfor %}</tbody></table></div></div></details>
+        <details style="margin-top:8px"><summary><strong>📊 Xem tiến độ GĐ1 & Top hoàn thành sớm</strong></summary><div style="padding-top:10px"><div class="admin-table-wrap tournament-compact"><table><thead><tr><th>HLV</th><th>Trận</th><th>Đối thủ</th><th>Điểm</th><th>Tiến độ</th></tr></thead><tbody>{% for r in ops.get('progress',[]) %}<tr><td>{{ r.display_name }}</td><td>{{ r.played }}/{{ r.target }}</td><td>{{ r.opponent_count }}</td><td>{{ r.points }}</td><td>{{ r.percent }}%</td></tr>{% endfor %}</tbody></table></div><div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table><thead><tr><th>Top</th><th>HLV</th><th>Vé Random</th><th>Hoàn tất GĐ1 lúc</th><th>Trận cán mốc</th><th>Trong 3 ngày</th></tr></thead><tbody>{% for r in ev.get('completion_ranking',[])[:16] %}<tr><td>{% if r.finish_rank %}<strong>#{{ r.finish_rank }}</strong>{% else %}—{% endif %}</td><td>{{ r.display_name }}</td><td>{% if r.tickets %}🎟 {{ r.tickets }}{% else %}—{% endif %}</td><td>{% if r.completed_at_vn %}<strong>{{ r.completed_at_vn }}</strong>{% else %}Chưa hoàn tất{% endif %}</td><td>{% set cm=r.completion_match %}{% if cm %}{{ cm.opponent_name }} · {{ cm.my_score }}-{{ cm.opponent_score }}<br><small>{{ cm.confirmed_by_name }}</small>{% else %}—{% endif %}</td><td>{{ '✓' if r.early_eligible else '—' }}</td></tr>{% endfor %}</tbody></table></div>
+        <details style="margin-top:10px"><summary><strong>🕒 Xem thời gian xác nhận từng trận của từng HLV</strong></summary><div style="padding-top:10px">
+          {% for r in ev.get('completion_ranking',[])[:16] %}
+          <details style="margin:0 0 8px;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 10px">
+            <summary><strong>{{ r.display_name }}</strong> · {{ r.played }} trận{% if r.completed_at_vn %} · Hoàn tất: {{ r.completed_at_vn }}{% endif %}</summary>
+            <div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table>
+              <thead><tr><th>#</th><th>Đối thủ</th><th>Tỷ số</th><th>Trận</th><th>Xác nhận lúc</th><th>Người xác nhận</th></tr></thead>
+              <tbody>
+              {% for mt in r.match_confirmations %}
+                <tr{% if mt.is_completion_match %} style="background:rgba(241,202,104,.10)"{% endif %}>
+                  <td>{{ mt.sequence_no }}</td>
+                  <td>{{ mt.opponent_name }}{% if mt.is_completion_match %}<br><strong>🏁 TRẬN CÁN MỐC GĐ1</strong>{% endif %}</td>
+                  <td><strong>{{ mt.my_score }} - {{ mt.opponent_score }}</strong></td>
+                  <td>Lượt {{ mt.leg_no }}</td>
+                  <td><strong>{{ mt.confirmed_at_vn or '—' }}</strong></td>
+                  <td>{{ mt.confirmed_by_name }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="6">Chưa có trận GĐ1 nào được xác nhận.</td></tr>
+              {% endfor %}
+              </tbody>
+            </table></div>
+          </details>
+          {% endfor %}
+        </div></details></div></details>
         <details style="margin-top:8px"><summary>⚠️ Trường hợp hết hạn mà còn trận thiếu</summary><div style="padding-top:8px"><form method="post" action="{{ url_for('admin_tournament_stage1_finish',tournament_id=ot.id) }}" onsubmit="return confirm('Các trận còn thiếu sẽ chuyển Chờ BTC xử lý. Tiếp tục?');"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="force" value="1"><button class="btn red" type="submit">Kết thúc & chuyển trận thiếu cho BTC</button></form></div></details>
       </div>
 

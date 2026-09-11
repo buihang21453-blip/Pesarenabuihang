@@ -454,38 +454,148 @@ def register_routes(context):
         sec=max(0,int((target-now).total_seconds()))
         return {"target":target.isoformat(),"remaining":sec,"days":sec//86400,"hours":(sec%86400)//3600,"minutes":(sec%3600)//60,"seconds":sec%60,"expired":sec<=0}
 
+    def _vn_datetime_text(value, with_seconds=True):
+        """Hiển thị timestamp theo giờ Việt Nam cho Admin C1."""
+        dt=_parse_iso(value) if not isinstance(value, datetime) else value
+        if not dt:
+            return ""
+        if dt.tzinfo is None:
+            dt=dt.replace(tzinfo=timezone.utc)
+        vn=dt.astimezone(timezone(timedelta(hours=7)))
+        return vn.strftime("%d/%m/%Y · %H:%M:%S" if with_seconds else "%d/%m/%Y · %H:%M")
+
+    def _stage1_confirmation_audit(tournament_id):
+        """
+        Audit toàn bộ trận GĐ1 đã completed:
+        - completed_at là thời điểm kết quả chính thức được chốt.
+        - proposal.confirmed_at/confirmed_by cho biết ai bấm xác nhận.
+        - Với Admin chốt tranh chấp, proposal có status=admin_confirmed.
+        """
+        members=_all_members(tournament_id)
+        names={str(x.get("user_id") or ""):(x.get("display_name") or "HLV") for x in members}
+        rows=[]
+        for match in _matches(tournament_id,"stage1",["completed"]):
+            mid=str(match.get("id") or "")
+            h=str(match.get("home_user_id") or ""); aw=str(match.get("away_user_id") or "")
+            proposal=_tournament_result_proposal(tournament_id,mid)
+            confirmed_at=proposal.get("confirmed_at") or match.get("completed_at") or match.get("updated_at")
+            confirmed_by=str(proposal.get("confirmed_by") or "")
+            proposal_status=str(proposal.get("status") or "")
+            if confirmed_by=="admin" or proposal_status=="admin_confirmed":
+                confirmer_name="🛡️ Admin"
+            elif confirmed_by:
+                confirmer_name=names.get(confirmed_by,"HLV")
+            else:
+                confirmer_name="Hệ thống/Admin"
+            rows.append({
+                "match_id":mid,
+                "round_code":match.get("round_code") or "",
+                "leg_no":int(match.get("leg_no") or 1),
+                "home_user_id":h,
+                "away_user_id":aw,
+                "home_name":names.get(h,"HLV"),
+                "away_name":names.get(aw,"HLV"),
+                "home_score":match.get("home_score"),
+                "away_score":match.get("away_score"),
+                "completed_at":match.get("completed_at") or match.get("updated_at"),
+                "confirmed_at":confirmed_at,
+                "confirmed_at_dt":_parse_iso(confirmed_at),
+                "confirmed_at_vn":_vn_datetime_text(confirmed_at),
+                "confirmed_by":confirmed_by,
+                "confirmed_by_name":confirmer_name,
+                "proposal_status":proposal_status,
+            })
+        rows.sort(key=lambda x:(x.get("confirmed_at_dt") or datetime.max.replace(tzinfo=timezone.utc), x.get("match_id") or ""))
+        return rows
+
     def _completion_ranking(tournament_id):
         stage=_stage(tournament_id,"stage1") or {}
         target=int(stage.get("match_target") or 6)
         min_opp=int(stage.get("min_opponents") or 3)
         cutoff=_parse_iso((_setting(tournament_id,"competition_timing",{}) or {}).get("stage1_early_end_at"))
         members=_all_members(tournament_id)
-        by={str(m.get("user_id")):{"user_id":str(m.get("user_id")),"display_name":m.get("display_name") or "HLV","done":[],"opponents":set()} for m in members}
-        for m in _matches(tournament_id,"stage1",["completed"]):
-            h,a=str(m.get("home_user_id")),str(m.get("away_user_id"))
-            dt=_parse_iso(m.get("completed_at") or m.get("updated_at"))
-            if h in by:
-                by[h]["done"].append(dt); by[h]["opponents"].add(a)
-            if a in by:
-                by[a]["done"].append(dt); by[a]["opponents"].add(h)
+
+        by={
+            str(mem.get("user_id")):{
+                "user_id":str(mem.get("user_id")),
+                "display_name":mem.get("display_name") or "HLV",
+                "matches":[],
+            }
+            for mem in members
+        }
+
+        # Duyệt đúng theo thời điểm kết quả được chốt để tìm "trận cán mốc".
+        for audit in _stage1_confirmation_audit(tournament_id):
+            for uid,opp in (
+                (str(audit.get("home_user_id") or ""),str(audit.get("away_user_id") or "")),
+                (str(audit.get("away_user_id") or ""),str(audit.get("home_user_id") or "")),
+            ):
+                if uid not in by:
+                    continue
+                item=dict(audit)
+                item["opponent_user_id"]=opp
+                item["opponent_name"]=(
+                    audit.get("away_name") if uid==str(audit.get("home_user_id") or "")
+                    else audit.get("home_name")
+                )
+                # Tỷ số theo góc nhìn HLV này.
+                if uid==str(audit.get("home_user_id") or ""):
+                    item["my_score"]=audit.get("home_score"); item["opponent_score"]=audit.get("away_score")
+                else:
+                    item["my_score"]=audit.get("away_score"); item["opponent_score"]=audit.get("home_score")
+                by[uid]["matches"].append(item)
+
         out=[]
         for row in by.values():
-            valid=[x for x in row.pop("done") if x]
-            row["played"]=len(valid); row["opponent_count"]=len(row.pop("opponents"))
-            row["eligible"]=row["played"]>=target and row["opponent_count"]>=min_opp
-            completed=max(valid) if row["eligible"] and valid else None
-            row["completed_at"]=completed.isoformat() if completed else None
-            row["early_eligible"]=bool(completed and (not cutoff or completed<=cutoff))
+            played=0
+            opponents=set()
+            milestone=None
+            details=[]
+            for item in row["matches"]:
+                played+=1
+                opponents.add(str(item.get("opponent_user_id") or ""))
+                detail=dict(item)
+                detail["sequence_no"]=played
+                detail["is_completion_match"]=False
+                details.append(detail)
+                if milestone is None and played>=target and len(opponents)>=min_opp:
+                    milestone=item.get("confirmed_at_dt")
+                    detail["is_completion_match"]=True
+
+            row["played"]=played
+            row["opponent_count"]=len(opponents)
+            row["eligible"]=bool(milestone)
+            row["completed_at"]=milestone.isoformat() if milestone else None
+            row["completed_at_vn"]=_vn_datetime_text(milestone)
+            row["early_eligible"]=bool(milestone and (not cutoff or milestone<=cutoff))
+            row["match_confirmations"]=details
+            row["completion_match"]=next((x for x in details if x.get("is_completion_match")),None)
             out.append(row)
-        out.sort(key=lambda r: (_parse_iso(r.get("completed_at")) or datetime.max.replace(tzinfo=timezone.utc)))
-        rank=0
+
+        out.sort(key=lambda r:(_parse_iso(r.get("completed_at")) or datetime.max.replace(tzinfo=timezone.utc), (r.get("display_name") or "").lower()))
+
+        # Competition ranking: cùng timestamp => cùng hạng; 1,1,3...
+        previous_dt=None
+        previous_rank=None
+        eligible_seen=0
         for r in out:
-            if r["eligible"] and r["early_eligible"]:
-                rank+=1; r["finish_rank"]=rank
-                r["tickets"]=2 if rank==1 else (1 if rank<=3 else 0)
+            if not (r.get("eligible") and r.get("early_eligible")):
+                r["finish_rank"]=None
+                r["tickets"]=0
+                continue
+            eligible_seen+=1
+            dt=_parse_iso(r.get("completed_at"))
+            if previous_dt is not None and dt==previous_dt:
+                rank=previous_rank
             else:
-                r["finish_rank"]=None; r["tickets"]=0
+                rank=eligible_seen
+            r["finish_rank"]=rank
+            r["tickets"]=2 if rank==1 else (1 if rank in {2,3} else 0)
+            previous_dt=dt
+            previous_rank=rank
+
         return out
+
 
     def _combined_ranking(tournament_id):
         members=_all_members(tournament_id)
@@ -763,6 +873,7 @@ def register_routes(context):
         s1_reveals=_setting(tournament_id,"stage1_player_reveals",{}) or {}
         league_draw=_league_draw_payload(tournament_id)
         return {"timing":_timing_payload(tournament_id),"completion_ranking":cr,"my_completion":mine,
+                "stage1_confirmation_audit":_stage1_confirmation_audit(tournament_id),
                 "club_draft":_club_draft_state(tournament_id),"club_draft_admin_rows":_club_draft_admin_rows(tournament_id),
                 "stage1_reveals":s1_reveals,"league_draw":league_draw}
 

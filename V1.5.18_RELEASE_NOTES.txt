@@ -1,0 +1,16 @@
+PES ARENA V1.5.18 - C1 GĐ1 COMPLETION TIMESTAMP AUDIT
+
+- Admin GĐ1 xem giờ Việt Nam chính xác đến giây của từng trận đã được xác nhận.
+- Hiển thị người xác nhận kết quả (HLV hoặc Admin).
+- Mỗi HLV có lịch sử từng trận: đối thủ, tỷ số, lượt, giờ xác nhận.
+- Đánh dấu rõ "🏁 TRẬN CÁN MỐC GĐ1".
+- Sửa cách tính thời điểm hoàn tất GĐ1:
+  + Không lấy trận completed cuối cùng một cách máy móc.
+  + Lấy timestamp của trận sớm nhất làm HLV vừa đủ match_target + min_opponents.
+- HLV hoàn tất cùng đúng timestamp được đồng hạng.
+- Xếp hạng tie theo competition ranking: 1,1,3...
+- Thưởng hiện tại:
+  + Hạng 1: 2 vé Random CLB.
+  + Hạng 2–3: 1 vé Random CLB.
+  + Nếu 2 HLV đồng hạng 1, cả hai đều nhận 2 vé; vị trí tiếp theo là hạng 3.
+- Không thay đổi BXH điểm số C1, RP/Rank, Host, Room thường hoặc giờ rảnh.
