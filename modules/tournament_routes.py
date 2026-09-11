@@ -406,7 +406,8 @@ def register_routes(context):
             progress_label='🔴 GĐ1 đang trong thời gian gia hạn:'; progress_deadline=timing.get('stage1_extension_end_at')
         elif _future(timing.get('league_end_at')):
             progress_label='League Phase · thời gian còn lại:'; progress_deadline=timing.get('league_end_at')
-        early_deadline=timing.get('stage1_early_end_at') if _future(timing.get('stage1_early_end_at')) else None
+        early_deadline=timing.get('stage1_early_end_at')
+        early_deadline_active=bool(early_deadline and _future(early_deadline))
 
         all_members,_=_safe_rows(db.table('tournament_members').select('user_id').eq('tournament_id',tournament_id).eq('status','active'),'tournament_landing_center_members')
         all_ids=[str(x.get('user_id')) for x in all_members if x.get('user_id')]
@@ -466,7 +467,7 @@ def register_routes(context):
             'stage1_opened':bool(s1_reveals.get(uid)), 'league_mine':league_mine,
             'league_opened':bool(league_reveals.get(uid)), 'test_opponent':test_opponent,
             'test_opponent_days':test_opp_days,
-            'progress_label':progress_label,'progress_deadline':progress_deadline,'early_deadline':early_deadline,
+            'progress_label':progress_label,'progress_deadline':progress_deadline,'early_deadline':early_deadline,'early_deadline_active':early_deadline_active,
             'host_ready':host_ready,'center_rooms':center_rooms,
         }
 

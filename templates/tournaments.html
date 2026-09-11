@@ -51,6 +51,7 @@
 .tournament-progress-overlay>strong{display:block;color:#f2cc6d;font-size:13px;margin-bottom:4px}.tournament-progress-overlay>span{display:block;color:#e5ebf0;font-size:11px;line-height:1.35}.tournament-progress-overlay>span.reward{margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.10);color:#f2cc6d}
 .tournament-progress-mini{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px}.tournament-progress-mini b{display:block;padding:5px 3px;border-radius:7px;background:rgba(5,22,35,.82);color:#fff;text-align:center;font-size:15px;line-height:1}.tournament-progress-mini small{display:block;margin-top:3px;color:#8fa0ad;font-size:8px;font-weight:700}
 @media(max-width:720px){.tournament-progress-overlay{right:10px;top:52px;width:calc(100% - 20px);max-width:360px}.tournament-card-media{height:270px}}
+.tournament-progress-expired{display:block!important;margin-top:5px;color:#aeb9c2!important;font-size:10px!important;font-weight:700}
 </style>
 {% endblock %}
 
@@ -100,7 +101,10 @@
           <div class="tournament-progress-overlay">
             <strong>⏱️ Tiến trình giải đấu</strong>
             {% if hub.progress_deadline %}<span>{{ hub.progress_label }}</span><div class="tournament-progress-mini" data-center-countdown="{{ hub.progress_deadline }}"><b data-d>0<small>Ngày</small></b><b data-h>0<small>Giờ</small></b><b data-m>0<small>Phút</small></b><b data-s>0<small>Giây</small></b></div>{% endif %}
-            {% if hub.early_deadline %}<span class="reward">🎁 Thưởng hoàn thành sớm còn:</span><div class="tournament-progress-mini" data-center-countdown="{{ hub.early_deadline }}"><b data-d>0<small>Ngày</small></b><b data-h>0<small>Giờ</small></b><b data-m>0<small>Phút</small></b><b data-s>0<small>Giây</small></b></div>{% endif %}
+            <span class="reward">🎁 Thưởng hoàn thành sớm còn:</span>
+            {% if hub.early_deadline and hub.early_deadline_active %}<div class="tournament-progress-mini" data-center-countdown="{{ hub.early_deadline }}"><b data-d>0<small>Ngày</small></b><b data-h>0<small>Giờ</small></b><b data-m>0<small>Phút</small></b><b data-s>0<small>Giây</small></b></div>
+            {% elif hub.early_deadline %}<span class="tournament-progress-expired">Đã hết thời gian thưởng</span>
+            {% else %}<span class="tournament-progress-expired">Chưa cấu hình hạn thưởng</span>{% endif %}
           </div>
           {% endif %}
           <img class="tournament-arena-badge" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/Giaidau/C1mua1/Huyhieu.webp" alt="PES Arena Champions League">
