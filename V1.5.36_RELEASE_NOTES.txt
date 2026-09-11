@@ -1,0 +1,28 @@
+PES ARENA V1.5.36 - TÁCH APP.PY THÀNH MODULE
+
+Mục tiêu
+- Tách app.py theo module nhưng giữ nguyên hành vi hiện tại.
+- Không đổi URL route, SQL/database schema hay logic Rank/C1 trong đợt refactor này.
+
+Thay đổi chính
+- app.py giảm từ 7.489 dòng xuống khoảng 2.841 dòng.
+- Tách 41 route còn nằm trực tiếp trong app.py thành 9 module route:
+  notification_routes, session_presence_routes, room_api_routes, auth_routes,
+  chat_routes, announcement_routes, dashboard_routes, ranking_routes, invite_routes.
+- Tách 126 helper/service thành 7 module service:
+  legacy_ranking_service, legacy_team_random_service, legacy_player_service,
+  legacy_match_service, legacy_room_service, legacy_chat_service,
+  legacy_room_activity_service.
+- Giữ cơ chế dependency injection bằng configure(context)/register_routes(context)
+  giống các module đã có sẵn trong dự án, tránh circular import.
+- Thêm bước refresh dependency sau khi export service để các module gọi chéo nhau
+  vẫn nhìn thấy đúng helper như khi còn nằm chung app.py.
+
+Kiểm tra
+- Python compileall: PASS.
+- Đối chiếu tĩnh các route được di chuyển: giữ nguyên decorator, URL, methods và endpoint name.
+- Không thể chạy smoke-test Flask trong môi trường đóng gói hiện tại vì thiếu package Flask runtime;
+  cấu trúc source đã được compile kiểm tra cú pháp đầy đủ.
+
+Version
+- APP_VERSION = V1.5.36.
