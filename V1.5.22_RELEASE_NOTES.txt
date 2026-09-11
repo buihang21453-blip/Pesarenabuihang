@@ -1,0 +1,24 @@
+PES ARENA V1.5.22 - BLOCK MATCH INVITES TO ADMIN
+
+Module:
+- Invite / Matchmaking / Room Access / Admin role
+
+Fix:
+- Admin thật không còn nhận popup lời mời thi đấu Rank/Friendly.
+- /invites/send chặn backend nếu người gửi hoặc người nhận là Admin.
+- Quick Match chặn Admin khởi tạo tìm trận.
+- Quick Match loại toàn bộ tài khoản Admin khỏi danh sách ứng viên.
+- Nếu còn lời mời cũ/stale trỏ vào Admin, Admin không thấy popup.
+- Nếu Admin cố xử lý lời mời cũ, invite được cancel và không thể vào trận.
+
+Admin Switch:
+- Khi Admin chuyển sang Test A/Test B ở V1.5.21, effective user là player.
+- Vì vậy 2 tài khoản Test vẫn gửi/nhận lời mời bình thường.
+- Không ảnh hưởng lời mời C1/luồng Test của tài khoản player.
+
+Không thay đổi:
+- BXH
+- RP
+- Room C1
+- Random CLB
+- 16 HLV thật

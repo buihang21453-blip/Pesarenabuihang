@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.5.21"
+APP_VERSION = "V1.5.22"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -4286,6 +4286,11 @@ def current_pending_invites():
         user = current_user()
         if not user:
             return cache_set("_rz_current_pending_invites", [])
+        # V1.5.22: Admin thật không tham gia Rank/Friendly nên tuyệt đối không
+        # nhận popup/lời mời thi đấu. Khi Admin Switch sang Test C1, effective
+        # current_user là tài khoản Test (player), vì vậy Test vẫn nhận bình thường.
+        if is_admin_user(user):
+            return cache_set("_rz_current_pending_invites", [])
         invites = list_invites("pending")
         return cache_set("_rz_current_pending_invites", [invite for invite in invites if invite["to_user_id"] == user["id"]])
     except Exception as exc:
@@ -6572,6 +6577,15 @@ def send_invite():
         flash("Không tìm thấy đối thủ.", "danger")
         return redirect(url_for("players"))
 
+    # V1.5.22: tài khoản Admin thật không được tham gia lời mời Rank/Friendly.
+    # Đây là chặn backend, không phụ thuộc việc Admin có bị ẩn khỏi danh sách UI.
+    if is_admin_user(user):
+        flash("Tài khoản Admin không tham gia thi đấu Rank/Friendly. Hãy chuyển sang tài khoản Test để kiểm tra.", "warning")
+        return redirect(url_for("players"))
+    if is_admin_user(opponent):
+        flash("Tài khoản Admin không nhận lời mời thi đấu. Hãy chọn HLV khác.", "warning")
+        return redirect(url_for("players"))
+
     try:
         state = matchmaking_snapshot(user["id"], to_user_id)
     except Exception as exc:
@@ -6690,6 +6704,8 @@ QUICK_MATCH_ACTIVE_SECONDS = 30 * 60
 @login_required
 def quick_match_invite():
     user = current_user()
+    if is_admin_user(user):
+        return jsonify({"ok": False, "message": "Tài khoản Admin không tham gia Tìm Nhanh. Hãy chuyển sang tài khoản Test."}), 403
     payload = request.get_json(silent=True) or request.form or {}
     raw_excluded = payload.get("excluded_user_ids", [])
     if isinstance(raw_excluded, str):
@@ -6780,7 +6796,10 @@ def quick_match_invite():
             continue
         role = str(opponent.get("role") or "").strip().lower()
         admin_level = str(opponent.get("admin_level") or "").strip().lower()
-        if role not in {"player", "admin"} and admin_level not in {"owner", "admin"}:
+        # Admin tuyệt đối không phải ứng viên Tìm Nhanh.
+        if role == "admin" or admin_level in {"owner","admin"}:
+            continue
+        if role != "player":
             continue
         if opponent.get("account_status", "approved") != "approved":
             continue
@@ -7047,6 +7066,25 @@ def respond_invite(invite_id):
     user = current_user()
     action = request.form.get("action")
     invite = get_invite(invite_id)
+
+    if is_admin_user(user):
+        if invite and invite.get("status") == "pending":
+            try:
+                execute_query(
+                    db.table("match_invites").update({
+                        "status":"cancelled",
+                        "updated_at":now_iso(),
+                    }).eq("id",invite_id).eq("status","pending"),
+                    "cancel_invite_targeting_admin",
+                    attempts=2,
+                )
+                ttl_cache_delete("invites_raw")
+                cache_delete("_rz_invites_all")
+                cache_delete("_rz_current_pending_invites")
+            except Exception:
+                pass
+        flash("Tài khoản Admin không tham gia thi đấu. Hãy chuyển sang tài khoản Test nếu cần kiểm tra luồng trận.", "warning")
+        return redirect(url_for("admin"))
 
     if not invite:
         flash("Không tìm thấy lời mời.", "danger")
