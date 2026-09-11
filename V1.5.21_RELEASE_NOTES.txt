@@ -1,0 +1,35 @@
+PES ARENA V1.5.21 - ADMIN SWITCH TEST ACCOUNT
+
+Module:
+- Authentication / Session / Admin Test Account
+
+Tính năng:
+- Admin có thể chuyển sang đúng 2 tài khoản Test C1 đã cấu hình mà không cần mở trình duyệt/User khác.
+- Có thể chuyển Admin -> Test A / Test B.
+- Khi đang Test A có thể chuyển thẳng sang Test B.
+- Có nút cố định "👑 Quay lại Admin".
+- Tài khoản Test hoạt động bằng session/user_id thật của tài khoản Test nên giao diện và quyền giống HLV thường.
+- Không sửa role trong database.
+
+An toàn quyền:
+- Khi impersonate, session role/admin_level được thay bằng role của tài khoản Test.
+- Các menu Admin biến mất.
+- is_admin_user(current_user()) trả false.
+- Admin route thông thường không được kế thừa quyền trong lúc đang test.
+- Chỉ endpoint "Quay lại Admin" được phép dùng root Admin đã lưu trong session để khôi phục tài khoản.
+- Target switch bị giới hạn đúng 2 user_id trong c1_test_accounts_v1.
+- Không thể switch sang 16 HLV thật hoặc một tài khoản Admin khác.
+
+UI:
+- Trong menu tài khoản Admin có khối "🧪 Chuyển tài khoản Test C1".
+- Khi đang đóng vai Test có banner cố định:
+  "🧪 ĐANG TEST DƯỚI TK..."
+  + nút chuyển sang tài khoản Test còn lại
+  + nút "👑 Quay lại Admin".
+
+Không thay đổi:
+- BXH C1
+- Room C1
+- Random CLB
+- RP/Rank
+- dữ liệu 16 HLV thật

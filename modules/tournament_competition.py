@@ -1808,6 +1808,160 @@ def register_routes(context):
         rows.sort(key=lambda r:order.get(str(r.get("id")),99))
         return rows
 
+    # ============================================================
+    # V1.5.21 - ADMIN TEST ACCOUNT SWITCH
+    # Admin có thể chuyển sang đúng 2 tài khoản Test C1 trong cùng trình duyệt.
+    # Không thay đổi role DB; khi impersonate, effective session là tài khoản Test.
+    # ============================================================
+    def _admin_switch_root_user():
+        root_id=str(session.get("admin_switch_root_user_id") or "")
+        if not root_id:
+            return None
+        try:
+            root=get_user(root_id)
+        except Exception:
+            return None
+        return root if is_admin_user(root) else None
+
+    def _admin_switch_set_effective_user(user):
+        if not user:
+            return
+        session["user_id"]=user.get("id")
+        session["username"]=user.get("username","")
+        session["display_name"]=user.get("display_name","")
+        session["avatar_url"]=user.get("avatar_url")
+        session["role"]=user.get("role","player")
+        session["account_status"]=user.get("account_status","approved")
+        session["admin_level"]=user.get("admin_level","none")
+        session["zcoin_balance"]=int(user.get("zcoin_balance") or 0)
+        session["last_real_activity"]=int(time.time())
+        session["last_activity_touch"]=int(time.time())
+        cache_delete("_rz_current_user")
+        cache_delete("_rz_current_pending_invites")
+        ttl_cache_delete("invites_raw")
+
+    def _admin_switch_context_payload():
+        active_root=_admin_switch_root_user()
+        current=current_user() or {}
+
+        # Đang đóng vai Test: chỉ dùng tournament đã lưu trong session.
+        if active_root:
+            tid=str(session.get("admin_switch_tournament_id") or "")
+            users=_c1_test_users(tid) if tid else []
+            return {
+                "admin_test_switch_active":True,
+                "admin_test_switch_root":active_root,
+                "admin_test_switch_users":users,
+                "admin_test_switch_tournament_id":tid,
+                "admin_test_switch_current":current,
+            }
+
+        # Chỉ Admin thật mới được thấy nút Switch.
+        if not is_admin_user(current):
+            return {
+                "admin_test_switch_active":False,
+                "admin_test_switch_users":[],
+            }
+
+        # Ưu tiên giải đang hiển thị qua view_args, nếu không lấy giải visible đầu tiên
+        # có cấu hình tài khoản Test C1.
+        candidate_ids=[]
+        try:
+            if request.view_args and request.view_args.get("tournament_id"):
+                candidate_ids.append(str(request.view_args.get("tournament_id")))
+        except Exception:
+            pass
+        try:
+            tours,_=_rows(
+                db.table("tournaments").select("id").eq("is_visible",True).order("created_at",desc=True),
+                "ops_admin_switch_tournaments",
+            )
+            for tour in tours:
+                tid=str(tour.get("id") or "")
+                if tid and tid not in candidate_ids:
+                    candidate_ids.append(tid)
+        except Exception:
+            pass
+
+        for tid in candidate_ids:
+            users=_c1_test_users(tid)
+            if users:
+                return {
+                    "admin_test_switch_active":False,
+                    "admin_test_switch_users":users,
+                    "admin_test_switch_tournament_id":tid,
+                }
+
+        return {
+            "admin_test_switch_active":False,
+            "admin_test_switch_users":[],
+        }
+
+    @app.context_processor
+    def inject_admin_test_switch():
+        try:
+            return _admin_switch_context_payload()
+        except Exception as exc:
+            app.logger.warning("Admin test switch context failed: %s",exc)
+            return {
+                "admin_test_switch_active":False,
+                "admin_test_switch_users":[],
+            }
+
+    @app.post('/admin/test-switch/<tournament_id>/<test_user_id>')
+    @login_required
+    def admin_test_switch_account(tournament_id,test_user_id):
+        current=current_user() or {}
+        root=_admin_switch_root_user()
+
+        # Lần đầu phải là Admin thật. Sau đó có thể Test A -> Test B trực tiếp
+        # nhờ root admin đã được giữ trong session.
+        if root is None:
+            if not is_admin_user(current):
+                flash("Chỉ Admin mới được chuyển sang tài khoản Test C1.","error")
+                return redirect(url_for("dashboard"))
+            root=current
+            session["admin_switch_root_user_id"]=str(root.get("id") or "")
+
+        allowed=set(_c1_test_user_ids(tournament_id))
+        target_id=str(test_user_id or "")
+        if target_id not in allowed:
+            flash("Tài khoản này không thuộc danh sách Test C1 được phép chuyển.","error")
+            return redirect(url_for("admin") if is_admin_user(current) else url_for("tournaments"))
+
+        try:
+            target=get_user(target_id)
+        except Exception:
+            target=None
+        if not target or target.get("account_status","approved")!="approved" or is_admin_user(target):
+            flash("Tài khoản Test C1 không hợp lệ.","error")
+            return redirect(url_for("admin") if is_admin_user(current) else url_for("tournaments"))
+
+        session["admin_switch_tournament_id"]=str(tournament_id)
+        session["admin_switch_started_at"]=now_iso()
+        _admin_switch_set_effective_user(target)
+
+        flash(f"🧪 Đang thao tác dưới tài khoản Test: {target.get('display_name') or target.get('username')}. Quyền Admin đã tạm khóa trong chế độ này.","success")
+        return redirect(url_for("tournaments"))
+
+    @app.post('/admin/test-switch/return')
+    @login_required
+    def admin_test_switch_return():
+        root=_admin_switch_root_user()
+        if not root:
+            # Session root không hợp lệ thì không được tự nâng quyền.
+            for key in ("admin_switch_root_user_id","admin_switch_tournament_id","admin_switch_started_at"):
+                session.pop(key,None)
+            flash("Không thể khôi phục phiên Admin. Vui lòng đăng nhập Admin lại.","warning")
+            return redirect(url_for("login"))
+
+        _admin_switch_set_effective_user(root)
+        for key in ("admin_switch_root_user_id","admin_switch_tournament_id","admin_switch_started_at"):
+            session.pop(key,None)
+        cache_delete("_rz_current_user")
+        flash("👑 Đã quay lại tài khoản Admin.","success")
+        return redirect(url_for("admin"))
+
     def _c1_test_confirmed_matches(tournament_id):
         test_users=_c1_test_users(tournament_id)
         if not test_users:

@@ -57,7 +57,19 @@ function toggleTheme(){
     localStorage.setItem('pes2026-theme', next);
 }
 </script>
-<style>:root{--pes-login-background:url("{{ asset_url('login-background.webp') }}")}</style>
+<style>
+:root{--pes-login-background:url("{{ asset_url('login-background.webp') }}")}
+.admin-test-switch-banner{position:fixed;z-index:100000;left:0;right:0;top:0;min-height:52px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px;background:#5a3b00;color:#fff3c4;border-bottom:1px solid #d7a72e;box-shadow:0 4px 18px rgba(0,0,0,.32)}
+.admin-test-switch-copy{display:flex;flex-direction:column;gap:2px}.admin-test-switch-copy span{font-size:12px;opacity:.9}
+.admin-test-switch-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.admin-test-switch-actions form{margin:0}
+.admin-test-switch-spacer{height:56px}
+.account-test-switch{padding:10px 12px;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);display:grid;gap:6px}
+.account-test-switch strong{font-size:12px;color:#f1ca68}
+.account-test-switch form{margin:0}
+.account-test-switch button{width:100%;border:0;background:transparent;color:inherit;text-align:left;padding:8px;border-radius:8px;cursor:pointer}
+.account-test-switch button:hover{background:rgba(255,255,255,.06)}
+@media(max-width:700px){.admin-test-switch-banner{align-items:flex-start;flex-direction:column}.admin-test-switch-spacer{height:100px}}
+</style>
 <script>window.PES_ASSET_BASE_URL={{ asset_base_url()|tojson }};</script>
 {% block head_extra %}{% endblock %}
 {% block page_styles %}{% endblock %}
@@ -69,6 +81,27 @@ function toggleTheme(){
     <strong>{{ '⚠️' if maintenance_status.countdown.kind == 'close' else '✅' }} {{ maintenance_status.countdown.label }}</strong>
     <span data-maintenance-countdown="{{ maintenance_status.countdown.target_iso }}">--:--</span>
 </div>
+{% endif %}
+{% if admin_test_switch_active|default(false) and current_user and not (auth_only|default(false)) %}
+<div class="admin-test-switch-banner">
+    <div class="admin-test-switch-copy">
+        <strong>🧪 ĐANG TEST DƯỚI TK: {{ current_user.display_name or current_user.username }}</strong>
+        <span>Quyền Admin đang tạm khóa · bạn đang thao tác như HLV Test thật.</span>
+    </div>
+    <div class="admin-test-switch-actions">
+        {% for test_user in admin_test_switch_users|default([]) %}
+        {% if test_user.id|string != current_user.id|string %}
+        <form method="post" action="{{ url_for('admin_test_switch_account', tournament_id=admin_test_switch_tournament_id, test_user_id=test_user.id) }}">
+            <button class="btn small" type="submit">🔄 {{ test_user.display_name or test_user.username }}</button>
+        </form>
+        {% endif %}
+        {% endfor %}
+        <form method="post" action="{{ url_for('admin_test_switch_return') }}">
+            <button class="btn small gold" type="submit">👑 Quay lại Admin</button>
+        </form>
+    </div>
+</div>
+<div class="admin-test-switch-spacer"></div>
 {% endif %}
 {% if current_user and not (auth_only|default(false)) %}
 <div class="layout player-app-shell">
@@ -198,6 +231,16 @@ function toggleTheme(){
                         <a href="{{ url_for('inventory') }}"><span>🎒</span> Kho đồ</a>
                         <a href="{{ url_for('matches') }}"><span>📜</span> Lịch sử trận đấu</a>
                         {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}
+                        {% if admin_test_switch_users|default([]) %}
+                        <div class="account-test-switch">
+                            <strong>🧪 Chuyển tài khoản Test C1</strong>
+                            {% for test_user in admin_test_switch_users %}
+                            <form method="post" action="{{ url_for('admin_test_switch_account', tournament_id=admin_test_switch_tournament_id, test_user_id=test_user.id) }}">
+                                <button type="submit"><span>🔄</span> {{ test_user.display_name or test_user.username }}</button>
+                            </form>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                         <form class="account-presence-control" method="post" action="{{ url_for('admin_presence_mode') }}">
                             <input type="hidden" name="next_url" value="{{ request.full_path if request.query_string else request.path }}">
                             <label for="adminPresenceMode"><span>●</span> Trạng thái hiển thị</label>
