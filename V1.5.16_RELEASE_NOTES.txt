@@ -1,0 +1,17 @@
+PES ARENA V1.5.16 - C1 ROOM UI / RESULT / NEXT MATCH
+
+1) Guest C1
+- Ẩn hoàn toàn khu/nút Random CLB với Đội khách.
+- Guest chỉ thấy Sẵn sàng/Hủy sẵn sàng và thao tác thuộc vai trò Guest.
+- Host/Admin giữ Random như cũ.
+
+2) Kết quả C1
+- Chuyển form nhập tỷ số của Host và xác nhận/tranh chấp của Guest từ cuối trang lên cột trung tâm.
+- Áp dụng cả full render và live polling render.
+
+3) Trận tiếp theo
+- Nút Trận tiếp theo không còn quay về tournament_detail#rooms.
+- Tự tìm trận chưa hoàn tất tiếp theo của HLV và mở thẳng Phòng đấu C1.
+- Live polling sau khi confirmed cũng dùng đúng nút C1, không hiện nhầm Đá Tiếp/Rematch của Rank.
+
+Không thay đổi BXH, RP, Rank, random logic hoặc result logic C1.

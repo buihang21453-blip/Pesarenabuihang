@@ -2142,6 +2142,52 @@ def register_routes(context):
         flash("Đã tạo Phòng đấu C1. Khi sẵn sàng, hãy bấm Mời đối thủ ngay trong phòng.","success")
         return redirect(url_for("room_detail",room_id=room.get("id")))
 
+    @app.get('/tournaments/<tournament_id>/rooms/<room_id>/next-match')
+    @login_required
+    def tournament_room_next_match(tournament_id, room_id):
+        """Mở trực tiếp trận C1 chưa hoàn tất tiếp theo của HLV."""
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        room=get_room(room_id); meta=_room_meta(room)
+        if not room or not meta or str(meta.get("tournament_id") or "") != str(tournament_id):
+            flash("Không tìm thấy Phòng đấu C1 hiện tại.","error")
+            return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
+
+        if uid not in {str(room.get("host_user_id") or ""), str(room.get("guest_user_id") or "")} and not is_admin_user(user):
+            flash("Bạn không thuộc Phòng đấu C1 này.","error")
+            return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
+
+        current_match_id=str(meta.get("tournament_match_id") or "")
+        candidates=[]
+        for match in _matches(tournament_id):
+            mid=str(match.get("id") or "")
+            if not mid or mid == current_match_id:
+                continue
+            if uid not in {str(match.get("home_user_id") or ""), str(match.get("away_user_id") or "")}:
+                continue
+            status=str(match.get("status") or "").lower()
+            if status in {"completed","cancelled","disputed"}:
+                continue
+            if _stage1_pair_is_complete(tournament_id, match):
+                continue
+            candidates.append(match)
+
+        if not candidates:
+            flash("Hiện chưa có trận C1 tiếp theo cần thi đấu.","info")
+            return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
+
+        def _next_key(match):
+            scheduled=str(match.get("scheduled_at") or "")
+            created=str(match.get("created_at") or "")
+            return (0 if scheduled else 1, scheduled or created, created)
+
+        candidates.sort(key=_next_key)
+        target=candidates[0]
+        return redirect(url_for(
+            "tournament_match_room_enter",
+            tournament_id=tournament_id,
+            match_id=target.get("id"),
+        ))
+
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/invite-opponent')
     @login_required
     def tournament_room_invite_opponent(tournament_id,room_id):
