@@ -1,0 +1,8 @@
+PES ARENA V1.5.27
+- Base: V1.5.26 (khong quay lai V1.5.24).
+- Lich cua doi thu van chia 3 ngay.
+- Khi HLV tich/bo tich mot khung gio cua minh, khung gio trung ben lich doi thu doi mau xanh/ngung xanh NGAY LAP TUC tren trinh duyet.
+- Khong can bam "Luu gio ranh cua toi" de thay mau xanh.
+- Nut "Tich toan bo" cung cap nhat mau xanh ngay lap tuc.
+- Nut Luu van chi co nhiem vu ghi du lieu xuong he thong.
+- Khong thay doi SQL/database/API.
