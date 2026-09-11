@@ -1,0 +1,16 @@
+PES ARENA V1.5.20 - BXH C1 5 TRẬN GẦN NHẤT
+
+Module: C1 -> BXH giải đấu
+
+Thay đổi:
+- Khôi phục cột "5 trận gần nhất" trên BXH C1 chính.
+- Lấy từ các trận tournament_matches có status=completed.
+- Bao gồm GĐ1, League Phase và Knockout.
+- Sắp xếp theo completed_at / updated_at.
+- Mỗi HLV chỉ giữ 5 trận gần nhất.
+- Ký hiệu:
+  + T = Thắng
+  + H = Hòa
+  + B = Bại
+- Trận mới nhất nằm bên phải, giống cách hiển thị BXH TEST.
+- Không thay đổi điểm, thứ hạng, hiệu số hay logic kết quả.

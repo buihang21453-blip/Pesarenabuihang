@@ -696,17 +696,97 @@ def register_routes(context):
 
     def _combined_ranking(tournament_id):
         members=_all_members(tournament_id)
-        base={str(m["user_id"]):{"user_id":str(m["user_id"]),"display_name":m.get("display_name") or "HLV","played":0,"wins":0,"draws":0,"losses":0,"gf":0,"ga":0,"gd":0,"points":0,"pot_no":m.get("pot_no"),"club":m.get("fixed_club_name") or ""} for m in members}
+        base={
+            str(m["user_id"]):{
+                "user_id":str(m["user_id"]),
+                "display_name":m.get("display_name") or "HLV",
+                "played":0,"wins":0,"draws":0,"losses":0,
+                "gf":0,"ga":0,"gd":0,"points":0,
+                "pot_no":m.get("pot_no"),
+                "club":m.get("fixed_club_name") or "",
+                "recent_form":[],
+            }
+            for m in members
+        }
+
+        # Điểm/BXH giữ nguyên cách tính hiện tại: cộng GĐ1 + League.
         for code in ("stage1","league"):
             for r in _ranking(tournament_id,code):
                 row=base.get(str(r.get("user_id")))
-                if not row: continue
+                if not row:
+                    continue
                 for k in ("played","wins","draws","losses","gf","ga","points"):
                     row[k]+=int(r.get(k) or 0)
+
+        # V1.5.20: lịch sử 5 trận C1 đã được xác nhận gần nhất của mỗi HLV.
+        # Dùng completed_at để đảm bảo đúng thứ tự thời gian thực tế.
+        completed=[]
+        for mt in _matches(tournament_id):
+            if str(mt.get("status") or "")!="completed":
+                continue
+            if str(mt.get("stage_code") or "") not in {"stage1","league","knockout"}:
+                continue
+            completed.append(mt)
+
+        completed.sort(
+            key=lambda mt:(
+                _parse_iso(mt.get("completed_at") or mt.get("updated_at"))
+                or datetime.min.replace(tzinfo=timezone.utc)
+            )
+        )
+
+        for mt in completed:
+            h=str(mt.get("home_user_id") or "")
+            a=str(mt.get("away_user_id") or "")
+            if h not in base and a not in base:
+                continue
+            try:
+                hs=int(mt.get("home_score") or 0)
+                aw=int(mt.get("away_score") or 0)
+            except Exception:
+                continue
+
+            if hs>aw:
+                h_code,h_label,h_short="W","Thắng","T"
+                a_code,a_label,a_short="L","Bại","B"
+            elif hs<aw:
+                h_code,h_label,h_short="L","Bại","B"
+                a_code,a_label,a_short="W","Thắng","T"
+            else:
+                h_code=h_code2="D"
+                h_label=h_label2="Hòa"
+                h_short=h_short2="H"
+                a_code,a_label,a_short=h_code2,h_label2,h_short2
+
+            completed_at=mt.get("completed_at") or mt.get("updated_at")
+            if h in base:
+                base[h]["recent_form"].append({
+                    "code":h_code,
+                    "label":h_label,
+                    "short":h_short,
+                    "match_id":mt.get("id"),
+                    "completed_at":completed_at,
+                })
+            if a in base:
+                base[a]["recent_form"].append({
+                    "code":a_code,
+                    "label":a_label,
+                    "short":a_short,
+                    "match_id":mt.get("id"),
+                    "completed_at":completed_at,
+                })
+
         vals=list(base.values())
-        for r in vals: r["gd"]=r["gf"]-r["ga"]
-        vals.sort(key=lambda x:(x["points"],x["gd"],x["gf"],x["wins"]),reverse=True)
-        for i,r in enumerate(vals,1): r["rank"]=i
+        for r in vals:
+            r["gd"]=r["gf"]-r["ga"]
+            r["recent_form"]=r["recent_form"][-5:]
+
+        vals.sort(
+            key=lambda x:(x["points"],x["gd"],x["gf"],x["wins"]),
+            reverse=True,
+        )
+        for i,r in enumerate(vals,1):
+            r["rank"]=i
         return vals
 
     def _round_pairs(tournament_id, round_code):
