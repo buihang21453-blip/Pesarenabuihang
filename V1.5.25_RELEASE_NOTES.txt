@@ -1,0 +1,18 @@
+PES ARENA V1.5.25
+
+Module: Phòng đấu C1 / chuyển Trận 2 + nhập tỷ số
+
+File sửa:
+- modules/tournament_competition.py
+- templates/partials/tournament_room_result.html
+- static/style.css
+
+Thay đổi:
+1. Fix Host bấm “Trận 2” nhưng room không chuyển trạng thái ở Guest:
+   - Reset room Trận 2 theo chính room_id thay vì ràng buộc thêm host_user_id + guest_user_id.
+   - Giữ bước verify DB có tournament_match_id mới, status=waiting_ready, guest_ready=False trước khi báo thành công.
+   - Cache room vẫn được xóa để polling Host/Guest nhận state mới.
+2. Ô nhập tỷ số C1/TEST C1:
+   - Chữ số lớn hơn, in đậm, căn giữa, dễ nhìn hơn.
+
+Không thay đổi SQL/database schema.

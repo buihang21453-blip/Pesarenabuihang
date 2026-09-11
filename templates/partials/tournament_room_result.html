@@ -6,9 +6,9 @@
   {% set tr=tournament_meta.test_result or {} %}
   {% if room.status == 'playing' and room_room_viewer_is_host %}
   <form method="post" action="{{ url_for('c1_test_room_submit_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
-    <label>{{ room.host_name or 'Test A' }}<input type="number" min="0" max="99" name="host_score" value="0" required></label>
+    <label>{{ room.host_name or 'Test A' }}<input type="number" min="0" max="99" name="host_score" value="0" required class="c1-score-input"></label>
     <strong style="padding-bottom:10px">-</strong>
-    <label>{{ room.guest_name or 'Test B' }}<input type="number" min="0" max="99" name="guest_score" value="0" required></label>
+    <label>{{ room.guest_name or 'Test B' }}<input type="number" min="0" max="99" name="guest_score" value="0" required class="c1-score-input"></label>
     <button class="btn green" type="submit">Gửi kết quả TEST</button>
   </form>
   {% elif room.status == 'waiting_result_confirm' %}
@@ -42,9 +42,9 @@
   {% set pr=tournament_result_proposal or {} %}
   {% if room.status == 'playing' and room_room_viewer_is_host %}
   <form method="post" action="{{ url_for('tournament_room_submit_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
-    <label>{{ room.host_name or 'Chủ phòng' }}<input type="number" min="0" max="99" name="host_score" value="0" required></label>
+    <label>{{ room.host_name or 'Chủ phòng' }}<input type="number" min="0" max="99" name="host_score" value="0" required class="c1-score-input"></label>
     <strong style="padding-bottom:10px">-</strong>
-    <label>{{ room.guest_name or 'Đối thủ' }}<input type="number" min="0" max="99" name="guest_score" value="0" required></label>
+    <label>{{ room.guest_name or 'Đối thủ' }}<input type="number" min="0" max="99" name="guest_score" value="0" required class="c1-score-input"></label>
     <button class="btn green" type="submit">Gửi kết quả</button>
   </form>
   {% elif room.status == 'waiting_result_confirm' %}

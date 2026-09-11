@@ -2709,7 +2709,7 @@ def register_routes(context):
                 "match_mode":"tournament",
                 "team_tier":"TOURNAMENT_GD1" if sibling.get("stage_code")=="stage1" else "TOURNAMENT",
                 "updated_at":next_started_at,
-            }).eq("id",room_id).eq("host_user_id",host_uid).eq("guest_user_id",guest_uid),
+            }).eq("id",room_id),
             "ops_c1_next_same_room_reset_for_leg2",
             attempts=2,
         )
