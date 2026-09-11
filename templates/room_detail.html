@@ -355,13 +355,7 @@
                         {% elif room.status == 'confirmed' and (room_room_viewer_is_host or room_viewer_is_guest) %}
                         {% if is_tournament_room and tournament_meta %}
                         <div class="room-center-primary-actions room-action-zone">
-                            {% if room_room_viewer_is_host or current_user.role == 'admin' %}
-                            <form method="post" action="{{ url_for('tournament_room_next_match', tournament_id=tournament_meta.tournament_id, room_id=room.id) }}">
-                                <button class="btn gold room-center-action-btn" type="submit">🏆 Trận 2</button>
-                            </form>
-                            {% else %}
-                            <div class="room-center-state-pill">⏳ Chờ Chủ phòng mở Trận 2</div>
-                            {% endif %}
+                            <div class="room-center-state-pill">✅ Cặp đấu đã hoàn tất</div>
                             <a class="btn gray room-center-action-btn" href="{{ url_for('tournament_detail', tournament_id=tournament_meta.tournament_id) }}">Về giải đấu</a>
                         </div>
                         {% else %}
@@ -981,8 +975,8 @@ function getRoomStateInterval() {
     if (currentRoomStatus === "friendly_playing") return 15000;
     if (currentRoomStatus === "waiting_result_confirm") return currentRoomUserIsGuest ? 3000 : 6000;
     if (currentRoomStatus === "waiting_ready") return currentRoomIsTournament ? 2500 : 6000;
-    // C1: khách đang ở màn “Chờ Chủ phòng mở Trận 2” phải nhận lần đổi leg nhanh.
-    if (currentRoomStatus === "confirmed") return currentRoomIsTournament ? 2000 : 8000;
+    // C1: sau leg cuối trạng thái confirmed chỉ cần poll nhẹ; leg 2 đã tự mở ngay khi Guest xác nhận leg 1.
+    if (currentRoomStatus === "confirmed") return currentRoomIsTournament ? 8000 : 8000;
     return 15000;
 }
 

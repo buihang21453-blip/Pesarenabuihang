@@ -2988,8 +2988,89 @@ def register_routes(context):
         winner=match.get("home_user_id") if hs>aw else (match.get("away_user_id") if aw>hs else None)
         execute_query(db.table("tournament_matches").update({"home_score":hs,"away_score":aw,"winner_user_id":winner,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_confirm",attempts=2)
         prop.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
+
+        # V1.5.29 - C1 GĐ1 dùng lại đúng luồng Rank sau khi xác nhận kết quả:
+        # xác nhận Trận 1 xong -> room tự chuyển sang Trận 2 ở trạng thái waiting_ready;
+        # đội khách bấm Sẵn Sàng -> Host quay đội ngay. Không còn bước Host bấm "Trận 2".
+        next_match=None
+        if str(match.get("stage_code") or "")=="stage1":
+            pair_ids={str(match.get("home_user_id") or ""),str(match.get("away_user_id") or "")}
+            current_leg=int(match.get("leg_no") or 1)
+            candidates=[]
+            for candidate in _matches(tournament_id,"stage1"):
+                if str(candidate.get("id") or "")==str(match.get("id") or ""):
+                    continue
+                if {str(candidate.get("home_user_id") or ""),str(candidate.get("away_user_id") or "")} != pair_ids:
+                    continue
+                if str(candidate.get("status") or "").lower() in {"completed","cancelled"}:
+                    continue
+                candidates.append(candidate)
+            wanted_leg=2 if current_leg==1 else 1
+            next_match=next((c for c in candidates if int(c.get("leg_no") or 1)==wanted_leg),None)
+            if not next_match and candidates:
+                next_match=sorted(candidates,key=lambda c:(int(c.get("leg_no") or 999),str(c.get("created_at") or ""),str(c.get("id") or "")))[0]
+
+        if next_match:
+            history=list(meta.get("previous_match_ids") or [])
+            current_match_id=str(match.get("id") or "")
+            if current_match_id and current_match_id not in history:
+                history.append(current_match_id)
+            dm=_decorate_matches(tournament_id,[next_match])[0]
+            meta.update({
+                "tournament_match_id":str(next_match.get("id") or ""),
+                "stage_code":next_match.get("stage_code"),
+                "home_user_id":str(next_match.get("home_user_id") or ""),
+                "away_user_id":str(next_match.get("away_user_id") or ""),
+                "home_name":dm.get("home_name"),
+                "away_name":dm.get("away_name"),
+                "previous_match_ids":history,
+                "current_leg_no":int(next_match.get("leg_no") or 2),
+                "transition_token":now_iso(),
+            })
+            # Bảo đảm leg kế tiếp sẵn sàng để khởi động lại trong chính room hiện tại.
+            if str(next_match.get("status") or "")!="pending":
+                execute_query(
+                    db.table("tournament_matches").update({"status":"pending","updated_at":now_iso()}).eq("id",next_match.get("id")).eq("tournament_id",tournament_id),
+                    "ops_c1_confirm_auto_next_match_pending",attempts=2,
+                )
+            reset_result=execute_query(
+                db.table("match_rooms").update({
+                    "note":_room_note(meta),
+                    "status":"waiting_ready",
+                    "guest_ready":False,
+                    "host_team":None,
+                    "guest_team":None,
+                    "host_team_overall":None,
+                    "guest_team_overall":None,
+                    "host_score":None,
+                    "guest_score":None,
+                    "invite_id":None,
+                    "state_expires_at":None,
+                    "match_mode":"tournament",
+                    "team_tier":"TOURNAMENT_GD1",
+                    "updated_at":now_iso(),
+                }).eq("id",room_id).eq("status","waiting_result_confirm"),
+                "ops_c1_confirm_auto_open_next_leg",attempts=2,
+            )
+            if reset_result.data or []:
+                cache_delete("_rz_rooms_all")
+                cache_delete("_rz_current_pending_invites")
+                ttl_cache_delete("rooms_raw")
+                flash("✅ Đã xác nhận Trận 1. Trận 2 đã sẵn sàng; bạn hãy bấm Sẵn Sàng để Chủ phòng quay đội.","success")
+                return redirect(url_for("room_detail",room_id=room_id))
+
+            # Nếu room vừa bị request khác thay đổi, không giả vờ đã mở Trận 2.
+            latest=get_room(room_id)
+            latest_meta=_room_meta(latest) if latest else {}
+            if latest and str(latest.get("status") or "")=="waiting_ready" and str((latest_meta or {}).get("tournament_match_id") or "")==str(next_match.get("id") or ""):
+                cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
+                flash("✅ Trận 2 đã sẵn sàng. Đội khách hãy bấm Sẵn Sàng.","success")
+                return redirect(url_for("room_detail",room_id=room_id))
+
+        # Không còn lượt kế tiếp: khóa room như cũ.
         execute_query(db.table("match_rooms").update({"status":"confirmed","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_room_confirmed",attempts=2)
-        flash("Đã xác nhận kết quả. BXH giải đã được cập nhật.","success")
+        cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
+        flash("Đã xác nhận kết quả. Cặp đấu đã hoàn tất và BXH giải đã được cập nhật.","success")
         return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/dispute-result')
