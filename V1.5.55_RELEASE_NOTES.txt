@@ -1,0 +1,6 @@
+PES ARENA V1.5.55
+
+- Thêm nút 📊 BXH trên card giải tại /tournaments, nhảy trực tiếp tới khu BXH.
+- Thêm nút 🏟️ Phòng thi đấu trên card giải tại /tournaments, nhảy trực tiếp tới khu Phòng thi đấu/Host đang rảnh/Trận của tôi.
+- Giữ nguyên 🎮 Phòng đấu C1 và 📅 Lịch của tôi.
+- Không tạo trang trung gian mới; các nút BXH/Phòng thi đấu dùng anchor trên chính /tournaments.
