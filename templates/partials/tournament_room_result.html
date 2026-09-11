@@ -80,7 +80,7 @@
       {% endif %}
     </div>
   {% elif tournament_match.status == 'completed' or room.status == 'confirmed' %}
-    <strong>✅ KẾT QUẢ TRẬN NÀY ĐÃ ĐƯỢC CHỐT: {{ tournament_match.home_score }} - {{ tournament_match.away_score }}</strong><p class="small" style="margin:6px 0 0;color:#9ad9a9">{% if tournament_pair_is_complete %}Cặp đấu đã hoàn thành đủ 2 trận.{% else %}Mới hoàn tất {{ tournament_pair_completed_count or 1 }}/2 trận. Trận 2 sẽ chuyển sang bước Sẵn Sàng để đội khách xác nhận và Chủ phòng quay đội.{% endif %}</p>
+    <strong>✅ KẾT QUẢ TRẬN NÀY ĐÃ ĐƯỢC CHỐT: {{ tournament_match.home_score }} - {{ tournament_match.away_score }}</strong><p class="small" style="margin:6px 0 0;color:#9ad9a9">{% if tournament_pair_is_complete %}Cặp đấu đã hoàn tất{% if tournament_pair_total_count %} ({{ tournament_pair_completed_count }}/{{ tournament_pair_total_count }} trận){% endif %}.{% elif tournament_pair_total_count %}Đã hoàn tất {{ tournament_pair_completed_count }}/{{ tournament_pair_total_count }} trận. Còn trận trong lịch sẽ tự chuyển sang bước Sẵn Sàng.{% else %}Kết quả đã được ghi nhận.{% endif %}</p>
   {% elif tournament_match.status == 'disputed' or room.status == 'disputed' %}
     <strong>⚠ KẾT QUẢ ĐANG TRANH CHẤP · CHỜ ADMIN C1 XỬ LÝ.</strong><p class="small" style="margin:6px 0 0">HLV không thể tự sửa kết quả trong trạng thái này.</p>
   {% endif %}

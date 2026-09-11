@@ -1,0 +1,10 @@
+PES ARENA V1.5.31 — C1 Dynamic Pair Flow Fix
+
+- Phòng C1 không còn giả định mọi cặp đều có 2 trận.
+- Sau khi xác nhận kết quả, hệ thống đọc lịch thật của đúng cặp HLV trong cùng giai đoạn.
+- Nếu còn trận chưa hoàn tất: dùng lại chính room, reset về waiting_ready, Guest bấm Sẵn Sàng, Host quay đội.
+- Nếu không còn trận: mới đánh dấu Cặp đấu đã hoàn tất.
+- GĐ1 2 trận và GĐ2 1 trận dùng chung một luồng.
+- Tự sửa room V1.5.29/V1.5.30 bị kẹt confirmed sau Trận 1 khi tải lại trang.
+- UI bỏ toàn bộ câu chữ cứng /2 trận, đủ 2 trận, Trận 1 -> Trận 2 trong trạng thái phòng.
+- Không đổi database schema / SQL migration.

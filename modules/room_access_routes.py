@@ -172,7 +172,10 @@ def register_routes(context):
         tournament_match = None
         tournament_result_proposal = {}
         tournament_pair_completed_count = 0
+        tournament_pair_total_count = 0
+        tournament_pair_remaining_count = 0
         tournament_pair_is_complete = False
+        tournament_has_next_match = False
         tournament_stage1_pool = []
         tournament_invite_members = []
         tournament_viewer_is_member = False
@@ -228,18 +231,89 @@ def register_routes(context):
                 if tid and mid:
                     mr = execute_query(db.table("tournament_matches").select("*").eq("id",mid).eq("tournament_id",tid).limit(1),"room_tournament_match_context",attempts=2)
                     tournament_match = (mr.data or [None])[0]
-                    if tournament_match and str(tournament_match.get("stage_code") or "") == "stage1":
+                    if tournament_match:
+                        # V1.5.31: trạng thái cặp đấu dựa trên số bản ghi lịch thực tế,
+                        # không giả định GĐ1=2 hay GĐ2=1 trong UI.
                         pair_ids = {str(tournament_match.get("home_user_id") or ""), str(tournament_match.get("away_user_id") or "")}
+                        stage_code = str(tournament_match.get("stage_code") or "")
                         cr = execute_query(
-                            db.table("tournament_matches").select("id,home_user_id,away_user_id,status").eq("tournament_id",tid).eq("stage_code","stage1").eq("status","completed"),
-                            "room_tournament_pair_completed_context",
+                            db.table("tournament_matches").select("id,home_user_id,away_user_id,status,stage_code,leg_no,created_at").eq("tournament_id",tid).eq("stage_code",stage_code),
+                            "room_tournament_pair_flow_context",
                             attempts=2,
                         )
-                        tournament_pair_completed_count = sum(
-                            1 for row in (cr.data or [])
+                        pair_rows = [
+                            dict(row) for row in (cr.data or [])
                             if {str(row.get("home_user_id") or ""), str(row.get("away_user_id") or "")} == pair_ids
-                        )
-                        tournament_pair_is_complete = tournament_pair_completed_count >= 2
+                            and str(row.get("status") or "").lower() != "cancelled"
+                        ]
+                        pair_rows.sort(key=lambda row:(int(row.get("leg_no") or 999), str(row.get("created_at") or ""), str(row.get("id") or "")))
+                        tournament_pair_total_count = len(pair_rows)
+                        tournament_pair_completed_count = sum(1 for row in pair_rows if str(row.get("status") or "").lower() == "completed")
+                        remaining_rows = [row for row in pair_rows if str(row.get("status") or "").lower() not in {"completed","cancelled"}]
+                        tournament_pair_remaining_count = len(remaining_rows)
+                        next_rows = [row for row in remaining_rows if str(row.get("id") or "") != str(tournament_match.get("id") or "")]
+                        tournament_has_next_match = bool(next_rows)
+                        tournament_pair_is_complete = bool(pair_rows) and not remaining_rows
+
+                        # Tự cứu các room bị kẹt từ V1.5.29/V1.5.30: room đã confirmed
+                        # sau Trận 1 nhưng lịch vẫn còn trận kế tiếp. Khi hai HLV tải lại,
+                        # chuyển chính room đó về waiting_ready, không cần Admin sửa DB.
+                        if str(room.get("status") or "") == "confirmed" and str(tournament_match.get("status") or "") == "completed" and next_rows:
+                            next_match = next_rows[0]
+                            history = list(tournament_meta.get("previous_match_ids") or [])
+                            current_mid = str(tournament_match.get("id") or "")
+                            if current_mid and current_mid not in history:
+                                history.append(current_mid)
+                            old_home_id = str(tournament_meta.get("home_user_id") or "")
+                            old_away_id = str(tournament_meta.get("away_user_id") or "")
+                            old_home_name = tournament_meta.get("home_name")
+                            old_away_name = tournament_meta.get("away_name")
+                            next_home_id = str(next_match.get("home_user_id") or "")
+                            next_away_id = str(next_match.get("away_user_id") or "")
+                            tournament_meta.update({
+                                "tournament_match_id": str(next_match.get("id") or ""),
+                                "stage_code": next_match.get("stage_code") or stage_code,
+                                "home_user_id": next_home_id,
+                                "away_user_id": next_away_id,
+                                "home_name": old_home_name if next_home_id == old_home_id else (old_away_name if next_home_id == old_away_id else old_home_name),
+                                "away_name": old_away_name if next_away_id == old_away_id else (old_home_name if next_away_id == old_home_id else old_away_name),
+                                "previous_match_ids": history,
+                                "current_leg_no": int(next_match.get("leg_no") or 1),
+                            })
+                            repaired_note = "TOURNAMENT_ROOM|" + json.dumps(tournament_meta, ensure_ascii=False, separators=(",", ":"))
+                            execute_query(
+                                db.table("match_rooms").update({
+                                    "note": repaired_note,
+                                    "status": "waiting_ready",
+                                    "guest_ready": False,
+                                    "host_team": None,
+                                    "guest_team": None,
+                                    "host_team_overall": None,
+                                    "guest_team_overall": None,
+                                    "host_score": None,
+                                    "guest_score": None,
+                                    "invite_id": None,
+                                    "state_expires_at": None,
+                                    "match_mode": "tournament",
+                                    "team_tier": "TOURNAMENT_GD1" if str(next_match.get("stage_code") or "") == "stage1" else "TOURNAMENT",
+                                    "updated_at": now_iso(),
+                                }).eq("id", room.get("id")).eq("status", "confirmed"),
+                                "room_tournament_repair_stale_confirmed", attempts=2,
+                            )
+                            room.update({
+                                "note": repaired_note, "status": "waiting_ready", "guest_ready": False,
+                                "host_team": None, "guest_team": None, "host_team_overall": None, "guest_team_overall": None,
+                                "host_score": None, "guest_score": None, "match_mode": "tournament",
+                                "team_tier": "TOURNAMENT_GD1" if str(next_match.get("stage_code") or "") == "stage1" else "TOURNAMENT",
+                            })
+                            tournament_match = next_match
+                            mid = str(next_match.get("id") or "")
+                            tournament_has_next_match = False
+                            tournament_pair_is_complete = False
+                            try:
+                                cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
+                            except Exception:
+                                pass
                     sr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key",f"match_result_proposal:{mid}").limit(1),"room_tournament_result_context",attempts=2)
                     tournament_result_proposal = ((sr.data or [{}])[0].get("setting_value") or {})
             except Exception as exc:
@@ -274,7 +348,10 @@ def register_routes(context):
             "tournament_match": tournament_match,
             "tournament_result_proposal": tournament_result_proposal,
             "tournament_pair_completed_count": tournament_pair_completed_count,
+            "tournament_pair_total_count": tournament_pair_total_count,
+            "tournament_pair_remaining_count": tournament_pair_remaining_count,
             "tournament_pair_is_complete": tournament_pair_is_complete,
+            "tournament_has_next_match": tournament_has_next_match,
             "tournament_stage1_pool": tournament_stage1_pool,
             "tournament_stage1_pool_count": len(tournament_stage1_pool),
             "tournament_invite_members": tournament_invite_members,

@@ -138,6 +138,38 @@ def register_routes(context):
         rows,_=_rows(q.order("created_at"), "ops_matches")
         return rows
 
+
+    def _pair_matches(tournament_id, match, include_cancelled=False):
+        """Các trận của đúng cặp HLV trong cùng giai đoạn. Không giả định số lượt."""
+        if not match:
+            return []
+        stage_code=str(match.get("stage_code") or "")
+        pair_ids={str(match.get("home_user_id") or ""), str(match.get("away_user_id") or "")}
+        rows=[]
+        for row in _matches(tournament_id, stage_code or None):
+            if {str(row.get("home_user_id") or ""), str(row.get("away_user_id") or "")} != pair_ids:
+                continue
+            if not include_cancelled and str(row.get("status") or "").lower()=="cancelled":
+                continue
+            rows.append(row)
+        return sorted(rows, key=lambda r:(int(r.get("leg_no") or 999), str(r.get("created_at") or ""), str(r.get("id") or "")))
+
+    def _pair_flow_state(tournament_id, match):
+        """Trạng thái cặp đấu động: GĐ1 có thể 2 trận, GĐ2 có thể 1 trận."""
+        rows=_pair_matches(tournament_id, match)
+        completed=[r for r in rows if str(r.get("status") or "").lower()=="completed"]
+        remaining=[r for r in rows if str(r.get("status") or "").lower() not in {"completed","cancelled"}]
+        current_id=str((match or {}).get("id") or "")
+        next_match=next((r for r in remaining if str(r.get("id") or "") != current_id), None)
+        return {
+            "matches":rows,
+            "total_count":len(rows),
+            "completed_count":len(completed),
+            "remaining_count":len(remaining),
+            "next_match":next_match,
+            "is_complete":bool(rows) and not remaining,
+        }
+
     def _stage1_pair_completed_count(tournament_id, user_a, user_b, exclude_match_id=None):
         """Số trận GĐ1 đã hoàn thành giữa đúng 2 HLV, bất kể ai là chủ/khách."""
         a=str(user_a or ""); b=str(user_b or "")
@@ -2592,8 +2624,9 @@ def register_routes(context):
         match,_=_one(db.table("tournament_matches").select("*").eq("id",match_id).eq("tournament_id",tournament_id),"ops_tournament_room_match")
         if not match or uid not in {str(match.get("home_user_id")),str(match.get("away_user_id"))}:
             flash("Bạn không thuộc trận đấu này.","error"); return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
-        if _stage1_pair_is_complete(tournament_id, match):
-            flash("Cặp HLV này đã hoàn thành đủ 2 trận.","warning")
+        pair_state=_pair_flow_state(tournament_id, match)
+        if str(match.get("status") or "").lower()=="completed" and pair_state.get("is_complete"):
+            flash("Cặp HLV này đã hoàn tất toàn bộ các trận trong lịch.","warning")
             return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#rooms")
         existing=None
         for r in _tournament_rooms(tournament_id):
@@ -2942,9 +2975,6 @@ def register_routes(context):
             flash("Chỉ được gửi kết quả khi trận C1 đang thi đấu.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         if str(match.get("status")) in {"completed","cancelled"}:
             flash("Trận này đã hoàn tất.","warning"); return redirect(url_for("room_detail",room_id=room_id))
-        if _stage1_pair_is_complete(tournament_id, match):
-            flash("Cặp HLV này đã hoàn thành đủ 2 trận. Kết quả này không được tính.","warning")
-            return redirect(url_for("room_detail",room_id=room_id))
         try:
             hs=max(0,min(99,int(request.form.get("host_score") or 0))); gs=max(0,min(99,int(request.form.get("guest_score") or 0)))
         except Exception:
@@ -2981,34 +3011,16 @@ def register_routes(context):
         prop=_tournament_result_proposal(tournament_id,match.get("id"))
         if prop.get("status")!="waiting_confirm":
             flash("Không có kết quả nào đang chờ xác nhận.","warning"); return redirect(url_for("room_detail",room_id=room_id))
-        if _stage1_pair_is_complete(tournament_id, match):
-            flash("Cặp HLV này đã hoàn thành đủ 2 trận. Kết quả này không được tính.","warning")
-            return redirect(url_for("room_detail",room_id=room_id))
         hs=int(prop.get("home_score") or 0); aw=int(prop.get("away_score") or 0)
         winner=match.get("home_user_id") if hs>aw else (match.get("away_user_id") if aw>hs else None)
         execute_query(db.table("tournament_matches").update({"home_score":hs,"away_score":aw,"winner_user_id":winner,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_confirm",attempts=2)
         prop.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
 
-        # V1.5.29 - C1 GĐ1 dùng lại đúng luồng Rank sau khi xác nhận kết quả:
-        # xác nhận Trận 1 xong -> room tự chuyển sang Trận 2 ở trạng thái waiting_ready;
-        # đội khách bấm Sẵn Sàng -> Host quay đội ngay. Không còn bước Host bấm "Trận 2".
-        next_match=None
-        if str(match.get("stage_code") or "")=="stage1":
-            pair_ids={str(match.get("home_user_id") or ""),str(match.get("away_user_id") or "")}
-            current_leg=int(match.get("leg_no") or 1)
-            candidates=[]
-            for candidate in _matches(tournament_id,"stage1"):
-                if str(candidate.get("id") or "")==str(match.get("id") or ""):
-                    continue
-                if {str(candidate.get("home_user_id") or ""),str(candidate.get("away_user_id") or "")} != pair_ids:
-                    continue
-                if str(candidate.get("status") or "").lower() in {"completed","cancelled"}:
-                    continue
-                candidates.append(candidate)
-            wanted_leg=2 if current_leg==1 else 1
-            next_match=next((c for c in candidates if int(c.get("leg_no") or 1)==wanted_leg),None)
-            if not next_match and candidates:
-                next_match=sorted(candidates,key=lambda c:(int(c.get("leg_no") or 999),str(c.get("created_at") or ""),str(c.get("id") or "")))[0]
+        # V1.5.31: Phòng C1 không còn giả định "luôn có Trận 2".
+        # Sau khi chốt một trận, hỏi lịch giải của đúng cặp trong cùng giai đoạn:
+        # còn trận pending/scheduled/playing -> dùng lại room cho trận kế tiếp; hết -> hoàn tất cặp.
+        pair_state=_pair_flow_state(tournament_id, match)
+        next_match=pair_state.get("next_match")
 
         if next_match:
             history=list(meta.get("previous_match_ids") or [])
@@ -3024,7 +3036,7 @@ def register_routes(context):
                 "home_name":dm.get("home_name"),
                 "away_name":dm.get("away_name"),
                 "previous_match_ids":history,
-                "current_leg_no":int(next_match.get("leg_no") or 2),
+                "current_leg_no":int(next_match.get("leg_no") or 1),
                 "transition_token":now_iso(),
             })
             # Bảo đảm leg kế tiếp sẵn sàng để khởi động lại trong chính room hiện tại.
@@ -3047,7 +3059,7 @@ def register_routes(context):
                     "invite_id":None,
                     "state_expires_at":None,
                     "match_mode":"tournament",
-                    "team_tier":"TOURNAMENT_GD1",
+                    "team_tier":"TOURNAMENT_GD1" if str(next_match.get("stage_code") or "")=="stage1" else "TOURNAMENT",
                     "updated_at":now_iso(),
                 }).eq("id",room_id).eq("status","waiting_result_confirm"),
                 "ops_c1_confirm_auto_open_next_leg",attempts=2,
@@ -3070,22 +3082,22 @@ def register_routes(context):
                 and str(verify_room_row.get("status") or "")=="waiting_ready"
                 and str((verify_meta or {}).get("tournament_match_id") or "")==str(next_match.get("id") or "")
             ):
-                flash("✅ Đã xác nhận Trận 1. Trận 2 đã sẵn sàng; bạn hãy bấm Sẵn Sàng để Chủ phòng quay đội.","success")
+                flash("✅ Đã xác nhận kết quả. Còn trận tiếp theo trong lịch; bạn hãy bấm Sẵn Sàng để Chủ phòng quay đội.","success")
                 return redirect(url_for("room_detail",room_id=room_id))
 
             # Có Trận 2 nhưng reset room chưa xác minh được: tuyệt đối KHÔNG ghi đè
             # room thành confirmed, vì như vậy UI sẽ hiểu nhầm là cặp đấu đã hoàn tất.
             app.logger.error(
-                "C1 auto next leg verify failed room=%s next_match=%s status=%s meta_match=%s",
+                "C1 auto next match verify failed room=%s next_match=%s status=%s meta_match=%s",
                 room_id,
                 next_match.get("id"),
                 (verify_room_row or {}).get("status"),
                 (verify_meta or {}).get("tournament_match_id"),
             )
-            flash("Đã chốt Trận 1 nhưng chưa thể mở Trận 2. Hãy tải lại phòng; hệ thống sẽ không đánh dấu cặp đấu là hoàn tất.","warning")
+            flash("Đã chốt kết quả nhưng chưa thể mở trận tiếp theo. Hãy tải lại phòng; hệ thống sẽ không đánh dấu cặp đấu là hoàn tất.","warning")
             return redirect(url_for("room_detail",room_id=room_id))
 
-        # Chỉ khi thật sự không còn lượt kế tiếp mới khóa room.
+        # Chỉ khi lịch của đúng cặp thật sự không còn trận nào tiếp theo mới khóa room.
         execute_query(db.table("match_rooms").update({"status":"confirmed","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_room_confirmed",attempts=2)
         cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
         flash("Đã xác nhận kết quả. Cặp đấu đã hoàn tất và BXH giải đã được cập nhật.","success")
