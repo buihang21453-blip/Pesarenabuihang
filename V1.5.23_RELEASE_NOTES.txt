@@ -1,0 +1,32 @@
+PES ARENA V1.5.23 - THƯỞNG HOÀN THÀNH SỚM GĐ1
+
+Module:
+- C1 -> GĐ1 -> Top hoàn thành sớm / Economy / Notification
+
+Mức thưởng:
+- Hạng 1: 1.000 Zcoin + 2 Lucky Box.
+- Hạng 2 và Hạng 3: 800 Zcoin + 1 Lucky Box.
+- Nếu đồng hạng theo completion timestamp thì dùng finish_rank hiện tại.
+  Ví dụ 1,1,3: cả hai Hạng 1 nhận 1.000 + 2 Box; Hạng 3 nhận 800 + 1 Box.
+
+Admin:
+- Thêm nút "🏆 Trao thưởng Top GĐ1" trong khu Tiến độ & Top hoàn thành sớm.
+- Chỉ trao cho HLV early_eligible có finish_rank 1/2/3.
+
+Chống cấp trùng:
+- Zcoin dùng RPC adjust_zcoin_balance với idempotency key riêng tournament/user/rank.
+- Lucky Box dùng RPC adjust_lucky_box_balance với idempotency key riêng.
+- tournament_settings lưu trạng thái đã trao để không gửi notification/log trùng khi bấm lại.
+
+Thông báo:
+- Mỗi HLV nhận notification cá nhân ghi rõ hạng + Zcoin + Lucky Box.
+- Tạo thông báo chung:
+  "Chúc mừng các HLV đã hoàn thành sớm Giai Đoạn 1"
+  kèm danh sách người nhận và phần thưởng.
+
+Không thay đổi:
+- BXH điểm số
+- RP/Rank
+- Room C1
+- Random CLB
+- lịch thi đấu

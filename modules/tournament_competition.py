@@ -3684,6 +3684,184 @@ def register_routes(context):
             execute_query(db.table("tournament_matches").insert({"tournament_id":tournament_id,"stage_code":"knockout","round_code":rnd,"leg_no":leg,"aggregate_group":group,"home_user_id":h,"away_user_id":a,"status":"pending","created_at":now_iso(),"updated_at":now_iso()}),"ops_ko_insert",attempts=2)
         flash("Đã tạo cặp Knockout hai lượt." if two else "Đã tạo cặp Knockout.","success"); return redirect_admin("tournaments")
 
+    STAGE1_EARLY_REWARD_KEY = "stage1_early_completion_rewards_v1"
+
+    def _stage1_early_reward_amount(rank):
+        rank=int(rank or 0)
+        if rank==1:
+            return {"zcoin":1000,"lucky_box":2}
+        if rank in {2,3}:
+            return {"zcoin":800,"lucky_box":1}
+        return {"zcoin":0,"lucky_box":0}
+
+    def _stage1_early_reward_state(tournament_id):
+        return _setting(tournament_id,STAGE1_EARLY_REWARD_KEY,{}) or {}
+
+    @app.post('/admin/tournaments/<tournament_id>/stage1/early-rewards/grant')
+    @login_required
+    @admin_required
+    def admin_tournament_stage1_early_rewards_grant(tournament_id):
+        """Trao thưởng Top hoàn thành sớm GĐ1, idempotent theo tournament/user/rank."""
+        actor=current_user() or {}
+        tour=_tour(tournament_id)
+        if not tour:
+            flash("Không tìm thấy giải đấu.","error")
+            return redirect_admin("tournaments")
+
+        ranking=_completion_ranking(tournament_id)
+        winners=[
+            row for row in ranking
+            if row.get("early_eligible") and int(row.get("finish_rank") or 0) in {1,2,3}
+        ]
+        if not winners:
+            flash("Chưa có HLV nào đủ điều kiện nhận thưởng hoàn thành sớm GĐ1.","warning")
+            return redirect_admin("tournaments")
+
+        state=_stage1_early_reward_state(tournament_id)
+        granted=dict(state.get("granted") or {})
+        newly_rewarded=[]
+        already_rewarded=[]
+
+        for row in winners:
+            uid=str(row.get("user_id") or "")
+            rank=int(row.get("finish_rank") or 0)
+            reward=_stage1_early_reward_amount(rank)
+            if not uid or reward["zcoin"]<=0:
+                continue
+
+            record=granted.get(uid) or {}
+            # Nếu state đã ghi complete thì bỏ qua toàn bộ notification/log phụ.
+            if record.get("status")=="granted":
+                already_rewarded.append(row)
+                continue
+
+            z_key=f"c1:{tournament_id}:stage1:early:{uid}:rank:{rank}:zcoin"
+            box_key=f"c1:{tournament_id}:stage1:early:{uid}:rank:{rank}:luckybox"
+            reason=f"Thưởng hoàn thành sớm Giai Đoạn 1 C1 · Hạng {rank}"
+
+            # RPC Zcoin đã có idempotency_key -> bấm lại không cộng trùng.
+            adjust_zcoin_balance(
+                uid,
+                reward["zcoin"],
+                reason,
+                actor.get("id"),
+                z_key,
+            )
+
+            # Lucky Box RPC cũng idempotent.
+            execute_query(
+                db.rpc("adjust_lucky_box_balance",{
+                    "p_user_id":uid,
+                    "p_amount":reward["lucky_box"],
+                    "p_source":"c1_stage1_early_reward",
+                    "p_description":reason,
+                    "p_idempotency_key":box_key,
+                    "p_metadata":{
+                        "tournament_id":str(tournament_id),
+                        "stage_code":"stage1",
+                        "finish_rank":rank,
+                        "completed_at":row.get("completed_at"),
+                    },
+                }),
+                "ops_c1_stage1_early_luckybox_reward",
+                attempts=2,
+            )
+
+            granted[uid]={
+                "status":"granted",
+                "finish_rank":rank,
+                "zcoin":reward["zcoin"],
+                "lucky_box":reward["lucky_box"],
+                "completed_at":row.get("completed_at"),
+                "granted_at":now_iso(),
+                "granted_by":str(actor.get("id") or ""),
+            }
+
+            # Lưu log thưởng tournament để Admin tra lại.
+            try:
+                execute_query(
+                    db.table("tournament_reward_grants").insert({
+                        "tournament_id":tournament_id,
+                        "rule_id":None,
+                        "user_id":uid,
+                        "reward_type":"zcoin",
+                        "reward_value":str(reward["zcoin"]),
+                        "reason":reason+" | Lucky Box: "+str(reward["lucky_box"]),
+                        "granted_at":now_iso(),
+                        "granted_by":actor.get("id"),
+                    }),
+                    "ops_c1_stage1_early_reward_log",
+                    attempts=1,
+                )
+            except Exception:
+                pass
+
+            create_user_notification(
+                uid,
+                "🏆 Chúc mừng hoàn thành sớm Giai Đoạn 1!",
+                (
+                    f"Bạn hoàn thành GĐ1 ở hạng {rank} và nhận "
+                    f"{reward['zcoin']:,} Zcoin + {reward['lucky_box']} Lucky Box."
+                ).replace(",","."),
+                f"/tournaments/{tournament_id}",
+                "c1_stage1_early_reward",
+            )
+            ttl_cache_delete(f"user:{uid}")
+            newly_rewarded.append(row)
+
+        # Ghi state sau khi RPC thành công; đây là lớp chống gửi thông báo/log trùng.
+        summary_names=[]
+        for row in winners:
+            rank=int(row.get("finish_rank") or 0)
+            reward=_stage1_early_reward_amount(rank)
+            summary_names.append(
+                f"#{rank} {row.get('display_name')}: {reward['zcoin']} Zcoin + {reward['lucky_box']} Lucky Box"
+            )
+
+        announcement_created=bool(state.get("announcement_created"))
+        if not announcement_created:
+            title="Chúc mừng các HLV đã hoàn thành sớm Giai Đoạn 1"
+            message=" · ".join(summary_names)
+            try:
+                create_admin_announcement(
+                    title=title[:40],
+                    message=message[:220],
+                    admin_user_id=actor.get("id"),
+                )
+                announcement_created=True
+            except Exception as exc:
+                app.logger.warning("C1 stage1 early reward announcement failed: %s",exc)
+
+        new_state={
+            "granted":granted,
+            "announcement_created":announcement_created,
+            "announcement_title":"Chúc mừng các HLV đã hoàn thành sớm Giai Đoạn 1",
+            "updated_at":now_iso(),
+        }
+        execute_query(
+            db.table("tournament_settings").upsert({
+                "tournament_id":tournament_id,
+                "setting_key":STAGE1_EARLY_REWARD_KEY,
+                "setting_value":new_state,
+                "updated_at":now_iso(),
+            },on_conflict="tournament_id,setting_key"),
+            "ops_c1_stage1_early_reward_state",
+            attempts=2,
+        )
+
+        cache_delete("_rz_players_all")
+        cache_delete("_rz_users_map")
+        cache_delete("_rz_current_user")
+
+        if newly_rewarded:
+            flash(
+                f"Đã trao thưởng hoàn thành sớm GĐ1 cho {len(newly_rewarded)} HLV và đăng thông báo chúc mừng.",
+                "success",
+            )
+        else:
+            flash("Các HLV Top hoàn thành sớm đã được trao thưởng trước đó. Không cộng trùng.","info")
+        return redirect_admin("tournaments")
+
     @app.post('/admin/tournaments/<tournament_id>/rewards/add')
     @login_required
     @admin_required
