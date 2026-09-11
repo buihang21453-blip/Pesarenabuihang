@@ -171,6 +171,8 @@ def register_routes(context):
         tournament_meta = None
         tournament_match = None
         tournament_result_proposal = {}
+        tournament_pair_completed_count = 0
+        tournament_pair_is_complete = False
         tournament_stage1_pool = []
         tournament_invite_members = []
         tournament_viewer_is_member = False
@@ -226,6 +228,18 @@ def register_routes(context):
                 if tid and mid:
                     mr = execute_query(db.table("tournament_matches").select("*").eq("id",mid).eq("tournament_id",tid).limit(1),"room_tournament_match_context",attempts=2)
                     tournament_match = (mr.data or [None])[0]
+                    if tournament_match and str(tournament_match.get("stage_code") or "") == "stage1":
+                        pair_ids = {str(tournament_match.get("home_user_id") or ""), str(tournament_match.get("away_user_id") or "")}
+                        cr = execute_query(
+                            db.table("tournament_matches").select("id,home_user_id,away_user_id,status").eq("tournament_id",tid).eq("stage_code","stage1").eq("status","completed"),
+                            "room_tournament_pair_completed_context",
+                            attempts=2,
+                        )
+                        tournament_pair_completed_count = sum(
+                            1 for row in (cr.data or [])
+                            if {str(row.get("home_user_id") or ""), str(row.get("away_user_id") or "")} == pair_ids
+                        )
+                        tournament_pair_is_complete = tournament_pair_completed_count >= 2
                     sr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key",f"match_result_proposal:{mid}").limit(1),"room_tournament_result_context",attempts=2)
                     tournament_result_proposal = ((sr.data or [{}])[0].get("setting_value") or {})
             except Exception as exc:
@@ -259,6 +273,8 @@ def register_routes(context):
             "tournament_meta": tournament_meta,
             "tournament_match": tournament_match,
             "tournament_result_proposal": tournament_result_proposal,
+            "tournament_pair_completed_count": tournament_pair_completed_count,
+            "tournament_pair_is_complete": tournament_pair_is_complete,
             "tournament_stage1_pool": tournament_stage1_pool,
             "tournament_stage1_pool_count": len(tournament_stage1_pool),
             "tournament_invite_members": tournament_invite_members,

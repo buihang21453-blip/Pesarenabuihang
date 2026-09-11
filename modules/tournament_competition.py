@@ -3033,7 +3033,7 @@ def register_routes(context):
                     db.table("tournament_matches").update({"status":"pending","updated_at":now_iso()}).eq("id",next_match.get("id")).eq("tournament_id",tournament_id),
                     "ops_c1_confirm_auto_next_match_pending",attempts=2,
                 )
-            reset_result=execute_query(
+            execute_query(
                 db.table("match_rooms").update({
                     "note":_room_note(meta),
                     "status":"waiting_ready",
@@ -3052,22 +3052,40 @@ def register_routes(context):
                 }).eq("id",room_id).eq("status","waiting_result_confirm"),
                 "ops_c1_confirm_auto_open_next_leg",attempts=2,
             )
-            if reset_result.data or []:
-                cache_delete("_rz_rooms_all")
-                cache_delete("_rz_current_pending_invites")
-                ttl_cache_delete("rooms_raw")
+
+            # V1.5.30: Supabase UPDATE có thể thành công nhưng response.data rỗng.
+            # Không dùng response.data để quyết định cặp đấu đã kết thúc. Xóa cache trước,
+            # sau đó đọc trực tiếp DB và chỉ coi chuyển Trận 2 thành công khi cả status
+            # lẫn tournament_match_id đều đúng leg tiếp theo.
+            cache_delete("_rz_rooms_all")
+            cache_delete("_rz_current_pending_invites")
+            ttl_cache_delete("rooms_raw")
+            verify_room_row,_=_one(
+                db.table("match_rooms").select("id,status,note,guest_ready,updated_at").eq("id",room_id),
+                "ops_c1_confirm_auto_next_verify",
+            )
+            verify_meta=_room_meta(verify_room_row) if verify_room_row else {}
+            if (
+                verify_room_row
+                and str(verify_room_row.get("status") or "")=="waiting_ready"
+                and str((verify_meta or {}).get("tournament_match_id") or "")==str(next_match.get("id") or "")
+            ):
                 flash("✅ Đã xác nhận Trận 1. Trận 2 đã sẵn sàng; bạn hãy bấm Sẵn Sàng để Chủ phòng quay đội.","success")
                 return redirect(url_for("room_detail",room_id=room_id))
 
-            # Nếu room vừa bị request khác thay đổi, không giả vờ đã mở Trận 2.
-            latest=get_room(room_id)
-            latest_meta=_room_meta(latest) if latest else {}
-            if latest and str(latest.get("status") or "")=="waiting_ready" and str((latest_meta or {}).get("tournament_match_id") or "")==str(next_match.get("id") or ""):
-                cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
-                flash("✅ Trận 2 đã sẵn sàng. Đội khách hãy bấm Sẵn Sàng.","success")
-                return redirect(url_for("room_detail",room_id=room_id))
+            # Có Trận 2 nhưng reset room chưa xác minh được: tuyệt đối KHÔNG ghi đè
+            # room thành confirmed, vì như vậy UI sẽ hiểu nhầm là cặp đấu đã hoàn tất.
+            app.logger.error(
+                "C1 auto next leg verify failed room=%s next_match=%s status=%s meta_match=%s",
+                room_id,
+                next_match.get("id"),
+                (verify_room_row or {}).get("status"),
+                (verify_meta or {}).get("tournament_match_id"),
+            )
+            flash("Đã chốt Trận 1 nhưng chưa thể mở Trận 2. Hãy tải lại phòng; hệ thống sẽ không đánh dấu cặp đấu là hoàn tất.","warning")
+            return redirect(url_for("room_detail",room_id=room_id))
 
-        # Không còn lượt kế tiếp: khóa room như cũ.
+        # Chỉ khi thật sự không còn lượt kế tiếp mới khóa room.
         execute_query(db.table("match_rooms").update({"status":"confirmed","updated_at":now_iso()}).eq("id",room_id),"ops_tournament_room_confirmed",attempts=2)
         cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
         flash("Đã xác nhận kết quả. Cặp đấu đã hoàn tất và BXH giải đã được cập nhật.","success")

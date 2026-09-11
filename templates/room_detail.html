@@ -355,8 +355,13 @@
                         {% elif room.status == 'confirmed' and (room_room_viewer_is_host or room_viewer_is_guest) %}
                         {% if is_tournament_room and tournament_meta %}
                         <div class="room-center-primary-actions room-action-zone">
+                            {% if tournament_pair_is_complete %}
                             <div class="room-center-state-pill">✅ Cặp đấu đã hoàn tất</div>
                             <a class="btn gray room-center-action-btn" href="{{ url_for('tournament_detail', tournament_id=tournament_meta.tournament_id) }}">Về giải đấu</a>
+                            {% else %}
+                            <div class="room-center-state-pill">✅ Trận 1 đã hoàn tất · Đang chuẩn bị Trận 2</div>
+                            <a class="btn gold room-center-action-btn" href="{{ url_for('room_detail', room_id=room.id) }}">Tải lại phòng</a>
+                            {% endif %}
                         </div>
                         {% else %}
                         {% set current_has_rematch_ready = (room_room_viewer_is_host and room.rematch_host_ready) or (room_viewer_is_guest and room.rematch_guest_ready) %}

@@ -1,0 +1,10 @@
+PES ARENA V1.5.30
+
+FIX C1 TRẬN 1 -> TRẬN 2
+- Sửa lỗi mới đá 1 trận nhưng phòng hiện "Cặp đấu đã hoàn tất".
+- Không còn dùng response.data của Supabase UPDATE để quyết định chuyển Trận 2 thành công.
+- Sau khi Guest xác nhận Trận 1: xóa cache, đọc trực tiếp DB và xác minh room.status=waiting_ready + tournament_match_id đúng Trận 2.
+- Nếu có Trận 2 nhưng xác minh reset room thất bại, tuyệt đối không ghi đè room thành confirmed.
+- UI chỉ hiện "Cặp đấu đã hoàn tất" khi có đủ 2 trận completed của đúng cặp HLV.
+- Đồng bộ APP_VERSION lên V1.5.30.
+- Không thay đổi database schema / SQL migration.
