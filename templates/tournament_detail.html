@@ -41,22 +41,41 @@
   <div class="td-gate-lock">🔒</div>
   <h2>📅 ĐẶT LỊCH THI ĐẤU</h2>
   <p>Trước khi vào xem giải đấu, HLV bắt buộc phải khai báo giờ rảnh trong <strong>Hôm nay / Ngày mai / Ngày kia</strong>.</p>
-  <p><strong>Chỉ cần lưu ít nhất 1 khung giờ hợp lệ. Sau khi lưu, hệ thống sẽ tự mở nội dung giải đấu.</strong></p>
-  <form method="post" action="{{ url_for('admin_tournament_test_availability_simple_save',tournament_id=tournament.id) if c1_test_account|default(false) else url_for('tournament_availability_simple_save',tournament_id=tournament.id) }}" class="td-gate-form">
-    <div class="td-gate-days">
-      {% for day in availability.days %}
-      <div class="td-gate-day">
-        <strong>{{ day.label }}</strong><span>{{ day.weekday }}</span>
-        <div class="td-gate-time">
-          <label>Từ giờ<input type="time" name="start_{{ loop.index0 }}" step="60"></label>
-          <div class="td-gate-arrow">→</div>
-          <label>Đến giờ<input type="time" name="end_{{ loop.index0 }}" step="60"></label>
+
+  {% for flexday in availability.days if not flexday.is_weekend and not c1_test_account|default(false) %}
+  <form id="gate-flex-{{ flexday.date }}" method="post" action="{{ url_for('tournament_availability_custom_add',tournament_id=tournament.id) }}"></form>
+  {% endfor %}
+
+  <form method="post" action="{{ url_for('admin_tournament_test_availability_simple_save',tournament_id=tournament.id) if c1_test_account|default(false) else url_for('tournament_availability_save',tournament_id=tournament.id) }}" class="td-fixed-schedule" data-fixed-schedule>
+    <div class="td-av-days">
+    {% for day in availability.days %}
+      <div class="td-av-day">
+        <div class="td-av-day-head">
+          <div><strong>{{ day.label }}</strong><span>{{ day.weekday }}</span></div>
+          <div class="td-av-day-tools"><label class="td-av-all"><input type="checkbox" data-select-all-day> Tích toàn bộ</label></div>
         </div>
+        <div class="td-av-slots">
+          {% for slot in day.slots %}
+          <label class="td-av-slot"><input type="checkbox" name="slots" value="{{ slot.iso }}" {{ 'checked' if slot.iso in availability.mine_set else '' }}><span>{{ slot.label or slot.time }}</span></label>
+          {% else %}<small>Không còn khung giờ nào trong ngày này.</small>{% endfor %}
+        </div>
+        {% if not day.is_weekend and not c1_test_account|default(false) %}
+        <div class="td-av-flex">
+          <div class="td-av-flex-title">🕒 Giờ linh hoạt</div>
+          <input type="hidden" name="day_date" value="{{ day.date }}" form="gate-flex-{{ day.date }}">
+          <div class="td-av-flex-fields">
+            <label>Từ (24h)<input type="text" name="start_time" form="gate-flex-{{ day.date }}" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="18:30" title="Giờ 24h, ví dụ 18:30" autocomplete="off"></label>
+            <label>Đến (24h)<input type="text" name="end_time" form="gate-flex-{{ day.date }}" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="22:00" title="Giờ 24h, ví dụ 22:00" autocomplete="off"></label>
+            <button class="btn gold" type="submit" form="gate-flex-{{ day.date }}">＋ Thêm</button>
+          </div>
+        </div>
+        {% elif day.is_weekend %}
+        <div class="td-av-weekend-note">🕒 Thứ 7 / Chủ nhật: giờ thi đấu linh hoạt sẵn, không cần khai báo thêm khoảng giờ riêng.</div>
+        {% endif %}
       </div>
-      {% endfor %}
+    {% endfor %}
     </div>
-    <div class="td-gate-submit"><button class="btn green" type="submit">💾 LƯU GIỜ RẢNH & VÀO GIẢI ĐẤU</button></div>
-    <p class="td-gate-note">Bắt buộc điền ít nhất 1 ngày. Khi chưa lưu giờ rảnh, các nội dung bên trong giải vẫn bị khóa.</p>
+    <div class="td-av-save"><button class="btn green" type="submit">💾 Lưu giờ rảnh của tôi</button><small>Mỗi khung = 1 giờ · chỉ áp dụng Hôm nay / Ngày mai / Ngày kia.</small></div>
   </form>
 </section>
 {% else %}
@@ -80,7 +99,7 @@
 {% else %}
 <nav class="td-tabs" role="tablist" aria-label="Điều hướng giải đấu"><button type="button" class="is-active" data-tab-target="center">🏟️ Trung tâm</button><button type="button" data-tab-target="stage1">⚽ GĐ1</button><button type="button" data-tab-target="schedule">📅 Lịch thi đấu</button><button type="button" data-tab-target="league">🏆 GĐ2</button><button type="button" data-tab-target="knockout">🥇 Knockout</button><button type="button" data-tab-target="info">ℹ️ Thông tin</button></nav>
 {% endif %}
-<section class="td-section is-active" id="rooms" data-tab-panel="center"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><h2 style="margin:0">🏟️ Phòng thi đấu</h2>{% if member and not admin_participant_view|default(false) and event_ops.get('timing',{}).get('stage1_start',{}).get('expired') %}<button class="btn" type="button" data-opening-replay>🏆 Xem lễ khai mạc</button>{% endif %}</div>
+<section class="td-section is-active" id="rooms" data-tab-panel="center"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><h2 style="margin:0">🏟️ Phòng thi đấu</h2></div>
 <p style="color:#91a3b1;font-size:12px">Khu trung tâm để theo dõi phòng giải, HLV đang chờ và Host đang rảnh.</p>
 <div class="td-host-ready"><strong style="width:100%;color:#f1ca68">Host đang rảnh</strong><small style="width:100%;color:#91a3b1">Tự động hiển thị HLV có Host, đang online và không ở trong phòng đấu.</small>{% for h in host_ready %}<span class="td-host-chip">🟢 {{ h.display_name }} · {{ h.region }}</span>{% else %}<small style="color:#91a3b1">Hiện chưa có Host nào đang rảnh.</small>{% endfor %}</div>
 {% if not admin_participant_view|default(false) %}<div class="td-host-guide">

@@ -1,0 +1,6 @@
+PES ARENA V1.5.47 - GATE LỊCH THI ĐẤU CHÍNH THỨC
+
+- Bỏ nút “🏆 Xem lễ khai mạc”.
+- Cổng bắt buộc trước khi vào giải dùng đúng giao diện lịch thi đấu chính thức: Hôm nay / Ngày mai / Ngày kia, các khung giờ chia sẵn, Tích toàn bộ, giờ linh hoạt (HLV thật) và nút Lưu giờ rảnh của tôi.
+- Xóa dòng “Chỉ cần lưu ít nhất 1 khung giờ hợp lệ. Sau khi lưu, hệ thống sẽ tự mở nội dung giải đấu.”
+- Giữ nguyên cơ chế khóa nội dung giải khi HLV chưa khai báo giờ rảnh.
