@@ -1,0 +1,21 @@
+PES ARENA V1.5.19 - CLEAN ADMIN /TOURNAMENTS + ALL HLV AVAILABILITY
+
+Admin /tournaments:
+- Ẩn banner "ADMIN TEST TOÀN BỘ GIAO DIỆN C1".
+- Ẩn dòng ACTIVE / Đang tham gia / Pot / CLB giả của Admin.
+- Ẩn cảnh báo "Bạn chưa đặt lịch thi đấu" của tài khoản Admin.
+- Ẩn nút "Xem lễ khai mạc" với Admin.
+- Ẩn "HƯỚNG DẪN TEST HOST" với Admin.
+- Ẩn "Trận của tôi" với Admin.
+- Ẩn toàn bộ "Đối thủ của tôi" với Admin.
+- Bỏ khối "ADMIN TEST LỊCH NHƯ HLV" và thông báo "Bạn chưa có đối thủ cần xem lịch".
+
+Lịch thi đấu / Giờ rảnh Admin:
+- Hiển thị toàn bộ HLV thật trong giải.
+- Cho biết: Đã đăng ký giờ rảnh / Đã có lịch nên không cần khai / Chưa đăng ký.
+- Hiển thị từng giờ rảnh trong Hôm nay, Ngày mai, Ngày kia.
+- Hiển thị lịch đã chốt trong 3 ngày tới và đối thủ.
+- Hiển thị Host + khu vực.
+- Có tổng số HLV / đã khai / đã có lịch / chưa đăng ký.
+
+Không thay đổi giao diện HLV thường, BXH, Random CLB, Room C1, Result Confirmation hoặc Rank/RP.

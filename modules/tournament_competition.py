@@ -376,6 +376,103 @@ def register_routes(context):
                 day_chips[d["date"]]=[]
         return {"days":days,"mine":mine,"mine_set":mine_set,"status":status,"slot_count":len(mine_set),"day_ranges":day_ranges,"day_chips":day_chips}
 
+    def _admin_all_availability_payload(tournament_id, matches=None):
+        """Admin xem lịch rảnh của toàn bộ HLV thật trong 3 ngày tới."""
+        members=_all_members(tournament_id)
+        ids=[str(x.get("user_id") or "") for x in members if x.get("user_id")]
+        rows=_availability_rows(tournament_id,ids) if ids else []
+        by_user={}
+        for row in rows:
+            by_user.setdefault(str(row.get("user_id") or ""),[]).append(row)
+
+        days=_availability_days()
+        day_dates=[d.get("date") for d in days]
+        vn_tz=timezone(timedelta(hours=7))
+        all_matches=list(matches or _matches(tournament_id))
+        result=[]
+
+        for mem in members:
+            uid=str(mem.get("user_id") or "")
+            slots=sorted(by_user.get(uid,[]),key=lambda x:str(x.get("slot_iso") or ""))
+            grouped={d:[] for d in day_dates}
+            for row in slots:
+                try:
+                    dt=datetime.fromisoformat(str(row.get("slot_iso") or "")).astimezone(vn_tz)
+                except Exception:
+                    continue
+                dkey=dt.date().isoformat()
+                if dkey in grouped:
+                    grouped[dkey].append({
+                        "iso":row.get("slot_iso"),
+                        "time":dt.strftime("%H:%M"),
+                        "label":dt.strftime("%H:%M"),
+                    })
+
+            own_matches=[
+                mt for mt in all_matches
+                if uid in {str(mt.get("home_user_id") or ""),str(mt.get("away_user_id") or "")}
+            ]
+            has_schedule=_has_upcoming_scheduled_match_3day(uid,own_matches)
+            scheduled=[]
+            for mt in own_matches:
+                if str(mt.get("status") or "") not in {"pending","scheduled"} or not mt.get("scheduled_at"):
+                    continue
+                try:
+                    dt=datetime.fromisoformat(str(mt.get("scheduled_at")).replace("Z","+00:00"))
+                    if dt.tzinfo is None:
+                        dt=dt.replace(tzinfo=vn_tz)
+                    dt=dt.astimezone(vn_tz)
+                except Exception:
+                    continue
+                now=datetime.now(vn_tz)
+                if dt < now or dt.date() > now.date()+timedelta(days=2):
+                    continue
+                opponent_uid=(
+                    str(mt.get("away_user_id") or "")
+                    if uid==str(mt.get("home_user_id") or "")
+                    else str(mt.get("home_user_id") or "")
+                )
+                opponent=next((x for x in members if str(x.get("user_id") or "")==opponent_uid),{})
+                scheduled.append({
+                    "at":dt.isoformat(),
+                    "label":dt.strftime("%d/%m · %H:%M"),
+                    "opponent_name":opponent.get("display_name") or "HLV",
+                })
+
+            if has_schedule:
+                status="scheduled"
+                status_label="📅 Đã có lịch · Không cần khai"
+            elif slots:
+                status="registered"
+                status_label="✅ Đã đăng ký giờ rảnh"
+            else:
+                status="missing"
+                status_label="🔴 Chưa đăng ký"
+
+            result.append({
+                "user_id":uid,
+                "display_name":mem.get("display_name") or "HLV",
+                "zalo_name":mem.get("zalo_name") or "",
+                "has_host":bool(mem.get("has_host")),
+                "host_region":mem.get("host_region") or "",
+                "status":status,
+                "status_label":status_label,
+                "slot_count":len(slots),
+                "slots_by_day":grouped,
+                "scheduled":scheduled,
+            })
+
+        status_order={"missing":0,"registered":1,"scheduled":2}
+        result.sort(key=lambda x:(status_order.get(x.get("status"),9),(x.get("display_name") or "").lower()))
+        return {
+            "days":days,
+            "rows":result,
+            "missing_count":sum(1 for x in result if x.get("status")=="missing"),
+            "registered_count":sum(1 for x in result if x.get("status")=="registered"),
+            "scheduled_count":sum(1 for x in result if x.get("status")=="scheduled"),
+            "total":len(result),
+        }
+
     def _c1_test_availability_slots(tournament_id,user_id):
         state=_setting(tournament_id,f"c1_test_availability_{str(user_id)}",{}) or {}
         allowed={slot["iso"] for day in _availability_days() for slot in day["slots"]}
@@ -1205,6 +1302,7 @@ def register_routes(context):
                 "slot_count":len(saved_slots),"day_ranges":{},"day_chips":{},
             }
             data["admin_test_mode"]=True
+            data["admin_all_availability"]=_admin_all_availability_payload(tournament_id,data.get("matches") or [])
             data["me_progress"]=None
             data["rewards"]=_reward_summary(tournament_id,uid)
         elif _is_c1_test_user(tournament_id,uid) and not data.get("member"):
