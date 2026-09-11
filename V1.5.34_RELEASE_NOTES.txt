@@ -1,0 +1,9 @@
+PES ARENA V1.5.34 - C1 Guest Ready Sync Fix
+
+- Fix C1: Guest bấm Sẵn Sàng nhưng Host vẫn hiện ĐỢI KHÁCH SẴN SÀNG.
+- Tournament Ready cập nhật trực tiếp theo room_id sau khi đã xác thực đúng Guest + waiting_ready.
+- Đọc lại DB ngay sau update để xác minh guest_ready=true trước khi báo thành công.
+- Host tiếp tục dùng state polling hiện có; guest_ready nằm trong state_key nên Host tự refresh sang nút QUAY ĐỘI.
+- Không thay đổi SQL/database schema.
+- Giữ nguyên Rank/Quick Match và luồng C1 Trận 1 -> trận tiếp theo của V1.5.33.
+- APP_VERSION = V1.5.34.

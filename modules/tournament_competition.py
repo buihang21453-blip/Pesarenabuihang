@@ -3016,7 +3016,7 @@ def register_routes(context):
         execute_query(db.table("tournament_matches").update({"home_score":hs,"away_score":aw,"winner_user_id":winner,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_confirm",attempts=2)
         prop.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
 
-        # V1.5.33: C1 dùng đúng luồng phòng Rank cho trận kế tiếp; không hiện trạng thái trung gian.
+        # V1.5.34: C1 dùng đúng luồng phòng Rank cho trận kế tiếp; không hiện trạng thái trung gian.
         # Không có trạng thái trung gian "mở Trận 2" / "đồng bộ trận tiếp theo".
         # Còn trận -> reset chính room về waiting_ready; hết trận -> confirmed.
         # Đọc lịch trực tiếp sau khi chốt kết quả để tránh phụ thuộc trạng thái cũ của room.

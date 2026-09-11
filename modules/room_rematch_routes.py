@@ -228,7 +228,7 @@ def register_routes(context):
             flash("Không tìm thấy phòng.", "danger")
             return redirect(url_for("dashboard"))
 
-        # C1 V1.5.33: nếu vì dữ liệu cũ/phản hồi chậm mà room vẫn còn ở confirmed
+        # C1 V1.5.34: nếu vì dữ liệu cũ/phản hồi chậm mà room vẫn còn ở confirmed
         # trong khi lịch còn trận, dùng đúng thao tác "Sẵn Sàng -> Host quay đội" như Rank.
         # Không chặn Tournament và không bắt HLV quay về trang giải để mở Trận 2.
         room_note = str(room.get("note") or "")

@@ -570,10 +570,35 @@ def register_routes(context):
         patch = {"guest_ready": True, "updated_at": now_iso()}
         if not is_tournament_room:
             patch["note"] = "Khách đã sẵn sàng. Chủ phòng có thể quay đội."
-        execute_query(
-            db.table("match_rooms").update(patch).eq("id", room_id).eq("status", "waiting_ready"),
-            "room_guest_ready",
-        )
+
+        # V1.5.34: C1 dùng đúng cơ chế Ready của Rank nhưng xác minh trực tiếp DB.
+        # Trước đây request có thể trả về thành công dù update theo status không tác động
+        # dòng nào; Guest thấy thông báo đã sẵn sàng trong khi Host vẫn đọc False.
+        if is_tournament_room:
+            execute_query(
+                db.table("match_rooms").update(patch).eq("id", room_id),
+                "room_guest_ready_tournament",
+                attempts=2,
+            )
+            verified_result = execute_query(
+                db.table("match_rooms").select("id,status,guest_user_id,guest_ready,updated_at").eq("id", room_id).limit(1),
+                "room_guest_ready_tournament_verify",
+                attempts=2,
+            )
+            verified = dict((verified_result.data or [{}])[0]) if verified_result is not None else {}
+            if str(verified.get("status") or "") != "waiting_ready" or not bool(verified.get("guest_ready")):
+                app.logger.warning(
+                    "C1 ready verify failed room=%s status=%s guest_ready=%s",
+                    room_id, verified.get("status"), verified.get("guest_ready"),
+                )
+                flash("Chưa đồng bộ được trạng thái Sẵn Sàng. Hãy bấm lại một lần.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+        else:
+            execute_query(
+                db.table("match_rooms").update(patch).eq("id", room_id).eq("status", "waiting_ready"),
+                "room_guest_ready",
+            )
+
         cache_delete("_rz_rooms_all")
         ttl_cache_delete("rooms_raw")
         flash("Bạn đã sẵn sàng.", "success")
