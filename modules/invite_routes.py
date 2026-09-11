@@ -116,11 +116,8 @@ def register_routes(context):
             flash("Không tìm thấy đối thủ.", "danger")
             return redirect(url_for("players"))
 
-        # V1.5.22: tài khoản Admin thật không được tham gia lời mời Rank/Friendly.
-        # Đây là chặn backend, không phụ thuộc việc Admin có bị ẩn khỏi danh sách UI.
-        if is_admin_user(user):
-            flash("Tài khoản Admin không tham gia thi đấu Rank/Friendly. Hãy chuyển sang tài khoản Test để kiểm tra.", "warning")
-            return redirect(url_for("players"))
+        # V1.5.57: Admin được CHỦ ĐỘNG gửi lời mời Rank thủ công tới HLV thường.
+        # Chiều ngược lại vẫn khóa: Admin không xuất hiện như một đối thủ có thể được mời.
         if is_admin_user(opponent):
             flash("Tài khoản Admin không nhận lời mời thi đấu. Hãy chọn HLV khác.", "warning")
             return redirect(url_for("players"))

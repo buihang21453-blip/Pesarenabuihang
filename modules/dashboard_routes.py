@@ -20,7 +20,7 @@ def register_routes(context):
         user = current_user()
         try:
             player_rows = list_players()
-            presence_rows = list_players(include_admin=True)
+            presence_rows = list_players()
             matches = list_matches()
             rooms = list_rooms()
             invite_count = current_pending_invite_count()
@@ -149,7 +149,7 @@ def register_routes(context):
     @app.route("/players")
     @login_required
     def players():
-        player_rows = invite_visible_players(current_user(), include_admin=True, force_invisible_refresh=True)
+        player_rows = invite_visible_players(current_user(), include_admin=False, force_invisible_refresh=True)
         rooms = list_rooms()
         activity_map = build_player_activity_map(rooms=rooms)
         solo_room_user_ids = {

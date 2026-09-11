@@ -1,0 +1,6 @@
+PES ARENA V1.5.57
+
+- Admin được chủ động gửi lời mời Rank thủ công tới HLV thường.
+- HLV thường vẫn không thể mời Admin.
+- Admin không xuất hiện trong danh sách Player/đối thủ online dùng cho lời mời Rank.
+- Tìm Nhanh của Admin vẫn bị khóa; thay đổi chỉ áp dụng lời mời thủ công.
