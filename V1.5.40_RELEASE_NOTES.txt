@@ -1,0 +1,8 @@
+PES ARENA V1.5.40 - C1 Auto Next Match Like Rank
+
+- C1 no longer stops at room.status=confirmed after every confirmed result when the same pair still has a scheduled next match.
+- After Guest confirms Match N, the current C1 room is immediately rebound to Match N+1 and reset to waiting_ready, matching Rank flow.
+- Clears teams, scores, ready state and transient room match fields while preserving the completed tournament result.
+- Updates tournament_match_id/current_leg_no/transition_token in room metadata for the next leg.
+- Stage1 legacy schedules missing a required next leg are repaired at confirmation time.
+- Only leaves the room in confirmed/final state when the pair truly has no next match under the tournament schedule.

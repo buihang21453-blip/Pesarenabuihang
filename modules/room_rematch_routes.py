@@ -250,6 +250,26 @@ def register_routes(context):
             if room.get("status") != "confirmed":
                 return redirect(url_for("room_detail", room_id=room_id))
 
+            # V1.5.39: metadata phòng cũ có thể thiếu stage_code. Lấy lại từ chính
+            # tournament_match hiện tại trước khi tìm trận kế tiếp để không truy vấn sai stage.
+            current_match_row = None
+            if tournament_id and current_mid:
+                try:
+                    cur = execute_query(
+                        db.table("tournament_matches").select("*").eq("tournament_id", tournament_id).eq("id", current_mid).limit(1),
+                        "room_c1_current_match_for_rematch",
+                        attempts=2,
+                    )
+                    current_match_row = (cur.data or [None])[0] if cur is not None else None
+                except Exception:
+                    current_match_row = None
+                if current_match_row:
+                    stage_code = str(current_match_row.get("stage_code") or stage_code)
+                    pair_ids = {
+                        str(current_match_row.get("home_user_id") or room.get("host_user_id") or ""),
+                        str(current_match_row.get("away_user_id") or room.get("guest_user_id") or ""),
+                    }
+
             rows = []
             if tournament_id:
                 q = db.table("tournament_matches").select("*").eq("tournament_id", tournament_id)
@@ -267,7 +287,7 @@ def register_routes(context):
             candidates.sort(key=lambda r: (int(r.get("leg_no") or 999), str(r.get("created_at") or ""), str(r.get("id") or "")))
             next_match = candidates[0] if candidates else None
 
-            # V1.5.38: cứu dữ liệu lịch GĐ1 cũ bị thiếu leg 2.
+            # V1.5.39: cứu dữ liệu lịch GĐ1 cũ bị thiếu leg 2.
             # Nếu trận hiện tại đã hoàn tất, cặp mới có 1 bản ghi nhưng luật GĐ1
             # yêu cầu 2 trận/cặp thì tạo đúng leg còn thiếu ngay lúc bấm Đá Tiếp.
             # Không tạo trong lúc render để tránh GET làm thay đổi dữ liệu.

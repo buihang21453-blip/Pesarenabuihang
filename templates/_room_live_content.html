@@ -318,9 +318,11 @@
                             <div class="room-center-state-pill">✅ Cặp đấu đã hoàn tất</div>
                             <a class="btn gray room-center-action-btn" href="{{ url_for('tournament_detail', tournament_id=tournament_meta.tournament_id) }}">Về giải đấu</a>
                             {% else %}
-                            {# V1.5.38: C1 dùng đúng UX Đá Tiếp như Rank, kể cả lịch cũ thiếu leg 2.
-                               Bấm Đá Tiếp mới reset phòng sang waiting_ready của trận kế tiếp. #}
-                            {% if tournament_has_next_match %}
+                            {# V1.5.39: Với C1 GĐ1, KHÔNG được suy ra "đã hoàn tất" chỉ vì truy vấn
+                               has_next_match trả False. Chỉ khóa cặp khi backend chứng minh is_complete=True.
+                               Route room_rematch là nguồn sự thật cuối cùng và sẽ tìm/tạo leg 2 an toàn. #}
+                            {% set c1_stage1_can_continue = (tournament_meta.stage_code == 'stage1') or (room.team_tier == 'TOURNAMENT_GD1') %}
+                            {% if c1_stage1_can_continue or tournament_has_next_match %}
                             <form method="post" action="{{ url_for('room_rematch', room_id=room.id) }}">
                                 <button class="btn gold room-center-action-btn" type="submit">Đá Tiếp</button>
                             </form>

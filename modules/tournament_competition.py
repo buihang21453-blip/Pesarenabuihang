@@ -3049,32 +3049,125 @@ def register_routes(context):
         execute_query(db.table("tournament_matches").update({"home_score":hs,"away_score":aw,"winner_user_id":winner,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_confirm",attempts=2)
         prop.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
 
-        # V1.5.38: giống Rank thật sự: sau khi xác nhận kết quả, phòng chỉ về confirmed.
-        # Nếu lịch còn trận của đúng cặp, giao diện hiện nút Đá Tiếp; khi bấm,
-        # room_rematch_routes sẽ reset CHÍNH phòng này sang waiting_ready và gắn trận kế tiếp.
-        # Không tự chuyển trận ngay trong route xác nhận để tránh state nửa cũ/nửa mới.
+        # V1.5.40: C1 dùng đúng nhịp của Rank. Ngay khi kết quả Trận N được xác nhận,
+        # nếu đúng cặp còn Trận N+1 thì chuyển CHÍNH room hiện tại sang trận kế tiếp và
+        # reset về waiting_ready. Không giữ room ở confirmed để người chơi phải bấm Đá Tiếp.
         pair_state=_pair_flow_state(tournament_id, match)
-        remaining_rows=[
-            r for r in pair_state.get("matches",[])
-            if str(r.get("id") or "") != str(match.get("id") or "")
-            and str(r.get("status") or "").lower() not in {"completed", "cancelled"}
-        ]
+        next_match=pair_state.get("next_match")
 
+        # Dữ liệu GĐ1 cũ có thể thiếu sẵn row lượt tiếp theo. Nếu luật của stage vẫn yêu cầu
+        # thêm trận cho đúng cặp thì tạo row thiếu ngay tại thời điểm xác nhận, tương tự Rank
+        # tạo phiên trận mới sau khi trận cũ hoàn tất.
+        if not next_match and str(match.get("stage_code") or "")=="stage1" and pair_state.get("missing_count",0)>0:
+            used_legs={int(r.get("leg_no") or 0) for r in pair_state.get("matches",[])}
+            expected=max(2,int(pair_state.get("total_count") or 2))
+            missing_leg=next((leg for leg in range(1,expected+1) if leg not in used_legs),len(used_legs)+1)
+            created=execute_query(
+                db.table("tournament_matches").insert({
+                    "tournament_id":tournament_id,
+                    "stage_code":"stage1",
+                    "round_code":match.get("round_code"),
+                    "home_user_id":match.get("away_user_id"),
+                    "away_user_id":match.get("home_user_id"),
+                    "status":"pending",
+                    "leg_no":missing_leg,
+                    "created_at":now_iso(),
+                    "updated_at":now_iso(),
+                }),
+                "ops_c1_auto_create_next_match_after_confirm",attempts=2,
+            )
+            next_match=(created.data or [None])[0] if created is not None else None
+
+        if next_match:
+            # Giữ lịch sử match_id để debug/đối soát nhưng room luôn trỏ vào trận hiện tại.
+            history=list(meta.get("previous_match_ids") or [])
+            current_mid=str(match.get("id") or "")
+            if current_mid and current_mid not in history:
+                history.append(current_mid)
+            dm=_decorate_matches(tournament_id,[next_match])[0]
+            meta.update({
+                "tournament_match_id":str(next_match.get("id") or ""),
+                "stage_code":next_match.get("stage_code") or match.get("stage_code"),
+                "home_user_id":str(next_match.get("home_user_id") or ""),
+                "away_user_id":str(next_match.get("away_user_id") or ""),
+                "home_name":dm.get("home_name"),
+                "away_name":dm.get("away_name"),
+                "previous_match_ids":history,
+                "current_leg_no":int(next_match.get("leg_no") or (int(match.get("leg_no") or 1)+1)),
+                "transition_token":now_iso(),
+            })
+
+            # Bảo đảm trận kế tiếp ở trạng thái pending trước khi mở lại room.
+            if str(next_match.get("status") or "").lower()!="pending":
+                execute_query(
+                    db.table("tournament_matches").update({
+                        "status":"pending","updated_at":now_iso(),
+                    }).eq("id",next_match.get("id")).eq("tournament_id",tournament_id),
+                    "ops_c1_auto_next_match_pending",attempts=2,
+                )
+
+            room_patch={
+                "note":_room_note(meta),
+                "status":"waiting_ready",
+                "guest_ready":False,
+                "host_team":None,
+                "guest_team":None,
+                "host_team_overall":None,
+                "guest_team_overall":None,
+                "host_team_logo_url":None,
+                "guest_team_logo_url":None,
+                "host_team_league":None,
+                "guest_team_league":None,
+                "host_score":None,
+                "guest_score":None,
+                "match_id":None,
+                "submitted_by_id":None,
+                "confirmed_by_id":uid,
+                "invite_id":None,
+                "state_expires_at":None,
+                "match_mode":"tournament",
+                "team_tier":"TOURNAMENT_GD1" if str(next_match.get("stage_code") or "")=="stage1" else "TOURNAMENT",
+                "updated_at":now_iso(),
+            }
+            moved=execute_query(
+                db.table("match_rooms").update(room_patch).eq("id",room_id).eq("status","waiting_result_confirm"),
+                "ops_c1_confirm_auto_advance_same_room",attempts=2,
+            )
+            if not (moved.data or []):
+                latest=get_room(room_id)
+                latest_meta=_room_meta(latest) if latest else {}
+                if not (
+                    latest and str(latest.get("status") or "")=="waiting_ready"
+                    and str((latest_meta or {}).get("tournament_match_id") or "")==str(next_match.get("id") or "")
+                ):
+                    # Kết quả trận cũ đã được ghi. Không được báo cặp hoàn tất chỉ vì reset room lỗi.
+                    execute_query(
+                        db.table("match_rooms").update({
+                            "status":"confirmed","guest_ready":False,"state_expires_at":None,"updated_at":now_iso(),
+                        }).eq("id",room_id),
+                        "ops_c1_confirm_auto_advance_fallback_confirmed",attempts=2,
+                    )
+                    cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
+                    flash("Kết quả đã được xác nhận nhưng phòng chưa tự mở trận kế tiếp. Hãy tải lại phòng và bấm Đá Tiếp.","warning")
+                    return redirect(url_for("room_detail",room_id=room_id))
+
+            cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
+            flash(f"Đã xác nhận Trận {int(match.get('leg_no') or 1)}. Phòng đã chuyển sang Trận {int(next_match.get('leg_no') or (int(match.get('leg_no') or 1)+1))} và chờ Sẵn Sàng.","success")
+            return redirect(url_for("room_detail",room_id=room_id))
+
+        # Chỉ khi không còn bất kỳ trận kế tiếp nào theo lịch/luật của đúng cặp mới kết thúc.
         execute_query(
             db.table("match_rooms").update({
                 "status":"confirmed",
                 "guest_ready":False,
                 "state_expires_at":None,
+                "confirmed_by_id":uid,
                 "updated_at":now_iso(),
             }).eq("id",room_id),
-            "ops_tournament_room_confirmed", attempts=2,
+            "ops_tournament_room_pair_finished",attempts=2,
         )
         cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
-
-        if remaining_rows or pair_state.get("has_next"):
-            flash("Đã xác nhận kết quả. Nếu muốn đá tiếp, bấm Đá Tiếp.","success")
-        else:
-            flash("Đã xác nhận kết quả. Cặp đấu đã hoàn tất và BXH giải đã được cập nhật.","success")
+        flash("Đã xác nhận kết quả. Cặp đấu đã hoàn tất đủ số trận và BXH giải đã được cập nhật.","success")
         return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/dispute-result')
