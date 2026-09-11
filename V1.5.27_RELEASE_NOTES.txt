@@ -1,8 +1,5 @@
 PES ARENA V1.5.27
-- Base: V1.5.26 (khong quay lai V1.5.24).
-- Lich cua doi thu van chia 3 ngay.
-- Khi HLV tich/bo tich mot khung gio cua minh, khung gio trung ben lich doi thu doi mau xanh/ngung xanh NGAY LAP TUC tren trinh duyet.
-- Khong can bam "Luu gio ranh cua toi" de thay mau xanh.
-- Nut "Tich toan bo" cung cap nhat mau xanh ngay lap tuc.
-- Nut Luu van chi co nhiem vu ghi du lieu xuong he thong.
-- Khong thay doi SQL/database/API.
+- Lịch đối thủ chia theo 3 ngày.
+- Giờ trùng được tô xanh ngay khi người dùng tích giờ rảnh, chưa cần bấm Lưu.
+- Đồng bộ APP_VERSION hiển thị toàn hệ thống từ V1.5.24 lên V1.5.27.
+- Không thay đổi SQL/database schema.
