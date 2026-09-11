@@ -1,0 +1,8 @@
+PES ARENA V1.5.33 - C1 Continue Like Rank (Simplified)
+
+- Bỏ toàn bộ câu/trạng thái trung gian kiểu "Còn trận trong lịch / Đang chuyển / Đang đồng bộ" khỏi phòng C1.
+- Sau khi Guest xác nhận kết quả: nếu cùng cặp HLV trong cùng giai đoạn còn trận, room được reset thẳng về waiting_ready như một trận Rank mới.
+- Guest thấy nút Sẵn Sàng; sau khi Guest sẵn sàng, Host quay đội và đá tiếp bình thường.
+- Nếu dữ liệu/phòng cũ còn mắc ở confirmed nhưng lịch vẫn còn trận, Guest vẫn có nút Sẵn Sàng để đưa room thẳng về waiting_ready, không phải quay lại trang giải.
+- Nếu không còn trận trong lịch thì mới hiện Cặp đấu đã hoàn tất.
+- Không thay đổi database schema/SQL.

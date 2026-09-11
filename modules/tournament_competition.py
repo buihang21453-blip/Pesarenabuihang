@@ -3016,11 +3016,18 @@ def register_routes(context):
         execute_query(db.table("tournament_matches").update({"home_score":hs,"away_score":aw,"winner_user_id":winner,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}).eq("id",match.get("id")),"ops_tournament_result_confirm",attempts=2)
         prop.update({"status":"confirmed","confirmed_by":uid,"confirmed_at":now_iso()}); _save_tournament_result_proposal(tournament_id,match.get("id"),prop)
 
-        # V1.5.32: C1 đá tiếp giống Rank, nhưng dùng trận kế tiếp đã có trong lịch giải.
+        # V1.5.33: C1 dùng đúng luồng phòng Rank cho trận kế tiếp; không hiện trạng thái trung gian.
         # Không có trạng thái trung gian "mở Trận 2" / "đồng bộ trận tiếp theo".
         # Còn trận -> reset chính room về waiting_ready; hết trận -> confirmed.
-        pair_state=_pair_flow_state(tournament_id, match)
-        next_match=pair_state.get("next_match")
+        # Đọc lịch trực tiếp sau khi chốt kết quả để tránh phụ thuộc trạng thái cũ của room.
+        # Chỉ cần biết: cùng cặp HLV + cùng giai đoạn còn trận chưa completed/cancelled hay không.
+        fresh_pair_rows=_pair_matches(tournament_id, match)
+        current_match_id=str(match.get("id") or "")
+        next_match=next((
+            r for r in fresh_pair_rows
+            if str(r.get("id") or "") != current_match_id
+            and str(r.get("status") or "").lower() not in {"completed", "cancelled"}
+        ), None)
 
         if next_match:
             history=list(meta.get("previous_match_ids") or [])
@@ -3080,7 +3087,7 @@ def register_routes(context):
                 "ops_c1_continue_same_room", attempts=2,
             )
             cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
-            flash("✅ Đã xác nhận kết quả. Còn trận trong lịch — bạn bấm Sẵn Sàng để Chủ phòng quay đội và đá tiếp.","success")
+            flash("✅ Đã xác nhận kết quả. Bạn bấm Sẵn Sàng để Chủ phòng quay đội.","success")
             return redirect(url_for("room_detail",room_id=room_id))
 
         # Chỉ khi lịch của đúng cặp thật sự không còn trận nào tiếp theo mới khóa room.

@@ -318,8 +318,16 @@
                             <div class="room-center-state-pill">✅ Cặp đấu đã hoàn tất</div>
                             <a class="btn gray room-center-action-btn" href="{{ url_for('tournament_detail', tournament_id=tournament_meta.tournament_id) }}">Về giải đấu</a>
                             {% else %}
-                            <div class="room-center-state-pill">▶ Còn trận trong lịch · Đang chuyển sang bước Sẵn Sàng</div>
-                            <a class="btn gold room-center-action-btn" href="{{ url_for('room_detail', room_id=room.id) }}">Tiếp tục</a>
+                            {% if room_viewer_is_guest %}
+                            <form method="post" action="{{ url_for('room_rematch', room_id=room.id) }}">
+                                <button class="btn green room-center-action-btn" type="submit">Sẵn Sàng</button>
+                            </form>
+                            {% else %}
+                            <div class="room-center-random-trigger disabled">
+                                <span class="room-center-random-title room-random-button-label">ĐỢI KHÁCH SẴN SÀNG</span>
+                                <span class="room-center-random-sub">Khách chưa sẵn sàng</span>
+                            </div>
+                            {% endif %}
                             {% endif %}
                         </div>
                         {% else %}

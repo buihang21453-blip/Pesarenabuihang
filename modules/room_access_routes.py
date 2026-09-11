@@ -232,7 +232,7 @@ def register_routes(context):
                     mr = execute_query(db.table("tournament_matches").select("*").eq("id",mid).eq("tournament_id",tid).limit(1),"room_tournament_match_context",attempts=2)
                     tournament_match = (mr.data or [None])[0]
                     if tournament_match:
-                        # V1.5.32: trạng thái cặp đấu dựa trên số bản ghi lịch thực tế,
+                        # V1.5.33: trạng thái cặp đấu dựa trên số bản ghi lịch thực tế,
                         # không giả định GĐ1=2 hay GĐ2=1 trong UI.
                         pair_ids = {str(tournament_match.get("home_user_id") or ""), str(tournament_match.get("away_user_id") or "")}
                         stage_code = str(tournament_match.get("stage_code") or "")
@@ -255,7 +255,7 @@ def register_routes(context):
                         tournament_has_next_match = bool(next_rows)
                         tournament_pair_is_complete = bool(pair_rows) and not remaining_rows
 
-                        # V1.5.32 compatibility repair: chỉ dùng để cứu room bị kẹt từ các bản cũ.
+                        # V1.5.33 compatibility repair: chỉ dùng để cứu room bị kẹt từ các bản cũ.
                         # Luồng mới bình thường đã chuyển trận ngay tại route xác nhận kết quả.
                         if str(room.get("status") or "") == "confirmed" and not tournament_pair_is_complete:
                             current_status=str(tournament_match.get("status") or "").lower()
