@@ -233,7 +233,7 @@ function toggleTheme(){
                         {% if (current_user.role == "admin" or current_user.admin_level in ["owner", "admin"]) %}
                         {% if admin_test_switch_users|default([]) %}
                         <div class="account-test-switch">
-                            <strong>🧪 Chuyển tài khoản Test C1</strong>
+                            <strong>🧪 Chuyển tài khoản thử nghiệm</strong>
                             {% for test_user in admin_test_switch_users %}
                             <form method="post" action="{{ url_for('admin_test_switch_account', tournament_id=admin_test_switch_tournament_id, test_user_id=test_user.id) }}">
                                 <button type="submit"><span>🔄</span> {{ test_user.display_name or test_user.username }}</button>

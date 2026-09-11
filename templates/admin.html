@@ -1193,17 +1193,17 @@
     {% if ops.get('tournament') %}
     {% set c1_test_ids = ops.get('c1_test_user_ids',[]) %}
     <div style="margin-top:18px;padding:14px;border:1px solid rgba(246,196,83,.28);border-radius:12px;background:rgba(246,196,83,.04)">
-      <h3 style="margin:0 0 6px">🧪 Tài khoản Test C1</h3>
+      <h3 style="margin:0 0 6px">🧪 Tài khoản thử nghiệm</h3>
       <p class="small">Chọn tối đa 2 tài khoản thật để test <strong>Giải đấu + Phòng đấu C1</strong>. Hai tài khoản này <strong>không được thêm vào 16 HLV chính thức</strong>; kết quả Test không cộng BXH C1 hoặc Rank.</p>
       <form method="post" action="{{ url_for('admin_tournament_c1_test_accounts',tournament_id=ops.get('tournament').id) }}" class="system-toggle-grid">
         <label><span>Test A</span><select name="test_user_1"><option value="">-- Không chọn --</option>{% for player in players|sort(attribute='display_name') %}<option value="{{ player.id }}" {{ 'selected' if c1_test_ids|length>0 and c1_test_ids[0]|string==player.id|string else '' }}>{{ player.display_name }}</option>{% endfor %}</select></label>
         <label><span>Test B</span><select name="test_user_2"><option value="">-- Không chọn --</option>{% for player in players|sort(attribute='display_name') %}<option value="{{ player.id }}" {{ 'selected' if c1_test_ids|length>1 and c1_test_ids[1]|string==player.id|string else '' }}>{{ player.display_name }}</option>{% endfor %}</select></label>
-        <button class="btn green" type="submit">💾 Lưu tài khoản Test C1</button>
+        <button class="btn green" type="submit">💾 Lưu tài khoản thử nghiệm</button>
       </form>
       {% if ops.get('c1_test_users') %}<div class="small" style="margin-top:8px">Đang bật: {% for u in ops.get('c1_test_users') %}<strong>🧪 {{ u.display_name or u.username }}</strong>{% if not loop.last %} ↔ {% endif %}{% endfor %}</div>{% endif %}
       <div class="small" style="margin-top:8px;color:#cfead7"><strong>Quy tắc:</strong> Test A/B chỉ nhìn thấy nhau. HLV thật không thấy tài khoản/phòng/kết quả TEST. TEST không chiếm suất 16 HLV, không chiếm CLB pool thật và không vào BXH C1 thật.</div>
       {% if ops.get('c1_test_users') %}
-      <details open style="margin-top:10px"><summary><strong>👑 Theo dõi TEST C1 — Admin toàn quyền</strong></summary>
+      <details open style="margin-top:10px"><summary><strong>👑 Theo dõi khu kiểm thử — Admin toàn quyền</strong></summary>
         <div class="small" style="padding:8px 0">Admin thấy toàn bộ dữ liệu TEST. Quyền Admin không bị gate lịch rảnh, thành viên, lời mời hay giai đoạn.</div>
         <div class="admin-table-wrap tournament-compact"><table><thead><tr><th>HLV Test</th><th>Trận</th><th>W-D-L</th><th>GF-GA</th><th>Điểm TEST</th></tr></thead><tbody>
         {% for r in ops.get('c1_test_ranking',[]) %}<tr><td>🧪 {{ r.display_name }}</td><td>{{ r.played }}</td><td>{{ r.wins }}-{{ r.draws }}-{{ r.losses }}</td><td>{{ r.gf }}-{{ r.ga }}</td><td><strong>{{ r.points }}</strong></td></tr>{% endfor %}

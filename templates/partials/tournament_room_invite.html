@@ -7,7 +7,7 @@
   {% if tournament_match %}
     <div class="small" style="margin-top:5px">✅ Đã gắn với trận C1: <strong>{{ tournament_meta.home_name }}</strong> vs <strong>{{ tournament_meta.away_name }}</strong>.</div>
   {% elif tournament_meta.test_sandbox_room %}
-    <div class="small" style="margin-top:5px;color:#f6c453">🧪 Phòng Test C1 · Chỉ hai tài khoản Test đã được Admin cấp quyền nhìn thấy nhau. <strong>Không ghi kết quả vào BXH C1 hoặc Rank.</strong></div>
+    <div class="small" style="margin-top:5px;color:#f6c453">Vào phòng trước rồi mời một HLV đang tham gia C1. Nếu hai HLV có trận C1 hợp lệ, hệ thống tự gắn đúng trận.</div>
   {% elif tournament_meta.admin_test_room %}
     <div class="small" style="margin-top:5px;color:#f6c453">👑 Phòng test của Admin · Có thể mời HLV C1 để kiểm tra thao tác, nhưng <strong>không ghi kết quả vào BXH/giải</strong>.</div>
   {% else %}
@@ -15,7 +15,7 @@
   {% endif %}
 
   {% if room.status == 'waiting_ready' and room_room_viewer_is_host and not room.guest_user_id %}
-    <div class="c1-invite-title">{{ "Mời tài khoản Test C1" if tournament_meta.test_sandbox_room else "Mời HLV đang tham gia giải C1" }}</div>
+    <div class="c1-invite-title">Mời HLV đang tham gia giải C1</div>
     <div class="c1-player-list">
       {% for p in tournament_invite_members %}
       <div class="c1-player-card">

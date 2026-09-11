@@ -34,7 +34,7 @@
 </style>{% endblock %}
 {% block content %}<div class="td-shell">
 {% if preview_mode|default(false) %}<div class="td-preview-banner"><strong>👁️ ĐANG XEM NHƯ HLV: {{ preview_user.display_name or preview_user.username or preview_user.user_id }}</strong><small>Chế độ chỉ xem · dữ liệu là của giải thật · mọi thao tác ghi dữ liệu đã bị khóa để tránh ảnh hưởng HLV.</small></div>{% endif %}
-{% if c1_test_account|default(false) %}<div class="td-preview-banner" style="border-color:rgba(46,204,113,.35);background:#10251a;color:#cfead7"><strong>🧪 TÀI KHOẢN TEST C1</strong><small>Phòng đấu, random đội, gửi kết quả và xác nhận kết quả hoạt động như thật. Kết quả TEST sẽ cập nhật vào BXH TEST C1 riêng, không ảnh hưởng BXH C1 thật của 16 HLV.</small></div>{% endif %}
+{% if c1_test_account|default(false) %}<div class="td-preview-banner" style="border-color:rgba(46,204,113,.35);background:#10251a;color:#cfead7"><strong>🧪 TÀI KHOẢN THỬ NGHIỆM</strong><small>Phòng đấu, random đội, gửi kết quả và xác nhận kết quả dùng cùng cơ chế với giải chính thức. Dữ liệu kiểm thử được lưu riêng và không ảnh hưởng 16 HLV chính thức.</small></div>{% endif %}
 {% if member %}<section class="td-opening" data-opening {% if not show_opening_animation|default(false) %}hidden{% endif %}><div class="td-opening-stars" aria-hidden="true">{% for i in range(12) %}<i style="left:{{ 5 + (i*8)%92 }}%;top:{{ (i*13)%35 }}px"></i>{% endfor %}</div><span class="td-opening-cup">🏆</span><div class="td-opening-kicker">PES ARENA · 2026/2027</div><h2>CHAMPION LEAGUE ARENA</h2><p>GIAI ĐOẠN 1 CHÍNH THỨC BẮT ĐẦU</p><button class="btn gold" type="button" data-opening-close>⚽ VÀO GIẢI ĐẤU</button></section>{% endif %}
 <div class="td-head"><h1>🏆 {{ tournament.name }}</h1>{% if not admin_participant_view|default(false) %}<div class="td-meta"><span>{{ tournament.status|upper }}</span><span>•</span><span>{{ 'Đang tham gia' if member else 'Người xem' }}</span>{% if member %}<span>• Pot {{ member.pot_no or '—' }}</span><span>• {{ member.fixed_club_name or 'Chưa chọn CLB' }}</span>{% endif %}</div>{% endif %}</div>
 {% if availability_gate_locked|default(false) %}
@@ -137,9 +137,9 @@
   </div>
 {% endif %}
 {% if admin_participant_view|default(false) or c1_test_account|default(false) %}
-<h3 style="margin-top:16px">🧪 BXH TEST C1</h3>
-<div class="td-test-note">Khu này mô phỏng BXH như thật cho các tài khoản Test C1. Chỉ tính các trận TEST đã được xác nhận và hoàn toàn không đụng vào BXH thật của 16 HLV.</div>
-<div style="overflow:auto"><table class="td-table"><thead><tr><th>#</th><th>HLV Test</th><th>Tr</th><th>T</th><th>H</th><th>B</th><th>HS</th><th>Điểm</th><th>5 trận gần nhất</th><th>Win rate</th></tr></thead><tbody>{% for r in c1_test_stage1_ranking %}<tr><td>{{ r.rank }}</td><td><strong>{{ r.display_name }}</strong></td><td>{{ r.played }}</td><td>{{ r.wins }}</td><td>{{ r.draws }}</td><td>{{ r.losses }}</td><td>{{ r.gd }}</td><td><b>{{ r.points }}</b></td><td><div class="td-form-pills">{% for item in r.recent_form|reverse %}<span class="td-form-pill {{ item.code }}" title="{{ item.label }}{% if loop.last %} · Trận mới nhất{% endif %}">{{ item.short }}</span>{% endfor %}{% for _ in range(5 - (r.recent_form|length)) %}<span class="td-form-pill empty">-</span>{% endfor %}</div></td><td><span class="td-winrate">{{ r.winrate }}%</span></td></tr>{% else %}<tr><td colspan="10">Chưa có dữ liệu BXH TEST C1.</td></tr>{% endfor %}</tbody></table></div>
+<h3 style="margin-top:16px">🧪 BXH THỬ NGHIỆM</h3>
+<div class="td-test-note">Khu này mô phỏng BXH cho các tài khoản thử nghiệm. Chỉ tính các trận đã được xác nhận trong khu kiểm thử và không tác động BXH chính thức của 16 HLV.</div>
+<div style="overflow:auto"><table class="td-table"><thead><tr><th>#</th><th>HLV Test</th><th>Tr</th><th>T</th><th>H</th><th>B</th><th>HS</th><th>Điểm</th><th>5 trận gần nhất</th><th>Win rate</th></tr></thead><tbody>{% for r in c1_test_stage1_ranking %}<tr><td>{{ r.rank }}</td><td><strong>{{ r.display_name }}</strong></td><td>{{ r.played }}</td><td>{{ r.wins }}</td><td>{{ r.draws }}</td><td>{{ r.losses }}</td><td>{{ r.gd }}</td><td><b>{{ r.points }}</b></td><td><div class="td-form-pills">{% for item in r.recent_form|reverse %}<span class="td-form-pill {{ item.code }}" title="{{ item.label }}{% if loop.last %} · Trận mới nhất{% endif %}">{{ item.short }}</span>{% endfor %}{% for _ in range(5 - (r.recent_form|length)) %}<span class="td-form-pill empty">-</span>{% endfor %}</div></td><td><span class="td-winrate">{{ r.winrate }}%</span></td></tr>{% else %}<tr><td colspan="10">Chưa có dữ liệu BXH thử nghiệm.</td></tr>{% endfor %}</tbody></table></div>
 {% if c1_test_recent_matches %}<h3 style="margin-top:16px">🧪 5 trận TEST gần nhất</h3><div class="td-recent-test">{% for m in c1_test_recent_matches %}<div class="td-recent-test-row"><span>{{ m.host_name }} <strong>{{ m.host_score }} - {{ m.guest_score }}</strong> {{ m.guest_name }}</span><small>{{ (m.confirmed_at|string)|replace('T',' ') }}</small></div>{% endfor %}</div>{% endif %}
 {% endif %}
 {% if ev.get('completion_ranking') %}<h3 style="margin-top:16px">🏁 Đua hoàn thành sớm</h3><div style="overflow:auto"><table class="td-table"><thead><tr><th>Top</th><th>HLV</th><th>Trận</th><th>Thưởng</th></tr></thead><tbody>{% for r in ev.get('completion_ranking',[])[:10] %}<tr><td>{{ r.finish_rank or '—' }}</td><td>{{ r.display_name }}</td><td>{{ r.played }}/6</td><td>{% if r.tickets %}<span class="td-ticket">🎟 {{ r.tickets }} vé Random</span>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
@@ -249,7 +249,7 @@
       </section>
       {% endfor %}
     </div>
-  </article></div>{% else %}<div class="td-empty">Admin chưa cấu hình đủ 2 Tài khoản Test C1.</div>{% endif %}
+  </article></div>{% else %}<div class="td-empty">Admin chưa cấu hình đủ 2 tài khoản thử nghiệm.</div>{% endif %}
 {% else %}
 <div class="td-schedule-list">
 {% set ns = namespace(count=0) %}

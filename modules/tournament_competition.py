@@ -1546,7 +1546,7 @@ def register_routes(context):
         official={str(m.get("user_id")) for m in _all_members(tournament_id)}
         overlap=[uid for uid in requested if uid in official]
         if overlap:
-            flash("Không thể dùng HLV chính thức làm tài khoản Test C1. Hãy chọn tài khoản ngoài danh sách 16 HLV.","error")
+            flash("Không thể dùng HLV chính thức làm tài khoản thử nghiệm. Hãy chọn tài khoản ngoài danh sách 16 HLV.","error")
             return redirect_admin("tournaments")
         valid=[]
         if requested:
@@ -1556,7 +1556,7 @@ def register_routes(context):
             "tournament_id":tournament_id,"setting_key":C1_TEST_ACCOUNTS_KEY,
             "setting_value":{"user_ids":valid,"updated_at":now_iso()},"updated_at":now_iso(),
         },on_conflict="tournament_id,setting_key"),"ops_save_c1_test_accounts",attempts=2)
-        flash(f"Đã lưu {len(valid)} tài khoản Test C1. Test A/B chỉ nhìn thấy nhau; HLV thường không thấy. Dữ liệu TEST không vào BXH, lịch, pool CLB hay trận chính thức.","success")
+        flash(f"Đã lưu {len(valid)} tài khoản thử nghiệm. Hai tài khoản chỉ nhìn thấy nhau; HLV thường không thấy. Dữ liệu kiểm thử không vào BXH, lịch, pool CLB hay trận chính thức.","success")
         return redirect_admin("tournaments")
 
     @app.get('/admin/tournaments/<tournament_id>/preview-player')
@@ -2005,7 +2005,7 @@ def register_routes(context):
         # nhờ root admin đã được giữ trong session.
         if root is None:
             if not is_admin_user(current):
-                flash("Chỉ Admin mới được chuyển sang tài khoản Test C1.","error")
+                flash("Chỉ Admin mới được chuyển sang tài khoản thử nghiệm.","error")
                 return redirect(url_for("dashboard"))
             root=current
             session["admin_switch_root_user_id"]=str(root.get("id") or "")
@@ -2013,7 +2013,7 @@ def register_routes(context):
         allowed=set(_c1_test_user_ids(tournament_id))
         target_id=str(test_user_id or "")
         if target_id not in allowed:
-            flash("Tài khoản này không thuộc danh sách Test C1 được phép chuyển.","error")
+            flash("Tài khoản này không thuộc danh sách thử nghiệm được phép chuyển.","error")
             return redirect(url_for("admin") if is_admin_user(current) else url_for("tournaments"))
 
         try:
@@ -2021,14 +2021,14 @@ def register_routes(context):
         except Exception:
             target=None
         if not target or target.get("account_status","approved")!="approved" or is_admin_user(target):
-            flash("Tài khoản Test C1 không hợp lệ.","error")
+            flash("Tài khoản thử nghiệm không hợp lệ.","error")
             return redirect(url_for("admin") if is_admin_user(current) else url_for("tournaments"))
 
         session["admin_switch_tournament_id"]=str(tournament_id)
         session["admin_switch_started_at"]=now_iso()
         _admin_switch_set_effective_user(target)
 
-        flash(f"🧪 Đang thao tác dưới tài khoản Test: {target.get('display_name') or target.get('username')}. Quyền Admin đã tạm khóa trong chế độ này.","success")
+        flash(f"🧪 Đang thao tác dưới tài khoản thử nghiệm: {target.get('display_name') or target.get('username')}. Quyền Admin đã tạm khóa trong chế độ này.","success")
         return redirect(url_for("tournaments"))
 
     @app.post('/admin/test-switch/return')
@@ -2516,7 +2516,7 @@ def register_routes(context):
             opponent=next((m for m in test_users if str(m.get("id"))==opponent_uid),None)
             host_member=next((m for m in test_users if str(m.get("id"))==host_uid),None)
             if not opponent or opponent_uid==host_uid:
-                flash("Phòng Test C1 chỉ được mời tài khoản Test C1 còn lại.","error"); return redirect(url_for("room_detail",room_id=room_id))
+                flash("Phòng kiểm thử chỉ được mời tài khoản thử nghiệm còn lại.","error"); return redirect(url_for("room_detail",room_id=room_id))
             match=None
         else:
             opponent=next((m for m in members if str(m.get("user_id"))==opponent_uid),None)
@@ -2591,7 +2591,7 @@ def register_routes(context):
         if str(meta.get("invited_user_id") or "")!=uid and not is_admin_user(user):
             flash("Phòng này không mời tài khoản của bạn.","error"); return redirect(url_for("c1_rooms",tournament_id=tournament_id))
         if not is_admin_user(user) and not _member(tournament_id,uid) and not (meta.get("test_sandbox_room") and _is_c1_test_user(tournament_id,uid)):
-            flash("Chỉ HLV chính thức hoặc tài khoản Test C1 được cấp quyền mới vào phòng.","error"); return redirect(url_for("tournaments"))
+            flash("Chỉ HLV chính thức hoặc tài khoản thử nghiệm được cấp quyền mới vào phòng.","error"); return redirect(url_for("tournaments"))
         if room.get("guest_user_id") and str(room.get("guest_user_id"))!=uid:
             flash("Phòng đã đủ 2 HLV.","warning"); return redirect(url_for("c1_rooms",tournament_id=tournament_id))
         active=active_room_for_user(uid)
@@ -3129,31 +3129,12 @@ def register_routes(context):
                     "ops_c1_auto_next_match_pending",attempts=2,
                 )
 
-            room_patch={
-                "note":_room_note(meta),
-                "status":"waiting_ready",
-                # V1.5.44: Giống Rank: trận mới bắt đầu ở Chờ Sẵn Sàng.
-                # Khách phải bấm Sẵn Sàng; Host chỉ được Quay đội sau đó.
-                "guest_ready":False,
-                "host_team":None,
-                "guest_team":None,
-                "host_team_overall":None,
-                "guest_team_overall":None,
-                "host_team_logo_url":None,
-                "guest_team_logo_url":None,
-                "host_team_league":None,
-                "guest_team_league":None,
-                "host_score":None,
-                "guest_score":None,
-                "match_id":None,
-                "submitted_by_id":None,
-                "confirmed_by_id":uid,
-                "invite_id":None,
-                "state_expires_at":None,
-                "match_mode":"tournament",
-                "team_tier":"TOURNAMENT_GD1" if str(next_match.get("stage_code") or "")=="stage1" else "TOURNAMENT",
-                "updated_at":now_iso(),
-            }
+            # V1.5.45: dùng CHUNG state machine với phòng kiểm thử. Chỉ lớp dữ liệu
+            # trận đấu khác nhau; trạng thái room sau xác nhận là một nguồn duy nhất.
+            room_patch=_c1_rank_style_next_room_patch(
+                meta, uid,
+                "TOURNAMENT_GD1" if str(next_match.get("stage_code") or "")=="stage1" else "TOURNAMENT",
+            )
             moved=execute_query(
                 db.table("match_rooms").update(room_patch).eq("id",room_id).eq("status","waiting_result_confirm"),
                 "ops_c1_confirm_auto_advance_same_room",attempts=2,
@@ -3228,6 +3209,28 @@ def register_routes(context):
         flash("Đã báo sai kết quả. Admin sẽ xử lý.","warning")
         return redirect(url_for("room_detail",room_id=room_id))
 
+    def _c1_rank_style_next_room_patch(meta, confirmed_by_id, team_tier="TOURNAMENT"):
+        """Một state machine reset dùng chung cho phòng C1 thật và phòng kiểm thử.
+
+        Sau khi Trận N được xác nhận, cả hai luồng đều phải trở về đúng trạng thái
+        của Rank: waiting_ready + guest_ready=False, xóa toàn bộ dữ liệu trận cũ.
+        Lớp dữ liệu (tournament_matches hay lịch sử kiểm thử) được xử lý bên ngoài.
+        """
+        return {
+            "note":_room_note(meta),
+            "status":"waiting_ready",
+            "guest_ready":False,
+            "host_team":None,"guest_team":None,
+            "host_team_overall":None,"guest_team_overall":None,
+            "host_team_logo_url":None,"guest_team_logo_url":None,
+            "host_team_league":None,"guest_team_league":None,
+            "host_score":None,"guest_score":None,"match_id":None,
+            "submitted_by_id":None,"confirmed_by_id":confirmed_by_id,
+            "invite_id":None,"state_expires_at":None,
+            "match_mode":"tournament","team_tier":team_tier,
+            "updated_at":now_iso(),
+        }
+
     def _c1_test_room_or_error(tournament_id, room_id):
         room=get_room(room_id); meta=_room_meta(room)
         if not room or not meta or str(meta.get("tournament_id"))!=str(tournament_id) or not meta.get("test_sandbox_room"):
@@ -3240,9 +3243,9 @@ def register_routes(context):
         user=current_user() or {}; uid=str(user.get("id") or "")
         room,meta=_c1_test_room_or_error(tournament_id,room_id)
         if not room or uid!=str(room.get("host_user_id") or "") or not _is_c1_test_user(tournament_id,uid):
-            flash("Chỉ chủ phòng Test C1 được gửi kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
+            flash("Chỉ chủ phòng thử nghiệm được gửi kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
         if not room.get("guest_user_id"):
-            flash("Phòng Test chưa đủ 2 người.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+            flash("Phòng chưa đủ 2 người.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         try:
             hs=max(0,min(99,int(request.form.get("host_score") or 0))); gs=max(0,min(99,int(request.form.get("guest_score") or 0)))
         except Exception:
@@ -3254,7 +3257,7 @@ def register_routes(context):
             "result_id":f"{room_id}:test:{test_round_no}",
         }
         execute_query(db.table("match_rooms").update({"host_score":hs,"guest_score":gs,"status":"waiting_result_confirm","note":_room_note(meta),"updated_at":now_iso()}).eq("id",room_id),"ops_c1_test_submit_result",attempts=2)
-        flash("Đã gửi kết quả TEST. Chờ tài khoản Test còn lại xác nhận.","success")
+        flash("Đã gửi kết quả. Chờ đối thủ xác nhận.","success")
         return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/test-confirm-result')
@@ -3263,10 +3266,10 @@ def register_routes(context):
         user=current_user() or {}; uid=str(user.get("id") or "")
         room,meta=_c1_test_room_or_error(tournament_id,room_id)
         if not room or uid!=str(room.get("guest_user_id") or "") or not _is_c1_test_user(tournament_id,uid):
-            flash("Chỉ đối thủ Test C1 được xác nhận.","error"); return redirect(url_for("room_detail",room_id=room_id))
+            flash("Chỉ đối thủ được xác nhận kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
         result=meta.get("test_result") or {}
         if result.get("status")!="waiting_confirm":
-            flash("Không có kết quả Test đang chờ xác nhận.","warning"); return redirect(url_for("room_detail",room_id=room_id))
+            flash("Không có kết quả đang chờ xác nhận.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         # V1.5.44: COPY NGUYÊN NHỊP RANK cho SANDBOX.
         # Xác nhận Trận N -> lưu kết quả vào lịch sử TEST -> reset chính room về
         # waiting_ready, guest_ready=False -> khách bấm Sẵn Sàng -> chủ Quay đội.
@@ -3286,27 +3289,18 @@ def register_routes(context):
         meta["test_result"]={}
         meta["transition_token"]=confirmed_at
 
-        room_patch={
-            "status":"waiting_ready","guest_ready":False,
-            "host_team":None,"guest_team":None,
-            "host_team_overall":None,"guest_team_overall":None,
-            "host_team_logo_url":None,"guest_team_logo_url":None,
-            "host_team_league":None,"guest_team_league":None,
-            "host_score":None,"guest_score":None,"match_id":None,
-            "submitted_by_id":None,"confirmed_by_id":uid,
-            "invite_id":None,"state_expires_at":None,
-            "match_mode":"tournament","team_tier":"TOURNAMENT",
-            "note":_room_note(meta),"updated_at":confirmed_at,
-        }
+        # V1.5.45: phòng kiểm thử gọi đúng cùng state machine với phòng C1 thật.
+        room_patch=_c1_rank_style_next_room_patch(meta, uid, "TOURNAMENT")
+        room_patch["updated_at"]=confirmed_at
         updated=execute_query(
             db.table("match_rooms").update(room_patch).eq("id",room_id).eq("status","waiting_result_confirm"),
             "ops_c1_test_confirm_result_reset_like_rank",attempts=2,
         )
         if not (updated.data or []):
-            flash("Kết quả TEST đã được xác nhận nhưng phòng vừa thay đổi trạng thái. Hãy tải lại phòng.","warning")
+            flash("Kết quả đã được xác nhận nhưng phòng vừa thay đổi trạng thái. Hãy tải lại phòng.","warning")
             return redirect(url_for("room_detail",room_id=room_id))
         cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
-        flash(f"Đã xác nhận Trận TEST {test_round_no}. Phòng đã chuyển sang Trận TEST {test_round_no+1}: khách bấm Sẵn Sàng, chủ phòng chờ để Quay đội.","success")
+        flash(f"Đã xác nhận Trận {test_round_no}. Phòng đã chuyển sang Trận {test_round_no+1}: khách bấm Sẵn Sàng, chủ phòng chờ để Quay đội.","success")
         return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/test-dispute-result')
@@ -3315,11 +3309,11 @@ def register_routes(context):
         user=current_user() or {}; uid=str(user.get("id") or "")
         room,meta=_c1_test_room_or_error(tournament_id,room_id)
         if not room or uid!=str(room.get("guest_user_id") or "") or not _is_c1_test_user(tournament_id,uid):
-            flash("Chỉ đối thủ Test C1 được báo sai kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
+            flash("Chỉ đối thủ được báo sai kết quả.","error"); return redirect(url_for("room_detail",room_id=room_id))
         result=meta.get("test_result") or {}
         result.update({"status":"disputed","disputed_by":uid,"disputed_at":now_iso(),"reason":(request.form.get("reason") or "Sai kết quả").strip()[:300]}); meta["test_result"]=result
         execute_query(db.table("match_rooms").update({"status":"disputed","note":_room_note(meta),"updated_at":now_iso()}).eq("id",room_id),"ops_c1_test_dispute_result",attempts=2)
-        flash("Đã tạo tranh chấp TEST. Không ảnh hưởng trận/BXH thật.","warning")
+        flash("Đã tạo tranh chấp trong khu kiểm thử. Không ảnh hưởng dữ liệu giải chính thức.","warning")
         return redirect(url_for("room_detail",room_id=room_id))
 
     @app.post('/tournaments/<tournament_id>/club/select')
@@ -3701,7 +3695,7 @@ def register_routes(context):
         uid=str(user.get("id") or "")
         is_test=_is_c1_test_user(tournament_id,uid)
         if not is_admin_user(user) and not is_test:
-            flash("Bạn không có quyền lưu lịch Test C1.","error")
+            flash("Bạn không có quyền lưu lịch kiểm thử.","error")
             return redirect(url_for("tournament_detail",tournament_id=tournament_id)+"#schedule")
         allowed={slot["iso"] for day in _availability_days() for slot in day["slots"]}
         selected=[]
