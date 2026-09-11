@@ -130,22 +130,6 @@
 
 </section>
 {% if member and not admin_participant_view|default(false) %}
-<section class="td-section" id="my-opponents" data-tab-panel="center"><h2>👥 Đối thủ của tôi</h2>
-{% set myid = member.user_id|string %}{% set s1opened = ev.get('stage1_reveals',{}).get(myid) %}
-{% set ldraw_simple = ev.get('league_draw',{}).get('state',{}) %}{% set lreveal_simple = ev.get('league_draw',{}).get('player_reveals',{}) %}{% set league_mine_simple = ldraw_simple.get('revealed',{}).get(myid,[]) %}
-{% if admin_participant_view|default(false) %}
-  <div class="td-empty">👑 Admin đang xem giao diện HLV. Admin không có đối thủ cá nhân nên không cần mở đối thủ.</div>
-{% elif league_mine_simple %}
-  {% if not lreveal_simple.get(myid) %}<div class="td-reveal"><h3>🎁 Đối thủ của bạn đã sẵn sàng</h3><p>Chỉ cần mở một lần. Sau khi mở, nút này sẽ biến mất.</p><form method="post" action="{{ url_for('tournament_league_reveal',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">MỞ ĐỐI THỦ CỦA TÔI</button></form></div>
-  {% else %}<div class="td-opponents">{% for o in league_mine_simple %}<div class="td-opponent"><small>ĐỐI THỦ {{ loop.index }}</small><b>{{ o.name }}</b>{% for m in matches if (m.home_user_id|string==myid or m.away_user_id|string==myid) %}{% set oid = m.away_user_id|string if m.home_user_id|string==myid else m.home_user_id|string %}{% if oid==o.user_id|string %}{% set oz = m.away_zalo_name if m.home_user_id|string==myid else m.home_zalo_name %}{% if oz %}<div class="td-contact-line">💬 Zalo: <strong>{{ oz }}</strong></div>{% endif %}{% endif %}{% endfor %}</div>{% endfor %}</div>{% endif %}
-{% elif not s1opened %}
-  <div class="td-reveal"><h3>🎁 Đối thủ của bạn đã sẵn sàng</h3><p>Chỉ cần mở một lần. Sau khi mở, nút này sẽ biến mất.</p><form method="post" action="{{ url_for('tournament_stage1_reveal',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">MỞ ĐỐI THỦ CỦA TÔI</button></form></div>
-{% else %}
-  <div class="td-opponents">{% set seen=[] %}{% for m in matches if m.stage_code=='stage1' and (m.home_user_id|string==myid or m.away_user_id|string==myid) %}{% set opp = m.away_name if m.home_user_id|string==myid else m.home_name %}{% set opp_zalo = m.away_zalo_name if m.home_user_id|string==myid else m.home_zalo_name %}{% if opp not in seen %}{% if seen.append(opp) %}{% endif %}<div class="td-opponent"><small>ĐỐI THỦ {{ seen|length }}</small><b>{{ opp }}</b>{% if opp_zalo %}<div class="td-contact-line">💬 Zalo: <strong>{{ opp_zalo }}</strong></div>{% endif %}</div>{% endif %}{% endfor %}</div>
-{% endif %}
-</section>
-
-{% endif %}
 <section class="td-section" id="stage1" data-tab-panel="stage1"><h2>⚽ GĐ1</h2>
 {% if member %}{% set myid = member.user_id|string %}{% set s1opened = ev.get('stage1_reveals',{}).get(myid) %}
   <div style="margin:4px 0 18px;padding:16px;border:1px solid rgba(241,202,104,.35);border-radius:14px;background:linear-gradient(135deg,rgba(241,202,104,.10),rgba(9,26,41,.95))">
@@ -181,6 +165,25 @@
   {% else %}<p>⏳ Admin chưa bốc xong đối thủ của bạn.</p>{% endif %}
 {% endif %}
 <div class="td-empty" style="margin-top:16px">🏆 BXH không tách riêng theo giai đoạn. Xem BXH GIẢI ĐẤU duy nhất tại khu Trung tâm.</div></section>
+<section class="td-section" id="host" data-tab-panel="info"><h2>Danh sách Host của giải</h2><div class="td-clubs">{% for h in hosts %}<div class="td-club"><strong>{{ h.name }}</strong><br><small>{{ h.region }} · {{ h.status }}</small></div>{% endfor %}</div></section>
+<section class="td-section" id="knockout" data-tab-panel="knockout"><h2>🏆 Knockout / Bracket</h2>{% set kf=knockout_flow|default({}) %}<p style="color:#91a3b1;font-size:12px">{{ 'Có Play-off · ' if kf.get('use_playoff') else 'Không Play-off · ' }}Các vòng trước Chung kết đá 2 lượt và tính tổng tỷ số. Chung kết Bo3; trận 3 là trận phân định có hiệp phụ/pen nếu cần.</p>{% if kf.get('champion_user_id') %}<div class="td-reveal"><h3>🏆 GIẢI ĐẤU ĐÃ HOÀN TẤT</h3><p>Nhà vô địch đã được xác định.</p></div>{% endif %}{% for code,label in [('playoff','PLAY-OFF'),('r16','VÒNG 1/8'),('qf','TỨ KẾT'),('sf','BÁN KẾT'),('final','CHUNG KẾT')] %}{% set ns=namespace(any=false) %}{% for m in matches if m.stage_code=='knockout' and m.round_code==code %}{% if not ns.any %}<h3 style="margin-top:16px">{{ label }}</h3>{% set ns.any=true %}{% endif %}<div class="td-match"><span>{{ 'Trận' if code=='final' else 'Lượt' }} {{ m.leg_no }}</span><strong>{{ m.home_name }} {{ m.home_score if m.home_score is not none else '—' }}{% if m.home_pen is not none %} ({{ m.home_pen }}){% endif %}</strong><strong>{% if m.away_pen is not none %}({{ m.away_pen }}) {% endif %}{{ m.away_score if m.away_score is not none else '—' }} {{ m.away_name }}</strong><small>{{ 'Chờ BTC xử lý' if m.status=='disputed' else m.status }}</small></div>{% endfor %}{% endfor %}</section>
+<section class="td-section" id="reward" data-tab-panel="info"><h2>Thưởng sớm</h2>{% for r in rewards.rules %}<div class="td-club"><strong>{{ r.name }}</strong><br><small>{{ r.reward_type }}: {{ r.reward_value }} · Hạn {{ r.deadline_at or 'Không giới hạn' }}</small></div>{% else %}<p>Chưa cấu hình thưởng sớm.</p>{% endfor %}</section>
+<section class="td-section" id="my-opponents" data-tab-panel="center"><h2>👥 Đối thủ của tôi</h2>
+{% set myid = member.user_id|string %}{% set s1opened = ev.get('stage1_reveals',{}).get(myid) %}
+{% set ldraw_simple = ev.get('league_draw',{}).get('state',{}) %}{% set lreveal_simple = ev.get('league_draw',{}).get('player_reveals',{}) %}{% set league_mine_simple = ldraw_simple.get('revealed',{}).get(myid,[]) %}
+{% if admin_participant_view|default(false) %}
+  <div class="td-empty">👑 Admin đang xem giao diện HLV. Admin không có đối thủ cá nhân nên không cần mở đối thủ.</div>
+{% elif league_mine_simple %}
+  {% if not lreveal_simple.get(myid) %}<div class="td-reveal"><h3>🎁 Đối thủ của bạn đã sẵn sàng</h3><p>Chỉ cần mở một lần. Sau khi mở, nút này sẽ biến mất.</p><form method="post" action="{{ url_for('tournament_league_reveal',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">MỞ ĐỐI THỦ CỦA TÔI</button></form></div>
+  {% else %}<div class="td-opponents">{% for o in league_mine_simple %}<div class="td-opponent"><small>ĐỐI THỦ {{ loop.index }}</small><b>{{ o.name }}</b>{% for m in matches if (m.home_user_id|string==myid or m.away_user_id|string==myid) %}{% set oid = m.away_user_id|string if m.home_user_id|string==myid else m.home_user_id|string %}{% if oid==o.user_id|string %}{% set oz = m.away_zalo_name if m.home_user_id|string==myid else m.home_zalo_name %}{% if oz %}<div class="td-contact-line">💬 Zalo: <strong>{{ oz }}</strong></div>{% endif %}{% endif %}{% endfor %}</div>{% endfor %}</div>{% endif %}
+{% elif not s1opened %}
+  <div class="td-reveal"><h3>🎁 Đối thủ của bạn đã sẵn sàng</h3><p>Chỉ cần mở một lần. Sau khi mở, nút này sẽ biến mất.</p><form method="post" action="{{ url_for('tournament_stage1_reveal',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">MỞ ĐỐI THỦ CỦA TÔI</button></form></div>
+{% else %}
+  <div class="td-opponents">{% set seen=[] %}{% for m in matches if m.stage_code=='stage1' and (m.home_user_id|string==myid or m.away_user_id|string==myid) %}{% set opp = m.away_name if m.home_user_id|string==myid else m.home_name %}{% set opp_zalo = m.away_zalo_name if m.home_user_id|string==myid else m.home_zalo_name %}{% if opp not in seen %}{% if seen.append(opp) %}{% endif %}<div class="td-opponent"><small>ĐỐI THỦ {{ seen|length }}</small><b>{{ opp }}</b>{% if opp_zalo %}<div class="td-contact-line">💬 Zalo: <strong>{{ opp_zalo }}</strong></div>{% endif %}</div>{% endif %}{% endfor %}</div>
+{% endif %}
+</section>
+
+{% endif %}
 <section class="td-section" id="schedule" data-tab-panel="{{ 'schedule' if admin_participant_view|default(false) else ('center' if member else 'schedule') }}"><h2>📅 Lịch thi đấu / Giờ rảnh</h2>
 
 {% if admin_participant_view|default(false) %}
@@ -295,9 +298,7 @@
 {% endif %}
 {% else %}<div class="td-empty">Khán giả có thể xem giải nhưng chỉ HLV tham gia hoặc Admin Test mới được thao tác lịch.</div>{% endif %}
 </section>
-<section class="td-section" id="host" data-tab-panel="info"><h2>Danh sách Host của giải</h2><div class="td-clubs">{% for h in hosts %}<div class="td-club"><strong>{{ h.name }}</strong><br><small>{{ h.region }} · {{ h.status }}</small></div>{% endfor %}</div></section>
-<section class="td-section" id="knockout" data-tab-panel="knockout"><h2>🏆 Knockout / Bracket</h2>{% set kf=knockout_flow|default({}) %}<p style="color:#91a3b1;font-size:12px">{{ 'Có Play-off · ' if kf.get('use_playoff') else 'Không Play-off · ' }}Các vòng trước Chung kết đá 2 lượt và tính tổng tỷ số. Chung kết Bo3; trận 3 là trận phân định có hiệp phụ/pen nếu cần.</p>{% if kf.get('champion_user_id') %}<div class="td-reveal"><h3>🏆 GIẢI ĐẤU ĐÃ HOÀN TẤT</h3><p>Nhà vô địch đã được xác định.</p></div>{% endif %}{% for code,label in [('playoff','PLAY-OFF'),('r16','VÒNG 1/8'),('qf','TỨ KẾT'),('sf','BÁN KẾT'),('final','CHUNG KẾT')] %}{% set ns=namespace(any=false) %}{% for m in matches if m.stage_code=='knockout' and m.round_code==code %}{% if not ns.any %}<h3 style="margin-top:16px">{{ label }}</h3>{% set ns.any=true %}{% endif %}<div class="td-match"><span>{{ 'Trận' if code=='final' else 'Lượt' }} {{ m.leg_no }}</span><strong>{{ m.home_name }} {{ m.home_score if m.home_score is not none else '—' }}{% if m.home_pen is not none %} ({{ m.home_pen }}){% endif %}</strong><strong>{% if m.away_pen is not none %}({{ m.away_pen }}) {% endif %}{{ m.away_score if m.away_score is not none else '—' }} {{ m.away_name }}</strong><small>{{ 'Chờ BTC xử lý' if m.status=='disputed' else m.status }}</small></div>{% endfor %}{% endfor %}</section>
-<section class="td-section" id="reward" data-tab-panel="info"><h2>Thưởng sớm</h2>{% for r in rewards.rules %}<div class="td-club"><strong>{{ r.name }}</strong><br><small>{{ r.reward_type }}: {{ r.reward_value }} · Hạn {{ r.deadline_at or 'Không giới hạn' }}</small></div>{% else %}<p>Chưa cấu hình thưởng sớm.</p>{% endfor %}</section>
+
 </div>
 <script>
 (function(){

@@ -105,7 +105,10 @@
           </div>
           {% endif %}
           <div class="tournament-card-actions">
-            <a class="btn" href="{{ url_for('c1_rooms') }}">🎮 Phòng đấu C1</a>
+            <form method="post" action="{{ url_for('c1_room_open') }}" style="display:inline;margin:0">
+              <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+              <button class="btn" type="submit">🎮 Phòng đấu C1</button>
+            </form>
             {% if tournament.my_member %}
               <a class="btn" href="{{ url_for('tournament_detail', tournament_id=tournament.id) }}#schedule">📅 Lịch của tôi</a>
               <details class="tournament-profile-edit"><summary class="btn">✎ Thông tin giải</summary><form method="post" action="{{ url_for('tournament_profile_update', tournament_id=tournament.id) }}" style="margin-top:8px;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;display:grid;gap:8px;min-width:280px"><strong>Sửa thông tin của tôi</strong><input class="tournament-zalo-input" name="zalo_name" maxlength="80" placeholder="Tên Zalo" value="{{ tournament.my_registration.zalo_name if tournament.my_registration else '' }}" required><div class="tournament-choice-grid"><label class="tournament-choice"><input type="radio" name="host_choice" value="yes" {% if tournament.my_registration and tournament.my_registration.has_host %}checked{% endif %} required> Có Host</label><label class="tournament-choice"><input type="radio" name="host_choice" value="no" {% if not tournament.my_registration or not tournament.my_registration.has_host %}checked{% endif %} required> Không Host</label></div><div class="tournament-choice-grid">{% for region in ['Bắc','Trung','Nam'] %}<label class="tournament-choice"><input type="radio" name="host_region" value="{{ region }}" {% if tournament.my_registration and tournament.my_registration.host_region==region %}checked{% endif %} required> {{ region }}</label>{% endfor %}</div><button class="btn gold" type="submit">Lưu thông tin</button></form></details>
