@@ -408,6 +408,8 @@ def register_routes(context):
             progress_label='League Phase · thời gian còn lại:'; progress_deadline=timing.get('league_end_at')
         early_deadline=timing.get('stage1_early_end_at')
         early_deadline_active=bool(early_deadline and _future(early_deadline))
+        league_reroll_state=_landing_setting(tournament_id,'league_top3_club_reroll_v1',{}) or {}
+        league_reroll_entry=(league_reroll_state.get('entries') or {}).get(uid,{}) if isinstance(league_reroll_state,dict) else {}
 
         all_members,_=_safe_rows(db.table('tournament_members').select('user_id').eq('tournament_id',tournament_id).eq('status','active'),'tournament_landing_center_members')
         all_ids=[str(x.get('user_id')) for x in all_members if x.get('user_id')]
@@ -468,6 +470,7 @@ def register_routes(context):
             'league_opened':bool(league_reveals.get(uid)), 'test_opponent':test_opponent,
             'test_opponent_days':test_opp_days,
             'progress_label':progress_label,'progress_deadline':progress_deadline,'early_deadline':early_deadline,'early_deadline_active':early_deadline_active,
+            'league_reroll_entry':league_reroll_entry,
             'host_ready':host_ready,'center_rooms':center_rooms,
         }
 

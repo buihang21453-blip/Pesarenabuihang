@@ -147,6 +147,12 @@
               <a class="btn" href="{{ url_for('tournaments') }}#rooms-{{ tournament.id }}">🏟️ Phòng thi đấu</a>
             {% endif %}
           </div>
+          {% if hub and hub.league_reroll_entry and hub.league_reroll_entry.get('tickets_remaining',0)|int > 0 %}
+          <div style="margin:10px 0;padding:10px 12px;border:1px solid rgba(241,202,104,.3);border-radius:10px;background:rgba(241,202,104,.05);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <div><strong>🎟 Vé Random lại CLB sau GĐ2</strong><div class="small">Top {{ hub.league_reroll_entry.get('rank') }} · còn {{ hub.league_reroll_entry.get('tickets_remaining') }} vé. CLB bỏ qua sẽ không xuất hiện lại cho bạn.</div></div>
+            <form method="post" action="{{ url_for('tournament_league_top3_reroll_club',tournament_id=tournament.id) }}" onsubmit="return confirm('Dùng 1 vé để bỏ CLB hiện tại và Random CLB khác? CLB cũ sẽ không xuất hiện lại cho bạn.');"><button class="btn gold" type="submit">🎲 Random lại CLB</button></form>
+          </div>
+          {% endif %}
           <div class="tournament-public-ranking" id="ranking">
             <div class="tournament-public-ranking-head">
               <div>
@@ -363,14 +369,15 @@
                 <details><summary>🏆 Thể thức thi đấu</summary><div class="tournament-help-body"><ul>
                   <li><strong>GĐ1 – Khởi động:</strong> Mỗi HLV đá 6 trận, gặp 3 HLV khác nhau do hệ thống Random, mỗi cặp 2 trận. Điểm giữ lại để xếp Pot và cộng sang GĐ2.</li>
                   <li><strong>Thời hạn GĐ1:</strong> 1 tuần. HLV hoàn thành đủ trận sớm được nhận vé Random thưởng.</li>
-                  <li><strong>GĐ2 – League Phase:</strong> Chia 3 Pot, nhận CLB cố định và thi đấu theo lịch hệ thống. BXH tính tổng điểm GĐ1 + GĐ2.</li>
+                  <li><strong>GĐ2 – League Phase:</strong> Chia 3 Pot · mỗi HLV đá đúng 4 trận: 3 trận ưu tiên phủ 3 Pot + 1 trận Random bất kỳ, không lặp đối thủ. BXH tính tổng điểm GĐ1 + GĐ2.</li>
                   <li><strong>Thời hạn GĐ2:</strong> 1 tuần. HLV hoàn thành đủ trận sớm tiếp tục có cơ hội nhận vé Random thưởng.</li>
-                  <li><strong>GĐ3 – Knockout:</strong> Play-off → Vòng 1/8 → Tứ kết → Bán kết → Chung kết. BTC có thể lược bỏ Play-off tùy số lượng HLV.</li>
+                  <li><strong>GĐ3 – Knockout:</strong> Top 8 BXH tổng vào thẳng Tứ kết → Bán kết → Chung kết. Không Play-off.</li>
                 </ul></div></details>
                 <details><summary>🎮 Hướng dẫn người chơi</summary><div class="tournament-help-body"><ul>
                   <li><strong>Trước giải:</strong> Đăng ký, hoàn tất phí và theo dõi trạng thái BTC duyệt.</li>
                   <li><strong>GĐ1:</strong> Xem đối thủ Random, đặt lịch thi đấu, chủ động liên hệ, đá đủ 6 trận và điền/xác nhận kết quả.</li>
-                  <li><strong>GĐ2:</strong> Kiểm tra Pot, CLB và đối thủ. Đặt lịch rảnh trong Hôm nay – Ngày mai – Ngày kia; lịch áp dụng cho tất cả đối thủ. Có thể xem lịch đối thủ và chỉnh lịch của mình để tìm giờ trùng.</li>
+                  <li><strong>GĐ2:</strong> Kiểm tra Pot, CLB và 4 đối thủ. Đặt lịch rảnh trong Hôm nay – Ngày mai – Ngày kia; lịch áp dụng cho tất cả đối thủ.</li>
+                  <li><strong>Sau GĐ2:</strong> Top 1–3 nhận mỗi người 1 vé Random lại CLB. Top 8 BXH tổng vào thẳng Tứ kết, không Play-off.</li>
                   <li><strong>GĐ3:</strong> Theo dõi bracket, thống nhất giờ đấu, thi đấu đúng thể thức và xác nhận kết quả.</li>
                   <li><strong>Trong suốt giải:</strong> Kiểm tra tiến độ, lịch, BXH và thông báo BTC để tránh quá hạn.</li>
                 </ul></div></details>

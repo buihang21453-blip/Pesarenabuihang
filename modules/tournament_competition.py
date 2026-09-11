@@ -1138,6 +1138,7 @@ def register_routes(context):
         return {"timing":_timing_payload(tournament_id),"completion_ranking":cr,"my_completion":mine,
                 "stage1_confirmation_audit":_stage1_confirmation_audit(tournament_id),
                 "club_draft":_club_draft_state(tournament_id),"club_draft_admin_rows":_club_draft_admin_rows(tournament_id),
+                "stage1_early_reward_state":_stage1_early_reward_state(tournament_id),
                 "stage1_reveals":s1_reveals,"league_draw":league_draw}
 
     def _reward_summary(tournament_id,user_id):
@@ -1214,8 +1215,8 @@ def register_routes(context):
         pot_state=_setting(tournament_id,"pots_locked",{}) or {}
         pot_count=max(1,int(pot_state.get("pot_count") or 3))
         league_cfg=_setting(tournament_id,"league_config",{}) or {}
-        matches_per_pot=max(1,int(league_cfg.get("matches_per_pot") or 2))
-        league_per_hlv=pot_count*matches_per_pot
+        matches_per_pot=1
+        league_per_hlv=4
         league_planned=(n*league_per_hlv)//2 if n else 0
 
         all_matches=_matches(tournament_id)
@@ -1236,28 +1237,13 @@ def register_routes(context):
             total_min=stage1_planned+league_planned+knockout_planned
             total_max=total_min
         else:
-            # Final is Bo3: 2 matches minimum, 3 maximum.
-            if n>=24:
-                ko_no_playoff_min,ko_no_playoff_max=30,31
-                ko_playoff_min,ko_playoff_max=46,47
-            elif n>=16:
-                ko_no_playoff_min,ko_no_playoff_max=30,31
-                ko_playoff_min,ko_playoff_max=30,31
-            elif n>=8:
-                ko_no_playoff_min,ko_no_playoff_max=14,15
-                ko_playoff_min,ko_playoff_max=14,15
+            # Luật chính thức: Top 8 vào thẳng Knockout (Tứ kết), không Play-off. Chung kết Bo3.
+            if n>=8:
+                ko_min,ko_max=14,15
+                knockout_label=f"{ko_min}–{ko_max} trận · Top 8 vào thẳng Tứ kết"
             else:
-                ko_no_playoff_min=ko_no_playoff_max=ko_playoff_min=ko_playoff_max=0
-            use_playoff=ko_state.get("use_playoff") if ko_state else None
-            if use_playoff is True:
-                ko_min,ko_max=ko_playoff_min,ko_playoff_max
-                knockout_label=f"{ko_min}–{ko_max} trận (có Play-off)" if ko_min!=ko_max else f"{ko_max} trận"
-            elif use_playoff is False:
-                ko_min,ko_max=ko_no_playoff_min,ko_no_playoff_max
-                knockout_label=f"{ko_min}–{ko_max} trận (bỏ Play-off)" if ko_min!=ko_max else f"{ko_max} trận"
-            else:
-                ko_min=min(ko_no_playoff_min,ko_playoff_min); ko_max=max(ko_no_playoff_max,ko_playoff_max)
-                knockout_label=f"{ko_no_playoff_min}–{ko_no_playoff_max} bỏ Play-off / {ko_playoff_min}–{ko_playoff_max} có Play-off" if n>=24 else f"{ko_min}–{ko_max} trận"
+                ko_min=ko_max=0
+                knockout_label="Chưa đủ 8 HLV"
             knockout_planned=ko_max
             total_min=stage1_planned+league_planned+ko_min
             total_max=stage1_planned+league_planned+ko_max
@@ -1270,7 +1256,7 @@ def register_routes(context):
         return {
             "member_count":n,
             "stage1":{"per_hlv":s1_target,"planned":stage1_planned,"actual":actual_by_stage["stage1"],"completed":completed_by_stage["stage1"]},
-            "league":{"per_hlv":league_per_hlv,"pot_count":pot_count,"matches_per_pot":matches_per_pot,"planned":league_planned,"actual":actual_by_stage["league"],"completed":completed_by_stage["league"]},
+            "league":{"per_hlv":league_per_hlv,"pot_count":3,"matches_per_pot":1,"three_pot_matches":3,"wildcard_matches":1,"planned":league_planned,"actual":actual_by_stage["league"],"completed":completed_by_stage["league"]},
             "knockout":{"planned":knockout_planned,"actual":actual_by_stage["knockout"],"completed":completed_by_stage["knockout"],"label":knockout_label},
             "final_label":"2–3 trận (Bo3)",
             "total_min":total_min,"total_max":total_max,"completed":completed,"remaining":remaining,"percent":percent,
@@ -3269,36 +3255,126 @@ def register_routes(context):
             for i,u in enumerate(group_a): pairs.append((u,group_b[(i+shift)%n]))
         return pairs
 
+    def _league_four_match_pairs(tournament_id, members):
+        """Sinh đúng 4 trận/HLV: 3 lượt ưu tiên phủ đủ 3 Pot + 1 lượt random bất kỳ.
+
+        Mỗi lượt là một perfect matching toàn bộ HLV, nên mọi HLV có đúng 1 trận/lượt.
+        Ba lượt đầu tối đa hóa số Pot khác nhau đã gặp; lượt 4 chỉ yêu cầu không lặp đối thủ.
+        """
+        players=[str(m.get("user_id")) for m in members if m.get("user_id")]
+        if len(players)<4 or len(players)%2:
+            raise ValueError("GĐ2 cần số HLV chẵn và tối thiểu 4 để sinh 4 trận cân bằng.")
+        pot_by={str(m.get("user_id")):int(m.get("pot_no") or 0) for m in members if m.get("user_id")}
+        if len({p for p in pot_by.values() if p>0})<3:
+            raise ValueError("GĐ2 cần chia đủ 3 Pot trước khi sinh lịch.")
+
+        used=set()
+        covered={uid:set() for uid in players}
+        rounds=[]
+
+        def pair_key(a,b): return tuple(sorted((a,b)))
+
+        def make_matching(coverage_mode):
+            best=None; best_score=-10**9
+            # Random nhiều lần để tìm matching có độ phủ Pot tốt nhưng vẫn không lặp cặp.
+            for _ in range(5000):
+                arr=players[:]
+                random.shuffle(arr)
+                pairs=[]; ok=True; score=0
+                for i in range(0,len(arr),2):
+                    a,b=arr[i],arr[i+1]
+                    key=pair_key(a,b)
+                    if key in used:
+                        ok=False; break
+                    pairs.append((a,b))
+                    if coverage_mode:
+                        pa,pb=pot_by.get(a,0),pot_by.get(b,0)
+                        # Ưu tiên đối thủ thuộc Pot HLV chưa gặp; bonus thêm cho cặp khác Pot.
+                        score += (6 if pb and pb not in covered[a] else 0)
+                        score += (6 if pa and pa not in covered[b] else 0)
+                        score += (2 if pa and pb and pa!=pb else 0)
+                if ok:
+                    # Hạn chế để một HLV lặp quá nhiều cùng Pot trong 3 lượt đầu.
+                    if coverage_mode:
+                        for a,b in pairs:
+                            score -= len(covered[a] & {pot_by.get(b,0)})
+                            score -= len(covered[b] & {pot_by.get(a,0)})
+                    if score>best_score:
+                        best_score=score; best=pairs
+            if best is None:
+                # Fallback backtracking để luôn tìm perfect matching không lặp nếu còn tồn tại.
+                remaining=set(players)
+                out=[]
+                def dfs():
+                    if not remaining: return True
+                    a=min(remaining)
+                    remaining.remove(a)
+                    cand=[b for b in remaining if pair_key(a,b) not in used]
+                    random.shuffle(cand)
+                    if coverage_mode:
+                        cand.sort(key=lambda b:(pot_by.get(b,0) in covered[a], pot_by.get(a,0)==pot_by.get(b,0)))
+                    for b in cand:
+                        remaining.remove(b); out.append((a,b))
+                        if dfs(): return True
+                        out.pop(); remaining.add(b)
+                    remaining.add(a)
+                    return False
+                if not dfs():
+                    raise ValueError("Không thể sinh đủ 4 trận/HLV mà không lặp đối thủ. Hãy kiểm tra danh sách HLV/Pot.")
+                best=out
+            return best
+
+        for round_no in range(1,5):
+            pairs=make_matching(round_no<=3)
+            rounds.append(pairs)
+            for a,b in pairs:
+                used.add(pair_key(a,b))
+                covered[a].add(pot_by.get(b,0)); covered[b].add(pot_by.get(a,0))
+        return rounds
+
     @app.post('/admin/tournaments/<tournament_id>/league/generate')
     @login_required
     @admin_required
     def admin_tournament_league_generate(tournament_id):
-        k=max(1,min(4,int(request.form.get("matches_per_pot") or 2)))
-        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"league_config","setting_value":{"matches_per_pot":k},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_config",attempts=2)
-        members=_all_members(tournament_id); pots={}
-        for m in members: pots.setdefault(int(m.get("pot_no") or 0),[]).append(str(m["user_id"]))
-        pots={p:ids for p,ids in pots.items() if p>0}
-        if len(pots)<2:
-            flash("Hãy chia Pot trước khi sinh League Phase.","error"); return redirect_admin("tournaments")
-        # clear only pending league fixtures; completed history is protected
+        members=_all_members(tournament_id)
+        pots={int(m.get("pot_no") or 0) for m in members if int(m.get("pot_no") or 0)>0}
+        if len(pots)!=3:
+            flash("GĐ2 chính thức dùng đúng 3 Pot. Hãy chia 3 Pot trước khi sinh lịch.","error"); return redirect_admin("tournaments")
         existing_completed=_matches(tournament_id,"league",["completed"])
         if existing_completed:
             flash("League Phase đã có kết quả; không thể sinh lại tự động.","error"); return redirect_admin("tournaments")
-        execute_query(db.table("tournament_matches").delete().eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_league_clear",attempts=2)
-        pairs=[]; plist=sorted(pots)
         try:
-            for i,p in enumerate(plist):
-                pairs += _cyclic_pairs(pots[p],pots[p],k,True)
-                for q in plist[i+1:]: pairs += _cyclic_pairs(pots[p],pots[q],k,False)
+            rounds=_league_four_match_pairs(tournament_id,members)
         except ValueError as exc:
             flash(str(exc),"error"); return redirect_admin("tournaments")
-        unique=[]; seen=set()
-        for a,b in pairs:
-            key=tuple(sorted((a,b)))
-            if key not in seen: seen.add(key); unique.append((a,b))
-        for idx,(a,b) in enumerate(unique,1):
-            execute_query(db.table("tournament_matches").insert({"tournament_id":tournament_id,"stage_code":"league","round_code":f"LP-{idx}","home_user_id":a,"away_user_id":b,"status":"pending","leg_no":1,"created_at":now_iso(),"updated_at":now_iso()}),"ops_league_insert",attempts=2)
-        flash(f"Đã sinh {len(unique)} trận League Phase.","success"); return redirect_admin("tournaments")
+
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,
+            "setting_key":"league_config",
+            "setting_value":{
+                "pot_count":3,
+                "matches_per_hlv":4,
+                "three_pot_matches":3,
+                "wildcard_matches":1,
+                "format":"3_POT_PLUS_1_RANDOM",
+            },
+            "updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_league_config",attempts=2)
+        execute_query(db.table("tournament_matches").delete().eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_league_clear",attempts=2)
+
+        idx=0
+        for round_no,pairs in enumerate(rounds,1):
+            for a,b in pairs:
+                idx+=1
+                # Cân bằng home/away theo round + index.
+                h,a2=(a,b) if (idx+round_no)%2 else (b,a)
+                execute_query(db.table("tournament_matches").insert({
+                    "tournament_id":tournament_id,"stage_code":"league",
+                    "round_code":f"LP-R{round_no}-{idx}","home_user_id":h,"away_user_id":a2,
+                    "status":"pending","leg_no":1,"created_at":now_iso(),"updated_at":now_iso(),
+                }),"ops_league_insert",attempts=2)
+        flash(f"Đã sinh {idx} trận GĐ2: mỗi HLV đúng 4 trận · 3 lượt ưu tiên 3 Pot + 1 lượt Random bất kỳ · không lặp đối thủ.","success")
+        return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/registration-status')
     @login_required
@@ -3906,6 +3982,75 @@ def register_routes(context):
         execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_league_open_after_s1",attempts=2)
         flash("Đã kết thúc GĐ1. Có thể chia Pot, chọn CLB và chuẩn bị League Phase.","success"); return redirect_admin("tournaments")
 
+    LEAGUE_TOP3_REROLL_KEY = "league_top3_club_reroll_v1"
+
+    def _grant_league_top3_reroll_tickets(tournament_id):
+        ranking=_combined_ranking(tournament_id)
+        winners=ranking[:3]
+        old=_setting(tournament_id,LEAGUE_TOP3_REROLL_KEY,{}) or {}
+        entries=dict(old.get("entries") or {})
+        for pos,row in enumerate(winners,1):
+            uid=str(row.get("user_id") or "")
+            if not uid: continue
+            existing=entries.get(uid) or {}
+            if not existing:
+                entries[uid]={
+                    "rank":pos,"tickets_total":1,"tickets_remaining":1,"skipped_club_ids":[],
+                    "history":[],"granted_at":now_iso(),
+                }
+                try:
+                    create_user_notification(
+                        uid,
+                        f"🎟 Top {pos} GĐ2 · Nhận 1 vé Random lại CLB",
+                        "Bạn được 1 vé Random lại CLB trước vòng Knockout. CLB đã bỏ sẽ không xuất hiện lại cho bạn.",
+                        "/tournaments",
+                        "c1_league_top3_reroll",
+                    )
+                except Exception:
+                    pass
+        state={"entries":entries,"updated_at":now_iso(),"source":"combined_ranking_top3"}
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,"setting_key":LEAGUE_TOP3_REROLL_KEY,
+            "setting_value":state,"updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_league_top3_reroll_grant",attempts=2)
+        return state
+
+    @app.post('/tournaments/<tournament_id>/league-top3/reroll-club')
+    @login_required
+    def tournament_league_top3_reroll_club(tournament_id):
+        uid=str((current_user() or {}).get("id") or "")
+        member=_member(tournament_id,uid)
+        if not member:
+            flash("Bạn không thuộc giải đấu này.","error"); return redirect(url_for("tournaments"))
+        state=_setting(tournament_id,LEAGUE_TOP3_REROLL_KEY,{}) or {}
+        entries=dict(state.get("entries") or {})
+        entry=dict(entries.get(uid) or {})
+        if int(entry.get("tickets_remaining") or 0)<=0:
+            flash("Bạn không còn vé Random lại CLB GĐ2.","warning"); return redirect(url_for("tournaments")+"#ranking")
+        old_name=str(member.get("fixed_club_name") or "")
+        if not old_name:
+            flash("Bạn chưa có CLB để Random lại.","warning"); return redirect(url_for("tournaments")+"#ranking")
+        old_club,_=_one(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("name",old_name),"ops_league_reroll_old_club")
+        skipped=set(str(x) for x in (entry.get("skipped_club_ids") or []))
+        if old_club: skipped.add(str(old_club.get("id")))
+        pool=_available_clubs(tournament_id,skipped)
+        if not pool:
+            flash("Không còn CLB trống phù hợp để Random lại.","error"); return redirect(url_for("tournaments")+"#ranking")
+        new_club=random.choice(pool)
+        # Chỉ nhả CLB cũ sau khi đã chắc chắn có CLB mới để nhận.
+        if old_club:
+            execute_query(db.table("tournament_clubs").update({"selected_by":None,"selected_at":None}).eq("id",old_club.get("id")).eq("selected_by",uid),"ops_league_reroll_release_old",attempts=2)
+        _club_assign(tournament_id,uid,new_club)
+        entry["tickets_remaining"]=int(entry.get("tickets_remaining") or 0)-1
+        entry["skipped_club_ids"]=list(skipped)
+        entry.setdefault("history",[]).append({"at":now_iso(),"from":old_name,"to":new_club.get("name")})
+        entries[uid]=entry; state["entries"]=entries; state["updated_at"]=now_iso()
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,"setting_key":LEAGUE_TOP3_REROLL_KEY,"setting_value":state,"updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_league_top3_reroll_use",attempts=2)
+        flash(f"Đã dùng 1 vé: {old_name} → {new_club.get('name')}. CLB {old_name} sẽ không xuất hiện lại cho bạn.","success")
+        return redirect(url_for("tournaments")+"#ranking")
+
     @app.post('/admin/tournaments/<tournament_id>/league/finish')
     @login_required
     @admin_required
@@ -3919,34 +4064,28 @@ def register_routes(context):
                 execute_query(db.table("tournament_matches").update({"status":"disputed","updated_at":now_iso()}).eq("id",m.get("id")),"ops_league_pending_btc",attempts=2)
         execute_query(db.table("tournament_stages").update({"status":"completed","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_league_finish",attempts=2)
         execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","knockout"),"ops_ko_open",attempts=2)
-        flash("Đã khóa League Phase. BXH tổng GĐ1 + GĐ2 đã sẵn sàng để sinh Knockout.","success"); return redirect_admin("tournaments")
+        _grant_league_top3_reroll_tickets(tournament_id)
+        flash("Đã khóa GĐ2. Top 1–3 BXH tổng nhận mỗi người 1 vé Random lại CLB; Top 8 sẵn sàng vào thẳng Knockout.","success"); return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/knockout/generate')
     @login_required
     @admin_required
     def admin_tournament_knockout_generate(tournament_id):
-        use_playoff=request.form.get("use_playoff")=="1"
         ranking=_combined_ranking(tournament_id)
         if len(ranking)<8:
-            flash("Chưa đủ HLV để sinh Knockout.","error"); return redirect_admin("tournaments")
+            flash("Chưa đủ 8 HLV để sinh Knockout.","error"); return redirect_admin("tournaments")
         existing=_matches(tournament_id,"knockout")
         if any(m.get("status")=="completed" for m in existing):
             flash("Knockout đã có kết quả, không thể sinh lại.","error"); return redirect_admin("tournaments")
         if existing:
             execute_query(db.table("tournament_matches").delete().eq("tournament_id",tournament_id).eq("stage_code","knockout"),"ops_ko_clear",attempts=2)
-        ids=[str(r.get("user_id")) for r in ranking]
-        state={"use_playoff":use_playoff,"completed":False,"champion_user_id":None,"created_at":now_iso()}
-        if use_playoff and len(ids)>=24:
-            direct=ids[:8]; pool=ids[8:24]; state["direct_r16"]=direct; state["current_round"]="playoff"
-            for i in range(8): _insert_ko_pair(tournament_id,"playoff",pool[i],pool[-(i+1)],True)
-        else:
-            entrants=ids[:16] if len(ids)>=16 else ids[:8]
-            round_code="r16" if len(entrants)>=16 else "qf"
-            state["current_round"]=round_code
-            for i in range(len(entrants)//2): _insert_ko_pair(tournament_id,round_code,entrants[i],entrants[-(i+1)],True)
+        ids=[str(r.get("user_id")) for r in ranking[:8]]
+        state={"use_playoff":False,"completed":False,"champion_user_id":None,"created_at":now_iso(),"direct_top8":ids,"current_round":"qf"}
+        for i in range(4):
+            _insert_ko_pair(tournament_id,"qf",ids[i],ids[-(i+1)],True)
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"knockout_flow","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_ko_generate_state",attempts=2)
         execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","knockout"),"ops_ko_generate_open",attempts=2)
-        flash("Đã sinh bracket Knockout tự động.","success"); return redirect_admin("tournaments")
+        flash("Đã sinh Knockout: Top 8 vào thẳng Tứ kết · không Play-off.","success"); return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/knockout/match')
     @login_required
@@ -4050,6 +4189,7 @@ def register_routes(context):
                 "finish_rank":rank,
                 "zcoin":reward["zcoin"],
                 "lucky_box":reward["lucky_box"],
+                "random_club_tickets":2 if rank==1 else 1,
                 "completed_at":row.get("completed_at"),
                 "granted_at":now_iso(),
                 "granted_by":str(actor.get("id") or ""),
@@ -4079,9 +4219,9 @@ def register_routes(context):
                 "🏆 Chúc mừng hoàn thành sớm Giai Đoạn 1!",
                 (
                     f"Bạn hoàn thành GĐ1 ở hạng {rank} và nhận "
-                    f"{reward['zcoin']:,} Zcoin + {reward['lucky_box']} Lucky Box."
+                    f"{reward['zcoin']:,} Zcoin + {reward['lucky_box']} Lucky Box + {2 if rank==1 else 1} vé Random CLB GĐ2."
                 ).replace(",","."),
-                f"/tournaments/{tournament_id}",
+                "/tournaments",
                 "c1_stage1_early_reward",
             )
             ttl_cache_delete(f"user:{uid}")
@@ -4093,7 +4233,7 @@ def register_routes(context):
             rank=int(row.get("finish_rank") or 0)
             reward=_stage1_early_reward_amount(rank)
             summary_names.append(
-                f"#{rank} {row.get('display_name')}: {reward['zcoin']} Zcoin + {reward['lucky_box']} Lucky Box"
+                f"#{rank} {row.get('display_name')}: {reward['zcoin']} Zcoin + {reward['lucky_box']} Lucky Box + {2 if rank==1 else 1} vé Random CLB"
             )
 
         announcement_created=bool(state.get("announcement_created"))
