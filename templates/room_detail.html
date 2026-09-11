@@ -359,8 +359,8 @@
                             <div class="room-center-state-pill">✅ Cặp đấu đã hoàn tất</div>
                             <a class="btn gray room-center-action-btn" href="{{ url_for('tournament_detail', tournament_id=tournament_meta.tournament_id) }}">Về giải đấu</a>
                             {% else %}
-                            <div class="room-center-state-pill">⏳ Đang đồng bộ trận tiếp theo...</div>
-                            <a class="btn gold room-center-action-btn" href="{{ url_for('room_detail', room_id=room.id) }}">Tải lại phòng</a>
+                            <div class="room-center-state-pill">▶ Còn trận trong lịch · Đang chuyển sang bước Sẵn Sàng</div>
+                            <a class="btn gold room-center-action-btn" href="{{ url_for('room_detail', room_id=room.id) }}">Tiếp tục</a>
                             {% endif %}
                         </div>
                         {% else %}
