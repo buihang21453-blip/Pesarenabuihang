@@ -19,3 +19,5 @@ venv/
 private/
 backups/
 user_data/
+.vercel
+.env*

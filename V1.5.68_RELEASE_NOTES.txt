@@ -1,0 +1,6 @@
+PES ARENA V1.5.68
+- Tiến độ GĐ1 thêm cột Còn lại.
+- Còn 0 trận: xanh nhẹ.
+- Còn 1 trận: cam nổi bật.
+- Còn >=2 trận: đỏ nổi bật.
+- Thêm cột trạng thái, không đổi logic thưởng.

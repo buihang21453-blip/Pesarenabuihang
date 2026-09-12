@@ -3,6 +3,21 @@
 {% block page_styles %}
 <link rel="stylesheet" href="{{ static_asset('css/admin_dashboard.css') }}">
 {% endblock %}
+
+<style>
+.stage1-progress-table tr.stage1-row-complete{background:rgba(46,204,113,.055)}
+.stage1-progress-table tr.stage1-row-warning{background:linear-gradient(90deg,rgba(243,156,18,.18),rgba(243,156,18,.055));box-shadow:inset 4px 0 0 rgba(243,156,18,.85)}
+.stage1-progress-table tr.stage1-row-danger{background:linear-gradient(90deg,rgba(231,76,60,.22),rgba(231,76,60,.065));box-shadow:inset 4px 0 0 rgba(231,76,60,.92)}
+.stage1-progress-table tr.stage1-row-warning td:first-child strong{color:#ffbf58}
+.stage1-progress-table tr.stage1-row-danger td:first-child strong{color:#ff8275}
+.stage1-remaining{display:inline-flex;min-width:34px;height:28px;align-items:center;justify-content:center;border-radius:999px;padding:0 9px;font-size:14px}
+.stage1-remaining.is-done{color:#9be7b5;background:rgba(46,204,113,.12);border:1px solid rgba(46,204,113,.25)}
+.stage1-remaining.is-warning{color:#ffd083;background:rgba(243,156,18,.18);border:1px solid rgba(243,156,18,.48);box-shadow:0 0 14px rgba(243,156,18,.10)}
+.stage1-remaining.is-danger{color:#ffaaa1;background:rgba(231,76,60,.20);border:1px solid rgba(231,76,60,.55);box-shadow:0 0 16px rgba(231,76,60,.12)}
+.stage1-status-done{color:#62d98b;font-weight:800}
+.stage1-status-warning{color:#ffb84d;font-weight:900}
+.stage1-status-danger{color:#ff7568;font-weight:900}
+</style>
 {% block content %}
 
 <div class="admin-dashboard-heading">
@@ -1021,7 +1036,7 @@
             <input type="hidden" name="_admin_tab" value="tournaments">
             <button class="btn gold" type="submit">🏆 Trao thưởng GĐ1</button>
           </form>
-        </div><div class="admin-table-wrap tournament-compact"><table><thead><tr><th>HLV</th><th>Trận</th><th>Đối thủ</th><th>Điểm</th><th>Tiến độ</th></tr></thead><tbody>{% for r in ops.get('progress',[]) %}<tr><td>{{ r.display_name }}</td><td>{{ r.played }}/{{ r.target }}</td><td>{{ r.opponent_count }}</td><td>{{ r.points }}</td><td>{{ r.percent }}%</td></tr>{% endfor %}</tbody></table></div>{% set reward_granted=ev.get('stage1_early_reward_state',{}).get('granted',{}) %}<div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table><thead><tr><th>Top</th><th>HLV</th><th>Phần thưởng</th><th>Vé Random</th><th>Hoàn tất GĐ1 lúc</th><th>Trạng thái</th></tr></thead><tbody>{% for r in ev.get('completion_ranking',[])[:16] %}<tr><td>{% if r.finish_rank %}<strong>#{{ r.finish_rank }}</strong>{% else %}—{% endif %}</td><td><strong>{{ r.display_name }}</strong></td><td>{% if r.finish_rank==1 %}1.000 ZCoin + 2 Lucky Box{% elif r.finish_rank in [2,3] %}800 ZCoin + 1 Lucky Box{% else %}—{% endif %}</td><td>{% if r.tickets %}🎟 {{ r.tickets }}{% else %}—{% endif %}</td><td>{% if r.completed_at_vn %}<strong>{{ r.completed_at_vn }}</strong>{% else %}Chưa hoàn tất{% endif %}</td><td>{% if reward_granted.get(r.user_id|string,{}).get('status')=='granted' %}<span style="color:#2ecc71">✅ Đã trao</span>{% elif r.finish_rank in [1,2,3] and r.early_eligible %}<span style="color:#f1ca68">Chờ trao</span>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+        </div><div class="admin-table-wrap tournament-compact"><table class="stage1-progress-table"><thead><tr><th>HLV</th><th>Đã đá</th><th>Còn lại</th><th>Đối thủ</th><th>Điểm</th><th>Tiến độ</th><th>Trạng thái</th></tr></thead><tbody>{% for r in ops.get('progress',[]) %}{% set remain=r.remaining|default(0)|int %}<tr class="{% if remain<=0 %}stage1-row-complete{% elif remain==1 %}stage1-row-warning{% else %}stage1-row-danger{% endif %}"><td><strong>{{ r.display_name }}</strong></td><td>{{ r.played }}/{{ r.target }}</td><td><strong class="stage1-remaining {% if remain<=0 %}is-done{% elif remain==1 %}is-warning{% else %}is-danger{% endif %}">{{ remain }}</strong></td><td>{{ r.opponent_count }}</td><td>{{ r.points }}</td><td><strong>{{ r.percent }}%</strong></td><td>{% if remain<=0 %}<span class="stage1-status-done">✅ Hoàn thành</span>{% elif remain==1 %}<span class="stage1-status-warning">🟠 CÒN 1 TRẬN</span>{% else %}<span class="stage1-status-danger">🔴 CÒN {{ remain }} TRẬN</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% set reward_granted=ev.get('stage1_early_reward_state',{}).get('granted',{}) %}<div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table><thead><tr><th>Top</th><th>HLV</th><th>Phần thưởng</th><th>Vé Random</th><th>Hoàn tất GĐ1 lúc</th><th>Trạng thái</th></tr></thead><tbody>{% for r in ev.get('completion_ranking',[])[:16] %}<tr><td>{% if r.finish_rank %}<strong>#{{ r.finish_rank }}</strong>{% else %}—{% endif %}</td><td><strong>{{ r.display_name }}</strong></td><td>{% if r.finish_rank==1 %}1.000 ZCoin + 2 Lucky Box{% elif r.finish_rank in [2,3] %}800 ZCoin + 1 Lucky Box{% else %}—{% endif %}</td><td>{% if r.tickets %}🎟 {{ r.tickets }}{% else %}—{% endif %}</td><td>{% if r.completed_at_vn %}<strong>{{ r.completed_at_vn }}</strong>{% else %}Chưa hoàn tất{% endif %}</td><td>{% if reward_granted.get(r.user_id|string,{}).get('status')=='granted' %}<span style="color:#2ecc71">✅ Đã trao</span>{% elif r.finish_rank in [1,2,3] and r.early_eligible %}<span style="color:#f1ca68">Chờ trao</span>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>
         <details style="margin-top:10px"><summary><strong>🕒 Xem thời gian xác nhận từng trận của từng HLV</strong></summary><div style="padding-top:10px">
           {% for r in ev.get('completion_ranking',[])[:16] %}
           <details style="margin:0 0 8px;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 10px">
