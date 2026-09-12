@@ -1,0 +1,7 @@
+PES ARENA V1.5.64
+
+- Fix popup lịch rảnh không hiện trên 2 tài khoản test C1.
+- Gate áp cho: HLV thật thuộc tournament_members HOẶC tài khoản test C1.
+- Người dùng thường không tham gia giải vẫn xem /tournaments bình thường.
+- Popup chỉ xuất hiện khi tài khoản tương ứng chưa có bất kỳ giờ rảnh nào trong mine_set.
+- Giữ nguyên popup PES Arena bắt buộc của V1.5.63.

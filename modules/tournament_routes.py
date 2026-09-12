@@ -496,7 +496,9 @@ def register_routes(context):
                 # Người xem thường không phải thành viên giải vẫn xem /tournaments bình thường.
                 # Admin được miễn gate.
                 hub = item.get("landing_hub") or {}
-                is_tournament_competitor = bool(item.get("my_member"))
+                # HLV thật thuộc giải và 2 tài khoản test C1 đều đi qua cùng gate để kiểm thử đúng luồng.
+                # Người dùng thường không thuộc giải vẫn xem bình thường.
+                is_tournament_competitor = bool(item.get("my_member") or hub.get("is_test"))
                 if is_tournament_competitor and not can_admin_manage_tournament:
                     item["needs_availability_gate"] = not bool(hub.get("mine_set"))
                 member_rows, _ = _safe_rows(
