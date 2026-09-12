@@ -1,0 +1,3 @@
+PES ARENA V1.5.67
+- Popup lịch rảnh hiển thị Lịch của đối thủ.
+- Tick giờ trùng đổi xanh lá realtime cho HLV thật và tài khoản test.
