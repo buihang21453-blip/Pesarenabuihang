@@ -52,6 +52,9 @@
 .tournament-progress-mini{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px}.tournament-progress-mini b{display:block;padding:5px 3px;border-radius:7px;background:rgba(5,22,35,.82);color:#fff;text-align:center;font-size:15px;line-height:1}.tournament-progress-mini small{display:block;margin-top:3px;color:#8fa0ad;font-size:8px;font-weight:700}
 @media(max-width:720px){.tournament-progress-overlay{right:10px;top:52px;width:calc(100% - 20px);max-width:360px}.tournament-card-media{height:270px}}
 .tournament-progress-expired{display:block!important;margin-top:5px;color:#aeb9c2!important;font-size:10px!important;font-weight:700}
+
+/* V1.5.63 Mandatory availability popup */
+.pes-arena-mandatory-backdrop{position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(1,7,13,.86);backdrop-filter:blur(9px);overflow:auto;overscroll-behavior:contain}.pes-arena-mandatory-backdrop:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 0%,rgba(241,202,104,.14),transparent 38%),linear-gradient(135deg,rgba(8,34,51,.2),transparent 55%)}.pes-arena-mandatory-modal{position:relative;width:min(1120px,100%);max-height:calc(100vh - 44px);overflow:auto;border:1px solid rgba(241,202,104,.5);border-radius:20px;background:linear-gradient(180deg,rgba(7,23,35,.98),rgba(3,13,22,.99));box-shadow:0 30px 90px rgba(0,0,0,.62),0 0 0 1px rgba(255,255,255,.035) inset;padding:20px}.pes-arena-modal-glow{position:absolute;left:8%;right:8%;top:-1px;height:2px;background:linear-gradient(90deg,transparent,#f1ca68,transparent);box-shadow:0 0 22px rgba(241,202,104,.65)}.pes-arena-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:14px}.pes-arena-modal-head h2{margin:3px 0 5px;color:#f1ca68;font-size:24px}.pes-arena-modal-head p{margin:0;color:#d6e0e7;font-size:13px}.pes-arena-modal-kicker{display:block;color:#6f8595;font-size:10px;font-weight:900;letter-spacing:1.5px}.pes-arena-required-badge{padding:7px 10px;border-radius:999px;border:1px solid rgba(241,202,104,.45);background:rgba(241,202,104,.10);color:#f1ca68;font-size:10px;font-weight:900;letter-spacing:1px}.pes-arena-modal-note{margin:0 0 14px;padding:10px 12px;border-left:3px solid #f1ca68;border-radius:8px;background:rgba(241,202,104,.06);color:#9fb0bc;font-size:12px}.pes-arena-modal-footer{position:sticky;bottom:-20px;z-index:4;margin:16px -20px -20px;padding:14px 20px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:linear-gradient(180deg,rgba(3,13,22,.70),#030d16 40%);border-top:1px solid rgba(255,255,255,.08)}.pes-arena-lock-hint{color:#8fa0ad;font-size:11px}.pes-arena-save-schedule{min-width:250px;font-weight:900}body:has(.pes-arena-mandatory-backdrop){overflow:hidden}@media(max-width:760px){.pes-arena-mandatory-backdrop{padding:10px;align-items:flex-start}.pes-arena-mandatory-modal{max-height:calc(100vh - 20px);padding:14px;border-radius:15px}.pes-arena-modal-head{flex-direction:column;gap:8px}.pes-arena-modal-head h2{font-size:20px}.pes-arena-modal-footer{margin:14px -14px -14px;padding:12px 14px 14px}.pes-arena-save-schedule{width:100%;min-width:0}}
 </style>
 {% endblock %}
 
@@ -133,9 +136,7 @@
             </form>
             {% endif %}
             {% if tournament.my_member %}
-              {% if tournament.needs_availability_gate %}
-                <a class="btn gold" href="#availability-gate-{{ tournament.id }}">📅 ĐẶT LỊCH THI ĐẤU</a>
-              {% else %}
+              {% if not tournament.needs_availability_gate %}
                 <a class="btn" href="{{ url_for('tournaments') }}#schedule-{{ tournament.id }}">📅 Lịch của tôi</a>
                 <a class="btn" href="{{ url_for('tournaments') }}#ranking">📊 BXH</a>
                 <a class="btn" href="{{ url_for('tournaments') }}#rooms-{{ tournament.id }}">🏟️ Phòng thi đấu</a>
@@ -410,24 +411,19 @@
     {% for tournament in tournaments %}
     {% set hub=tournament.landing_hub|default(none) %}
     {% if tournament.name == 'CHAMPION LEAGUE ARENA' and hub and tournament.needs_availability_gate %}
-    <section class="td-section tournament-availability-gate" id="availability-gate-{{ tournament.id }}">
-      <h2>📅 ĐẶT LỊCH THI ĐẤU</h2>
-      <p>Trước khi vào xem giải đấu, HLV bắt buộc phải khai báo giờ rảnh trong Hôm nay / Ngày mai / Ngày kia.</p>
-      {% for day in hub.days if not day.is_weekend %}<form id="gate-flex-{{ tournament.id }}-{{ day.date }}" method="post" action="{{ url_for('tournament_availability_custom_add',tournament_id=tournament.id) }}"><input type="hidden" name="return_to" value="tournaments"></form>{% endfor %}
-      <form method="post" action="{{ url_for('admin_tournament_test_availability_simple_save',tournament_id=tournament.id) if hub.is_test else url_for('tournament_availability_save',tournament_id=tournament.id) }}" class="td-fixed-schedule" data-fixed-schedule>
-        <input type="hidden" name="return_to" value="tournaments">
-        <div class="td-av-days">
-        {% for day in hub.days %}
-          <div class="td-av-day">
-            <div class="td-av-day-head"><div><strong>{{ day.label }}</strong><span>{{ day.weekday }}</span></div><label class="td-av-all"><input type="checkbox" data-select-all-day> Tích toàn bộ</label></div>
-            <div class="td-av-slots">{% for slot in day.slots %}<label class="td-av-slot"><input type="checkbox" name="slots" value="{{ slot.iso }}" {{ 'checked' if slot.iso in hub.mine_set else '' }}><span>{{ slot.label }}</span></label>{% else %}<small>Không còn khung giờ nào trong ngày này.</small>{% endfor %}</div>
-            {% if not day.is_weekend %}<div class="td-av-flex"><div class="td-av-flex-title">🕒 Giờ linh hoạt</div><div class="td-av-flex-fields"><label>Từ (24h)<input type="text" name="start_time" form="gate-flex-{{ tournament.id }}-{{ day.date }}" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="18:30"></label><label>Đến (24h)<input type="text" name="end_time" form="gate-flex-{{ tournament.id }}-{{ day.date }}" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="22:00"></label><input type="hidden" name="day_date" value="{{ day.date }}" form="gate-flex-{{ tournament.id }}-{{ day.date }}"><button class="btn gold" type="submit" form="gate-flex-{{ tournament.id }}-{{ day.date }}">＋ Thêm</button></div></div>{% else %}<div class="td-av-weekend-note">🕒 Thứ 7 / Chủ nhật: giờ thi đấu linh hoạt sẵn, không cần khai báo thêm khoảng giờ riêng.</div>{% endif %}
-          </div>
-        {% endfor %}
-        </div>
-        <div class="td-av-save"><button class="btn green" type="submit">💾 Lưu giờ rảnh của tôi</button><small>Mỗi khung = 1 giờ · Hôm nay / Ngày mai / Ngày kia.</small></div>
-      </form>
-    </section>
+    <div class="pes-arena-mandatory-backdrop" data-mandatory-availability-modal aria-modal="true" role="dialog" aria-labelledby="availability-title-{{ tournament.id }}">
+      <section class="pes-arena-mandatory-modal">
+        <div class="pes-arena-modal-glow"></div>
+        <header class="pes-arena-modal-head"><div><small class="pes-arena-modal-kicker">PES ARENA · CHAMPIONS LEAGUE</small><h2 id="availability-title-{{ tournament.id }}">📅 ĐẶT LỊCH THI ĐẤU</h2><p>HLV phải khai báo giờ rảnh trước khi vào xem giải đấu.</p></div><span class="pes-arena-required-badge">BẮT BUỘC</span></header>
+        <div class="pes-arena-modal-note">Chọn giờ bạn có thể thi đấu trong <strong>Hôm nay / Ngày mai / Ngày kia</strong>. Có thể chọn khung 1 giờ hoặc thêm giờ linh hoạt theo định dạng 24h.</div>
+        {% for day in hub.days if not day.is_weekend %}<form id="gate-flex-{{ tournament.id }}-{{ day.date }}" method="post" action="{{ url_for('tournament_availability_custom_add',tournament_id=tournament.id) }}"><input type="hidden" name="return_to" value="tournaments"></form>{% endfor %}
+        <form method="post" action="{{ url_for('tournament_availability_save',tournament_id=tournament.id) }}" class="td-fixed-schedule pes-arena-modal-schedule" data-fixed-schedule>
+          <input type="hidden" name="return_to" value="tournaments"><div class="td-av-days">
+          {% for day in hub.days %}<div class="td-av-day"><div class="td-av-day-head"><div><strong>{{ day.label }}</strong><span>{{ day.weekday }}</span></div><label class="td-av-all"><input type="checkbox" data-select-all-day> Tích toàn bộ</label></div><div class="td-av-slots">{% for slot in day.slots %}<label class="td-av-slot"><input type="checkbox" name="slots" value="{{ slot.iso }}" {{ 'checked' if slot.iso in hub.mine_set else '' }}><span>{{ slot.label }}</span></label>{% else %}<small>Không còn khung giờ nào trong ngày này.</small>{% endfor %}</div>{% if not day.is_weekend %}<div class="td-av-flex"><div class="td-av-flex-title">🕒 Giờ linh hoạt</div><div class="td-av-flex-fields"><label>Từ (24h)<input type="text" name="start_time" form="gate-flex-{{ tournament.id }}-{{ day.date }}" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="18:30"></label><label>Đến (24h)<input type="text" name="end_time" form="gate-flex-{{ tournament.id }}-{{ day.date }}" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="22:00"></label><input type="hidden" name="day_date" value="{{ day.date }}" form="gate-flex-{{ tournament.id }}-{{ day.date }}"><button class="btn gold" type="submit" form="gate-flex-{{ tournament.id }}-{{ day.date }}">＋ Thêm</button></div></div>{% else %}<div class="td-av-weekend-note">🕒 Thứ 7 / Chủ nhật: giờ thi đấu linh hoạt sẵn, không cần khai báo thêm khoảng giờ riêng.</div>{% endif %}</div>{% endfor %}
+          </div><div class="pes-arena-modal-footer"><div class="pes-arena-lock-hint">🔒 Nội dung giải đấu sẽ mở sau khi bạn lưu lịch thi đấu.</div><button class="btn green pes-arena-save-schedule" type="submit">💾 LƯU LỊCH & VÀO GIẢI ĐẤU</button></div>
+        </form>
+      </section>
+    </div>
     {% endif %}
     {% endfor %}
 
@@ -666,3 +662,4 @@ document.querySelectorAll('[data-fixed-schedule]').forEach(function(form){
 });
 </script>
 {% endblock %}
+<script>document.addEventListener('DOMContentLoaded',function(){var m=document.querySelector('[data-mandatory-availability-modal]');if(!m)return;m.addEventListener('click',function(e){if(e.target===m){e.preventDefault();e.stopPropagation();}});document.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();e.stopPropagation();}},true);var f=m.querySelector('input[type=checkbox],input[type=text],button');if(f)setTimeout(function(){f.focus({preventScroll:true});},80);});</script>
