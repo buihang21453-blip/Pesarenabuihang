@@ -492,13 +492,12 @@ def register_routes(context):
                 item["my_member"] = _member_for_user(item.get("id"), user_id)
                 item["landing_hub"] = _landing_hub_payload(item.get("id"), user, item.get("my_member"))
                 item["needs_availability_gate"] = False
-                if item.get("my_member") and not can_admin_manage_tournament:
-                    av_rows, _ = _safe_rows(
-                        db.table("tournament_availability_slots").select("id")
-                        .eq("tournament_id", item.get("id")).eq("user_id", user_id),
-                        "tournament_landing_availability_gate",
-                    )
-                    item["needs_availability_gate"] = not bool(av_rows)
+                # V1.5.62: gate được áp ngay trên /tournaments cho HLV thật và tài khoản test.
+                # Dùng mine_set làm nguồn sự thật để tính cả khung giờ chuẩn lẫn giờ linh hoạt.
+                hub = item.get("landing_hub") or {}
+                is_competitor_view = bool(item.get("my_member") or hub.get("is_test"))
+                if is_competitor_view and not can_admin_manage_tournament:
+                    item["needs_availability_gate"] = not bool(hub.get("mine_set"))
                 member_rows, _ = _safe_rows(
                     db.table("tournament_members").select("id").eq("tournament_id", item.get("id")).eq("status", "active"),
                     "tournament_member_count",

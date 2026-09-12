@@ -126,14 +126,20 @@
           </div>
           {% endif %}
           <div class="tournament-card-actions">
+            {% if not tournament.needs_availability_gate %}
             <form method="post" action="{{ url_for('c1_room_open') }}" style="display:inline;margin:0">
               <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
               <button class="btn" type="submit">🎮 Phòng đấu C1</button>
             </form>
+            {% endif %}
             {% if tournament.my_member %}
-              <a class="btn" href="{{ url_for('tournaments') }}#schedule-{{ tournament.id }}">📅 Lịch của tôi</a>
-              <a class="btn" href="{{ url_for('tournaments') }}#ranking">📊 BXH</a>
-              <a class="btn" href="{{ url_for('tournaments') }}#rooms-{{ tournament.id }}">🏟️ Phòng thi đấu</a>
+              {% if tournament.needs_availability_gate %}
+                <a class="btn gold" href="#availability-gate-{{ tournament.id }}">📅 ĐẶT LỊCH THI ĐẤU</a>
+              {% else %}
+                <a class="btn" href="{{ url_for('tournaments') }}#schedule-{{ tournament.id }}">📅 Lịch của tôi</a>
+                <a class="btn" href="{{ url_for('tournaments') }}#ranking">📊 BXH</a>
+                <a class="btn" href="{{ url_for('tournaments') }}#rooms-{{ tournament.id }}">🏟️ Phòng thi đấu</a>
+              {% endif %}
               <details class="tournament-profile-edit"><summary class="btn">✎ Thông tin giải</summary><form method="post" action="{{ url_for('tournament_profile_update', tournament_id=tournament.id) }}" style="margin-top:8px;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;display:grid;gap:8px;min-width:280px"><strong>Sửa thông tin của tôi</strong><input class="tournament-zalo-input" name="zalo_name" maxlength="80" placeholder="Tên Zalo" value="{{ tournament.my_registration.zalo_name if tournament.my_registration else '' }}" required><div class="tournament-choice-grid"><label class="tournament-choice"><input type="radio" name="host_choice" value="yes" {% if tournament.my_registration and tournament.my_registration.has_host %}checked{% endif %} required> Có Host</label><label class="tournament-choice"><input type="radio" name="host_choice" value="no" {% if not tournament.my_registration or not tournament.my_registration.has_host %}checked{% endif %} required> Không Host</label></div><div class="tournament-choice-grid">{% for region in ['Bắc','Trung','Nam'] %}<label class="tournament-choice"><input type="radio" name="host_region" value="{{ region }}" {% if tournament.my_registration and tournament.my_registration.host_region==region %}checked{% endif %} required> {{ region }}</label>{% endfor %}</div><button class="btn gold" type="submit">Lưu thông tin</button></form></details>
             {% elif tournament.my_registration and tournament.my_registration.status == 'pending' %}
               <div class="tournament-control"><strong>Đang chờ Admin duyệt</strong></div>
@@ -153,6 +159,7 @@
             <form method="post" action="{{ url_for('tournament_league_top3_reroll_club',tournament_id=tournament.id) }}" onsubmit="return confirm('Dùng 1 vé để bỏ CLB hiện tại và Random CLB khác? CLB cũ sẽ không xuất hiện lại cho bạn.');"><button class="btn gold" type="submit">🎲 Random lại CLB</button></form>
           </div>
           {% endif %}
+          {% if not tournament.needs_availability_gate %}
           <div class="tournament-public-ranking" id="ranking">
             <div class="tournament-public-ranking-head">
               <div>
@@ -357,7 +364,8 @@
               </table>
             </div>
           </div>
-          {% if tournament.registration_open and not tournament.my_member and (not tournament.my_registration or tournament.my_registration.status in ['rejected','withdrawn']) and request.args.get('register') == tournament.id|string %}
+          {% endif %}
+                    {% if tournament.registration_open and not tournament.my_member and (not tournament.my_registration or tournament.my_registration.status in ['rejected','withdrawn']) and request.args.get('register') == tournament.id|string %}
           <form id="register-{{ tournament.id }}" class="tournament-register-box" method="post" action="{{ url_for('tournament_register', tournament_id=tournament.id) }}">
             <div class="tournament-register-head"><h4>🏆 Đăng ký tham gia giải đấu</h4></div>
             <p>Điền thông tin liên hệ và kết nối. Các lựa chọn chỉ cần tích ✓, sau đó đọc khung giờ thi đấu và quét QR đóng phí.</p>
@@ -401,7 +409,31 @@
 
     {% for tournament in tournaments %}
     {% set hub=tournament.landing_hub|default(none) %}
-    {% if tournament.name == 'CHAMPION LEAGUE ARENA' and hub %}
+    {% if tournament.name == 'CHAMPION LEAGUE ARENA' and hub and tournament.needs_availability_gate %}
+    <section class="td-section tournament-availability-gate" id="availability-gate-{{ tournament.id }}">
+      <h2>📅 ĐẶT LỊCH THI ĐẤU</h2>
+      <p>Trước khi vào xem giải đấu, HLV bắt buộc phải khai báo giờ rảnh trong Hôm nay / Ngày mai / Ngày kia.</p>
+      {% for day in hub.days if not day.is_weekend %}<form id="gate-flex-{{ tournament.id }}-{{ day.date }}" method="post" action="{{ url_for('tournament_availability_custom_add',tournament_id=tournament.id) }}"><input type="hidden" name="return_to" value="tournaments"></form>{% endfor %}
+      <form method="post" action="{{ url_for('admin_tournament_test_availability_simple_save',tournament_id=tournament.id) if hub.is_test else url_for('tournament_availability_save',tournament_id=tournament.id) }}" class="td-fixed-schedule" data-fixed-schedule>
+        <input type="hidden" name="return_to" value="tournaments">
+        <div class="td-av-days">
+        {% for day in hub.days %}
+          <div class="td-av-day">
+            <div class="td-av-day-head"><div><strong>{{ day.label }}</strong><span>{{ day.weekday }}</span></div><label class="td-av-all"><input type="checkbox" data-select-all-day> Tích toàn bộ</label></div>
+            <div class="td-av-slots">{% for slot in day.slots %}<label class="td-av-slot"><input type="checkbox" name="slots" value="{{ slot.iso }}" {{ 'checked' if slot.iso in hub.mine_set else '' }}><span>{{ slot.label }}</span></label>{% else %}<small>Không còn khung giờ nào trong ngày này.</small>{% endfor %}</div>
+            {% if not day.is_weekend %}<div class="td-av-flex"><div class="td-av-flex-title">🕒 Giờ linh hoạt</div><div class="td-av-flex-fields"><label>Từ (24h)<input type="text" name="start_time" form="gate-flex-{{ tournament.id }}-{{ day.date }}" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="18:30"></label><label>Đến (24h)<input type="text" name="end_time" form="gate-flex-{{ tournament.id }}-{{ day.date }}" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="22:00"></label><input type="hidden" name="day_date" value="{{ day.date }}" form="gate-flex-{{ tournament.id }}-{{ day.date }}"><button class="btn gold" type="submit" form="gate-flex-{{ tournament.id }}-{{ day.date }}">＋ Thêm</button></div></div>{% else %}<div class="td-av-weekend-note">🕒 Thứ 7 / Chủ nhật: giờ thi đấu linh hoạt sẵn, không cần khai báo thêm khoảng giờ riêng.</div>{% endif %}
+          </div>
+        {% endfor %}
+        </div>
+        <div class="td-av-save"><button class="btn green" type="submit">💾 Lưu giờ rảnh của tôi</button><small>Mỗi khung = 1 giờ · Hôm nay / Ngày mai / Ngày kia.</small></div>
+      </form>
+    </section>
+    {% endif %}
+    {% endfor %}
+
+    {% for tournament in tournaments %}
+    {% set hub=tournament.landing_hub|default(none) %}
+    {% if tournament.name == 'CHAMPION LEAGUE ARENA' and hub and not tournament.needs_availability_gate %}
     <div class="tournament-center-stack" id="center-{{ tournament.id }}">
       <section class="td-section" id="rooms-{{ tournament.id }}">
         <h2>🏟️ Phòng thi đấu</h2>
@@ -434,7 +466,7 @@
 
     {% for tournament in tournaments %}
     {% set hub=tournament.landing_hub|default(none) %}
-    {% if tournament.name == 'CHAMPION LEAGUE ARENA' and hub %}
+    {% if tournament.name == 'CHAMPION LEAGUE ARENA' and hub and not tournament.needs_availability_gate %}
     <div class="tournament-personal-hub" id="personal-hub-{{ tournament.id }}">
       {% set myid=hub.member.user_id|string %}
       <section class="td-section" id="schedule-{{ tournament.id }}">
