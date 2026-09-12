@@ -364,12 +364,14 @@ def register_routes(context):
         zalos={str(x.get('user_id')):(x.get('zalo_name') or '') for x in reg_rows}
 
         decorated=[]
+        opponent_slot_set=set()
         for m in match_rows:
             row=dict(m); h=str(row.get('home_user_id') or ''); a=str(row.get('away_user_id') or '')
             row['home_name']=names.get(h,'HLV'); row['away_name']=names.get(a,'HLV'); row['home_zalo_name']=zalos.get(h,''); row['away_zalo_name']=zalos.get(a,'')
             oid=a if h==uid else h
             opp_rows,_=_safe_rows(db.table('tournament_availability_slots').select('slot_at').eq('tournament_id',tournament_id).eq('user_id',oid),'tournament_landing_opp_availability')
             opp=_landing_parse_slots([r.get('slot_at') for r in opp_rows])
+            opponent_slot_set.update(opp)
             row['opponent_availability_days']=_landing_group_slots(opp,mine_set)
             decorated.append(row)
 
@@ -380,6 +382,7 @@ def register_routes(context):
             if oid:
                 state=_landing_setting(tournament_id,f'c1_test_availability_{oid}',{}) or {}
                 opp=_landing_parse_slots(state.get('slots') or [])
+                opponent_slot_set.update(opp)
                 test_opp_days=_landing_group_slots(opp,mine_set)
 
         s1_reveals=_landing_setting(tournament_id,'stage1_player_reveals',{}) or {}
@@ -469,6 +472,7 @@ def register_routes(context):
             'stage1_opened':bool(s1_reveals.get(uid)), 'league_mine':league_mine,
             'league_opened':bool(league_reveals.get(uid)), 'test_opponent':test_opponent,
             'test_opponent_days':test_opp_days,
+            'opponent_slot_set':opponent_slot_set,
             'progress_label':progress_label,'progress_deadline':progress_deadline,'early_deadline':early_deadline,'early_deadline_active':early_deadline_active,
             'league_reroll_entry':league_reroll_entry,
             'host_ready':host_ready,'center_rooms':center_rooms,
