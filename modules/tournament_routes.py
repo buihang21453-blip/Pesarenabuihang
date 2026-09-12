@@ -506,7 +506,38 @@ def register_routes(context):
                 item["member_count"] = len(member_rows)
                 timing = _tournament_timing_preview(item.get("id"))
                 item["stage1_start_at"] = timing.get("stage1_start_at")
+                item["stage1_end_at"] = timing.get("stage1_end_at")
+                item["stage1_extension_end_at"] = timing.get("stage1_extension_end_at")
+                item["league_end_at"] = timing.get("league_end_at")
                 item["stage1_early_end_at"] = timing.get("stage1_early_end_at")
+
+                # V1.5.61: Tiến trình giải là dữ liệu công khai của giải, không phụ thuộc landing_hub/member.
+                vn_tz = timezone(timedelta(hours=7))
+                now_vn = datetime.now(vn_tz)
+                def _public_future(raw):
+                    dt = _parse_tournament_dt(raw)
+                    if not dt:
+                        return False
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=vn_tz)
+                    return dt.astimezone(vn_tz) > now_vn
+
+                item["progress_label"] = ""
+                item["progress_deadline"] = None
+                if _public_future(item.get("stage1_start_at")):
+                    item["progress_label"] = "GĐ1 bắt đầu sau:"
+                    item["progress_deadline"] = item.get("stage1_start_at")
+                elif _public_future(item.get("stage1_end_at")):
+                    item["progress_label"] = "GĐ1 đang diễn ra · thời gian còn lại:"
+                    item["progress_deadline"] = item.get("stage1_end_at")
+                elif _public_future(item.get("stage1_extension_end_at")):
+                    item["progress_label"] = "🔴 GĐ1 đang trong thời gian gia hạn:"
+                    item["progress_deadline"] = item.get("stage1_extension_end_at")
+                elif _public_future(item.get("league_end_at")):
+                    item["progress_label"] = "League Phase · thời gian còn lại:"
+                    item["progress_deadline"] = item.get("league_end_at")
+                item["early_deadline"] = item.get("stage1_early_end_at")
+                item["early_deadline_active"] = bool(item.get("early_deadline") and _public_future(item.get("early_deadline")))
                 start_dt = _parse_tournament_dt(item.get("stage1_start_at"))
                 if start_dt:
                     if start_dt.tzinfo is None:

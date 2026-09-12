@@ -97,13 +97,13 @@
       <section class="tournament-section-card is-c1-arena">
         <div class="tournament-card-media">
           <span class="tournament-card-status {{ 'registration' if tournament.status in ['registration','upcoming'] else '' }}">● {{ 'Đăng ký' if tournament.status in ['registration','upcoming'] else 'Đang diễn ra' }}</span>
-          {% if hub and (hub.progress_deadline or hub.early_deadline) %}
+          {% if tournament.progress_deadline or tournament.early_deadline %}
           <div class="tournament-progress-overlay">
             <strong>⏱️ Tiến trình giải đấu</strong>
-            {% if hub.progress_deadline %}<span>{{ hub.progress_label }}</span><div class="tournament-progress-mini" data-center-countdown="{{ hub.progress_deadline }}"><b data-d>0<small>Ngày</small></b><b data-h>0<small>Giờ</small></b><b data-m>0<small>Phút</small></b><b data-s>0<small>Giây</small></b></div>{% endif %}
+            {% if tournament.progress_deadline %}<span>{{ tournament.progress_label }}</span><div class="tournament-progress-mini" data-center-countdown="{{ tournament.progress_deadline }}"><b data-d>0<small>Ngày</small></b><b data-h>0<small>Giờ</small></b><b data-m>0<small>Phút</small></b><b data-s>0<small>Giây</small></b></div>{% endif %}
             <span class="reward">🎁 Thưởng hoàn thành sớm còn:</span>
-            {% if hub.early_deadline and hub.early_deadline_active %}<div class="tournament-progress-mini" data-center-countdown="{{ hub.early_deadline }}"><b data-d>0<small>Ngày</small></b><b data-h>0<small>Giờ</small></b><b data-m>0<small>Phút</small></b><b data-s>0<small>Giây</small></b></div>
-            {% elif hub.early_deadline %}<span class="tournament-progress-expired">Đã hết thời gian thưởng</span>
+            {% if tournament.early_deadline and tournament.early_deadline_active %}<div class="tournament-progress-mini" data-center-countdown="{{ tournament.early_deadline }}"><b data-d>0<small>Ngày</small></b><b data-h>0<small>Giờ</small></b><b data-m>0<small>Phút</small></b><b data-s>0<small>Giây</small></b></div>
+            {% elif tournament.early_deadline %}<span class="tournament-progress-expired">Đã hết thời gian thưởng</span>
             {% else %}<span class="tournament-progress-expired">Chưa cấu hình hạn thưởng</span>{% endif %}
           </div>
           {% endif %}

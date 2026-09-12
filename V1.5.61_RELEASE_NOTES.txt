@@ -1,0 +1,6 @@
+PES ARENA V1.5.61
+
+- Sửa Tiến trình giải đấu / Thưởng hoàn thành sớm trên /tournaments.
+- Overlay không còn phụ thuộc landing_hub/member.
+- Admin, HLV thường và tài khoản test đều đọc chung dữ liệu timing công khai của giải.
+- Dòng thưởng luôn hiện khi có mốc stage1_early_end_at; hết hạn sẽ báo Đã hết thời gian thưởng.
