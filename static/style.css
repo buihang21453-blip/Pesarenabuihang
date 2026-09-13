@@ -6305,7 +6305,6 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 .sidebar-zalo-qr-wrap{display:grid;place-items:center;width:132px;height:132px;padding:7px;border-radius:10px;background:#fff;box-shadow:0 8px 18px rgba(0,0,0,.28)}
 .sidebar-zalo-qr-wrap img{display:block;width:100%;height:100%;object-fit:contain;border-radius:5px}
 .sidebar-zalo-group strong{color:#d9e2ea;font-size:10px;line-height:1.4}
-.sidebar-zalo-group small{color:#69b7ff;font-size:9px;font-weight:700;overflow-wrap:anywhere}
 html[data-theme="light"] .sidebar-zalo-group{background:linear-gradient(145deg,#fff,#f4f7fa);border-color:#d4b252}
 html[data-theme="light"] .sidebar-zalo-group strong{color:#405063}
 @media(max-width:900px){.sidebar-zalo-group{margin:0 12px 12px}.sidebar-zalo-qr-wrap{width:118px;height:118px}}

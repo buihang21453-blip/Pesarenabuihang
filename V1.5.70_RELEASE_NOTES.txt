@@ -1,0 +1,4 @@
+PES ARENA V1.5.70
+- Không hiển thị dòng zalo.me/g/bqbtai165 dưới QR ở sidebar.
+- Link click tham gia nhóm vẫn giữ nguyên.
+- Thay ảnh QR Zalo bằng zalo_qr.webp ở sidebar và trang Hướng dẫn.
