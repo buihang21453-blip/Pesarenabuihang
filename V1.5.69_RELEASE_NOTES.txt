@@ -1,0 +1,7 @@
+PES ARENA V1.5.69
+
+- Thêm QR nhóm Zalo dưới khung Phiên bản ở sidebar.
+- Sidebar mở nhóm: https://zalo.me/g/bqbtai165
+- QR mới: https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1/zalo_group_qr.webp
+- Trang Hướng dẫn thay link nhóm Zalo cũ bằng link mới.
+- Trang Hướng dẫn thay QR cũ bằng QR mới.

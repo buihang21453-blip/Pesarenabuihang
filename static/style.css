@@ -6291,3 +6291,22 @@ html[data-theme="light"] .account-presence-control select{background:#fff!import
 /* V1.5.25 - C1 score entry: larger, bold digits for Host result input */
 .room-layout-v137 .c1-score-input{font-size:22px!important;font-weight:900!important;line-height:1.15!important;text-align:center!important;min-width:96px!important;height:48px!important;font-variant-numeric:tabular-nums!important;}
 @media(max-width:640px){.room-layout-v137 .c1-score-input{font-size:20px!important;height:46px!important;min-width:82px!important;}}
+
+
+/* V1.5.69 — Zalo group QR below sidebar version */
+.sidebar-zalo-group{
+  display:grid;justify-items:center;gap:7px;margin:-6px 12px 18px;padding:11px 10px 12px;
+  border:1px solid rgba(241,202,104,.32);border-radius:11px;
+  background:radial-gradient(circle at 50% 0%,rgba(241,202,104,.08),transparent 52%),linear-gradient(145deg,rgba(13,25,38,.94),rgba(5,14,23,.98));
+  color:var(--pes-text);text-decoration:none;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.025);transition:.18s ease;
+}
+.sidebar-zalo-group:hover{transform:translateY(-1px);border-color:rgba(241,202,104,.62);box-shadow:0 8px 24px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.035)}
+.sidebar-zalo-title{color:#f1ca68;font-size:12px;font-weight:900}
+.sidebar-zalo-qr-wrap{display:grid;place-items:center;width:132px;height:132px;padding:7px;border-radius:10px;background:#fff;box-shadow:0 8px 18px rgba(0,0,0,.28)}
+.sidebar-zalo-qr-wrap img{display:block;width:100%;height:100%;object-fit:contain;border-radius:5px}
+.sidebar-zalo-group strong{color:#d9e2ea;font-size:10px;line-height:1.4}
+.sidebar-zalo-group small{color:#69b7ff;font-size:9px;font-weight:700;overflow-wrap:anywhere}
+html[data-theme="light"] .sidebar-zalo-group{background:linear-gradient(145deg,#fff,#f4f7fa);border-color:#d4b252}
+html[data-theme="light"] .sidebar-zalo-group strong{color:#405063}
+@media(max-width:900px){.sidebar-zalo-group{margin:0 12px 12px}.sidebar-zalo-qr-wrap{width:118px;height:118px}}
+

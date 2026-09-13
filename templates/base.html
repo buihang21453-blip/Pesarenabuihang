@@ -125,6 +125,15 @@ function toggleTheme(){
             <strong>{{ APP_VERSION.replace("Collap_", "").split("_")[0] }}</strong>
         </div>
 
+        <a class="sidebar-zalo-group" href="https://zalo.me/g/bqbtai165" target="_blank" rel="noopener noreferrer" aria-label="Tham gia nhóm Zalo PES Arena">
+            <span class="sidebar-zalo-title">💬 Nhóm Zalo PES Arena</span>
+            <span class="sidebar-zalo-qr-wrap">
+                <img src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1/zalo_group_qr.webp" alt="Mã QR nhóm Zalo PES Arena" loading="lazy">
+            </span>
+            <strong>Quét QR hoặc bấm để tham gia</strong>
+            <small>zalo.me/g/bqbtai165</small>
+        </a>
+
         <form id="quickCreateRoomForm" method="post" action="{{ url_for('create_open_room') }}" hidden></form>
         <form id="quickCreateC1RoomForm" method="post" action="{{ url_for('c1_room_open') }}" hidden>
             {% if request.view_args and request.view_args.get('tournament_id') %}
