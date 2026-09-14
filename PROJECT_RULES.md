@@ -40,6 +40,7 @@ Mỗi yêu cầu phải xác định tối thiểu:
 - Không tách module lớn trong cùng release sửa bug nhỏ trừ khi user yêu cầu refactor.
 - Khi refactor HTML phải giữ nguyên `id`, `class`, `data-*`, form action, endpoint, biến Jinja và JS hook trừ khi yêu cầu thay đổi chúng.
 - `templates/tournaments.html` chỉ là orchestrator; sửa từng khu vực C1 trong `templates/tournament/...` theo `PROJECT_MAP.md`.
+- `modules/tournament_competition.py` chỉ là composition root C1; không đưa nghiệp vụ mới trở lại file này. Sửa đúng partition trong `modules/tournament_competition_parts/` và giữ thứ tự đăng ký `core → admin → test_support → rooms → league → scheduling → rewards`.
 
 ## 5. Quy tắc C1 / Tournament
 

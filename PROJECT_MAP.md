@@ -1,6 +1,6 @@
 # PROJECT_MAP — PES Arena
 
-**Baseline:** V1.5.77  
+**Baseline:** V1.5.78  
 **Stack:** Flask + Jinja2 + Supabase + vanilla CSS/JavaScript  
 **Entry point:** `app.py`  
 
@@ -93,13 +93,37 @@ Render UI
 | Module | Vai trò |
 |---|---|
 | `tournament_routes.py` | Hub `/tournaments`, đăng ký/rút, hồ sơ HLV, admin registration/finance/access; dựng `landing_hub` và dữ liệu render |
-| `tournament_competition.py` | Nghiệp vụ thi đấu C1: lịch, availability, room C1, stage, BXH giải, Host, club/random, reward, API Sảnh chờ... |
+| `tournament_competition.py` | **Composition root C1**: giữ API `register_routes(context)`, hằng số chung và đăng ký các partition theo thứ tự phụ thuộc; không còn chứa nghiệp vụ 4k+ dòng. |
 | `tournament_test_mode.py` | Sandbox/Test C1, tạo player test, seed/generate stage, simulate/report/reset |
+| `tournament_competition_parts/core.py` | Helper lõi: members/matches/ranking/progress/availability payload/countdown/KO helper/payload Admin + context processor. |
+| `tournament_competition_parts/admin.py` | Route Admin nền tảng: test accounts, member/stage/match result, Pot. |
+| `tournament_competition_parts/test_support.py` | 2 tài khoản test, Admin switch, ranking test, lịch sử random GĐ1, pool CLB test. |
+| `tournament_competition_parts/rooms.py` | Phòng C1: open/invite/accept/enter/next-match/random CLB/result/confirm/dispute + nhánh test room. |
+| `tournament_competition_parts/league.py` | Chọn CLB, sinh lịch GĐ2, timing/start, draft/random/reveal League Phase. |
+| `tournament_competition_parts/scheduling.py` | Availability, Host đang rảnh API/toggle, đặt/accept/reject lịch, host admin, gia hạn GĐ1. |
+| `tournament_competition_parts/rewards.py` | Kết thúc GĐ1/GĐ2, vé reroll Top 3, sinh/điều hành Knockout, thưởng hoàn thành sớm, reward admin. |
 | `templates/tournaments.html` | **Orchestrator 32 dòng** của hub giải sau V1.5.76 |
 | `templates/tournament_detail.html` | Template legacy/chi tiết; GET detail hiện chủ yếu tương thích/redirect theo lịch sử V1.5.54 |
 | `templates/c1_rooms.html` | Trang/phần phòng C1 legacy/trung gian còn được giữ cho tương thích |
 
-### 5.1 Cấu trúc `templates/tournament/` sau V1.5.76
+### 5.1 Backend C1 sau V1.5.78
+
+```text
+modules/
+├─ tournament_competition.py          # composition root, ~80 dòng
+└─ tournament_competition_parts/
+   ├─ core.py                         # helper lõi + payload/ranking/context
+   ├─ admin.py                        # route Admin cơ bản
+   ├─ test_support.py                 # 2 TK test + Admin switch + test helpers
+   ├─ rooms.py                        # vòng đời phòng C1 + result
+   ├─ league.py                       # club/draw/Stage 2
+   ├─ scheduling.py                   # availability/schedule/Host live
+   └─ rewards.py                      # finish/reward/KO/reroll
+```
+
+**Thứ tự đăng ký bắt buộc:** `core → admin → test_support → rooms → league → scheduling → rewards`. `tournament_competition.py` gom helper được export từ partition trước và truyền sang partition sau để giữ nguyên dependency/endpoint mà không đưa logic trở lại `app.py`.
+
+### 5.2 Cấu trúc `templates/tournament/` sau V1.5.76
 
 ```text
 tournament/
@@ -127,20 +151,20 @@ tournament/
    └─ legacy_tail_scripts.html
 ```
 
-### 5.2 Map yêu cầu C1 → file ưu tiên
+### 5.3 Map yêu cầu C1 → file ưu tiên
 
 | Yêu cầu | File đầu tiên cần kiểm tra |
 |---|---|
 | Tiến trình GĐ1/countdown/thưởng | `cards/c1_media.html`, `tournament_routes.py` |
 | 4 menu BXH/Lịch/Sảnh/C1 | `cards/c1_header_nav.html` |
-| BXH giải | `tabs/ranking.html`, `tournament_competition.py` |
-| Lịch của tôi/đối thủ/giờ rảnh | `tabs/schedule.html`, `components/availability_gate.html`, `tournament_competition.py` |
-| Sảnh chờ/Host đang rảnh | `tabs/lobby.html`, `tournament_competition.py` |
+| BXH giải | `tabs/ranking.html`, `tournament_competition_parts/core.py` |
+| Lịch của tôi/đối thủ/giờ rảnh | `tabs/schedule.html`, `components/availability_gate.html`, `tournament_competition_parts/scheduling.py` |
+| Sảnh chờ/Host đang rảnh | `tabs/lobby.html`, `tournament_competition_parts/scheduling.py` + `core.py` |
 | Đăng ký giải/Host/khu vực | `cards/c1_registration.html`, `tournament_routes.py` |
-| Phòng đấu C1 | `tournament_competition.py` + room modules + `room_detail.html` partials |
+| Phòng đấu C1 | `tournament_competition_parts/rooms.py` + room modules + `room_detail.html` partials |
 | Test C1 | `tournament_test_mode.py` + `tournament_test_*.html` |
 
-### 5.3 Luồng C1 quan trọng
+### 5.4 Luồng C1 quan trọng
 
 ```text
 /tournaments
@@ -150,7 +174,7 @@ tournament/
   → Sảnh chờ đọc Host online/live
   → Phòng đấu C1 mở/tái sử dụng match_room
   → room modules xử lý ready/random/result
-  → tournament_competition cập nhật tournament_match/stage/ranking
+  → tournament_competition_parts/* cập nhật tournament_match/stage/ranking
 ```
 
 **Quy tắc state:** không được tạo side effect DB chỉ vì render GET nếu không có chủ đích nghiệp vụ rõ ràng. Luồng C1 từng có nhiều lỗi do state `confirmed/waiting_ready` và chuyển trận; mọi sửa phần này phải test cả Host và Guest.

@@ -1,0 +1,366 @@
+"""Internal tournament competition partition extracted from the legacy monolith.
+
+Registered only through :mod:`modules.tournament_competition`.
+"""
+
+def register_admin(context):
+    globals().update(context)
+
+    @app.get('/tournaments/<tournament_id>')
+    @login_required
+    def tournament_detail(tournament_id):
+        # Compatibility route only: all user-facing tournament UI now lives at /tournaments.
+        return redirect(url_for("tournaments"))
+
+    @app.post('/admin/tournaments/<tournament_id>/c1-test-accounts')
+    @login_required
+    @admin_required
+    def admin_tournament_c1_test_accounts(tournament_id):
+        requested=[]
+        for key in ("test_user_1","test_user_2"):
+            value=str(request.form.get(key) or "").strip()
+            if value and value not in requested:
+                requested.append(value)
+        requested=requested[:2]
+        official={str(m.get("user_id")) for m in _all_members(tournament_id)}
+        overlap=[uid for uid in requested if uid in official]
+        if overlap:
+            flash("Không thể dùng HLV chính thức làm tài khoản thử nghiệm. Hãy chọn tài khoản ngoài danh sách 16 HLV.","error")
+            return redirect_admin("tournaments")
+        valid=[]
+        if requested:
+            rows,_=_rows(db.table("users").select("id").in_("id",requested),"ops_validate_c1_test_accounts")
+            valid=[str(r.get("id")) for r in rows if str(r.get("id") or "") in requested]
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,"setting_key":C1_TEST_ACCOUNTS_KEY,
+            "setting_value":{"user_ids":valid,"updated_at":now_iso()},"updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_save_c1_test_accounts",attempts=2)
+        flash(f"Đã lưu {len(valid)} tài khoản thử nghiệm. Hai tài khoản chỉ nhìn thấy nhau; HLV thường không thấy. Dữ liệu kiểm thử không vào BXH, lịch, pool CLB hay trận chính thức.","success")
+        return redirect_admin("tournaments")
+
+    @app.get('/admin/tournaments/<tournament_id>/preview-player')
+    @login_required
+    @admin_required
+    def admin_tournament_preview_player(tournament_id):
+        user_id=str(request.args.get("user_id") or "").strip()
+        if not user_id:
+            flash("Hãy chọn HLV cần xem.","warning")
+            return redirect_admin("tournaments")
+        members=_all_members(tournament_id)
+        preview_member=next((m for m in members if str(m.get("user_id"))==user_id),None)
+        if not preview_member:
+            flash("HLV này không còn trong danh sách giải.","error")
+            return redirect_admin("tournaments")
+        data=_detail_payload(tournament_id,user_id)
+        if not data:
+            flash("Không tìm thấy giải đấu.","error")
+            return redirect_admin("tournaments")
+        data.update({"preview_mode":True,"preview_user":preview_member})
+        return render_template('tournament_detail.html', **data)
+
+    @app.post('/admin/tournaments/<tournament_id>/members/<user_id>/remove')
+    @login_required
+    @admin_required
+    def admin_tournament_member_remove(tournament_id,user_id):
+        # V1.4.79: khi Admin xóa HLV ở giai đoạn đăng ký, phải đồng bộ cả
+        # danh sách thi đấu và hồ sơ đăng ký. Không xóa tài khoản web / lịch sử tiền.
+        execute_query(
+            db.table("tournament_members").update({"status":"withdrawn"})
+            .eq("tournament_id",tournament_id).eq("user_id",user_id),
+            "ops_member_remove", attempts=2,
+        )
+        execute_query(
+            db.table("tournament_registrations").update({"status":"withdrawn"})
+            .eq("tournament_id",tournament_id).eq("user_id",user_id),
+            "ops_registration_remove", attempts=2,
+        )
+        log_admin_action(
+            "Xóa HLV khỏi giải", "tournament_member",
+            details={"tournament_id":tournament_id,"user_id":user_id,"registration_status":"withdrawn"},
+        )
+        flash("Đã xóa HLV khỏi giải. Tài khoản web và lịch sử lệ phí vẫn được giữ lại.","success")
+        return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/stages/<stage_code>/status')
+    @login_required
+    @admin_required
+    def admin_tournament_stage_status(tournament_id,stage_code):
+        status=(request.form.get("status") or "locked").strip()
+        if status not in {"draft","open","locked","completed"}: status="locked"
+        execute_query(db.table("tournament_stages").update({"status":status,"updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code",stage_code),"ops_stage_status",attempts=2)
+        flash(f"Đã cập nhật {STAGE_LABELS.get(stage_code,stage_code)}: {status}.","success"); return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/stage1/settings')
+    @login_required
+    @admin_required
+    def admin_tournament_stage1_settings(tournament_id):
+        target=max(1,min(20,int(request.form.get("match_target") or 6)))
+        min_opp=max(1,min(target,int(request.form.get("min_opponents") or 3)))
+        max_same=max(1,min(target,int(request.form.get("max_per_opponent") or 2)))
+        execute_query(db.table("tournament_stages").update({"match_target":target,"min_opponents":min_opp,"max_matches_per_opponent":max_same,"updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","stage1"),"ops_stage1_settings",attempts=2)
+        flash("Đã lưu luật GĐ1.","success"); return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/stage1/clubs')
+    @login_required
+    @admin_required
+    def admin_tournament_stage1_clubs(tournament_id):
+        selected=request.form.getlist("clubs")
+        if len(selected)!=16:
+            flash(f"Hãy chọn đúng 16 CLB Tier S/S+ cho phòng C1. Hiện đang chọn {len(selected)} đội.","error"); return redirect_admin("tournaments")
+        lookup={x.get("display"):x for x in _stage1_eligible_clubs(force=True)}
+        clubs=[]
+        for name in selected:
+            info=lookup.get(name)
+            if info:
+                clubs.append({
+                    "display":name,
+                    "overall":int(info.get("overall") or 0),
+                    "tier":str(info.get("tier") or "").strip().upper(),
+                })
+        if len(clubs)!=16:
+            flash(f"Phòng C1 yêu cầu chọn đúng 16 CLB Tier S/S+. Hiện đang chọn {len(clubs)} đội.","error"); return redirect_admin("tournaments")
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"stage1_club_pool","setting_value":{"clubs":clubs,"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_stage1_club_pool_save",attempts=2)
+        flash(f"Đã lưu Pool {len(clubs)} CLB cho GĐ1.","success"); return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/stage1/clubs/reset')
+    @login_required
+    @admin_required
+    def admin_tournament_stage1_clubs_reset(tournament_id):
+        defaults=_default_stage1_clubs()
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"stage1_club_pool","setting_value":{"clubs":defaults,"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_stage1_club_pool_reset",attempts=2)
+        flash(f"Đã chọn lại {len(defaults)} CLB Tier S+ và S mạnh nhất cho C1.","success"); return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/matches/add')
+    @login_required
+    @admin_required
+    def admin_tournament_match_add(tournament_id):
+        stage_code=(request.form.get("stage_code") or "stage1").strip()
+        home=str(request.form.get("home_user_id") or "").strip(); away=str(request.form.get("away_user_id") or "").strip()
+        if not home or not away or home==away:
+            flash("Cặp đấu không hợp lệ.","error"); return redirect_admin("tournaments")
+        if stage_code=="stage1":
+            st=_stage(tournament_id,"stage1") or {}; max_same=int(st.get("max_matches_per_opponent") or 2)
+            allm=_matches(tournament_id,"stage1",["pending","scheduled","completed"])
+            same=sum(1 for m in allm if {str(m.get("home_user_id")),str(m.get("away_user_id"))}=={home,away})
+            if same>=max_same:
+                flash(f"Hai HLV đã đạt giới hạn {max_same} trận gặp nhau ở GĐ1.","error"); return redirect_admin("tournaments")
+        payload={"tournament_id":tournament_id,"stage_code":stage_code,"home_user_id":home,"away_user_id":away,"status":"pending","round_code":request.form.get("round_code") or None,"leg_no":int(request.form.get("leg_no") or 1),"created_at":now_iso(),"updated_at":now_iso()}
+        execute_query(db.table("tournament_matches").insert(payload),"ops_match_add",attempts=2)
+        flash("Đã tạo trận giải.","success"); return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/matches/<match_id>/result')
+    @login_required
+    @admin_required
+    def admin_tournament_match_result(match_id):
+        match,_=_one(db.table("tournament_matches").select("*").eq("id",match_id),"ops_match_result_lookup")
+        if not match:
+            flash("Không tìm thấy trận.","error"); return redirect_admin("tournaments")
+        if str(match.get("stage_code") or "")=="stage1" and str(match.get("status") or "")!="completed":
+            if _stage1_pair_completed_count(match.get("tournament_id"), match.get("home_user_id"), match.get("away_user_id"), exclude_match_id=match.get("id")) >= 2:
+                flash("Cặp HLV này đã hoàn thành đủ 2 trận. Không thể tính thêm kết quả GĐ1.","warning")
+                return redirect_admin("tournaments")
+        hs=max(0,int(request.form.get("home_score") or 0)); aw=max(0,int(request.form.get("away_score") or 0))
+        hp=request.form.get("home_pen"); ap=request.form.get("away_pen")
+        payload={"home_score":hs,"away_score":aw,"home_pen":int(hp) if hp not in (None,'') else None,"away_pen":int(ap) if ap not in (None,'') else None,"status":"completed","completed_at":now_iso(),"updated_at":now_iso()}
+        winner=None
+        if hs>aw: winner=match.get("home_user_id")
+        elif aw>hs: winner=match.get("away_user_id")
+        elif payload["home_pen"] is not None and payload["away_pen"] is not None:
+            if payload["home_pen"]>payload["away_pen"]: winner=match.get("home_user_id")
+            elif payload["away_pen"]>payload["home_pen"]: winner=match.get("away_user_id")
+        payload["winner_user_id"]=winner
+        execute_query(db.table("tournament_matches").update(payload).eq("id",match_id),"ops_match_result",attempts=2)
+
+        # V1.5.14: Admin chốt kết quả phải đồng bộ luôn Phòng đấu C1 liên kết.
+        try:
+            room_rows,_=_rows(
+                db.table("match_rooms").select("id,note,status,host_user_id,guest_user_id").order("updated_at",desc=True).limit(500),
+                "ops_admin_result_linked_c1_rooms",
+            )
+            for linked_room in room_rows:
+                linked_meta=_room_meta(linked_room)
+                if not linked_meta:
+                    continue
+                if str(linked_meta.get("tournament_match_id") or "") != str(match_id):
+                    continue
+                if str(linked_meta.get("tournament_id") or "") != str(match.get("tournament_id") or ""):
+                    continue
+
+                host_uid=str(linked_room.get("host_user_id") or "")
+                if host_uid == str(match.get("home_user_id") or ""):
+                    room_hs,room_gs=hs,aw
+                else:
+                    room_hs,room_gs=aw,hs
+
+                execute_query(
+                    db.table("match_rooms").update({
+                        "host_score":room_hs,
+                        "guest_score":room_gs,
+                        "status":"confirmed",
+                        "updated_at":now_iso(),
+                    }).eq("id",linked_room.get("id")),
+                    "ops_admin_result_sync_c1_room",
+                    attempts=2,
+                )
+
+                prop=_tournament_result_proposal(match.get("tournament_id"),match_id)
+                prop.update({
+                    "status":"admin_confirmed",
+                    "home_score":hs,
+                    "away_score":aw,
+                    "host_score":room_hs,
+                    "guest_score":room_gs,
+                    "confirmed_by":"admin",
+                    "confirmed_at":now_iso(),
+                })
+                _save_tournament_result_proposal(match.get("tournament_id"),match_id,prop)
+                break
+        except Exception as exc:
+            app.logger.warning("Sync Admin C1 result to room failed: %s",exc)
+
+        if match.get("stage_code")=="knockout":
+            try: _maybe_advance_knockout(match.get("tournament_id"))
+            except Exception as exc: app.logger.warning("Knockout auto advance failed: %s",exc)
+        log_admin_action("Cập nhật kết quả trận giải","tournament_match",details={"match_id":match_id,"score":f"{hs}-{aw}"})
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return ("", 204)
+        flash("Đã lưu kết quả trận giải.","success")
+        return_to = (request.form.get("return_to") or "").strip()
+        if return_to == "central":
+            return redirect(url_for("tournaments") + "#ranking")
+        if return_to == "tournament":
+            return redirect(url_for('tournaments') + "#bxh")
+        return redirect_admin("tournaments")
+
+
+    @app.post('/admin/tournaments/<tournament_id>/matches/bulk-result')
+    @login_required
+    @admin_required
+    def admin_tournament_bulk_match_result(tournament_id):
+        match_ids = [str(x).strip() for x in request.form.getlist("match_id") if str(x).strip()]
+        home_scores = request.form.getlist("home_score")
+        away_scores = request.form.getlist("away_score")
+        home_pens = request.form.getlist("home_pen")
+        away_pens = request.form.getlist("away_pen")
+        if not match_ids:
+            flash("Hãy tích ít nhất 1 trận cần lưu tỷ số.","warning")
+            return redirect(url_for("tournaments") + "#ranking")
+        if len(match_ids) != len(home_scores) or len(match_ids) != len(away_scores):
+            flash("Dữ liệu tỷ số hàng loạt không hợp lệ.","error")
+            return redirect(url_for("tournaments") + "#ranking")
+
+        saved = 0
+        skipped = 0
+        for idx, match_id in enumerate(match_ids):
+            match,_ = _one(
+                db.table("tournament_matches").select("*").eq("id",match_id).eq("tournament_id",tournament_id),
+                "ops_bulk_match_lookup",
+            )
+            if not match:
+                skipped += 1
+                continue
+            try:
+                hs = max(0, int(home_scores[idx] or 0))
+                aw = max(0, int(away_scores[idx] or 0))
+            except Exception:
+                skipped += 1
+                continue
+
+            # GĐ1: không cho tạo kết quả thứ 3 cho cùng một cặp.
+            if str(match.get("stage_code") or "")=="stage1" and str(match.get("status") or "")!="completed":
+                if _stage1_pair_completed_count(
+                    tournament_id,
+                    match.get("home_user_id"),
+                    match.get("away_user_id"),
+                    exclude_match_id=match.get("id"),
+                ) >= 2:
+                    skipped += 1
+                    continue
+
+            hp_raw = home_pens[idx] if idx < len(home_pens) else ""
+            ap_raw = away_pens[idx] if idx < len(away_pens) else ""
+            hp = int(hp_raw) if str(hp_raw).strip() != "" else None
+            ap = int(ap_raw) if str(ap_raw).strip() != "" else None
+
+            winner = None
+            if hs > aw:
+                winner = match.get("home_user_id")
+            elif aw > hs:
+                winner = match.get("away_user_id")
+            elif hp is not None and ap is not None:
+                if hp > ap:
+                    winner = match.get("home_user_id")
+                elif ap > hp:
+                    winner = match.get("away_user_id")
+
+            payload = {
+                "home_score": hs,
+                "away_score": aw,
+                "home_pen": hp,
+                "away_pen": ap,
+                "winner_user_id": winner,
+                "status": "completed",
+                "completed_at": now_iso(),
+                "updated_at": now_iso(),
+            }
+            execute_query(
+                db.table("tournament_matches").update(payload).eq("id",match_id),
+                "ops_bulk_match_result",
+                attempts=2,
+            )
+            saved += 1
+
+        try:
+            if saved:
+                _maybe_advance_knockout(tournament_id)
+        except Exception as exc:
+            app.logger.warning("Bulk result knockout advance failed: %s", exc)
+
+        if saved and skipped:
+            flash(f"Đã lưu {saved} trận. Bỏ qua {skipped} trận không hợp lệ/đã đủ giới hạn.","success")
+        elif saved:
+            flash(f"Đã lưu cùng lúc {saved} kết quả trận đấu.","success")
+        else:
+            flash("Không có trận nào được lưu. Hãy kiểm tra tỷ số hoặc giới hạn 2 trận/cặp.","warning")
+        return redirect(url_for("tournaments") + "#ranking")
+
+    @app.post('/admin/tournaments/<tournament_id>/pot/generate')
+    @login_required
+    @admin_required
+    def admin_tournament_generate_pots(tournament_id):
+        # GĐ2 chính thức: 16 HLV chia cố định 3 Pot theo BXH GĐ1 = 5 / 6 / 5.
+        pot_count=3
+        club_count=max(2,min(64,int(request.form.get("club_count") or len(_all_members(tournament_id)) or 16)))
+        league_cfg=_setting(tournament_id,"league_config",{}) or {}
+        league_cfg["club_count"]=club_count
+        league_cfg["pot_count"]=3
+        league_cfg["pot_sizes"]=[5,6,5]
+        league_cfg["pot_format"]="5-6-5"
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"league_config","setting_value":league_cfg,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_config_pot_clubs",attempts=2)
+        ranking=_ranking(tournament_id,"stage1")
+        if not ranking:
+            flash("Chưa có HLV để chia Pot.","error"); return redirect_admin("tournaments")
+        if len(ranking)!=16:
+            flash(f"GĐ2 cấu hình 5–6–5 yêu cầu đúng 16 HLV, hiện có {len(ranking)} HLV.","error")
+            return redirect_admin("tournaments")
+        cut1=5; cut2=11
+        for i,row in enumerate(ranking):
+            pot=1 if i<cut1 else (2 if i<cut2 else 3)
+            execute_query(db.table("tournament_members").update({"pot_no":pot,"seed_no":i+1}).eq("tournament_id",tournament_id).eq("user_id",row["user_id"]),"ops_pot_update",attempts=2)
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,"setting_key":"pots_locked",
+            "setting_value":{"locked":False,"pot_count":3,"pot_sizes":[5,6,5],"pot_format":"5-6-5"},
+            "updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_pot_setting",attempts=2)
+        flash(f"Đã chia GĐ2 đúng 3 Pot 5–6–5 theo BXH GĐ1: Pot 1 = 5 HLV · Pot 2 = 6 HLV · Pot 3 = 5 HLV · {club_count} CLB.","success")
+        return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/pot/lock')
+    @login_required
+    @admin_required
+    def admin_tournament_lock_pots(tournament_id):
+        locked=request.form.get("locked")=="1"
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"pots_locked","setting_value":{"locked":locked},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_pot_lock",attempts=2)
+        flash("Đã khóa Pot." if locked else "Đã mở chỉnh Pot.","success"); return redirect_admin("tournaments")
+
+    return {k: v for k, v in locals().items() if k.startswith('_') and callable(v)}

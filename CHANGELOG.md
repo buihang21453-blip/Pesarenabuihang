@@ -2,6 +2,14 @@
 
 > Nguồn: các `V1.5.xx_RELEASE_NOTES.txt` có thật trong source. Không tự suy diễn các version bị thiếu.
 
+## [V1.5.78] — 2026-09-15
+- Tách `modules/tournament_competition.py` từ monolith 4.339 dòng thành composition root nhỏ và 7 module chức năng trong `modules/tournament_competition_parts/`.
+- Giữ nguyên public registrar `register_routes(context)`, Flask endpoint/URL/method/decorator và thứ tự dependency.
+- Các nhóm mới: core, Admin, test support, C1 rooms, League/club draw, scheduling/Host, rewards/Knockout.
+- Cập nhật `PROJECT_MAP.md` theo cấu trúc backend C1 mới.
+- Cập nhật `PROJECT_RULES.md`: `tournament_competition.py` chỉ còn là composition root, feature mới phải sửa đúng partition.
+- Không thay đổi database/SQL, template hoặc luật giải; đây là refactor cấu trúc backend.
+
 ## [V1.5.77] — 2026-09-14
 - Phân tích toàn bộ source và bổ sung `PROJECT_MAP.md`.
 - Bổ sung `PROJECT_RULES.md` làm quy tắc phát triển/kiểm thử/đóng gói bắt buộc.

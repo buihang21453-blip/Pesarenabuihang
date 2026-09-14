@@ -1,0 +1,24 @@
+PES Arena V1.5.78
+
+MỤC TIÊU
+- Tách monolith modules/tournament_competition.py thành các module lớn theo chức năng.
+- Giữ nguyên hành vi, route/endpoint và database.
+
+CẤU TRÚC MỚI
+- modules/tournament_competition.py: composition root/registrar chung.
+- modules/tournament_competition_parts/core.py
+- modules/tournament_competition_parts/admin.py
+- modules/tournament_competition_parts/test_support.py
+- modules/tournament_competition_parts/rooms.py
+- modules/tournament_competition_parts/league.py
+- modules/tournament_competition_parts/scheduling.py
+- modules/tournament_competition_parts/rewards.py
+
+TƯƠNG THÍCH
+- Giữ import hiện tại trong app.py: from modules.tournament_competition import register_routes.
+- Giữ nguyên endpoint/URL/method/decorator của các route C1.
+- Không thay đổi SQL/database schema.
+- Không thay đổi template/giao diện.
+
+VERSION
+- APP_VERSION: V1.5.77 -> V1.5.78
