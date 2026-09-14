@@ -1,0 +1,7 @@
+PES ARENA V1.5.71
+- Popup đăng ký lịch thi đấu linh hoạt có sẵn giờ mẫu: 18:30 - 22:00.
+- Có nút - / + để tăng giảm thời gian theo bước 30 phút.
+- Người chơi vẫn có thể chọn hoặc nhập thời gian trực tiếp trong ô giờ.
+- Không thay đổi backend/database; chỉ tác động giao diện templates/tournaments.html.
+- Đồng bộ APP_VERSION toàn hệ thống lên V1.5.71.
+- Dọn toàn bộ __pycache__, *.pyc và các file tạm/cache trước khi đóng gói.
