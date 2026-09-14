@@ -1,0 +1,8 @@
+PES Arena V1.5.77
+=================
+
+- Phân tích toàn bộ cấu trúc source và tạo PROJECT_MAP.md.
+- Tạo PROJECT_RULES.md với quy tắc bắt buộc về phạm vi sửa, version, C1/test accounts, database, kiểm thử và ZIP sạch.
+- Tạo CHANGELOG.md hợp nhất lịch sử từ các V1.5.xx_RELEASE_NOTES.txt có thật trong source; không suy diễn version thiếu.
+- Đồng bộ APP_VERSION lên V1.5.77.
+- Không thay đổi route, database/SQL hoặc nghiệp vụ runtime.
