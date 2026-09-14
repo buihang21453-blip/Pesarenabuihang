@@ -500,6 +500,12 @@ def register_routes(context):
                 # Người xem thường không phải thành viên giải vẫn xem /tournaments bình thường.
                 # Admin được miễn gate.
                 hub = item.get("landing_hub") or {}
+                # V1.5.72: trạng thái cá nhân trên banner tiến trình GĐ1.
+                # Dùng cùng landing_hub cho HLV thật và 2 tài khoản test để giữ luồng kiểm thử đồng nhất.
+                hub_matches = hub.get("matches") or []
+                stage1_matches = [m for m in hub_matches if str(m.get("stage_code") or "") == "stage1"]
+                item["personal_stage1_remaining"] = sum(1 for m in stage1_matches if str(m.get("status") or "") not in {"completed", "cancelled"}) if hub else None
+                item["personal_stage1_total"] = len(stage1_matches) if hub else None
                 # HLV thật thuộc giải và 2 tài khoản test C1 đều đi qua cùng gate để kiểm thử đúng luồng.
                 # Người dùng thường không thuộc giải vẫn xem bình thường.
                 is_tournament_competitor = bool(item.get("my_member") or hub.get("is_test"))
