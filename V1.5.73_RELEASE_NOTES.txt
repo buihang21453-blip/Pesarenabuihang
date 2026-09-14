@@ -1,0 +1,18 @@
+PES Arena V1.5.73
+=================
+
+Nâng cấp giao diện điều hướng trên card PES Arena Champions League:
+- Thêm thời gian khởi tranh GĐ1 ngay cạnh thông tin giải đấu (giờ Việt Nam GMT+7).
+- Chuyển 4 chức năng thành thanh menu nhỏ gọn trên cùng một hàng:
+  🎮 Phòng đấu C1 · 📅 Lịch của tôi · 📊 BXH · 🏟️ Phòng thi đấu.
+- Nền tab #0B1C29, bo góc 11px, viền xanh xám mảnh, chữ trắng và icon nổi hơn.
+- Hover: nền sáng nhẹ + viền vàng.
+- Tab đang chọn: viền vàng + vạch vàng 3px phía dưới.
+- Responsive: màn hình nhỏ tự chuyển 2 cột để không tràn giao diện.
+
+Phạm vi tác động:
+- templates/tournaments.html
+- modules/tournament_routes.py
+- app.py (đồng bộ APP_VERSION V1.5.73)
+
+Không thay đổi database/SQL và không thay đổi logic thi đấu.

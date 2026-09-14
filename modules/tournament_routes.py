@@ -518,6 +518,16 @@ def register_routes(context):
                 item["member_count"] = len(member_rows)
                 timing = _tournament_timing_preview(item.get("id"))
                 item["stage1_start_at"] = timing.get("stage1_start_at")
+                # V1.5.73: nhãn thời gian khởi tranh hiển thị trực tiếp trên card giải đấu.
+                start_label_dt = _parse_tournament_dt(item.get("stage1_start_at"))
+                if start_label_dt:
+                    if start_label_dt.tzinfo is None:
+                        start_label_dt = start_label_dt.replace(tzinfo=timezone(timedelta(hours=7)))
+                    else:
+                        start_label_dt = start_label_dt.astimezone(timezone(timedelta(hours=7)))
+                    item["stage1_start_label"] = start_label_dt.strftime("%d/%m/%Y · %H:%M")
+                else:
+                    item["stage1_start_label"] = None
                 item["stage1_end_at"] = timing.get("stage1_end_at")
                 item["stage1_extension_end_at"] = timing.get("stage1_extension_end_at")
                 item["league_end_at"] = timing.get("league_end_at")

@@ -10,7 +10,7 @@
 .tournament-workspace{margin-top:16px}.tournament-filterbar{display:grid;grid-template-columns:minmax(280px,2fr) repeat(3,minmax(150px,1fr));gap:12px;padding:9px;border:1px solid rgba(255,255,255,.10);border-radius:14px;background:rgba(8,20,32,.78)}.tournament-control{height:42px;border:1px solid rgba(255,255,255,.10);border-radius:9px;background:#071522;color:#8d9aa7;padding:0 14px;display:flex;align-items:center}.tournament-control strong{color:#aeb9c3}.tournament-control.is-disabled{opacity:.68}
 .tournament-section-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-top:14px;align-items:start}.tournament-section-card{position:relative;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#071522;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.18)}
 .tournament-card-media{position:relative;height:235px;background:linear-gradient(180deg,rgba(4,14,26,.05),rgba(4,14,26,.18)),url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/Giaidau/C1mua1/NenC1arena.webp") center/cover no-repeat;overflow:hidden}.tournament-card-media:after{content:"";position:absolute;inset:auto 0 0;height:52%;background:linear-gradient(180deg,transparent,rgba(3,12,20,.62));pointer-events:none}.tournament-card-status{position:absolute;left:16px;top:15px;z-index:3;display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:9px;border:1px solid rgba(32,206,83,.42);background:rgba(2,90,38,.76);color:#d9ffe5;font-size:12px;font-weight:900}.tournament-card-status.registration{border-color:rgba(47,145,255,.45);background:rgba(10,61,125,.78);color:#dbeeff}
-.tournament-arena-badge{--badge-width:{{ tournament_design.arena_badge_width|default(230) }}px;--badge-x:{{ tournament_design.arena_badge_x|default(50) }}%;--badge-y:{{ tournament_design.arena_badge_y|default(46) }}%;position:absolute;z-index:2;left:var(--badge-x);top:var(--badge-y);width:var(--badge-width);max-width:74%;transform:translate(-50%,-50%);filter:drop-shadow(0 18px 22px rgba(0,0,0,.5));pointer-events:none}.tournament-card-body{padding:17px 18px 18px;background:linear-gradient(180deg,#091827,#07131f)}.tournament-card-headline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.tournament-card-title{margin:0;color:#f2f5f8;font-size:20px;font-weight:950}.tournament-share-register.header-share{width:auto;min-height:34px;padding:7px 11px;font-size:12px;white-space:nowrap}.tournament-card-meta{margin:11px 0 15px;color:#a4b0bc;font-size:13px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}.tournament-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:11px}.tournament-card-actions .btn{width:100%;min-height:43px;justify-content:center}.tournament-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 17px;border-bottom:1px solid rgba(255,255,255,.08)}.tournament-section-head h3{margin:0;color:#ecf1f6;font-size:15px}.tournament-badge{font-size:11px;font-weight:850;border:1px solid rgba(255,255,255,.10);border-radius:999px;padding:5px 9px;color:#8997a4}.tournament-badge.live{color:#77e7a0;border-color:rgba(45,190,97,.3)}.tournament-badge.upcoming{color:#79b7ff;border-color:rgba(52,132,241,.3)}
+.tournament-arena-badge{--badge-width:{{ tournament_design.arena_badge_width|default(230) }}px;--badge-x:{{ tournament_design.arena_badge_x|default(50) }}%;--badge-y:{{ tournament_design.arena_badge_y|default(46) }}%;position:absolute;z-index:2;left:var(--badge-x);top:var(--badge-y);width:var(--badge-width);max-width:74%;transform:translate(-50%,-50%);filter:drop-shadow(0 18px 22px rgba(0,0,0,.5));pointer-events:none}.tournament-card-body{padding:17px 18px 18px;background:linear-gradient(180deg,#091827,#07131f)}.tournament-card-headline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.tournament-card-title{margin:0;color:#f2f5f8;font-size:20px;font-weight:950}.tournament-share-register.header-share{width:auto;min-height:34px;padding:7px 11px;font-size:12px;white-space:nowrap}.tournament-card-meta{margin:11px 0 15px;color:#a4b0bc;font-size:13px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}.tournament-card-actions{display:flex;gap:10px;flex-wrap:wrap}.tournament-card-actions .btn{min-height:40px;justify-content:center}.tournament-quick-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:2px 0 14px}.tournament-quick-nav-form{margin:0;min-width:0}.tournament-quick-tab{position:relative;width:100%;height:56px;padding:0 15px;border:1px solid rgba(119,145,163,.22);border-radius:11px;background:#0B1C29;color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:10px;font:inherit;font-size:14px;font-weight:900;cursor:pointer;overflow:hidden;transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease}.tournament-quick-tab:hover{background:#10293a;border-color:rgba(231,190,88,.72);box-shadow:0 8px 22px rgba(0,0,0,.20);transform:translateY(-1px)}.tournament-quick-tab .tab-icon{font-size:21px;line-height:1;filter:drop-shadow(0 0 7px rgba(118,194,255,.38))}.tournament-quick-tab .tab-label{color:#fff;white-space:nowrap}.tournament-quick-tab.is-active{border-color:rgba(231,190,88,.82);background:linear-gradient(180deg,#102333,#0B1C29);box-shadow:inset 0 0 0 1px rgba(231,190,88,.08),0 7px 20px rgba(0,0,0,.16)}.tournament-quick-tab.is-active:after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:#e7bd58;box-shadow:0 0 9px rgba(231,189,88,.58)}.tournament-start-time{display:inline-flex;align-items:center;gap:5px;color:#d7e0e7;font-weight:800}.tournament-start-time strong{color:#f1ca68}@media(max-width:760px){.tournament-quick-nav{grid-template-columns:repeat(2,minmax(0,1fr))}.tournament-quick-tab{height:52px;font-size:13px}}.tournament-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 17px;border-bottom:1px solid rgba(255,255,255,.08)}.tournament-section-head h3{margin:0;color:#ecf1f6;font-size:15px}.tournament-badge{font-size:11px;font-weight:850;border:1px solid rgba(255,255,255,.10);border-radius:999px;padding:5px 9px;color:#8997a4}.tournament-badge.live{color:#77e7a0;border-color:rgba(45,190,97,.3)}.tournament-badge.upcoming{color:#79b7ff;border-color:rgba(52,132,241,.3)}
 
 
 .tournament-public-countdown{margin:0 0 14px;padding:12px 13px;border:1px solid rgba(241,202,104,.24);border-radius:11px;background:rgba(241,202,104,.055)}
@@ -123,7 +123,7 @@
             {% endif %}
           </div>
           <div class="tournament-card-meta">
-            <span>👥 {{ tournament.member_count|default(0) }} HLV</span><span>•</span><span>◯ {{ tournament.phase_name|default('Đang diễn ra') }}</span>
+            <span>👥 {{ tournament.member_count|default(0) }} HLV</span><span>•</span><span>◯ {{ tournament.phase_name|default('Đang diễn ra') }}</span>{% if tournament.stage1_start_label %}<span>•</span><span class="tournament-start-time">📅 Khởi tranh: <strong>{{ tournament.stage1_start_label }}</strong></span>{% endif %}
           </div>
           {% if tournament.show_stage1_start_countdown %}
           <div class="tournament-public-countdown" data-public-countdown="{{ tournament.stage1_start_at }}">
@@ -131,19 +131,19 @@
             <div class="timer"><div class="unit"><b data-cd-d>0</b><span>Ngày</span></div><div class="unit"><b data-cd-h>0</b><span>Giờ</span></div><div class="unit"><b data-cd-m>0</b><span>Phút</span></div><div class="unit"><b data-cd-s>0</b><span>Giây</span></div></div>
           </div>
           {% endif %}
-          <div class="tournament-card-actions">
-            {% if not tournament.needs_availability_gate %}
-            <form method="post" action="{{ url_for('c1_room_open') }}" style="display:inline;margin:0">
+          {% if not tournament.needs_availability_gate %}
+          <nav class="tournament-quick-nav" data-tournament-quick-nav aria-label="Điều hướng giải đấu">
+            <form method="post" action="{{ url_for('c1_room_open') }}" class="tournament-quick-nav-form">
               <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
-              <button class="btn" type="submit">🎮 Phòng đấu C1</button>
+              <button class="tournament-quick-tab is-active" type="submit" data-nav-key="c1-room"><span class="tab-icon">🎮</span><span class="tab-label">Phòng đấu C1</span></button>
             </form>
-            {% endif %}
+            <a class="tournament-quick-tab" data-nav-key="schedule" href="{{ url_for('tournaments') }}#schedule-{{ tournament.id }}"><span class="tab-icon">📅</span><span class="tab-label">Lịch của tôi</span></a>
+            <a class="tournament-quick-tab" data-nav-key="ranking" href="{{ url_for('tournaments') }}#ranking"><span class="tab-icon">📊</span><span class="tab-label">BXH</span></a>
+            <a class="tournament-quick-tab" data-nav-key="rooms" href="{{ url_for('tournaments') }}#rooms-{{ tournament.id }}"><span class="tab-icon">🏟️</span><span class="tab-label">Phòng thi đấu</span></a>
+          </nav>
+          {% endif %}
+          <div class="tournament-card-actions">
             {% if tournament.my_member %}
-              {% if not tournament.needs_availability_gate %}
-                <a class="btn" href="{{ url_for('tournaments') }}#schedule-{{ tournament.id }}">📅 Lịch của tôi</a>
-                <a class="btn" href="{{ url_for('tournaments') }}#ranking">📊 BXH</a>
-                <a class="btn" href="{{ url_for('tournaments') }}#rooms-{{ tournament.id }}">🏟️ Phòng thi đấu</a>
-              {% endif %}
               <details class="tournament-profile-edit"><summary class="btn">✎ Thông tin giải</summary><form method="post" action="{{ url_for('tournament_profile_update', tournament_id=tournament.id) }}" style="margin-top:8px;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;display:grid;gap:8px;min-width:280px"><strong>Sửa thông tin của tôi</strong><input class="tournament-zalo-input" name="zalo_name" maxlength="80" placeholder="Tên Zalo" value="{{ tournament.my_registration.zalo_name if tournament.my_registration else '' }}" required><div class="tournament-choice-grid"><label class="tournament-choice"><input type="radio" name="host_choice" value="yes" {% if tournament.my_registration and tournament.my_registration.has_host %}checked{% endif %} required> Có Host</label><label class="tournament-choice"><input type="radio" name="host_choice" value="no" {% if not tournament.my_registration or not tournament.my_registration.has_host %}checked{% endif %} required> Không Host</label></div><div class="tournament-choice-grid">{% for region in ['Bắc','Trung','Nam'] %}<label class="tournament-choice"><input type="radio" name="host_region" value="{{ region }}" {% if tournament.my_registration and tournament.my_registration.host_region==region %}checked{% endif %} required> {{ region }}</label>{% endfor %}</div><button class="btn gold" type="submit">Lưu thông tin</button></form></details>
             {% elif tournament.my_registration and tournament.my_registration.status == 'pending' %}
               <div class="tournament-control"><strong>Đang chờ Admin duyệt</strong></div>
@@ -152,9 +152,6 @@
             {% elif tournament.registration_open %}
               <a class="btn gold" href="{{ url_for('tournaments', register=tournament.id) }}#register-{{ tournament.id }}">🏆 Đăng ký</a>
             {% else %}
-              <a class="btn" href="{{ url_for('tournaments') }}#schedule-{{ tournament.id }}">📅 Lịch của tôi</a>
-              <a class="btn" href="{{ url_for('tournaments') }}#ranking">📊 BXH</a>
-              <a class="btn" href="{{ url_for('tournaments') }}#rooms-{{ tournament.id }}">🏟️ Phòng thi đấu</a>
             {% endif %}
           </div>
           {% if hub and hub.league_reroll_entry and hub.league_reroll_entry.get('tickets_remaining',0)|int > 0 %}
@@ -731,5 +728,28 @@ document.addEventListener('click',function(e){
 })();
 </script>
 {% endblock %}
+<script>
+(function(){
+  function syncTournamentQuickNav(){
+    var hash=(window.location.hash||'').toLowerCase();
+    document.querySelectorAll('[data-tournament-quick-nav]').forEach(function(nav){
+      var activeKey='c1-room';
+      if(hash.indexOf('#schedule-')===0) activeKey='schedule';
+      else if(hash==='#ranking') activeKey='ranking';
+      else if(hash.indexOf('#rooms-')===0) activeKey='rooms';
+      nav.querySelectorAll('.tournament-quick-tab').forEach(function(tab){tab.classList.toggle('is-active',tab.getAttribute('data-nav-key')===activeKey);});
+    });
+  }
+  document.addEventListener('click',function(e){
+    var tab=e.target.closest('.tournament-quick-tab[href]');
+    if(!tab) return;
+    var nav=tab.closest('[data-tournament-quick-nav]');
+    if(nav) nav.querySelectorAll('.tournament-quick-tab').forEach(function(x){x.classList.toggle('is-active',x===tab);});
+  });
+  window.addEventListener('hashchange',syncTournamentQuickNav);
+  document.addEventListener('DOMContentLoaded',syncTournamentQuickNav);
+  syncTournamentQuickNav();
+})();
+</script>
 <script>document.addEventListener('click',function(e){var b=e.target.closest('[data-time-adjust]');if(!b)return;var wrap=b.closest('.td-time-stepper');if(!wrap)return;var input=wrap.querySelector('[data-time-stepper-input]');if(!input)return;var parts=(input.value||'00:00').split(':');var mins=(parseInt(parts[0]||'0',10)*60)+parseInt(parts[1]||'0',10)+parseInt(b.dataset.timeAdjust||'0',10);mins=Math.max(0,Math.min(1439,mins));mins=Math.round(mins/30)*30;if(mins>1439)mins=1410;input.value=String(Math.floor(mins/60)).padStart(2,'0')+':'+String(mins%60).padStart(2,'0');input.dispatchEvent(new Event('change',{bubbles:true}));});</script>
 <script>document.addEventListener('DOMContentLoaded',function(){var m=document.querySelector('[data-mandatory-availability-modal]');if(!m)return;m.addEventListener('click',function(e){if(e.target===m){e.preventDefault();e.stopPropagation();}});document.addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();e.stopPropagation();}},true);var f=m.querySelector('input[type=checkbox],input[type=text],button');if(f)setTimeout(function(){f.focus({preventScroll:true});},80);});</script>
