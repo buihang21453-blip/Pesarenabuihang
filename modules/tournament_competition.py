@@ -1146,6 +1146,52 @@ def register_routes(context):
         grants,_=_rows(db.table("tournament_reward_grants").select("*").eq("tournament_id",tournament_id).eq("user_id",user_id),"ops_reward_grants")
         return {"rules":rules,"grants":grants}
 
+    def _host_ready_rows(tournament_id, members_all=None):
+        """Danh sách Host đang rảnh dùng chung cho render trang và API live-polling.
+
+        Chỉ lấy HLV active thuộc đúng giải, có Host trong hồ sơ đăng ký, online
+        theo presence hiện tại và không ở room đang chờ/đang thi đấu/xử lý kết quả.
+        """
+        members_all = members_all if members_all is not None else _all_members(tournament_id)
+        member_ids={str(hm.get("user_id") or "") for hm in members_all if hm.get("user_id")}
+        busy_user_ids=set()
+        if member_ids:
+            active_room_statuses=[
+                "waiting_ready",
+                "playing",
+                "friendly_playing",
+                "waiting_result_confirm",
+                "waiting_confirm",
+                "disputed",
+            ]
+            active_rooms,_=_rows(
+                db.table("match_rooms")
+                .select("host_user_id,guest_user_id,status")
+                .in_("status",active_room_statuses)
+                .limit(500),
+                "ops_available_hosts_active_rooms",
+            )
+            for ar in active_rooms:
+                hid=str(ar.get("host_user_id") or "")
+                gid=str(ar.get("guest_user_id") or "")
+                if hid in member_ids:
+                    busy_user_ids.add(hid)
+                if gid in member_ids:
+                    busy_user_ids.add(gid)
+
+        host_ready=[]
+        for hm in members_all:
+            huid=str(hm.get("user_id") or "")
+            user_row=hm.get("user") or {}
+            if hm.get("has_host") and is_user_online_now(user_row) and huid not in busy_user_ids:
+                host_ready.append({
+                    "user_id":huid,
+                    "display_name":hm.get("display_name") or "HLV",
+                    "region":hm.get("host_region") or "—",
+                })
+        host_ready.sort(key=lambda x: str(x.get("display_name") or "").casefold())
+        return host_ready
+
     def _detail_payload(tournament_id, user_id):
         tour=_tour(tournament_id)
         if not tour: return None
@@ -1162,35 +1208,10 @@ def register_routes(context):
         ops_events=_event_ops_payload(tournament_id,user_id)
         members_all=_all_members(tournament_id)
 
-        # V1.4.123: Host đang rảnh được xác định hoàn toàn tự động.
-        # Điều kiện: tài khoản có Host + đang online thật + không nằm trong bất kỳ phòng đấu đang hoạt động nào.
-        member_ids={str(hm.get("user_id") or "") for hm in members_all if hm.get("user_id")}
-        busy_user_ids=set()
-        if member_ids:
-            active_room_statuses=["waiting_ready","playing","friendly_playing","waiting_result_confirm","disputed","confirmed"]
-            active_rooms,_=_rows(
-                db.table("match_rooms")
-                .select("host_user_id,guest_user_id,status")
-                .in_("status",active_room_statuses)
-                .limit(500),
-                "ops_available_hosts_active_rooms",
-            )
-            for ar in active_rooms:
-                hid=str(ar.get("host_user_id") or "")
-                gid=str(ar.get("guest_user_id") or "")
-                if hid in member_ids: busy_user_ids.add(hid)
-                if gid in member_ids: busy_user_ids.add(gid)
-
-        host_ready=[]
-        for hm in members_all:
-            huid=str(hm.get("user_id") or "")
-            user_row=hm.get("user") or {}
-            if hm.get("has_host") and is_user_online_now(user_row) and huid not in busy_user_ids:
-                host_ready.append({
-                    "user_id":huid,
-                    "display_name":hm.get("display_name") or "HLV",
-                    "region":hm.get("host_region") or "—",
-                })
+        # V1.5.75: Host đang rảnh = HLV active của giải, đã đăng ký có Host,
+        # đang online thật và không nằm trong một phòng đấu THỰC SỰ đang hoạt động.
+        # `confirmed` là trạng thái trận đã xong nên không được giữ HLV ở trạng thái bận.
+        host_ready=_host_ready_rows(tournament_id, members_all=members_all)
         my_host_profile=next((hm for hm in members_all if str(hm.get("user_id"))==str(user_id)),{})
         c1_test_matches=_c1_test_confirmed_matches(tournament_id)
         c1_test_ranking=_c1_test_ranking(tournament_id)
@@ -3836,6 +3857,18 @@ def register_routes(context):
             execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":key,"setting_value":{"slots":sorted(current),"updated_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_test_availability_custom",attempts=2)
         flash(f"Đã thêm giờ linh hoạt {start.strftime('%H:%M')}–{end.strftime('%H:%M')} ({added} mốc 30 phút).","success")
         return _tournament_landing_return(tournament_id,"schedule")
+
+    @app.get('/api/tournaments/<tournament_id>/host-ready')
+    @login_required
+    def api_tournament_host_ready(tournament_id):
+        # V1.5.75: endpoint chỉ đọc để Sảnh chờ cập nhật live cho HLV test/Admin/HLV thường.
+        # Không phụ thuộc viewer có phải member hay không; danh sách nguồn luôn chỉ gồm
+        # các HLV active thuộc chính giải đấu này.
+        tournament=_tour(tournament_id)
+        if not tournament:
+            return jsonify({"ok":False,"error":"tournament_not_found"}),404
+        rows=_host_ready_rows(tournament_id)
+        return jsonify({"ok":True,"hosts":rows,"count":len(rows)})
 
     @app.post('/tournaments/<tournament_id>/host-ready')
     @login_required

@@ -465,10 +465,14 @@
     {% if tournament.name == 'CHAMPION LEAGUE ARENA' and hub and not tournament.needs_availability_gate %}
     <div class="tournament-center-stack" id="center-{{ tournament.id }}">
       <section class="td-section" id="rooms-{{ tournament.id }}">
-        <h2>🏟️ Phòng thi đấu</h2>
-        <p style="color:#91a3b1;font-size:12px">Khu trung tâm để theo dõi phòng giải, HLV đang chờ và Host đang rảnh.</p>
-        <div class="td-host-ready"><strong style="width:100%;color:#f1ca68">Host đang rảnh</strong><small style="width:100%;color:#91a3b1">Tự động hiển thị HLV có Host, đang online và không ở trong phòng đấu.</small>{% for h in hub.host_ready %}<span class="td-host-chip">🟢 {{ h.display_name }} · {{ h.region }}</span>{% else %}<small style="color:#91a3b1">Hiện chưa có Host nào đang rảnh.</small>{% endfor %}</div>
-        <div class="td-room-list">{% for r in hub.center_rooms %}<article class="td-room-card"><small>PHÒNG GIẢI · {{ (r.tournament_match.stage_code or 'stage1')|upper }}</small><strong>{{ r.public_label }}</strong><span>{{ r.public_status }}</span>{% if r.host_team and r.guest_team %}<p>{{ r.host_team }} ⚔ {{ r.guest_team }}</p>{% endif %}{% if hub.member and (hub.member.user_id|string == r.tournament_match.home_user_id|string or hub.member.user_id|string == r.tournament_match.away_user_id|string) %}<div style="margin-top:8px"><a class="btn" href="{{ url_for('room_detail',room_id=r.id) }}">Vào phòng</a></div>{% endif %}</article>{% else %}<div class="td-empty">Chưa có HLV nào vào Phòng thi đấu.</div>{% endfor %}</div>
+        <h2>🏟️ Sảnh chờ</h2>
+        <p style="color:#91a3b1;font-size:12px">Sảnh trung tâm để theo dõi phòng giải, HLV đang chờ và Host đang rảnh.</p>
+        <div class="td-host-ready" data-host-ready-list data-tournament-id="{{ tournament.id }}">
+          <strong style="width:100%;color:#f1ca68">Host đang rảnh</strong>
+          <small style="width:100%;color:#91a3b1">Tự động hiển thị HLV trong giải có Host, đang online và không ở trong phòng đấu.</small>
+          <div class="td-host-ready-items" data-host-ready-items>{% for h in hub.host_ready %}<span class="td-host-chip">🟢 {{ h.display_name }} · {{ h.region }}</span>{% else %}<small class="td-host-ready-empty" style="color:#91a3b1">Hiện chưa có Host nào đang rảnh.</small>{% endfor %}</div>
+        </div>
+        <div class="td-room-list">{% for r in hub.center_rooms %}<article class="td-room-card"><small>PHÒNG GIẢI · {{ (r.tournament_match.stage_code or 'stage1')|upper }}</small><strong>{{ r.public_label }}</strong><span>{{ r.public_status }}</span>{% if r.host_team and r.guest_team %}<p>{{ r.host_team }} ⚔ {{ r.guest_team }}</p>{% endif %}{% if hub.member and (hub.member.user_id|string == r.tournament_match.home_user_id|string or hub.member.user_id|string == r.tournament_match.away_user_id|string) %}<div style="margin-top:8px"><a class="btn" href="{{ url_for('room_detail',room_id=r.id) }}">Vào phòng</a></div>{% endif %}</article>{% else %}<div class="td-empty">Chưa có phòng giải nào đang hoạt động trong Sảnh chờ.</div>{% endfor %}</div>
         <h3 style="margin-top:16px">Trận của tôi</h3><div style="overflow:auto"><table class="td-table"><thead><tr><th>Giai đoạn</th><th>Đối thủ</th><th>Zalo</th><th>Lịch hẹn</th><th>Phòng</th></tr></thead><tbody>
         {% for m in hub.matches if m.status in ['pending','scheduled'] %}{% set is_home = hub.member.user_id|string==m.home_user_id|string %}{% set opp=m.away_name if is_home else m.home_name %}{% set opp_zalo=m.away_zalo_name if is_home else m.home_zalo_name %}<tr><td>{{ 'GĐ1' if m.stage_code=='stage1' else m.stage_code }}</td><td><strong>{{ opp }}</strong></td><td>{% if opp_zalo %}<strong>💬 {{ opp_zalo }}</strong>{% else %}<span style="color:#8193a1">Chưa có</span>{% endif %}</td><td>{{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa hẹn' }}</td><td><form method="post" action="{{ url_for('tournament_match_room_enter',tournament_id=tournament.id,match_id=m.id) }}"><button class="btn green" type="submit">Tạo phòng & mời đối thủ</button></form></td></tr>{% else %}<tr><td colspan="5" style="color:#91a3b1">Chưa có trận đang chờ.</td></tr>{% endfor %}
         </tbody></table></div>
@@ -529,6 +533,62 @@
   </div>
   {% endif %}
 </section>
+<script>
+(function(){
+  // V1.5.75: cập nhật Host đang rảnh ngay trong Sảnh chờ cho mọi viewer đã đăng nhập
+  // (bao gồm 2 tài khoản test và Admin), không cần F5 trang.
+  var lists=Array.from(document.querySelectorAll('[data-host-ready-list]'));
+  if(!lists.length) return;
+
+  function render(box, hosts){
+    var target=box.querySelector('[data-host-ready-items]');
+    if(!target) return;
+    target.textContent='';
+    if(!Array.isArray(hosts) || !hosts.length){
+      var empty=document.createElement('small');
+      empty.className='td-host-ready-empty';
+      empty.style.color='#91a3b1';
+      empty.textContent='Hiện chưa có Host nào đang rảnh.';
+      target.appendChild(empty);
+      return;
+    }
+    hosts.forEach(function(host){
+      var chip=document.createElement('span');
+      chip.className='td-host-chip';
+      var name=(host && host.display_name) ? String(host.display_name) : 'HLV';
+      var region=(host && host.region) ? String(host.region) : '—';
+      chip.textContent='🟢 '+name+' · '+region;
+      target.appendChild(chip);
+    });
+  }
+
+  function refresh(box){
+    var tid=box.dataset.tournamentId;
+    if(!tid) return Promise.resolve();
+    return fetch('/api/tournaments/'+encodeURIComponent(tid)+'/host-ready',{
+      method:'GET',
+      credentials:'same-origin',
+      headers:{'Accept':'application/json'},
+      cache:'no-store'
+    }).then(function(res){
+      if(!res.ok) throw new Error('host-ready '+res.status);
+      return res.json();
+    }).then(function(data){
+      if(data && data.ok) render(box,data.hosts||[]);
+    }).catch(function(){
+      // Giữ dữ liệu render server hiện có nếu polling tạm lỗi.
+    });
+  }
+
+  function refreshAll(){ lists.forEach(refresh); }
+  // Đợi heartbeat chung của base.html kịp ghi presence trước lượt refresh đầu tiên.
+  window.setTimeout(refreshAll,1200);
+  window.setInterval(refreshAll,15000);
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden) refreshAll();
+  });
+})();
+</script>
 <script>
 (function(){
   var boxes=Array.from(document.querySelectorAll('[data-center-countdown]'));
