@@ -1,0 +1,36 @@
+    {% for tournament in tournaments %}
+    {% set hub=tournament.landing_hub|default(none) %}
+    {% if tournament.name == 'CHAMPION LEAGUE ARENA' and hub and not tournament.needs_availability_gate %}
+    <div class="tournament-center-stack" id="center-{{ tournament.id }}">
+      <section class="td-section" id="rooms-{{ tournament.id }}">
+        <h2>🏟️ Sảnh chờ</h2>
+        <p style="color:#91a3b1;font-size:12px">Sảnh trung tâm để theo dõi phòng giải, HLV đang chờ và Host đang rảnh.</p>
+        <div class="td-host-ready" data-host-ready-list data-tournament-id="{{ tournament.id }}">
+          <strong style="width:100%;color:#f1ca68">Host đang rảnh</strong>
+          <small style="width:100%;color:#91a3b1">Tự động hiển thị HLV trong giải có Host, đang online và không ở trong phòng đấu.</small>
+          <div class="td-host-ready-items" data-host-ready-items>{% for h in hub.host_ready %}<span class="td-host-chip">🟢 {{ h.display_name }} · {{ h.region }}</span>{% else %}<small class="td-host-ready-empty" style="color:#91a3b1">Hiện chưa có Host nào đang rảnh.</small>{% endfor %}</div>
+        </div>
+        <div class="td-room-list">{% for r in hub.center_rooms %}<article class="td-room-card"><small>PHÒNG GIẢI · {{ (r.tournament_match.stage_code or 'stage1')|upper }}</small><strong>{{ r.public_label }}</strong><span>{{ r.public_status }}</span>{% if r.host_team and r.guest_team %}<p>{{ r.host_team }} ⚔ {{ r.guest_team }}</p>{% endif %}{% if hub.member and (hub.member.user_id|string == r.tournament_match.home_user_id|string or hub.member.user_id|string == r.tournament_match.away_user_id|string) %}<div style="margin-top:8px"><a class="btn" href="{{ url_for('room_detail',room_id=r.id) }}">Vào phòng</a></div>{% endif %}</article>{% else %}<div class="td-empty">Chưa có phòng giải nào đang hoạt động trong Sảnh chờ.</div>{% endfor %}</div>
+        <h3 style="margin-top:16px">Trận của tôi</h3><div style="overflow:auto"><table class="td-table"><thead><tr><th>Giai đoạn</th><th>Đối thủ</th><th>Zalo</th><th>Lịch hẹn</th><th>Phòng</th></tr></thead><tbody>
+        {% for m in hub.matches if m.status in ['pending','scheduled'] %}{% set is_home = hub.member.user_id|string==m.home_user_id|string %}{% set opp=m.away_name if is_home else m.home_name %}{% set opp_zalo=m.away_zalo_name if is_home else m.home_zalo_name %}<tr><td>{{ 'GĐ1' if m.stage_code=='stage1' else m.stage_code }}</td><td><strong>{{ opp }}</strong></td><td>{% if opp_zalo %}<strong>💬 {{ opp_zalo }}</strong>{% else %}<span style="color:#8193a1">Chưa có</span>{% endif %}</td><td>{{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa hẹn' }}</td><td><form method="post" action="{{ url_for('tournament_match_room_enter',tournament_id=tournament.id,match_id=m.id) }}"><button class="btn green" type="submit">Tạo phòng & mời đối thủ</button></form></td></tr>{% else %}<tr><td colspan="5" style="color:#91a3b1">Chưa có trận đang chờ.</td></tr>{% endfor %}
+        </tbody></table></div>
+
+      <section class="td-section" id="opponents-{{ tournament.id }}">
+        <h2>👥 Đối thủ của tôi</h2>
+        {% set myid=hub.member.user_id|string %}
+        {% if hub.is_test %}
+          {% if hub.test_opponent %}<div class="td-opponents"><div class="td-opponent"><small>ĐỐI THỦ</small><b>{{ hub.test_opponent.display_name }}</b></div></div>{% else %}<div class="td-empty">Chưa có đối thủ.</div>{% endif %}
+        {% elif hub.league_mine %}
+          {% if not hub.league_opened %}<div class="td-reveal"><h3>🎁 Đối thủ của bạn đã sẵn sàng</h3><form method="post" action="{{ url_for('tournament_league_reveal',tournament_id=tournament.id) }}"><input type="hidden" name="return_to" value="tournaments"><button class="btn gold" type="submit">MỞ ĐỐI THỦ CỦA TÔI</button></form></div>
+          {% else %}<div class="td-opponents">{% for o in hub.league_mine %}<div class="td-opponent"><small>ĐỐI THỦ {{ loop.index }}</small><b>{{ o.name }}</b></div>{% endfor %}</div>{% endif %}
+        {% elif not hub.stage1_opened %}
+          <div class="td-reveal"><h3>🎁 Đối thủ của bạn đã sẵn sàng</h3><form method="post" action="{{ url_for('tournament_stage1_reveal',tournament_id=tournament.id) }}"><input type="hidden" name="return_to" value="tournaments"><button class="btn gold" type="submit">MỞ ĐỐI THỦ CỦA TÔI</button></form></div>
+        {% else %}
+          <div class="td-opponents">{% set seen=[] %}{% for m in hub.matches if m.stage_code=='stage1' %}{% set opp=m.away_name if m.home_user_id|string==myid else m.home_name %}{% set oz=m.away_zalo_name if m.home_user_id|string==myid else m.home_zalo_name %}{% if opp not in seen %}{% if seen.append(opp) %}{% endif %}<div class="td-opponent"><small>ĐỐI THỦ {{ seen|length }}</small><b>{{ opp }}</b>{% if oz %}<div class="td-contact-line">💬 Zalo: <strong>{{ oz }}</strong></div>{% endif %}</div>{% endif %}{% else %}<div class="td-empty">Chưa có đối thủ GĐ1.</div>{% endfor %}</div>
+        {% endif %}
+      </section>
+
+      </section>
+    </div>
+    {% endif %}
+    {% endfor %}

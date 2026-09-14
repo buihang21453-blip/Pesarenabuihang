@@ -1,0 +1,33 @@
+    {% for tournament in tournaments %}
+    {% set hub=tournament.landing_hub|default(none) %}
+    {% if tournament.name == 'CHAMPION LEAGUE ARENA' and hub and not tournament.needs_availability_gate %}
+    <div class="tournament-personal-hub" id="personal-hub-{{ tournament.id }}">
+      {% set myid=hub.member.user_id|string %}
+      <section class="td-section" id="schedule-{{ tournament.id }}">
+        <h2>📅 Lịch thi đấu / Giờ rảnh</h2>
+        {% for day in hub.days if not day.is_weekend %}<form id="landing-flex-{{ tournament.id }}-{{ day.date }}" method="post" action="{{ url_for('tournament_availability_custom_add',tournament_id=tournament.id) }}"><input type="hidden" name="return_to" value="tournaments"></form>{% endfor %}
+        <form method="post" action="{{ url_for('admin_tournament_test_availability_simple_save',tournament_id=tournament.id) if hub.is_test else url_for('tournament_availability_save',tournament_id=tournament.id) }}" class="td-fixed-schedule" data-fixed-schedule data-availability-scope="{{ tournament.id }}">
+          <input type="hidden" name="return_to" value="tournaments">
+          <div class="td-av-days">
+          {% for day in hub.days %}
+            <div class="td-av-day">
+              <div class="td-av-day-head"><div><strong>{{ day.label }}</strong><span>{{ day.weekday }}</span></div><label class="td-av-all"><input type="checkbox" data-select-all-day> Tích toàn bộ</label></div>
+              <div class="td-av-slots">{% for slot in day.slots %}<label class="td-av-slot"><input type="checkbox" name="slots" value="{{ slot.iso }}" data-live-slot data-opponent-match="{{ 1 if slot.iso in hub.opponent_slot_set else 0 }}" {{ 'checked' if slot.iso in hub.mine_set else '' }}><span>{{ slot.label }}</span></label>{% else %}<small>Không còn khung giờ nào trong ngày này.</small>{% endfor %}</div>
+              {% if not day.is_weekend %}<div class="td-av-flex"><div class="td-av-flex-title">🕒 Giờ linh hoạt</div><div class="td-av-flex-fields"><label>Từ (24h)<input type="text" name="start_time" form="landing-flex-{{ tournament.id }}-{{ day.date }}" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="18:30"></label><label>Đến (24h)<input type="text" name="end_time" form="landing-flex-{{ tournament.id }}-{{ day.date }}" inputmode="numeric" pattern="(?:[01]\d|2[0-3]):[0-5]\d" maxlength="5" placeholder="22:00"></label><input type="hidden" name="day_date" value="{{ day.date }}" form="landing-flex-{{ tournament.id }}-{{ day.date }}"><button class="btn gold" type="submit" form="landing-flex-{{ tournament.id }}-{{ day.date }}">＋ Thêm</button></div></div>{% else %}<div class="td-av-weekend-note">🕒 Thứ 7 / Chủ nhật: giờ thi đấu linh hoạt sẵn, không cần khai báo thêm khoảng giờ riêng.</div>{% endif %}
+            </div>
+          {% endfor %}
+          </div>
+          <div class="td-av-save"><button class="btn green" type="submit">💾 Lưu giờ rảnh của tôi</button><small>Mỗi khung = 1 giờ · Hôm nay / Ngày mai / Ngày kia.</small></div>
+        </form>
+
+        <h3 style="margin-top:20px">Lịch của đối thủ</h3>
+        <p style="color:#91a3b1;font-size:12px">Hai HLV xem giờ rảnh của nhau rồi tự liên hệ qua Zalo để thống nhất giờ đá.</p>
+        {% if hub.is_test %}
+          {% if hub.test_opponent %}<div class="td-schedule-list"><article class="td-schedule-card"><div class="td-schedule-top"><div class="td-player"><strong>Bạn</strong></div><div class="td-vs">VS</div><div class="td-player away"><strong>{{ hub.test_opponent.display_name }}</strong></div></div><div class="td-schedule-status"><strong>Giờ rảnh của {{ hub.test_opponent.display_name }}:</strong> <span style="color:#89dfa5">Giờ trùng với bạn được tô xanh.</span></div><div class="td-opponent-days">{% for day in hub.test_opponent_days %}<section class="td-opponent-day"><div class="td-opponent-day-head"><strong>📅 {{ day.label }}</strong><span>{{ day.weekday }}</span></div><div class="td-opponent-day-slots">{% for x in day.opponent_slots %}<span class="td-opponent-slot{{ ' is-overlap' if x.is_overlap else '' }}" data-opponent-slot-iso="{{ x.iso }}" data-availability-scope="{{ tournament.id }}">{{ x.label }}</span>{% else %}<span class="td-opponent-empty">Chưa có giờ rảnh.</span>{% endfor %}</div></section>{% endfor %}</div></article></div>{% endif %}
+        {% else %}
+          <div class="td-schedule-list">{% set sc=namespace(count=0) %}{% for m in hub.matches if m.status in ['pending','scheduled'] %}{% set sc.count=sc.count+1 %}{% set opp=m.away_name if m.home_user_id|string==myid else m.home_name %}{% set oz=m.away_zalo_name if m.home_user_id|string==myid else m.home_zalo_name %}<article class="td-schedule-card"><div class="td-schedule-top"><div class="td-player"><strong>Bạn</strong></div><div class="td-vs">VS</div><div class="td-player away"><strong>{{ opp }}</strong>{% if oz %}<small>💬 Zalo: {{ oz }}</small>{% endif %}</div></div><div class="td-schedule-status"><strong>Giờ rảnh của {{ opp }}:</strong> <span style="color:#89dfa5">Giờ trùng với bạn được tô xanh.</span></div><div class="td-opponent-days">{% for day in m.opponent_availability_days %}<section class="td-opponent-day"><div class="td-opponent-day-head"><strong>📅 {{ day.label }}</strong><span>{{ day.weekday }}</span></div><div class="td-opponent-day-slots">{% for x in day.opponent_slots %}<span class="td-opponent-slot{{ ' is-overlap' if x.is_overlap else '' }}" data-opponent-slot-iso="{{ x.iso }}" data-availability-scope="{{ tournament.id }}">{{ x.label }}</span>{% else %}<span class="td-opponent-empty">Chưa có giờ rảnh.</span>{% endfor %}</div></section>{% endfor %}</div></article>{% endfor %}{% if sc.count==0 %}<div class="td-empty">Bạn chưa có đối thủ cần xem lịch.</div>{% endif %}</div>
+        {% endif %}
+      </section>
+    </div>
+    {% endif %}
+    {% endfor %}

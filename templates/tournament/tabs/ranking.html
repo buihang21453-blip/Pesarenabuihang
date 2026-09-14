@@ -1,0 +1,206 @@
+          {% if not tournament.needs_availability_gate %}
+          <div class="tournament-public-ranking" id="ranking">
+            <div class="tournament-public-ranking-head">
+              <div>
+                <h4>📊 BXH</h4>
+              </div>
+            </div>
+            {% if tournament.can_admin_manage %}
+            <details class="tournament-admin-all-schedule">
+              <summary>
+                <span>📅 Lịch thi đấu toàn bộ HLV</span>
+                <small style="color:#91a3b1;font-weight:700">Bấm để xem / thu gọn</small>
+              </summary>
+              <div class="tournament-admin-all-schedule-body">
+                {% if tournament.central_admin_players %}
+                {% set first_ap = (tournament.central_admin_players.values()|list|first) %}
+                <div class="tournament-admin-all-days">
+                  {% for d in first_ap.availability_days|default([]) %}
+                  <div class="tournament-admin-all-day">
+                    <h5>{{ d.label }} · {{ d.weekday }}</h5>
+                    {% for uid, player in tournament.central_admin_players.items() %}
+                    <div class="tournament-admin-all-player">
+                      <strong>{{ player.display_name }}</strong>
+                      <div class="tournament-admin-all-slots">
+                        {% for tm in player.availability_by_day.get(d.date,[]) %}
+                          <span>{{ tm }}</span>
+                        {% else %}
+                          <small style="color:#6f8190">Chưa đăng ký giờ rảnh</small>
+                        {% endfor %}
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="tournament-admin-fixed-matches">
+                  <strong style="color:#f1ca68">📌 Các trận đã hẹn giờ</strong>
+                  {% for sm in tournament.central_admin_schedule_matches|default([]) %}
+                  <div class="tournament-admin-fixed-match">
+                    <span>{{ 'GĐ1' if sm.stage_code=='stage1' else ('GĐ2' if sm.stage_code=='league' else (sm.round_code|upper if sm.round_code else 'Knockout')) }} · <strong>{{ sm.home_name }} vs {{ sm.away_name }}</strong></span>
+                    <span>{{ (sm.scheduled_at|string)|replace('T',' ') }}</span>
+                  </div>
+                  {% else %}
+                  <div class="small" style="margin-top:8px">Chưa có trận nào được hẹn giờ.</div>
+                  {% endfor %}
+                </div>
+              </div>
+            </details>
+            {% endif %}
+            <div class="tournament-public-ranking-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Tên HLV</th>
+                    <th>Trận</th>
+                    <th>Điểm</th>
+                    <th>Thành tích</th>
+                    <th>BT</th>
+                    <th>BB</th>
+                    <th>Hiệu số</th>
+                    <th>5 trận gần nhất</th>
+                    <th>Win rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in tournament.public_stage1_ranking %}
+                  <tr>
+                    <td><span class="rank-number{% if r.rank == 1 %} top-1{% elif r.rank == 2 %} top-2{% elif r.rank == 3 %} top-3{% endif %}">{{ r.rank }}</span></td>
+                    <td>{% if tournament.can_admin_manage %}<button type="button" class="tournament-rank-name-btn" data-central-player-toggle="{{ tournament.id }}-{{ r.user_id }}">{{ r.display_name }}</button>{% else %}<span class="coach-name">{{ r.display_name }}</span>{% endif %}{% if current_user and current_user.id|string == r.user_id|string %} <small style="color:#f1ca68;font-weight:850">Bạn</small>{% endif %}</td>
+                    <td><strong>{{ r.played }}</strong></td>
+                    <td><span class="points">{{ r.points }}</span></td>
+                    <td>
+                      <div class="leaderboard-record">
+                        <span class="record-chip record-chip-win">{{ r.wins }}T</span>
+                        <span class="record-chip record-chip-draw">{{ r.draws }}H</span>
+                        <span class="record-chip record-chip-loss">{{ r.losses }}B</span>
+                      </div>
+                    </td>
+                    <td><strong>{{ r.gf }}</strong></td>
+                    <td><strong>{{ r.ga }}</strong></td>
+                    <td><strong>{{ '+' if r.gd > 0 else '' }}{{ r.gd }}</strong></td>
+                    <td>
+                      <div class="leaderboard-form" aria-label="5 trận gần nhất của {{ r.display_name }}">
+                        {% for item in r.recent_form|reverse %}
+                        <span class="form-pill form-pill-{{ item.code }}{% if loop.last %} form-pill-newest{% endif %}" title="{{ item.label }}{% if loop.last %} • Trận mới nhất{% endif %}">{{ item.short }}</span>
+                        {% endfor %}
+                        {% for _ in range(5 - (r.recent_form|length)) %}
+                        <span class="form-pill form-pill-empty">−</span>
+                        {% endfor %}
+                      </div>
+                    </td>
+                    <td><strong class="leaderboard-winrate">{{ r.winrate }}%</strong></td>
+                  </tr>
+                  {% if tournament.can_admin_manage %}
+                  {% set ap = tournament.central_admin_players.get(r.user_id|string, {}) %}
+                  <tr class="tournament-admin-detail-row" data-central-player-panel="{{ tournament.id }}-{{ r.user_id }}">
+                    <td colspan="10" class="tournament-admin-detail-cell">
+                      <div class="tournament-admin-detail-grid">
+                        <div class="tournament-admin-detail-card">
+                          <h5>👤 {{ r.display_name }} · Thông tin</h5>
+                          <div class="small"><strong>Zalo:</strong> {{ ap.zalo_name or '—' }}</div>
+                          <div class="small"><strong>Host:</strong> {{ '✅ Có Host' if ap.has_host else '❌ Không Host' }}</div>
+                          <div class="small"><strong>Khu vực:</strong> {{ ap.host_region or '—' }}</div>
+                          <div class="small"><strong>Pot:</strong> {{ ap.pot_no or '—' }}</div>
+                          <div class="small"><strong>CLB:</strong> {{ ap.fixed_club_name or '—' }}</div>
+                          <form class="tournament-admin-profile-form" method="post" action="{{ url_for('admin_tournament_registration_profile_update',registration_id=(ap.registration_id or 'none')) }}">
+                            <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+                            <input type="hidden" name="user_id" value="{{ r.user_id }}">
+                            <input type="hidden" name="return_to" value="central">
+                            <input name="zalo_name" value="{{ ap.zalo_name|default('',true) }}" placeholder="Tên Zalo" style="grid-column:1/-1">
+                            <select name="host_region">
+                              <option value="Bắc" {{ 'selected' if ap.host_region=='Bắc' else '' }}>Bắc</option>
+                              <option value="Trung" {{ 'selected' if ap.host_region=='Trung' else '' }}>Trung</option>
+                              <option value="Nam" {{ 'selected' if ap.host_region=='Nam' else '' }}>Nam</option>
+                            </select>
+                            <select name="host_choice">
+                              <option value="yes" {{ 'selected' if ap.has_host else '' }}>Có Host</option>
+                              <option value="no" {{ 'selected' if not ap.has_host else '' }}>Không Host</option>
+                            </select>
+                            <button class="btn green" type="submit" style="grid-column:1/-1">💾 Lưu thông tin</button>
+                          </form>
+                        </div>
+                        <div class="tournament-admin-detail-card">
+                          <h5>📅 Khung giờ đã đăng ký</h5>
+                          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:12px">
+                            {% for d in ap.availability_days|default([]) %}
+                            <div style="padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:#071522">
+                              <strong style="font-size:12px;color:#f1ca68">{{ d.label }}</strong>
+                              <div class="small">{{ d.weekday }}</div>
+                              <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
+                                {% for tm in ap.availability_by_day.get(d.date,[]) %}
+                                  <span style="padding:4px 6px;border-radius:6px;background:#0d2a3d;font-size:11px">{{ tm }}</span>
+                                {% else %}
+                                  <span class="small">Chưa đăng ký giờ rảnh.</span>
+                                {% endfor %}
+                              </div>
+                            </div>
+                            {% endfor %}
+                          </div>
+                          <h5>⚔️ Đối thủ · Lịch thi đấu · Lịch sử trận</h5>
+                          <div class="tournament-auto-save-note">Nhập hoặc sửa tỷ số → hệ thống tự lưu sau khi bạn ngừng nhập.</div>
+                          <div class="tournament-admin-match-list">
+                            {% for m in ap.matches|default([]) %}
+                            <div class="tournament-admin-match">
+                              <div>
+                                <strong>{{ 'GĐ1' if m.stage_code=='stage1' else ('GĐ2' if m.stage_code=='league' else (m.round_code|upper if m.round_code else 'Knockout')) }} · vs {{ m.opponent_name }}</strong>
+                                <div class="small">📅 {{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa đặt lịch' }} · {{ 'Đã hoàn thành' if m.status=='completed' else 'Chờ thi đấu' }}</div>
+                                {% if m.status=='completed' %}<div class="small"><strong>Tỷ số:</strong> {% if m.is_home_for_player %}{{ m.home_score }} - {{ m.away_score }}{% else %}{{ m.away_score }} - {{ m.home_score }}{% endif %}{% if m.home_pen is not none and m.away_pen is not none %} · Pen {% if m.is_home_for_player %}{{ m.home_pen }} - {{ m.away_pen }}{% else %}{{ m.away_pen }} - {{ m.home_pen }}{% endif %}{% endif %}</div>{% endif %}
+                              </div>
+                              <form class="tournament-admin-score" method="post" action="{{ url_for('admin_tournament_match_result',match_id=m.id) }}" data-auto-score-form>
+                                <input type="hidden" name="return_to" value="central">
+                                <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+                                {% if m.is_home_for_player %}
+                                  <span class="tournament-admin-score-name">{{ r.display_name }}<br><small>HLV đang xem</small></span>
+                                  <input type="number" min="0" name="home_score" value="{{ m.home_score if m.home_score is not none else 0 }}" required aria-label="Tỷ số {{ r.display_name }}" data-auto-score>
+                                  <strong>-</strong>
+                                  <input type="number" min="0" name="away_score" value="{{ m.away_score if m.away_score is not none else 0 }}" required aria-label="Tỷ số {{ m.opponent_name }}" data-auto-score>
+                                  <span class="tournament-admin-score-name away">{{ m.opponent_name }}<br><small>Đối thủ</small></span>
+                                {% else %}
+                                  <span class="tournament-admin-score-name">{{ r.display_name }}<br><small>HLV đang xem</small></span>
+                                  <input type="number" min="0" name="away_score" value="{{ m.away_score if m.away_score is not none else 0 }}" required aria-label="Tỷ số {{ r.display_name }}" data-auto-score>
+                                  <strong>-</strong>
+                                  <input type="number" min="0" name="home_score" value="{{ m.home_score if m.home_score is not none else 0 }}" required aria-label="Tỷ số {{ m.opponent_name }}" data-auto-score>
+                                  <span class="tournament-admin-score-name away">{{ m.opponent_name }}<br><small>Đối thủ</small></span>
+                                {% endif %}
+                                <span class="tournament-auto-save-state" data-auto-save-state>{{ 'Đã lưu' if m.status=='completed' else 'Chưa lưu' }}</span>
+                                {% if m.stage_code=='knockout' %}
+                                <div class="tournament-admin-pen-row">
+                                  <span>Penalty:</span>
+                                  {% if m.is_home_for_player %}
+                                    <strong>{{ r.display_name }}</strong>
+                                    <input type="number" min="0" name="home_pen" data-auto-score value="{{ m.home_pen if m.home_pen is not none else '' }}" placeholder="Pen">
+                                    <strong>-</strong>
+                                    <input type="number" min="0" name="away_pen" data-auto-score value="{{ m.away_pen if m.away_pen is not none else '' }}" placeholder="Pen">
+                                    <strong>{{ m.opponent_name }}</strong>
+                                  {% else %}
+                                    <strong>{{ r.display_name }}</strong>
+                                    <input type="number" min="0" name="away_pen" data-auto-score value="{{ m.away_pen if m.away_pen is not none else '' }}" placeholder="Pen">
+                                    <strong>-</strong>
+                                    <input type="number" min="0" name="home_pen" data-auto-score value="{{ m.home_pen if m.home_pen is not none else '' }}" placeholder="Pen">
+                                    <strong>{{ m.opponent_name }}</strong>
+                                  {% endif %}
+                                </div>
+                                {% endif %}
+                              </form>
+                            </div>
+                            {% else %}
+                            <div class="small">HLV này chưa có cặp đấu.</div>
+                            {% endfor %}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endif %}
+                  {% else %}
+                  <tr><td colspan="10" class="empty-row">Chưa có dữ liệu BXH.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endif %}
