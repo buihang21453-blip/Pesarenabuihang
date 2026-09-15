@@ -327,4 +327,4 @@ def register_rewards(context):
         execute_query(db.table("tournament_reward_rules").insert(payload),"ops_reward_add",attempts=2)
         flash("Đã thêm mức thưởng.","success"); return redirect_admin("tournaments")
 
-    return {k: v for k, v in locals().items() if k.startswith('_') and callable(v)}
+    return {k: v for k, v in locals().items() if (k.startswith('_') and callable(v)) or k.isupper()}

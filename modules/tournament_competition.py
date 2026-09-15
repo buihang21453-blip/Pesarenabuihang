@@ -1,4 +1,4 @@
-"""Tournament competition composition root (V1.5.78).
+"""Tournament competition composition root (V1.5.79).
 
 The former 4k+ line tournament competition monolith is split by responsibility
 under ``modules/tournament_competition_parts``. Public registration remains
@@ -11,13 +11,31 @@ import uuid
 
 from teams_data import TEAMS
 
-from modules.tournament_competition_parts.core import register_core
-from modules.tournament_competition_parts.admin import register_admin
-from modules.tournament_competition_parts.test_support import register_test_support
-from modules.tournament_competition_parts.rooms import register_rooms
-from modules.tournament_competition_parts.league import register_league
-from modules.tournament_competition_parts.scheduling import register_scheduling
-from modules.tournament_competition_parts.rewards import register_rewards
+from modules.tournament_competition_parts import core as _core_part
+from modules.tournament_competition_parts import admin as _admin_part
+from modules.tournament_competition_parts import test_support as _test_support_part
+from modules.tournament_competition_parts import rooms as _rooms_part
+from modules.tournament_competition_parts import league as _league_part
+from modules.tournament_competition_parts import scheduling as _scheduling_part
+from modules.tournament_competition_parts import rewards as _rewards_part
+
+register_core = _core_part.register_core
+register_admin = _admin_part.register_admin
+register_test_support = _test_support_part.register_test_support
+register_rooms = _rooms_part.register_rooms
+register_league = _league_part.register_league
+register_scheduling = _scheduling_part.register_scheduling
+register_rewards = _rewards_part.register_rewards
+
+_COMPETITION_PARTS = (
+    _core_part,
+    _admin_part,
+    _test_support_part,
+    _rooms_part,
+    _league_part,
+    _scheduling_part,
+    _rewards_part,
+)
 
 STAGE_LABELS = {
     "stage1": "GĐ1 · Phân hạng",
@@ -69,3 +87,11 @@ def register_routes(context):
     ):
         exported = registrar(shared) or {}
         shared.update(exported)
+
+    # V1.5.79: the legacy monolith allowed functions in any section to resolve
+    # helpers/constants declared later in the same module. After V1.5.79 split,
+    # each part had an isolated module namespace, so forward cross-part references
+    # could raise NameError at request time (notably /admin tournament context).
+    # Synchronize the completed shared namespace back into every partition.
+    for part in _COMPETITION_PARTS:
+        part.__dict__.update(shared)

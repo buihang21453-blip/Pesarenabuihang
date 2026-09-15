@@ -116,3 +116,10 @@ Không tuyên bố đã sửa/tạo ZIP nếu file chưa thực sự tồn tại
 4. Phạm vi thay đổi nhỏ, dễ rollback.
 5. Test được.
 6. Sau đó mới tối ưu cấu trúc hoặc thẩm mỹ.
+
+
+## Quy tắc module hóa `tournament_competition`
+- Khi tách/mở rộng `tournament_competition_parts`, phải kiểm tra dependency chéo giữa các partition, không chỉ compile từng file.
+- Helper/hằng số được tham chiếu chéo phải có mặt trong shared namespace cuối cùng.
+- Sau khi đăng ký toàn bộ partition phải đồng bộ shared namespace về từng partition để bảo toàn forward-reference của monolith cũ.
+- Bắt buộc kiểm tra các route Admin, Test Support, Room, League, Scheduling và Rewards sau thay đổi cấu trúc.

@@ -1,6 +1,6 @@
 # PROJECT_MAP — PES Arena
 
-**Baseline:** V1.5.78  
+**Baseline:** V1.5.79  
 **Stack:** Flask + Jinja2 + Supabase + vanilla CSS/JavaScript  
 **Entry point:** `app.py`  
 
@@ -106,7 +106,7 @@ Render UI
 | `templates/tournament_detail.html` | Template legacy/chi tiết; GET detail hiện chủ yếu tương thích/redirect theo lịch sử V1.5.54 |
 | `templates/c1_rooms.html` | Trang/phần phòng C1 legacy/trung gian còn được giữ cho tương thích |
 
-### 5.1 Backend C1 sau V1.5.78
+### 5.1 Backend C1 sau V1.5.79
 
 ```text
 modules/
@@ -256,3 +256,9 @@ Yêu cầu
 → tăng version + CHANGELOG/PROJECT_MAP nếu cần
 → kiểm tra + dọn ZIP
 ```
+
+
+### V1.5.79 – lưu ý dependency của `tournament_competition_parts`
+Các partition vẫn giữ endpoint cũ nhưng có thể tham chiếu helper/hằng số ở partition khác như khi còn monolith.
+`tournament_competition.register_routes()` vì vậy xây dựng namespace chung hoàn chỉnh và đồng bộ namespace này vào tất cả partition sau khi đăng ký.
+Không được bỏ bước đồng bộ này khi thêm partition mới.

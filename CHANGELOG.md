@@ -519,3 +519,12 @@ C1 Trận 2:
 - Sau polling, Guest thấy nút Sẵn Sàng.
 
 Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
+
+
+## V1.5.79
+- Hotfix lỗi namespace sau khi tách `tournament_competition.py` ở V1.5.78.
+- Đồng bộ namespace hoàn chỉnh ngược lại tất cả `tournament_competition_parts` để giữ hành vi forward-reference của monolith cũ.
+- Export các hằng số nội bộ cần dùng chéo module, gồm `C1_TEST_ACCOUNTS_KEY`.
+- Sửa nguy cơ `NameError` ở `/admin` và các route C1/module khác chỉ xuất hiện lúc request runtime.
+- Không thay đổi database, SQL, endpoint hay luật giải đấu.
+

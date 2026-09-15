@@ -400,4 +400,4 @@ def register_test_support(context):
                 })
         return clean
 
-    return {k: v for k, v in locals().items() if k.startswith('_') and callable(v)}
+    return {k: v for k, v in locals().items() if (k.startswith('_') and callable(v)) or k.isupper()}
