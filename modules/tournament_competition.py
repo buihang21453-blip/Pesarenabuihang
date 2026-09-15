@@ -1,4 +1,4 @@
-"""Tournament competition composition root (V1.5.79).
+"""Tournament competition composition root (V1.5.80).
 
 The former 4k+ line tournament competition monolith is split by responsibility
 under ``modules/tournament_competition_parts``. Public registration remains
@@ -88,8 +88,8 @@ def register_routes(context):
         exported = registrar(shared) or {}
         shared.update(exported)
 
-    # V1.5.79: the legacy monolith allowed functions in any section to resolve
-    # helpers/constants declared later in the same module. After V1.5.79 split,
+    # V1.5.80: the legacy monolith allowed functions in any section to resolve
+    # helpers/constants declared later in the same module. After V1.5.80 split,
     # each part had an isolated module namespace, so forward cross-part references
     # could raise NameError at request time (notably /admin tournament context).
     # Synchronize the completed shared namespace back into every partition.

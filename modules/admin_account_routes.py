@@ -436,6 +436,27 @@ def register_routes(context):
         return redirect_admin("users")
 
 
+    @app.route("/admin/users/<user_id>/notification", methods=["POST"])
+    @admin_required
+    def admin_send_user_notification(user_id):
+        require_admin_permission("users_approve")
+        user = get_user_by_id(user_id)
+        if not user:
+            flash("Không tìm thấy tài khoản.", "danger")
+            return redirect(url_for("admin") + "#users")
+        preset = (request.form.get("preset") or "general").strip().lower()
+        custom = (request.form.get("message") or "").strip()
+        presets = {
+            "reminder": ("🔔 Nhắc nhở từ Admin", "Admin gửi nhắc nhở tới tài khoản của bạn. Vui lòng kiểm tra và tuân thủ quy định của PES Arena."),
+            "verify": ("⚠️ Yêu cầu xác minh tài khoản", "Tài khoản của bạn đang có IP truy cập trùng với một tài khoản khác. Vui lòng liên hệ Admin trong nhóm Zalo để xác minh."),
+            "warning": ("🚨 Cảnh cáo từ Admin", "Tài khoản của bạn đang có dấu hiệu cần kiểm tra. Vui lòng liên hệ Admin và thực hiện theo yêu cầu xác minh."),
+            "general": ("📢 Thông báo từ Admin", "Bạn có một thông báo mới từ Admin PES Arena."),
+        }
+        title, default_message = presets.get(preset, presets["general"])
+        created = create_user_notification(user_id, title, custom or default_message, "/notifications", f"admin_{preset}")
+        flash(f"Đã gửi thông báo tới {user.get('username')}." if created else "Không gửi được thông báo.", "success" if created else "danger")
+        return redirect(url_for("admin") + "#users")
+
     @app.route("/admin/invite-code/create", methods=["POST"])
     @login_required
     @admin_required

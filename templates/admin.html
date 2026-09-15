@@ -223,7 +223,7 @@
                 </div>
                 {% endfor %}
             </div>
-            <p class="small">Không tự khóa chỉ vì trùng IP. Hãy đối chiếu thêm Zalo, lịch sử trận và hành vi cộng điểm.</p>
+            <p class="small">Tài khoản trùng IP đăng ký hoặc IP gần nhất sẽ không được duyệt/đăng nhập cho tới khi được kiểm tra.</p>
         </div>
         {% else %}
         <div class="admin-no-duplicate">✅ Chưa phát hiện tài khoản nào dùng chung IP.</div>
@@ -307,6 +307,22 @@
                                         {{ 'Bỏ tài khoản tin cậy' if p.duplicate_ip_trusted else 'Đánh dấu tài khoản tin cậy' }}
                                     </button>
                                     {% if p.duplicate_ip_trusted %}<p class="small admin-ip-safe">✓ Đang bỏ qua cảnh báo IP cho tài khoản này.</p>{% endif %}
+                                    <div class="admin-user-message-box">
+                                        <h3>💬 Gửi thông báo tới tài khoản</h3>
+                                        {% if p.duplicate_ip_accounts %}<p class="admin-ip-warning">⚠️ Đang trùng IP với: {{ p.duplicate_ip_accounts|join(', ') }}</p>{% endif %}
+                                        <label>Loại thông báo
+                                            <select name="preset">
+                                                <option value="reminder">🔔 Nhắc nhở</option>
+                                                <option value="verify" {% if p.duplicate_ip_accounts %}selected{% endif %}>⚠️ Yêu cầu xác minh</option>
+                                                <option value="warning">🚨 Cảnh cáo</option>
+                                                <option value="general">📢 Thông báo chung</option>
+                                            </select>
+                                        </label>
+                                        <label>Nội dung riêng (không bắt buộc)
+                                            <textarea name="message" maxlength="500" rows="3" placeholder="Để trống để dùng nội dung mẫu."></textarea>
+                                        </label>
+                                        <button class="btn gold" type="submit" formaction="{{ url_for('admin_send_user_notification', user_id=p.id) }}" formmethod="post">Gửi thông báo</button>
+                                    </div>
                                 </div>
 
                                 <div class="admin-user-edit-group">

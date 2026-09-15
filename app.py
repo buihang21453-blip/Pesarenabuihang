@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.5.79"
+APP_VERSION = "V1.5.80"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -1539,6 +1539,47 @@ def registration_ip_conflicts(ip):
     return rows
 
 
+
+
+def registration_or_latest_ip_conflicts(ip, exclude_user_id=None):
+    """Đối chiếu IP hiện tại với IP đăng ký hoặc IP gần nhất của player khác."""
+    ip = str(ip or "").strip()
+    excluded = str(exclude_user_id or "")
+    if not ip:
+        return []
+    result = execute_query(
+        db.table("users").select("id,username,display_name,account_status,register_ip,role").eq("role", "player"),
+        "ip_conflict_users", attempts=2,
+    )
+    rows, by_id = [], {}
+    for raw in (result.data or []):
+        user_id = str(raw.get("id") or "")
+        if not user_id or user_id == excluded:
+            continue
+        if str(raw.get("account_status") or "approved").lower() == "deleted" or is_admin_managed_test_account(raw):
+            continue
+        row = dict(raw)
+        row["conflict_sources"] = []
+        rows.append(row); by_id[user_id] = row
+        if str(raw.get("register_ip") or "").strip() == ip:
+            row["conflict_sources"].append("register_ip")
+    try:
+        device_result = execute_query(
+            db.table("user_devices").select("user_id,ip_address,last_seen_at").order("last_seen_at", desc=True),
+            "ip_conflict_latest_devices", attempts=2,
+        )
+        seen = set()
+        for device in (device_result.data or []):
+            user_id = str(device.get("user_id") or "")
+            if not user_id or user_id in seen:
+                continue
+            seen.add(user_id)
+            row = by_id.get(user_id)
+            if row is not None and str(device.get("ip_address") or "").strip() == ip:
+                row["conflict_sources"].append("latest_ip")
+    except Exception as exc:
+        print(f"latest ip conflict warning: {exc}")
+    return [row for row in rows if row.get("conflict_sources")]
 
 def list_all_users():
     require_db()

@@ -11,6 +11,18 @@
             {% endfor %}
         {% endwith %}
 
+        {% if blocked_account %}
+        <div class="blocked-account-popup" role="alert">
+            <div class="blocked-account-icon">⚠️</div>
+            <h2>{{ blocked_account.admin_notice.title if blocked_account.admin_notice else 'Tài khoản cần Admin kiểm tra' }}</h2>
+            <p class="blocked-account-message">{{ blocked_account.admin_notice.message if blocked_account.admin_notice else blocked_account.message }}</p>
+            {% if blocked_account.reason %}<p class="blocked-account-reason">{{ blocked_account.reason }}</p>{% endif %}
+            <a class="blocked-zalo-link" href="https://zalo.me/g/bqbtai165" target="_blank" rel="noopener noreferrer">
+                <img src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1/zalo_qr.webp" alt="QR nhóm Zalo PES Arena">
+                <strong>Liên hệ Admin trong nhóm Zalo</strong><span>Bấm vào QR để mở nhóm</span>
+            </a>
+        </div>
+        {% endif %}
         <form method="post" id="loginForm" autocomplete="on">
             <div class="form-group"><input id="loginUsername" name="username" placeholder="Username" autocomplete="username" required></div>
             <div class="form-group password-field">
@@ -66,3 +78,5 @@
 })();
 </script>
 {% endblock %}
+
+<style>.blocked-account-popup{margin:0 0 18px;padding:18px;border:2px solid #d2ae4b;border-radius:14px;background:linear-gradient(180deg,#142536,#0B1C29);box-shadow:0 12px 36px rgba(0,0,0,.38);text-align:center;color:#fff}.blocked-account-icon{font-size:34px}.blocked-account-popup h2{margin:5px 0 9px;color:#ffd76a}.blocked-account-message{font-weight:700;line-height:1.5}.blocked-account-reason{font-size:12px;color:#b9c6d2}.blocked-zalo-link{display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;text-decoration:none}.blocked-zalo-link img{width:132px;height:132px;object-fit:contain;background:#fff;padding:6px;border-radius:10px}.blocked-zalo-link span{font-size:12px;color:#b9c6d2}</style>

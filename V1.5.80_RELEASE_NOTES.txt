@@ -1,0 +1,9 @@
+PES Arena V1.5.80
+
+ACCOUNT IP REVIEW + ADMIN MESSAGE
+- Trùng IP đăng ký hoặc IP gần nhất: pending / không tự duyệt.
+- Approved player truy cập từ IP trùng: chuyển pending và báo Admin.
+- QR Zalo tại đăng ký và popup tài khoản bị chặn; click QR mở nhóm.
+- Admin gửi thông báo riêng: Nhắc nhở, Yêu cầu xác minh, Cảnh cáo, Thông báo chung.
+- Popup login hiển thị tin nhắn Admin mới nhất cho cả tài khoản pending/rejected/banned.
+- Không thay đổi schema/database.

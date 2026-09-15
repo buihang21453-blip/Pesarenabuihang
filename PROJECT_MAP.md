@@ -1,6 +1,6 @@
 # PROJECT_MAP — PES Arena
 
-**Baseline:** V1.5.79  
+**Baseline:** V1.5.80  
 **Stack:** Flask + Jinja2 + Supabase + vanilla CSS/JavaScript  
 **Entry point:** `app.py`  
 
@@ -106,7 +106,7 @@ Render UI
 | `templates/tournament_detail.html` | Template legacy/chi tiết; GET detail hiện chủ yếu tương thích/redirect theo lịch sử V1.5.54 |
 | `templates/c1_rooms.html` | Trang/phần phòng C1 legacy/trung gian còn được giữ cho tương thích |
 
-### 5.1 Backend C1 sau V1.5.79
+### 5.1 Backend C1 sau V1.5.80
 
 ```text
 modules/
@@ -258,7 +258,17 @@ Yêu cầu
 ```
 
 
-### V1.5.79 – lưu ý dependency của `tournament_competition_parts`
+### V1.5.80 – lưu ý dependency của `tournament_competition_parts`
 Các partition vẫn giữ endpoint cũ nhưng có thể tham chiếu helper/hằng số ở partition khác như khi còn monolith.
 `tournament_competition.register_routes()` vì vậy xây dựng namespace chung hoàn chỉnh và đồng bộ namespace này vào tất cả partition sau khi đăng ký.
 Không được bỏ bước đồng bộ này khi thêm partition mới.
+
+
+### V1.5.80 – Duyệt IP & Admin Notification
+- `app.py`: `registration_or_latest_ip_conflicts()` đối chiếu IP đăng ký + IP gần nhất.
+- `modules/auth_routes.py`: registration/login hold khi trùng IP; popup blocked account.
+- `modules/admin_account_routes.py`: Admin gửi notification riêng theo tài khoản.
+- `templates/register.html`: QR nhóm Zalo.
+- `templates/login.html`: popup tài khoản cần kiểm tra + QR + tin nhắn Admin.
+- `templates/admin.html`: form gửi Nhắc nhở / Xác minh / Cảnh cáo / Thông báo chung.
+- Dùng `user_notifications` hiện có, không cần migration mới.

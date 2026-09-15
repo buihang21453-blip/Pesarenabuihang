@@ -18,8 +18,14 @@
             <button class="btn full green" type="submit">Gửi đăng ký</button>
         </form>
 
-        <p class="small">IP đăng ký không trùng sẽ được duyệt tự động. Trường hợp trùng IP sẽ chuyển Admin kiểm duyệt.</p>
+        <p class="small">IP đăng ký hoặc IP gần nhất không trùng sẽ được duyệt tự động. Nếu trùng, tài khoản sẽ chờ Admin kiểm tra.</p>
+<a class="register-zalo-card" href="https://zalo.me/g/bqbtai165" target="_blank" rel="noopener noreferrer" title="Bấm để tham gia nhóm Zalo PES Arena">
+<strong>💬 Nhóm Zalo PES Arena</strong>
+<img src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1/zalo_qr.webp" alt="QR nhóm Zalo PES Arena">
+<span>Bấm vào mã QR để mở nhóm Zalo</span></a>
         <p class="small">Đã có tài khoản? <a href="{{ url_for('login') }}">Đăng nhập</a></p>
     </div>
 </div>
 {% endblock %}
+
+<style>.register-zalo-card{display:flex;flex-direction:column;align-items:center;gap:8px;margin:16px 0;padding:14px;background:#0B1C29;border:1px solid rgba(210,174,75,.38);border-radius:12px;color:#fff;text-decoration:none}.register-zalo-card:hover{border-color:#d2ae4b;background:#10283a}.register-zalo-card img{width:132px;height:132px;object-fit:contain;border-radius:10px;background:#fff;padding:6px}.register-zalo-card span{font-size:12px;color:#b9c6d2}</style>

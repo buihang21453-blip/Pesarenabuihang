@@ -1,4 +1,4 @@
-PES Arena V1.5.79
+PES Arena V1.5.80
 
 MỤC TIÊU
 - Tách monolith modules/tournament_competition.py thành các module lớn theo chức năng.
@@ -21,4 +21,4 @@ TƯƠNG THÍCH
 - Không thay đổi template/giao diện.
 
 VERSION
-- APP_VERSION: V1.5.77 -> V1.5.79
+- APP_VERSION: V1.5.77 -> V1.5.80

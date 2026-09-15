@@ -521,6 +521,15 @@ C1 Trận 2:
 Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 
 
+## V1.5.80
+- Siết duyệt tài khoản: trùng IP đăng ký hoặc IP gần nhất của player khác -> `pending`, không tự duyệt.
+- Player approved truy cập từ IP đang trùng sẽ chuyển `pending` và Admin nhận cảnh báo.
+- Thêm QR nhóm Zalo tại trang đăng ký; bấm QR mở nhóm.
+- Tài khoản bị chặn thấy popup nổi bật + QR và tin nhắn Admin mới nhất ngay tại login.
+- Admin gửi thông báo riêng từng tài khoản với 4 mẫu: Nhắc nhở / Yêu cầu xác minh / Cảnh cáo / Thông báo chung.
+- Tận dụng bảng `user_notifications`, không thêm SQL/schema.
+- Cập nhật cảnh báo IP trên Admin theo chính sách mới.
+
 ## V1.5.79
 - Hotfix lỗi namespace sau khi tách `tournament_competition.py` ở V1.5.78.
 - Đồng bộ namespace hoàn chỉnh ngược lại tất cả `tournament_competition_parts` để giữ hành vi forward-reference của monolith cũ.

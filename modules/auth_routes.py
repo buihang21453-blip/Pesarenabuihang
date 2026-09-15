@@ -79,19 +79,44 @@ def register_routes(context):
                 return redirect(url_for("login"))
 
             status = user.get("account_status", "approved")
+            if status == "approved" and user.get("role") == "player" and not is_admin_managed_test_account(user):
+                current_ip = get_client_ip()
+                conflicts = registration_or_latest_ip_conflicts(current_ip, exclude_user_id=user.get("id"))
+                if conflicts:
+                    names = ", ".join(str(item.get("username") or "-") for item in conflicts[:5])
+                    reason = f"Trùng IP truy cập với tài khoản khác: {names}"[:200]
+                    execute_query(
+                        db.table("users").update({"account_status": "pending", "rejection_reason": reason, "is_online": False}).eq("id", user["id"]),
+                        "login_duplicate_ip_hold", attempts=2,
+                    )
+                    status = "pending"; user["account_status"] = "pending"; user["rejection_reason"] = reason
+                    try:
+                        notify_admins("🚨 Tài khoản trùng IP cần kiểm tra", f"{user.get('username')} vừa truy cập từ IP trùng với: {names}.", "/admin#users")
+                    except Exception as exc:
+                        print(f"duplicate ip admin notice warning: {exc}")
+
             if status != "approved":
                 messages = {
-                    "pending": (
-                        "Tài khoản chưa thể duyệt tự động vì IP đăng ký bị trùng. Admin có thể kiểm duyệt tài khoản này."
-                        if "Trùng IP" in str(user.get("rejection_reason") or "")
-                        else "Tài khoản của bạn đang chờ Admin duyệt."
-                    ),
+                    "pending": ("Hệ thống phát hiện bạn đã có tài khoản hoặc IP truy cập đang trùng với một tài khoản khác. Vui lòng liên hệ Admin trong nhóm Zalo để được kiểm tra."
+                                if "Trùng IP" in str(user.get("rejection_reason") or "") else "Tài khoản của bạn đang chờ Admin duyệt."),
                     "rejected": "Tài khoản của bạn đã bị từ chối.",
                     "banned": "Tài khoản của bạn đã bị khóa. Hãy liên hệ Admin.",
                     "deleted": "Tài khoản này đã được Admin xóa khỏi hệ thống.",
                 }
-                flash(messages.get(status, "Tài khoản chưa được phép đăng nhập."), "danger")
-                return redirect(url_for("login"))
+                admin_notice = None
+                try:
+                    nr = execute_query(
+                        db.table("user_notifications").select("id,notification_type,title,message,created_at")
+                        .eq("user_id", user["id"]).order("created_at", desc=True).limit(1),
+                        "blocked_user_latest_admin_notice", attempts=2,
+                    )
+                    admin_notice = (nr.data or [None])[0]
+                except Exception as exc:
+                    print(f"blocked user notice warning: {exc}")
+                return render_template("login.html", auth_only=True, blocked_account={
+                    "status": status, "message": messages.get(status, "Tài khoản chưa được phép đăng nhập."),
+                    "reason": user.get("rejection_reason"), "admin_notice": admin_notice,
+                })
 
             ok, msg = link_device_to_user(user)
             if not ok:
@@ -289,14 +314,9 @@ def register_routes(context):
             ip = get_client_ip()
             ua = request.headers.get("User-Agent", "")
 
-            ip_conflicts = registration_ip_conflicts(ip)
-            if ip_conflicts:
-                # Không tiết lộ cơ chế kiểm tra IP ra giao diện công khai.
-                flash("⚠️ PES Arena phát hiện bạn đã có tài khoản trên web rồi. Vui lòng không lập thêm tài khoản khác. Nếu quên mật khẩu hoặc tài khoản, vui lòng liên hệ Admin.", "warning")
-                return redirect(url_for("register"))
-
-            auto_approved = True
-            account_status = "approved"
+            ip_conflicts = registration_or_latest_ip_conflicts(ip)
+            auto_approved = not bool(ip_conflicts)
+            account_status = "approved" if auto_approved else "pending"
 
             payload = {
                 "username": username,
@@ -309,7 +329,7 @@ def register_routes(context):
                 "rank_points": DEFAULT_POINTS,
                 "register_ip": ip,
                 "register_user_agent": ua,
-                "rejection_reason": None,
+                "rejection_reason": ("Trùng IP đăng ký/IP gần nhất với tài khoản khác." if ip_conflicts else None),
             }
             if auto_approved:
                 payload["approved_at"] = now_iso()
@@ -320,6 +340,15 @@ def register_routes(context):
             )
 
             user = created.data[0]
+
+            if ip_conflicts:
+                names = ", ".join(str(item.get("username") or "-") for item in ip_conflicts[:5])
+                try:
+                    notify_admins("🚨 Đăng ký trùng IP cần kiểm tra", f"Tài khoản mới {username} đang pending vì IP đăng ký/IP gần nhất trùng với: {names}.", "/admin#users")
+                except Exception as exc:
+                    print(f"register duplicate ip admin notice warning: {exc}")
+                flash("⚠️ Hệ thống phát hiện bạn đã có tài khoản hoặc IP đang trùng với một tài khoản khác. Tài khoản chưa được duyệt. Vui lòng liên hệ Admin trong nhóm Zalo bên dưới.", "warning")
+                return redirect(url_for("login"))
 
             if auto_approved:
                 # Chỉ ghi nhận thiết bị; không dùng thiết bị làm điều kiện duyệt.

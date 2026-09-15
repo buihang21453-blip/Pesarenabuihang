@@ -123,3 +123,11 @@ Không tuyên bố đã sửa/tạo ZIP nếu file chưa thực sự tồn tại
 - Helper/hằng số được tham chiếu chéo phải có mặt trong shared namespace cuối cùng.
 - Sau khi đăng ký toàn bộ partition phải đồng bộ shared namespace về từng partition để bảo toàn forward-reference của monolith cũ.
 - Bắt buộc kiểm tra các route Admin, Test Support, Room, League, Scheduling và Rewards sau thay đổi cấu trúc.
+
+
+## Quy tắc duyệt IP từ V1.5.80
+- Player mới trùng IP đăng ký hoặc IP gần nhất với player khác: không tự duyệt, chuyển `pending`.
+- Player approved truy cập từ IP đang trùng: chuyển `pending`; Admin được cảnh báo.
+- 2 tài khoản test do Admin quản lý và tài khoản Admin được loại khỏi cơ chế chặn tự động.
+- Khi chặn vì IP phải cho người chơi thấy hướng liên hệ Admin + QR Zalo.
+- Admin có thể gửi notification riêng tới từng tài khoản; ưu tiên mẫu có sẵn trước khi nhập nội dung tùy chỉnh.
