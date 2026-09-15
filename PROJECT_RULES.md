@@ -125,9 +125,19 @@ Không tuyên bố đã sửa/tạo ZIP nếu file chưa thực sự tồn tại
 - Bắt buộc kiểm tra các route Admin, Test Support, Room, League, Scheduling và Rewards sau thay đổi cấu trúc.
 
 
-## Quy tắc duyệt IP từ V1.5.80
+## Quy tắc duyệt IP từ V1.5.81
 - Player mới trùng IP đăng ký hoặc IP gần nhất với player khác: không tự duyệt, chuyển `pending`.
 - Player approved truy cập từ IP đang trùng: chuyển `pending`; Admin được cảnh báo.
 - 2 tài khoản test do Admin quản lý và tài khoản Admin được loại khỏi cơ chế chặn tự động.
 - Khi chặn vì IP phải cho người chơi thấy hướng liên hệ Admin + QR Zalo.
 - Admin có thể gửi notification riêng tới từng tài khoản; ưu tiên mẫu có sẵn trước khi nhập nội dung tùy chỉnh.
+
+
+## Quy tắc thay HLV giữa giải
+- Không xóa hoặc reset kết quả đã hoàn thành khi thay HLV.
+- HLV mới kế thừa suất thi đấu: CLB/Pot/seed, lịch/đối thủ, tỷ số/BXH/tiến độ.
+- Phải lưu snapshot lịch sử trước khi chuyển owner để Admin truy được ai là người thực sự đá kết quả cũ.
+- Không kế thừa lịch rảnh; HLV mới phải đăng ký lịch mới.
+- Không phát lại reward đã được cấp cho suất.
+- Không cho thay khi HLV cũ đang ở phòng C1 active hoặc HLV mới đã có lịch sử trận trong cùng giải.
+- Mọi thay HLV phải ghi `admin_action` và cập nhật `replacement_history`.

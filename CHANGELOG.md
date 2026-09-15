@@ -521,6 +521,18 @@ C1 Trận 2:
 Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 
 
+## V1.5.81
+- Thêm chức năng Admin `🔄 Thay HLV` khi giải đang diễn ra.
+- HLV mới tiếp quản nguyên suất: Pot/seed/CLB, đối thủ, lịch trận, tỷ số completed, BXH và tiến độ.
+- Toàn bộ `tournament_matches` của suất được đổi owner sang HLV mới để các phép tính hiện tại tiếp tục dùng đúng kết quả cũ.
+- Lưu snapshot trước khi thay vào `tournament_settings.replacement_history` để truy vết HLV cũ và tỷ số gốc.
+- HLV cũ/member + registration chuyển `withdrawn`; HLV mới chuyển `active/approved`.
+- Không kế thừa lịch rảnh; HLV mới bắt buộc đăng ký lịch của chính mình.
+- Reward marker đã cấp được chuyển theo suất để không phát thưởng hoàn thành sớm lần hai.
+- Chặn thay HLV nếu HLV cũ đang ở phòng C1 active hoặc HLV mới đã có lịch sử trận trong cùng giải.
+- Gửi notification cho HLV mới sau khi tiếp quản.
+- Không cần SQL/migration mới.
+
 ## V1.5.80
 - Siết duyệt tài khoản: trùng IP đăng ký hoặc IP gần nhất của player khác -> `pending`, không tự duyệt.
 - Player approved truy cập từ IP đang trùng sẽ chuyển `pending` và Admin nhận cảnh báo.

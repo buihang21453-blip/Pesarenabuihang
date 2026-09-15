@@ -81,6 +81,265 @@ def register_admin(context):
         flash("Đã xóa HLV khỏi giải. Tài khoản web và lịch sử lệ phí vẫn được giữ lại.","success")
         return redirect_admin("tournaments")
 
+    @app.post('/admin/tournaments/<tournament_id>/members/<old_user_id>/replace')
+    @login_required
+    @admin_required
+    def admin_tournament_member_replace(tournament_id, old_user_id):
+        """Cho HLV mới tiếp quản nguyên suất thi đấu của HLV rời giải.
+
+        Kết quả/lịch/CLB/Pot được chuyển sang user mới để các phép tính hiện tại
+        tiếp tục hoạt động; snapshot trước khi chuyển được lưu trong
+        tournament_settings:replacement_history để Admin vẫn truy được lịch sử.
+        Lịch rảnh không được kế thừa.
+        """
+        new_user_id=str(request.form.get("new_user_id") or "").strip()
+        if not new_user_id or new_user_id == str(old_user_id):
+            flash("Hãy chọn một HLV thay thế khác HLV đang rời giải.","error")
+            return redirect_admin("tournaments")
+
+        old_member=_member(tournament_id, old_user_id)
+        new_user=get_user(new_user_id)
+        if not old_member or str(old_member.get("status") or "")!="active":
+            flash("HLV rời giải không còn là thành viên active của giải.","error")
+            return redirect_admin("tournaments")
+        if not new_user or str(new_user.get("role") or "player")!="player":
+            flash("Không tìm thấy tài khoản HLV thay thế hợp lệ.","error")
+            return redirect_admin("tournaments")
+        existing_new=_member(tournament_id,new_user_id)
+        if existing_new and str(existing_new.get("status") or "")=="active":
+            flash("HLV thay thế đã có một suất active trong giải này.","error")
+            return redirect_admin("tournaments")
+        new_existing_matches=[
+            m for m in _matches(tournament_id)
+            if str(m.get("home_user_id") or "")==new_user_id or str(m.get("away_user_id") or "")==new_user_id
+        ]
+        if new_existing_matches:
+            flash("HLV thay thế đã có lịch sử trận trong giải này nên không thể nhập thêm một suất khác.","error")
+            return redirect_admin("tournaments")
+
+        # Không thay người khi HLV cũ vẫn nằm trong một phòng C1 đang hoạt động.
+        try:
+            active_room=next((
+                r for r in _tournament_rooms(tournament_id)
+                if str(r.get("host_user_id") or "")==str(old_user_id)
+                or str(r.get("guest_user_id") or "")==str(old_user_id)
+            ),None)
+        except Exception:
+            active_room=None
+        if active_room:
+            flash("HLV cũ đang ở trong phòng đấu C1. Hãy đóng/hoàn tất phòng trước khi thay HLV.","error")
+            return redirect_admin("tournaments")
+
+        admin_user=current_user() or {}
+        now_value=now_iso()
+        old_user=get_user(old_user_id) or {}
+        old_name=old_user.get("display_name") or old_user.get("username") or str(old_user_id)
+        new_name=new_user.get("display_name") or new_user.get("username") or str(new_user_id)
+
+        # Snapshot toàn bộ trận trước khi đổi owner để giữ bằng chứng ai thực sự đá.
+        all_matches=_matches(tournament_id)
+        affected=[]
+        for m in all_matches:
+            if str(m.get("home_user_id") or "")==str(old_user_id) or str(m.get("away_user_id") or "")==str(old_user_id):
+                affected.append({
+                    "match_id":m.get("id"),
+                    "stage_code":m.get("stage_code"),
+                    "status":m.get("status"),
+                    "home_user_id":m.get("home_user_id"),
+                    "away_user_id":m.get("away_user_id"),
+                    "home_score":m.get("home_score"),
+                    "away_score":m.get("away_score"),
+                    "home_pen":m.get("home_pen"),
+                    "away_pen":m.get("away_pen"),
+                    "winner_user_id":m.get("winner_user_id"),
+                    "scheduled_at":m.get("scheduled_at"),
+                })
+
+        # Đổi owner của toàn bộ trận, kể cả completed: BXH và tiến độ của suất
+        # được kế thừa đúng, còn snapshot phía trên giữ lịch sử người đá cũ.
+        execute_query(
+            db.table("tournament_matches").update({"home_user_id":new_user_id,"updated_at":now_value})
+            .eq("tournament_id",tournament_id).eq("home_user_id",old_user_id),
+            "ops_member_replace_home_matches",attempts=2,
+        )
+        execute_query(
+            db.table("tournament_matches").update({"away_user_id":new_user_id,"updated_at":now_value})
+            .eq("tournament_id",tournament_id).eq("away_user_id",old_user_id),
+            "ops_member_replace_away_matches",attempts=2,
+        )
+        execute_query(
+            db.table("tournament_matches").update({"winner_user_id":new_user_id,"updated_at":now_value})
+            .eq("tournament_id",tournament_id).eq("winner_user_id",old_user_id),
+            "ops_member_replace_winner",attempts=2,
+        )
+
+        # Chuyển suất thành viên, giữ nguyên Pot/seed/CLB.
+        execute_query(
+            db.table("tournament_members").update({"status":"withdrawn"})
+            .eq("tournament_id",tournament_id).eq("user_id",old_user_id),
+            "ops_member_replace_old_withdraw",attempts=2,
+        )
+        member_payload={
+            "tournament_id":tournament_id,
+            "user_id":new_user_id,
+            "status":"active",
+            "pot_no":old_member.get("pot_no"),
+            "seed_no":old_member.get("seed_no"),
+            "fixed_club_id":old_member.get("fixed_club_id"),
+            "fixed_club_name":old_member.get("fixed_club_name"),
+            "approved_at":now_value,
+            "approved_by":admin_user.get("id"),
+        }
+        # zalo_name là cột mở rộng ở source hiện tại; chỉ truyền khi có dữ liệu.
+        if new_user.get("display_name"):
+            member_payload["zalo_name"]=new_user.get("display_name")
+        execute_query(
+            db.table("tournament_members").upsert(member_payload,on_conflict="tournament_id,user_id"),
+            "ops_member_replace_new_upsert",attempts=2,
+        )
+
+        # Hồ sơ đăng ký cũ rút giải; HLV mới được approved nhưng KHÔNG kế thừa
+        # tiền/Host/Zalo/lịch rảnh của người cũ.
+        execute_query(
+            db.table("tournament_registrations").update({"status":"withdrawn","reviewed_at":now_value,"reviewed_by":admin_user.get("id")})
+            .eq("tournament_id",tournament_id).eq("user_id",old_user_id),
+            "ops_member_replace_old_registration",attempts=2,
+        )
+        new_regs,_=_rows(
+            db.table("tournament_registrations").select("*").eq("tournament_id",tournament_id).eq("user_id",new_user_id),
+            "ops_member_replace_new_registration_lookup",
+        )
+        if new_regs:
+            execute_query(
+                db.table("tournament_registrations").update({"status":"approved","reviewed_at":now_value,"reviewed_by":admin_user.get("id")})
+                .eq("id",new_regs[0].get("id")),
+                "ops_member_replace_new_registration_update",attempts=2,
+            )
+        else:
+            execute_query(
+                db.table("tournament_registrations").insert({
+                    "tournament_id":tournament_id,"user_id":new_user_id,"status":"approved",
+                    "registered_at":now_value,"reviewed_at":now_value,"reviewed_by":admin_user.get("id"),
+                    "has_host":False,
+                }),
+                "ops_member_replace_new_registration_insert",attempts=2,
+            )
+
+        # CLB đang reserve theo user cũ phải chuyển owner.
+        try:
+            execute_query(
+                db.table("tournament_clubs").update({"selected_by":new_user_id,"selected_at":now_value})
+                .eq("tournament_id",tournament_id).eq("selected_by",old_user_id),
+                "ops_member_replace_club_owner",attempts=2,
+            )
+        except Exception as exc:
+            app.logger.warning("Tournament replacement club owner warning: %s",exc)
+
+        # Reward đã cấp thuộc về suất thi đấu: chuyển marker để người mới không
+        # được nhận lại lần hai. Không phát thêm Zcoin/Lucky Box.
+        try:
+            execute_query(
+                db.table("tournament_reward_grants").update({"user_id":new_user_id})
+                .eq("tournament_id",tournament_id).eq("user_id",old_user_id),
+                "ops_member_replace_reward_markers",attempts=2,
+            )
+        except Exception as exc:
+            app.logger.warning("Tournament replacement reward marker warning: %s",exc)
+
+        # Người mới bắt buộc khai báo lịch rảnh của chính mình.
+        execute_query(
+            db.table("tournament_availability_slots").delete()
+            .eq("tournament_id",tournament_id).eq("user_id",new_user_id),
+            "ops_member_replace_clear_new_availability",attempts=2,
+        )
+
+        # Các setting/draft có user_id cũ được chuyển owner theo slot.
+        settings,_=_rows(
+            db.table("tournament_settings").select("*").eq("tournament_id",tournament_id),
+            "ops_member_replace_settings_read",
+        )
+        def _replace_uid(value):
+            if isinstance(value,dict):
+                return {k:_replace_uid(v) for k,v in value.items()}
+            if isinstance(value,list):
+                return [_replace_uid(v) for v in value]
+            if str(value)==str(old_user_id):
+                return new_user_id
+            return value
+        for setting in settings:
+            key=str(setting.get("setting_key") or "")
+            if key=="replacement_history":
+                continue
+            original=setting.get("setting_value")
+            replaced=_replace_uid(original)
+            if replaced != original:
+                execute_query(
+                    db.table("tournament_settings").update({"setting_value":replaced,"updated_at":now_value}).eq("id",setting.get("id")),
+                    "ops_member_replace_setting_owner",attempts=2,
+                )
+
+        # Lưu lịch sử thay HLV ở setting JSON, không cần migration DB.
+        history_setting,_=_one(
+            db.table("tournament_settings").select("*").eq("tournament_id",tournament_id).eq("setting_key","replacement_history"),
+            "ops_member_replace_history_read",
+        )
+        history_value=(history_setting or {}).get("setting_value") or {}
+        if not isinstance(history_value,dict):
+            history_value={}
+        entries=list(history_value.get("entries") or [])
+        entries.append({
+            "replaced_at":now_value,
+            "replaced_by":admin_user.get("id"),
+            "old_user_id":str(old_user_id),
+            "old_name":old_name,
+            "new_user_id":new_user_id,
+            "new_name":new_name,
+            "inherited":{
+                "pot_no":old_member.get("pot_no"),
+                "seed_no":old_member.get("seed_no"),
+                "club_id":old_member.get("fixed_club_id"),
+                "club_name":old_member.get("fixed_club_name"),
+                "matches":affected,
+            },
+        })
+        execute_query(
+            db.table("tournament_settings").upsert({
+                "tournament_id":tournament_id,
+                "setting_key":"replacement_history",
+                "setting_value":{"entries":entries,"updated_at":now_value},
+                "updated_at":now_value,
+            },on_conflict="tournament_id,setting_key"),
+            "ops_member_replace_history_save",attempts=2,
+        )
+
+        try:
+            create_user_notification(
+                new_user_id,
+                "🔄 Bạn được xếp vào thay HLV giữa giải",
+                f"Bạn đã tiếp quản suất của {old_name}. CLB, Pot, kết quả đã đá và lịch còn lại được giữ nguyên. Hãy đăng ký lại giờ rảnh trước khi thi đấu.",
+                "/tournaments",
+                "tournament_replacement",
+            )
+        except Exception as exc:
+            app.logger.warning("Tournament replacement notification warning: %s",exc)
+
+        log_admin_action(
+            "Thay HLV giữa giải","tournament_member",
+            details={
+                "tournament_id":tournament_id,
+                "old_user_id":str(old_user_id),"old_name":old_name,
+                "new_user_id":new_user_id,"new_name":new_name,
+                "inherited_match_count":len(affected),
+                "club":old_member.get("fixed_club_name"),
+                "pot_no":old_member.get("pot_no"),
+            },
+        )
+        flash(
+            f"Đã thay {old_name} → {new_name}. {new_name} kế thừa CLB, Pot, {len(affected)} trận/kết quả và tiến độ; lịch rảnh phải đăng ký lại.",
+            "success",
+        )
+        return redirect_admin("tournaments")
+
     @app.post('/admin/tournaments/<tournament_id>/stages/<stage_code>/status')
     @login_required
     @admin_required
