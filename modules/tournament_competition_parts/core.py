@@ -1093,6 +1093,7 @@ def register_core(context):
             rerolls=[h for h in user_history if h.get("action") in {"SKIP","REROLL"}]
             rows.append({
                 "position":pos,"user_id":uid,"display_name":member.get("display_name") or "HLV",
+                "seed_no":int(member.get("seed_no") or 0),
                 "tier_hlv":int(member.get("pot_no") or 0),
                 "allocation_type":"EARLY_REWARD" if pos<=3 else "SYSTEM",
                 "tickets_total":int(entry.get("tickets_total") or (2 if pos==1 else (1 if pos<=3 else 0))),
@@ -1101,7 +1102,7 @@ def register_core(context):
                 "status":entry.get("status") or ("selected" if member.get("fixed_club_name") else "waiting"),
                 "reroll_count":len(rerolls),"history":user_history,
             })
-        return rows
+        return sorted(rows, key=lambda r:(r.get("seed_no") or 9999, r.get("display_name") or ""))
 
     def _event_ops_payload(tournament_id,user_id=None):
         _sync_competition_deadlines(tournament_id)
@@ -1109,7 +1110,11 @@ def register_core(context):
         mine=next((x for x in cr if str(x.get("user_id"))==str(user_id)),None) if user_id else None
         s1_reveals=_setting(tournament_id,"stage1_player_reveals",{}) or {}
         league_draw=_league_draw_payload(tournament_id)
-        return {"timing":_timing_payload(tournament_id),"completion_ranking":cr,"my_completion":mine,
+        base_config=_setting(tournament_id,"club_base_draft_v1",{}) or {}
+        ordered=sorted(_all_members(tournament_id),key=lambda m:int(m.get("seed_no") or 9999),reverse=base_config.get("direction")=="descending")
+        base_turn=next((m for m in ordered if not m.get("fixed_club_name")),None) if base_config.get("mode")=="sequential" else None
+        return {"base_draft_config":base_config,"base_draft_next":base_turn,
+                "timing":_timing_payload(tournament_id),"completion_ranking":cr,"my_completion":mine,
                 "stage1_confirmation_audit":_stage1_confirmation_audit(tournament_id),
                 "club_draft":_club_draft_state(tournament_id),"club_draft_admin_rows":_club_draft_admin_rows(tournament_id),
                 "stage1_early_reward_state":_stage1_early_reward_state(tournament_id),

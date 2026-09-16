@@ -161,3 +161,11 @@ V1.5.87 is a partial artifact only; do not deploy before stage1 automation, test
 V1.5.87: không đưa lên Production khi chưa kiểm thử luồng giao dịch thưởng/chia Pot trên Supabase.
 
 - V1.5.87: Không đánh dấu bản phát hành production nếu chưa kiểm chứng giao dịch thưởng và dữ liệu giải thật; kiểm tra đầy đủ Pot trước khi khóa.
+
+
+### V1.5.96 – Bảo vệ Random CLB theo lượt
+- Hạng quay quân căn cứ `seed_no` (BXH GĐ1), không sử dụng thứ tự hoàn tất sớm.
+- Một giải chỉ dùng một cơ chế phân CLB gốc tại một thời điểm; Random toàn bộ không được ghi đè một phiên theo lượt đang dở.
+- Chỉ random khi đủ 16 HLV chính thức, Tier 5–6–5, GĐ1 completed, GĐ2 draft/pending, chưa có lịch/trận. Một lượt sử dụng một RPC transaction; frontend không là lớp bảo vệ duy nhất.
+- Tier 1→Pot 3, Tier 2→Pot 2, Tier 3→Pot 1; CLB không trùng và vé thưởng sớm 2/1/1 không trừ khi random gốc. Chỉ mở vé sau khi đủ 16 CLB.
+- Muốn đổi thứ tự/mode giữa chừng, thu hồi theo các chốt bảo vệ trước; không xóa lịch sử hoặc sửa thưởng/GĐ1.

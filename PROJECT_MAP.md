@@ -331,3 +331,10 @@ V1.5.90: Admin `POST /admin/tournaments/<id>/clubs/rerandom-by-tier` tại `modu
 - `templates/admin.html`: hai POST `data-c1-club-admin-action` không dùng confirm; fetch và trạng thái lỗi nội tuyến, chỉ reload sau JSON `ok`.
 - `modules/tournament_competition_parts/league.py`: hai route POST trả JSON cho XHR, fallback redirect `#c1-admin-gd2`, vẫn gọi RPC V1.5.90/91 để ghi giao dịch nguyên tử.
 - `app.py`: đồng bộ version; bảng `tournament_members`, `tournament_clubs`, `tournament_settings` không đổi schema.
+
+### V1.5.96 – Điều hành Random CLB GĐ2
+- `templates/admin.html`: khối thống nhất Random toàn bộ / cấu hình thứ tự 1→16 hoặc 16→1 / chọn Admin hoặc HLV bấm / thu hồi / bảng theo hạng BXH GĐ1.
+- `modules/tournament_competition_parts/league.py`: POST `admin_tournament_configure_base_draft`, `admin_tournament_random_one_base_club`, `tournament_random_my_base_club`; kiểm soát quyền, mode, lượt và thông báo kết quả; bảo vệ khi batch trùng phiên tuần tự.
+- `modules/tournament_competition_parts/core.py`: trả `base_draft_config`, `base_draft_next` và hạng `seed_no` cho Admin/trang giải.
+- `modules/tournament_routes.py`, `templates/tournament/cards/c1_actions.html`, `templates/tournament_detail.html`: hiện nút tự Random duy nhất cho HLV đúng lượt khi Admin chọn mode player.
+- `SQL_V1.5.96_SEQUENTIAL_CLUB_DRAFT.sql`: RPC service-role `c1_allocate_one_base_club(uuid,uuid,text)` lock trên giải; phân CLB gốc một HLV trong một transaction; kết thúc 16 lượt mới bật vé thưởng. Setting mode `club_base_draft_v1`; trạng thái đã có `club_draft_v2`. Không có bảng mới.

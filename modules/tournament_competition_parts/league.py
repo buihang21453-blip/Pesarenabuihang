@@ -555,6 +555,85 @@ def register_league(context):
         flash(message, category)
         return redirect(url_for("admin") + "#c1-admin-gd2")
 
+    def _base_draft_config(tournament_id):
+        return _setting(tournament_id, "club_base_draft_v1", {}) or {}
+
+    def _base_draft_turn(tournament_id, direction):
+        members = sorted(_all_members(tournament_id), key=lambda m: int(m.get("seed_no") or 9999),
+                         reverse=(direction == "descending"))
+        return next((m for m in members if not m.get("fixed_club_name")), None)
+
+    @app.post('/admin/tournaments/<tournament_id>/clubs/configure-base-draft')
+    @login_required
+    @admin_required
+    def admin_tournament_configure_base_draft(tournament_id):
+        direction = request.form.get("direction")
+        actor = request.form.get("actor")
+        if direction not in {"ascending", "descending"} or actor not in {"admin", "player"}:
+            return _club_admin_reply("Chọn thứ tự 1→16 hoặc 16→1 và người Random hợp lệ.")
+        stages, _ = _rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id), "ops_base_draft_stages")
+        stages = {str(r.get("stage_code")): r.get("status") for r in stages}
+        if stages.get("stage1") != "completed" or stages.get("league") not in {"draft", "pending"} or _matches(tournament_id,"league") or _matches(tournament_id,"knockout"):
+            return _club_admin_reply("Chỉ cấu hình sau GĐ1, trước khi sinh lịch/trận GĐ2.")
+        members = _all_members(tournament_id)
+        ranks = sorted(int(m.get("seed_no") or 0) for m in members)
+        if len(members) != 16 or ranks != list(range(1,17)) or [sum(int(m.get("pot_no") or 0)==t for m in members) for t in (1,2,3)] != [5,6,5]:
+            return _club_admin_reply("Cần đủ 16 HLV có hạng 1–16 và Tier 5–6–5.")
+        if any(m.get("fixed_club_name") for m in members):
+            return _club_admin_reply("Đã có CLB được Random. Thu hồi CLB trước khi đổi chế độ/thứ tự để tránh ghi đè.")
+        state = _club_draft_state(tournament_id,False) or {}
+        if len(state.get("all_order") or []) != 16 or any(int(e.get("tickets_remaining") or 0)<int(e.get("tickets_total") or 0)
+            for e in (state.get("entries") or {}).values() if e.get("allocation_type")=="EARLY_REWARD"):
+            return _club_admin_reply("Hồ sơ Random chưa đủ hoặc đã dùng vé thưởng; không thể cấu hình lại.")
+        if (_setting(tournament_id,"club_selection",{}) or {}).get("open"):
+            return _club_admin_reply("Đóng chức năng chọn CLB thủ công trước.")
+        payload={"mode":"sequential","direction":direction,"actor":actor,"configured_at":now_iso()}
+        try:
+            execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_base_draft_v1","setting_value":payload,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_base_draft_configure",attempts=2)
+        except Exception:
+            app.logger.exception("C1 base draft configuration failed: %s",tournament_id)
+            return _club_admin_reply("Không lưu được cấu hình Random; kiểm tra log server.")
+        return _club_admin_reply("Đã mở Random lần lượt theo hạng; chỉ người được chọn mới có quyền bấm.","success")
+
+    def _allocate_base_club_reply(tournament_id, uid, actor):
+        config=_base_draft_config(tournament_id)
+        if config.get("mode")!="sequential" or config.get("actor")!=actor:
+            message="Chế độ Random hiện tại không cho phép thao tác này."
+            return _club_admin_reply(message) if actor=="admin" else (flash(message,"warning") or redirect(url_for("tournaments")))
+        turn=_base_draft_turn(tournament_id,config.get("direction"))
+        if not turn or str(turn.get("user_id"))!=str(uid):
+            message="Chưa đến lượt HLV này hoặc đã Random đủ 16 CLB."
+            return _club_admin_reply(message) if actor=="admin" else (flash(message,"warning") or redirect(url_for("tournaments")))
+        try:
+            result=execute_query(db.rpc("c1_allocate_one_base_club",{"p_tournament_id":tournament_id,"p_user_id":uid,"p_actor":actor}),"ops_base_draft_single_rpc",attempts=1)
+            club=getattr(result,"data",None)
+            if not isinstance(club,str) or not club:
+                raise RuntimeError("Single-club RPC returned no confirmed club")
+        except Exception:
+            app.logger.exception("C1 base single allocation failed: tournament=%s actor=%s",tournament_id,actor)
+            message="Random thất bại ở database. Kiểm tra SQL V1.5.96 và log server; chưa ghi nhận thành công."
+            return _club_admin_reply(message) if actor=="admin" else (flash(message,"error") or redirect(url_for("tournaments")))
+        if actor=="admin":
+            return _club_admin_reply("Đã Random thành công CLB: " + club,"success")
+        flash("Bạn đã Random CLB gốc: " + club + ". Không trừ vé thưởng sớm.","success")
+        return redirect(url_for("tournaments"))
+
+    @app.post('/admin/tournaments/<tournament_id>/clubs/random-one')
+    @login_required
+    @admin_required
+    def admin_tournament_random_one_base_club(tournament_id):
+        uid=str(request.form.get("user_id") or "")
+        return _allocate_base_club_reply(tournament_id,uid,"admin")
+
+    @app.post('/tournaments/<tournament_id>/clubs/random-mine')
+    @login_required
+    def tournament_random_my_base_club(tournament_id):
+        uid=str((current_user() or {}).get("id") or "")
+        if not _member(tournament_id,uid):
+            flash("Bạn không thuộc giải đấu.","error")
+            return redirect(url_for("tournaments"))
+        return _allocate_base_club_reply(tournament_id,uid,"player")
+
     @app.post('/admin/tournaments/<tournament_id>/clubs/rerandom-by-tier')
     @login_required
     @admin_required
@@ -576,6 +655,9 @@ def register_league(context):
         if any(int(e.get("tickets_remaining") or 0)<int(e.get("tickets_total") or 0)
                for e in (state.get("entries") or {}).values() if e.get("allocation_type")=="EARLY_REWARD"):
             return _club_admin_reply("Đã có HLV dùng vé thưởng sớm; không thể ghi đè CLB đã đổi.")
+        config=_base_draft_config(tournament_id)
+        if config.get("mode")=="sequential" and any(m.get("fixed_club_name") for m in members):
+            return _club_admin_reply("Đang Random lần lượt. Thu hồi CLB trước khi chuyển sang Random toàn bộ.")
         # Sample each exclusive Pot without replacement; preserve the 2/1/1 ticket balances.
         allocations=[]
         for tier,club_pot in ((1,3),(2,2),(3,1)):
@@ -595,6 +677,10 @@ def register_league(context):
             log_admin_action("Random lại 16 CLB theo Tier/Pot","tournament_club",details={"tournament_id":tournament_id,"rule":"Tier1:Pot3;Tier2:Pot2;Tier3:Pot1"})
         except Exception:
             app.logger.exception("Tier/Pot correction succeeded but auxiliary audit failed: %s",tournament_id)
+        try:
+            execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_base_draft_v1","setting_value":{"mode":"bulk","configured_at":now_iso()},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_base_draft_bulk_mode",attempts=2)
+        except Exception:
+            app.logger.exception("Bulk succeeded but mode metadata save failed: %s",tournament_id)
         return _club_admin_reply("Đã Random lại đủ 16 CLB đúng Tier/Pot, giữ nguyên vé thưởng và lịch sử.", "success")
 
     @app.post('/admin/tournaments/<tournament_id>/clubs/revoke-all')

@@ -1,3 +1,12 @@
+## V1.5.96 – Gom điều hành Random CLB và thêm Random theo lượt 1–16 / 16–1
+- Admin GĐ2: gom Random toàn bộ, cấu hình Random lần lượt, Random hộ, Thu hồi vào một khối; bỏ nút/chỉ dẫn trùng.
+- Thứ tự Random theo `tournament_members.seed_no` (hạng BXH GĐ1), không nhầm với thứ tự về đích nhận thưởng sớm. Chọn 1→16 hoặc 16→1; chỉ một HLV đến lượt được Random.
+- Chế độ: Admin Random hộ tại GĐ2, hoặc HLV tự Random ở `/tournaments` và trang giải. Chỉ Admin cấu hình; backend xác minh tài khoản đăng nhập và lượt.
+- SQL RPC `c1_allocate_one_base_club` chạy trong một transaction, khóa giải trước khi chọn CLB, xác minh Tier 5–6–5 và Pot 3/2/1, chặn CLB trùng, lần bấm lặp, lịch/trận GĐ2, trạng thái sai. Ghi lịch sử, không trừ vé, mở vé Top 1–3 chỉ khi 16 CLB gốc hoàn tất.
+- Không cho Random toàn bộ ghi đè phiên Random lần lượt đang dở; muốn chuyển cách phải Thu hồi theo điều kiện bảo vệ V1.5.91. Giữ nguyên tất cả thưởng, lịch sử và dữ liệu GĐ1.
+- Bảng Admin có cột hạng BXH GĐ1 và sắp xếp theo hạng; cột thứ tự nhận thưởng sớm phân biệt rõ.
+- Phải chạy `SQL_V1.5.96_SEQUENTIAL_CLUB_DRAFT.sql` trước khi sử dụng Random từng người; SQL V1.5.90/91 vẫn cần cho Random toàn bộ/Thu hồi. Chưa kiểm thử Production/Supabase thật.
+
 ## V1.5.95 – Xóa nút Random hạng 4–16 đã thay thế ở Admin GĐ2
 - Xóa hẳn form/nút ④ Random hạng 4–16 (đã thay thế) khỏi `templates/admin.html`, tránh giao diện chồng lấn nút Random mới.
 - Giữ nguyên nút Admin Random lại 16 CLB theo Tier/Pot và Thu hồi CLB; không đổi API, DB, vé thưởng hoặc nghiệp vụ Random. Không có SQL migration.

@@ -10,6 +10,15 @@
             {% else %}
             {% endif %}
           </div>
+          {% if tournament.my_member and hub and hub.get('base_draft_config',{}).get('mode')=='sequential' and hub.get('base_draft_config',{}).get('actor')=='player' and hub.get('base_draft_turn')==tournament.my_member.user_id|string %}
+          <div style="margin:10px 0;padding:12px;border:1px solid rgba(241,202,104,.38);border-radius:10px">
+            <strong>🎲 Đến lượt bạn Random CLB gốc GĐ2</strong>
+            <p class="small">Tier {{ tournament.my_member.pot_no }} → Pot {{ 4-tournament.my_member.pot_no|int }} · không dùng vé thưởng sớm.</p>
+            <form method="post" action="{{ url_for('tournament_random_my_base_club',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">🎲 Random CLB của tôi</button></form>
+          </div>
+          {% elif tournament.my_member and hub and hub.get('base_draft_config',{}).get('mode')=='sequential' and hub.get('base_draft_config',{}).get('actor')=='player' and not hub.get('club_draft',{}).get('completed') and not tournament.my_member.fixed_club_name %}
+          <p class="small">⏳ Chưa đến lượt Random CLB gốc của bạn.</p>
+          {% endif %}
           {% if tournament.my_member and hub and hub.early_reward_entry and hub.early_reward_entry.get('allocation_type')=='EARLY_REWARD' %}
           {% set early=hub.early_reward_entry %}
           <div style="margin:10px 0;padding:12px;border:1px solid rgba(241,202,104,.38);border-radius:10px;background:rgba(241,202,104,.06)">
