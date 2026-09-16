@@ -1,3 +1,8 @@
+## V1.5.88 – Sửa lỗi 500 khi Admin kết thúc GĐ1 (chưa kiểm thử Production)
+- Bổ sung SQL migration cho trạng thái `pending` của `tournament_stages` (SQL gốc chỉ cho phép draft/open/locked/completed).
+- Hai nút kết thúc GĐ1 dùng chung route: kiểm tra trạng thái, ghi chuẩn bị GĐ2 trước khi hoàn tất GĐ1 và báo lỗi có log thay vì trang 500.
+- Không tự động mở GĐ2; giữ kết quả và BXH hiện tại. Cần chạy SQL migration trước deploy, kiểm tra Production và hai tài khoản test trước khi phát hành.
+
 ## V1.5.87 – Bổ sung bản vá khôi phục GĐ1 và tab Admin (chưa xác nhận Production)
 - Tự hoàn tất GĐ1 có thể chạy lại khi bước chia/khóa Pot bị gián đoạn; kiểm chứng đủ 16 hạng và đúng seed trước khi khóa.
 - Tab Admin GĐ1 / GĐ2 / KO tương tác, GĐ2 gồm Pot/CLB và League.

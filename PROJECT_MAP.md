@@ -303,3 +303,5 @@ V1.5.87: rooms.py c1_room_open/c1_room_accept fixed club for free rooms during l
 V1.5.87 bổ sung: rewards.py chứa _auto_finish_stage1, _grant_stage1_early_rewards; rooms.py gọi tự kết thúc sau xác nhận kết quả.
 
 - V1.5.87: `rewards.py` xử lý khôi phục tự kết thúc GĐ1/Pot; `templates/admin.html` điều hướng tab GĐ1/GĐ2/KO.
+
+V1.5.88: `rewards.py` route `admin_tournament_stage1_finish` ghi GĐ2 `pending` trước GĐ1 `completed`, cùng migration `SQL_V1.5.88_STAGE_STATUS_PENDING.sql` cập nhật CHECK `tournament_stages.status`. Nếu thiếu migration sẽ log lỗi và flash, không trả trang 500.

@@ -10,17 +10,49 @@ def register_rewards(context):
     @login_required
     @admin_required
     def admin_tournament_stage1_finish(tournament_id):
+        """Prepare GĐ2 without leaving GĐ1 completed when DB rejects pending."""
         force=request.form.get("force")=="1"
-        pending=[m for m in _matches(tournament_id,"stage1") if m.get("status")!="completed"]
-        if pending and not force:
-            flash(f"GĐ1 còn {len(pending)} trận chưa hoàn thành. Chỉ kết thúc sớm khi 100% trận xong, hoặc dùng kết thúc sau gia hạn.","warning"); return redirect_admin("tournaments")
-        if pending and force:
-            for m in pending:
-                execute_query(db.table("tournament_matches").update({"status":"disputed","updated_at":now_iso()}).eq("id",m.get("id")),"ops_s1_pending_btc",attempts=2)
-        execute_query(db.table("tournament_stages").update({"status":"completed","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","stage1"),"ops_s1_finish",attempts=2)
-        # Kết thúc GĐ1 chỉ chuyển GĐ2 sang trạng thái chuẩn bị; không mở thi đấu.
-        execute_query(db.table("tournament_stages").update({"status":"pending","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_league_prepare_after_s1",attempts=2)
-        flash("Đã kết thúc GĐ1. GĐ2 CHƯA bắt đầu: hãy trao thưởng, chia/khóa Pot, chốt CLB và công bố đối thủ.","success"); return redirect_admin("tournaments")
+        try:
+            stages,_=_rows(db.table("tournament_stages").select("stage_code,status")
+                           .eq("tournament_id",tournament_id),"ops_s1_finish_stage_gate")
+            states={str(s.get("stage_code")):s.get("status") for s in stages}
+            if "stage1" not in states or "league" not in states:
+                flash("Thiếu bản ghi giai đoạn GĐ1 hoặc GĐ2. Không thay đổi dữ liệu.","error")
+                return redirect_admin("tournaments")
+            if states["league"] in {"open","locked","completed"}:
+                flash("GĐ2 đã mở hoặc hoàn tất; không được đưa về trạng thái chuẩn bị.","error")
+                return redirect_admin("tournaments")
+            if states["stage1"] not in {"open","locked","completed"}:
+                flash("GĐ1 chưa mở; không thể kết thúc.","error")
+                return redirect_admin("tournaments")
+            pending=[m for m in _matches(tournament_id,"stage1") if m.get("status")!="completed"]
+            if pending and not force:
+                flash(f"GĐ1 còn {len(pending)} trận chưa hoàn thành. Chỉ kết thúc sớm khi 100% trận xong, hoặc dùng kết thúc sau gia hạn.","warning")
+                return redirect_admin("tournaments")
+            # Check the DB 'pending' status before changing match/stage1 state.
+            # SQL_V1.5.88 fixes the original stage status CHECK that rejects it.
+            if states["league"]!="pending":
+                execute_query(db.table("tournament_stages").update({
+                    "status":"pending","updated_at":now_iso(),
+                }).eq("tournament_id",tournament_id).eq("stage_code","league")
+                .eq("status",states["league"]),"ops_league_prepare_after_s1",attempts=2)
+            if pending and force:
+                for m in pending:
+                    if m.get("status") not in {"disputed","cancelled"}:
+                        execute_query(db.table("tournament_matches").update({
+                            "status":"disputed","updated_at":now_iso(),
+                        }).eq("id",m.get("id")),"ops_s1_pending_btc",attempts=2)
+            if states["stage1"]!="completed":
+                execute_query(db.table("tournament_stages").update({
+                    "status":"completed","updated_at":now_iso(),
+                }).eq("tournament_id",tournament_id).eq("stage_code","stage1"),
+                "ops_s1_finish",attempts=2)
+        except Exception:
+            app.logger.exception("C1 admin stage1 finish failed: tournament_id=%s",tournament_id)
+            flash("Không thể kết thúc GĐ1 do lỗi cơ sở dữ liệu. Kiểm tra log Vercel/Supabase và migration SQL_V1.5.88; các bước đã ghi trước lỗi có thể cần kiểm tra lại.","error")
+            return redirect_admin("tournaments")
+        flash("Đã kết thúc GĐ1. GĐ2 CHƯA bắt đầu: hãy trao thưởng, chia/khóa Pot, chốt CLB và công bố đối thủ.","success")
+        return redirect_admin("tournaments")
 
     LEAGUE_TOP3_REROLL_KEY = "league_top3_club_reroll_v1"
 
