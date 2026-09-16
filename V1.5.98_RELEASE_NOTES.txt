@@ -1,0 +1,5 @@
+V1.5.98 – Fix thu hồi và Random lại khi giải có 17 membership (16 active).
+1) Chạy SQL_V1.5.98_FIX_ACTIVE_16_REVOKE_RERANDOM.sql tại Supabase SQL Editor đúng dự án. Chỉ thay RPC, không thu hồi trong bước SQL.
+2) Triển khai source ZIP; tại Admin GĐ2, bấm Thu hồi CLB một lần; kiểm tra 16 CLB đã được trả về pool trước khi Random lại.
+3) Nếu thao tác vẫn thất bại, lấy lỗi hiển thị và log server, không tự chạy trực tiếp RPC nhiều lần.
+Không đổi vé, phần thưởng hay lịch GĐ1. Chưa test trên Production.

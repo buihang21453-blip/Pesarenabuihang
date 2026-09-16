@@ -37,9 +37,9 @@ begin
   if cardinality(v_ids) <> 16 or (select count(distinct u) from unnest(v_ids) u) <> 16 then
     raise exception 'Danh sách 16 HLV không hợp lệ';
   end if;
-  select count(*) into v_count from public.tournament_members where tournament_id=p_tournament_id;
-  if v_count <> 16 or (select count(*) from public.tournament_members where tournament_id=p_tournament_id and user_id=any(v_ids)) <> 16 then
-    raise exception 'Danh sách giải không khớp 16 HLV';
+  select count(*) into v_count from public.tournament_members where tournament_id=p_tournament_id and status='active';
+  if v_count <> 16 or (select count(*) from public.tournament_members where tournament_id=p_tournament_id and status='active' and user_id=any(v_ids)) <> 16 then
+    raise exception 'Danh sách 16 HLV đang tham gia không khớp với danh sách Random';
   end if;
   v_entries := v_state->'entries';
   if jsonb_typeof(v_entries) is distinct from 'object' then raise exception 'Thiếu dữ liệu vé/CLB'; end if;

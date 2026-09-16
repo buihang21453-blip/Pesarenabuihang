@@ -1,3 +1,9 @@
+## V1.5.98 – Sửa lỗi thu hồi và Random lại khi giải có HLV dự phòng/ngừng tham gia
+- Kết quả chẩn đoán Production: 17 thành viên toàn bộ nhưng chỉ 16 active, đã phân CLB cho 16 người; GĐ1 completed, GĐ2 pending, không có lịch, RPC tồn tại và role có quyền EXECUTE.
+- Sửa hai RPC `c1_admin_revoke_tier_clubs` và `c1_admin_rerandom_tier_clubs`: đếm đúng 16 thành viên `status=active` thay vì tất cả bản ghi; vẫn xác minh đủ 16 ID trong danh sách Random và không ghi đè thành viên inactive.
+- SQL `SQL_V1.5.98_FIX_ACTIVE_16_REVOKE_RERANDOM.sql` chỉ thay định nghĩa RPC, KHÔNG thực thi thao tác thu hồi/Random, không sửa CLB hay thưởng lúc chạy migration.
+- Chưa có log RPC thực tế: lỗi lệch 17/16 được xác nhận từ code và dữ liệu chẩn đoán; còn các ràng buộc khác chỉ xác nhận khi bấm thao tác sau migration. Chưa kiểm thử trên Supabase Production.
+
 ## V1.5.97 – Chẩn đoán lỗi thu hồi CLB GĐ2, không thay đổi dữ liệu
 - Route `admin_tournament_revoke_clubs`: phân loại mã lỗi RPC (không tồn tại, thiếu quyền, ràng buộc, điều kiện nghiệp vụ) và hiển thị hướng xử lý ngay tại GĐ2; ghi traceback đầy đủ trong log backend nhưng không lộ raw error hoặc khóa cho client.
 - Thêm `SQL_V1.5.97_DIAGNOSE_REVOKE_READ_ONLY.sql` để kiểm tra RPC, quyền service_role, tình trạng stage, số HLV, draft 16 người và lịch GĐ2/KO. Chỉ SELECT, không sửa/xóa dữ liệu.
