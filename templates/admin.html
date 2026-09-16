@@ -1158,7 +1158,7 @@
         </div>
         <div style="margin-top:10px;padding:12px;border:1px solid rgba(241,202,104,.45);border-radius:10px">
           <strong>🔄 Admin sửa Random CLB sai Tier/Pot · đủ 16 HLV</strong>
-          <p class="small">Random lại TOÀN BỘ 16 CLB; giữ nguyên Tier HLV, vé thưởng sớm còn lại, lịch sử và thưởng ZCoin/Lucky Box. Không tác động kết quả GĐ1. Chỉ thực hiện trước khi sinh lịch và bắt đầu GĐ2. Mỗi lần nhấn sẽ sinh bộ CLB mới.</p>
+          <p class="small">Random CLB GỐC cho toàn bộ 16 HLV trước khi sử dụng vé thưởng sớm; giữ nguyên Tier HLV, vé còn lại, lịch sử và thưởng ZCoin/Lucky Box. Không tác động kết quả GĐ1. Chỉ thực hiện trước khi sinh lịch và bắt đầu GĐ2. Mỗi lần nhấn sẽ sinh bộ CLB mới.</p>
           <form method="post" action="{{ url_for('admin_tournament_rerandom_clubs_by_tier',tournament_id=ot.id) }}" onsubmit="return confirm('XÁC NHẬN RANDOM LẠI TOÀN BỘ 16 CLB? Tier 1 → Pot 3, Tier 2 → Pot 2, Tier 3 → Pot 1. CLB cũ sẽ được thay nhưng VÉ/THƯỞNG/LỊCH SỬ GIỮ NGUYÊN. Chỉ làm trước khi sinh lịch GĐ2.');">
             <input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="confirm_rule" value="TIER_POT_321">
             <button class="btn gold" type="submit">🔄 Admin Random lại 16 CLB theo Tier/Pot</button>
@@ -1170,27 +1170,27 @@
           <p class="small">Thu hồi chỉ xóa quyền sở hữu CLB hiện tại, không hoàn vé đã dùng hoặc xóa lịch sử. Không dùng khi GĐ2 có lịch/trận.</p>
           {% if cd.get('tier_club_pot_rule') %}<p class="small" style="color:#8ee0a1">✓ Đã áp dụng quy tắc mới. Nút này có thể dùng lại nếu Admin muốn quay lại bộ CLB khác trước GĐ2.</p>{% endif %}
         </div>
-        {% if cd.get('order') %}<p class="small">Top 1–3: vé thưởng sớm không hết hạn, HLV có thể Random/chốt/đổi CLB độc lập bất cứ lúc nào.</p>{% endif %}
+        {% if cd.get('order') %}<p class="small">Vé thưởng sớm Top 1–3 chỉ được sử dụng sau khi Admin đã Random CLB gốc cho đủ 16 HLV theo Tier/Pot; sau đó vé không hết hạn.</p>{% endif %}
         <details style="margin-top:8px"><summary><strong>⚽ Pool Random CLB chính thức · 24 CLB</strong></summary><div style="padding-top:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">{% for pot_no, club_names in ops.get('c1_club_pots',{}).items() %}<div style="padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px"><strong>Pot {{ pot_no }}</strong><div class="small" style="margin-top:5px">{{ club_names|join(' · ') }}</div></div>{% endfor %}</div></details>
         {% set draft_rows=ev.get('club_draft_admin_rows',[]) %}
         <details open style="margin-top:10px"><summary><strong>🎯 Theo dõi Random CLB · 16 HLV</strong></summary>
           <div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table>
-            <thead><tr><th>#</th><th>HLV</th><th>Cơ chế</th><th>Vé</th><th>CLB hiện tại</th><th>Pot CLB</th><th>Reroll</th><th>Trạng thái</th></tr></thead>
+            <thead><tr><th>#</th><th>HLV</th><th>Tier HLV</th><th>Cơ chế</th><th>Vé</th><th>CLB hiện tại</th><th>Pot CLB</th><th>Reroll</th><th>Trạng thái</th></tr></thead>
             <tbody>
             {% for r in draft_rows %}
               <tr>
-                <td><strong>{{ r.position }}</strong></td><td>{{ r.display_name }}</td>
+                <td><strong>{{ r.position }}</strong></td><td>{{ r.display_name }}</td><td><strong>{{ ("Tier " ~ r.tier_hlv) if r.tier_hlv in [1,2,3] else "Chưa chia" }}</strong></td>
                 <td>{{ '🎟 Thưởng sớm' if r.allocation_type=='EARLY_REWARD' else '⚙️ Hệ thống' }}</td>
                 <td>{{ r.tickets_remaining }}/{{ r.tickets_total }}</td>
                 <td><strong>{{ r.club or 'Chưa Random' }}</strong></td><td>{{ ('Pot ' ~ r.club_pot) if r.club_pot else '—' }}</td>
-                <td>{{ r.reroll_count }}</td><td>{{ ('Đã chốt · còn vé' if r.tickets_remaining > 0 else 'Đã chốt') if r.status=='selected' else ('Có thể Random bất cứ lúc nào' if r.allocation_type=='EARLY_REWARD' else 'Chờ hệ thống') }}</td>
+                <td>{{ r.reroll_count }}</td><td>{{ ('Đã chốt · còn vé' if r.tickets_remaining > 0 else 'Đã chốt') if r.status=='selected' else ('Chờ phân CLB gốc' if r.allocation_type=='EARLY_REWARD' and not cd.get('system_assigned') else ('Có thể sử dụng vé' if r.allocation_type=='EARLY_REWARD' else 'Chờ hệ thống')) }}</td>
               </tr>
-              {% if r.history %}<tr><td></td><td colspan="7"><details><summary class="small">Lịch sử {{ r.history|length }} sự kiện</summary><div class="small" style="padding:6px 0">{% for h in r.history %}<div>• {{ h.at }} · {{ h.message }}</div>{% endfor %}</div></details></td></tr>{% endif %}
+              {% if r.history %}<tr><td></td><td colspan="8"><details><summary class="small">Lịch sử {{ r.history|length }} sự kiện</summary><div class="small" style="padding:6px 0">{% for h in r.history %}<div>• {{ h.at }} · {{ h.message }}</div>{% endfor %}</div></details></td></tr>{% endif %}
             {% endfor %}
-            {% if not draft_rows %}<tr><td colspan="8" class="small">Chưa mở cơ chế Random CLB 16 HLV.</td></tr>{% endif %}
+            {% if not draft_rows %}<tr><td colspan="9" class="small">Chưa mở cơ chế Random CLB 16 HLV.</td></tr>{% endif %}
             </tbody></table></div>
         </details>
-        <p class="small">Top 1–3 tự sử dụng vé bất cứ lúc nào; Admin không tự chốt thay để bảo toàn quyền thưởng.</p>
+        <p class="small">Admin Random CLB gốc cho đủ 16 HLV trước; sau đó Top 1–3 tự sử dụng vé thưởng sớm bất cứ lúc nào. Không tự chốt hoặc trừ vé thay HLV.</p>
       </div>
 
       <div class="tournament-op-tab-panel" data-tournament-op-panel="league" style="padding:15px;border:1px solid rgba(155,89,182,.32);border-radius:14px;margin-bottom:12px">

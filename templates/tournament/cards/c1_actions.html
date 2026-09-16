@@ -15,7 +15,9 @@
           <div style="margin:10px 0;padding:12px;border:1px solid rgba(241,202,104,.38);border-radius:10px;background:rgba(241,202,104,.06)">
             <strong>🎟 Vé thưởng sớm GĐ1 · còn {{ early.get('tickets_remaining',0) }}/{{ early.get('tickets_total',0) }} vé</strong>
             <p class="small" style="margin:6px 0">Không giới hạn thời gian · vé chưa dùng được bảo lưu. CLB đã bỏ sẽ không xuất hiện lại cho bạn.</p>
-            {% if early.get('status')=='selected' %}
+            {% if not (hub.get('club_draft',{}).get('system_assigned') and hub.get('club_draft',{}).get('tier_club_pot_rule') == '1:3;2:2;3:1' and hub.get('club_draft',{}).get('completed')) %}
+              <p class="small">⏳ Chờ Admin phân CLB gốc đủ 16 HLV theo Tier/Pot. Vé vẫn được bảo lưu.</p>
+            {% elif early.get('status')=='selected' %}
               <div class="small">CLB hiện tại: <strong>{{ tournament.my_member.fixed_club_name or early.get('selected_club','—') }}</strong></div>
               {% if early.get('tickets_remaining',0)|int > 0 %}
               <form method="post" action="{{ url_for('tournament_club_draft_reward_reroll',tournament_id=tournament.id) }}" style="margin-top:8px"><button class="btn gold" type="submit">🎲 Dùng 1 vé Random lại CLB</button></form>

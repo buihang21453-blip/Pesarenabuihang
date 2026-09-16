@@ -477,6 +477,7 @@ def register_routes(context):
             'opponent_slot_set':opponent_slot_set,
             'progress_label':progress_label,'progress_deadline':progress_deadline,'early_deadline':early_deadline,'early_deadline_active':early_deadline_active,
             'league_reroll_entry':league_reroll_entry,
+            'club_draft':reward_draft,
             'early_reward_entry':early_reward_entry,
             'host_ready':host_ready,'center_rooms':center_rooms,
         }

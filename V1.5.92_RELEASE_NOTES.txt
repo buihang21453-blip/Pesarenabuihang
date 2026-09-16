@@ -1,0 +1,1 @@
+V1.5.92: Admin phân CLB gốc đủ 16 theo Tier/Pot trước; sau đó Top thưởng sớm mới dùng vé. Bổ sung cột Tier HLV. Không cần SQL mới; cần SQL V1.5.90/91 nếu chưa chạy. Chưa xác minh Production.

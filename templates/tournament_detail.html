@@ -117,7 +117,10 @@
 <section class="td-section" id="club" data-tab-panel="league"><h2>🎰 Random / Chọn CLB</h2>
 {% set cd = ev.get('club_draft',{}) %}{% if member %}{% set uid = member.user_id|string %}{% set entry = cd.get('entries',{}).get(uid,{}) %}
   {% if cd.get('order') and uid in cd.get('order',[]) %}
-    <p>Top 1–3: vé thưởng sớm không hết hạn, còn {{ entry.get('tickets_remaining',0) }} vé.</p>
+    <p>Top 1–3: còn {{ entry.get('tickets_remaining',0) }} vé thưởng sớm, không hết hạn.</p>
+    {% if not (cd.get('system_assigned') and cd.get('tier_club_pot_rule') == '1:3;2:2;3:1' and cd.get('completed')) %}
+      <p>⏳ Chờ Admin phân CLB gốc đủ 16 HLV theo Tier/Pot. Vé vẫn được bảo lưu.</p>
+    {% else %}
     {% if entry.get('status')=='selected' %}
       <p>CLB hiện tại: <strong>{{ member.fixed_club_name or entry.get('selected_club') }}</strong></p>
       {% if entry.get('tickets_remaining',0)|int > 0 %}<form method="post" action="{{ url_for('tournament_club_draft_reward_reroll',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">🎲 Dùng 1 vé Random lại CLB</button></form>{% endif %}
@@ -126,7 +129,8 @@
       <form method="post" action="{{ url_for('tournament_club_draft_accept',tournament_id=tournament.id) }}"><button class="btn green" type="submit">✅ Chốt CLB</button></form>
       {% if entry.get('tickets_remaining',0)|int > 0 %}<form method="post" action="{{ url_for('tournament_club_draft_random',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">🎲 Dùng 1 vé Random lại</button></form>{% endif %}
     {% else %}<form method="post" action="{{ url_for('tournament_club_draft_random',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">🎲 Random CLB đầu tiên (miễn phí)</button></form>{% endif %}
-  {% elif member.fixed_club_name %}<p>🎯 CLB của bạn: <strong>{{ member.fixed_club_name }}</strong></p>{% else %}<p>Bạn không thuộc Top 1–3. Sau khi Top 1–3 chốt xong, hệ thống/Admin sẽ Random CLB từ Pool còn lại cho bạn.</p>{% endif %}
+    {% endif %}
+  {% elif member.fixed_club_name %}<p>🎯 CLB của bạn: <strong>{{ member.fixed_club_name }}</strong></p>{% else %}<p>Bạn không thuộc Top 1–3. Admin sẽ Random CLB gốc cho đủ 16 HLV theo Tier/Pot trước khi mở vé thưởng sớm.</p>{% endif %}
 {% else %}<p>Bạn đang xem với tư cách khán giả.</p>{% endif %}
 {% if cd.get('history') %}<h3>Lịch sử công khai</h3><div class="td-event-log">{% for h in cd.get('history',[])[-15:]|reverse %}<div>{{ h.message }}</div>{% endfor %}</div>{% endif %}
 </section>

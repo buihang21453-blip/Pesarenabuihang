@@ -415,7 +415,7 @@ def register_league(context):
                "history":[{"at":now_iso(),"user_id":reward_order[0],"action":"REWARD_OPEN","message":"Top 1–3 có thể chọn CLB và sử dụng vé thưởng sớm bất cứ lúc nào."}],
                "deadline_at":None,"system_assigned":False,"flexible_reward_tickets":True}
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_draft_start",attempts=2)
-        flash("Đã mở Random CLB thưởng sớm: Top 1 có 2 vé; Top 2–3 có 1 vé. Hạng 4–16 sẽ do hệ thống Random.","success"); return redirect_admin("tournaments")
+        flash("Đã ghi nhận vé thưởng sớm 2/1/1. Admin phải Random CLB gốc cho đủ 16 HLV theo Tier/Pot trước khi HLV sử dụng vé.","success"); return redirect_admin("tournaments")
 
     def _save_reward_draft(tournament_id,state,label):
         entries=state.get("entries") or {}
@@ -427,6 +427,18 @@ def register_league(context):
         state["completed"]=bool(all_ids) and all(entries.get(uid,{}).get("status")=="selected" for uid in all_ids)
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),label,attempts=2)
 
+    def _early_reward_ticket_phase_open(tournament_id, state):
+        """All 16 must receive their base Tier/Pot clubs before any early ticket can be used."""
+        order=[str(uid) for uid in (state.get("all_order") or [])]
+        if not state.get("system_assigned") or state.get("tier_club_pot_rule") != "1:3;2:2;3:1" or len(order)!=16 or len(set(order))!=16:
+            return False
+        members={str(m.get("user_id")):m for m in _all_members(tournament_id)}
+        return len(members)==16 and all(
+            uid in members and bool(members[uid].get("fixed_club_name"))
+            and C1_CLUB_POT_BY_NAME.get(members[uid].get("fixed_club_name"))==4-int(members[uid].get("pot_no") or 0)
+            for uid in order
+        )
+
     @app.post('/tournaments/<tournament_id>/club-draft/random')
     @login_required
     def tournament_club_draft_random(tournament_id):
@@ -435,6 +447,9 @@ def register_league(context):
         entry=(state.get("entries") or {}).get(uid) or {}
         if not _member(tournament_id,uid) or entry.get("allocation_type")!="EARLY_REWARD" or entry.get("status")=="selected":
             flash("Bạn không có lượt Random CLB chưa chốt.","warning"); return redirect(url_for('tournaments'))
+        if not _early_reward_ticket_phase_open(tournament_id,state):
+            flash("Chờ Admin Random CLB gốc cho đủ 16 HLV theo Tier/Pot trước khi dùng vé thưởng sớm.","warning")
+            return redirect(url_for('tournaments'))
         old=entry.get("candidate")
         if old and int(entry.get("tickets_remaining") or 0)<=0:
             flash("Đã hết vé, hãy chốt CLB hiện tại.","warning"); return redirect(url_for('tournaments'))
@@ -463,6 +478,9 @@ def register_league(context):
         entry=(state.get("entries") or {}).get(uid) or {}
         if not _member(tournament_id,uid) or entry.get("allocation_type")!="EARLY_REWARD" or entry.get("status")=="selected":
             flash("Không có lượt chọn CLB đang chờ.","warning"); return redirect(url_for('tournaments'))
+        if not _early_reward_ticket_phase_open(tournament_id,state):
+            flash("Chờ Admin Random CLB gốc cho đủ 16 HLV theo Tier/Pot trước khi dùng vé thưởng sớm.","warning")
+            return redirect(url_for('tournaments'))
         candidate=entry.get("candidate") or {}
         if not candidate.get("id"):
             flash("Hãy Random CLB trước.","warning"); return redirect(url_for('tournaments'))
@@ -490,6 +508,9 @@ def register_league(context):
             flash("Bạn không có vé thưởng sớm để dùng.","warning"); return redirect(url_for('tournaments'))
         if not state.get("tier_club_pot_rule"):
             flash("Admin cần sửa phân bổ 16 CLB đúng Tier/Pot trước khi HLV sử dụng vé đổi CLB.","warning")
+            return redirect(url_for('tournaments'))
+        if not _early_reward_ticket_phase_open(tournament_id,state):
+            flash("Chờ Admin Random CLB gốc cho đủ 16 HLV theo Tier/Pot trước khi dùng vé thưởng sớm.","warning")
             return redirect(url_for('tournaments'))
         old_name=str(member.get("fixed_club_name") or "")
         if not old_name or entry.get("status")!="selected":
@@ -549,6 +570,10 @@ def register_league(context):
         if (_setting(tournament_id,"club_selection",{}) or {}).get("open"):
             flash("Hãy khóa chế độ chọn CLB thủ công trước khi Random lại.","warning")
             return redirect_admin("tournaments")
+        if any(int(e.get("tickets_remaining") or 0)<int(e.get("tickets_total") or 0)
+               for e in (state.get("entries") or {}).values() if e.get("allocation_type")=="EARLY_REWARD"):
+            flash("Đã có HLV sử dụng vé thưởng sớm; không thể Random lại toàn bộ và ghi đè CLB đã đổi.","error")
+            return redirect_admin("tournaments")
         # Sample each exclusive Pot without replacement; preserve the 2/1/1 ticket balances.
         allocations=[]
         for tier,club_pot in ((1,3),(2,2),(3,1)):
@@ -587,6 +612,11 @@ def register_league(context):
             return redirect_admin('tournaments')
         if (_setting(tournament_id, 'club_selection', {}) or {}).get('open'):
             flash('Hãy đóng chọn CLB thủ công trước khi thu hồi.', 'warning')
+            return redirect_admin('tournaments')
+        state = _club_draft_state(tournament_id, False) or {}
+        if any(int(e.get('tickets_remaining') or 0)<int(e.get('tickets_total') or 0)
+               for e in (state.get('entries') or {}).values() if e.get('allocation_type')=='EARLY_REWARD'):
+            flash('Đã có HLV dùng vé thưởng sớm; không thu hồi để tránh xóa CLB đã đổi.', 'error')
             return redirect_admin('tournaments')
         try:
             result = execute_query(db.rpc('c1_admin_revoke_tier_clubs', {'p_tournament_id': tournament_id}), 'ops_admin_revoke_clubs_rpc', attempts=1)

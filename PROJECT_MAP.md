@@ -315,3 +315,10 @@ V1.5.90: Admin `POST /admin/tournaments/<id>/clubs/rerandom-by-tier` tại `modu
 - `modules/tournament_competition_parts/league.py`: route POST `/admin/tournaments/<tournament_id>/clubs/revoke-all` (admin only) gọi RPC.
 - `SQL_V1.5.91_ADMIN_REVOKE_CLUBS.sql`: RPC atomic giải phóng `tournament_clubs.selected_by/selected_at`, `tournament_members.fixed_club_id/fixed_club_name`, cập nhật JSON `tournament_settings.club_draft_v2`; giữ vé/lịch sử và các bảng khác.
 - Ảnh hưởng: giao diện Admin tab, lựa chọn CLB / Random lại; không sửa kết quả, BXH, điểm thưởng, lịch thi đấu.
+
+### V1.5.92 – Quy tắc mở vé sau phân CLB gốc
+- `modules/tournament_competition_parts/league.py`: `_early_reward_ticket_phase_open()` xác minh trạng thái cấp CLB gốc cho 16 thành viên và Tier/Pot, chặn ba route vé khi chưa đủ; bảo vệ admin khỏi thay CLB đã dùng vé.
+- `modules/tournament_competition_parts/core.py`: `_club_draft_admin_rows` trả `tier_hlv` từ `tournament_members.pot_no`; phân biệt `club_pot` suy từ tên CLB.
+- `modules/tournament_routes.py`: chuyển `club_draft` vào dữ liệu card giải ở `/tournaments` để hiển thị cổng khóa vé.
+- `templates/admin.html`, `templates/tournament_detail.html`, `templates/tournament/cards/c1_actions.html`: cột Tier HLV; luồng chờ phân CLB gốc rồi mới mở vé thưởng sớm.
+- Dữ liệu: đọc `tournament_settings.club_draft_v2`, `tournament_members`, không thay schema; SQL V1.5.90/91 tiếp tục dùng cho nút Admin.

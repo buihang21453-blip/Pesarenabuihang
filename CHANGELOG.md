@@ -1,3 +1,10 @@
+## V1.5.92 – Phân CLB gốc cho 16 HLV trước khi dùng vé; bổ sung Tier HLV
+- Chặn ở backend cả ba route `/club-draft/random`, `/club-draft/accept`, `/club-draft/reward-reroll` cho đến khi Admin hoàn tất Random CLB gốc đủ 16 HLV, xác minh Tier 1→Pot 3, Tier 2→Pot 2, Tier 3→Pot 1; không trừ vé khi bị chặn.
+- `/tournaments` và trang giải ẩn nút Random/đổi CLB khi chưa phân đủ CLB, vẫn hiện số vé bảo lưu; khi đủ 16 thì Top thưởng sớm mới được đổi CLB cùng Pot.
+- Admin: bảng Theo dõi Random CLB có thêm cột Tier HLV lấy từ `tournament_members.pot_no` (không nhầm với Pot CLB); sửa colspan; cập nhật hướng dẫn trình tự.
+- Chặn thao tác Admin thu hồi/Random lại toàn bộ khi đã có vé được sử dụng, tránh ghi đè CLB đổi thưởng. Số dư vé và lịch sử cũ được giữ nguyên.
+- Không cần migration mới: dùng lại SQL V1.5.90 và V1.5.91 theo đúng thứ tự từ phiên bản trước. Chưa kiểm thử Supabase Production/2 tài khoản test.
+
 ## V1.5.91 – Sửa tab Admin GĐ1/GĐ2/KO và thu hồi CLB GĐ2 (chưa kiểm thử Production)
 - Sửa lỗi JS khởi tạo tab trước khi DOM chứa các panel được parse: chuyển sang DOMContentLoaded, kiểm tra panel, duy trì tab giai đoạn sau POST bằng sessionStorage.
 - Admin GĐ2 có nút thu hồi 16 CLB đã Random, yêu cầu xác nhận. RPC một giao dịch bảo vệ giai đoạn, lịch/trận, đủ 16 thành viên, đóng chọn CLB thủ công; giải phóng CLB và xóa fixed_club, candidate, selected_club; ghi audit CLB cũ, giữ nguyên vé, skipped, thưởng và kết quả GĐ1.

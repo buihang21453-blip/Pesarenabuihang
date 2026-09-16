@@ -1093,6 +1093,7 @@ def register_core(context):
             rerolls=[h for h in user_history if h.get("action") in {"SKIP","REROLL"}]
             rows.append({
                 "position":pos,"user_id":uid,"display_name":member.get("display_name") or "HLV",
+                "tier_hlv":int(member.get("pot_no") or 0),
                 "allocation_type":"EARLY_REWARD" if pos<=3 else "SYSTEM",
                 "tickets_total":int(entry.get("tickets_total") or (2 if pos==1 else (1 if pos<=3 else 0))),
                 "tickets_remaining":int(entry.get("tickets_remaining") or 0),
