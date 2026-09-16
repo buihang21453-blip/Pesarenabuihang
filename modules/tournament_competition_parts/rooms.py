@@ -398,6 +398,15 @@ def register_rooms(context):
         match,_=_one(db.table("tournament_matches").select("*").eq("id",match_id).eq("tournament_id",tournament_id),"ops_tournament_room_match")
         if not match or uid not in {str(match.get("home_user_id")),str(match.get("away_user_id"))}:
             flash("Bạn không thuộc trận đấu này.","error"); return redirect(url_for('tournaments')+"#rooms")
+        # GĐ2/KO chỉ cho vào phòng khi giai đoạn thực sự mở và cả hai HLV đã có CLB cố định.
+        stage_code=str(match.get("stage_code") or "")
+        if stage_code in {"league","knockout"}:
+            stage_rows,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id).eq("stage_code",stage_code),"ops_room_stage_gate")
+            if not stage_rows or stage_rows[0].get("status")!="open":
+                flash("Giai đoạn chưa mở; chưa thể tạo phòng thi đấu.","warning"); return redirect(url_for('tournaments')+"#rooms")
+            participants=[_member(tournament_id,match.get(key)) for key in ("home_user_id","away_user_id")]
+            if any(not m or not m.get("fixed_club_name") for m in participants):
+                flash("Hai HLV phải được gán CLB cố định trước khi vào phòng.","error"); return redirect(url_for('tournaments')+"#rooms")
         pair_state=_pair_flow_state(tournament_id, match)
         if str(match.get("status") or "").lower()=="completed" and pair_state.get("is_complete"):
             flash("Cặp HLV này đã hoàn tất toàn bộ các trận trong lịch.","warning")
@@ -413,6 +422,10 @@ def register_rooms(context):
                 existing=None
             else:
                 patch={"match_mode":"tournament","team_tier":"TOURNAMENT_GD1" if match.get("stage_code")=="stage1" else "TOURNAMENT","updated_at":now_iso()}
+                if stage_code in {"league","knockout"}:
+                    fixed={str(m.get("user_id")):m.get("fixed_club_name") for m in participants}
+                    patch["host_team"]=fixed.get(host_id)
+                    patch["guest_team"]=fixed.get(guest_id) if guest_id in allowed else None
                 if existing.get("status")=="friendly_playing": patch["status"]="playing"
                 if guest_id and guest_id not in allowed:
                     patch.update({"guest_user_id":None,"guest_ready":False,"guest_team":None,"guest_team_overall":None})
@@ -421,14 +434,18 @@ def register_rooms(context):
                 if uid not in {host_id,guest_id}:
                     if guest_id:
                         flash("Phòng đã đủ 2 HLV.","warning"); return redirect(url_for('tournaments')+"#rooms")
-                    execute_query(db.table("match_rooms").update({"guest_user_id":uid,"guest_ready":False,"match_mode":"tournament","updated_at":now_iso()}).eq("id",existing.get("id")),"ops_tournament_room_join",attempts=2)
+                    join_patch={"guest_user_id":uid,"guest_ready":False,"match_mode":"tournament","updated_at":now_iso()}
+                    if stage_code in {"league","knockout"}:
+                        join_patch["guest_team"]=(_member(tournament_id,uid) or {}).get("fixed_club_name")
+                    execute_query(db.table("match_rooms").update(join_patch).eq("id",existing.get("id")),"ops_tournament_room_join",attempts=2)
                 return redirect(url_for("room_detail",room_id=existing.get("id")))
         active=active_room_for_user(uid)
         if active:
             flash("Bạn đang ở một phòng đấu khác. Hãy thoát phòng đó trước.","warning"); return redirect(url_for("room_detail",room_id=active.get("id")))
         dm=_decorate_matches(tournament_id,[match])[0]
         meta={"tournament_id":str(tournament_id),"tournament_match_id":str(match_id),"stage_code":match.get("stage_code"),"home_user_id":str(match.get("home_user_id")),"away_user_id":str(match.get("away_user_id")),"home_name":dm.get("home_name"),"away_name":dm.get("away_name")}
-        row=execute_query(db.table("match_rooms").insert({"invite_id":None,"host_user_id":uid,"guest_user_id":None,"team_tier":"TOURNAMENT_GD1" if match.get("stage_code")=="stage1" else "TOURNAMENT","match_mode":"tournament","friendly_tier":None,"status":"waiting_ready","guest_ready":False,"note":_room_note(meta),"state_expires_at":None,"updated_at":now_iso()}),"ops_tournament_room_create",attempts=2)
+        fixed_host=(_member(tournament_id,uid) or {}).get("fixed_club_name") if stage_code in {"league","knockout"} else None
+        row=execute_query(db.table("match_rooms").insert({"invite_id":None,"host_user_id":uid,"guest_user_id":None,"host_team":fixed_host,"team_tier":"TOURNAMENT_GD1" if match.get("stage_code")=="stage1" else "TOURNAMENT","match_mode":"tournament","friendly_tier":None,"status":"waiting_ready","guest_ready":False,"note":_room_note(meta),"state_expires_at":None,"updated_at":now_iso()}),"ops_tournament_room_create",attempts=2)
         room=(row.data or [{}])[0]
         flash("Đã tạo Phòng đấu C1. Khi sẵn sàng, hãy bấm Mời đối thủ ngay trong phòng.","success")
         return redirect(url_for("room_detail",room_id=room.get("id")))

@@ -1,3 +1,5 @@
+
+### V1.5.86: Không triển khai bản vá từng phần lên giải thật. Kiểm thử đầy đủ luồng tự kết thúc GĐ1, thưởng, Pot, phòng C1 và đồng thời trước khi phát hành Production.
 # PROJECT_RULES — PES Arena
 
 **Áp dụng từ:** V1.5.77  

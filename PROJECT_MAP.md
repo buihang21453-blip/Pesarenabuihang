@@ -1,3 +1,5 @@
+
+### V1.5.86: league.py xử lý start_now; rooms.py chặn stage và nạp CLB cố định khi vào phòng theo trận; templates/admin.html có nút bắt đầu ngay. Các luồng tự động GĐ1 chưa hoàn thiện.
 # PROJECT_MAP — PES Arena
 
 **Baseline:** V1.5.84  

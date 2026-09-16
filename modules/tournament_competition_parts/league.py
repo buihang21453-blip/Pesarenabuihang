@@ -169,10 +169,18 @@ def register_league(context):
         vn=timezone(timedelta(hours=7)); now=datetime.now(vn)
         start=_parse_iso(cfg.get("league_start_at"))
         if not start:
-            flash("Admin cần lưu mốc bắt đầu GĐ2 trước.","error"); return redirect_admin("tournaments")
+            if request.form.get("start_now")=="1":
+                start=now
+                cfg["league_start_at"]=start.isoformat()
+            else:
+                flash("Admin cần lưu mốc bắt đầu GĐ2 trước.","error"); return redirect_admin("tournaments")
         if start.tzinfo is None: start=start.replace(tzinfo=vn)
-        if now<start:
-            flash("Chưa đến mốc bắt đầu GĐ2 đã cấu hình.","warning"); return redirect_admin("tournaments")
+        start_now=request.form.get("start_now")=="1"
+        if now<start and not start_now:
+            flash("Chưa đến mốc bắt đầu GĐ2. Admin có thể chọn Bắt đầu ngay để ghi đè lịch.","warning"); return redirect_admin("tournaments")
+        if start_now:
+            start=now
+            cfg["league_start_at"]=start.isoformat()
         end=start+timedelta(days=7)
         cfg["league_end_at"]=end.isoformat()
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"competition_timing","setting_value":cfg,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_start_timing",attempts=2)

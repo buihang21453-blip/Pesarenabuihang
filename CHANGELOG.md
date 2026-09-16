@@ -1,3 +1,11 @@
+## V1.5.86 – Bản vá bước đầu: bắt đầu GĐ2 ngay và khóa CLB tại phòng theo lịch
+
+- Admin có thể bắt đầu GĐ2 ngay sau khi đủ điều kiện, ghi đè mốc bắt đầu và đặt hạn 7 ngày; vẫn giữ lựa chọn bắt đầu theo lịch.
+- Chặn vào phòng theo trận GĐ2/KO nếu giai đoạn chưa mở hoặc HLV thiếu CLB cố định.
+- Khi tạo/vào lại phòng theo trận, lấy CLB từ tournament_members; không lấy CLB tùy ý từ form.
+- CHƯA hoàn tất: tự kết thúc GĐ1, tự trao thưởng/chia/khóa Pot, khóa CLB ở mọi API phòng C1 tự do, kiểm thử tích hợp.
+- KHÔNG đưa bản này lên Production khi chưa hoàn thành các mục còn thiếu.
+
 ## V1.5.84 – GĐ2: bản bảo vệ dữ liệu (CHƯA hoàn tất toàn bộ quy trình)
 - Kết thúc GĐ1 chuyển GĐ2 sang chuẩn bị, không tự mở thi đấu.
 - Sinh lịch chỉ sau khi GĐ1 hoàn tất, Pot khóa, đủ 16 CLB cố định; không sinh đè lịch đã có.
