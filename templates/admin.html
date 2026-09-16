@@ -733,7 +733,7 @@
   {% set ops = tournament_ops_admin|default({}) %}
   <div class="panel">
     <style>
-    .c1-phase-nav{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0;position:sticky;top:0;z-index:5;background:#0b1c29;padding:9px;border-radius:12px}.c1-phase-nav a{color:#f1ca68;border:1px solid rgba(241,202,104,.45);border-radius:8px;padding:8px 12px;text-decoration:none;font-weight:700}.c1-phase-nav a:hover{background:rgba(241,202,104,.14)}#c1-admin-gd1,#c1-admin-gd2,#c1-admin-ko{scroll-margin-top:76px}
+    .c1-phase-nav{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0;background:#0b1c29;padding:9px;border-radius:12px}.c1-phase-nav a{color:#f1ca68;border:1px solid rgba(241,202,104,.45);border-radius:8px;padding:8px 12px;text-decoration:none;font-weight:700}.c1-phase-nav a:hover{background:rgba(241,202,104,.14)}#c1-admin-gd1,#c1-admin-gd2,#c1-admin-ko{scroll-margin-top:76px}
     .tournament-op-tabs{display:none;gap:6px;flex-wrap:wrap;margin:10px 0 14px;padding:6px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.08);border-radius:12px}
     .tournament-op-tab-btn{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:inherit;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;line-height:1.2}
     .tournament-op-tab-btn:hover{background:rgba(255,255,255,.08)}
@@ -765,7 +765,12 @@
         <div style="padding:10px 12px;border:1px solid rgba(241,202,104,.25);border-radius:10px"><strong>🏆 BXH</strong><div class="small">BXH trung tâm tự cập nhật theo kết quả.</div></div>
         <div style="padding:10px 12px;border:1px solid rgba(155,89,182,.25);border-radius:10px"><strong>🎯 Điều hành vòng</strong><div class="small">Random, Pot, League và Knockout.</div></div>
       </div>
-      <nav class="c1-phase-nav" aria-label="Điều hành từng giai đoạn"><a href="#c1-admin-gd1">GĐ 1</a><a href="#c1-admin-gd2">GĐ 2 · Pot / CLB / Lịch</a><a href="#c1-admin-ko">KO</a></nav>
+      <h3 style="margin:14px 0 8px">🎯 Điều hành vòng hiện tại</h3>
+      <nav class="c1-stage-admin-tabs c1-phase-nav" aria-label="Điều hành giai đoạn C1">
+        <a href="#c1-admin-gd1" class="btn gold" data-c1-stage-tab="gd1" aria-current="true">GĐ 1</a>
+        <a href="#c1-admin-gd2" class="btn gray" data-c1-stage-tab="gd2">GĐ 2 · Pot / CLB / Lịch</a>
+        <a href="#c1-admin-ko" class="btn gray" data-c1-stage-tab="ko">KO</a>
+      </nav>
       <div class="tournament-op-tab-panel active" data-tournament-op-panel="registration" style="padding:15px;border:1px solid rgba(52,152,219,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">👥 HLV & Trận đấu</h3>
         <p class="small">Quản lý danh sách HLV ngay tại đây. Bấm từng HLV để xem đối thủ, cặp đấu, lịch, tỷ số và nhập/sửa kết quả mà không cần sang Công cụ riêng.</p>
@@ -1052,12 +1057,6 @@
         </tbody></table></div></details>
       </div>
 
-      <h3 style="margin:18px 0 10px">🎯 Điều hành vòng hiện tại</h3>
-      <nav class="c1-stage-admin-tabs" aria-label="Điều hành giai đoạn C1" style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
-        <button type="button" class="btn gold" data-c1-stage-tab="gd1" aria-pressed="true">GĐ 1</button>
-        <button type="button" class="btn gray" data-c1-stage-tab="gd2" aria-pressed="false">GĐ 2 · Pot / CLB / Lịch</button>
-        <button type="button" class="btn gray" data-c1-stage-tab="ko" aria-pressed="false">KO</button>
-      </nav>
       <script>
       // Panels are below this script: initialize only after the document is parsed.
       document.addEventListener('DOMContentLoaded', function () {
@@ -1083,7 +1082,8 @@
           }));
           nav.querySelectorAll('[data-c1-stage-tab]').forEach(button => {
             const active = button.dataset.c1StageTab === key;
-            button.setAttribute('aria-pressed', String(active));
+            if (active) button.setAttribute('aria-current', 'true');
+            else button.removeAttribute('aria-current');
             button.classList.toggle('gold', active);
             button.classList.toggle('gray', !active);
           });
@@ -1091,11 +1091,18 @@
         }
         nav.addEventListener('click', event => {
           const button = event.target.closest('[data-c1-stage-tab]');
-          if (button && nav.contains(button)) activate(button.dataset.c1StageTab);
+          if (button && nav.contains(button)) {
+            // Reveal target before default fragment navigation scrolls into view.
+            activate(button.dataset.c1StageTab);
+          }
         });
+        const hashToStage = {'#c1-admin-gd1': 'gd1', '#c1-admin-gd2': 'gd2', '#c1-admin-ko': 'ko'};
         let saved = 'gd1';
         try { saved = sessionStorage.getItem(keyName) || 'gd1'; } catch (_) { /* optional */ }
-        activate(saved);
+        activate(hashToStage[window.location.hash] || saved);
+        window.addEventListener('hashchange', () => {
+          if (hashToStage[window.location.hash]) activate(hashToStage[window.location.hash]);
+        });
       });
       </script>
 

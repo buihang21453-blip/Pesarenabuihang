@@ -322,3 +322,7 @@ V1.5.90: Admin `POST /admin/tournaments/<id>/clubs/rerandom-by-tier` tại `modu
 - `modules/tournament_routes.py`: chuyển `club_draft` vào dữ liệu card giải ở `/tournaments` để hiển thị cổng khóa vé.
 - `templates/admin.html`, `templates/tournament_detail.html`, `templates/tournament/cards/c1_actions.html`: cột Tier HLV; luồng chờ phân CLB gốc rồi mới mở vé thưởng sớm.
 - Dữ liệu: đọc `tournament_settings.club_draft_v2`, `tournament_members`, không thay schema; SQL V1.5.90/91 tiếp tục dùng cho nút Admin.
+
+### V1.5.93 – Điều hướng Admin theo hash
+- `templates/admin.html`: thanh điều hướng giai đoạn đặt trên đầu tab Điều hành giải đấu, liên kết trực tiếp tới `#c1-admin-gd1`, `#c1-admin-gd2`, `#c1-admin-ko`; script chọn panel theo hash hoặc session.
+- `static/js/admin_dashboard.js`: ba hash trên kích hoạt tab cha `tournaments` thay vì rơi về `overview`. Không tác động route hay database.

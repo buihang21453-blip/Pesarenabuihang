@@ -1,3 +1,8 @@
+## V1.5.93 – Đưa điều hướng GĐ1/GĐ2/KO lên đầu khu Điều hành giải đấu
+- Di chuyển tiêu đề “🎯 Điều hành vòng hiện tại” và ba nút chuyển giai đoạn lên ngay đầu màn Điều hành giải đấu, tránh phải cuộn qua toàn bộ danh sách HLV/lịch.
+- Nút dùng đúng URL fragment `/admin#c1-admin-gd1`, `/admin#c1-admin-gd2`, `/admin#c1-admin-ko`; mở liên kết trực tiếp vào đúng tab Admin và đúng giai đoạn, kể cả khi tải lại trang.
+- Giữ nguyên các form/API và nghiệp vụ Random/thu hồi, không sửa DB/SQL; chưa xác minh Production.
+
 ## V1.5.92 – Phân CLB gốc cho 16 HLV trước khi dùng vé; bổ sung Tier HLV
 - Chặn ở backend cả ba route `/club-draft/random`, `/club-draft/accept`, `/club-draft/reward-reroll` cho đến khi Admin hoàn tất Random CLB gốc đủ 16 HLV, xác minh Tier 1→Pot 3, Tier 2→Pot 2, Tier 3→Pot 1; không trừ vé khi bị chặn.
 - `/tournaments` và trang giải ẩn nút Random/đổi CLB khi chưa phân đủ CLB, vẫn hiện số vé bảo lưu; khi đủ 16 thì Top thưởng sớm mới được đổi CLB cùng Pot.

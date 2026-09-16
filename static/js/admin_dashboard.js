@@ -4,7 +4,7 @@
     const allowedTabs = new Set(buttons.map(function (button) { return button.dataset.adminTab; }));
 
     function activateAdminTab(tabName) {
-        const selected = allowedTabs.has(tabName) ? tabName : 'overview';
+        const selected = tabName && tabName.indexOf('c1-admin-') === 0 ? 'tournaments' : (allowedTabs.has(tabName) ? tabName : 'overview');
         buttons.forEach(function (button) {
             const active = button.dataset.adminTab === selected;
             button.classList.toggle('active', active);
