@@ -18,8 +18,9 @@ def register_rewards(context):
             for m in pending:
                 execute_query(db.table("tournament_matches").update({"status":"disputed","updated_at":now_iso()}).eq("id",m.get("id")),"ops_s1_pending_btc",attempts=2)
         execute_query(db.table("tournament_stages").update({"status":"completed","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","stage1"),"ops_s1_finish",attempts=2)
-        execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_league_open_after_s1",attempts=2)
-        flash("Đã kết thúc GĐ1. Có thể chia Pot, chọn CLB và chuẩn bị League Phase.","success"); return redirect_admin("tournaments")
+        # Kết thúc GĐ1 chỉ chuyển GĐ2 sang trạng thái chuẩn bị; không mở thi đấu.
+        execute_query(db.table("tournament_stages").update({"status":"pending","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_league_prepare_after_s1",attempts=2)
+        flash("Đã kết thúc GĐ1. GĐ2 CHƯA bắt đầu: hãy trao thưởng, chia/khóa Pot, chốt CLB và công bố đối thủ.","success"); return redirect_admin("tournaments")
 
     LEAGUE_TOP3_REROLL_KEY = "league_top3_club_reroll_v1"
 
@@ -95,7 +96,11 @@ def register_rewards(context):
     @admin_required
     def admin_tournament_league_finish(tournament_id):
         force=request.form.get("force")=="1"
-        pending=[m for m in _matches(tournament_id,"league") if m.get("status")!="completed"]
+        league_matches=_matches(tournament_id,"league")
+        if len(league_matches)!=32:
+            flash(f"Không thể kết thúc GĐ2: cần đúng 32 trận, hiện có {len(league_matches)}.","error")
+            return redirect_admin("tournaments")
+        pending=[m for m in league_matches if m.get("status")!="completed"]
         if pending and not force:
             flash(f"League Phase còn {len(pending)} trận chưa hoàn thành.","warning"); return redirect_admin("tournaments")
         if pending and force:

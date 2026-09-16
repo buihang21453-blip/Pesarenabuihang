@@ -145,6 +145,26 @@ def register_league(context):
     @admin_required
     def admin_tournament_league_generate(tournament_id):
         members=_all_members(tournament_id)
+        stage1=_matches(tournament_id,"stage1")
+        if not stage1 or any(m.get("status")!="completed" for m in stage1):
+            flash("Chỉ sinh lịch GĐ2 sau khi toàn bộ kết quả GĐ1 đã hoàn tất.","error")
+            return redirect_admin("tournaments")
+        stage_rows,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id),"ops_league_stage_gate")
+        if not any(x.get("stage_code")=="stage1" and x.get("status")=="completed" for x in stage_rows):
+            flash("Admin phải kết thúc GĐ1 trước khi sinh lịch GĐ2.","error")
+            return redirect_admin("tournaments")
+        if not (_setting(tournament_id,"pots_locked",{}) or {}).get("locked"):
+            flash("Hãy khóa Pot trước khi sinh lịch GĐ2.","error")
+            return redirect_admin("tournaments")
+        if (_setting(tournament_id,"club_selection",{}) or {}).get("open"):
+            flash("Hãy khóa Random/chọn CLB trước khi sinh lịch GĐ2.","error")
+            return redirect_admin("tournaments")
+        if len(members)!=16 or any(not m.get("fixed_club_name") for m in members):
+            flash("Cần đủ 16 HLV đã được gán CLB cố định trước khi sinh lịch.","error")
+            return redirect_admin("tournaments")
+        if _matches(tournament_id,"league"):
+            flash("Lịch GĐ2 đã tồn tại. Không cho sinh lại/xóa lịch tự động để bảo vệ đối thủ đã công bố.","error")
+            return redirect_admin("tournaments")
         pots={int(m.get("pot_no") or 0) for m in members if int(m.get("pot_no") or 0)>0}
         if len(pots)!=3:
             flash("GĐ2 chính thức dùng đúng 3 Pot. Hãy chia 3 Pot 5–6–5 trước khi sinh lịch.","error"); return redirect_admin("tournaments")
@@ -160,6 +180,27 @@ def register_league(context):
         except ValueError as exc:
             flash(str(exc),"error"); return redirect_admin("tournaments")
 
+        # Validate complete fixture graph BEFORE the first database write.
+        pair_keys=set()
+        match_counts={str(m.get("user_id")):0 for m in members}
+        if len(rounds)!=4 or any(len(pairs)!=8 for pairs in rounds):
+            flash("Thuật toán chưa sinh đủ 4 lượt × 8 trận; chưa ghi dữ liệu.","error")
+            return redirect_admin("tournaments")
+        for pairs in rounds:
+            seen_round=set()
+            for a,b in pairs:
+                key=tuple(sorted((str(a),str(b))))
+                if a==b or key in pair_keys or a in seen_round or b in seen_round or a not in match_counts or b not in match_counts:
+                    flash("Lịch GĐ2 có cặp trùng hoặc HLV không hợp lệ; chưa ghi dữ liệu.","error")
+                    return redirect_admin("tournaments")
+                pair_keys.add(key)
+                seen_round.update((a,b))
+                match_counts[a]+=1
+                match_counts[b]+=1
+        if len(pair_keys)!=32 or any(count!=4 for count in match_counts.values()):
+            flash("Lịch GĐ2 chưa bảo đảm 32 trận và 4 trận/HLV; chưa ghi dữ liệu.","error")
+            return redirect_admin("tournaments")
+
         execute_query(db.table("tournament_settings").upsert({
             "tournament_id":tournament_id,
             "setting_key":"league_config",
@@ -174,7 +215,10 @@ def register_league(context):
             },
             "updated_at":now_iso(),
         },on_conflict="tournament_id,setting_key"),"ops_league_config",attempts=2)
-        execute_query(db.table("tournament_matches").delete().eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_league_clear",attempts=2)
+        # Never delete league fixtures: a second generation request must not destroy real results.
+        if _matches(tournament_id,"league"):
+            flash("Đã có lịch GĐ2. Dừng sinh lịch để bảo vệ dữ liệu.","error")
+            return redirect_admin("tournaments")
 
         idx=0
         for round_no,pairs in enumerate(rounds,1):
@@ -440,7 +484,18 @@ def register_league(context):
         state.setdefault("revealed",{}).setdefault(uid,[]).extend([x for x in opponents if x not in state.get("revealed",{}).get(uid,[])])
         state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"pot":pot,"action":"DRAW","opponents":[x.get("name") for x in opponents]})
         pi+=1
-        if pi>=len(pots): pi=0; i+=1
+        if pi>=len(pots):
+            # Lượt random thứ tư không có Pot riêng: công bố tất cả đối thủ còn thiếu.
+            already={str(x.get("user_id")) for x in state.get("revealed",{}).get(uid,[])}
+            for m in _matches(tournament_id,"league"):
+                h,a=str(m.get("home_user_id")),str(m.get("away_user_id"))
+                if uid not in {h,a}: continue
+                opp=a if uid==h else h
+                if opp not in already:
+                    om=member_map.get(opp) or {}
+                    state["revealed"][uid].append({"user_id":opp,"name":om.get("display_name") or "HLV","pot":int(om.get("pot_no") or 0)})
+                    already.add(opp)
+            pi=0; i+=1
         state["pot_index"]=pi; state["current_index"]=i
         if i>=len(order): state["active"]=False; state["completed"]=True
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"league_draw_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_draw_next",attempts=2)

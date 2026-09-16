@@ -1,3 +1,10 @@
+## V1.5.84 – GĐ2: bản bảo vệ dữ liệu (CHƯA hoàn tất toàn bộ quy trình)
+- Kết thúc GĐ1 chuyển GĐ2 sang chuẩn bị, không tự mở thi đấu.
+- Sinh lịch chỉ sau khi GĐ1 hoàn tất, Pot khóa, đủ 16 CLB cố định; không sinh đè lịch đã có.
+- Kiểm chứng 4 lượt × 8 trận, 32 cặp duy nhất, mỗi HLV đúng 4 trận trước khi ghi dữ liệu.
+- Công bố đối thủ lượt thứ tư; chặn kết thúc GĐ2 khi chưa đủ 32 trận.
+- Chưa hoàn thành: mốc hai ngày/một tuần, UI tab Admin, cố định CLB trong room, kiểm thử end-to-end và giao dịch nguyên tử khi sinh lịch. Không triển khai production cho giải thật trước khi hoàn tất.
+
 ## V1.5.83
 - Thu gọn riêng thanh tiêu đề phòng Rank/C1: cao khoảng 62px desktop, chữ PHÒNG ĐẤU/mã phòng nhỏ, logo và nút chia sẻ cân đối.
 - Mobile dùng thanh ngang gọn, giữ nút chia sẻ dạng biểu tượng, không thay đổi JS/ID/endpoint.
