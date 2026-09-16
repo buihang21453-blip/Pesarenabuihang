@@ -1378,6 +1378,7 @@ def register_core(context):
 
         payload.update({
             "ready":True,"tournament":tour,"members":members,"progress":progress,
+            "club_draw_at":(_setting(tid,"competition_timing",{}) or {}).get("club_draw_at") or "2026-09-17T20:00:00+07:00",
             "combined_ranking":_combined_ranking(tid),
             "knockout_flow":_setting(tid,"knockout_flow",{}) or {},
             "scale":_tournament_scale(tid),"c1_test_user_ids":test_ids,"c1_test_users":test_users,

@@ -1,4 +1,8 @@
 
+### V1.5.99
+- V1.5.99: Lễ bốc thăm GĐ2 do Admin đặt thời gian trong competition_timing.club_draw_at, hiển thị tại vị trí khung đếm ngược GĐ1 cũ; hết giờ không tự Random hoặc mở quyền vé.
+
+
 ### V1.5.86: Không triển khai bản vá từng phần lên giải thật. Kiểm thử đầy đủ luồng tự kết thúc GĐ1, thưởng, Pot, phòng C1 và đồng thời trước khi phát hành Production.
 # PROJECT_RULES — PES Arena
 

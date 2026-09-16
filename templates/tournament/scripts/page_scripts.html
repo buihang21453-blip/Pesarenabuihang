@@ -59,7 +59,18 @@
   var boxes=Array.from(document.querySelectorAll('[data-center-countdown]'));
   if(!boxes.length) return;
   function tick(box){var t=Date.parse(box.dataset.centerCountdown||'');if(!isFinite(t))return;var sec=Math.max(0,Math.floor((t-Date.now())/1000));var vals={d:Math.floor(sec/86400),h:Math.floor((sec%86400)/3600),m:Math.floor((sec%3600)/60),s:sec%60};Object.keys(vals).forEach(function(k){var el=box.querySelector('[data-'+k+']');if(el)el.firstChild.nodeValue=vals[k];});}
-  boxes.forEach(tick);window.setInterval(function(){boxes.forEach(tick);},1000);
+  boxes.forEach(function(box){
+    var dateEl=box.parentNode.querySelector('[data-draw-date]');
+    if(dateEl){var dt=new Date(dateEl.dataset.drawDate);if(!isNaN(dt.getTime())){
+      dateEl.textContent=new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric',hour12:false}).format(dt);
+    }}
+  });
+  function refresh(){boxes.forEach(function(box){tick(box);if(box.dataset.drawEvent==='1'){
+    var status=box.parentNode.querySelector('[data-draw-status]');
+    var target=Date.parse(box.dataset.centerCountdown||'');
+    if(status&&isFinite(target))status.textContent=Date.now()>=target?'🔴 ĐÃ ĐẾN GIỜ LỄ BỐC THĂM CLB GĐ2':'Đếm ngược đến lễ bốc thăm';
+  }});}
+  refresh();window.setInterval(refresh,1000);
 })();
 </script>
 <script>

@@ -1,4 +1,8 @@
 
+### V1.5.99
+- V1.5.99: modules/tournament_competition_parts/admin.py thêm route admin_tournament_gd2_draw_time lưu competition_timing.club_draw_at (giữ nguyên các khóa thời gian khác); core.py truyền mốc về admin; tournament_routes.py gắn mốc vào card; c1_media.html thay overlay GĐ1 bằng countdown GĐ2; page_scripts.html hiển thị ngày giờ Việt Nam và trạng thái khi hết giờ. Không có migration mới.
+
+
 ### V1.5.86: league.py xử lý start_now; rooms.py chặn stage và nạp CLB cố định khi vào phòng theo trận; templates/admin.html có nút bắt đầu ngay. Các luồng tự động GĐ1 chưa hoàn thiện.
 # PROJECT_MAP — PES Arena
 

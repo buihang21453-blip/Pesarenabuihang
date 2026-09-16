@@ -349,6 +349,36 @@ def register_admin(context):
         execute_query(db.table("tournament_stages").update({"status":status,"updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code",stage_code),"ops_stage_status",attempts=2)
         flash(f"Đã cập nhật {STAGE_LABELS.get(stage_code,stage_code)}: {status}.","success"); return redirect_admin("tournaments")
 
+    @app.post('/admin/tournaments/<tournament_id>/gd2/draw-time')
+    @login_required
+    @admin_required
+    def admin_tournament_gd2_draw_time(tournament_id):
+        # HTML datetime-local is interpreted in Asia/Ho_Chi_Minh (UTC+07), never in server TZ.
+        raw=(request.form.get("club_draw_local") or "").strip()
+        try:
+            parsed=datetime.strptime(raw,"%Y-%m-%dT%H:%M")
+            draw_iso=parsed.replace(tzinfo=timezone(timedelta(hours=7))).isoformat(timespec="seconds")
+        except (TypeError,ValueError):
+            flash("Thời gian lễ bốc thăm không hợp lệ. Hãy chọn ngày và giờ.","error")
+            return redirect(url_for("admin")+"#c1-admin-gd2")
+        cfg=_setting(tournament_id,"competition_timing",{}) or {}
+        cfg=dict(cfg) if isinstance(cfg,dict) else {}
+        cfg["club_draw_at"]=draw_iso
+        cfg["updated_at"]=now_iso()
+        try:
+            result=execute_query(db.table("tournament_settings").upsert({
+                "tournament_id":tournament_id,"setting_key":"competition_timing",
+                "setting_value":cfg,"updated_at":now_iso(),
+            },on_conflict="tournament_id,setting_key"),"ops_gd2_draw_time",attempts=2)
+            if result is None:
+                raise RuntimeError("Không nhận được xác nhận lưu thời gian từ database")
+        except Exception:
+            app.logger.exception("Cannot save GĐ2 draw time for tournament %s",tournament_id)
+            flash("Chưa lưu được thời gian bốc thăm. Kiểm tra log server và thử lại.","error")
+            return redirect(url_for("admin")+"#c1-admin-gd2")
+        flash("Đã lưu lịch lễ bốc thăm CLB GĐ2 (giờ Việt Nam).","success")
+        return redirect(url_for("admin")+"#c1-admin-gd2")
+
     @app.post('/admin/tournaments/<tournament_id>/stage1/settings')
     @login_required
     @admin_required

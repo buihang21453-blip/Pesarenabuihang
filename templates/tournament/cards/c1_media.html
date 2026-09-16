@@ -1,17 +1,11 @@
         <div class="tournament-card-media">
           <span class="tournament-card-status {{ 'registration' if tournament.status in ['registration','upcoming'] else '' }}">● {{ 'Đăng ký' if tournament.status in ['registration','upcoming'] else 'Đang diễn ra' }}</span>
-          {% if tournament.progress_deadline or tournament.early_deadline %}
-          <div class="tournament-progress-overlay">
-            <div class="tournament-progress-head"><strong>⏱️ GĐ1 ĐANG DIỄN RA</strong><span class="tournament-progress-slogan">Chiến hết mình – Cháy cùng đam mê!</span></div>
-            {% if tournament.progress_deadline %}<span class="tournament-progress-label">{{ tournament.progress_label }}</span><div class="tournament-progress-mini" data-center-countdown="{{ tournament.progress_deadline }}"><b data-d>0<small>Ngày</small></b><b data-h>0<small>Giờ</small></b><b data-m>0<small>Phút</small></b><b data-s>0<small>Giây</small></b></div>{% endif %}
-            {% if tournament.personal_stage1_remaining is not none %}
-              {% if tournament.personal_stage1_remaining > 0 %}<div class="tournament-personal-progress">⚠️ Tình trạng của bạn: <strong>Còn {{ tournament.personal_stage1_remaining }} trận chưa hoàn thành</strong></div>
-              {% else %}<div class="tournament-personal-progress is-done">✅ Tình trạng của bạn: <strong>Đã hoàn thành GĐ1</strong></div>{% endif %}
-            {% endif %}
-            <span class="reward">🎁 Thưởng hoàn thành sớm còn:</span>
-            {% if tournament.early_deadline and tournament.early_deadline_active %}<div class="tournament-progress-mini" data-center-countdown="{{ tournament.early_deadline }}"><b data-d>0<small>Ngày</small></b><b data-h>0<small>Giờ</small></b><b data-m>0<small>Phút</small></b><b data-s>0<small>Giây</small></b></div>
-            {% elif tournament.early_deadline %}<span class="tournament-progress-expired">Đã hết thời gian thưởng</span>
-            {% else %}<span class="tournament-progress-expired">Chưa cấu hình hạn thưởng</span>{% endif %}
+          {% if tournament.club_draw_at %}
+          <div class="tournament-progress-overlay tournament-draw-overlay">
+            <div class="tournament-progress-head"><strong>⏳ LỄ BỐC THĂM CLB GĐ2</strong><span class="tournament-progress-slogan">Chiến hết mình – Cháy cùng đam mê!</span></div>
+            <span class="tournament-progress-label"><span data-draw-date="{{ tournament.club_draw_at }}">20:00 · 17/09/2026</span> (giờ Việt Nam)</span>
+            <div class="tournament-progress-mini" data-center-countdown="{{ tournament.club_draw_at }}" data-draw-event="1"><b data-d>0<small>Ngày</small></b><b data-h>0<small>Giờ</small></b><b data-m>0<small>Phút</small></b><b data-s>0<small>Giây</small></b></div>
+            <span class="tournament-draw-status" data-draw-status>Đếm ngược đến lễ bốc thăm</span>
           </div>
           {% endif %}
           <img class="tournament-arena-badge" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/Giaidau/C1mua1/Huyhieu.webp" alt="PES Arena Champions League">

@@ -1192,6 +1192,15 @@
       </div>
 
       <div class="tournament-op-tab-panel" id="c1-admin-gd2" data-tournament-op-panel="potclub" style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
+        <div style="border:1px solid rgba(241,202,104,.45);border-radius:12px;padding:13px;margin-bottom:14px;background:#0b1c29">
+          <strong>⏳ Lịch lễ bốc thăm CLB GĐ2</strong>
+          <form method="post" action="{{ url_for('admin_tournament_gd2_draw_time',tournament_id=ot.id) }}" style="display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:9px">
+            <label>Ngày & giờ (Việt Nam, UTC+7)<input type="datetime-local" name="club_draw_local" data-admin-draw-input="{{ ops.get('club_draw_at','2026-09-17T20:00:00+07:00') }}" value="2026-09-17T20:00" required></label>
+            <button class="btn gold" type="submit">Lưu thời gian lễ bốc thăm</button>
+          </form>
+          <p class="small" style="margin:7px 0 0">Thời gian được đồng bộ lên đồng hồ tại trang Giải đấu. Hết giờ chỉ đổi thông báo; không tự Random hoặc mở quyền dùng vé.</p>
+          <script>(function(){document.querySelectorAll('[data-admin-draw-input]').forEach(function(el){var d=new Date(el.dataset.adminDrawInput);if(isNaN(d.getTime()))return;var parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d);var f={};parts.forEach(function(p){f[p.type]=p.value;});el.value=f.year+'-'+f.month+'-'+f.day+'T'+f.hour+':'+f.minute;});})();</script>
+        </div>
         <h3 style="margin:0 0 6px">3️⃣ Chia Pot & chọn CLB</h3>
         <p class="small"><strong>Quy tắc CLB GĐ2:</strong> Tier HLV 1 (Top 1–5) → CLB Pot 3 · Tier HLV 2 (Top 6–11) → CLB Pot 2 · Tier HLV 3 (Top 12–16) → CLB Pot 1. Phần chia Tier HLV 5–6–5 giữ nguyên.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">

@@ -1,3 +1,7 @@
+## V1.5.99 – Đồng hồ lễ bốc thăm CLB GĐ2
+- Admin đặt lại ngày giờ lễ bốc thăm GĐ2 (giờ Việt Nam) và lưu trong competition_timing.club_draw_at; đồng hồ thay toàn bộ khung tiến trình GĐ1 ở card Giải đấu.
+- Đồng hồ chỉ đổi nhãn khi đến giờ, không tự thực thi Random hay can thiệp vé thưởng.
+
 ## V1.5.98 – Sửa lỗi thu hồi và Random lại khi giải có HLV dự phòng/ngừng tham gia
 - Kết quả chẩn đoán Production: 17 thành viên toàn bộ nhưng chỉ 16 active, đã phân CLB cho 16 người; GĐ1 completed, GĐ2 pending, không có lịch, RPC tồn tại và role có quyền EXECUTE.
 - Sửa hai RPC `c1_admin_revoke_tier_clubs` và `c1_admin_rerandom_tier_clubs`: đếm đúng 16 thành viên `status=active` thay vì tất cả bản ghi; vẫn xác minh đủ 16 ID trong danh sách Random và không ghi đè thành viên inactive.

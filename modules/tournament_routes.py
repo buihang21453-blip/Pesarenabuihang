@@ -409,6 +409,7 @@ def register_routes(context):
             progress_label='🔴 GĐ1 đang trong thời gian gia hạn:'; progress_deadline=timing.get('stage1_extension_end_at')
         elif _future(timing.get('league_end_at')):
             progress_label='League Phase · thời gian còn lại:'; progress_deadline=timing.get('league_end_at')
+        club_draw_at=timing.get('club_draw_at') or '2026-09-17T20:00:00+07:00'
         early_deadline=timing.get('stage1_early_end_at')
         early_deadline_active=bool(early_deadline and _future(early_deadline))
         base_draft_config=_landing_setting(tournament_id,'club_base_draft_v1',{}) or {}
@@ -478,7 +479,7 @@ def register_routes(context):
             'league_opened':bool(league_reveals.get(uid)), 'test_opponent':test_opponent,
             'test_opponent_days':test_opp_days,
             'opponent_slot_set':opponent_slot_set,
-            'progress_label':progress_label,'progress_deadline':progress_deadline,'early_deadline':early_deadline,'early_deadline_active':early_deadline_active,
+            'club_draw_at':club_draw_at,'progress_label':progress_label,'progress_deadline':progress_deadline,'early_deadline':early_deadline,'early_deadline_active':early_deadline_active,
             'league_reroll_entry':league_reroll_entry,
             'club_draft':reward_draft,
             'base_draft_config':base_draft_config,'base_draft_turn':base_turn,
@@ -525,6 +526,7 @@ def register_routes(context):
                 )
                 item["member_count"] = len(member_rows)
                 timing = _tournament_timing_preview(item.get("id"))
+                item["club_draw_at"] = timing.get("club_draw_at") or "2026-09-17T20:00:00+07:00"
                 item["stage1_start_at"] = timing.get("stage1_start_at")
                 # V1.5.73: nhãn thời gian khởi tranh hiển thị trực tiếp trên card giải đấu.
                 start_label_dt = _parse_tournament_dt(item.get("stage1_start_at"))
