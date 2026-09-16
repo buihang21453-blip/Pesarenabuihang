@@ -125,7 +125,7 @@ Không tuyên bố đã sửa/tạo ZIP nếu file chưa thực sự tồn tại
 - Bắt buộc kiểm tra các route Admin, Test Support, Room, League, Scheduling và Rewards sau thay đổi cấu trúc.
 
 
-## Quy tắc duyệt IP từ V1.5.82
+## Quy tắc duyệt IP từ V1.5.83
 - Player mới trùng IP đăng ký hoặc IP gần nhất với player khác: không tự duyệt, chuyển `pending`.
 - Player approved truy cập từ IP đang trùng: chuyển `pending`; Admin được cảnh báo.
 - 2 tài khoản test do Admin quản lý và tài khoản Admin được loại khỏi cơ chế chặn tự động.
@@ -142,5 +142,8 @@ Không tuyên bố đã sửa/tạo ZIP nếu file chưa thực sự tồn tại
 - Không cho thay khi HLV cũ đang ở phòng C1 active hoặc HLV mới đã có lịch sử trận trong cùng giải.
 - Mọi thay HLV phải ghi `admin_action` và cập nhật `replacement_history`.
 
-### Layout V1.5.82
+### Layout V1.5.83
 - Không ẩn QR Zalo hoặc cắt nội dung phòng đấu để ép giao diện vừa màn hình; ưu tiên giảm khoảng trống, giữ scroll trang khi cần.
+
+### V1.5.83
+- Chỉnh topbar phòng đấu phải giữ nguyên ID chia sẻ, room code, logo và route; responsive không cắt nội dung.

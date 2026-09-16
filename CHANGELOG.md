@@ -1,3 +1,8 @@
+## V1.5.83
+- Thu gọn riêng thanh tiêu đề phòng Rank/C1: cao khoảng 62px desktop, chữ PHÒNG ĐẤU/mã phòng nhỏ, logo và nút chia sẻ cân đối.
+- Mobile dùng thanh ngang gọn, giữ nút chia sẻ dạng biểu tượng, không thay đổi JS/ID/endpoint.
+- Không thay đổi dữ liệu hay luật thi đấu.
+
 ## V1.5.82
 - Cân đối sidebar desktop theo chiều cao viewport: logo, menu, phiên bản và QR Zalo thu gọn có giới hạn; QR vẫn bấm được.
 - Thu gọn khoảng trống trang phòng đấu ở màn hình laptop (cao <=1000px), giảm chiều cao tối thiểu 3 cột, khung CLB, topbar và dải chế độ.

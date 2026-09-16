@@ -1,6 +1,6 @@
 # PROJECT_MAP — PES Arena
 
-**Baseline:** V1.5.82  
+**Baseline:** V1.5.83  
 **Stack:** Flask + Jinja2 + Supabase + vanilla CSS/JavaScript  
 **Entry point:** `app.py`  
 
@@ -106,7 +106,7 @@ Render UI
 | `templates/tournament_detail.html` | Template legacy/chi tiết; GET detail hiện chủ yếu tương thích/redirect theo lịch sử V1.5.54 |
 | `templates/c1_rooms.html` | Trang/phần phòng C1 legacy/trung gian còn được giữ cho tương thích |
 
-### 5.1 Backend C1 sau V1.5.82
+### 5.1 Backend C1 sau V1.5.83
 
 ```text
 modules/
@@ -258,13 +258,13 @@ Yêu cầu
 ```
 
 
-### V1.5.82 – lưu ý dependency của `tournament_competition_parts`
+### V1.5.83 – lưu ý dependency của `tournament_competition_parts`
 Các partition vẫn giữ endpoint cũ nhưng có thể tham chiếu helper/hằng số ở partition khác như khi còn monolith.
 `tournament_competition.register_routes()` vì vậy xây dựng namespace chung hoàn chỉnh và đồng bộ namespace này vào tất cả partition sau khi đăng ký.
 Không được bỏ bước đồng bộ này khi thêm partition mới.
 
 
-### V1.5.82 – Duyệt IP & Admin Notification
+### V1.5.83 – Duyệt IP & Admin Notification
 - `app.py`: `registration_or_latest_ip_conflicts()` đối chiếu IP đăng ký + IP gần nhất.
 - `modules/auth_routes.py`: registration/login hold khi trùng IP; popup blocked account.
 - `modules/admin_account_routes.py`: Admin gửi notification riêng theo tài khoản.
@@ -274,12 +274,15 @@ Không được bỏ bước đồng bộ này khi thêm partition mới.
 - Dùng `user_notifications` hiện có, không cần migration mới.
 
 
-### V1.5.82 – Thay HLV giữa giải
+### V1.5.83 – Thay HLV giữa giải
 - Backend: `modules/tournament_competition_parts/admin.py` → `admin_tournament_member_replace`.
 - UI Admin: `templates/admin.html` → nút `🔄 Thay HLV` trong danh sách HLV giải.
 - Cơ chế: chuyển ownership của suất qua `tournament_members`, `tournament_registrations`, `tournament_matches`, `tournament_clubs`, reward markers và các setting/draft có user id.
 - Audit: snapshot trước khi chuyển được append vào `tournament_settings` với key `replacement_history`.
 - Lịch rảnh (`tournament_availability_slots`) của HLV mới luôn được xóa để bắt buộc khai báo lại.
 
-### V1.5.82 – Responsive room / sidebar
+### V1.5.83 – Responsive room / sidebar
 - `static/style.css`: CSS scoped desktop `.player-sidebar` và `#roomLiveShell`, viewport height <=1000px.
+
+### V1.5.83
+- `static/style.css`: CSS compact `.room-layout-v137 .room-stage-topbar` cho Rank/C1, không đổi HTML/JS.
