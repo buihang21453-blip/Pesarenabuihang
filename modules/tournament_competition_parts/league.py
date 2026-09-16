@@ -572,6 +572,37 @@ def register_league(context):
         flash("Đã Random lại đủ 16 CLB: Tier 1→Pot 3; Tier 2→Pot 2; Tier 3→Pot 1. Vé thưởng sớm và lịch sử được giữ nguyên.","success")
         return redirect_admin("tournaments")
 
+    @app.post('/admin/tournaments/<tournament_id>/clubs/revoke-all')
+    @login_required
+    @admin_required
+    def admin_tournament_revoke_clubs(tournament_id):
+        """Revoke every assigned GĐ2 club atomically; tickets and rewards are untouched."""
+        if request.form.get('confirm_revoke') != 'REVOKE_ALL_16_CLUBS':
+            flash('Chưa xác nhận thu hồi 16 CLB.', 'warning')
+            return redirect_admin('tournaments')
+        stages, _ = _rows(db.table('tournament_stages').select('stage_code,status').eq('tournament_id', tournament_id), 'ops_revoke_stages')
+        status = {str(row.get('stage_code')): row.get('status') for row in stages}
+        if status.get('stage1') != 'completed' or status.get('league') not in {'draft', 'pending'} or _matches(tournament_id, 'league') or _matches(tournament_id, 'knockout'):
+            flash('Chỉ thu hồi CLB sau khi GĐ1 hoàn tất và trước khi GĐ2 có lịch/trận.', 'error')
+            return redirect_admin('tournaments')
+        if (_setting(tournament_id, 'club_selection', {}) or {}).get('open'):
+            flash('Hãy đóng chọn CLB thủ công trước khi thu hồi.', 'warning')
+            return redirect_admin('tournaments')
+        try:
+            result = execute_query(db.rpc('c1_admin_revoke_tier_clubs', {'p_tournament_id': tournament_id}), 'ops_admin_revoke_clubs_rpc', attempts=1)
+            if getattr(result, 'data', None) != 16:
+                raise RuntimeError('RPC did not confirm all 16 participants')
+        except Exception:
+            app.logger.exception('C1 club revocation failed: tournament_id=%s', tournament_id)
+            flash('Thu hồi không thành công. Kiểm tra SQL_V1.5.91_ADMIN_REVOKE_CLUBS.sql và log. Giao dịch SQL rollback nếu lỗi.', 'error')
+            return redirect_admin('tournaments')
+        try:
+            log_admin_action('Thu hồi CLB GĐ2 của 16 HLV', 'tournament_club', details={'tournament_id': tournament_id})
+        except Exception:
+            app.logger.exception('Club revocation succeeded but auxiliary audit failed: %s', tournament_id)
+        flash('Đã thu hồi CLB của 16 HLV. Vé thưởng và lịch sử giữ nguyên. Hãy Random lại theo Tier 1→Pot 3, Tier 2→Pot 2, Tier 3→Pot 1.', 'success')
+        return redirect_admin('tournaments')
+
     @app.post('/admin/tournaments/<tournament_id>/clubs/assign-remaining')
     @login_required
     @admin_required

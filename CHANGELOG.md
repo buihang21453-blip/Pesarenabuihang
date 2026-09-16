@@ -1,3 +1,9 @@
+## V1.5.91 – Sửa tab Admin GĐ1/GĐ2/KO và thu hồi CLB GĐ2 (chưa kiểm thử Production)
+- Sửa lỗi JS khởi tạo tab trước khi DOM chứa các panel được parse: chuyển sang DOMContentLoaded, kiểm tra panel, duy trì tab giai đoạn sau POST bằng sessionStorage.
+- Admin GĐ2 có nút thu hồi 16 CLB đã Random, yêu cầu xác nhận. RPC một giao dịch bảo vệ giai đoạn, lịch/trận, đủ 16 thành viên, đóng chọn CLB thủ công; giải phóng CLB và xóa fixed_club, candidate, selected_club; ghi audit CLB cũ, giữ nguyên vé, skipped, thưởng và kết quả GĐ1.
+- Sau thu hồi phải dùng Admin Random lại theo Tier1→Pot3, Tier2→Pot2, Tier3→Pot1. Không tự động mở GĐ2.
+- BẮT BUỘC chạy SQL_V1.5.91_ADMIN_REVOKE_CLUBS.sql trước khi dùng nút thu hồi (và SQL V1.5.90 trước nút Random). Chưa kiểm thử Supabase Production/2 tài khoản test.
+
 ## V1.5.90 – Admin Random lại 16 CLB đúng Tier/Pot (chưa kiểm thử Production)
 - Sửa sai phân bổ CLB: Tier HLV 1 (5 người) → Pot CLB 3; Tier HLV 2 (6 người) → Pot CLB 2; Tier HLV 3 (5 người) → Pot CLB 1.
 - Nút Admin Random lại toàn bộ 16 CLB trước khi có lịch/trận GĐ2, xác nhận trước khi chạy và cho phép bấm lại. SQL RPC một transaction: nếu lỗi rollback toàn bộ, kiểm tra 16 user/CLB không trùng, 24 CLB hợp lệ, Stage chưa bắt đầu.

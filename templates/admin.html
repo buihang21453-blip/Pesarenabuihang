@@ -1055,33 +1055,48 @@
       <h3 style="margin:18px 0 10px">🎯 Điều hành vòng hiện tại</h3>
       <nav class="c1-stage-admin-tabs" aria-label="Điều hành giai đoạn C1" style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
         <button type="button" class="btn gold" data-c1-stage-tab="gd1" aria-pressed="true">GĐ 1</button>
-        <button type="button" class="btn gray" data-c1-stage-tab="gd2" aria-pressed="false">GĐ 2</button>
+        <button type="button" class="btn gray" data-c1-stage-tab="gd2" aria-pressed="false">GĐ 2 · Pot / CLB / Lịch</button>
         <button type="button" class="btn gray" data-c1-stage-tab="ko" aria-pressed="false">KO</button>
       </nav>
       <script>
-      (function(){
-        const nav=document.currentScript.previousElementSibling;
-        const root=nav.parentElement;
-        const panels={
-          gd1:[root.querySelector('#c1-admin-gd1')],
-          gd2:[root.querySelector('#c1-admin-gd2'),root.querySelector('[data-tournament-op-panel="league"]')],
-          ko:[root.querySelector('#c1-admin-ko')]
+      // Panels are below this script: initialize only after the document is parsed.
+      document.addEventListener('DOMContentLoaded', function () {
+        const nav = document.querySelector('.c1-stage-admin-tabs');
+        if (!nav) return;
+        const root = nav.closest('[data-admin-panel="tournaments"]');
+        if (!root) return;
+        const panels = {
+          gd1: [root.querySelector('#c1-admin-gd1')],
+          gd2: [root.querySelector('#c1-admin-gd2'), root.querySelector('[data-tournament-op-panel="league"]')],
+          ko: [root.querySelector('#c1-admin-ko')]
         };
-        if(Object.values(panels).flat().some(panel=>!panel)) return;
-        function activate(key){
-          Object.entries(panels).forEach(([name,items])=>items.forEach(panel=>{panel.hidden=name!==key;panel.style.display=name===key?'block':'none';}));
-          nav.querySelectorAll('[data-c1-stage-tab]').forEach(button=>{
-            const active=button.dataset.c1StageTab===key;
-            button.setAttribute('aria-pressed',String(active));
-            button.classList.toggle('gold',active);button.classList.toggle('gray',!active);
-          });
+        if (Object.values(panels).flat().some(panel => !panel)) {
+          console.error('PES Arena: missing C1 stage admin panel');
+          return;
         }
-        nav.addEventListener('click',event=>{
-          const button=event.target.closest('[data-c1-stage-tab]');
-          if(button) activate(button.dataset.c1StageTab);
+        const keyName = 'pes_c1_admin_stage';
+        function activate(key) {
+          if (!panels[key]) key = 'gd1';
+          Object.entries(panels).forEach(([name, items]) => items.forEach(panel => {
+            panel.hidden = name !== key;
+            panel.style.display = name === key ? 'block' : 'none';
+          }));
+          nav.querySelectorAll('[data-c1-stage-tab]').forEach(button => {
+            const active = button.dataset.c1StageTab === key;
+            button.setAttribute('aria-pressed', String(active));
+            button.classList.toggle('gold', active);
+            button.classList.toggle('gray', !active);
+          });
+          try { sessionStorage.setItem(keyName, key); } catch (_) { /* optional */ }
+        }
+        nav.addEventListener('click', event => {
+          const button = event.target.closest('[data-c1-stage-tab]');
+          if (button && nav.contains(button)) activate(button.dataset.c1StageTab);
         });
-        activate(location.hash==='#c1-admin-ko'?'ko':location.hash==='#c1-admin-gd2'?'gd2':'gd1');
-      })();
+        let saved = 'gd1';
+        try { saved = sessionStorage.getItem(keyName) || 'gd1'; } catch (_) { /* optional */ }
+        activate(saved);
+      });
       </script>
 
       <div class="tournament-op-tab-panel" id="c1-admin-gd1" data-tournament-op-panel="stage1" style="padding:15px;border:1px solid rgba(46,204,113,.3);border-radius:14px;margin-bottom:12px">
@@ -1148,6 +1163,11 @@
             <input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="confirm_rule" value="TIER_POT_321">
             <button class="btn gold" type="submit">🔄 Admin Random lại 16 CLB theo Tier/Pot</button>
           </form>
+          <form method="post" action="{{ url_for('admin_tournament_revoke_clubs',tournament_id=ot.id) }}" onsubmit="return confirm('THU HỒI TOÀN BỘ CLB của 16 HLV? CLB sẽ được trả về pool và mọi HLV tạm thời KHÔNG có CLB. Giữ nguyên vé còn lại, ZCoin, Lucky Box, BXH GĐ1 và lịch sử. Chỉ thực hiện trước khi có lịch GĐ2. Sau đó Admin phải Random lại theo Tier/Pot.');" style="margin-top:9px">
+            <input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="confirm_revoke" value="REVOKE_ALL_16_CLUBS">
+            <button class="btn red" type="submit">↩ Thu hồi CLB đã Random của 16 HLV</button>
+          </form>
+          <p class="small">Thu hồi chỉ xóa quyền sở hữu CLB hiện tại, không hoàn vé đã dùng hoặc xóa lịch sử. Không dùng khi GĐ2 có lịch/trận.</p>
           {% if cd.get('tier_club_pot_rule') %}<p class="small" style="color:#8ee0a1">✓ Đã áp dụng quy tắc mới. Nút này có thể dùng lại nếu Admin muốn quay lại bộ CLB khác trước GĐ2.</p>{% endif %}
         </div>
         {% if cd.get('order') %}<p class="small">Top 1–3: vé thưởng sớm không hết hạn, HLV có thể Random/chốt/đổi CLB độc lập bất cứ lúc nào.</p>{% endif %}

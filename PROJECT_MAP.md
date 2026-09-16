@@ -309,3 +309,9 @@ V1.5.88: `rewards.py` route `admin_tournament_stage1_finish` ghi GĐ2 `pending` 
 V1.5.89: Vé thưởng sớm GĐ1 thuộc `modules/tournament_competition_parts/league.py` (routes random/accept/reward-reroll và bảo lưu state), `core.py` (không auto-expire cho Top 1–3). `modules/tournament_routes.py` cung cấp `landing_hub.early_reward_entry` cho `templates/tournament/cards/c1_actions.html`; Admin theo dõi tại `templates/admin.html`. Lưu tại `tournament_settings.club_draft_v2` không thay schema.
 
 V1.5.90: Admin `POST /admin/tournaments/<id>/clubs/rerandom-by-tier` tại `modules/tournament_competition_parts/league.py`, nút UI `templates/admin.html`, rule Pot trong `modules/tournament_competition.py`. DB RPC `public.c1_admin_rerandom_tier_clubs` tại SQL_V1.5.90_ADMIN_RERANDOM_TIER_POT.sql thực hiện một transaction thay 16 `tournament_members.fixed_club_*`/`tournament_clubs.selected_by`, bảo toàn vé và lịch sử trong `tournament_settings.club_draft_v2`; không chạm thưởng ZCoin/Lucky Box. Chặn GĐ2 sai mapping và giới hạn reroll vé trong Pot tương ứng.
+
+### V1.5.91 – Tab điều hành và thu hồi CLB
+- `templates/admin.html`: tab GD1/GD2/KO chờ DOMContentLoaded; GD2 gồm nút thu hồi 16 CLB.
+- `modules/tournament_competition_parts/league.py`: route POST `/admin/tournaments/<tournament_id>/clubs/revoke-all` (admin only) gọi RPC.
+- `SQL_V1.5.91_ADMIN_REVOKE_CLUBS.sql`: RPC atomic giải phóng `tournament_clubs.selected_by/selected_at`, `tournament_members.fixed_club_id/fixed_club_name`, cập nhật JSON `tournament_settings.club_draft_v2`; giữ vé/lịch sử và các bảng khác.
+- Ảnh hưởng: giao diện Admin tab, lựa chọn CLB / Random lại; không sửa kết quả, BXH, điểm thưởng, lịch thi đấu.
