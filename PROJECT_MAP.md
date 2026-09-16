@@ -326,3 +326,8 @@ V1.5.90: Admin `POST /admin/tournaments/<id>/clubs/rerandom-by-tier` tại `modu
 ### V1.5.93 – Điều hướng Admin theo hash
 - `templates/admin.html`: thanh điều hướng giai đoạn đặt trên đầu tab Điều hành giải đấu, liên kết trực tiếp tới `#c1-admin-gd1`, `#c1-admin-gd2`, `#c1-admin-ko`; script chọn panel theo hash hoặc session.
 - `static/js/admin_dashboard.js`: ba hash trên kích hoạt tab cha `tournaments` thay vì rơi về `overview`. Không tác động route hay database.
+
+### V1.5.94 – Admin GĐ2: Random lại / Thu hồi phản hồi tại chỗ
+- `templates/admin.html`: hai POST `data-c1-club-admin-action` không dùng confirm; fetch và trạng thái lỗi nội tuyến, chỉ reload sau JSON `ok`.
+- `modules/tournament_competition_parts/league.py`: hai route POST trả JSON cho XHR, fallback redirect `#c1-admin-gd2`, vẫn gọi RPC V1.5.90/91 để ghi giao dịch nguyên tử.
+- `app.py`: đồng bộ version; bảng `tournament_members`, `tournament_clubs`, `tournament_settings` không đổi schema.

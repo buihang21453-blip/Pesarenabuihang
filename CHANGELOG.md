@@ -1,3 +1,11 @@
+## V1.5.94 – Sửa nút Random lại / Thu hồi không phản hồi
+- Bỏ hộp thoại `confirm()` của trình duyệt cho hai thao tác Admin GĐ2 theo yêu cầu.
+- Hai form POST trực tiếp qua fetch; báo lỗi ngay trong khu GĐ2 (không popup), chỉ tải lại khi backend xác nhận RPC trả đúng 16.
+- API giữ nguyên điều kiện an toàn GĐ1/GĐ2, chưa có trận, chưa dùng vé, khóa chọn thủ công; không tự vượt qua chốt chặn.
+- POST truyền thống dự phòng đưa Admin về đúng `#c1-admin-gd2`; log lỗi SQL giữ ở server.
+- Không thay đổi schema/SQL, dữ liệu giải và thưởng; SQL V1.5.90/91 vẫn phải được chạy trước.
+- Kiểm tra tĩnh không tương đương với kiểm thử Supabase Production.
+
 ## V1.5.93 – Đưa điều hướng GĐ1/GĐ2/KO lên đầu khu Điều hành giải đấu
 - Di chuyển tiêu đề “🎯 Điều hành vòng hiện tại” và ba nút chuyển giai đoạn lên ngay đầu màn Điều hành giải đấu, tránh phải cuộn qua toàn bộ danh sách HLV/lịch.
 - Nút dùng đúng URL fragment `/admin#c1-admin-gd1`, `/admin#c1-admin-gd2`, `/admin#c1-admin-ko`; mở liên kết trực tiếp vào đúng tab Admin và đúng giai đoạn, kể cả khi tải lại trang.

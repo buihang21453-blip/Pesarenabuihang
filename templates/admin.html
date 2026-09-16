@@ -1058,6 +1058,43 @@
       </div>
 
       <script>
+      // V1.5.94: no browser confirmation; show errors in the GĐ2 panel itself.
+      document.addEventListener('DOMContentLoaded', function () {
+        const panel = document.getElementById('c1-admin-gd2');
+        if (!panel) return;
+        const status = panel.querySelector('[data-c1-club-action-status]');
+        panel.querySelectorAll('form[data-c1-club-admin-action]').forEach(function (form) {
+          form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            if (!button || button.disabled) return;
+            button.disabled = true;
+            status.hidden = false;
+            status.style.color = '#f1ca68';
+            status.textContent = 'Đang xử lý...';
+            try {
+              const response = await fetch(form.action, {
+                method: 'POST', body: new FormData(form), credentials: 'same-origin',
+                headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json'},
+                redirect: 'follow'
+              });
+              const result = await response.json();
+              if (!response.ok || !result.ok) {
+                status.style.color = '#ff9b85';
+                status.textContent = result.message || 'Không thể thực hiện. Kiểm tra trạng thái giải và log server.';
+                return;
+              }
+              // Reload only when the database confirms success; display fresh allocation table.
+              window.location.assign(window.location.pathname + '?c1_club_updated=' + Date.now() + '#c1-admin-gd2');
+            } catch (error) {
+              status.style.color = '#ff9b85';
+              status.textContent = 'Không nhận được kết quả từ máy chủ. Hãy tải lại trang để kiểm tra trước khi thử tiếp.';
+            } finally {
+              button.disabled = false;
+            }
+          });
+        });
+      });
       // Panels are below this script: initialize only after the document is parsed.
       document.addEventListener('DOMContentLoaded', function () {
         const nav = document.querySelector('.c1-stage-admin-tabs');
@@ -1166,14 +1203,15 @@
         <div style="margin-top:10px;padding:12px;border:1px solid rgba(241,202,104,.45);border-radius:10px">
           <strong>🔄 Admin sửa Random CLB sai Tier/Pot · đủ 16 HLV</strong>
           <p class="small">Random CLB GỐC cho toàn bộ 16 HLV trước khi sử dụng vé thưởng sớm; giữ nguyên Tier HLV, vé còn lại, lịch sử và thưởng ZCoin/Lucky Box. Không tác động kết quả GĐ1. Chỉ thực hiện trước khi sinh lịch và bắt đầu GĐ2. Mỗi lần nhấn sẽ sinh bộ CLB mới.</p>
-          <form method="post" action="{{ url_for('admin_tournament_rerandom_clubs_by_tier',tournament_id=ot.id) }}" onsubmit="return confirm('XÁC NHẬN RANDOM LẠI TOÀN BỘ 16 CLB? Tier 1 → Pot 3, Tier 2 → Pot 2, Tier 3 → Pot 1. CLB cũ sẽ được thay nhưng VÉ/THƯỞNG/LỊCH SỬ GIỮ NGUYÊN. Chỉ làm trước khi sinh lịch GĐ2.');">
+          <form data-c1-club-admin-action method="post" action="{{ url_for('admin_tournament_rerandom_clubs_by_tier',tournament_id=ot.id) }}">
             <input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="confirm_rule" value="TIER_POT_321">
             <button class="btn gold" type="submit">🔄 Admin Random lại 16 CLB theo Tier/Pot</button>
           </form>
-          <form method="post" action="{{ url_for('admin_tournament_revoke_clubs',tournament_id=ot.id) }}" onsubmit="return confirm('THU HỒI TOÀN BỘ CLB của 16 HLV? CLB sẽ được trả về pool và mọi HLV tạm thời KHÔNG có CLB. Giữ nguyên vé còn lại, ZCoin, Lucky Box, BXH GĐ1 và lịch sử. Chỉ thực hiện trước khi có lịch GĐ2. Sau đó Admin phải Random lại theo Tier/Pot.');" style="margin-top:9px">
+          <form data-c1-club-admin-action method="post" action="{{ url_for('admin_tournament_revoke_clubs',tournament_id=ot.id) }}" style="margin-top:9px">
             <input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="confirm_revoke" value="REVOKE_ALL_16_CLUBS">
             <button class="btn red" type="submit">↩ Thu hồi CLB đã Random của 16 HLV</button>
           </form>
+          <p data-c1-club-action-status role="status" aria-live="polite" class="small" hidden style="padding:9px 12px;border:1px solid rgba(241,202,104,.35);border-radius:8px;margin:9px 0 0"></p>
           <p class="small">Thu hồi chỉ xóa quyền sở hữu CLB hiện tại, không hoàn vé đã dùng hoặc xóa lịch sử. Không dùng khi GĐ2 có lịch/trận.</p>
           {% if cd.get('tier_club_pot_rule') %}<p class="small" style="color:#8ee0a1">✓ Đã áp dụng quy tắc mới. Nút này có thể dùng lại nếu Admin muốn quay lại bộ CLB khác trước GĐ2.</p>{% endif %}
         </div>

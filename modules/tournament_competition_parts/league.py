@@ -548,32 +548,34 @@ def register_league(context):
         flash("Vé thưởng sớm không còn thời hạn. HLV tự Random/chốt CLB; Admin không Random thay để tránh mất quyền thưởng.","warning")
         return redirect_admin("tournaments")
 
+    def _club_admin_reply(message, category="error"):
+        """Inline feedback for the two club-management forms, regular POST fallback."""
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": category == "success", "message": message}), (200 if category == "success" else 409)
+        flash(message, category)
+        return redirect(url_for("admin") + "#c1-admin-gd2")
+
     @app.post('/admin/tournaments/<tournament_id>/clubs/rerandom-by-tier')
     @login_required
     @admin_required
     def admin_tournament_rerandom_clubs_by_tier(tournament_id):
         """Correction batch: database RPC commits all 16 allocations or none."""
         if request.form.get("confirm_rule") != "TIER_POT_321":
-            flash("Chưa xác nhận quy tắc Tier 1→Pot 3, Tier 2→Pot 2, Tier 3→Pot 1.","warning")
-            return redirect_admin("tournaments")
+            return _club_admin_reply("Thiếu thông tin xác thực thao tác Random lại.")
         stages,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id),"ops_tier_rerandom_stages")
         status={str(x.get("stage_code")):x.get("status") for x in stages}
         if status.get("stage1")!="completed" or status.get("league") not in {"pending","draft"} or _matches(tournament_id,"league") or _matches(tournament_id,"knockout"):
-            flash("Chỉ được sửa Random khi GĐ1 đã hoàn thành, GĐ2 chưa bắt đầu và chưa sinh lịch/trận.","error")
-            return redirect_admin("tournaments")
+            return _club_admin_reply(f"Không thể Random: GĐ1={status.get('stage1') or 'chưa có'}, GĐ2={status.get('league') or 'chưa có'}. Cần GĐ1 hoàn tất, GĐ2 chuẩn bị và chưa có lịch/trận GĐ2 hoặc KO.")
         state=_club_draft_state(tournament_id,False) or {}
         members=_all_members(tournament_id)
         grouped={p:[m for m in members if int(m.get("pot_no") or 0)==p] for p in (1,2,3)}
         if len(members)!=16 or [len(grouped[p]) for p in (1,2,3)]!=[5,6,5] or len(state.get("all_order") or [])!=16:
-            flash("Cần đủ 16 HLV chia Tier 5–6–5 và đã mở Random CLB; không thay đổi dữ liệu.","error")
-            return redirect_admin("tournaments")
+            return _club_admin_reply("Không thể Random: chưa đủ 16 HLV, Tier chưa đúng 5–6–5 hoặc chưa khởi tạo danh sách Random 16 người.")
         if (_setting(tournament_id,"club_selection",{}) or {}).get("open"):
-            flash("Hãy khóa chế độ chọn CLB thủ công trước khi Random lại.","warning")
-            return redirect_admin("tournaments")
+            return _club_admin_reply("Cần khóa chế độ chọn CLB thủ công trước khi Random lại.")
         if any(int(e.get("tickets_remaining") or 0)<int(e.get("tickets_total") or 0)
                for e in (state.get("entries") or {}).values() if e.get("allocation_type")=="EARLY_REWARD"):
-            flash("Đã có HLV sử dụng vé thưởng sớm; không thể Random lại toàn bộ và ghi đè CLB đã đổi.","error")
-            return redirect_admin("tournaments")
+            return _club_admin_reply("Đã có HLV dùng vé thưởng sớm; không thể ghi đè CLB đã đổi.")
         # Sample each exclusive Pot without replacement; preserve the 2/1/1 ticket balances.
         allocations=[]
         for tier,club_pot in ((1,3),(2,2),(3,1)):
@@ -588,14 +590,12 @@ def register_league(context):
                 raise RuntimeError("RPC did not confirm 16 assignments")
         except Exception:
             app.logger.exception("C1 admin tier/pot correction failed: tournament_id=%s",tournament_id)
-            flash("Không thể Random lại. Kiểm tra đã chạy SQL_V1.5.90_ADMIN_RERANDOM_TIER_POT.sql và log; giao dịch DB tự rollback nếu lỗi.","error")
-            return redirect_admin("tournaments")
+            return _club_admin_reply("Random thất bại ở database. Kiểm tra SQL_V1.5.90_ADMIN_RERANDOM_TIER_POT.sql, cấu hình Service Role và log server; không được coi là thành công.")
         try:
             log_admin_action("Random lại 16 CLB theo Tier/Pot","tournament_club",details={"tournament_id":tournament_id,"rule":"Tier1:Pot3;Tier2:Pot2;Tier3:Pot1"})
         except Exception:
             app.logger.exception("Tier/Pot correction succeeded but auxiliary audit failed: %s",tournament_id)
-        flash("Đã Random lại đủ 16 CLB: Tier 1→Pot 3; Tier 2→Pot 2; Tier 3→Pot 1. Vé thưởng sớm và lịch sử được giữ nguyên.","success")
-        return redirect_admin("tournaments")
+        return _club_admin_reply("Đã Random lại đủ 16 CLB đúng Tier/Pot, giữ nguyên vé thưởng và lịch sử.", "success")
 
     @app.post('/admin/tournaments/<tournament_id>/clubs/revoke-all')
     @login_required
@@ -603,35 +603,29 @@ def register_league(context):
     def admin_tournament_revoke_clubs(tournament_id):
         """Revoke every assigned GĐ2 club atomically; tickets and rewards are untouched."""
         if request.form.get('confirm_revoke') != 'REVOKE_ALL_16_CLUBS':
-            flash('Chưa xác nhận thu hồi 16 CLB.', 'warning')
-            return redirect_admin('tournaments')
+            return _club_admin_reply('Thiếu thông tin xác thực thao tác thu hồi.')
         stages, _ = _rows(db.table('tournament_stages').select('stage_code,status').eq('tournament_id', tournament_id), 'ops_revoke_stages')
         status = {str(row.get('stage_code')): row.get('status') for row in stages}
         if status.get('stage1') != 'completed' or status.get('league') not in {'draft', 'pending'} or _matches(tournament_id, 'league') or _matches(tournament_id, 'knockout'):
-            flash('Chỉ thu hồi CLB sau khi GĐ1 hoàn tất và trước khi GĐ2 có lịch/trận.', 'error')
-            return redirect_admin('tournaments')
+            return _club_admin_reply(f"Không thể thu hồi: GĐ1={status.get('stage1') or 'chưa có'}, GĐ2={status.get('league') or 'chưa có'}. Cần GĐ1 hoàn tất, GĐ2 chuẩn bị và chưa có lịch/trận GĐ2 hoặc KO.")
         if (_setting(tournament_id, 'club_selection', {}) or {}).get('open'):
-            flash('Hãy đóng chọn CLB thủ công trước khi thu hồi.', 'warning')
-            return redirect_admin('tournaments')
+            return _club_admin_reply('Cần đóng chế độ chọn CLB thủ công trước khi thu hồi.')
         state = _club_draft_state(tournament_id, False) or {}
         if any(int(e.get('tickets_remaining') or 0)<int(e.get('tickets_total') or 0)
                for e in (state.get('entries') or {}).values() if e.get('allocation_type')=='EARLY_REWARD'):
-            flash('Đã có HLV dùng vé thưởng sớm; không thu hồi để tránh xóa CLB đã đổi.', 'error')
-            return redirect_admin('tournaments')
+            return _club_admin_reply('Đã có HLV dùng vé thưởng sớm; không thể thu hồi để tránh xóa CLB đã đổi.')
         try:
             result = execute_query(db.rpc('c1_admin_revoke_tier_clubs', {'p_tournament_id': tournament_id}), 'ops_admin_revoke_clubs_rpc', attempts=1)
             if getattr(result, 'data', None) != 16:
                 raise RuntimeError('RPC did not confirm all 16 participants')
         except Exception:
             app.logger.exception('C1 club revocation failed: tournament_id=%s', tournament_id)
-            flash('Thu hồi không thành công. Kiểm tra SQL_V1.5.91_ADMIN_REVOKE_CLUBS.sql và log. Giao dịch SQL rollback nếu lỗi.', 'error')
-            return redirect_admin('tournaments')
+            return _club_admin_reply('Thu hồi thất bại ở database. Kiểm tra SQL_V1.5.91_ADMIN_REVOKE_CLUBS.sql, cấu hình Service Role và log server; dữ liệu không được coi là đã thu hồi.')
         try:
             log_admin_action('Thu hồi CLB GĐ2 của 16 HLV', 'tournament_club', details={'tournament_id': tournament_id})
         except Exception:
             app.logger.exception('Club revocation succeeded but auxiliary audit failed: %s', tournament_id)
-        flash('Đã thu hồi CLB của 16 HLV. Vé thưởng và lịch sử giữ nguyên. Hãy Random lại theo Tier 1→Pot 3, Tier 2→Pot 2, Tier 3→Pot 1.', 'success')
-        return redirect_admin('tournaments')
+        return _club_admin_reply('Đã thu hồi CLB của 16 HLV, giữ nguyên vé thưởng và lịch sử.', 'success')
 
     @app.post('/admin/tournaments/<tournament_id>/clubs/assign-remaining')
     @login_required
