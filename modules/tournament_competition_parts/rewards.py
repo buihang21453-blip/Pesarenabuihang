@@ -331,50 +331,65 @@ def register_rewards(context):
         return _grant_stage1_early_rewards(tournament_id)
 
     def _auto_finish_stage1(tournament_id):
-        """Finalize only a fully confirmed real stage; never open league automatically."""
+        """Finish confirmed GĐ1 and resume Pot setup after an interrupted request.
+
+        Reward transfers use deterministic idempotency keys; Pot updates are
+        repeatable. A completed stage must still be checked for incomplete Pot
+        preparation instead of returning early forever.
+        """
         stage=_stage(tournament_id,"stage1") or {}
-        if stage.get("status")=="completed":
-            return False
-        if stage.get("status") not in {"open","locked"}:
+        if stage.get("status") not in {"open","locked","completed"}:
             return False
         matches=_matches(tournament_id,"stage1")
         if not matches or any(m.get("status")!="completed" for m in matches):
             return False
         members=_all_members(tournament_id)
         progress=_stage1_progress(tournament_id)
-        if len(progress)!=16 or any(not row.get("eligible") for row in progress):
-            return False
-        if len(members)!=16:
-            app.logger.warning("C1 auto-finish refused: expected 16 members, got %s",len(members))
-            return False
-        # Reward RPCs use per-user deterministic idempotency keys. A failure must
-        # stop progression so a later confirmation/admin retry can recover.
-        _grant_stage1_early_rewards(tournament_id)
-        # Claim transition with compare-and-set to avoid repeated stage changes.
-        updated=execute_query(db.table("tournament_stages").update({
-            "status":"completed","updated_at":now_iso(),
-        }).eq("tournament_id",tournament_id).eq("stage_code","stage1").eq("status",stage["status"]),
-        "ops_stage1_auto_finish",attempts=2)
-        if not (updated.data or []):
+        if len(members)!=16 or len(progress)!=16 or any(not row.get("eligible") for row in progress):
             return False
         ranking=_ranking(tournament_id,"stage1")
-        if len(ranking)!=16:
-            app.logger.error("C1 stage1 completed but ranking not 16; admin review required")
-            return True
-        for i,row in enumerate(ranking):
-            execute_query(db.table("tournament_members").update({
-                "pot_no":1 if i<5 else 2 if i<11 else 3,"seed_no":i+1,
-            }).eq("tournament_id",tournament_id).eq("user_id",row["user_id"]),
-            "ops_stage1_auto_pot",attempts=2)
-        pots=_all_members(tournament_id)
-        if sorted(int(m.get("pot_no") or 0) for m in pots)!=[1]*5+[2]*6+[3]*5:
-            app.logger.error("C1 automatic pot verification failed; manual repair needed")
-            return True
+        if len(ranking)!=16 or len({str(r.get("user_id")) for r in ranking})!=16:
+            app.logger.error("C1 auto-finish: invalid 16-member ranking; refusing transition")
+            return False
+        # Reward operations have stable per-user idempotency keys. Run before
+        # changing the stage so an exception leaves a retriable state.
+        _grant_stage1_early_rewards(tournament_id)
+        if stage.get("status")!="completed":
+            updated=execute_query(db.table("tournament_stages").update({
+                "status":"completed","updated_at":now_iso(),
+            }).eq("tournament_id",tournament_id).eq("stage_code","stage1").eq("status",stage["status"]),
+            "ops_stage1_auto_finish",attempts=2)
+            if not (updated.data or []):
+                # Another request may have finished the stage; its Pot setup
+                # can still be resumed on the next invocation.
+                return False
+        expected={str(row["user_id"]):(1 if i<5 else 2 if i<11 else 3,i+1)
+                  for i,row in enumerate(ranking)}
+        for member in members:
+            uid=str(member.get("user_id") or "")
+            pot,seed=expected[uid]
+            if int(member.get("pot_no") or 0)!=pot or int(member.get("seed_no") or 0)!=seed:
+                execute_query(db.table("tournament_members").update({
+                    "pot_no":pot,"seed_no":seed,
+                }).eq("tournament_id",tournament_id).eq("user_id",uid),
+                "ops_stage1_auto_pot",attempts=2)
+        verified=_all_members(tournament_id)
+        if len(verified)!=16 or any(
+            (int(m.get("pot_no") or 0),int(m.get("seed_no") or 0))!=expected.get(str(m.get("user_id")))
+            for m in verified
+        ):
+            app.logger.error("C1 Pot verification failed; automatic lock withheld")
+            return False
         execute_query(db.table("tournament_settings").upsert({
             "tournament_id":tournament_id,"setting_key":"pots_locked",
-            "setting_value":{"locked":True,"pot_count":3,"pot_sizes":[5,6,5],"pot_format":"5-6-5","auto_at":now_iso()},
+            "setting_value":{"locked":True,"pot_count":3,"pot_sizes":[5,6,5],
+                             "pot_format":"5-6-5","auto_at":now_iso()},
             "updated_at":now_iso(),
         },on_conflict="tournament_id,setting_key"),"ops_stage1_auto_lock_pots",attempts=2)
+        lock=_setting(tournament_id,"pots_locked",{}) or {}
+        if not lock.get("locked"):
+            app.logger.error("C1 Pot lock not persisted; GĐ2 preparation withheld")
+            return False
         execute_query(db.table("tournament_stages").update({
             "status":"pending","updated_at":now_iso(),
         }).eq("tournament_id",tournament_id).eq("stage_code","league").neq("status","open"),

@@ -159,3 +159,5 @@ Không tự mở GĐ2 theo thời gian; Admin xác nhận khi đủ dữ liệu 
 V1.5.87 is a partial artifact only; do not deploy before stage1 automation, test account parity and DB integration tests.
 
 V1.5.87: không đưa lên Production khi chưa kiểm thử luồng giao dịch thưởng/chia Pot trên Supabase.
+
+- V1.5.87: Không đánh dấu bản phát hành production nếu chưa kiểm chứng giao dịch thưởng và dữ liệu giải thật; kiểm tra đầy đủ Pot trước khi khóa.

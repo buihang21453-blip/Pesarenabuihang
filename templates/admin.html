@@ -1053,6 +1053,37 @@
       </div>
 
       <h3 style="margin:18px 0 10px">🎯 Điều hành vòng hiện tại</h3>
+      <nav class="c1-stage-admin-tabs" aria-label="Điều hành giai đoạn C1" style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+        <button type="button" class="btn gold" data-c1-stage-tab="gd1" aria-pressed="true">GĐ 1</button>
+        <button type="button" class="btn gray" data-c1-stage-tab="gd2" aria-pressed="false">GĐ 2</button>
+        <button type="button" class="btn gray" data-c1-stage-tab="ko" aria-pressed="false">KO</button>
+      </nav>
+      <script>
+      (function(){
+        const nav=document.currentScript.previousElementSibling;
+        const root=nav.parentElement;
+        const panels={
+          gd1:[root.querySelector('#c1-admin-gd1')],
+          gd2:[root.querySelector('#c1-admin-gd2'),root.querySelector('[data-tournament-op-panel="league"]')],
+          ko:[root.querySelector('#c1-admin-ko')]
+        };
+        if(Object.values(panels).flat().some(panel=>!panel)) return;
+        function activate(key){
+          Object.entries(panels).forEach(([name,items])=>items.forEach(panel=>{panel.hidden=name!==key;panel.style.display=name===key?'block':'none';}));
+          nav.querySelectorAll('[data-c1-stage-tab]').forEach(button=>{
+            const active=button.dataset.c1StageTab===key;
+            button.setAttribute('aria-pressed',String(active));
+            button.classList.toggle('gold',active);button.classList.toggle('gray',!active);
+          });
+        }
+        nav.addEventListener('click',event=>{
+          const button=event.target.closest('[data-c1-stage-tab]');
+          if(button) activate(button.dataset.c1StageTab);
+        });
+        activate(location.hash==='#c1-admin-ko'?'ko':location.hash==='#c1-admin-gd2'?'gd2':'gd1');
+      })();
+      </script>
+
       <div class="tournament-op-tab-panel" id="c1-admin-gd1" data-tournament-op-panel="stage1" style="padding:15px;border:1px solid rgba(46,204,113,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">2️⃣ Giai đoạn 1 — Random & thi đấu 6 trận</h3>
         <p class="small"><strong>Làm theo thứ tự:</strong> Bắt đầu GĐ1 → Random đối thủ → theo dõi tiến độ → kết thúc GĐ1.</p>

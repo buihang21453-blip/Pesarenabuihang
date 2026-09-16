@@ -1,3 +1,8 @@
+## V1.5.87 – Bổ sung bản vá khôi phục GĐ1 và tab Admin (chưa xác nhận Production)
+- Tự hoàn tất GĐ1 có thể chạy lại khi bước chia/khóa Pot bị gián đoạn; kiểm chứng đủ 16 hạng và đúng seed trước khi khóa.
+- Tab Admin GĐ1 / GĐ2 / KO tương tác, GĐ2 gồm Pot/CLB và League.
+- Chưa xác nhận tính nguyên tử giữa các RPC thưởng, chưa kiểm thử Supabase và 2 tài khoản test thực tế.
+
 ## V1.5.87 – bổ sung sau bản partial (chưa kiểm thử tích hợp)
 - Nối xác nhận tỷ số GĐ1 với tự kết thúc khi đủ 16 HLV đạt điều kiện và tất cả trận completed.
 - Dùng lại engine thưởng có idempotency RPC; tự chia và khóa Pot 5–6–5; GĐ2 giữ pending và đặt lịch mặc định +2 ngày.
