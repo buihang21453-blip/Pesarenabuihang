@@ -1,3 +1,10 @@
+## V1.6.0 – GĐ2: bắt buộc gặp đủ 3 Tier trong 4 trận
+- Thay thuật toán chấm điểm/xác suất bằng lịch mẫu hợp lệ 4 lượt × 8 trận, hoán vị ngẫu nhiên HLV trong mỗi Tier 5–6–5; mỗi HLV có đúng 4 đối thủ khác nhau, gặp đủ Tier 1/2/3 trên CẢ BỐN trận (không ép đủ trong 3 trận đầu).
+- Bộ kiểm tra độc lập xác nhận 32 trận, bốn lượt hoàn chỉnh, mỗi HLV 4 trận, không trùng cặp và phủ đủ 3 Tier; từ chối trước khi ghi dữ liệu nếu sai. Nút mở GĐ2 kiểm tra lại độ phủ của lịch đã lưu.
+- Cập nhật nhãn Admin và league_config cho luật chính thức. Không đổi lịch đã tồn tại, lịch GĐ1, CLB, vé hoặc schema DB; không SQL migration.
+- Giới hạn hiện hữu: route tạo lịch ghi từng trận qua Supabase, chưa giao dịch atomic cho 32 insert. Nếu một lần ghi thất bại giữa chừng phải kiểm tra và xử lý lịch dở dang trước khi thử lại, không xóa dữ liệu Production tự động.
+- Kiểm tra local thuật toán nhiều lần và cú pháp; chưa thử Supabase Production, luồng Admin/2 tài khoản test trên server.
+
 ## V1.5.99 – Đồng hồ lễ bốc thăm CLB GĐ2
 - Admin đặt lại ngày giờ lễ bốc thăm GĐ2 (giờ Việt Nam) và lưu trong competition_timing.club_draw_at; đồng hồ thay toàn bộ khung tiến trình GĐ1 ở card Giải đấu.
 - Đồng hồ chỉ đổi nhãn khi đến giờ, không tự thực thi Random hay can thiệp vé thưởng.

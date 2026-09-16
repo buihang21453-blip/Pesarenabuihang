@@ -1256,7 +1256,7 @@ def register_core(context):
         return {
             "member_count":n,
             "stage1":{"per_hlv":s1_target,"planned":stage1_planned,"actual":actual_by_stage["stage1"],"completed":completed_by_stage["stage1"]},
-            "league":{"per_hlv":league_per_hlv,"pot_count":3,"matches_per_pot":1,"three_pot_matches":3,"wildcard_matches":1,"planned":league_planned,"actual":actual_by_stage["league"],"completed":completed_by_stage["league"]},
+            "league":{"per_hlv":league_per_hlv,"pot_count":3,"tier_coverage_required":True,"tier_coverage_scope":"all_four_matches","planned":league_planned,"actual":actual_by_stage["league"],"completed":completed_by_stage["league"]},
             "knockout":{"planned":knockout_planned,"actual":actual_by_stage["knockout"],"completed":completed_by_stage["knockout"],"label":knockout_label},
             "final_label":"2–3 trận (Bo3)",
             "total_min":total_min,"total_max":total_max,"completed":completed,"remaining":remaining,"percent":percent,

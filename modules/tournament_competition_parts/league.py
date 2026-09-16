@@ -1,7 +1,8 @@
-"""Internal tournament competition partition extracted from the legacy monolith.
+"""GĐ2 routes; draw generation and validation live in league_draw.py."""
 
-Registered only through :mod:`modules.tournament_competition`.
-"""
+from modules.tournament_competition_parts.league_draw import (
+    generate_four_match_draw, validate_four_match_draw,
+)
 
 def register_league(context):
     globals().update(context)
@@ -64,81 +65,8 @@ def register_league(context):
         return pairs
 
     def _league_four_match_pairs(tournament_id, members):
-        """Sinh đúng 4 trận/HLV: 3 lượt ưu tiên phủ đủ 3 Pot + 1 lượt random bất kỳ.
-
-        Mỗi lượt là một perfect matching toàn bộ HLV, nên mọi HLV có đúng 1 trận/lượt.
-        Ba lượt đầu tối đa hóa số Pot khác nhau đã gặp; lượt 4 chỉ yêu cầu không lặp đối thủ.
-        """
-        players=[str(m.get("user_id")) for m in members if m.get("user_id")]
-        if len(players)<4 or len(players)%2:
-            raise ValueError("GĐ2 cần số HLV chẵn và tối thiểu 4 để sinh 4 trận cân bằng.")
-        pot_by={str(m.get("user_id")):int(m.get("pot_no") or 0) for m in members if m.get("user_id")}
-        if len({p for p in pot_by.values() if p>0})<3:
-            raise ValueError("GĐ2 cần chia đủ 3 Pot trước khi sinh lịch.")
-
-        used=set()
-        covered={uid:set() for uid in players}
-        rounds=[]
-
-        def pair_key(a,b): return tuple(sorted((a,b)))
-
-        def make_matching(coverage_mode):
-            best=None; best_score=-10**9
-            # Random nhiều lần để tìm matching có độ phủ Pot tốt nhưng vẫn không lặp cặp.
-            for _ in range(5000):
-                arr=players[:]
-                random.shuffle(arr)
-                pairs=[]; ok=True; score=0
-                for i in range(0,len(arr),2):
-                    a,b=arr[i],arr[i+1]
-                    key=pair_key(a,b)
-                    if key in used:
-                        ok=False; break
-                    pairs.append((a,b))
-                    if coverage_mode:
-                        pa,pb=pot_by.get(a,0),pot_by.get(b,0)
-                        # Ưu tiên đối thủ thuộc Pot HLV chưa gặp; bonus thêm cho cặp khác Pot.
-                        score += (6 if pb and pb not in covered[a] else 0)
-                        score += (6 if pa and pa not in covered[b] else 0)
-                        score += (2 if pa and pb and pa!=pb else 0)
-                if ok:
-                    # Hạn chế để một HLV lặp quá nhiều cùng Pot trong 3 lượt đầu.
-                    if coverage_mode:
-                        for a,b in pairs:
-                            score -= len(covered[a] & {pot_by.get(b,0)})
-                            score -= len(covered[b] & {pot_by.get(a,0)})
-                    if score>best_score:
-                        best_score=score; best=pairs
-            if best is None:
-                # Fallback backtracking để luôn tìm perfect matching không lặp nếu còn tồn tại.
-                remaining=set(players)
-                out=[]
-                def dfs():
-                    if not remaining: return True
-                    a=min(remaining)
-                    remaining.remove(a)
-                    cand=[b for b in remaining if pair_key(a,b) not in used]
-                    random.shuffle(cand)
-                    if coverage_mode:
-                        cand.sort(key=lambda b:(pot_by.get(b,0) in covered[a], pot_by.get(a,0)==pot_by.get(b,0)))
-                    for b in cand:
-                        remaining.remove(b); out.append((a,b))
-                        if dfs(): return True
-                        out.pop(); remaining.add(b)
-                    remaining.add(a)
-                    return False
-                if not dfs():
-                    raise ValueError("Không thể sinh đủ 4 trận/HLV mà không lặp đối thủ. Hãy kiểm tra danh sách HLV/Pot.")
-                best=out
-            return best
-
-        for round_no in range(1,5):
-            pairs=make_matching(round_no<=3)
-            rounds.append(pairs)
-            for a,b in pairs:
-                used.add(pair_key(a,b))
-                covered[a].add(pot_by.get(b,0)); covered[b].add(pot_by.get(a,0))
-        return rounds
+        """V1.6.0: enforce coverage of ALL THREE HLV Tiers across FOUR matches."""
+        return generate_four_match_draw(members)
 
     @app.post('/admin/tournaments/<tournament_id>/league/start')
     @login_required
@@ -168,6 +96,15 @@ def register_league(context):
             pairs.add(pair); counts[a]+=1; counts[b]+=1
         if len(matches)!=32 or any(n!=4 for n in counts.values()):
             flash("Phải có đủ 32 trận, đúng 4 trận/HLV trước khi mở GĐ2.","error"); return redirect_admin("tournaments")
+        # Validate the existing saved fixtures as well, not just freshly generated draws.
+        tier_by={str(m.get("user_id")):int(m.get("pot_no") or 0) for m in members}
+        seen_tiers={uid:set() for uid in tier_by}
+        for match in matches:
+            a,b=str(match.get("home_user_id")),str(match.get("away_user_id"))
+            seen_tiers[a].add(tier_by[b]); seen_tiers[b].add(tier_by[a])
+        if any(seen_tiers[uid]!={1,2,3} for uid in tier_by):
+            flash("Không thể mở GĐ2: có HLV chưa gặp đủ 3 Tier trong 4 trận. Giữ nguyên lịch để Admin kiểm tra.","error")
+            return redirect_admin("tournaments")
         cfg=_setting(tournament_id,"competition_timing",{}) or {}
         vn=timezone(timedelta(hours=7)); now=datetime.now(vn)
         start=_parse_iso(cfg.get("league_start_at"))
@@ -254,6 +191,11 @@ def register_league(context):
         if len(pair_keys)!=32 or any(count!=4 for count in match_counts.values()):
             flash("Lịch GĐ2 chưa bảo đảm 32 trận và 4 trận/HLV; chưa ghi dữ liệu.","error")
             return redirect_admin("tournaments")
+        try:
+            validate_four_match_draw(rounds, {str(m.get("user_id")):int(m.get("pot_no") or 0) for m in members})
+        except ValueError as exc:
+            flash(f"Không sinh lịch: {exc} Chưa ghi database.","error")
+            return redirect_admin("tournaments")
 
         execute_query(db.table("tournament_settings").upsert({
             "tournament_id":tournament_id,
@@ -263,9 +205,9 @@ def register_league(context):
                 "pot_sizes":[5,6,5],
                 "pot_format":"5-6-5",
                 "matches_per_hlv":4,
-                "three_pot_matches":3,
-                "wildcard_matches":1,
-                "format":"3_POT_PLUS_1_RANDOM",
+                "three_tier_coverage_required":True,
+                "tier_coverage_scope":"all_four_matches",
+                "format":"FOUR_MATCHES_COVER_THREE_TIERS",
             },
             "updated_at":now_iso(),
         },on_conflict="tournament_id,setting_key"),"ops_league_config",attempts=2)
@@ -285,7 +227,7 @@ def register_league(context):
                     "round_code":f"LP-R{round_no}-{idx}","home_user_id":h,"away_user_id":a2,
                     "status":"pending","leg_no":1,"created_at":now_iso(),"updated_at":now_iso(),
                 }),"ops_league_insert",attempts=2)
-        flash(f"Đã sinh {idx} trận GĐ2: mỗi HLV đúng 4 trận · 3 lượt ưu tiên 3 Pot + 1 lượt Random bất kỳ · không lặp đối thủ.","success")
+        flash(f"Đã sinh {idx} trận GĐ2: mỗi HLV đúng 4 trận · 4 trận/HLV · đủ 3 Tier đối thủ/HLV · không lặp đối thủ.","success")
         return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/registration-status')

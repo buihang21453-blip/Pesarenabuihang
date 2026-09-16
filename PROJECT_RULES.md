@@ -173,3 +173,6 @@ V1.5.87: không đưa lên Production khi chưa kiểm thử luồng giao dịch
 - Chỉ random khi đủ 16 HLV chính thức, Tier 5–6–5, GĐ1 completed, GĐ2 draft/pending, chưa có lịch/trận. Một lượt sử dụng một RPC transaction; frontend không là lớp bảo vệ duy nhất.
 - Tier 1→Pot 3, Tier 2→Pot 2, Tier 3→Pot 1; CLB không trùng và vé thưởng sớm 2/1/1 không trừ khi random gốc. Chỉ mở vé sau khi đủ 16 CLB.
 - Muốn đổi thứ tự/mode giữa chừng, thu hồi theo các chốt bảo vệ trước; không xóa lịch sử hoặc sửa thưởng/GĐ1.
+
+### V1.6.0 – Ràng buộc lịch GĐ2
+- Với Tier HLV 5–6–5, từng HLV phải đá 4 trận gặp 4 người khác nhau và có đối thủ thuộc cả Tier 1/2/3 trong tổng 4 trận. Kiểm tra toàn lịch trước ghi và khi mở giải. Không chấp nhận thuật toán tối ưu mềm hoặc giới hạn đủ 3 Tier trong 3 trận đầu.

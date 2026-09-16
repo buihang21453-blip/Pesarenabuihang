@@ -1,3 +1,8 @@
+### V1.6.0 – Lịch GĐ2 đủ ba Tier
+- `modules/tournament_competition_parts/league_draw.py`: thuật toán sinh 4 lượt từ mẫu đồ thị hợp lệ, hoán vị ngẫu nhiên trong Tier; `validate_four_match_draw()` kiểm tra 16 HLV 5–6–5, 32 trận, 4 đối thủ khác nhau, đủ 3 Tier trong cả 4 trận.
+- `modules/tournament_competition_parts/league.py`: route POST `/admin/tournaments/<tournament_id>/league/generate` dùng thuật toán mới, xác thực trước ghi DB; route `/league/start` kiểm tra lịch đã lưu có đủ 3 Tier.
+- `templates/admin.html`: mô tả luật cập nhật; `core.py` metadata luật; `app.py` version V1.6.0. Không migration.
+
 
 ### V1.5.99
 - V1.5.99: modules/tournament_competition_parts/admin.py thêm route admin_tournament_gd2_draw_time lưu competition_timing.club_draw_at (giữ nguyên các khóa thời gian khác); core.py truyền mốc về admin; tournament_routes.py gắn mốc vào card; c1_media.html thay overlay GĐ1 bằng countdown GĐ2; page_scripts.html hiển thị ngày giờ Việt Nam và trạng thái khi hết giờ. Không có migration mới.
