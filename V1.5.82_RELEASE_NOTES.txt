@@ -1,0 +1,1 @@
+PES Arena V1.5.82: Compact sidebar QR/menu and room layout for desktop laptop-height viewport. CSS-only; no DB changes.

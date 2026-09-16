@@ -6309,3 +6309,54 @@ html[data-theme="light"] .sidebar-zalo-group{background:linear-gradient(145deg,#
 html[data-theme="light"] .sidebar-zalo-group strong{color:#405063}
 @media(max-width:900px){.sidebar-zalo-group{margin:0 12px 12px}.sidebar-zalo-qr-wrap{width:118px;height:118px}}
 
+
+/* V1.5.82 — Desktop sidebar fits viewport; QR stays clickable without a nested scroll. */
+@media (min-width: 851px) {
+  .player-sidebar {
+    display:flex;
+    flex-direction:column;
+    height:100dvh;
+    box-sizing:border-box;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding-bottom:8px;
+    scrollbar-width:thin;
+  }
+  .player-sidebar .brand-lockup { flex:0 0 auto; padding:5px 2px 6px!important; }
+  .player-sidebar .sidebar-brand-logo { max-height:clamp(44px,9dvh,82px)!important; width:100%!important; }
+  .player-sidebar .player-nav { flex:0 0 auto; gap:clamp(1px,.45dvh,5px); padding-top:clamp(3px,.9dvh,12px); }
+  .player-sidebar .player-nav a { min-height:clamp(30px,4.8dvh,42px); padding:0 10px; font-size:13px; }
+  .player-sidebar .sidebar-version-panel { flex:0 0 auto; margin:clamp(4px,.9dvh,10px) 10px 8px; padding:7px 10px; }
+  .player-sidebar .sidebar-version-panel span { margin-bottom:2px; }
+  .player-sidebar .sidebar-zalo-group { flex:0 0 auto; gap:4px; margin:0 10px 4px; padding:7px 6px; }
+  .player-sidebar .sidebar-zalo-qr-wrap { width:clamp(66px,13dvh,116px); height:clamp(66px,13dvh,116px); padding:5px; }
+  .player-sidebar .sidebar-zalo-title { font-size:11px; }
+  .player-sidebar .sidebar-zalo-group strong { font-size:9px; }
+}
+@media (min-width:851px) and (max-height:720px) {
+  .player-sidebar .sidebar-brand-logo { max-height:46px!important; }
+  .player-sidebar .player-nav a { min-height:29px; }
+  .player-sidebar .sidebar-zalo-qr-wrap { width:62px; height:62px; }
+}
+
+/* V1.5.82 — Room: compact the visual-only empty space on laptop-height screens.
+   Content is never clipped: the page itself may scroll if a real form needs space. */
+@media (min-width:981px) and (max-height:1000px) {
+  body:has(#roomLiveShell) .player-main { padding-bottom:12px; }
+  body:has(#roomLiveShell) .player-topbar { height:clamp(62px,8dvh,82px); margin-bottom:12px; }
+  #roomLiveShell .room-arena-frame { gap:10px!important; padding:10px!important; }
+  #roomLiveShell .room-arena-frame > section.room-side-card.room-team-card.home,
+  #roomLiveShell .room-arena-frame > section.room-center-stage-plain,
+  #roomLiveShell .room-arena-frame > section.room-side-card.room-team-card.away {
+    min-height:clamp(390px,52dvh,500px)!important;
+    height:auto!important;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+  #roomLiveShell .room-team-card .room-card-club-area { min-height:clamp(200px,27dvh,280px)!important; padding-top:12px!important; padding-bottom:12px!important; }
+  #roomLiveShell .room-team-card { padding:12px!important; }
+  #roomLiveShell .room-center-stage-plain { padding:12px!important; }
+  #roomLiveShell .room-mode-dock-card.room-mode-select-btn { min-height:90px!important; padding:6px!important; }
+  #roomLiveShell .room-mode-dock-logo-shell { height:44px!important; }
+  #roomLiveShell .room-mode-dock-logo { max-height:38px!important; }
+}

@@ -1,3 +1,8 @@
+## V1.5.82
+- Cân đối sidebar desktop theo chiều cao viewport: logo, menu, phiên bản và QR Zalo thu gọn có giới hạn; QR vẫn bấm được.
+- Thu gọn khoảng trống trang phòng đấu ở màn hình laptop (cao <=1000px), giảm chiều cao tối thiểu 3 cột, khung CLB, topbar và dải chế độ.
+- Không ẩn nội dung/khóa cuộn trang khi nội dung thực tế dài; giữ nguyên endpoint, logic trận và form.
+
 # CHANGELOG — PES Arena
 
 > Nguồn: các `V1.5.xx_RELEASE_NOTES.txt` có thật trong source. Không tự suy diễn các version bị thiếu.

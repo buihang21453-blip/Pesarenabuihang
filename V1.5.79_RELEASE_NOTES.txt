@@ -1,4 +1,4 @@
-PES Arena V1.5.81
+PES Arena V1.5.82
 
 HOTFIX SAU MODULE HOA TOURNAMENT COMPETITION
 - Sửa lỗi namespace chéo giữa các tournament_competition_parts.
