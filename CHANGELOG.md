@@ -1,3 +1,8 @@
+## V1.5.87 – C1 free-room fixed-club guard (partial, NOT production ready)
+- Room C1 tự do lấy CLB cố định của chủ khi GĐ2/KO mở; khách nhận phòng được gán CLB từ tournament_members, không từ client.
+- Chặn HLV chưa có CLB cố định vào phòng tự do GĐ2/KO; giữ cơ chế random GĐ1.
+- Chưa triển khai tự kết thúc GĐ1, tự thưởng/chia/khóa Pot, quyền đầy đủ TK test hoặc kiểm thử tích hợp với Supabase. KHÔNG triển khai production.
+
 ## V1.5.86 – Bản vá bước đầu: bắt đầu GĐ2 ngay và khóa CLB tại phòng theo lịch
 
 - Admin có thể bắt đầu GĐ2 ngay sau khi đủ điều kiện, ghi đè mốc bắt đầu và đặt hạn 7 ngày; vẫn giữ lựa chọn bắt đầu theo lịch.

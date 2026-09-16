@@ -226,7 +226,16 @@ def register_rooms(context):
             "admin_test_room":bool((is_admin_user(user) and not me) or is_test_account),
             "test_sandbox_room":bool(is_test_account),
         }
+        # V1.5.87: Free C1 room uses the same fixed club as match-linked rooms.
+        # Stage1 deliberately retains its per-match random-club rules.
+        league_open=str((_stage(tid,"league") or {}).get("status") or "")=="open"
+        knockout_open=str((_stage(tid,"knockout") or {}).get("status") or "")=="open"
+        fixed_host=(_member(tid,uid) or {}).get("fixed_club_name") if (league_open or knockout_open) else None
+        if (league_open or knockout_open) and me and not fixed_host:
+            flash("HLV chưa có CLB cố định; không thể tạo phòng C1 GĐ2/KO.","error")
+            return redirect(url_for("tournaments"))
         row=execute_query(db.table("match_rooms").insert({
+            "host_team":fixed_host,
             "invite_id":None,"host_user_id":uid,"guest_user_id":None,"team_tier":"TOURNAMENT",
             "match_mode":"tournament","friendly_tier":None,"status":"waiting_ready","guest_ready":False,
             "note":_room_note(meta),"state_expires_at":None,"updated_at":now_iso(),
@@ -360,16 +369,25 @@ def register_rooms(context):
                 return redirect(url_for("room_detail",room_id=active.get("id")))
         bound_invite_id=room.get("invite_id")
         accepted_at=now_iso()
-        accept_result=execute_query(
-            db.table("match_rooms").update({
-                "guest_user_id":uid,
-                "guest_ready":False,
-                "invite_id":None,
-                "updated_at":accepted_at,
-            }).eq("id",room_id),
-            "ops_c1_room_accept",
-            attempts=2,
+        # Do not trust team names sent by a room client; use membership assignment.
+        stage_code=str(meta.get("stage_code") or "")
+        fixed_stage=stage_code in {"league","knockout"} or (
+            str((_stage(tournament_id,"league") or {}).get("status") or "")=="open"
+            or str((_stage(tournament_id,"knockout") or {}).get("status") or "")=="open"
         )
+        fixed_guest=(_member(tournament_id,uid) or {}).get("fixed_club_name") if fixed_stage else None
+        if fixed_stage and not fixed_guest and not meta.get("test_sandbox_room"):
+            flash("HLV chưa có CLB cố định; không thể nhận phòng C1 GĐ2/KO.","error")
+            return redirect(url_for("c1_rooms",tournament_id=tournament_id))
+        guest_patch={"guest_user_id":uid,"guest_ready":False,"invite_id":None,"updated_at":accepted_at}
+        if fixed_guest:
+            guest_patch["guest_team"]=fixed_guest
+            guest_patch["host_team"]=(_member(tournament_id,room.get("host_user_id")) or {}).get("fixed_club_name")
+        accept_result=execute_query(
+            db.table("match_rooms").update(guest_patch).eq("id",room_id),
+            "ops_c1_room_accept",attempts=2,
+        )
+        # Legacy update body removed below.
         # V1.5.13: không báo nhận phòng thành công nếu guest_user_id chưa thật sự
         # được ghi xuống DB. Điều này tránh tình trạng khách vào được URL nhưng
         # phía chủ vẫn thấy "Đang chờ đối thủ".
