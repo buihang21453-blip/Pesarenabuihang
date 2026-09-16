@@ -875,6 +875,12 @@ def register_rooms(context):
             )
             next_match=(created.data or [None])[0] if created is not None else None
 
+        if str(match.get("stage_code") or "")=="stage1":
+            try:
+                _auto_finish_stage1(tournament_id)
+            except Exception:
+                app.logger.exception("C1 stage1 auto-finalization failed; result remains confirmed")
+
         if next_match:
             # Giữ lịch sử match_id để debug/đối soát nhưng room luôn trỏ vào trận hiện tại.
             history=list(meta.get("previous_match_ids") or [])

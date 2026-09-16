@@ -160,10 +160,8 @@ def register_rewards(context):
     def _stage1_early_reward_state(tournament_id):
         return _setting(tournament_id,STAGE1_EARLY_REWARD_KEY,{}) or {}
 
-    @app.post('/admin/tournaments/<tournament_id>/stage1/early-rewards/grant')
-    @login_required
-    @admin_required
-    def admin_tournament_stage1_early_rewards_grant(tournament_id):
+    def _grant_stage1_early_rewards(tournament_id):
+        """Shared idempotent reward engine for automatic and manual invocation."""
         """Trao thưởng Top hoàn thành sớm GĐ1, idempotent theo tournament/user/rank."""
         actor=current_user() or {}
         tour=_tour(tournament_id)
@@ -325,6 +323,70 @@ def register_rewards(context):
         else:
             flash("Các HLV Top hoàn thành sớm đã được trao thưởng trước đó. Không cộng trùng.","info")
         return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/stage1/early-rewards/grant')
+    @login_required
+    @admin_required
+    def admin_tournament_stage1_early_rewards_grant(tournament_id):
+        return _grant_stage1_early_rewards(tournament_id)
+
+    def _auto_finish_stage1(tournament_id):
+        """Finalize only a fully confirmed real stage; never open league automatically."""
+        stage=_stage(tournament_id,"stage1") or {}
+        if stage.get("status")=="completed":
+            return False
+        if stage.get("status") not in {"open","locked"}:
+            return False
+        matches=_matches(tournament_id,"stage1")
+        if not matches or any(m.get("status")!="completed" for m in matches):
+            return False
+        members=_all_members(tournament_id)
+        progress=_stage1_progress(tournament_id)
+        if len(progress)!=16 or any(not row.get("eligible") for row in progress):
+            return False
+        if len(members)!=16:
+            app.logger.warning("C1 auto-finish refused: expected 16 members, got %s",len(members))
+            return False
+        # Reward RPCs use per-user deterministic idempotency keys. A failure must
+        # stop progression so a later confirmation/admin retry can recover.
+        _grant_stage1_early_rewards(tournament_id)
+        # Claim transition with compare-and-set to avoid repeated stage changes.
+        updated=execute_query(db.table("tournament_stages").update({
+            "status":"completed","updated_at":now_iso(),
+        }).eq("tournament_id",tournament_id).eq("stage_code","stage1").eq("status",stage["status"]),
+        "ops_stage1_auto_finish",attempts=2)
+        if not (updated.data or []):
+            return False
+        ranking=_ranking(tournament_id,"stage1")
+        if len(ranking)!=16:
+            app.logger.error("C1 stage1 completed but ranking not 16; admin review required")
+            return True
+        for i,row in enumerate(ranking):
+            execute_query(db.table("tournament_members").update({
+                "pot_no":1 if i<5 else 2 if i<11 else 3,"seed_no":i+1,
+            }).eq("tournament_id",tournament_id).eq("user_id",row["user_id"]),
+            "ops_stage1_auto_pot",attempts=2)
+        pots=_all_members(tournament_id)
+        if sorted(int(m.get("pot_no") or 0) for m in pots)!=[1]*5+[2]*6+[3]*5:
+            app.logger.error("C1 automatic pot verification failed; manual repair needed")
+            return True
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,"setting_key":"pots_locked",
+            "setting_value":{"locked":True,"pot_count":3,"pot_sizes":[5,6,5],"pot_format":"5-6-5","auto_at":now_iso()},
+            "updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_stage1_auto_lock_pots",attempts=2)
+        execute_query(db.table("tournament_stages").update({
+            "status":"pending","updated_at":now_iso(),
+        }).eq("tournament_id",tournament_id).eq("stage_code","league").neq("status","open"),
+        "ops_stage1_auto_prepare_league",attempts=2)
+        timing=_setting(tournament_id,"competition_timing",{}) or {}
+        if not timing.get("league_start_at"):
+            timing["league_start_at"]=(datetime.now(timezone(timedelta(hours=7)))+timedelta(days=2)).isoformat()
+            execute_query(db.table("tournament_settings").upsert({
+                "tournament_id":tournament_id,"setting_key":"competition_timing",
+                "setting_value":timing,"updated_at":now_iso(),
+            },on_conflict="tournament_id,setting_key"),"ops_stage1_auto_schedule_league",attempts=2)
+        return True
 
     @app.post('/admin/tournaments/<tournament_id>/rewards/add')
     @login_required

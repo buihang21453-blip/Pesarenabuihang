@@ -299,3 +299,5 @@ V1.5.84: Bản bảo vệ dữ liệu GĐ2, chưa hoàn thành toàn bộ yêu c
 - `templates/admin.html`: điều hướng GĐ1/GĐ2/KO, nút mở GĐ2.
 
 V1.5.87: rooms.py c1_room_open/c1_room_accept fixed club for free rooms during league/KO; remaining auto stage flow pending.
+
+V1.5.87 bổ sung: rewards.py chứa _auto_finish_stage1, _grant_stage1_early_rewards; rooms.py gọi tự kết thúc sau xác nhận kết quả.

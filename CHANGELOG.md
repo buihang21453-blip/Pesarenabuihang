@@ -1,3 +1,9 @@
+## V1.5.87 – bổ sung sau bản partial (chưa kiểm thử tích hợp)
+- Nối xác nhận tỷ số GĐ1 với tự kết thúc khi đủ 16 HLV đạt điều kiện và tất cả trận completed.
+- Dùng lại engine thưởng có idempotency RPC; tự chia và khóa Pot 5–6–5; GĐ2 giữ pending và đặt lịch mặc định +2 ngày.
+- Giữ các chỉnh sửa CLB cố định và khởi động GĐ2 của bản partial.
+- Chưa chứng minh an toàn giao dịch toàn chuỗi, chưa kiểm thử Supabase và hai tài khoản test; không triển khai Production.
+
 ## V1.5.87 – C1 free-room fixed-club guard (partial, NOT production ready)
 - Room C1 tự do lấy CLB cố định của chủ khi GĐ2/KO mở; khách nhận phòng được gán CLB từ tournament_members, không từ client.
 - Chặn HLV chưa có CLB cố định vào phòng tự do GĐ2/KO; giữ cơ chế random GĐ1.
