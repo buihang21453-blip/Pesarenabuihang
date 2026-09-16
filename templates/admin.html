@@ -1134,12 +1134,21 @@
 
       <div class="tournament-op-tab-panel" id="c1-admin-gd2" data-tournament-op-panel="potclub" style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">3️⃣ Chia Pot & chọn CLB</h3>
-        <p class="small"><strong>Làm theo thứ tự:</strong> Chia 3 Pot 5–6–5 → Khóa Pot → mở Random thưởng sớm Top 1–3 → hệ thống Random CLB hạng 4–16.</p>
+        <p class="small"><strong>Quy tắc CLB GĐ2:</strong> Tier HLV 1 (Top 1–5) → CLB Pot 3 · Tier HLV 2 (Top 6–11) → CLB Pot 2 · Tier HLV 3 (Top 12–16) → CLB Pot 1. Phần chia Tier HLV 5–6–5 giữ nguyên.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <form method="post" action="{{ url_for('admin_tournament_generate_pots',tournament_id=ot.id) }}" style="display:flex;gap:6px;align-items:end;flex-wrap:wrap"><input type="hidden" name="_admin_tab" value="tournaments"><label class="small">Cấu trúc Pot<input value="3 Pot · 5–6–5" readonly style="width:130px"></label><label class="small">Số CLB<input name="club_count" type="number" min="2" max="64" value="{{ ops.get('league_config',{}).get('club_count',ops.get('members',[])|length or 10) }}" style="width:80px"></label><button class="btn" type="submit">① Chia Pot 5–6–5</button></form>
           <form method="post" action="{{ url_for('admin_tournament_lock_pots',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn" name="locked" value="1" type="submit">② 🔒 Khóa Pot</button></form>
           <form method="post" action="{{ url_for('admin_tournament_club_draft_start',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gold" type="submit" {% if cd.get('order') %}disabled title="Đã mở, không thể reset vé"{% endif %}>③ Mở Random CLB 16 HLV</button></form>
-          <form method="post" action="{{ url_for('admin_tournament_assign_remaining_clubs',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gray" type="submit">④ Hệ thống Random hạng 4–16</button></form>
+          <form method="post" action="{{ url_for('admin_tournament_assign_remaining_clubs',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gray" type="button" disabled title="Đã thay bằng nút Admin Random lại đủ 16 CLB theo Tier/Pot">④ Random hạng 4–16 (đã thay thế)</button></form>
+        </div>
+        <div style="margin-top:10px;padding:12px;border:1px solid rgba(241,202,104,.45);border-radius:10px">
+          <strong>🔄 Admin sửa Random CLB sai Tier/Pot · đủ 16 HLV</strong>
+          <p class="small">Random lại TOÀN BỘ 16 CLB; giữ nguyên Tier HLV, vé thưởng sớm còn lại, lịch sử và thưởng ZCoin/Lucky Box. Không tác động kết quả GĐ1. Chỉ thực hiện trước khi sinh lịch và bắt đầu GĐ2. Mỗi lần nhấn sẽ sinh bộ CLB mới.</p>
+          <form method="post" action="{{ url_for('admin_tournament_rerandom_clubs_by_tier',tournament_id=ot.id) }}" onsubmit="return confirm('XÁC NHẬN RANDOM LẠI TOÀN BỘ 16 CLB? Tier 1 → Pot 3, Tier 2 → Pot 2, Tier 3 → Pot 1. CLB cũ sẽ được thay nhưng VÉ/THƯỞNG/LỊCH SỬ GIỮ NGUYÊN. Chỉ làm trước khi sinh lịch GĐ2.');">
+            <input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="confirm_rule" value="TIER_POT_321">
+            <button class="btn gold" type="submit">🔄 Admin Random lại 16 CLB theo Tier/Pot</button>
+          </form>
+          {% if cd.get('tier_club_pot_rule') %}<p class="small" style="color:#8ee0a1">✓ Đã áp dụng quy tắc mới. Nút này có thể dùng lại nếu Admin muốn quay lại bộ CLB khác trước GĐ2.</p>{% endif %}
         </div>
         {% if cd.get('order') %}<p class="small">Top 1–3: vé thưởng sớm không hết hạn, HLV có thể Random/chốt/đổi CLB độc lập bất cứ lúc nào.</p>{% endif %}
         <details style="margin-top:8px"><summary><strong>⚽ Pool Random CLB chính thức · 24 CLB</strong></summary><div style="padding-top:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">{% for pot_no, club_names in ops.get('c1_club_pots',{}).items() %}<div style="padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px"><strong>Pot {{ pot_no }}</strong><div class="small" style="margin-top:5px">{{ club_names|join(' · ') }}</div></div>{% endfor %}</div></details>

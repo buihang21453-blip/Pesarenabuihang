@@ -149,6 +149,9 @@ def register_league(context):
         if stage.get("stage1")!="completed" or stage.get("league")!="pending":
             flash("GĐ1 phải kết thúc và GĐ2 phải ở trạng thái chuẩn bị.","error"); return redirect_admin("tournaments")
         members=_all_members(tournament_id)
+        if any(C1_CLUB_POT_BY_NAME.get(m.get("fixed_club_name")) != 4-int(m.get("pot_no") or 0) for m in members):
+            flash("CLB chưa đúng quy tắc Tier 1→Pot 3, Tier 2→Pot 2, Tier 3→Pot 1. Admin hãy Random lại.","error")
+            return redirect_admin("tournaments")
         if len(members)!=16 or sorted(int(m.get("pot_no") or 0) for m in members).count(1)!=5 or sorted(int(m.get("pot_no") or 0) for m in members).count(2)!=6 or sorted(int(m.get("pot_no") or 0) for m in members).count(3)!=5:
             flash("Cần đủ 16 HLV và Pot 5–6–5.","error"); return redirect_admin("tournaments")
         if not (_setting(tournament_id,"pots_locked",{}) or {}).get("locked") or (_setting(tournament_id,"club_selection",{}) or {}).get("open") or any(not m.get("fixed_club_name") for m in members):
@@ -203,6 +206,9 @@ def register_league(context):
             return redirect_admin("tournaments")
         if not (_setting(tournament_id,"pots_locked",{}) or {}).get("locked"):
             flash("Hãy khóa Pot trước khi sinh lịch GĐ2.","error")
+            return redirect_admin("tournaments")
+        if any(C1_CLUB_POT_BY_NAME.get(m.get("fixed_club_name")) != 4-int(m.get("pot_no") or 0) for m in members):
+            flash("Có HLV đang dùng CLB sai Tier/Pot. Admin cần Random lại đúng quy tắc trước khi sinh lịch.","error")
             return redirect_admin("tournaments")
         if (_setting(tournament_id,"club_selection",{}) or {}).get("open"):
             flash("Hãy khóa Random/chọn CLB trước khi sinh lịch GĐ2.","error")
@@ -482,6 +488,9 @@ def register_league(context):
         entry=(state.get("entries") or {}).get(uid) or {}
         if not member or entry.get("allocation_type")!="EARLY_REWARD" or int(entry.get("tickets_remaining") or 0)<=0:
             flash("Bạn không có vé thưởng sớm để dùng.","warning"); return redirect(url_for('tournaments'))
+        if not state.get("tier_club_pot_rule"):
+            flash("Admin cần sửa phân bổ 16 CLB đúng Tier/Pot trước khi HLV sử dụng vé đổi CLB.","warning")
+            return redirect(url_for('tournaments'))
         old_name=str(member.get("fixed_club_name") or "")
         if not old_name or entry.get("status")!="selected":
             flash("Bạn cần chốt CLB ban đầu trước khi dùng vé đổi CLB.","warning"); return redirect(url_for('tournaments'))
@@ -491,6 +500,9 @@ def register_league(context):
         skipped=set(str(x) for x in (entry.get("skipped") or []))
         skipped.add(str(old["id"]))
         pool=_available_clubs(tournament_id,skipped)
+        if state.get("tier_club_pot_rule"):
+            required_pot=4-int(member.get("pot_no") or 0)
+            pool=[c for c in pool if C1_CLUB_POT_BY_NAME.get(c.get("name"))==required_pot]
         if not pool:
             flash("Pool không còn CLB phù hợp, vé vẫn được giữ nguyên.","warning"); return redirect(url_for('tournaments'))
         new=random.choice(pool)
@@ -515,35 +527,57 @@ def register_league(context):
         flash("Vé thưởng sớm không còn thời hạn. HLV tự Random/chốt CLB; Admin không Random thay để tránh mất quyền thưởng.","warning")
         return redirect_admin("tournaments")
 
+    @app.post('/admin/tournaments/<tournament_id>/clubs/rerandom-by-tier')
+    @login_required
+    @admin_required
+    def admin_tournament_rerandom_clubs_by_tier(tournament_id):
+        """Correction batch: database RPC commits all 16 allocations or none."""
+        if request.form.get("confirm_rule") != "TIER_POT_321":
+            flash("Chưa xác nhận quy tắc Tier 1→Pot 3, Tier 2→Pot 2, Tier 3→Pot 1.","warning")
+            return redirect_admin("tournaments")
+        stages,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id),"ops_tier_rerandom_stages")
+        status={str(x.get("stage_code")):x.get("status") for x in stages}
+        if status.get("stage1")!="completed" or status.get("league") not in {"pending","draft"} or _matches(tournament_id,"league") or _matches(tournament_id,"knockout"):
+            flash("Chỉ được sửa Random khi GĐ1 đã hoàn thành, GĐ2 chưa bắt đầu và chưa sinh lịch/trận.","error")
+            return redirect_admin("tournaments")
+        state=_club_draft_state(tournament_id,False) or {}
+        members=_all_members(tournament_id)
+        grouped={p:[m for m in members if int(m.get("pot_no") or 0)==p] for p in (1,2,3)}
+        if len(members)!=16 or [len(grouped[p]) for p in (1,2,3)]!=[5,6,5] or len(state.get("all_order") or [])!=16:
+            flash("Cần đủ 16 HLV chia Tier 5–6–5 và đã mở Random CLB; không thay đổi dữ liệu.","error")
+            return redirect_admin("tournaments")
+        if (_setting(tournament_id,"club_selection",{}) or {}).get("open"):
+            flash("Hãy khóa chế độ chọn CLB thủ công trước khi Random lại.","warning")
+            return redirect_admin("tournaments")
+        # Sample each exclusive Pot without replacement; preserve the 2/1/1 ticket balances.
+        allocations=[]
+        for tier,club_pot in ((1,3),(2,2),(3,1)):
+            clubs=random.sample(C1_CLUB_POTS[club_pot],len(grouped[tier]))
+            for member,club in zip(grouped[tier],clubs):
+                allocations.append({"user_id":str(member["user_id"]),"club":club})
+        try:
+            result=execute_query(db.rpc("c1_admin_rerandom_tier_clubs",{
+                "p_tournament_id":tournament_id,"p_assignments":allocations,
+            }),"ops_admin_rerandom_tier_rpc",attempts=1)
+            if getattr(result,"data",None)!=16:
+                raise RuntimeError("RPC did not confirm 16 assignments")
+        except Exception:
+            app.logger.exception("C1 admin tier/pot correction failed: tournament_id=%s",tournament_id)
+            flash("Không thể Random lại. Kiểm tra đã chạy SQL_V1.5.90_ADMIN_RERANDOM_TIER_POT.sql và log; giao dịch DB tự rollback nếu lỗi.","error")
+            return redirect_admin("tournaments")
+        try:
+            log_admin_action("Random lại 16 CLB theo Tier/Pot","tournament_club",details={"tournament_id":tournament_id,"rule":"Tier1:Pot3;Tier2:Pot2;Tier3:Pot1"})
+        except Exception:
+            app.logger.exception("Tier/Pot correction succeeded but auxiliary audit failed: %s",tournament_id)
+        flash("Đã Random lại đủ 16 CLB: Tier 1→Pot 3; Tier 2→Pot 2; Tier 3→Pot 1. Vé thưởng sớm và lịch sử được giữ nguyên.","success")
+        return redirect_admin("tournaments")
+
     @app.post('/admin/tournaments/<tournament_id>/clubs/assign-remaining')
     @login_required
     @admin_required
     def admin_tournament_assign_remaining_clubs(tournament_id):
-        _sync_c1_club_pool(tournament_id)
-        state=_club_draft_state(tournament_id,False) or {}
-        all_order=[str(x) for x in (state.get("all_order") or [])][:16]
-        if len(all_order)<4:
-            flash("Hãy mở cơ chế Random CLB 16 HLV trước.","warning"); return redirect_admin("tournaments")
-        count=0
-        for pos,uid in enumerate(all_order[3:16],4):
-            entry=(state.get("entries") or {}).get(uid) or {}
-            member=_member(tournament_id,uid) or {}
-            if member.get("fixed_club_name"):
-                entry["selected_club"]=member.get("fixed_club_name"); entry["status"]="selected"
-                state["entries"][uid]=entry; continue
-            pool=_available_clubs(tournament_id)
-            if not pool: break
-            club=random.choice(pool); _club_assign(tournament_id,uid,club); count+=1
-            entry["candidate"]={"id":str(club.get("id")),"name":club.get("name")}; entry["selected_club"]=club.get("name"); entry["status"]="selected"
-            entry["tickets_total"]=0; entry["tickets_remaining"]=0; entry["allocation_type"]="SYSTEM"
-            state["entries"][uid]=entry
-            state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":"SYSTEM_RANDOM","club":club.get("name"),
-                                                  "message":f"Hạng {pos}: hệ thống Random và chốt {club.get('name')}."})
-        state["system_assigned"]=all((state.get("entries") or {}).get(uid,{}).get("status")=="selected" for uid in all_order[3:16])
-        if state.get("system_assigned") and all((state.get("entries") or {}).get(uid,{}).get("status")=="selected" for uid in all_order[:3]):
-            state["completed"]=True
-        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_draft_system_assign_save",attempts=2)
-        flash(f"Đã Random/chốt CLB cho {count} HLV thuộc hạng 4–16.","success"); return redirect_admin("tournaments")
+        flash("Nút Random hạng 4–16 cũ đã ngừng sử dụng do phân bổ sai Tier/Pot. Hãy dùng nút Admin Random lại đủ 16 CLB.","warning")
+        return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/league-draw/start')
     @login_required

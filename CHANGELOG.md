@@ -1,3 +1,11 @@
+## V1.5.90 – Admin Random lại 16 CLB đúng Tier/Pot (chưa kiểm thử Production)
+- Sửa sai phân bổ CLB: Tier HLV 1 (5 người) → Pot CLB 3; Tier HLV 2 (6 người) → Pot CLB 2; Tier HLV 3 (5 người) → Pot CLB 1.
+- Nút Admin Random lại toàn bộ 16 CLB trước khi có lịch/trận GĐ2, xác nhận trước khi chạy và cho phép bấm lại. SQL RPC một transaction: nếu lỗi rollback toàn bộ, kiểm tra 16 user/CLB không trùng, 24 CLB hợp lệ, Stage chưa bắt đầu.
+- Bảo lưu số vé thưởng sớm hiện có, ZCoin/Lucky Box và lịch sử; ghi lịch sử trước/sau của từng lần quay. Không cấp/trừ vé khi Admin sửa phân bổ.
+- Người dùng đổi CLB bằng vé sau khi sửa chỉ quay trong Pot CLB theo Tier, giữ nguyên cơ chế không quay lại CLB đã bỏ.
+- Chặn khởi động/sinh lịch GĐ2 nếu CLB chưa đúng Tier/Pot; vô hiệu nút Random hạng 4–16 cũ hoàn toàn; trước khi sửa, vé Top 1–3 không thể đổi CLB sai Pot.
+- **BẮT BUỘC chạy SQL_V1.5.90_ADMIN_RERANDOM_TIER_POT.sql trước khi deploy**; chưa có kiểm chứng Supabase Production/2 tài khoản test.
+
 ## V1.5.89 – Bảo lưu vé Random thưởng sớm Top 1–3 (chưa kiểm thử Production)
 - Bỏ giới hạn 10/5 phút và cơ chế tự chốt đối với ba HLV nhận vé GĐ1, kể cả state cũ có deadline.
 - Top 1–3 tự Random/chốt độc lập; lần Random CLB đầu tiên miễn phí, Random lại chỉ trừ một vé khi có CLB phù hợp.
