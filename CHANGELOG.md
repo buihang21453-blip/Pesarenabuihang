@@ -1,3 +1,8 @@
+## V1.5.95 – Xóa nút Random hạng 4–16 đã thay thế ở Admin GĐ2
+- Xóa hẳn form/nút ④ Random hạng 4–16 (đã thay thế) khỏi `templates/admin.html`, tránh giao diện chồng lấn nút Random mới.
+- Giữ nguyên nút Admin Random lại 16 CLB theo Tier/Pot và Thu hồi CLB; không đổi API, DB, vé thưởng hoặc nghiệp vụ Random. Không có SQL migration.
+- Kiểm tra tĩnh nội bộ; chưa kiểm thử trên Production.
+
 ## V1.5.94 – Sửa nút Random lại / Thu hồi không phản hồi
 - Bỏ hộp thoại `confirm()` của trình duyệt cho hai thao tác Admin GĐ2 theo yêu cầu.
 - Hai form POST trực tiếp qua fetch; báo lỗi ngay trong khu GĐ2 (không popup), chỉ tải lại khi backend xác nhận RPC trả đúng 16.
