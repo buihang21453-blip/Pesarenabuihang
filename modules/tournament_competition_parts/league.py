@@ -704,9 +704,24 @@ def register_league(context):
             result = execute_query(db.rpc('c1_admin_revoke_tier_clubs', {'p_tournament_id': tournament_id}), 'ops_admin_revoke_clubs_rpc', attempts=1)
             if getattr(result, 'data', None) != 16:
                 raise RuntimeError('RPC did not confirm all 16 participants')
-        except Exception:
+        except Exception as exc:
             app.logger.exception('C1 club revocation failed: tournament_id=%s', tournament_id)
-            return _club_admin_reply('Thu hồi thất bại ở database. Kiểm tra SQL_V1.5.91_ADMIN_REVOKE_CLUBS.sql, cấu hình Service Role và log server; dữ liệu không được coi là đã thu hồi.')
+            # Expose only an allowlisted database code and a known safe explanation to Admin.
+            # Never show raw exception text: PostgREST errors may contain identifiers or secrets.
+            code = str(getattr(exc, 'code', '') or '')
+            if code == 'PGRST202':
+                detail = 'Không tìm thấy RPC c1_admin_revoke_tier_clubs(uuid): chạy SQL V1.5.91 trong đúng Supabase project và làm mới schema cache.'
+            elif code in {'42501', 'PGRST301', 'PGRST302'}:
+                detail = 'Tài khoản kết nối không có quyền EXECUTE: kiểm tra SUPABASE_SERVICE_ROLE_KEY trong môi trường backend và quyền của RPC.'
+            elif code in {'23503', '23502', '23505'}:
+                detail = 'Ràng buộc database từ chối cập nhật; xem log backend để biết bảng/cột liên quan.'
+            elif code == 'P0001':
+                detail = 'RPC từ chối vì điều kiện dữ liệu chưa đạt (trạng thái GĐ, lịch, hồ sơ 16 HLV hoặc lựa chọn CLB). Đối chiếu SQL chẩn đoán kèm bản phát hành.'
+            elif code:
+                detail = 'Mã lỗi database: ' + code[:16] + '. Xem log backend và chạy SQL chẩn đoán kèm bản phát hành.'
+            else:
+                detail = 'Không nhận được mã lỗi database; xem log backend và chạy SQL chẩn đoán kèm bản phát hành.'
+            return _club_admin_reply('Thu hồi chưa được xác nhận. ' + detail + ' Không bấm Random tiếp khi chưa kiểm tra dữ liệu.')
         try:
             log_admin_action('Thu hồi CLB GĐ2 của 16 HLV', 'tournament_club', details={'tournament_id': tournament_id})
         except Exception:

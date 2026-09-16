@@ -1,3 +1,9 @@
+## V1.5.97 – Chẩn đoán lỗi thu hồi CLB GĐ2, không thay đổi dữ liệu
+- Route `admin_tournament_revoke_clubs`: phân loại mã lỗi RPC (không tồn tại, thiếu quyền, ràng buộc, điều kiện nghiệp vụ) và hiển thị hướng xử lý ngay tại GĐ2; ghi traceback đầy đủ trong log backend nhưng không lộ raw error hoặc khóa cho client.
+- Thêm `SQL_V1.5.97_DIAGNOSE_REVOKE_READ_ONLY.sql` để kiểm tra RPC, quyền service_role, tình trạng stage, số HLV, draft 16 người và lịch GĐ2/KO. Chỉ SELECT, không sửa/xóa dữ liệu.
+- Chưa xác định lỗi thực tế trên Production khi chưa có mã lỗi/log hoặc kết quả chẩn đoán; không thay thế và không tự chạy lại SQL V1.5.91 trên dữ liệu thật.
+- Không thay đổi cơ chế Random, vé thưởng, bảng CLB, DB schema hay các endpoint khác. Chưa kiểm thử Supabase Production / hai tài khoản test.
+
 ## V1.5.96 – Gom điều hành Random CLB và thêm Random theo lượt 1–16 / 16–1
 - Admin GĐ2: gom Random toàn bộ, cấu hình Random lần lượt, Random hộ, Thu hồi vào một khối; bỏ nút/chỉ dẫn trùng.
 - Thứ tự Random theo `tournament_members.seed_no` (hạng BXH GĐ1), không nhầm với thứ tự về đích nhận thưởng sớm. Chọn 1→16 hoặc 16→1; chỉ một HLV đến lượt được Random.

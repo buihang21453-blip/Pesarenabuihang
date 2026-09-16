@@ -338,3 +338,7 @@ V1.5.90: Admin `POST /admin/tournaments/<id>/clubs/rerandom-by-tier` tại `modu
 - `modules/tournament_competition_parts/core.py`: trả `base_draft_config`, `base_draft_next` và hạng `seed_no` cho Admin/trang giải.
 - `modules/tournament_routes.py`, `templates/tournament/cards/c1_actions.html`, `templates/tournament_detail.html`: hiện nút tự Random duy nhất cho HLV đúng lượt khi Admin chọn mode player.
 - `SQL_V1.5.96_SEQUENTIAL_CLUB_DRAFT.sql`: RPC service-role `c1_allocate_one_base_club(uuid,uuid,text)` lock trên giải; phân CLB gốc một HLV trong một transaction; kết thúc 16 lượt mới bật vé thưởng. Setting mode `club_base_draft_v1`; trạng thái đã có `club_draft_v2`. Không có bảng mới.
+
+### V1.5.97 – Chẩn đoán thu hồi CLB
+- `modules/tournament_competition_parts/league.py` → `admin_tournament_revoke_clubs`: phân loại lỗi RPC theo mã PostgREST/SQLSTATE, thông báo an toàn trong GĐ2; log server chứa chi tiết.
+- `SQL_V1.5.97_DIAGNOSE_REVOKE_READ_ONLY.sql`: kiểm tra dữ liệu/cấu hình bằng SELECT; không phải migration, không tự thu hồi.
