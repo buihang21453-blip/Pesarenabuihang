@@ -150,3 +150,6 @@ Không tuyên bố đã sửa/tạo ZIP nếu file chưa thực sự tồn tại
 
 
 V1.5.84: Bản bảo vệ dữ liệu GĐ2, chưa hoàn thành toàn bộ yêu cầu; không triển khai lên giải thật trước kiểm thử end-to-end.
+
+### V1.5.85 – An toàn GĐ2
+Không tự mở GĐ2 theo thời gian; Admin xác nhận khi đủ dữ liệu và đến mốc bắt đầu. Không cho kết thúc GĐ2 khi chưa xác nhận đủ 32 kết quả. Kiểm thử E2E trước Production.

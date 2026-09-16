@@ -96,6 +96,9 @@ def register_rewards(context):
     @admin_required
     def admin_tournament_league_finish(tournament_id):
         force=request.form.get("force")=="1"
+        stages,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id),"ops_league_finish_stage_gate")
+        if not any(row.get("stage_code")=="league" and row.get("status")=="open" for row in stages):
+            flash("GĐ2 chưa mở hoặc đã kết thúc; không thể khóa.","error"); return redirect_admin("tournaments")
         league_matches=_matches(tournament_id,"league")
         if len(league_matches)!=32:
             flash(f"Không thể kết thúc GĐ2: cần đúng 32 trận, hiện có {len(league_matches)}.","error")
@@ -103,9 +106,8 @@ def register_rewards(context):
         pending=[m for m in league_matches if m.get("status")!="completed"]
         if pending and not force:
             flash(f"League Phase còn {len(pending)} trận chưa hoàn thành.","warning"); return redirect_admin("tournaments")
-        if pending and force:
-            for m in pending:
-                execute_query(db.table("tournament_matches").update({"status":"disputed","updated_at":now_iso()}).eq("id",m.get("id")),"ops_league_pending_btc",attempts=2)
+        if pending:
+            flash("Phải xác nhận đủ 32 kết quả trước khi kết thúc GĐ2. Hãy xử lý trận thiếu tại Admin.","error"); return redirect_admin("tournaments")
         execute_query(db.table("tournament_stages").update({"status":"completed","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_league_finish",attempts=2)
         execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","knockout"),"ops_ko_open",attempts=2)
         _grant_league_top3_reroll_tickets(tournament_id)

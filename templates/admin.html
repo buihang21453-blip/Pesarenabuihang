@@ -733,6 +733,7 @@
   {% set ops = tournament_ops_admin|default({}) %}
   <div class="panel">
     <style>
+    .c1-phase-nav{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0;position:sticky;top:0;z-index:5;background:#0b1c29;padding:9px;border-radius:12px}.c1-phase-nav a{color:#f1ca68;border:1px solid rgba(241,202,104,.45);border-radius:8px;padding:8px 12px;text-decoration:none;font-weight:700}.c1-phase-nav a:hover{background:rgba(241,202,104,.14)}#c1-admin-gd1,#c1-admin-gd2,#c1-admin-ko{scroll-margin-top:76px}
     .tournament-op-tabs{display:none;gap:6px;flex-wrap:wrap;margin:10px 0 14px;padding:6px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.08);border-radius:12px}
     .tournament-op-tab-btn{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:inherit;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;line-height:1.2}
     .tournament-op-tab-btn:hover{background:rgba(255,255,255,.08)}
@@ -764,6 +765,7 @@
         <div style="padding:10px 12px;border:1px solid rgba(241,202,104,.25);border-radius:10px"><strong>🏆 BXH</strong><div class="small">BXH trung tâm tự cập nhật theo kết quả.</div></div>
         <div style="padding:10px 12px;border:1px solid rgba(155,89,182,.25);border-radius:10px"><strong>🎯 Điều hành vòng</strong><div class="small">Random, Pot, League và Knockout.</div></div>
       </div>
+      <nav class="c1-phase-nav" aria-label="Điều hành từng giai đoạn"><a href="#c1-admin-gd1">GĐ 1</a><a href="#c1-admin-gd2">GĐ 2 · Pot / CLB / Lịch</a><a href="#c1-admin-ko">KO</a></nav>
       <div class="tournament-op-tab-panel active" data-tournament-op-panel="registration" style="padding:15px;border:1px solid rgba(52,152,219,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">👥 HLV & Trận đấu</h3>
         <p class="small">Quản lý danh sách HLV ngay tại đây. Bấm từng HLV để xem đối thủ, cặp đấu, lịch, tỷ số và nhập/sửa kết quả mà không cần sang Công cụ riêng.</p>
@@ -1051,7 +1053,7 @@
       </div>
 
       <h3 style="margin:18px 0 10px">🎯 Điều hành vòng hiện tại</h3>
-      <div class="tournament-op-tab-panel" data-tournament-op-panel="stage1" style="padding:15px;border:1px solid rgba(46,204,113,.3);border-radius:14px;margin-bottom:12px">
+      <div class="tournament-op-tab-panel" id="c1-admin-gd1" data-tournament-op-panel="stage1" style="padding:15px;border:1px solid rgba(46,204,113,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">2️⃣ Giai đoạn 1 — Random & thi đấu 6 trận</h3>
         <p class="small"><strong>Làm theo thứ tự:</strong> Bắt đầu GĐ1 → Random đối thủ → theo dõi tiến độ → kết thúc GĐ1.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1099,7 +1101,7 @@
         <details style="margin-top:8px"><summary>⚠️ Trường hợp hết hạn mà còn trận thiếu</summary><div style="padding-top:8px"><form method="post" action="{{ url_for('admin_tournament_stage1_finish',tournament_id=ot.id) }}" onsubmit="return confirm('Các trận còn thiếu sẽ chuyển Chờ BTC xử lý. Tiếp tục?');"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="force" value="1"><button class="btn red" type="submit">Kết thúc & chuyển trận thiếu cho BTC</button></form></div></details>
       </div>
 
-      <div class="tournament-op-tab-panel" data-tournament-op-panel="potclub" style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
+      <div class="tournament-op-tab-panel" id="c1-admin-gd2" data-tournament-op-panel="potclub" style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">3️⃣ Chia Pot & chọn CLB</h3>
         <p class="small"><strong>Làm theo thứ tự:</strong> Chia 3 Pot 5–6–5 → Khóa Pot → mở Random thưởng sớm Top 1–3 → hệ thống Random CLB hạng 4–16.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1132,21 +1134,22 @@
       </div>
 
       <div class="tournament-op-tab-panel" data-tournament-op-panel="league" style="padding:15px;border:1px solid rgba(155,89,182,.32);border-radius:14px;margin-bottom:12px">
-        <h3 style="margin:0 0 6px">4️⃣ Giai đoạn 2 — League Phase</h3>
+        <h3 style="margin:0 0 6px">4️⃣ Giai đoạn 2 — League Phase</h3><p class="small">Sau khi kết thúc GĐ1: trao thưởng → chia và khóa Pot → Random/chốt 16 CLB → sinh và công bố đối thủ → đến ngày bắt đầu Admin mới mở GĐ2. HLV tự hẹn giờ, không gán ngày thi đấu khi bốc thăm.</p>
         <p class="small"><strong>Luật chính thức:</strong> 3 Pot · mỗi HLV đúng 4 trận = 3 lượt ưu tiên phủ 3 Pot + 1 lượt Random bất kỳ, không lặp đối thủ. Khóa GĐ2 xong Top 1–3 nhận mỗi người 1 vé Random lại CLB.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <form method="post" action="{{ url_for('admin_tournament_league_generate',tournament_id=ot.id) }}" onsubmit="return confirm('Sinh lịch GĐ2 đúng 4 trận/HLV: 3 lượt ưu tiên 3 Pot + 1 Random bất kỳ?');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gold" type="submit">🎲 Sinh lịch GĐ2 · 4 trận</button></form>
           <form method="post" action="{{ url_for('admin_tournament_league_draw_start',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gray" type="submit">▶ Lễ bốc thăm hiển thị</button></form>
           <form method="post" action="{{ url_for('admin_tournament_league_draw_next',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn green" type="submit">🎲 Bốc tiếp</button></form>
+          <form method="post" action="{{ url_for('admin_tournament_league_start',tournament_id=ot.id) }}" onsubmit="return confirm('Đã đủ 16 CLB, khóa Pot, 32 trận và đến ngày bắt đầu? Mở GĐ2 trong 7 ngày?');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gold" type="submit">▶ Xác nhận bắt đầu GĐ2</button></form>
           <form method="post" action="{{ url_for('admin_tournament_league_finish',tournament_id=ot.id) }}" onsubmit="return confirm('Kết thúc GĐ2 và khóa BXH?');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn green" type="submit">🔒 Kết thúc GĐ2 & khóa BXH</button></form>
         </div>
         {% if ld.get('order') %}<p class="small">Đang bốc HLV {{ ld.get('current_index',0)+1 }}/{{ ld.get('order')|length }} · Pot kế tiếp: {{ (ld.get('pots',[1,2,3])[ld.get('pot_index',0)]) if ld.get('active') else 'Hoàn tất' }}</p>{% endif %}
         <p class="small">Thời gian GĐ2 còn: <strong>{{ tm.get('league_end',{}).get('days',0) }} ngày {{ tm.get('league_end',{}).get('hours',0) }} giờ</strong></p>
         <details style="margin-top:8px"><summary><strong>📊 Xem BXH tổng GĐ1 + GĐ2</strong></summary>{% if ops.get('combined_ranking') %}<div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table><thead><tr><th>#</th><th>HLV</th><th>Trận</th><th>HS</th><th>Điểm</th></tr></thead><tbody>{% for r in ops.get('combined_ranking',[])[:24] %}<tr><td>{{ r.rank }}</td><td>{{ r.display_name }}</td><td>{{ r.played }}</td><td>{{ r.gd }}</td><td><b>{{ r.points }}</b></td></tr>{% endfor %}</tbody></table></div>{% endif %}</details>
-        <details style="margin-top:8px"><summary>⚠️ Khóa GĐ2 khi còn trận thiếu</summary><div style="padding-top:8px"><form method="post" action="{{ url_for('admin_tournament_league_finish',tournament_id=ot.id) }}" onsubmit="return confirm('Các trận thiếu sẽ chuyển Chờ BTC xử lý. Tiếp tục?');"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="force" value="1"><button class="btn red" type="submit">Khóa & chuyển trận thiếu cho BTC</button></form></div></details>
+        <details style="margin-top:8px"><summary>⚠️ Trận thiếu: xử lý kết quả trước khi khóa (không cho bỏ qua)</summary><div style="padding-top:8px"><form method="post" action="{{ url_for('admin_tournament_league_finish',tournament_id=ot.id) }}" onsubmit="return confirm('Các trận thiếu sẽ chuyển Chờ BTC xử lý. Tiếp tục?');"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="force" value="1"><button class="btn red" type="submit" disabled title="Phải xử lý đủ 32 kết quả">Không thể khóa khi còn trận thiếu</button></form></div></details>
       </div>
 
-      <div class="tournament-op-tab-panel" data-tournament-op-panel="knockout" style="padding:15px;border:1px solid rgba(231,76,60,.3);border-radius:14px;margin-bottom:12px">
+      <div class="tournament-op-tab-panel" id="c1-admin-ko" data-tournament-op-panel="knockout" style="padding:15px;border:1px solid rgba(231,76,60,.3);border-radius:14px;margin-bottom:12px">
         <h3 style="margin:0 0 6px">5️⃣ Knockout → Chung kết</h3>
         <p class="small"><strong>Luật chính thức:</strong> bỏ Play-off. Top 8 BXH tổng GĐ1 + GĐ2 vào thẳng Tứ kết. Hệ thống ghép 1–8, 2–7, 3–6, 4–5 và tự đẩy người thắng.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">

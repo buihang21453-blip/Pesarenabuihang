@@ -140,6 +140,46 @@ def register_league(context):
                 covered[a].add(pot_by.get(b,0)); covered[b].add(pot_by.get(a,0))
         return rounds
 
+    @app.post('/admin/tournaments/<tournament_id>/league/start')
+    @login_required
+    @admin_required
+    def admin_tournament_league_start(tournament_id):
+        stages,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id),"ops_league_start_stages")
+        stage={str(row.get("stage_code")):row.get("status") for row in stages}
+        if stage.get("stage1")!="completed" or stage.get("league")!="pending":
+            flash("GĐ1 phải kết thúc và GĐ2 phải ở trạng thái chuẩn bị.","error"); return redirect_admin("tournaments")
+        members=_all_members(tournament_id)
+        if len(members)!=16 or sorted(int(m.get("pot_no") or 0) for m in members).count(1)!=5 or sorted(int(m.get("pot_no") or 0) for m in members).count(2)!=6 or sorted(int(m.get("pot_no") or 0) for m in members).count(3)!=5:
+            flash("Cần đủ 16 HLV và Pot 5–6–5.","error"); return redirect_admin("tournaments")
+        if not (_setting(tournament_id,"pots_locked",{}) or {}).get("locked") or (_setting(tournament_id,"club_selection",{}) or {}).get("open") or any(not m.get("fixed_club_name") for m in members):
+            flash("Hãy khóa Pot và chốt CLB đủ 16 HLV trước khi mở GĐ2.","error"); return redirect_admin("tournaments")
+        draft=_setting(tournament_id,"club_draft_v2",{}) or {}
+        if draft.get("active") or (draft and not draft.get("completed")):
+            flash("Random CLB chưa kết thúc.","error"); return redirect_admin("tournaments")
+        matches=_matches(tournament_id,"league")
+        counts={str(m.get("user_id")):0 for m in members}; pairs=set()
+        for match in matches:
+            a,b=str(match.get("home_user_id")),str(match.get("away_user_id")); pair=tuple(sorted((a,b)))
+            if a==b or a not in counts or b not in counts or pair in pairs:
+                flash("Lịch GĐ2 có cặp sai hoặc trùng; không mở giải.","error"); return redirect_admin("tournaments")
+            pairs.add(pair); counts[a]+=1; counts[b]+=1
+        if len(matches)!=32 or any(n!=4 for n in counts.values()):
+            flash("Phải có đủ 32 trận, đúng 4 trận/HLV trước khi mở GĐ2.","error"); return redirect_admin("tournaments")
+        cfg=_setting(tournament_id,"competition_timing",{}) or {}
+        vn=timezone(timedelta(hours=7)); now=datetime.now(vn)
+        start=_parse_iso(cfg.get("league_start_at"))
+        if not start:
+            flash("Admin cần lưu mốc bắt đầu GĐ2 trước.","error"); return redirect_admin("tournaments")
+        if start.tzinfo is None: start=start.replace(tzinfo=vn)
+        if now<start:
+            flash("Chưa đến mốc bắt đầu GĐ2 đã cấu hình.","warning"); return redirect_admin("tournaments")
+        end=start+timedelta(days=7)
+        cfg["league_end_at"]=end.isoformat()
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"competition_timing","setting_value":cfg,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_start_timing",attempts=2)
+        execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","league").eq("status","pending"),"ops_league_start_manual",attempts=2)
+        flash("Đã mở GĐ2 sau khi kiểm tra 16 HLV, CLB, Pot và đủ 32 trận. Thời hạn thi đấu: 7 ngày.","success")
+        return redirect_admin("tournaments")
+
     @app.post('/admin/tournaments/<tournament_id>/league/generate')
     @login_required
     @admin_required

@@ -1058,8 +1058,8 @@ def register_core(context):
         lgstart=_parse_iso(cfg.get("league_start_at"))
         if lgstart and lgstart.tzinfo is None: lgstart=lgstart.replace(tzinfo=vn)
         if lgstart and now>=lgstart and not state.get("league_started"):
-            execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","league"),"ops_auto_league_stage",attempts=2)
-            state["league_started"]=now_iso()
+            # A timer alone must NEVER open the live competition: admin confirms readiness.
+            state["league_awaiting_admin"] = True
         ext=_parse_iso(cfg.get("stage1_extension_end_at"))
         if ext and ext.tzinfo is None: ext=ext.replace(tzinfo=timezone(timedelta(hours=7)))
         now=datetime.now((ext.tzinfo if ext else vn))

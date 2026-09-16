@@ -289,3 +289,9 @@ Không được bỏ bước đồng bộ này khi thêm partition mới.
 
 
 V1.5.84: Bản bảo vệ dữ liệu GĐ2, chưa hoàn thành toàn bộ yêu cầu; không triển khai lên giải thật trước kiểm thử end-to-end.
+
+### V1.5.85 GĐ2
+- `modules/tournament_competition_parts/league.py`: endpoint `admin_tournament_league_start` kiểm tra điều kiện và mở GĐ2 thủ công.
+- `modules/tournament_competition_parts/core.py`: deadline không tự mở GĐ2.
+- `modules/tournament_competition_parts/rewards.py`: chặn kết thúc khi còn trận thiếu.
+- `templates/admin.html`: điều hướng GĐ1/GĐ2/KO, nút mở GĐ2.

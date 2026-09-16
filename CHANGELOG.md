@@ -566,3 +566,9 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 - Sửa nguy cơ `NameError` ở `/admin` và các route C1/module khác chỉ xuất hiện lúc request runtime.
 - Không thay đổi database, SQL, endpoint hay luật giải đấu.
 
+
+## V1.5.85 – GĐ2: Admin xác nhận mở giải, điều hướng giai đoạn
+- Bỏ tự động mở GĐ2 chỉ vì đồng hồ đến hạn; Admin mở thủ công khi đủ 16 HLV/CLB, Pot 5–6–5, 32 trận, mốc bắt đầu đã đến. Thời hạn 7 ngày.
+- Không cho kết thúc GĐ2 khi còn trận chưa xác nhận, kể cả force.
+- Thêm điều hướng Admin GĐ1 / GĐ2 / KO và nút xác nhận bắt đầu GĐ2.
+- Chưa xác nhận kiểm thử E2E phòng C1, vé Random và dữ liệu Supabase thật; KHÔNG triển khai Production trước khi kiểm thử.
