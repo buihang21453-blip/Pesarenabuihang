@@ -975,6 +975,10 @@ def register_core(context):
 
     def _club_draft_state(tournament_id, auto_resolve=True):
         state=_setting(tournament_id,"club_draft_v2",{}) or {}
+        if state.get("order") and any((state.get("entries") or {}).get(str(uid),{}).get("allocation_type")=="EARLY_REWARD" for uid in state.get("order",[])):
+            # GĐ1 early tickets have no expiry; legacy deadlines must never auto-consume them.
+            state["countdown"]={}
+            return state
         if not state.get("active") or not state.get("order"):
             return state
         idx=int(state.get("current_index") or 0)

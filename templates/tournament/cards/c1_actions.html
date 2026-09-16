@@ -10,6 +10,29 @@
             {% else %}
             {% endif %}
           </div>
+          {% if tournament.my_member and hub and hub.early_reward_entry and hub.early_reward_entry.get('allocation_type')=='EARLY_REWARD' %}
+          {% set early=hub.early_reward_entry %}
+          <div style="margin:10px 0;padding:12px;border:1px solid rgba(241,202,104,.38);border-radius:10px;background:rgba(241,202,104,.06)">
+            <strong>🎟 Vé thưởng sớm GĐ1 · còn {{ early.get('tickets_remaining',0) }}/{{ early.get('tickets_total',0) }} vé</strong>
+            <p class="small" style="margin:6px 0">Không giới hạn thời gian · vé chưa dùng được bảo lưu. CLB đã bỏ sẽ không xuất hiện lại cho bạn.</p>
+            {% if early.get('status')=='selected' %}
+              <div class="small">CLB hiện tại: <strong>{{ tournament.my_member.fixed_club_name or early.get('selected_club','—') }}</strong></div>
+              {% if early.get('tickets_remaining',0)|int > 0 %}
+              <form method="post" action="{{ url_for('tournament_club_draft_reward_reroll',tournament_id=tournament.id) }}" style="margin-top:8px"><button class="btn gold" type="submit">🎲 Dùng 1 vé Random lại CLB</button></form>
+              {% endif %}
+            {% else %}
+              {% if early.get('candidate') %}
+                <div class="small">CLB vừa Random: <strong>{{ early.get('candidate',{}).get('name') }}</strong></div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+                  <form method="post" action="{{ url_for('tournament_club_draft_accept',tournament_id=tournament.id) }}"><button class="btn green" type="submit">✅ Chốt CLB</button></form>
+                  {% if early.get('tickets_remaining',0)|int > 0 %}<form method="post" action="{{ url_for('tournament_club_draft_random',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">🎲 Dùng 1 vé để Random lại</button></form>{% endif %}
+                </div>
+              {% else %}
+                <form method="post" action="{{ url_for('tournament_club_draft_random',tournament_id=tournament.id) }}" style="margin-top:8px"><button class="btn gold" type="submit">🎲 Random CLB đầu tiên (miễn phí)</button></form>
+              {% endif %}
+            {% endif %}
+          </div>
+          {% endif %}
           {% if hub and hub.league_reroll_entry and hub.league_reroll_entry.get('tickets_remaining',0)|int > 0 %}
           <div style="margin:10px 0;padding:10px 12px;border:1px solid rgba(241,202,104,.3);border-radius:10px;background:rgba(241,202,104,.05);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
             <div><strong>🎟 Vé Random lại CLB sau GĐ2</strong><div class="small">Top {{ hub.league_reroll_entry.get('rank') }} · còn {{ hub.league_reroll_entry.get('tickets_remaining') }} vé. CLB bỏ qua sẽ không xuất hiện lại cho bạn.</div></div>

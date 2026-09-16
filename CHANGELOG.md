@@ -1,3 +1,11 @@
+## V1.5.89 – Bảo lưu vé Random thưởng sớm Top 1–3 (chưa kiểm thử Production)
+- Bỏ giới hạn 10/5 phút và cơ chế tự chốt đối với ba HLV nhận vé GĐ1, kể cả state cũ có deadline.
+- Top 1–3 tự Random/chốt độc lập; lần Random CLB đầu tiên miễn phí, Random lại chỉ trừ một vé khi có CLB phù hợp.
+- Sau khi chốt CLB vẫn dùng vé chưa tiêu để đổi CLB về sau; CLB bỏ qua không xuất hiện lại cho chính HLV đó. Không tự reset dữ liệu/cấp thêm vé.
+- Chặn mở lại draft và chặn Admin Random thay Top 1–3; giữ nguyên Random hạng 4–16.
+- Bổ sung nút sử dụng vé ngay /tournaments, cập nhật giao diện Admin và route tương thích.
+- Dữ liệu: dùng JSON `tournament_settings.club_draft_v2`, không migration SQL. Cần kiểm thử với Supabase và 2 tài khoản test trước khi deploy Production.
+
 ## V1.5.88 – Sửa lỗi 500 khi Admin kết thúc GĐ1 (chưa kiểm thử Production)
 - Bổ sung SQL migration cho trạng thái `pending` của `tournament_stages` (SQL gốc chỉ cho phép draft/open/locked/completed).
 - Hai nút kết thúc GĐ1 dùng chung route: kiểm tra trạng thái, ghi chuẩn bị GĐ2 trước khi hoàn tất GĐ1 và báo lỗi có log thay vì trang 500.

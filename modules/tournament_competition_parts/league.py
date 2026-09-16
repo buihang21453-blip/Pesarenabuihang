@@ -383,6 +383,10 @@ def register_league(context):
     @login_required
     @admin_required
     def admin_tournament_club_draft_start(tournament_id):
+        existing=_setting(tournament_id,"club_draft_v2",{}) or {}
+        if existing.get("order") or existing.get("entries"):
+            flash("Đã mở Random CLB. Không mở lại để tránh xóa vé, CLB và lịch sử đã cấp.","warning")
+            return redirect_admin("tournaments")
         _sync_c1_club_pool(tournament_id)
         # V1.5.4: build one fixed 16-HLV allocation list. Top 1 gets 2 tickets,
         # Top 2–3 get 1 ticket; positions 4–16 are assigned automatically by the system.
@@ -399,77 +403,117 @@ def register_league(context):
         for i,uid in enumerate(all_order,1):
             tickets=2 if i==1 else (1 if i<=3 else 0)
             entries[uid]={"tickets_total":tickets,"tickets_remaining":tickets,"skipped":[],"candidate":None,
-                          "status":"waiting" if i<=3 else "pending_system","finish_rank":i,
+                          "status":"active" if i<=3 else "pending_system","finish_rank":i,
                           "allocation_type":"EARLY_REWARD" if i<=3 else "SYSTEM"}
-        entries[reward_order[0]]["status"]="active"
         state={"active":True,"completed":False,"order":reward_order,"all_order":all_order,"current_index":0,"entries":entries,
-               "history":[{"at":now_iso(),"user_id":reward_order[0],"action":"TURN_OPEN","message":"Mở lượt Top 1 (10 phút)."}],
-               "deadline_at":(datetime.now(timezone(timedelta(hours=7)))+timedelta(minutes=10)).isoformat(),"system_assigned":False}
+               "history":[{"at":now_iso(),"user_id":reward_order[0],"action":"REWARD_OPEN","message":"Top 1–3 có thể chọn CLB và sử dụng vé thưởng sớm bất cứ lúc nào."}],
+               "deadline_at":None,"system_assigned":False,"flexible_reward_tickets":True}
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_draft_start",attempts=2)
         flash("Đã mở Random CLB thưởng sớm: Top 1 có 2 vé; Top 2–3 có 1 vé. Hạng 4–16 sẽ do hệ thống Random.","success"); return redirect_admin("tournaments")
+
+    def _save_reward_draft(tournament_id,state,label):
+        entries=state.get("entries") or {}
+        reward_ids=[str(x) for x in (state.get("order") or [])]
+        all_ids=[str(x) for x in (state.get("all_order") or [])]
+        state["flexible_reward_tickets"]=True
+        state["deadline_at"]=None
+        state["active"]=any(entries.get(uid,{}).get("status")!="selected" for uid in reward_ids)
+        state["completed"]=bool(all_ids) and all(entries.get(uid,{}).get("status")=="selected" for uid in all_ids)
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),label,attempts=2)
 
     @app.post('/tournaments/<tournament_id>/club-draft/random')
     @login_required
     def tournament_club_draft_random(tournament_id):
-        uid=str((current_user() or {}).get("id") or ""); state=_club_draft_state(tournament_id)
-        idx=int(state.get("current_index") or 0); order=state.get("order") or []
-        if not state.get("active") or idx>=len(order) or str(order[idx])!=uid:
-            flash("Chưa tới lượt Random CLB của bạn.","warning"); return redirect(url_for('tournaments')+"#club")
-        entry=state["entries"].get(uid) or {}; old=entry.get("candidate")
-        if old:
-            if int(entry.get("tickets_remaining") or 0)<=0:
-                flash("Bạn đã hết vé Random. Hãy chốt CLB hiện tại.","warning"); return redirect(url_for('tournaments')+"#club")
-            entry.setdefault("skipped",[]).append(str(old.get("id"))); entry["tickets_remaining"]=int(entry.get("tickets_remaining") or 0)-1
-            state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":"SKIP","club":old.get("name"),"message":f"Bỏ qua {old.get('name')} · dùng 1 vé Random."})
-        pool=_available_clubs(tournament_id,entry.get("skipped") or [])
+        uid=str((current_user() or {}).get("id") or "")
+        state=_club_draft_state(tournament_id,False) or {}
+        entry=(state.get("entries") or {}).get(uid) or {}
+        if not _member(tournament_id,uid) or entry.get("allocation_type")!="EARLY_REWARD" or entry.get("status")=="selected":
+            flash("Bạn không có lượt Random CLB chưa chốt.","warning"); return redirect(url_for('tournaments'))
+        old=entry.get("candidate")
+        if old and int(entry.get("tickets_remaining") or 0)<=0:
+            flash("Đã hết vé, hãy chốt CLB hiện tại.","warning"); return redirect(url_for('tournaments'))
+        skipped=list(entry.get("skipped") or [])
+        if old: skipped.append(str(old.get("id")))
+        pool=_available_clubs(tournament_id,skipped)
         if not pool:
-            flash("Không còn CLB phù hợp trong Pool.","error"); return redirect(url_for('tournaments')+"#club")
-        club=random.choice(pool); entry["candidate"]={"id":str(club.get("id")),"name":club.get("name")}; entry["status"]="active"; state["entries"][uid]=entry
+            flash("Không còn CLB trống phù hợp. Vé vẫn được giữ nguyên.","warning"); return redirect(url_for('tournaments'))
+        club=random.choice(pool)
+        if old:
+            entry["tickets_remaining"]=int(entry.get("tickets_remaining") or 0)-1
+            entry["skipped"]=skipped
+            state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":"SKIP","club":old.get("name"),"message":f"Bỏ qua {old.get('name')} · dùng 1 vé thưởng sớm."})
+        entry["candidate"]={"id":str(club.get("id")),"name":club.get("name")}
+        entry["status"]="active"; state["entries"][uid]=entry
         state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":"RANDOM","club":club.get("name"),"message":f"Random ra {club.get('name')}."})
-        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_draft_random_save",attempts=2)
-        return redirect(url_for('tournaments')+"#club")
-
-    def _advance_draft(tournament_id,state,uid,club,action="SELECT"):
-        _club_assign(tournament_id,uid,club)
-        entry=state["entries"].get(uid) or {}; entry["status"]="selected"; entry["selected_club"]=club.get("name"); entry["candidate"]={"id":str(club.get("id")),"name":club.get("name")}; state["entries"][uid]=entry
-        state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":action,"club":club.get("name"),"message":f"Chốt {club.get('name')}."})
-        state["current_index"]=int(state.get("current_index") or 0)+1
-        if state["current_index"]<len(state.get("order") or []):
-            nxt=str(state["order"][state["current_index"]]); state["entries"][nxt]["status"]="active"; mins=5
-            state["deadline_at"]=(datetime.now(timezone(timedelta(hours=7)))+timedelta(minutes=mins)).isoformat(); state.setdefault("history",[]).append({"at":now_iso(),"user_id":nxt,"action":"TURN_OPEN","message":"Mở lượt HLV tiếp theo (5 phút)."})
-        else:
-            state["active"]=False; state["deadline_at"]=None
-            all_order=[str(x) for x in (state.get("all_order") or state.get("order") or [])]
-            state["completed"]=bool(all_order) and all((state.get("entries") or {}).get(x,{}).get("status")=="selected" for x in all_order)
-        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_draft_advance",attempts=2)
+        _save_reward_draft(tournament_id,state,"ops_draft_random_save")
+        flash(f"Đã Random ra {club.get('name')}. Hãy chốt CLB hoặc dùng vé để bỏ qua.","success")
+        return redirect(url_for('tournaments'))
 
     @app.post('/tournaments/<tournament_id>/club-draft/accept')
     @login_required
     def tournament_club_draft_accept(tournament_id):
-        uid=str((current_user() or {}).get("id") or ""); state=_club_draft_state(tournament_id); idx=int(state.get("current_index") or 0); order=state.get("order") or []
-        if not state.get("active") or idx>=len(order) or str(order[idx])!=uid:
-            flash("Chưa tới lượt của bạn.","warning"); return redirect(url_for('tournaments')+"#club")
-        entry=state["entries"].get(uid) or {}; candidate=entry.get("candidate")
-        if not candidate:
-            flash("Hãy Random CLB trước.","warning"); return redirect(url_for('tournaments')+"#club")
-        club,_=_one(db.table("tournament_clubs").select("*").eq("id",candidate.get("id")),"ops_draft_accept_lookup")
-        if not club or club.get("selected_by"):
-            flash("CLB này vừa không còn trống, hãy Random lại.","error"); return redirect(url_for('tournaments')+"#club")
-        _advance_draft(tournament_id,state,uid,club)
-        flash(f"Đã chốt {club.get('name')}.","success"); return redirect(url_for('tournaments')+"#club")
+        uid=str((current_user() or {}).get("id") or "")
+        state=_club_draft_state(tournament_id,False) or {}
+        entry=(state.get("entries") or {}).get(uid) or {}
+        if not _member(tournament_id,uid) or entry.get("allocation_type")!="EARLY_REWARD" or entry.get("status")=="selected":
+            flash("Không có lượt chọn CLB đang chờ.","warning"); return redirect(url_for('tournaments'))
+        candidate=entry.get("candidate") or {}
+        if not candidate.get("id"):
+            flash("Hãy Random CLB trước.","warning"); return redirect(url_for('tournaments'))
+        club,_=_one(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("id",candidate["id"]),"ops_draft_accept_lookup")
+        if not club or club.get("selected_by") or club.get("name") not in C1_CLUB_POOL:
+            flash("CLB đã có người chọn hoặc không hợp lệ. Hãy Random lại.","error"); return redirect(url_for('tournaments'))
+        reserved=execute_query(db.table("tournament_clubs").update({"selected_by":uid,"selected_at":now_iso()}).eq("tournament_id",tournament_id).eq("id",club["id"]).is_("selected_by","null"),"ops_reward_club_reserve",attempts=2)
+        if not getattr(reserved,"data",None):
+            flash("CLB vừa được chọn bởi người khác, hãy Random lại.","error"); return redirect(url_for('tournaments'))
+        execute_query(db.table("tournament_members").update({"fixed_club_id":club.get("club_key"),"fixed_club_name":club.get("name")}).eq("tournament_id",tournament_id).eq("user_id",uid),"ops_reward_member_club",attempts=2)
+        entry["status"]="selected"; entry["selected_club"]=club.get("name"); state["entries"][uid]=entry
+        state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":"SELECT","club":club.get("name"),"message":f"Chốt {club.get('name')}; vé chưa dùng được bảo lưu."})
+        _save_reward_draft(tournament_id,state,"ops_reward_select_save")
+        flash(f"Đã chốt {club.get('name')}. Vé còn lại có thể dùng bất cứ lúc nào.","success")
+        return redirect(url_for('tournaments'))
+
+    @app.post('/tournaments/<tournament_id>/club-draft/reward-reroll')
+    @login_required
+    def tournament_club_draft_reward_reroll(tournament_id):
+        uid=str((current_user() or {}).get("id") or "")
+        member=_member(tournament_id,uid)
+        state=_club_draft_state(tournament_id,False) or {}
+        entry=(state.get("entries") or {}).get(uid) or {}
+        if not member or entry.get("allocation_type")!="EARLY_REWARD" or int(entry.get("tickets_remaining") or 0)<=0:
+            flash("Bạn không có vé thưởng sớm để dùng.","warning"); return redirect(url_for('tournaments'))
+        old_name=str(member.get("fixed_club_name") or "")
+        if not old_name or entry.get("status")!="selected":
+            flash("Bạn cần chốt CLB ban đầu trước khi dùng vé đổi CLB.","warning"); return redirect(url_for('tournaments'))
+        old,_=_one(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("name",old_name).eq("selected_by",uid),"ops_early_reroll_old")
+        if not old:
+            flash("Không xác minh được CLB hiện tại, chưa trừ vé.","error"); return redirect(url_for('tournaments'))
+        skipped=set(str(x) for x in (entry.get("skipped") or []))
+        skipped.add(str(old["id"]))
+        pool=_available_clubs(tournament_id,skipped)
+        if not pool:
+            flash("Pool không còn CLB phù hợp, vé vẫn được giữ nguyên.","warning"); return redirect(url_for('tournaments'))
+        new=random.choice(pool)
+        reserved=execute_query(db.table("tournament_clubs").update({"selected_by":uid,"selected_at":now_iso()}).eq("tournament_id",tournament_id).eq("id",new["id"]).is_("selected_by","null"),"ops_early_reroll_reserve",attempts=2)
+        if not getattr(reserved,"data",None):
+            flash("CLB vừa được người khác chọn; chưa trừ vé. Hãy thử lại.","warning"); return redirect(url_for('tournaments'))
+        execute_query(db.table("tournament_members").update({"fixed_club_id":new.get("club_key"),"fixed_club_name":new.get("name")}).eq("tournament_id",tournament_id).eq("user_id",uid),"ops_early_reroll_member",attempts=2)
+        entry["tickets_remaining"]=int(entry["tickets_remaining"])-1
+        entry["skipped"]=list(skipped); entry["selected_club"]=new.get("name")
+        entry["candidate"]={"id":str(new["id"]),"name":new.get("name")}; entry["status"]="selected"
+        state["entries"][uid]=entry
+        state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":"REROLL","club":new.get("name"),"message":f"Dùng 1 vé thưởng sớm: {old_name} → {new.get('name')}."})
+        _save_reward_draft(tournament_id,state,"ops_early_reroll_save")
+        execute_query(db.table("tournament_clubs").update({"selected_by":None,"selected_at":None}).eq("tournament_id",tournament_id).eq("id",old["id"]).eq("selected_by",uid),"ops_early_reroll_release_old",attempts=2)
+        flash(f"Đã dùng 1 vé: {old_name} → {new.get('name')}. Còn {entry['tickets_remaining']} vé.","success")
+        return redirect(url_for('tournaments'))
 
     @app.post('/admin/tournaments/<tournament_id>/club-draft/force')
     @login_required
     @admin_required
     def admin_tournament_club_draft_force(tournament_id):
-        state=_club_draft_state(tournament_id,False); idx=int(state.get("current_index") or 0); order=state.get("order") or []
-        if not state.get("active") or idx>=len(order):
-            flash("Không có lượt chọn CLB đang hoạt động.","warning"); return redirect_admin("tournaments")
-        uid=str(order[idx]); entry=state["entries"].get(uid) or {}; pool=_available_clubs(tournament_id,entry.get("skipped") or [])
-        if not pool:
-            flash("Không còn CLB để Random thay.","error"); return redirect_admin("tournaments")
-        club=random.choice(pool); state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":"ADMIN_RANDOM","club":club.get("name"),"message":f"Admin Random thay: {club.get('name')}."}); _advance_draft(tournament_id,state,uid,club,"ADMIN_SELECT")
-        flash("Đã Random/chốt thay và chuyển lượt.","success"); return redirect_admin("tournaments")
+        flash("Vé thưởng sớm không còn thời hạn. HLV tự Random/chốt CLB; Admin không Random thay để tránh mất quyền thưởng.","warning")
+        return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/clubs/assign-remaining')
     @login_required
