@@ -29,7 +29,33 @@ def register_admin(context):
             return redirect_admin("tournaments")
         tour=tours[0]
         members=sorted(_all_members(tournament_id),key=lambda m:(int(m.get("seed_no") or 9999),(m.get("display_name") or "").lower()))
+        # Avatars are already returned by _all_members via users.avatar_url.
+        # Do not infer missing pictures or expose inactive members.
+        for member in members:
+            member["avatar_url"]=(member.get("user") or {}).get("avatar_url") or ""
         member_map={str(m.get("user_id")):m for m in members}
+        # Use the existing Supabase teams catalog; absent logos fall back to text.
+        club_logo_urls={}
+        try:
+            from modules.legacy_team_random_service import _load_teams_from_supabase
+            for team in _load_teams_from_supabase():
+                name=str(team.get("team") or team.get("display") or "").strip()
+                url=str(team.get("logo_url") or "").strip()
+                if name and url.startswith(("https://","http://","/static/")):
+                    club_logo_urls[name.casefold()]=url
+        except Exception:
+            app.logger.warning("Draw preview club logos unavailable: %s", tournament_id)
+        # Known display-name variants only; every URL still comes from the
+        # real teams catalog, never a guessed third-party image or endpoint.
+        club_aliases={
+            "bayern":"bayern munich", "man united":"manchester united",
+            "man city":"manchester city", "inter":"inter milan",
+            "psg":"paris saint-germain", "porto":"fc porto",
+            "dortmund":"borussia dortmund", "atletico madrid":"atlético madrid",
+        }
+        def draw_logo(name):
+            key=str(name or "").strip().casefold()
+            return club_logo_urls.get(key) or club_logo_urls.get(club_aliases.get(key,""), "")
         draft_rows=_club_draft_admin_rows(tournament_id)
         timing_cfg=_setting(tournament_id,"competition_timing",{}) or {}
         reward_phase=_reward_ticket_phase_status(tournament_id)
@@ -42,16 +68,16 @@ def register_admin(context):
         for pot_no in (1,2,3):
             clubs=[]
             for club in C1_CLUB_POTS.get(pot_no,[]):
-                clubs.append({"name":club,"occupied":club in occupied})
+                clubs.append({"name":club,"occupied":club in occupied,"logo_url":draw_logo(club)})
             club_pots.append({"pot_no":pot_no,"clubs":clubs,"remaining":sum(1 for c in clubs if not c["occupied"])})
 
         opponents_by_user={str(m.get("user_id")) : [] for m in members}
         for mt in league_matches:
             h=str(mt.get("home_user_id") or ""); a=str(mt.get("away_user_id") or "")
             if h in opponents_by_user and a in member_map:
-                opponents_by_user[h].append({"user_id":a,"display_name":member_map[a].get("display_name") or "HLV","tier":int(member_map[a].get("pot_no") or 0)})
+                opponents_by_user[h].append({"user_id":a,"display_name":member_map[a].get("display_name") or "HLV","tier":int(member_map[a].get("pot_no") or 0),"avatar_url":member_map[a].get("avatar_url") or ""})
             if a in opponents_by_user and h in member_map:
-                opponents_by_user[a].append({"user_id":h,"display_name":member_map[h].get("display_name") or "HLV","tier":int(member_map[h].get("pot_no") or 0)})
+                opponents_by_user[a].append({"user_id":h,"display_name":member_map[h].get("display_name") or "HLV","tier":int(member_map[h].get("pot_no") or 0),"avatar_url":member_map[h].get("avatar_url") or ""})
 
         order=[str(x) for x in (draw_state.get("order") or []) if str(x) in member_map]
         current_index=int(draw_state.get("current_index") or 0)
@@ -64,6 +90,19 @@ def register_admin(context):
         visible_ids={str(x.get("user_id")) for x in (revealed.get(current_uid) or []) if isinstance(x,dict)}
         current_opponents=[o for o in opponents_by_user.get(current_uid,[]) if str(o.get("user_id")) in visible_ids][:4]
         next_club_member=next((m for m in reversed(members) if not m.get("fixed_club_name")),None)
+        # Only reveal the most recently CONFIRMED base draw. The next coach's club
+        # remains unknown and no future results are computed in this GET handler.
+        draft_state=_club_draft_state(tournament_id,False) or {}
+        last_club_member=None
+        last_club_name=""
+        for event in reversed(draft_state.get("history") or []):
+            if event.get("action")!="BASE_SINGLE_RANDOM":
+                continue
+            candidate=member_map.get(str(event.get("user_id") or ""))
+            if candidate and str(candidate.get("fixed_club_name") or "")==str(event.get("club") or ""):
+                last_club_member=candidate
+                last_club_name=str(event.get("club") or "")
+                break
         next_opponent_member=member_map.get(order[current_index]) if order and current_index<len(order) else (members[0] if not order and members else None)
 
         revealed=draw_state.get("revealed") or {}
@@ -89,10 +128,10 @@ def register_admin(context):
                     a=str(a); b=str(b)
                     if a in sim_opponents and b in sim_member_map:
                         om=sim_member_map[b]
-                        sim_opponents[a].append({"user_id":b,"display_name":om.get("display_name") or "HLV","tier":int(om.get("pot_no") or 0)})
+                        sim_opponents[a].append({"user_id":b,"display_name":om.get("display_name") or "HLV","tier":int(om.get("pot_no") or 0),"avatar_url":om.get("avatar_url") or ""})
                     if b in sim_opponents and a in sim_member_map:
                         om=sim_member_map[a]
-                        sim_opponents[b].append({"user_id":a,"display_name":om.get("display_name") or "HLV","tier":int(om.get("pot_no") or 0)})
+                        sim_opponents[b].append({"user_id":a,"display_name":om.get("display_name") or "HLV","tier":int(om.get("pot_no") or 0),"avatar_url":om.get("avatar_url") or ""})
         except Exception:
             app.logger.exception("Could not build draw rehearsal payload: %s",tournament_id)
             sim_clubs={}
@@ -107,6 +146,7 @@ def register_admin(context):
             "members":members,
             "draft_rows":draft_rows,
             "club_pots":club_pots,
+            "club_logo_urls":{c.casefold():draw_logo(c) for pot in C1_CLUB_POTS.values() for c in pot},
             "assigned_count":assigned_count,
             "reward_phase":reward_phase,
             "league_match_count":len(league_matches),
@@ -115,6 +155,8 @@ def register_admin(context):
             "current_member":current_member,
             "current_opponents":current_opponents,
             "next_club_member":next_club_member,
+            "last_club_member":last_club_member,
+            "last_club_name":last_club_name,
             "next_opponent_member":next_opponent_member,
             "club_draw_at":timing_cfg.get("club_draw_at") or "2026-09-17T20:00:00+07:00",
             "reward_deadline_at":timing_cfg.get("gd2_reward_ticket_deadline_at") or "2026-09-18T12:00:00+07:00",
@@ -132,6 +174,7 @@ def register_admin(context):
                     "display_name":m.get("display_name") or "HLV",
                     "seed_no":int(m.get("seed_no") or 0),
                     "tier":int(m.get("pot_no") or 0),
+                    "avatar_url":m.get("avatar_url") or "",
                 } for m in sim_members],
             },
         }

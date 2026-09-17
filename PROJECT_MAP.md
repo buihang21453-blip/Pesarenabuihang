@@ -397,3 +397,9 @@ Luồng rollback trước GĐ2: Thu hồi đối thủ → Thu hồi CLB. Simula
 - `league.py`: route `clubs/draw-next` tự cấu hình 16→1 và RPC một CLB; `league-draw/next` khởi động tự động, công bố 4 đối thủ/HLV theo 1→16 và kiểm tra 32 trận.
 - `admin.py`: dữ liệu người tiếp theo, chỉ trả đối thủ đã tiết lộ trong HTML.
 - `draw_admin_preview.html`, `tournament_draw_preview.js`: một nút/HLV, đồng bộ giả lập.
+
+### V1.6.6 – Sân khấu và tài nguyên hình ảnh lễ bốc thăm
+- `modules/tournament_competition_parts/admin.py`: nạp avatar từ `_all_members`/`users.avatar_url`, logo từ danh mục `teams.logo_url` hiện hữu; xác định CLB vừa bốc từ lịch sử `BASE_SINGLE_RANDOM` đã ghi; chỉ dữ liệu HLV active và đối thủ đã công bố trong HTML.
+- `templates/tournament/draw_admin_preview.html`: một nút chính trong mỗi sân khấu; công cụ quản trị chuyển vào `<details>`; avatar HLV/opponent có fallback và logo chỉ hiện tại kết quả công bố CLB.
+- `static/js/tournament_draw_preview.js`: render avatar an toàn bằng DOM, logo theo kết quả; giả lập CLB thứ tự 16→1.
+- `static/css/tournament_draw_preview.css`: layout gọn, responsive, avatar và logo. Không migration.

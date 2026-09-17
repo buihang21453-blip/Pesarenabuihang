@@ -1,3 +1,10 @@
+## V1.6.6 – Giao diện sân khấu tối giản và avatar HLV
+- Sân khấu mỗi pha có đúng một nút chính: CLB 16→1 / Đối thủ 1→16; chuyển các thao tác quản trị khác vào mục thu gọn, vẫn giữ đầy đủ endpoint và khóa an toàn.
+- Hiển thị avatar thật từ users.avatar_url cho danh sách, HLV trên sân khấu và bốn đối thủ; khi không có ảnh/ảnh lỗi, dùng chữ cái đầu.
+- Chỉ hiển thị logo CLB khi công bố kết quả CLB hoặc nhận diện CLB của HLV ở pha đối thủ; lấy URL từ danh mục teams Supabase hiện hữu, nếu không có logo hiển thị biểu tượng và tên CLB; không tự đoán logo. Giao diện thật giữ kết quả CLB vừa bốc trong lúc nút chuẩn bị HLV tiếp theo.
+- Giả lập CLB đúng thứ tự 16→1, không ghi DB; chặn bấm nút thật trùng trong lúc đang chờ phản hồi; không thay thuật toán 32 trận, vé thưởng, nghiệp vụ thu hồi hay schema.
+- Chưa xác thực hiển thị với dữ liệu/avatar/logo Supabase Production hoặc 2 tài khoản test.
+
 ## V1.6.5 – Một nút một lượt bốc thăm
 - Điều hành thật: `Bốc CLB tiếp theo` tự cấu hình thứ tự 16→1 ở lần đầu khi chưa phân CLB; mỗi POST phân đúng 1 CLB cho đúng HLV tiếp theo qua RPC V1.5.96; không trừ vé.
 - Đối thủ: sau khi sinh đủ 32 trận hợp lệ, chỉ cần `Bốc tiếp`; lần đầu tự khởi động công bố, mỗi lần công bố cả 4 đối thủ của 1 HLV theo hạng 1→16. Không sinh lại lịch, không thay đổi cặp đấu.
