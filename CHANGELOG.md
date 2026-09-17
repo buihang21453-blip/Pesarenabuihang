@@ -1,3 +1,11 @@
+## V1.6.17
+# V1.6.17 — Chặn lỗi Admin quay hộ vé CLB
+
+- Bỏ preflight Admin quay hộ gọi DB ngoài try/except; route nay chuyển toàn bộ xác thực vào shared reroll đã bảo vệ.
+- Gắn mã thao tác và nhãn bước lỗi vào log/flash để tra traceback Vercel; rollback CLB có điều kiện nhằm không ghi đè phiên khác.
+- Không SQL mới; chưa xác nhận lỗi Production nếu thiếu log Vercel.
+- Thêm 7 smoke test giả lập cho đường Admin (thành công, lỗi đọc DB, hết vé, pool hết, lỗi cập nhật/lưu vé).
+
 ## V1.6.16
 # V1.6.16 — Fix HLV dùng vé Random CLB bị trang lỗi
 

@@ -1,3 +1,10 @@
+## V1.6.17
+# V1.6.17 — Chặn lỗi Admin quay hộ vé CLB
+
+- modules/tournament_competition_parts/league.py: route admin_tournament_reward_reroll_for không đọc DB ngoài guarded flow; _reroll_early_ticket_for gắn operation id/step cho chẩn đoán và rollback có điều kiện.
+- app.py: APP_VERSION = V1.6.17.
+- tests/test_admin_proxy_reroll_guard.py: bộ 7 smoke test mock route/Admin và luồng đổi CLB; không ghi Supabase thật.
+
 ## V1.6.16
 # V1.6.16 — Fix route dùng vé Random CLB
 

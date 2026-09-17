@@ -1,3 +1,9 @@
+## V1.6.17
+# V1.6.17 — Chặn lỗi Admin quay hộ vé CLB
+
+- Các route thao tác đổi CLB/tiêu vé phải bảo vệ cả bước preflight và ghi mã đối chiếu log khi lỗi.
+- Rollback phải có điều kiện, không ghi đè dữ liệu đổi bởi phiên khác; tránh retry khi kết quả giao dịch chưa rõ.
+
 ## V1.6.16
 # Quy ước lỗi khi dùng vé Random CLB
 

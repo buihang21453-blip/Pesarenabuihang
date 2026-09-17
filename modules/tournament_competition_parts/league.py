@@ -417,6 +417,10 @@ def register_league(context):
         the new club has been reserved and the member's assignment was written.
         """
         uid=str(uid or "")
+        # Operational trace is logged server-side, not leaked to players.
+        from uuid import uuid4
+        operation_id=uuid4().hex[:10]
+        step='initialization'
         redirect_target = (
             (url_for('admin_tournament_draw_preview',tournament_id=tournament_id)
              if (request.form.get('return_to') or '').strip()=='draw_control'
@@ -428,7 +432,9 @@ def register_league(context):
             return redirect(redirect_target)
 
         try:
+            step='load_member'
             member=_member(tournament_id,uid)
+            step='load_draft'
             state=_club_draft_state(tournament_id,False) or {}
             entry=(state.get('entries') or {}).get(uid) or {}
             if (not member or str(member.get('status') or '')!='active'
@@ -438,6 +444,7 @@ def register_league(context):
                 return reply('HLV không có vé thưởng sớm hợp lệ để dùng.')
             if entry.get('reward_finalized'):
                 return reply('CLB đã chốt cuối cùng; không thể dùng thêm vé.')
+            step='validate_phase'
             phase=_reward_ticket_phase_status(tournament_id,state)
             if phase.get('deadline_reached'):
                 _close_reward_ticket_phase(tournament_id,'deadline')
@@ -449,6 +456,7 @@ def register_league(context):
             old_name=str(member.get('fixed_club_name') or '')
             if not old_name or entry.get('status')!='selected':
                 return reply('HLV cần có CLB ban đầu đã chốt trước khi sử dụng vé.')
+            step='load_current_club'
             old,_=_one(db.table('tournament_clubs').select('*').eq('tournament_id',tournament_id)
                        .eq('name',old_name).eq('selected_by',uid),'ops_early_reroll_old')
             if not old:
@@ -459,6 +467,7 @@ def register_league(context):
             if pot_no not in (1,2,3):
                 return reply('Tier HLV chưa hợp lệ. Admin cần kiểm tra trước khi đổi vé.','error')
             required_pot=4-pot_no
+            step='load_available_pool'
             pool=[c for c in _available_clubs(tournament_id,skipped)
                   if C1_CLUB_POT_BY_NAME.get(c.get('name'))==required_pot]
             if not pool:
@@ -466,6 +475,7 @@ def register_league(context):
             new=random.choice(pool)
 
             # Reserve the new club first; do not mutate the ticket state yet.
+            step='reserve_new_club'
             reserved=execute_query(db.table('tournament_clubs').update({
                 'selected_by':uid,'selected_at':now_iso()
             }).eq('tournament_id',tournament_id).eq('id',new['id'])
@@ -476,9 +486,12 @@ def register_league(context):
             def restore_old_assignment():
                 # The old club remains reserved until the whole operation completes.
                 try:
+                    # Restore only if this request still owns the new assignment.
+                    # Never overwrite an unrelated, more recent club change.
                     execute_query(db.table('tournament_members').update({
                         'fixed_club_id':old.get('club_key'),'fixed_club_name':old_name
-                    }).eq('tournament_id',tournament_id).eq('user_id',uid),
+                    }).eq('tournament_id',tournament_id).eq('user_id',uid)
+                      .eq('fixed_club_name',new.get('name')),
                     'ops_early_reroll_restore_member',attempts=2)
                 except Exception:
                     app.logger.exception('Could not restore member after reroll failure tournament=%s user=%s',tournament_id,uid)
@@ -491,6 +504,7 @@ def register_league(context):
                     app.logger.exception('Could not release reserved replacement club tournament=%s user=%s',tournament_id,uid)
 
             try:
+                step='assign_new_club'
                 updated=execute_query(db.table('tournament_members').update({
                     'fixed_club_id':new.get('club_key'),'fixed_club_name':new.get('name')
                 }).eq('tournament_id',tournament_id).eq('user_id',uid).eq('fixed_club_name',old_name),
@@ -529,6 +543,7 @@ def register_league(context):
                     'message':'Đã dùng hết vé; CLB mới tự động trở thành CLB cuối cùng.'
                 })
             try:
+                step='save_ticket'
                 saved=_save_reward_draft(tournament_id,new_state,'ops_early_reroll_save')
                 if not getattr(saved,'data',None):
                     raise RuntimeError('Reward ticket state was not persisted')
@@ -539,6 +554,7 @@ def register_league(context):
             # Do not turn a successful ticket exchange into a broken link if a
             # non-critical cleanup/league-open step fails. Keep an operator log.
             try:
+                step='release_old_club'
                 execute_query(db.table('tournament_clubs').update({
                     'selected_by':None,'selected_at':None
                 }).eq('tournament_id',tournament_id).eq('id',old['id']).eq('selected_by',uid),
@@ -556,8 +572,17 @@ def register_league(context):
                      f"Đã dùng 1 vé: {old_name} → {new.get('name')}. Còn {new_entry['tickets_remaining']} vé.")
             return reply(message+(' GĐ2 đã tự mở.' if opened else ''),'success')
         except Exception:
-            app.logger.exception('Early club ticket reroll failed tournament=%s user=%s admin_proxy=%s',tournament_id,uid,bool(admin_actor))
-            return reply('Đổi CLB chưa hoàn tất vì lỗi dữ liệu. Hãy kiểm tra CLB/vé trước khi thử lại hoặc báo Admin.','error')
+            # The same operation identifier lets Admin correlate the visible error
+            # with the full stack trace in Vercel logs, without exposing credentials.
+            app.logger.exception(
+                'EARLY_REROLL_FAILED op=%s step=%s tournament=%s target_user=%s admin_proxy=%s',
+                operation_id,step,tournament_id,uid,bool(admin_actor)
+            )
+            return reply(
+                f'Lỗi đổi CLB (mã {operation_id}, bước {step}). Chưa xác nhận giao dịch thành công; '
+                'kiểm tra CLB và vé trước khi thử lại. Gửi mã lỗi cho Admin để tra log.',
+                'error'
+            )
 
     @app.post('/tournaments/<tournament_id>/club-draft/reward-reroll')
     @login_required
@@ -569,14 +594,28 @@ def register_league(context):
     @login_required
     @admin_required
     def admin_tournament_reward_reroll_for(tournament_id):
-        """Admin may spend exactly one existing ticket on behalf of a selected winner."""
-        uid=str(request.form.get("user_id") or "").strip()
-        state=_club_draft_state(tournament_id,False) or {}
-        if not uid or uid not in [str(x) for x in (state.get("order") or [])][:3]:
-            flash("HLV không thuộc Top 1–3 có vé thưởng sớm; không thể quay hộ.","warning")
-            return _gd2_admin_return(tournament_id)
-        admin_uid=str((current_user() or {}).get("id") or "")
-        return _reroll_early_ticket_for(tournament_id, uid, admin_actor=admin_uid)
+        """Admin proxy: delegate ALL eligibility checks to the guarded shared flow.
+
+        The V1.6.16 preflight called _club_draft_state outside try/except, so a
+        database read error on this POST could escape as HTTP 500 before the
+        guarded flow was ever reached. The shared flow already validates the
+        target belongs to Top 1–3, ticket count, Pot, phase and club ownership.
+        """
+        try:
+            uid=str(request.form.get('user_id') or '').strip()
+            admin_uid=str((current_user() or {}).get('id') or '')
+            if not uid or not admin_uid:
+                flash('Thiếu HLV hoặc phiên Admin. Không sử dụng vé.','warning')
+                return _gd2_admin_return(tournament_id)
+            return _reroll_early_ticket_for(tournament_id, uid, admin_actor=admin_uid)
+        except Exception:
+            from uuid import uuid4
+            operation_id=uuid4().hex[:10]
+            app.logger.exception(
+                'ADMIN_PROXY_REROLL_ROUTE_FAILED op=%s tournament=%s',operation_id,tournament_id
+            )
+            flash(f'Không xử lý được yêu cầu quay hộ (mã {operation_id}). Kiểm tra vé và CLB trước khi thử lại.','error')
+            return redirect(url_for('admin')+'#c1-admin-gd2')
 
     @app.post('/tournaments/<tournament_id>/club-draft/finalize')
     @login_required
