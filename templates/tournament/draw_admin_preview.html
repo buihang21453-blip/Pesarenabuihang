@@ -39,12 +39,9 @@
       <div class="control-panel-head"><div><strong>🔴 ĐIỀU HÀNH THẬT</strong><span>Mọi nút trong khối này thay đổi dữ liệu giải thật.</span></div><div class="control-status"><span>{{ preview.assigned_count }}/16 CLB</span><span>{{ preview.league_match_count }}/32 trận</span><span>{{ preview.revealed_count }}/16 công bố</span></div></div>
       <div class="control-action-grid">
         <form method="post" action="{{ url_for('admin_tournament_rerandom_clubs_by_tier',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><input type="hidden" name="confirm_rule" value="TIER_POT_321"><button class="action-gold" type="submit">🎲 Random toàn bộ 16 CLB</button></form>
-        <form method="post" action="{{ url_for('admin_tournament_configure_base_draft',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><input type="hidden" name="direction" value="ascending"><input type="hidden" name="actor" value="admin"><button type="submit">🔢 Mở Random từng HLV 1→16</button></form>
-        {% set next_club_member = preview.members|rejectattr('fixed_club_name')|list|first %}
-        <form method="post" action="{{ url_for('admin_tournament_random_one_base_club',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><input type="hidden" name="user_id" value="{{ next_club_member.user_id if next_club_member else '' }}"><button type="submit" {{ 'disabled' if not next_club_member else '' }}>🎯 Random HLV đang đến lượt</button></form>
+        <form method="post" action="{{ url_for('admin_tournament_club_draw_next',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><button class="action-gold" type="submit" {{ 'disabled' if not preview.next_club_member else '' }}>🎲 Bốc CLB tiếp theo · 16→1{% if preview.next_club_member %} · #{{ preview.next_club_member.seed_no }} {{ preview.next_club_member.display_name }}{% endif %}</button></form>
         <form method="post" action="{{ url_for('admin_tournament_league_generate',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><button class="action-blue" type="submit">🗓 Sinh lịch GĐ2 · 4 trận</button></form>
-        <form method="post" action="{{ url_for('admin_tournament_league_draw_start',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><button class="action-blue" type="submit">▶ Bắt đầu công bố đối thủ</button></form>
-        <form method="post" action="{{ url_for('admin_tournament_league_draw_next',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><button class="action-gold" type="submit">🎲 Bốc tiếp</button></form>
+        <form method="post" action="{{ url_for('admin_tournament_league_draw_next',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><button class="action-gold" type="submit" {{ 'disabled' if preview.league_match_count!=32 or preview.revealed_count>=16 else '' }}>🎲 Bốc tiếp · Công bố 4 đối thủ{% if preview.next_opponent_member %} · #{{ preview.next_opponent_member.seed_no }} {{ preview.next_opponent_member.display_name }}{% endif %}</button></form>
         <form method="post" action="{{ url_for('admin_tournament_league_start',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><input type="hidden" name="start_now" value="1"><button class="action-green" type="submit">⚡ Bắt đầu GĐ2 ngay</button></form>
         <form method="post" action="{{ url_for('admin_tournament_league_revoke_opponents',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><button class="action-red" type="submit" {{ 'disabled' if not preview.can_revoke_opponents else '' }}>↩ Thu hồi đối thủ</button></form>
         <form method="post" action="{{ url_for('admin_tournament_revoke_clubs',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><input type="hidden" name="confirm_revoke" value="REVOKE_ALL_16_CLUBS"><button class="action-red" type="submit" {{ 'disabled' if not preview.can_revoke_clubs else '' }}>↩ Thu hồi CLB</button></form>
@@ -58,7 +55,7 @@
     </section>
 
     <section class="draw-phase active" data-phase-panel="club">
-      <div class="draw-phase-head"><div><span class="eyebrow">PHẦN 1</span><h2>RANDOM CLB GỐC CHO 16 HLV</h2><p>Tier 1 → Pot 3 · Tier 2 → Pot 2 · Tier 3 → Pot 1</p></div><div class="draw-progress"><strong>{{ preview.assigned_count }}/16</strong><span>CLB đã phân</span><div><i style="width:{{ (preview.assigned_count * 100 / 16)|round(0,'floor') }}%"></i></div></div></div>
+      <div class="draw-phase-head"><div><span class="eyebrow">PHẦN 1</span><h2>RANDOM CLB GỐC CHO 16 HLV</h2><p>Quay lần lượt từ hạng 16 → 1 · Tier 1 → Pot 3 · Tier 2 → Pot 2 · Tier 3 → Pot 1</p></div><div class="draw-progress"><strong>{{ preview.assigned_count }}/16</strong><span>CLB đã phân</span><div><i style="width:{{ (preview.assigned_count * 100 / 16)|round(0,'floor') }}%"></i></div></div></div>
       <div class="draw-stage-grid">
         <aside class="draw-card draw-list-card">
           <h3>Danh sách HLV</h3>
@@ -72,7 +69,7 @@
         </aside>
 
         <section class="draw-card draw-center-stage">
-          {% set club_current = preview.members|selectattr('fixed_club_name','equalto',None)|list|first if preview.members else none %}
+          {% set club_current = preview.next_club_member %}
           {% if not club_current %}{% set club_current = preview.members|first %}{% endif %}
           <span class="stage-kicker">HLV ĐANG ĐẾN LƯỢT</span>
           <div class="draw-avatar" data-club-avatar>{{ (club_current.display_name[:1] if club_current else '?')|upper }}</div>
@@ -80,7 +77,7 @@
           <p data-club-meta>{{ ('TIER ' ~ club_current.pot_no ~ ' · HẠNG ' ~ club_current.seed_no ~ ' GĐ1') if club_current else 'Chưa có dữ liệu' }}</p>
           <div class="draw-club-reveal"><span data-club-reveal-icon>?</span><strong data-club-reveal-name>CLB BÍ ẨN</strong><small data-club-pot>{% if club_current %}Random từ Pot {{ 4 - (club_current.pot_no|int) }}{% else %}Chờ lễ bốc thăm{% endif %}</small></div>
           <button class="ceremony-button" type="button" disabled>🎲 RANDOM CLB</button>
-          <small class="preview-hint" data-center-hint>Điều hành thật: dùng bảng điều khiển phía trên · Giả lập: dùng nút chạy thử.</small>
+          <small class="preview-hint" data-center-hint>Điều hành thật: mỗi lần bấm Bốc CLB tiếp theo chỉ phân một HLV, từ hạng 16 về 1.</small>
         </section>
 
         <aside class="draw-card draw-pot-card">
@@ -97,14 +94,14 @@
     </section>
 
     <section class="draw-phase" data-phase-panel="opponent">
-      <div class="draw-phase-head"><div><span class="eyebrow">PHẦN 2</span><h2>RANDOM ĐỐI THỦ GĐ2</h2><p>32 trận cố định · 4 trận/HLV · đủ Tier 1, 2, 3 · không trùng đối thủ</p></div><div class="draw-progress"><strong>{{ preview.revealed_count }}/16</strong><span>HLV đã công bố</span><div><i style="width:{{ (preview.revealed_count * 100 / 16)|round(0,'floor') }}%"></i></div></div></div>
+      <div class="draw-phase-head"><div><span class="eyebrow">PHẦN 2</span><h2>RANDOM ĐỐI THỦ GĐ2</h2><p>Bốc từng HLV từ hạng 1 → 16 · mỗi lần công bố đủ 4 đối thủ · 32 trận cố định · đủ 3 Tier</p></div><div class="draw-progress"><strong>{{ preview.revealed_count }}/16</strong><span>HLV đã công bố</span><div><i style="width:{{ (preview.revealed_count * 100 / 16)|round(0,'floor') }}%"></i></div></div></div>
       <div class="draw-stage-grid opponent-layout">
         <aside class="draw-card draw-list-card"><h3>Thứ tự công bố</h3><div class="draw-filter-row"><span class="active">Tier 1</span><span>Tier 2</span><span>Tier 3</span></div><div class="draw-player-list">{% for m in preview.members %}<div class="draw-player-row"><b>#{{ m.seed_no }}</b><span>{{ m.display_name }}</span><em class="tier t{{ m.pot_no }}">T{{ m.pot_no }}</em><small>{{ m.fixed_club_name or '—' }}</small></div>{% endfor %}</div></aside>
         <section class="draw-card draw-center-stage opponent-stage">
           {% set cm=preview.current_member %}
           <span class="stage-kicker">ĐANG CÔNG BỐ ĐỐI THỦ</span><div class="draw-avatar" data-opp-avatar>{{ (cm.display_name[:1] if cm else '?')|upper }}</div><h3 data-opp-name>{{ cm.display_name if cm else 'CHỜ SINH LỊCH' }}</h3><p data-opp-meta>{% if cm %}TIER {{ cm.pot_no }} · HẠNG {{ cm.seed_no }} GĐ1 · {{ cm.fixed_club_name or 'Chưa chốt CLB' }}{% endif %}</p>
           <div class="opponent-slots" data-opponent-slots>{% for i in range(4) %}{% set o=preview.current_opponents[i] if i < preview.current_opponents|length else none %}<div class="opponent-slot {{ 'revealed' if o else '' }}"><small>Trận {{ i+1 }}</small><span>{{ (o.display_name[:1]|upper) if o else '?' }}</span><strong>{{ o.display_name if o else 'Chưa công bố' }}</strong><em>{{ ('Tier ' ~ o.tier) if o else '—' }}</em></div>{% endfor %}</div>
-          <button class="ceremony-button" type="button" disabled>🎲 BỐC TIẾP</button><small class="preview-hint">Điều hành thật dùng nút Bốc tiếp phía trên; giả lập không tác động dữ liệu thật.</small>
+          <button class="ceremony-button" type="button" disabled>🎲 BỐC TIẾP</button><small class="preview-hint">Điều hành thật: mỗi lần Bốc tiếp công bố đủ 4 đối thủ của một HLV, hạng 1 đến 16.</small>
         </section>
         <aside class="draw-card draw-status-card"><h3>Trạng thái lễ bốc thăm</h3><ul><li class="ok"><b>{{ preview.assigned_count }}/16 HLV có CLB</b><span>Phân bổ CLB gốc</span></li><li class="{{ 'ok' if preview.league_match_count==32 else 'wait' }}"><b>{{ preview.league_match_count }}/32 trận đã sinh</b><span>Lịch đối thủ cố định</span></li><li class="wait"><b>{{ preview.revealed_count }}/16 HLV đã công bố</b><span>Tier 1 → Tier 2 → Tier 3</span></li><li class="{{ 'ok' if preview.reward_phase.all_finalized else 'wait' }}"><b>{{ preview.reward_phase.finalized_count }}/3 HLV vé thưởng đã chốt</b><span>Vé còn lại vẫn đổi CLB, không đổi đối thủ</span></li></ul><div class="rule-box"><strong>Quy tắc GĐ2</strong><span>✓ 4 trận / HLV</span><span>✓ 4 đối thủ khác nhau</span><span>✓ Bắt buộc đủ 3 Tier</span><span>✓ Đối thủ cố định sau khi sinh lịch</span></div></aside>
       </div>

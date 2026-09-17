@@ -584,6 +584,41 @@ def register_league(context):
         flash("Bạn đã Random CLB gốc: " + club + ". Không trừ vé thưởng sớm.","success")
         return redirect(url_for("tournaments"))
 
+    @app.post('/admin/tournaments/<tournament_id>/clubs/draw-next')
+    @login_required
+    @admin_required
+    def admin_tournament_club_draw_next(tournament_id):
+        """One click = exactly one base club, in descending GĐ1 rank 16→1."""
+        members=_all_members(tournament_id)
+        ranks=sorted(int(m.get("seed_no") or 0) for m in members)
+        if len(members)!=16 or ranks!=list(range(1,17)) or [sum(int(m.get("pot_no") or 0)==t for m in members) for t in (1,2,3)]!=[5,6,5]:
+            return _club_admin_reply("Cần đủ 16 HLV active, hạng 1–16 và Tier 5–6–5.")
+        config=_base_draft_config(tournament_id)
+        assigned=any(m.get("fixed_club_name") for m in members)
+        desired={"mode":"sequential","direction":"descending","actor":"admin"}
+        if any(config.get(k)!=v for k,v in desired.items()):
+            if assigned:
+                return _club_admin_reply("Đang có CLB từ chế độ khác. Thu hồi CLB (và đối thủ nếu đã sinh) trước khi bắt đầu lượt 16→1; dữ liệu hiện có được giữ nguyên.")
+            stages,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id),"ops_draw_next_stages")
+            status={str(x.get("stage_code")):x.get("status") for x in stages}
+            state=_club_draft_state(tournament_id,False) or {}
+            if status.get("stage1")!="completed" or status.get("league") not in {"draft","pending"} or _matches(tournament_id,"league") or _matches(tournament_id,"knockout"):
+                return _club_admin_reply("Chỉ Random khi GĐ1 hoàn tất, GĐ2 chưa có lịch và chưa bắt đầu.")
+            if len(state.get("all_order") or [])!=16 or (_setting(tournament_id,"club_selection",{}) or {}).get("open"):
+                return _club_admin_reply("Cần khởi tạo hồ sơ Random đủ 16 HLV và khóa chọn CLB thủ công.")
+            if any(int(e.get("tickets_remaining") or 0)<int(e.get("tickets_total") or 0) for e in (state.get("entries") or {}).values() if e.get("allocation_type")=="EARLY_REWARD"):
+                return _club_admin_reply("Đã dùng vé thưởng; không thể khởi tạo lại lượt Random.")
+            payload={**desired,"configured_at":now_iso()}
+            try:
+                execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_base_draft_v1","setting_value":payload,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_draw_next_configure",attempts=2)
+            except Exception:
+                app.logger.exception("Could not configure 16-to-1 club draw: %s",tournament_id)
+                return _club_admin_reply("Không lưu được cấu hình Random 16→1; chưa Random CLB.")
+        turn=_base_draft_turn(tournament_id,"descending")
+        if not turn:
+            return _club_admin_reply("Đã Random đủ 16 CLB; không phân bổ thêm.","success")
+        return _allocate_base_club_reply(tournament_id,str(turn.get("user_id")),"admin")
+
     @app.post('/admin/tournaments/<tournament_id>/clubs/random-one')
     @login_required
     @admin_required
@@ -768,39 +803,53 @@ def register_league(context):
     @login_required
     @admin_required
     def admin_tournament_league_draw_next(tournament_id):
-        state=_setting(tournament_id,"league_draw_v2",{}) or {}; order=state.get("order") or []; pots=state.get("pots") or [1,2,3]
-        i=int(state.get("current_index") or 0); pi=int(state.get("pot_index") or 0)
-        if not state.get("active") or i>=len(order):
-            flash("Lễ bốc thăm đã hoàn tất hoặc chưa bắt đầu.","warning"); return _gd2_admin_return(tournament_id)
-        uid=str(order[i]); pot=int(pots[pi]); member_map={str(m.get("user_id")):m for m in _all_members(tournament_id)}
-        opponents=[]
-        for m in _matches(tournament_id,"league"):
-            h,a=str(m.get("home_user_id")),str(m.get("away_user_id"))
-            if uid not in {h,a}: continue
-            opp=a if uid==h else h; om=member_map.get(opp) or {}
-            if int(om.get("pot_no") or 0)==pot: opponents.append({"user_id":opp,"name":om.get("display_name") or "HLV","pot":pot})
-        state.setdefault("revealed",{}).setdefault(uid,[]).extend([x for x in opponents if x not in state.get("revealed",{}).get(uid,[])])
-        state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"pot":pot,"action":"DRAW","opponents":[x.get("name") for x in opponents]})
-        pi+=1
-        if pi>=len(pots):
-            # Lượt random thứ tư không có Pot riêng: công bố tất cả đối thủ còn thiếu.
-            already={str(x.get("user_id")) for x in state.get("revealed",{}).get(uid,[])}
-            for m in _matches(tournament_id,"league"):
-                h,a=str(m.get("home_user_id")),str(m.get("away_user_id"))
-                if uid not in {h,a}: continue
-                opp=a if uid==h else h
-                if opp not in already:
-                    om=member_map.get(opp) or {}
-                    state["revealed"][uid].append({"user_id":opp,"name":om.get("display_name") or "HLV","pot":int(om.get("pot_no") or 0)})
-                    already.add(opp)
-            pi=0; i+=1
-        state["pot_index"]=pi; state["current_index"]=i
-        if i>=len(order): state["active"]=False; state["completed"]=True
-        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"league_draw_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_draw_next",attempts=2)
+        """One click reveals all four fixed opponents for one HLV, ranks 1→16."""
+        state=_setting(tournament_id,"league_draw_v2",{}) or {}
+        members=sorted(_all_members(tournament_id),key=lambda m:(int(m.get("seed_no") or 9999),str(m.get("display_name") or "")))
+        if len(members)!=16 or sorted(int(m.get("seed_no") or 0) for m in members)!=list(range(1,17)) or [sum(int(m.get("pot_no") or 0)==t for m in members) for t in (1,2,3)]!=[5,6,5]:
+            flash("Cần đúng 16 HLV, hạng 1–16 và Tier 5–6–5.","error"); return _gd2_admin_return(tournament_id)
+        matches=[m for m in _matches(tournament_id,"league") if m.get("status")!="cancelled"]
+        if len(matches)!=32:
+            flash("Phải sinh đủ 32 trận GĐ2 trước khi bốc đối thủ.","error"); return _gd2_admin_return(tournament_id)
+        member_map={str(m.get("user_id")):m for m in members}
+        opponent_map={uid:[] for uid in member_map}
+        pairs=set()
+        for match in matches:
+            h,a=str(match.get("home_user_id")),str(match.get("away_user_id"))
+            pair=tuple(sorted((h,a)))
+            if h not in member_map or a not in member_map or h==a or pair in pairs:
+                flash("Lịch GĐ2 có cặp trùng hoặc HLV không hợp lệ; không công bố.","error"); return _gd2_admin_return(tournament_id)
+            pairs.add(pair);opponent_map[h].append(a);opponent_map[a].append(h)
+        if any(len(opp)!=4 or len(set(opp))!=4 or {int(member_map[u].get("pot_no") or 0) for u in opp}!={1,2,3} for opp in opponent_map.values()):
+            flash("Lịch GĐ2 chưa đạt 4 đối thủ và đủ 3 Tier cho mọi HLV; không công bố.","error"); return _gd2_admin_return(tournament_id)
+        expected_order=[str(m.get("user_id")) for m in members]
+        if not state.get("order"):
+            # First Bốc tiếp also starts the ceremony; no separate start button.
+            state={"active":True,"completed":False,"order":expected_order,"current_index":0,"pot_index":0,"pots":[1,2,3],"revealed":{},"history":[]}
+        elif list(map(str,state.get("order") or []))!=expected_order:
+            flash("Thứ tự bốc thăm đã lưu không khớp hạng 1–16. Thu hồi đối thủ để khởi tạo lại an toàn.","error");return _gd2_admin_return(tournament_id)
+        i=int(state.get("current_index") or 0)
+        if state.get("completed") or i>=16:
+            flash("Đã công bố đủ 16 HLV.","success");return _gd2_admin_return(tournament_id)
+        if not state.get("active"):
+            flash("Lễ bốc thăm đã tạm dừng; không ghi đè kết quả cũ.","warning");return _gd2_admin_return(tournament_id)
+        uid=expected_order[i]
+        # Existing V1.6.4 half-reveals are completed for this HLV in one click.
+        opponents=[{"user_id":opp,"name":member_map[opp].get("display_name") or "HLV","pot":int(member_map[opp].get("pot_no") or 0)} for opp in opponent_map[uid]]
+        state.setdefault("revealed",{})[uid]=opponents
+        state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":"DRAW_FOUR","opponents":[x["name"] for x in opponents]})
+        state["pot_index"]=0;state["current_index"]=i+1
+        if i+1>=16:state["active"]=False;state["completed"]=True
+        try:
+            execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"league_draw_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_draw_next_four",attempts=2)
+        except Exception:
+            app.logger.exception("Could not save four-opponent reveal: %s",tournament_id)
+            flash("Không lưu được công bố đối thủ. Chưa xác nhận lượt bốc này.","error");return _gd2_admin_return(tournament_id)
         opened=False
         if state.get("completed") and _reward_ticket_phase_status(tournament_id).get("all_finalized"):
             opened,_msg=_open_league_stage(tournament_id,"all_reward_holders_finalized")
-        flash(("Đã hoàn tất bốc thăm đối thủ. Cả 3 HLV vé thưởng đã chốt nên GĐ2 tự mở." if opened else f"Đã bốc Tier đối thủ {pot} cho HLV hiện tại."),"success"); return _gd2_admin_return(tournament_id)
+        flash(("Đã công bố đủ 16 HLV; GĐ2 đã mở vì 3 HLV vé thưởng đã chốt." if opened else f"Đã công bố 4 đối thủ của {member_map[uid].get('display_name') or 'HLV'} ({i+1}/16)."),"success")
+        return _gd2_admin_return(tournament_id)
 
     @app.post('/tournaments/<tournament_id>/league/reveal')
     @login_required

@@ -198,3 +198,6 @@ V1.5.87: không đưa lên Production khi chưa kiểm thử luồng giao dịch
 - Không xóa lịch GĐ2 nếu stage đã mở/completed hoặc bất kỳ trận GĐ2 nào không còn `pending`.
 - Khi muốn làm lại trước giờ thi đấu: bắt buộc Thu hồi đối thủ trước, sau đó mới Thu hồi CLB.
 - Không dùng giao diện/JS để bỏ qua các kiểm tra backend của 16 HLV, Tier 5–6–5, 32 trận, 4 trận/HLV và đủ 3 Tier.
+
+### V1.6.5 – Luật thao tác lễ bốc thăm
+- CLB gốc: đúng 1 lần bấm = 1 HLV, thứ tự 16→1; đối thủ: đúng 1 lần bấm = công bố 4 đối thủ của 1 HLV, thứ tự 1→16. Không nhầm công bố với sinh lại trận. Không vượt ràng buộc/ghi đè dữ liệu giải đã có.

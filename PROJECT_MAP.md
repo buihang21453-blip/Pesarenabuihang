@@ -392,3 +392,8 @@ V1.5.90: Admin `POST /admin/tournaments/<id>/clubs/rerandom-by-tier` tại `modu
 - `static/js/tournament_draw_preview.js`: chuyển mode Live/Simulation, chạy giả lập toàn bộ lễ.
 - `static/css/tournament_draw_preview.css`: style bảng điều khiển live/simulation.
 Luồng rollback trước GĐ2: Thu hồi đối thủ → Thu hồi CLB. Simulation không ghi dữ liệu.
+
+### V1.6.5 – Lượt bốc thăm một nút
+- `league.py`: route `clubs/draw-next` tự cấu hình 16→1 và RPC một CLB; `league-draw/next` khởi động tự động, công bố 4 đối thủ/HLV theo 1→16 và kiểm tra 32 trận.
+- `admin.py`: dữ liệu người tiếp theo, chỉ trả đối thủ đã tiết lộ trong HTML.
+- `draw_admin_preview.html`, `tournament_draw_preview.js`: một nút/HLV, đồng bộ giả lập.

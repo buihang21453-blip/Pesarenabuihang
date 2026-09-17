@@ -55,9 +55,16 @@ def register_admin(context):
 
         order=[str(x) for x in (draw_state.get("order") or []) if str(x) in member_map]
         current_index=int(draw_state.get("current_index") or 0)
-        current_uid=order[current_index] if order and current_index < len(order) else (str(members[0].get("user_id")) if members else "")
+        # Show the last publicly revealed HLV on stage; never leak scheduled
+        # but unannounced opponents into preview HTML.
+        revealed=draw_state.get("revealed") or {}
+        last_uid=str((draw_state.get("history") or [{}])[-1].get("user_id") or "")
+        current_uid=last_uid if last_uid in member_map else (order[current_index] if order and current_index < len(order) else (str(members[0].get("user_id")) if members else ""))
         current_member=member_map.get(current_uid) or (members[0] if members else {})
-        current_opponents=opponents_by_user.get(str(current_member.get("user_id") or ""),[])[:4]
+        visible_ids={str(x.get("user_id")) for x in (revealed.get(current_uid) or []) if isinstance(x,dict)}
+        current_opponents=[o for o in opponents_by_user.get(current_uid,[]) if str(o.get("user_id")) in visible_ids][:4]
+        next_club_member=next((m for m in reversed(members) if not m.get("fixed_club_name")),None)
+        next_opponent_member=member_map.get(order[current_index]) if order and current_index<len(order) else (members[0] if not order and members else None)
 
         revealed=draw_state.get("revealed") or {}
         revealed_count=sum(1 for uid in member_map if revealed.get(uid))
@@ -107,6 +114,8 @@ def register_admin(context):
             "revealed_count":revealed_count,
             "current_member":current_member,
             "current_opponents":current_opponents,
+            "next_club_member":next_club_member,
+            "next_opponent_member":next_opponent_member,
             "club_draw_at":timing_cfg.get("club_draw_at") or "2026-09-17T20:00:00+07:00",
             "reward_deadline_at":timing_cfg.get("gd2_reward_ticket_deadline_at") or "2026-09-18T12:00:00+07:00",
             "league_start_at":timing_cfg.get("league_start_at") or "2026-09-18T12:00:00+07:00",
