@@ -184,3 +184,9 @@ V1.5.87: không đưa lên Production khi chưa kiểm thử luồng giao dịch
 
 ### V1.6.0 – Ràng buộc lịch GĐ2
 - Với Tier HLV 5–6–5, từng HLV phải đá 4 trận gặp 4 người khác nhau và có đối thủ thuộc cả Tier 1/2/3 trong tổng 4 trận. Kiểm tra toàn lịch trước ghi và khi mở giải. Không chấp nhận thuật toán tối ưu mềm hoặc giới hạn đủ 3 Tier trong 3 trận đầu.
+
+### Quy tắc Preview Lễ bốc thăm từ V1.6.3
+- Màn `Admin Preview` là read-only: không được Random, sinh lịch, công bố hoặc mở GĐ2 từ màn hình preview.
+- Preview phải dùng cùng dữ liệu live của giải để Admin kiểm tra bố cục trước khi livestream, nhưng không được tạo side effect database.
+- Hai phần preview phải tách rõ: `Random CLB` và `Random đối thủ`; có thể chuyển qua lại và bật toàn màn hình.
+- Khi cần thao tác thật, Admin quay về `GĐ2 · Pot / CLB / Lịch`; không đặt chức năng quản trị nguy hiểm trên màn hình trình chiếu.

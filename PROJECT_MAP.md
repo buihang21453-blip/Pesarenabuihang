@@ -375,3 +375,11 @@ V1.5.90: Admin `POST /admin/tournaments/<id>/clubs/rerandom-by-tier` tại `modu
 
 **Luồng chuẩn V1.6.2:** 16 CLB gốc → sinh 32 trận cố định → công bố Tier 1→2→3 (có thể song song thời gian dùng vé) → 3 HLV tiếp tục reroll CLB nếu còn vé → khi pha vé đóng và các điều kiện lịch/công bố đạt thì mở GĐ2.
 
+
+### V1.6.3 — Admin Preview Lễ bốc thăm GĐ2
+- `modules/tournament_competition_parts/admin.py`: route GET `admin_tournament_draw_preview`, chỉ Admin, chỉ đọc dữ liệu hiện tại của giải.
+- `templates/tournament/draw_admin_preview.html`: sân khấu preview gồm 2 phần Random CLB / Random đối thủ.
+- `static/css/tournament_draw_preview.css`: layout stadium/dashboard responsive dành riêng cho preview.
+- `static/js/tournament_draw_preview.js`: chuyển phase, fullscreen và countdown theo giờ Việt Nam.
+- `templates/admin.html`: nút mở preview tại đầu tab `GĐ2 · Pot / CLB / Lịch`.
+- Preview không gọi API POST và không có nút thay đổi dữ liệu; mọi thao tác vận hành thật vẫn thực hiện tại Admin GĐ2.

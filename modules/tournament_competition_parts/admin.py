@@ -12,6 +12,71 @@ def register_admin(context):
         # Compatibility route only: all user-facing tournament UI now lives at /tournaments.
         return redirect(url_for("tournaments"))
 
+    @app.get('/admin/tournaments/<tournament_id>/draw-preview')
+    @login_required
+    @admin_required
+    def admin_tournament_draw_preview(tournament_id):
+        """Read-only preview of the GĐ2 draw ceremony screen for Admin."""
+        tours,_=_rows(
+            db.table("tournaments").select("*").eq("id",tournament_id).limit(1),
+            "ops_draw_preview_tournament",
+        )
+        if not tours:
+            flash("Không tìm thấy giải đấu.","error")
+            return redirect_admin("tournaments")
+        tour=tours[0]
+        members=sorted(_all_members(tournament_id),key=lambda m:(int(m.get("seed_no") or 9999),(m.get("display_name") or "").lower()))
+        member_map={str(m.get("user_id")):m for m in members}
+        draft_rows=_club_draft_admin_rows(tournament_id)
+        timing_cfg=_setting(tournament_id,"competition_timing",{}) or {}
+        reward_phase=_reward_ticket_phase_status(tournament_id)
+        league_draw=_league_draw_payload(tournament_id)
+        draw_state=league_draw.get("state") or {}
+        league_matches=[m for m in _matches(tournament_id,"league") if m.get("status")!="cancelled"]
+
+        occupied={str(m.get("fixed_club_name") or "") for m in members if m.get("fixed_club_name")}
+        club_pots=[]
+        for pot_no in (1,2,3):
+            clubs=[]
+            for club in C1_CLUB_POTS.get(pot_no,[]):
+                clubs.append({"name":club,"occupied":club in occupied})
+            club_pots.append({"pot_no":pot_no,"clubs":clubs,"remaining":sum(1 for c in clubs if not c["occupied"])})
+
+        opponents_by_user={str(m.get("user_id")) : [] for m in members}
+        for mt in league_matches:
+            h=str(mt.get("home_user_id") or ""); a=str(mt.get("away_user_id") or "")
+            if h in opponents_by_user and a in member_map:
+                opponents_by_user[h].append({"user_id":a,"display_name":member_map[a].get("display_name") or "HLV","tier":int(member_map[a].get("pot_no") or 0)})
+            if a in opponents_by_user and h in member_map:
+                opponents_by_user[a].append({"user_id":h,"display_name":member_map[h].get("display_name") or "HLV","tier":int(member_map[h].get("pot_no") or 0)})
+
+        order=[str(x) for x in (draw_state.get("order") or []) if str(x) in member_map]
+        current_index=int(draw_state.get("current_index") or 0)
+        current_uid=order[current_index] if order and current_index < len(order) else (str(members[0].get("user_id")) if members else "")
+        current_member=member_map.get(current_uid) or (members[0] if members else {})
+        current_opponents=opponents_by_user.get(str(current_member.get("user_id") or ""),[])[:4]
+
+        revealed=draw_state.get("revealed") or {}
+        revealed_count=sum(1 for uid in member_map if revealed.get(uid))
+        assigned_count=sum(1 for m in members if m.get("fixed_club_name"))
+        preview={
+            "tournament":tour,
+            "members":members,
+            "draft_rows":draft_rows,
+            "club_pots":club_pots,
+            "assigned_count":assigned_count,
+            "reward_phase":reward_phase,
+            "league_match_count":len(league_matches),
+            "draw_state":draw_state,
+            "revealed_count":revealed_count,
+            "current_member":current_member,
+            "current_opponents":current_opponents,
+            "club_draw_at":timing_cfg.get("club_draw_at") or "2026-09-17T20:00:00+07:00",
+            "reward_deadline_at":timing_cfg.get("gd2_reward_ticket_deadline_at") or "2026-09-18T12:00:00+07:00",
+            "league_start_at":timing_cfg.get("league_start_at") or "2026-09-18T12:00:00+07:00",
+        }
+        return render_template("tournament/draw_admin_preview.html", preview=preview, auth_only=True)
+
     @app.post('/admin/tournaments/<tournament_id>/c1-test-accounts')
     @login_required
     @admin_required

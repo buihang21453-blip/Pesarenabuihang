@@ -1,3 +1,11 @@
+## V1.6.3 – Admin Preview giao diện Lễ bốc thăm GĐ2
+- Thêm route Admin read-only `/admin/tournaments/<id>/draw-preview` để xem trước sân khấu Lễ bốc thăm trước khi livestream/vận hành thật.
+- Thêm nút `👁 Xem trước giao diện Lễ bốc thăm` ngay đầu khối `GĐ2 · Pot / CLB / Lịch`.
+- Preview có 2 chế độ: `Phần 1 · Random CLB` và `Phần 2 · Random đối thủ`, chuyển đổi ngay trên màn hình và hỗ trợ Fullscreen.
+- Preview dùng dữ liệu giải hiện tại: 16 HLV, Tier, CLB đã phân, kho CLB còn lại, vé thưởng, 32 trận GĐ2 và tiến độ công bố đối thủ; không có POST/action thay đổi database.
+- Hiển thị countdown theo 3 mốc Admin cấu hình: mở lễ, hạn vé thưởng, mở GĐ2.
+- Không thay đổi thuật toán V1.6.2: lịch đối thủ vẫn cố định sau khi sinh; vé thưởng chỉ đổi CLB.
+
 ## V1.6.2 – Tách lịch đối thủ khỏi vé Random CLB
 - Cho phép sinh 32 trận GĐ2 ngay khi đủ 16 CLB gốc hợp lệ, không cần chờ 3 HLV dùng/chốt hết vé thưởng.
 - Cho phép bắt đầu công bố đối thủ Tier 1 → Tier 2 → Tier 3 trong lúc vé thưởng vẫn còn hiệu lực.
