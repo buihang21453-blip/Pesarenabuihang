@@ -418,3 +418,9 @@ Luồng rollback trước GĐ2: Thu hồi đối thủ → Thu hồi CLB. Simula
 - `modules/tournament_competition_parts/admin.py`: truyền logo + trạng thái đồng bộ cho màn hình Lễ bốc thăm.
 - `templates/tournament/draw_admin_preview.html`, `static/css/tournament_draw_preview.css`: trạng thái đồng bộ trong Công cụ quản trị phụ; logo trên sân khấu dùng nguồn trên.
 - `clubs_import` chỉ đọc. Không migration, không ghi Storage; 3 CLB chưa có bản ghi do chủ dự án bổ sung sau.
+
+### V1.6.10 – GD2 ceremony assets / layout
+- `modules/tournament_draw_assets.py`: danh mục 8 URL WebP trên Supabase, tham chiếu cho bảo trì.
+- `templates/tournament/draw_admin_preview.html`: hai nút live/simulation đặt trong khung `.draw-center-stage`, mỗi pha một nút hiện ra.
+- `static/css/tournament_draw_preview.css`: nền sân vận động, crowd, đèn, frame, card và fallback khi ảnh không tải. Spritesheet chưa cắt icon.
+- Không thay `league.py`, RPC/DB, logic vé hoặc lịch.

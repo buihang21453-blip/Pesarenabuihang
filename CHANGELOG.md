@@ -1,3 +1,9 @@
+## V1.6.10 – Tích hợp bộ ảnh WebP GĐ2 và chuyển nút quay về giữa sân khấu
+- Dùng URL 8 tài nguyên từ bucket pes-assets/LeBocThamGD2 do chủ dự án cung cấp; giao diện fallback nền CSS/initials khi ảnh lỗi. Bộ spritesheet được khai báo nhưng chưa dùng vì chưa có tọa độ cắt icon.
+- Chuyển hai cụm điều khiển từ thanh phía trên vào chính giữa phần sân khấu, dưới nội dung công bố; mỗi pha chỉ có một nút thao tác hiển thị theo mode Live/Simulation.
+- Phần 1: RANDOM CLB 16→1. Phần 2: Bốc tiếp 1→16. Không đổi form action, RPC, quyền, thuật toán, luật vé thưởng và cơ chế thu hồi.
+- Không xác minh được HTTP đến Supabase trong môi trường đóng gói; cần thử tải 8 asset trong trình duyệt ở Production. Không cần SQL.
+
 ## V1.6.9 – Chuẩn hóa mapping logo CLB GĐ2
 - Đối chiếu CSV clubs_import 182 hàng: PSV đã có logo psv.png; Porto và RB Leipzig chưa có bản ghi.
 - Đồng bộ thêm alias Lille/Como; URL Porto/Leipzig chỉ là fallback chính xác theo người dùng cung cấp.
