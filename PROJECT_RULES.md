@@ -1,3 +1,10 @@
+## V1.6.18
+# V1.6.18 — Ticket transaction rules
+
+- Cài SQL_V1.6.18_ATOMIC_REWARD_CLUB_REROLL.sql trước khi deploy source V1.6.18.
+- Không ghi riêng CLB/vé bằng nhiều Supabase REST calls trong luồng reroll; mỗi lượt chỉ có một giao dịch RPC nguyên tử.
+- Không tự retry RPC đổi CLB nếu lỗi kết nối sau khi request đã gửi; kiểm tra dữ liệu thực tế trước.
+
 ## V1.6.17
 # V1.6.17 — Chặn lỗi Admin quay hộ vé CLB
 

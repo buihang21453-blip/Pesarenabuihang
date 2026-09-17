@@ -1,3 +1,10 @@
+## V1.6.18
+# V1.6.18 — Atomic GĐ1 ticket reroll
+
+- modules/tournament_competition_parts/league.py: hai route HLV/Admin cùng gọi RPC c1_use_early_club_reroll_ticket.
+- SQL_V1.6.18_ATOMIC_REWARD_CLUB_REROLL.sql: transaction khóa tournament, validate Tier/Pot, chọn CLB, chuyển sở hữu, trừ 1 vé, ghi lịch sử và nhả CLB cũ.
+- tests/test_admin_proxy_reroll_guard.py: kiểm thử mô phỏng hai route, lỗi/missing SQL, không retry.
+
 ## V1.6.17
 # V1.6.17 — Chặn lỗi Admin quay hộ vé CLB
 

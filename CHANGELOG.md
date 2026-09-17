@@ -1,3 +1,11 @@
+## V1.6.18
+# V1.6.18 — Đổi CLB & trừ vé bằng giao dịch SQL duy nhất
+
+- Sửa chức năng HLV tự dùng vé và Admin quay hộ: thay luồng ghi nhiều API bằng RPC PostgreSQL nguyên tử, hoặc hoàn thành cả đổi CLB/trừ vé/lịch sử/trả CLB cũ, hoặc rollback toàn bộ.
+- Một lượt chỉ gọi RPC một lần; không tự retry khi kết quả giao dịch chưa rõ.
+- Báo rõ nếu SQL V1.6.18 chưa cài; giữ nguyên 32 trận và dữ liệu hiện hữu.
+- SQL bắt buộc phải chạy trước khi deploy source.
+
 ## V1.6.17
 # V1.6.17 — Chặn lỗi Admin quay hộ vé CLB
 
