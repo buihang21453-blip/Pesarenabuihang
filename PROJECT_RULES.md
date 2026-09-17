@@ -1,3 +1,9 @@
+## V1.6.30
+
+- Bảng tổng quan GĐ2 ưu tiên nhìn đồng thời 16 HLV × 4 đối thủ trên một màn hình desktop.
+- Giữ thông tin tối thiểu bắt buộc trong mỗi ô: tên HLV, Tier, CLB, Pot; trạng thái trận là thông tin phụ.
+- Không sinh lại lịch đối thủ từ giao diện tổng quan.
+
 ## V1.6.29
 
 - Các bảng Admin chỉ đọc phải ưu tiên tái sử dụng lịch 32 trận đã lưu, không tự sinh lại đối thủ.

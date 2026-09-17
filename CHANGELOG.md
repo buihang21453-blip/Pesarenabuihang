@@ -1,3 +1,11 @@
+## V1.6.30 — Ma trận 16 HLV × 4 đối thủ GĐ2 trong 1 màn hình
+
+- Thiết kế lại bảng Admin thành ma trận 5 cột: HLV + Đối thủ 1–4.
+- Hiển thị toàn bộ 16 HLV theo 16 dòng cực gọn để theo dõi đồng thời trên một màn hình Full HD.
+- Mỗi ô đối thủ hiển thị tên, Tier HLV, CLB, Pot CLB và trạng thái/tỷ số trận.
+- Thêm chế độ Toàn màn hình để tối đa diện tích quan sát.
+- Không thay đổi lịch 32 trận, BXH, vé hoặc dữ liệu thi đấu.
+
 ## V1.6.29 — Bảng 4 đối thủ GĐ2 toàn bộ HLV trên 1 màn hình
 
 - Bổ sung trang Admin riêng hiển thị đồng thời 4 đối thủ GĐ2 của từng HLV trên cùng một màn hình.

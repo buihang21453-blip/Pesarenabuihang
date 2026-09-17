@@ -1,3 +1,9 @@
+## V1.6.30
+
+- `templates/tournament/admin_league_opponent_wall.html`: đổi từ card lớn thành ma trận 16×4 compact one-screen.
+- `templates/tournament/admin_league_opponent_board.html`: đổi nhãn nút mở bảng tổng quan.
+- `app.py`, `templates/admin.html`: đồng bộ V1.6.30.
+
 ## V1.6.29
 
 - `modules/tournament_routes.py`: thêm route Admin `admin_tournament_league_opponent_wall`.
