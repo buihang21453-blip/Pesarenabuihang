@@ -574,6 +574,99 @@ def register_routes(context):
                                player_options=player_options,
                                tournament_design=tournament_design_settings())
 
+    @app.get('/admin/tournaments/<tournament_id>/league-opponent-wall')
+    @login_required
+    @admin_required
+    def admin_tournament_league_opponent_wall(tournament_id):
+        """Compact one-screen wall: every HLV and all 4 GĐ2 opponents at once."""
+        tours, error = _safe_rows(
+            db.table('tournaments').select('*').eq('id', tournament_id).limit(1),
+            'admin_league_wall_tournament',
+        )
+        if error or not tours or tours[0].get('name') != 'CHAMPION LEAGUE ARENA':
+            flash('Không tìm thấy giải C1 hoặc không đọc được dữ liệu giải.', 'warning')
+            return redirect(url_for('admin') + '#c1-admin-gd2')
+
+        members, member_error = _safe_rows(
+            db.table('tournament_members').select('*').eq('tournament_id', tournament_id)
+            .eq('status', 'active').order('seed_no'),
+            'admin_league_wall_members',
+        )
+        if member_error:
+            flash('Không đọc được danh sách HLV C1.', 'warning')
+            return redirect(url_for('admin') + '#c1-admin-gd2')
+
+        member_by_id = {str(m.get('user_id') or ''): dict(m) for m in members if m.get('user_id')}
+        user_ids = list(member_by_id.keys())
+        if user_ids:
+            users, _ = _safe_rows(
+                db.table('users').select('id,username,display_name').in_('id', user_ids),
+                'admin_league_wall_users',
+            )
+        else:
+            users = []
+        user_map = {str(u.get('id') or ''): u for u in users}
+        for uid, row in member_by_id.items():
+            user = user_map.get(uid) or {}
+            row['display_name'] = row.get('display_name') or user.get('display_name') or user.get('username') or 'HLV'
+
+        match_rows, match_error = _safe_rows(
+            db.table('tournament_matches').select('*').eq('tournament_id', tournament_id).eq('stage_code', 'league')
+            .neq('status', 'cancelled').order('created_at'),
+            'admin_league_wall_matches',
+        )
+        if match_error:
+            flash('Không đọc được lịch GĐ2.', 'warning')
+            return redirect(url_for('admin') + '#c1-admin-gd2')
+
+        board = []
+        cards_by_id = {uid: [] for uid in member_by_id}
+        for mt in match_rows:
+            home = str(mt.get('home_user_id') or '')
+            away = str(mt.get('away_user_id') or '')
+            for owner_id, opp_id, is_home in ((home, away, True), (away, home, False)):
+                if owner_id not in cards_by_id or opp_id not in member_by_id:
+                    continue
+                opp = member_by_id.get(opp_id) or {}
+                opp_club = str(opp.get('fixed_club_name') or '')
+                cards_by_id[owner_id].append({
+                    'user_id': opp_id,
+                    'name': opp.get('display_name') or 'HLV',
+                    'tier': opp.get('pot_no'),
+                    'club': opp_club,
+                    'club_pot': C1_CLUB_POT_BY_NAME.get(opp_club),
+                    'status': mt.get('status') or 'pending',
+                    'home_score': mt.get('home_score'),
+                    'away_score': mt.get('away_score'),
+                    'is_home': is_home,
+                })
+
+        for uid, row in sorted(member_by_id.items(), key=lambda item: (int(item[1].get('seed_no') or 9999), str(item[1].get('display_name') or '').casefold())):
+            own_club = str(row.get('fixed_club_name') or '')
+            opponents = cards_by_id.get(uid, [])
+            opponents.sort(key=lambda c: (0 if c.get('status') == 'completed' else 1, str(c.get('name') or '').casefold()))
+            board.append({
+                'user_id': uid,
+                'seed_no': row.get('seed_no'),
+                'name': row.get('display_name') or 'HLV',
+                'tier': row.get('pot_no'),
+                'club': own_club,
+                'club_pot': C1_CLUB_POT_BY_NAME.get(own_club),
+                'opponents': opponents[:4],
+                'completed': sum(1 for x in opponents if str(x.get('status') or '') == 'completed'),
+                'count': len(opponents),
+            })
+
+        tournament = dict(tours[0])
+        return render_template(
+            'tournament/admin_league_opponent_wall.html',
+            tournament=tournament,
+            board=board,
+            fixture_count=len(match_rows),
+            tournament_design=tournament_design_settings(),
+        )
+
+
     @app.get('/tournaments')
     @login_required
     def tournaments():

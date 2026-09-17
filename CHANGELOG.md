@@ -1,3 +1,11 @@
+## V1.6.29 — Bảng 4 đối thủ GĐ2 toàn bộ HLV trên 1 màn hình
+
+- Bổ sung trang Admin riêng hiển thị đồng thời 4 đối thủ GĐ2 của từng HLV trên cùng một màn hình.
+- Mỗi HLV hiển thị theo dạng khối riêng: Tier HLV, CLB hiện tại, Pot CLB và 4 thẻ đối thủ.
+- Mỗi thẻ đối thủ hiển thị tên HLV, Tier, CLB, Pot CLB, trạng thái trận và tỷ số nếu đã xong.
+- Bổ sung nút mở nhanh trang mới từ khu GĐ2 Admin và từ Sảnh chờ C1 (Admin).
+- Không thay đổi lịch 32 trận, BXH, vé Random lại CLB hoặc dữ liệu kết quả.
+
 ## V1.6.28 — Admin xem Sảnh chờ C1 như HLV (chỉ xem)
 - Thêm route Admin /admin/tournaments/<id>/lobby với lựa chọn góc nhìn một HLV đang tham gia giải.
 - Dùng cùng dữ liệu Sảnh chờ, 4 đối thủ, CLB/Pot/Tier, Host rảnh và phòng đang chạy với HLV.

@@ -1,3 +1,9 @@
+## V1.6.29
+
+- Các bảng Admin chỉ đọc phải ưu tiên tái sử dụng lịch 32 trận đã lưu, không tự sinh lại đối thủ.
+- Với yêu cầu xem tổng quan nhiều HLV trong một màn hình, ưu tiên tạo trang riêng full-width thay vì nhồi thêm vào card nhỏ khó đọc.
+- Mọi thay đổi giao diện Admin phải giữ quyền chỉ xem nếu không có yêu cầu thao tác dữ liệu.
+
 ## V1.6.28
 - Admin xem Sảnh chờ bằng route admin_required riêng; không impersonate, không đưa quyền tạo trận/tiêu vé của HLV vào góc nhìn Admin.
 - Dữ liệu CLB/Tier/Pot của đối thủ luôn lấy từ dữ liệu giải hiện tại; giữ nguyên 32 trận.

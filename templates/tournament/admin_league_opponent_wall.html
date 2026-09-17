@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block page_styles %}
+{% include "tournament/styles.html" %}
+<style>
+.c1-wall-shell{max-width:1680px;margin:18px auto;padding:0 12px 30px}.c1-wall-head{padding:18px;border:1px solid rgba(241,202,104,.30);border-radius:16px;background:#071522}.c1-wall-head h1{margin:0 0 8px;color:#f1ca68;font-size:26px}.c1-wall-head p{margin:0;color:#b2bfca;font-size:13px;line-height:1.6;max-width:980px}.c1-wall-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}.c1-wall-toolbar .btn{min-height:40px}.c1-wall-summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.c1-wall-chip{padding:7px 10px;border-radius:999px;border:1px solid rgba(241,202,104,.26);background:#0b1c29;color:#f1ca68;font-size:12px;font-weight:800}.c1-wall-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}.c1-wall-player{border:1px solid rgba(255,255,255,.10);border-radius:16px;background:#081725;overflow:hidden;min-width:0}.c1-wall-player-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;padding:14px 15px;border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(241,202,104,.08),rgba(8,23,37,0))}.c1-wall-player-head h3{margin:0 0 4px;color:#f1ca68;font-size:18px}.c1-wall-player-meta{display:flex;gap:6px;flex-wrap:wrap}.c1-wall-pill{padding:5px 8px;border-radius:999px;background:#0d2a3d;border:1px solid rgba(255,255,255,.10);color:#d7e7f3;font-size:11px;font-weight:800}.c1-wall-progress{font-size:12px;color:#b9e6c8;font-weight:800}.c1-wall-opponents{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:12px}.c1-wall-card{padding:11px;border:1px solid rgba(241,202,104,.18);border-radius:12px;background:#0b2233;min-width:0}.c1-wall-card-top,.c1-wall-card-foot{display:flex;justify-content:space-between;align-items:center;gap:7px;flex-wrap:wrap}.c1-wall-card-top span:first-child{font-size:10px;color:#97afc1;font-weight:800;letter-spacing:.08em}.c1-wall-status{padding:4px 6px;border-radius:999px;border:1px solid rgba(255,255,255,.12);font-size:10px;font-weight:900;white-space:nowrap}.c1-wall-status.is-done{color:#96f0b3;border-color:rgba(46,204,113,.30);background:rgba(17,112,57,.16)}.c1-wall-status.is-live{color:#f6d56c;border-color:rgba(241,202,104,.30);background:rgba(241,202,104,.10)}.c1-wall-status.is-wait{color:#dce5ec}.c1-wall-card h4{margin:10px 0 4px;color:#fff;font-size:15px;overflow-wrap:anywhere}.c1-wall-card p{margin:0;color:#f1ca68;font-size:12px;overflow-wrap:anywhere}.c1-wall-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.c1-wall-tags span{padding:5px 7px;border-radius:8px;background:#12344b;border:1px solid rgba(106,163,210,.23);color:#d5e7f5;font-size:11px;font-weight:700}.c1-wall-card-foot{margin-top:12px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:#9eb4c4}.c1-wall-card-foot strong{color:#eff4f8;font-size:12px}.c1-wall-empty{padding:12px;color:#f0d07c;font-size:12px}.c1-wall-player-alert{padding:0 12px 12px;color:#efc86a;font-size:12px}.c1-wall-anchor{font-size:11px;color:#91a3b1;font-weight:800}.c1-wall-index{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-top:14px}.c1-wall-index a{display:block;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:#0b1c29;color:#d9e5ee;text-decoration:none;font-size:12px}.c1-wall-index a:hover{border-color:rgba(241,202,104,.36);color:#f1ca68}@media(max-width:1180px){.c1-wall-grid{grid-template-columns:1fr}}@media(max-width:700px){.c1-wall-opponents{grid-template-columns:1fr}.c1-wall-head h1{font-size:22px}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="c1-wall-shell">
+  <header class="c1-wall-head">
+    <h1>🧩 Bảng 4 đối thủ GĐ2 · Toàn bộ HLV</h1>
+    <p>Trang này hiển thị đồng thời tất cả HLV và 4 đối thủ GĐ2 của từng người trên cùng một màn hình. CLB và Pot CLB được đọc từ dữ liệu hiện tại, nên sẽ đổi theo vé Random lại CLB nếu HLV đã đổi trước đó.</p>
+    <div class="c1-wall-toolbar">
+      <a class="btn" href="{{ url_for('admin') }}#c1-admin-gd2">← Điều hành GĐ2</a>
+      <a class="btn" href="{{ url_for('admin_tournament_lobby', tournament_id=tournament.id) }}">🏟️ Sảnh chờ C1 (Admin)</a>
+      <button class="btn gold" type="button" onclick="window.location.reload()">↻ Làm mới dữ liệu</button>
+    </div>
+    <div class="c1-wall-summary">
+      <span class="c1-wall-chip">{{ board|length }} HLV</span>
+      <span class="c1-wall-chip">{{ fixture_count }}/32 trận GĐ2</span>
+      <span class="c1-wall-chip">Mỗi HLV hiển thị tối đa 4 đối thủ</span>
+    </div>
+    <div class="c1-wall-index">
+      {% for player in board %}<a href="#hlv-{{ player.user_id }}">#{{ player.seed_no or loop.index }} · {{ player.name }}</a>{% endfor %}
+    </div>
+  </header>
+
+  {% if board %}
+  <section class="c1-wall-grid">
+    {% for player in board %}
+    <article class="c1-wall-player" id="hlv-{{ player.user_id }}">
+      <header class="c1-wall-player-head">
+        <div>
+          <div class="c1-wall-anchor">HLV #{{ player.seed_no or loop.index }}</div>
+          <h3>{{ player.name }}</h3>
+          <div class="c1-wall-player-meta">
+            <span class="c1-wall-pill">Tier HLV {{ player.tier or '—' }}</span>
+            <span class="c1-wall-pill">CLB {{ player.club or 'Chờ cập nhật' }}</span>
+            <span class="c1-wall-pill">Pot CLB {{ player.club_pot or '—' }}</span>
+          </div>
+        </div>
+        <div class="c1-wall-progress">{{ player.completed }}/{{ player.count }} đã hoàn thành</div>
+      </header>
+      <div class="c1-wall-opponents">
+        {% for rival in player.opponents %}
+        <section class="c1-wall-card">
+          <div class="c1-wall-card-top">
+            <span>ĐỐI THỦ {{ loop.index }}</span>
+            {% set st = rival.status|string %}
+            <span class="c1-wall-status {{ 'is-done' if st == 'completed' else ('is-live' if st in ['playing','in_progress'] else 'is-wait') }}">
+              {{ '✓ Đã thi đấu' if st == 'completed' else ('Đang thi đấu' if st in ['playing','in_progress'] else 'Chưa thi đấu') }}
+            </span>
+          </div>
+          <h4>{{ rival.name }}</h4>
+          <p>{{ rival.club or 'CLB đang chờ cập nhật' }}</p>
+          <div class="c1-wall-tags">
+            <span>Tier {{ rival.tier or '—' }}</span>
+            <span>Pot {{ rival.club_pot or '—' }}</span>
+            <span>{{ 'Chủ nhà' if rival.is_home else 'Đội khách' }}</span>
+          </div>
+          <div class="c1-wall-card-foot">
+            <span>Trạng thái trận</span>
+            <strong>{% if st == 'completed' and rival.home_score is not none and rival.away_score is not none %}{{ rival.home_score }} – {{ rival.away_score }}{% else %}Chưa có kết quả{% endif %}</strong>
+          </div>
+        </section>
+        {% else %}
+        <div class="c1-wall-empty">HLV này chưa có đủ dữ liệu đối thủ GĐ2.</div>
+        {% endfor %}
+      </div>
+      {% if player.count != 4 %}<div class="c1-wall-player-alert">⚠ Hiện đang có {{ player.count }}/4 đối thủ trong lịch GĐ2 của HLV này.</div>{% endif %}
+    </article>
+    {% endfor %}
+  </section>
+  {% else %}
+  <section class="td-section" style="margin-top:15px">Chưa có HLV hoặc lịch GĐ2 để hiển thị.</section>
+  {% endif %}
+</div>
+{% endblock %}

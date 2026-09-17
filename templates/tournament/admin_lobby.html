@@ -33,6 +33,7 @@
         <button class="btn gold" type="submit">Xem HLV</button>
       </form>
       <a class="btn" href="{{ url_for('admin') }}#c1-admin-gd2">← Điều hành GĐ2</a>
+      <a class="btn" href="{{ url_for('admin_tournament_league_opponent_wall', tournament_id=tournament.id) }}">🧩 Bảng 16 HLV / 4 đối thủ</a>
       <a class="btn" href="{{ url_for('tournaments') }}">Trang giải đấu</a>
       <button type="button" class="btn" onclick="window.location.reload()">↻ Làm mới dữ liệu</button>
     </div>

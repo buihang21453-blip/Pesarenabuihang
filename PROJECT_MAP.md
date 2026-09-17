@@ -1,3 +1,12 @@
+## V1.6.29
+
+- `modules/tournament_routes.py`: thêm route Admin `admin_tournament_league_opponent_wall`.
+- `templates/tournament/admin_league_opponent_wall.html`: trang riêng hiển thị toàn bộ HLV và 4 đối thủ GĐ2 trên 1 màn hình.
+- `templates/tournament/admin_league_opponent_board.html`: thêm nút mở bảng mới.
+- `templates/tournament/admin_lobby.html`: thêm lối tắt sang bảng mới.
+- `templates/admin.html`: đồng bộ nhãn version V1.6.29.
+- `app.py`: nâng `APP_VERSION` lên V1.6.29.
+
 ## V1.6.28
 - modules/tournament_routes.py: GET admin_tournament_lobby, kiểm tra admin và membership trước khi đọc góc nhìn HLV.
 - templates/tournament/admin_lobby.html: giao diện Sảnh chờ của Admin, selector HLV, lịch rảnh chỉ xem.

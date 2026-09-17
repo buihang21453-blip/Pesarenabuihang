@@ -1,0 +1,7 @@
+# V1.6.29 — Bảng 4 đối thủ GĐ2 toàn bộ HLV
+
+1. Thêm trang Admin riêng hiển thị toàn bộ HLV và 4 đối thủ GĐ2 trên một màn hình.
+2. Mỗi HLV có khối riêng gồm: Tier HLV, CLB, Pot CLB, tiến độ và 4 thẻ đối thủ.
+3. Mỗi thẻ đối thủ hiển thị: tên HLV, Tier, CLB, Pot CLB, vai trò chủ/khách, trạng thái trận và tỷ số nếu đã có.
+4. Thêm nút mở nhanh trang này từ khu Điều hành GĐ2 và từ Sảnh chờ C1 (Admin).
+5. Không cần SQL mới.
