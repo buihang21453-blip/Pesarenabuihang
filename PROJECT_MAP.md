@@ -1,3 +1,9 @@
+## V1.6.28
+- modules/tournament_routes.py: GET admin_tournament_lobby, kiểm tra admin và membership trước khi đọc góc nhìn HLV.
+- templates/tournament/admin_lobby.html: giao diện Sảnh chờ của Admin, selector HLV, lịch rảnh chỉ xem.
+- templates/tournament/tabs/lobby.html: shared lobby với cờ admin_preview để vô hiệu hóa hành động của người chơi.
+- templates/admin.html và templates/tournament/cards/c1_header_nav.html: link Sảnh chờ Admin.
+
 ## V1.6.27
 - modules/tournament_competition_parts/core.py: _admin_payload thêm league_opponent_board từ trận league lưu và phân bổ CLB hiện tại.
 - templates/admin.html: nhúng bảng đối thủ độc lập trong tab GĐ2.

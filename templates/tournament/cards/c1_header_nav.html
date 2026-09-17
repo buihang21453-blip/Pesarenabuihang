@@ -17,7 +17,7 @@
           <nav class="tournament-quick-nav" data-tournament-quick-nav aria-label="Điều hướng giải đấu">
             <a class="tournament-quick-tab" data-nav-key="ranking" href="{{ url_for('tournaments') }}#ranking"><span class="tab-icon">📊</span><span class="tab-label">BXH</span></a>
             <a class="tournament-quick-tab" data-nav-key="schedule" href="{{ url_for('tournaments') }}#schedule-{{ tournament.id }}"><span class="tab-icon">📅</span><span class="tab-label">Lịch của tôi</span></a>
-            <a class="tournament-quick-tab" data-nav-key="rooms" href="{{ url_for('tournaments') }}#rooms-{{ tournament.id }}"><span class="tab-icon">🏟️</span><span class="tab-label">Sảnh chờ</span></a>
+            <a class="tournament-quick-tab" data-nav-key="rooms" href="{{ url_for('admin_tournament_lobby',tournament_id=tournament.id) if tournament.can_admin_manage else url_for('tournaments') ~ '#rooms-' ~ tournament.id }}"><span class="tab-icon">🏟️</span><span class="tab-label">Sảnh chờ</span></a>
             <form method="post" action="{{ url_for('c1_room_open') }}" class="tournament-quick-nav-form">
               <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
               <button class="tournament-quick-tab" type="submit" data-nav-key="c1-room"><span class="tab-icon">🎮</span><span class="tab-label">Phòng đấu C1</span></button>

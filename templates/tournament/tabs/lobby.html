@@ -3,20 +3,20 @@
     {% if tournament.name == 'CHAMPION LEAGUE ARENA' and hub and not tournament.needs_availability_gate %}
     <div class="tournament-center-stack" id="center-{{ tournament.id }}">
       <section class="td-section" id="rooms-{{ tournament.id }}">
-        <h2>🏟️ Sảnh chờ</h2><p><a class="btn" href="#opponents-{{ tournament.id }}">👥 Xem 4 đối thủ GĐ2 của tôi</a></p>
+        <h2>🏟️ Sảnh chờ</h2><p><a class="btn" href="#opponents-{{ tournament.id }}">👥 Xem 4 đối thủ GĐ2 {{ "của " ~ hub.preview_name if hub.admin_preview|default(false) else "của tôi" }}</a></p>
         <p style="color:#91a3b1;font-size:12px">Sảnh trung tâm để theo dõi phòng giải, HLV đang chờ và Host đang rảnh.</p>
         <div class="td-host-ready" data-host-ready-list data-tournament-id="{{ tournament.id }}">
           <strong style="width:100%;color:#f1ca68">Host đang rảnh</strong>
           <small style="width:100%;color:#91a3b1">HLV thuộc giải có Host, đang online và không ở trong phòng đấu sẽ tự động hiển thị. Không cần bật chế độ rảnh.</small>
           <div class="td-host-ready-items" data-host-ready-items>{% for h in hub.host_ready %}<span class="td-host-chip">🟢 {{ h.display_name }} · {{ h.region }}</span>{% else %}<small class="td-host-ready-empty" style="color:#91a3b1">Hiện chưa có Host nào đang rảnh.</small>{% endfor %}</div>
         </div>
-        <div class="td-room-list">{% for r in hub.center_rooms %}<article class="td-room-card"><small>PHÒNG GIẢI · {{ (r.tournament_match.stage_code or 'stage1')|upper }}</small><strong>{{ r.public_label }}</strong><span>{{ r.public_status }}</span>{% if r.host_team and r.guest_team %}<p>{{ r.host_team }} ⚔ {{ r.guest_team }}</p>{% endif %}{% if hub.member and (hub.member.user_id|string == r.tournament_match.home_user_id|string or hub.member.user_id|string == r.tournament_match.away_user_id|string) %}<div style="margin-top:8px"><a class="btn" href="{{ url_for('room_detail',room_id=r.id) }}">Vào phòng</a></div>{% endif %}</article>{% else %}<div class="td-empty">Chưa có phòng giải nào đang hoạt động trong Sảnh chờ.</div>{% endfor %}</div>
-        <h3 style="margin-top:16px">Trận của tôi</h3><div style="overflow:auto"><table class="td-table"><thead><tr><th>Giai đoạn</th><th>Đối thủ</th><th>Zalo</th><th>Lịch hẹn</th><th>Phòng</th></tr></thead><tbody>
-        {% for m in hub.matches if m.status in ['pending','scheduled'] and (m.stage_code!='league' or hub.league_opponents|length==4) %}{% set is_home = hub.member.user_id|string==m.home_user_id|string %}{% set opp=m.away_name if is_home else m.home_name %}{% set opp_zalo=m.away_zalo_name if is_home else m.home_zalo_name %}<tr><td>{{ 'GĐ1' if m.stage_code=='stage1' else m.stage_code }}</td><td><strong>{{ opp }}</strong></td><td>{% if opp_zalo %}<strong>💬 {{ opp_zalo }}</strong>{% else %}<span style="color:#8193a1">Chưa có</span>{% endif %}</td><td>{{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa hẹn' }}</td><td>{% if m.stage_code!='league' or hub.league_started %}<form method="post" action="{{ url_for('tournament_match_room_enter',tournament_id=tournament.id,match_id=m.id) }}"><button class="btn green" type="submit">Tạo phòng & mời đối thủ</button></form>{% else %}<span class="small">Chờ Admin mở GĐ2</span>{% endif %}</td></tr>{% else %}<tr><td colspan="5" style="color:#91a3b1">Chưa có trận đang chờ.</td></tr>{% endfor %}
+        <div class="td-room-list">{% for r in hub.center_rooms %}<article class="td-room-card"><small>PHÒNG GIẢI · {{ (r.tournament_match.stage_code or 'stage1')|upper }}</small><strong>{{ r.public_label }}</strong><span>{{ r.public_status }}</span>{% if r.host_team and r.guest_team %}<p>{{ r.host_team }} ⚔ {{ r.guest_team }}</p>{% endif %}{% if not hub.admin_preview|default(false) and hub.member and (hub.member.user_id|string == r.tournament_match.home_user_id|string or hub.member.user_id|string == r.tournament_match.away_user_id|string) %}<div style="margin-top:8px"><a class="btn" href="{{ url_for('room_detail',room_id=r.id) }}">Vào phòng</a></div>{% endif %}</article>{% else %}<div class="td-empty">Chưa có phòng giải nào đang hoạt động trong Sảnh chờ.</div>{% endfor %}</div>
+        <h3 style="margin-top:16px">Trận {{ "của " ~ hub.preview_name if hub.admin_preview|default(false) else "của tôi" }}</h3><div style="overflow:auto"><table class="td-table"><thead><tr><th>Giai đoạn</th><th>Đối thủ</th><th>Zalo</th><th>Lịch hẹn</th><th>Phòng</th></tr></thead><tbody>
+        {% for m in hub.matches if m.status in ['pending','scheduled'] and (m.stage_code!='league' or hub.league_opponents|length==4) %}{% set is_home = hub.member.user_id|string==m.home_user_id|string %}{% set opp=m.away_name if is_home else m.home_name %}{% set opp_zalo=m.away_zalo_name if is_home else m.home_zalo_name %}<tr><td>{{ 'GĐ1' if m.stage_code=='stage1' else m.stage_code }}</td><td><strong>{{ opp }}</strong></td><td>{% if opp_zalo %}<strong>💬 {{ opp_zalo }}</strong>{% else %}<span style="color:#8193a1">Chưa có</span>{% endif %}</td><td>{{ (m.scheduled_at|string)|replace('T',' ') if m.scheduled_at else 'Chưa hẹn' }}</td><td>{% if hub.admin_preview|default(false) %}<span class="small">Chế độ Admin: chỉ xem</span>{% elif m.stage_code!='league' or hub.league_started %}<form method="post" action="{{ url_for('tournament_match_room_enter',tournament_id=tournament.id,match_id=m.id) }}"><button class="btn green" type="submit">Tạo phòng & mời đối thủ</button></form>{% else %}<span class="small">Chờ Admin mở GĐ2</span>{% endif %}</td></tr>{% else %}<tr><td colspan="5" style="color:#91a3b1">Chưa có trận đang chờ.</td></tr>{% endfor %}
         </tbody></table></div>
 
       <section class="td-section" id="opponents-{{ tournament.id }}">
-        <h2>👥 Đối thủ của tôi</h2>
+        <h2>👥 Đối thủ {{ "của " ~ hub.preview_name if hub.admin_preview|default(false) else "của tôi" }}</h2>
         {% set myid=hub.member.user_id|string %}
         {% if hub.is_test %}
           {% if hub.test_opponent %}<div class="td-opponents"><div class="td-opponent"><small>ĐỐI THỦ</small><b>{{ hub.test_opponent.display_name }}</b></div></div>{% else %}<div class="td-empty">Chưa có đối thủ.</div>{% endif %}
@@ -36,17 +36,19 @@
               <div class="small">Trạng thái: <strong>{{ 'Đã hoàn thành' if o.status=='completed' else ('Đang xử lý' if o.status=='disputed' else ('Đã hẹn' if o.status=='scheduled' else 'Chưa thi đấu')) }}</strong></div>
               {% if o.scheduled_at %}<div class="small">📅 {{ format_vn_datetime(o.scheduled_at) }}</div>{% endif %}
               <div class="c1-opponent-actions"><a class="btn" href="#schedule">📅 Xem lịch của tôi</a>
-              {% if hub.league_started and o.status in ['pending','scheduled'] %}
+              {% if hub.admin_preview|default(false) %}<span class="small">Admin đang xem · không tạo trận thay HLV</span>{% elif hub.league_started and o.status in ['pending','scheduled'] %}
                 <form method="post" action="{{ url_for('tournament_match_room_enter',tournament_id=tournament.id,match_id=o.match_id) }}"><button class="btn green" type="submit">🎮 Vào trận C1</button></form>
               {% elif not hub.league_started %}<span class="small">⏳ Chờ Admin mở GĐ2</span>{% endif %}
               </div>
             </article>
           {% endfor %}
           </div>
+        {% elif hub.admin_preview|default(false) and hub.league_mine and not hub.league_opened %}<div class="td-empty">HLV chưa tự mở đối thủ. Admin chỉ quan sát; không mở thay HLV tại đây.</div>
         {% elif hub.league_mine and not hub.league_opened %}
           <div class="td-reveal"><h3>🎁 Đối thủ của bạn đã sẵn sàng</h3><form method="post" action="{{ url_for('tournament_league_reveal',tournament_id=tournament.id) }}"><input type="hidden" name="return_to" value="tournaments"><button class="btn gold" type="submit">MỞ ĐỐI THỦ CỦA TÔI</button></form></div>
         {% elif hub.league_mine or hub.league_opened %}
           <div class="td-empty">Đã công bố đối thủ nhưng lịch 4 trận chưa đồng bộ. Liên hệ Admin kiểm tra lịch GĐ2; hệ thống không tự sinh lại lịch.</div>
+        {% elif hub.admin_preview|default(false) and not hub.stage1_opened %}<div class="td-empty">HLV chưa công bố đối thủ GĐ1.</div>
         {% elif not hub.stage1_opened %}
           <div class="td-reveal"><h3>🎁 Đối thủ của bạn đã sẵn sàng</h3><form method="post" action="{{ url_for('tournament_stage1_reveal',tournament_id=tournament.id) }}"><input type="hidden" name="return_to" value="tournaments"><button class="btn gold" type="submit">MỞ ĐỐI THỦ CỦA TÔI</button></form></div>
         {% else %}

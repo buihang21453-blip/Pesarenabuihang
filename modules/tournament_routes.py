@@ -529,6 +529,51 @@ def register_routes(context):
             'host_ready':host_ready,'center_rooms':center_rooms,
         }
 
+    @app.get('/admin/tournaments/<tournament_id>/lobby')
+    @login_required
+    @admin_required
+    def admin_tournament_lobby(tournament_id):
+        """Read-only HLV perspective of the existing C1 lobby; never impersonates the member."""
+        rows, error = _safe_rows(
+            db.table('tournaments').select('*').eq('id', tournament_id).limit(1),
+            'admin_c1_lobby_tournament',
+        )
+        if error or not rows or rows[0].get('name') != 'CHAMPION LEAGUE ARENA':
+            flash('Không tìm thấy giải C1 hoặc không đọc được dữ liệu giải.', 'warning')
+            return redirect(url_for('admin') + '#c1-admin-gd2')
+        members, member_error = _safe_rows(
+            db.table('tournament_members').select('*').eq('tournament_id', tournament_id)
+            .eq('status', 'active').order('seed_no'), 'admin_c1_lobby_members',
+        )
+        if member_error:
+            flash('Không đọc được danh sách HLV C1.', 'warning')
+            return redirect(url_for('admin') + '#c1-admin-gd2')
+        ids = [str(m['user_id']) for m in members if m.get('user_id')]
+        users, _ = _safe_rows(db.table('users').select('id,username,display_name').in_('id', ids),
+                               'admin_c1_lobby_names') if ids else ([], None)
+        names = {str(u.get('id')): u.get('display_name') or u.get('username') or 'HLV' for u in users}
+        # Only allow active tournament members as the selected perspective.
+        selected = str(request.args.get('hlv') or '')
+        member_by_id = {str(m.get('user_id')): m for m in members}
+        if selected not in member_by_id:
+            selected = ids[0] if ids else ''
+        selected_member = member_by_id.get(selected)
+        # The substituted user id is used ONLY to read that HLV's view; no session/auth is changed.
+        perspective = {'id': selected} if selected_member else (current_user() or {})
+        hub = _landing_hub_payload(tournament_id, perspective, selected_member) if selected_member else None
+        if hub:
+            hub['admin_preview'] = True
+            hub['preview_name'] = names.get(selected, 'HLV')
+        tournament = dict(rows[0])
+        tournament['landing_hub'] = hub
+        tournament['needs_availability_gate'] = False
+        tournament['can_admin_manage'] = True
+        player_options = [{'id': uid, 'name': names.get(uid, 'HLV')} for uid in ids]
+        return render_template('tournament/admin_lobby.html', tournaments=[tournament],
+                               tournament=tournament, hub=hub, selected=selected,
+                               player_options=player_options,
+                               tournament_design=tournament_design_settings())
+
     @app.get('/tournaments')
     @login_required
     def tournaments():

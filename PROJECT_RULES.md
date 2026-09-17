@@ -1,3 +1,7 @@
+## V1.6.28
+- Admin xem Sảnh chờ bằng route admin_required riêng; không impersonate, không đưa quyền tạo trận/tiêu vé của HLV vào góc nhìn Admin.
+- Dữ liệu CLB/Tier/Pot của đối thủ luôn lấy từ dữ liệu giải hiện tại; giữ nguyên 32 trận.
+
 ## V1.6.27
 - Bảng đối thủ GĐ2 dành riêng cho Admin phải đọc trận league đã lưu, tuyệt đối không gọi random/sinh lịch lại.
 - Tier gắn thành viên, CLB và Pot CLB tra từ phân bổ hiện hành để phản ánh vé đổi CLB.

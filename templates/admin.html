@@ -1194,7 +1194,7 @@
       <div class="tournament-op-tab-panel" id="c1-admin-gd2" data-tournament-op-panel="potclub" style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
         {% set reward_phase=ev.get('reward_ticket_phase',{}) %}
         <div style="border:1px solid rgba(241,202,104,.45);border-radius:12px;padding:13px;margin-bottom:14px;background:#0b1c29">
-          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><strong>🏆 Kịch bản Lễ bốc thăm GĐ2 · V1.6.27</strong><a class="btn green" href="{{ url_for('admin_tournament_draw_preview',tournament_id=ot.id) }}" target="_blank" rel="noopener">🎛 Mở bảng điều hành Lễ bốc thăm</a></div>
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><strong>🏆 Kịch bản Lễ bốc thăm GĐ2 · V1.6.28</strong><a class="btn green" href="{{ url_for('admin_tournament_draw_preview',tournament_id=ot.id) }}" target="_blank" rel="noopener">🎛 Mở bảng điều hành Lễ bốc thăm</a></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0">
             <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>1 · 20:00 17/09</b><div class="small">Mở lễ bốc thăm</div></div>
             <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>2 · Random 16 CLB</b><div class="small">Tier 1→Pot 3 · Tier 2→Pot 2 · Tier 3→Pot 1</div></div>
@@ -1213,7 +1213,7 @@
         </div>
         {% include "tournament/admin_league_opponent_board.html" %}
         <section style="margin:12px 0;padding:13px;border:1px solid rgba(46,204,113,.35);border-radius:12px;background:#0b1c29" data-host-ready-list data-tournament-id="{{ ot.id }}">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><strong>🟢 Host đang rảnh · HLV của giải C1</strong><a class="btn" href="{{ url_for('tournaments') }}#rooms">Mở Sảnh chờ</a></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><strong>🟢 Host đang rảnh · HLV của giải C1</strong><a class="btn green" href="{{ url_for('admin_tournament_lobby',tournament_id=ot.id) }}">🏟️ Vào Sảnh chờ C1 (Admin)</a></div>
           <p class="small">HLV thuộc giải có Host, đang online và không ở trong phòng. Không cần bật chế độ rảnh; danh sách cập nhật tự động.</p>
           <div data-host-ready-items style="display:flex;flex-wrap:wrap;gap:8px">{% for h in ops.get('host_ready',[]) %}<span class="td-host-chip" style="padding:7px 10px;border:1px solid rgba(46,204,113,.35);border-radius:9px">🟢 {{ h.display_name }} · {{ h.region }}</span>{% else %}<span class="small">Hiện chưa có Host nào đang rảnh.</span>{% endfor %}</div>
           <small class="small" data-host-ready-count>{{ ops.get('host_ready',[])|length }} Host đang rảnh</small>

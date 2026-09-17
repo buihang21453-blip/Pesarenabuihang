@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block page_styles %}
+{% include "tournament/styles.html" %}
+<style>
+.admin-lobby-shell{max-width:1450px;margin:18px auto;padding:0 12px 30px}
+.admin-lobby-head{padding:18px;border:1px solid rgba(241,202,104,.30);border-radius:16px;background:#071522}
+.admin-lobby-head h1{margin:0 0 8px;color:#f1ca68;font-size:24px}
+.admin-lobby-head p{margin:0 0 12px;color:#b2bfca;font-size:13px}
+.admin-lobby-toolbar{display:flex;align-items:end;gap:10px;flex-wrap:wrap}
+.admin-lobby-toolbar label{display:grid;gap:5px;color:#aeb9c3;font-size:12px;font-weight:800}
+.admin-lobby-toolbar select{min-width:230px;min-height:40px;background:#0b1c29;border:1px solid rgba(241,202,104,.35);color:white;border-radius:9px;padding:7px}
+.admin-lobby-shell .tournament-center-stack{margin-top:15px}
+.admin-lobby-schedule{margin-top:15px}
+.admin-lobby-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.admin-lobby-day{background:#091a29;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px}
+.admin-lobby-day strong{display:block;color:#f1ca68;margin-bottom:9px}
+.admin-lobby-slot{display:inline-block;padding:6px 9px;margin:0 5px 5px 0;background:#0d2a3d;border-radius:7px;font-size:12px}
+@media(max-width:760px){.admin-lobby-days{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="admin-lobby-shell">
+  <header class="admin-lobby-head">
+    <h1>🏟️ Sảnh chờ C1 · Góc nhìn Admin</h1>
+    <p>Xem giống HLV: Host đang rảnh, phòng C1, trận và 4 đối thủ GĐ2. Chọn HLV để xem đúng dữ liệu của họ; đây là chế độ chỉ xem, không đăng nhập thay và không thao tác trận/vé.</p>
+    <div class="admin-lobby-toolbar">
+      <form method="get" action="{{ url_for('admin_tournament_lobby',tournament_id=tournament.id) }}" class="admin-lobby-toolbar">
+        <label>Góc nhìn HLV
+          <select name="hlv" aria-label="Chọn HLV để xem Sảnh chờ" onchange="this.form.submit()">
+            {% for player in player_options %}<option value="{{ player.id }}" {{ 'selected' if player.id == selected else '' }}>{{ player.name }}</option>{% endfor %}
+          </select>
+        </label>
+        <button class="btn gold" type="submit">Xem HLV</button>
+      </form>
+      <a class="btn" href="{{ url_for('admin') }}#c1-admin-gd2">← Điều hành GĐ2</a>
+      <a class="btn" href="{{ url_for('tournaments') }}">Trang giải đấu</a>
+      <button type="button" class="btn" onclick="window.location.reload()">↻ Làm mới dữ liệu</button>
+    </div>
+  </header>
+  {% if hub %}
+    {% include "tournament/tabs/lobby.html" %}
+    <section class="td-section admin-lobby-schedule" id="admin-lobby-schedule">
+      <h2>📅 Giờ rảnh của {{ hub.preview_name }}</h2>
+      <div class="admin-lobby-days">
+      {% for day in hub.days %}
+        <div class="admin-lobby-day"><strong>{{ day.label }} · {{ day.weekday }}</strong>
+        {% for slot in day.slots if slot.iso in hub.mine_set %}<span class="admin-lobby-slot">{{ slot.label }}</span>{% else %}<small style="color:#91a3b1">Chưa đăng ký giờ rảnh.</small>{% endfor %}
+        </div>
+      {% endfor %}
+      </div>
+      <h3 style="margin-top:14px">Lịch rảnh của các đối thủ</h3>
+      {% for m in hub.matches if m.status in ['pending','scheduled'] %}
+      <details class="admin-lobby-day" style="margin:8px 0"><summary style="cursor:pointer;color:#f1ca68">{{ m.away_name if m.home_user_id|string == selected else m.home_name }} · {{ 'GĐ2' if m.stage_code == 'league' else 'GĐ1' }}</summary>
+      <div class="admin-lobby-days" style="margin-top:10px">{% for day in m.opponent_availability_days %}<div class="admin-lobby-day"><strong>{{ day.label }}</strong>{% for slot in day.opponent_slots %}<span class="admin-lobby-slot">{{ slot.label }}</span>{% else %}<small>Chưa có giờ rảnh.</small>{% endfor %}</div>{% endfor %}</div>
+      </details>
+      {% endfor %}
+    </section>
+  {% else %}
+    <section class="td-section">Chưa có HLV đang tham gia giải để lựa chọn.</section>
+  {% endif %}
+</div>
+<script>
+(function(){
+  var box=document.querySelector('[data-host-ready-list]');if(!box)return;
+  function refresh(){fetch('/api/tournaments/'+encodeURIComponent(box.dataset.tournamentId)+'/host-ready',{credentials:'same-origin',cache:'no-store'}).then(function(r){if(!r.ok)throw Error(r.status);return r.json();}).then(function(data){if(!data.ok)return;var target=box.querySelector('[data-host-ready-items]');if(!target)return;target.replaceChildren();(data.hosts||[]).forEach(function(host){var chip=document.createElement('span');chip.className='td-host-chip';chip.textContent='🟢 '+host.display_name+' · '+host.region;target.appendChild(chip);});if(!(data.hosts||[]).length){var empty=document.createElement('small');empty.textContent='Hiện chưa có Host nào đang rảnh.';target.appendChild(empty);}}).catch(function(){});}
+  refresh();window.setInterval(refresh,15000);
+})();
+</script>
+{% endblock %}

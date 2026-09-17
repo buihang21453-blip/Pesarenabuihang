@@ -1,3 +1,10 @@
+## V1.6.28 — Admin xem Sảnh chờ C1 như HLV (chỉ xem)
+- Thêm route Admin /admin/tournaments/<id>/lobby với lựa chọn góc nhìn một HLV đang tham gia giải.
+- Dùng cùng dữ liệu Sảnh chờ, 4 đối thủ, CLB/Pot/Tier, Host rảnh và phòng đang chạy với HLV.
+- Ẩn các form mở trận và công bố đối thủ trong chế độ Admin; không thay đổi session hay thao tác thay HLV.
+- Hiển thị giờ rảnh của HLV và đối thủ; Host được cập nhật mỗi 15 giây.
+- Thay link mở Sảnh chờ ở Admin GĐ2 và menu nhanh của Admin bằng đường dẫn Admin riêng. Không cần SQL.
+
 ## V1.6.27 — Bảng đối thủ GĐ2 theo từng HLV dành cho Admin
 - Thêm giao diện riêng trong Admin → GĐ2: chọn HLV, xem đồng thời bốn thẻ đối thủ hoặc toàn bộ HLV.
 - Hiển thị Tier HLV, CLB hiện tại, Pot CLB, logo nếu có, trạng thái trận và tỷ số đã xác nhận.
