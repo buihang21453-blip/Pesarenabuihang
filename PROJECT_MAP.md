@@ -1,3 +1,7 @@
+### V1.6.9 – Chuẩn hóa logo GĐ2 từ CSV
+- `modules/tournament_club_logos.py`: alias LOSC Lille/Calcio Como, fallback URL Porto/Leipzig sau clubs_import/teams; PSV dùng psv.png trong import.
+- `templates/tournament/draw_admin_preview.html`: báo nguồn fallback cho Admin. Không có mutation DB/Storage.
+
 ### V1.6.0 – Lịch GĐ2 đủ ba Tier
 - `modules/tournament_competition_parts/league_draw.py`: thuật toán sinh 4 lượt từ mẫu đồ thị hợp lệ, hoán vị ngẫu nhiên trong Tier; `validate_four_match_draw()` kiểm tra 16 HLV 5–6–5, 32 trận, 4 đối thủ khác nhau, đủ 3 Tier trong cả 4 trận.
 - `modules/tournament_competition_parts/league.py`: route POST `/admin/tournaments/<tournament_id>/league/generate` dùng thuật toán mới, xác thực trước ghi DB; route `/league/start` kiểm tra lịch đã lưu có đủ 3 Tier.

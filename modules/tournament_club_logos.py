@@ -22,10 +22,18 @@ _ALIASES = {
     'ssc napoli': 'napoli', 'as roma': 'roma', 'fenerbahce sk': 'fenerbahce',
     'galatasaray sk': 'galatasaray', 'borussia dortmund': 'dortmund',
     'bvb': 'dortmund', 'psv eindhoven': 'psv', 'villarreal cf': 'villarreal',
-    'real betis balompie': 'real betis', 'lille osc': 'lille',
-    'rc lens': 'lens', 'racing club de lens': 'lens', 'como 1907': 'como',
+    'real betis balompie': 'real betis', 'lille osc': 'lille', 'losc lille': 'lille',
+    'rc lens': 'lens', 'racing club de lens': 'lens', 'como 1907': 'como', 'calcio como': 'como',
     'fc porto': 'porto', 'fcporto': 'porto', 'rb leipzig': 'rb leipzig',
-    'rasenballsport leipzig': 'rb leipzig',
+    'rasenballsport leipzig': 'rb leipzig', 'leipzig': 'rb leipzig',
+}
+
+# Exact public Storage URLs supplied by the tournament owner. Read-only fallback
+# for the two clubs absent from the 2026-09-17 clubs_import CSV export. Do not
+# overwrite a valid clubs_import logo or claim the Storage object was verified.
+_MANUAL_LOGO_FALLBACK = {
+    'porto': 'https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/team-logos/porto.webp',
+    'rb leipzig': 'https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/team-logos/leipzig.webp',
 }
 
 
@@ -103,10 +111,18 @@ def load_draw_club_logos(db, execute_query, supabase_url, clubs, team_loader=Non
     except Exception as exc:
         if logger:
             logger.warning('Draw teams logo fallback unavailable: %s', exc)
+    # The repeated Porto URL in the input is not a third logo or a PSV URL.
+    # PSV already exists in clubs_import as psv.png; never invent psv.webp.
+    manual_fallback = []
+    for key, url in _MANUAL_LOGO_FALLBACK.items():
+        if key in canonical and key not in found:
+            found[key], sources[key] = url, 'manual_fallback'
+            manual_fallback.append(canonical[key])
     urls = {name: found.get(normalize_club(name), '') for name in clubs}
     info = {
         'clubs_import': sum(source == 'clubs_import' for source in sources.values()),
         'teams_fallback': sum(source == 'teams' for source in sources.values()),
+        'manual_fallback': manual_fallback,
         'without_logo': [name for name in clubs if not urls[name]],
         'missing_in_import': ([name for name in clubs if normalize_club(name) not in imported]
                               if import_available else None),

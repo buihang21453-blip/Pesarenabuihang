@@ -1,3 +1,9 @@
+## V1.6.9 – Chuẩn hóa mapping logo CLB GĐ2
+- Đối chiếu CSV clubs_import 182 hàng: PSV đã có logo psv.png; Porto và RB Leipzig chưa có bản ghi.
+- Đồng bộ thêm alias Lille/Como; URL Porto/Leipzig chỉ là fallback chính xác theo người dùng cung cấp.
+- Không tự suy đoán URL PSV WebP từ đường dẫn Porto bị gửi lặp; hiển thị nguồn URL dự phòng trên màn hình Admin.
+- Không sửa DB/Storage/luật giải; chưa xác thực HTTP Storage trên Production.
+
 ## V1.6.8 – Đồng bộ logo Lễ bốc thăm từ clubs_import
 - Admin GĐ2 đọc `clubs_import` (read-only) để lấy URL logo của đúng 24 CLB; ưu tiên dữ liệu clubs_import trước `teams`.
 - Chuẩn hóa các biến thể tên CLB (Manchester United/Man United, FC Porto/Porto, v.v.) để khớp đúng tên đã chốt trong Pot; không đổi tên hoặc danh sách CLB gốc.

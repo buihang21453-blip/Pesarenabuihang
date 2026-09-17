@@ -1223,7 +1223,7 @@ body{background:radial-gradient(circle at 60% -20%,#11213b 0,#07101d 32%,#040912
 @media(max-width:850px){.player-sidebar{transform:translateX(-100%);transition:.2s;z-index:100}.sidebar-open .player-sidebar{transform:translateX(0)}.player-main{margin-left:0}.sidebar-menu-button{display:block}.topbar-profile span,.topbar-profile em{display:none}.dashboard-metrics{grid-template-columns:repeat(2,1fr)}.dashboard-primary-grid,.dashboard-secondary-grid{grid-template-columns:1fr}.quick-panel,.online-panel{grid-column:auto}.quick-stat-list{grid-template-columns:1fr 1fr}}
 @media(max-width:520px){.player-main{padding:0 10px 20px}.player-topbar{margin:0 -10px 16px;padding:0 12px;height:76px}.topbar-copy small{display:none}.dashboard-metrics{grid-template-columns:1fr 1fr;gap:7px}.dashboard-metrics article{padding:10px;min-height:88px}.dashboard-metrics strong{font-size:18px}.metric-glyph{width:32px;height:32px}.quick-stat-list{grid-template-columns:1fr}.performance-chart{height:230px}.performance-chart svg{height:180px}.chart-axis{font-size:7px}.topbar-actions{gap:3px}.topbar-icon{width:32px}}
 
-/* ===== PES eFootball 2026 unified black-gold UI — V1.6.8 ===== */
+/* ===== PES eFootball 2026 unified black-gold UI — V1.6.9 ===== */
 :root{
   --pes-bg:#020811;--pes-surface:#07111d;--pes-surface-2:#0b1725;--pes-panel:#0a1421;
   --pes-border:#203043;--pes-border-soft:rgba(255,255,255,.075);--pes-gold:#f5b928;

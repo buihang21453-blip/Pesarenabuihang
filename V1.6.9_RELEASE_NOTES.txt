@@ -1,0 +1,8 @@
+PES Arena V1.6.9 — Chuẩn hóa logo CLB GĐ2 (17/09/2026)
+- Nguồn chính: clubs_import.logo_url (không chỉnh database hay Storage).
+- Bổ sung alias LOSC Lille → Lille, Calcio Como → Como; giữ tên CLB/Pot gốc.
+- Hai URL do chủ giải cung cấp làm fallback: porto.webp, leipzig.webp. Không ghi chúng vào clubs_import.
+- PSV đã có trong CSV: psv.png. URL Porto được gửi hai lần; không có URL PSV WebP.
+- Không thể xác thực HTTP Storage từ môi trường này. URL fallback chỉ dùng khi catalog không có logo hợp lệ.
+- Không thay đổi Random CLB, lịch GĐ2, vé, BXH, database. Không có SQL migration.
+- Cần kiểm thử trên Production và hai tài khoản test; kiểm tra thực tế HTTP của 2 URL WebP.

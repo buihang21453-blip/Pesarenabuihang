@@ -46,6 +46,6 @@
 .draw-action-description{color:var(--muted);font-size:12px}
 @media(max-width:650px){.draw-ceremony-actions .draw-primary-action,.draw-ceremony-actions .draw-sim-primary{width:100%}.draw-action-description{text-align:center}}
 
-/* V1.6.8: read-only catalog health, visible only inside admin tools. */
+/* V1.6.9: read-only catalog health, visible only inside admin tools. */
 .draw-logo-sync-status{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;padding:10px 12px;border:1px solid rgba(244,195,75,.3);border-radius:10px;background:rgba(10,28,43,.65);font-size:12px}
 .draw-logo-sync-status strong{color:#f5c451}.draw-logo-sync-status small{width:100%;color:#bacbd9}

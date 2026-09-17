@@ -34,8 +34,8 @@ def register_admin(context):
         for member in members:
             member["avatar_url"]=(member.get("user") or {}).get("avatar_url") or ""
         member_map={str(m.get("user_id")):m for m in members}
-        # V1.6.8: use clubs_import as the primary Supabase source for draw logos.
-        # Missing imports (notably Porto, RB Leipzig, PSV) can be added later;
+        # V1.6.9: clubs_import first, then teams and exact owner-provided URLs for missing clubs.
+        # Porto/RB Leipzig missing in CSV; PSV is present with psv.png.
         # do not create fake rows, generate brand marks, or change Pot membership.
         from modules.tournament_club_logos import load_draw_club_logos
         from modules.legacy_team_random_service import _load_teams_from_supabase
