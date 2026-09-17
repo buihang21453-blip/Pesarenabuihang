@@ -1,3 +1,13 @@
+## V1.6.12
+# V1.6.12 — Giao diện lễ bốc thăm / asset composition
+- Đưa chế độ tập dượt vào Công cụ quản trị phụ; màn hình chính không nhắc tới giả lập. Chế độ tập dượt vẫn hoạt động khi Admin chủ động chọn.
+- Giảm lớp phủ trên nền sân vận động; hiển thị crowd overlay ở chân trang.
+- Khung ánh sáng phủ sân khấu; bục ở lớp đáy, không che nội dung.
+- Thẻ bí ẩn giữ nguyên tỉ lệ ảnh; chỉ hiện khung reveal khi có logo được công bố, không chồng 2 dấu hỏi.
+- Hai nút RANDOM CLB / Bốc tiếp căn giữa dưới thẻ và bốn đối thủ.
+- Không thay đổi route backend, random, dữ liệu Supabase, lịch, vé hay chính sách mở giải.
+- URL Storage chưa kiểm chứng được từ môi trường làm việc; cần kiểm tra trực quan trình duyệt sau deploy.
+
 
 ### V1.5.99
 - V1.5.99: Lễ bốc thăm GĐ2 do Admin đặt thời gian trong competition_timing.club_draw_at, hiển thị tại vị trí khung đếm ngược GĐ1 cũ; hết giờ không tự Random hoặc mở quyền vé.

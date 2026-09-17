@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>PES Arena · Điều hành Lễ bốc thăm GĐ2</title>
+  <title>PES Arena · Lễ bốc thăm GĐ2</title>
   <link rel="stylesheet" href="{{ static_asset('css/tournament_draw_preview.css') }}">
 </head>
 <body class="draw-preview-page" data-draw-at="{{ preview.club_draw_at }}" data-reward-deadline="{{ preview.reward_deadline_at }}" data-league-start="{{ preview.league_start_at }}" data-control-mode="live" data-last-club="{{ preview.last_club_name }}" data-default-phase="{{ 'opponent' if preview.league_match_count==32 else 'club' }}">
@@ -25,10 +25,8 @@
 
   <main class="draw-preview-shell">
     <section class="draw-preview-toolbar control-toolbar">
-      <div><strong>🎛 Điều hành Lễ bốc thăm</strong><span>Chọn <b>Điều hành thật</b> để thao tác trực tiếp hoặc <b>Giả lập</b> để chạy thử toàn bộ lễ mà không ghi database.</span></div>
+      <div><strong>🏆 Lễ bốc thăm Giai đoạn 2</strong><span>16 HLV · Bốc CLB hạng 16 → 1 · Công bố đối thủ hạng 1 → 16</span></div>
       <div class="draw-preview-switch">
-        <button class="active" type="button" data-control-select="live">🔴 Điều hành thật</button>
-        <button type="button" data-control-select="simulation">🧪 Lễ giả lập</button>
         <button type="button" data-preview-phase="club">Phần 1 · CLB</button>
         <button type="button" data-preview-phase="opponent">Phần 2 · Đối thủ</button>
         <button type="button" data-preview-fullscreen>⛶ Toàn màn hình</button>
@@ -45,6 +43,14 @@
         <form method="post" action="{{ url_for('admin_tournament_revoke_clubs',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><input type="hidden" name="confirm_revoke" value="REVOKE_ALL_16_CLUBS"><button class="action-red" type="submit" {{ 'disabled' if not preview.can_revoke_clubs else '' }}>Thu hồi CLB</button></form>
       </div>
       <small class="control-order-note">Thu hồi đối thủ trước, sau đó mới thu hồi CLB. Không thu hồi khi GĐ2 đã bắt đầu hoặc đã có kết quả.</small>
+      <div class="draw-rehearsal-settings" aria-label="Công cụ tập dượt dành riêng cho Admin">
+        <strong>Chế độ vận hành</strong>
+        <div class="draw-preview-switch">
+          <button type="button" class="active" data-control-select="live">🔴 Điều hành thật</button>
+          <button type="button" data-control-select="simulation">🧪 Tập dượt không lưu dữ liệu</button>
+        </div>
+        <small>Chỉ dành cho Admin; chế độ tập dượt không thay đổi CLB, lịch hoặc vé thật.</small>
+      </div>
       <div class="draw-logo-sync-status" role="status">
         <strong>🛡 Đồng bộ logo CLB từ Supabase</strong>
         <span>clubs_import: {{ preview.logo_sync_status.clubs_import }}/24 logo · teams dự phòng: {{ preview.logo_sync_status.teams_fallback }} · URL bổ sung: {{ preview.logo_sync_status.manual_fallback|length }}</span>

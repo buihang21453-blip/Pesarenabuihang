@@ -71,3 +71,82 @@ body.draw-preview-page{background-image:linear-gradient(180deg,rgba(1,8,16,.48),
 .draw-center-stage .draw-ceremony-actions .draw-primary-action,.draw-center-stage .draw-ceremony-actions .draw-sim-primary{display:block;justify-self:center;width:min(380px,82%)!important;margin:0 auto!important}
 .draw-center-stage .draw-ceremony-actions .ceremony-button{display:block;width:100%!important;margin:0 auto!important;text-align:center}
 .draw-center-stage .draw-action-description{justify-self:center;text-align:center;max-width:520px}
+
+
+/* V1.6.12 — show the eight supplied WebP layers at their intended proportions.
+   Existing CSS gradients remain as fallbacks while Supabase images load. */
+:root{--gd2-assets:"https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/";--gd2-gold:#edc46a}
+body.draw-preview-page{
+ background-color:#030e1c;
+ background-image:linear-gradient(180deg,rgba(0,7,17,.18) 0%,rgba(0,9,21,.20) 40%,rgba(0,6,15,.68) 100%),url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_draw_ceremony_stadium.webp");
+ background-position:center top,center top;background-size:cover,cover;background-repeat:no-repeat;background-attachment:fixed;
+}
+.draw-preview-page:before{
+ background-image:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_crowd_silhouette.webp");
+ background-size:100% auto;background-position:center bottom;background-repeat:no-repeat;opacity:.55;
+}
+.draw-preview-header,.draw-stepbar{background:rgba(2,12,24,.83);backdrop-filter:blur(7px)}
+.draw-preview-shell{max-width:1740px}
+.draw-card{border-color:rgba(237,196,106,.58);background:linear-gradient(180deg,rgba(4,19,34,.90),rgba(4,14,27,.94));box-shadow:inset 0 1px rgba(255,232,170,.08),0 14px 28px rgba(0,0,0,.25)}
+.draw-preview-toolbar{background:rgba(3,16,30,.84);border-color:rgba(237,196,106,.34)}
+.draw-rehearsal-settings{border-top:1px solid rgba(237,196,106,.2);padding:12px 14px 15px;display:grid;gap:8px}
+.draw-rehearsal-settings>strong{font-size:12px;color:var(--gold2)}
+.draw-rehearsal-settings>small{font-size:11px;color:var(--muted)}
+.draw-rehearsal-settings .draw-preview-switch{justify-content:flex-start}
+.draw-stage-grid{grid-template-columns:minmax(255px,.95fr) minmax(460px,1.50fr) minmax(255px,.95fr);gap:12px}
+.draw-center-stage{
+ min-height:665px;padding:17px 20px 25px;justify-content:flex-start;
+ background:linear-gradient(180deg,rgba(2,12,26,.36),rgba(3,13,26,.25) 60%,rgba(2,11,23,.66)),
+ url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_stadium_lights_frame.webp") center top/100% 100% no-repeat;
+ border-color:rgba(255,212,116,.85);box-shadow:0 0 25px rgba(243,199,93,.13),inset 0 0 32px rgba(13,71,117,.20);
+}
+.draw-center-stage:before{
+ inset:auto 0 0;height:55%;background:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_club_reveal_stage.webp") center bottom/100% auto no-repeat;opacity:.67;
+}
+.draw-center-stage:after{inset:0;background:none;display:none}
+.draw-center-stage .stage-kicker{margin-top:0;color:#fff4d6;text-shadow:0 2px 5px #000}
+.draw-center-stage .draw-avatar{width:68px;height:68px;margin:8px 0 5px;border:2px solid var(--gold)}
+.draw-center-stage h3{font-size:clamp(21px,2vw,30px);margin:0 0 3px;text-shadow:0 2px 8px #000}
+.draw-center-stage>p{font-size:15px;text-shadow:0 2px 6px #000}
+/* Portrait artwork already includes a border, crest and question mark. Keep original ratio, never stretch it over a horizontal panel. */
+.draw-club-reveal{
+ flex:none;width:min(270px,80%);height:302px;min-height:0;margin:10px auto 0;padding:38px 20px 30px;align-content:center;justify-items:center;gap:6px;
+ background-color:transparent;background-image:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_random_club_card.webp");
+ background-position:center;background-repeat:no-repeat;background-size:contain;border:0;border-radius:0;box-shadow:none;
+}
+.draw-club-reveal:before{display:none}
+/* Do not render a second question mark on top of the question-mark artwork. */
+.draw-club-reveal:not(:has(.draw-club-logo:not([hidden])))>span{opacity:0;visibility:hidden}
+.draw-club-reveal:not(:has(.draw-club-logo:not([hidden]))) strong{font-size:0}
+.draw-club-reveal:not(:has(.draw-club-logo:not([hidden]))) strong:after{content:'CHƯA CÔNG BỐ';font-size:11px;color:#ffedbf;letter-spacing:1px;text-shadow:0 2px 6px #000}
+.draw-club-reveal:not(:has(.draw-club-logo:not([hidden]))) small{display:none}
+/* Revealed result uses the dedicated open-centre reveal frame, not a stretched question card. */
+.draw-club-reveal:has(.draw-club-logo:not([hidden])){
+ background-image:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_club_reveal_frame.webp");
+ background-position:center;background-size:contain;
+}
+.draw-club-reveal .draw-club-logo{width:95px;height:95px;max-width:50%;object-fit:contain;filter:drop-shadow(0 4px 9px #000)}
+.draw-club-reveal:has(.draw-club-logo:not([hidden])) strong{color:#fff5da;text-shadow:0 2px 6px #000}
+.draw-club-reveal:has(.draw-club-logo:not([hidden])) small{color:#ffe2a0;text-shadow:0 2px 5px #000}
+.draw-center-stage .preview-hint{margin-top:5px;font-size:11px;color:#e2d3b2;text-shadow:0 2px 5px #000}
+/* Button physically belongs to the stage centre, directly beneath the card. */
+.draw-center-stage .draw-ceremony-actions{flex:none;position:relative;margin:8px auto 0!important;width:100%;padding:0!important;z-index:4;place-items:center}
+.draw-center-stage .draw-ceremony-actions .draw-primary-action,.draw-center-stage .draw-ceremony-actions .draw-sim-primary{width:min(385px,82%)!important}
+.draw-center-stage .draw-ceremony-actions .ceremony-button{
+ min-height:60px;border:1px solid #fff1b5;border-radius:9px;
+ background:linear-gradient(180deg,#fff0ac,#efbf53 57%,#d89125);
+ box-shadow:0 0 20px rgba(243,195,86,.35),inset 0 1px rgba(255,255,255,.7);
+ color:#271908;font-size:20px;font-weight:950;
+}
+.draw-center-stage .draw-action-description{font-size:11px;color:#f4ddae;text-shadow:0 1px 4px #000}
+/* Keep background visibility and layout consistent in the opponent reveal, without covering four opponent cards. */
+.draw-center-stage.opponent-stage{justify-content:flex-start}
+.draw-center-stage.opponent-stage:before{opacity:.30;background-size:100% auto}
+.opponent-stage .opponent-slots{margin:16px 0 6px}
+.opponent-stage .opponent-slot{background:rgba(3,18,33,.89);border-color:rgba(243,199,93,.35)}
+.draw-list-card,.draw-pot-card,.draw-status-card{backdrop-filter:blur(5px)}
+.draw-player-row{border-bottom:1px solid rgba(237,196,106,.10)}
+.draw-player-row.done{border-color:rgba(243,199,93,.30)}
+.draw-mini-avatar,.draw-avatar,.draw-opponent-avatar{background-color:#0b2540}
+@media(max-width:1100px){.draw-stage-grid{grid-template-columns:1fr}.draw-center-stage{min-height:650px}}
+@media(max-width:650px){.draw-center-stage{min-height:635px;padding:18px 10px}.draw-club-reveal{height:280px;width:245px}.draw-center-stage .draw-ceremony-actions .draw-primary-action,.draw-center-stage .draw-ceremony-actions .draw-sim-primary{width:min(350px,95%)!important}.draw-preview-page:before{background-size:auto 38%}}
