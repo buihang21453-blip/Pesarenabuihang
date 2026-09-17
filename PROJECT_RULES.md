@@ -190,3 +190,11 @@ V1.5.87: không đưa lên Production khi chưa kiểm thử luồng giao dịch
 - Preview phải dùng cùng dữ liệu live của giải để Admin kiểm tra bố cục trước khi livestream, nhưng không được tạo side effect database.
 - Hai phần preview phải tách rõ: `Random CLB` và `Random đối thủ`; có thể chuyển qua lại và bật toàn màn hình.
 - Khi cần thao tác thật, Admin quay về `GĐ2 · Pot / CLB / Lịch`; không đặt chức năng quản trị nguy hiểm trên màn hình trình chiếu.
+
+
+### Quy tắc điều hành Lễ bốc thăm từ V1.6.4
+- Chế độ **Điều hành thật** được phép ghi dữ liệu; mọi nút phải qua route Admin có kiểm tra trạng thái.
+- Chế độ **Giả lập** tuyệt đối không ghi database, không trừ vé, không thay đổi CLB/lịch/trạng thái giải.
+- Không xóa lịch GĐ2 nếu stage đã mở/completed hoặc bất kỳ trận GĐ2 nào không còn `pending`.
+- Khi muốn làm lại trước giờ thi đấu: bắt buộc Thu hồi đối thủ trước, sau đó mới Thu hồi CLB.
+- Không dùng giao diện/JS để bỏ qua các kiểm tra backend của 16 HLV, Tier 5–6–5, 32 trận, 4 trận/HLV và đủ 3 Tier.

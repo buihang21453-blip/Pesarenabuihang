@@ -1,3 +1,6 @@
+from modules.tournament_competition_parts.league_draw import generate_four_match_draw
+import random as _draw_random
+
 """Internal tournament competition partition extracted from the legacy monolith.
 
 Registered only through :mod:`modules.tournament_competition`.
@@ -16,7 +19,7 @@ def register_admin(context):
     @login_required
     @admin_required
     def admin_tournament_draw_preview(tournament_id):
-        """Read-only preview of the GĐ2 draw ceremony screen for Admin."""
+        """V1.6.4 live control + safe rehearsal screen for the GĐ2 draw ceremony."""
         tours,_=_rows(
             db.table("tournaments").select("*").eq("id",tournament_id).limit(1),
             "ops_draw_preview_tournament",
@@ -59,6 +62,39 @@ def register_admin(context):
         revealed=draw_state.get("revealed") or {}
         revealed_count=sum(1 for uid in member_map if revealed.get(uid))
         assigned_count=sum(1 for m in members if m.get("fixed_club_name"))
+
+        # V1.6.4: generate a full rehearsal payload entirely in memory. This data is
+        # never persisted and therefore lets Admin rehearse the entire ceremony
+        # without consuming tickets, assigning clubs or creating fixtures.
+        sim_members=[dict(m) for m in members]
+        sim_clubs={}
+        try:
+            for tier,club_pot in ((1,3),(2,2),(3,1)):
+                tier_members=[m for m in sim_members if int(m.get("pot_no") or 0)==tier]
+                chosen=_draw_random.sample(list(C1_CLUB_POTS.get(club_pot,[])),len(tier_members))
+                for m,club in zip(tier_members,chosen):
+                    sim_clubs[str(m.get("user_id"))]=club
+            sim_rounds=generate_four_match_draw(sim_members)
+            sim_opponents={str(m.get("user_id")):[] for m in sim_members}
+            sim_member_map={str(m.get("user_id")):m for m in sim_members}
+            for pairs in sim_rounds:
+                for a,b in pairs:
+                    a=str(a); b=str(b)
+                    if a in sim_opponents and b in sim_member_map:
+                        om=sim_member_map[b]
+                        sim_opponents[a].append({"user_id":b,"display_name":om.get("display_name") or "HLV","tier":int(om.get("pot_no") or 0)})
+                    if b in sim_opponents and a in sim_member_map:
+                        om=sim_member_map[a]
+                        sim_opponents[b].append({"user_id":a,"display_name":om.get("display_name") or "HLV","tier":int(om.get("pot_no") or 0)})
+        except Exception:
+            app.logger.exception("Could not build draw rehearsal payload: %s",tournament_id)
+            sim_clubs={}
+            sim_opponents={}
+
+        stages,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id),"ops_draw_preview_stages")
+        stage_status={str(x.get("stage_code")):str(x.get("status") or "") for x in stages}
+        league_started=stage_status.get("league") in {"open","completed"}
+        has_non_pending_league=any(str(m.get("status") or "pending")!="pending" for m in league_matches)
         preview={
             "tournament":tour,
             "members":members,
@@ -74,6 +110,21 @@ def register_admin(context):
             "club_draw_at":timing_cfg.get("club_draw_at") or "2026-09-17T20:00:00+07:00",
             "reward_deadline_at":timing_cfg.get("gd2_reward_ticket_deadline_at") or "2026-09-18T12:00:00+07:00",
             "league_start_at":timing_cfg.get("league_start_at") or "2026-09-18T12:00:00+07:00",
+            "stage_status":stage_status,
+            "league_started":league_started,
+            "can_revoke_opponents":bool(league_matches) and not league_started and not has_non_pending_league,
+            "can_revoke_clubs":not league_matches and not league_started,
+            "simulation":{
+                "clubs":sim_clubs,
+                "opponents":sim_opponents,
+                "order":[str(m.get("user_id")) for m in sim_members],
+                "members":[{
+                    "user_id":str(m.get("user_id")),
+                    "display_name":m.get("display_name") or "HLV",
+                    "seed_no":int(m.get("seed_no") or 0),
+                    "tier":int(m.get("pot_no") or 0),
+                } for m in sim_members],
+            },
         }
         return render_template("tournament/draw_admin_preview.html", preview=preview, auth_only=True)
 

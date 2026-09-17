@@ -7,6 +7,11 @@ from modules.tournament_competition_parts.league_draw import (
 def register_league(context):
     globals().update(context)
 
+    def _gd2_admin_return(tournament_id):
+        if (request.form.get("return_to") or "").strip()=="draw_control":
+            return redirect(url_for("admin_tournament_draw_preview",tournament_id=tournament_id))
+        return redirect_admin("tournaments")
+
     @app.post('/tournaments/<tournament_id>/club/select')
     @login_required
     def tournament_club_select(tournament_id):
@@ -78,18 +83,18 @@ def register_league(context):
         if force:
             ok,msg=_open_league_stage(tournament_id,"admin_force",force_close_rewards=True,start_at=now)
             if not ok:
-                flash("Không thể bắt đầu GĐ2: "+msg,"error"); return redirect_admin("tournaments")
+                flash("Không thể bắt đầu GĐ2: "+msg,"error"); return _gd2_admin_return(tournament_id)
             flash("Admin đã bắt đầu GĐ2 ngay. Vé thưởng chưa dùng đã hết hiệu lực; thời hạn thi đấu 7 ngày.","success")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
         scheduled=_parse_iso(cfg.get("league_start_at") or "2026-09-18T12:00:00+07:00")
         if scheduled and scheduled.tzinfo is None: scheduled=scheduled.replace(tzinfo=vn)
         if scheduled and now<scheduled:
-            flash("Chưa đến mốc mở GĐ2. Nếu cần mở sớm, dùng nút Bắt đầu GĐ2 ngay.","warning"); return redirect_admin("tournaments")
+            flash("Chưa đến mốc mở GĐ2. Nếu cần mở sớm, dùng nút Bắt đầu GĐ2 ngay.","warning"); return _gd2_admin_return(tournament_id)
         ok,msg=_open_league_stage(tournament_id,"admin_scheduled",start_at=now)
         if not ok:
-            flash("Không thể bắt đầu GĐ2: "+msg,"error"); return redirect_admin("tournaments")
+            flash("Không thể bắt đầu GĐ2: "+msg,"error"); return _gd2_admin_return(tournament_id)
         flash("Đã mở GĐ2 sau khi kiểm tra CLB, vé thưởng, 32 trận và đủ 3 Tier.","success")
-        return redirect_admin("tournaments")
+        return _gd2_admin_return(tournament_id)
 
     @app.post('/admin/tournaments/<tournament_id>/league/generate')
     @login_required
@@ -99,70 +104,70 @@ def register_league(context):
         stage1=_matches(tournament_id,"stage1")
         if not stage1 or any(m.get("status")!="completed" for m in stage1):
             flash("Chỉ sinh lịch GĐ2 sau khi toàn bộ kết quả GĐ1 đã hoàn tất.","error")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
         stage_rows,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id),"ops_league_stage_gate")
         if not any(x.get("stage_code")=="stage1" and x.get("status")=="completed" for x in stage_rows):
             flash("Admin phải kết thúc GĐ1 trước khi sinh lịch GĐ2.","error")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
         if not (_setting(tournament_id,"pots_locked",{}) or {}).get("locked"):
             flash("Hãy khóa Pot trước khi sinh lịch GĐ2.","error")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
         if any(C1_CLUB_POT_BY_NAME.get(m.get("fixed_club_name")) != 4-int(m.get("pot_no") or 0) for m in members):
             flash("Có HLV đang dùng CLB sai Tier/Pot. Admin cần Random lại đúng quy tắc trước khi sinh lịch.","error")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
         if (_setting(tournament_id,"club_selection",{}) or {}).get("open"):
             flash("Hãy khóa Random/chọn CLB trước khi sinh lịch GĐ2.","error")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
         if len(members)!=16 or any(not m.get("fixed_club_name") for m in members):
             flash("Cần đủ 16 HLV đã được gán CLB cố định trước khi sinh lịch.","error")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
         # V1.6.2: opponent fixtures are independent from early-reward club rerolls.
         # As soon as all 16 active HLV have a valid base club, the 32-match fixture
         # graph may be generated and then remains fixed while eligible HLV continue
         # to use reward tickets to change only their own club.
         if _matches(tournament_id,"league"):
             flash("Lịch GĐ2 đã tồn tại. Không cho sinh lại/xóa lịch tự động để bảo vệ đối thủ đã công bố.","error")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
         pots={int(m.get("pot_no") or 0) for m in members if int(m.get("pot_no") or 0)>0}
         if len(pots)!=3:
-            flash("GĐ2 chính thức dùng đúng 3 Pot. Hãy chia 3 Pot 5–6–5 trước khi sinh lịch.","error"); return redirect_admin("tournaments")
+            flash("GĐ2 chính thức dùng đúng 3 Pot. Hãy chia 3 Pot 5–6–5 trước khi sinh lịch.","error"); return _gd2_admin_return(tournament_id)
         pot_counts={p:sum(1 for m in members if int(m.get("pot_no") or 0)==p) for p in (1,2,3)}
         if [pot_counts.get(1,0),pot_counts.get(2,0),pot_counts.get(3,0)] != [5,6,5]:
             flash(f"Sai cấu trúc Pot GĐ2: hiện là {pot_counts.get(1,0)}–{pot_counts.get(2,0)}–{pot_counts.get(3,0)}. Cần chia lại đúng 5–6–5.","error")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
         existing_completed=_matches(tournament_id,"league",["completed"])
         if existing_completed:
-            flash("League Phase đã có kết quả; không thể sinh lại tự động.","error"); return redirect_admin("tournaments")
+            flash("League Phase đã có kết quả; không thể sinh lại tự động.","error"); return _gd2_admin_return(tournament_id)
         try:
             rounds=_league_four_match_pairs(tournament_id,members)
         except ValueError as exc:
-            flash(str(exc),"error"); return redirect_admin("tournaments")
+            flash(str(exc),"error"); return _gd2_admin_return(tournament_id)
 
         # Validate complete fixture graph BEFORE the first database write.
         pair_keys=set()
         match_counts={str(m.get("user_id")):0 for m in members}
         if len(rounds)!=4 or any(len(pairs)!=8 for pairs in rounds):
             flash("Thuật toán chưa sinh đủ 4 lượt × 8 trận; chưa ghi dữ liệu.","error")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
         for pairs in rounds:
             seen_round=set()
             for a,b in pairs:
                 key=tuple(sorted((str(a),str(b))))
                 if a==b or key in pair_keys or a in seen_round or b in seen_round or a not in match_counts or b not in match_counts:
                     flash("Lịch GĐ2 có cặp trùng hoặc HLV không hợp lệ; chưa ghi dữ liệu.","error")
-                    return redirect_admin("tournaments")
+                    return _gd2_admin_return(tournament_id)
                 pair_keys.add(key)
                 seen_round.update((a,b))
                 match_counts[a]+=1
                 match_counts[b]+=1
         if len(pair_keys)!=32 or any(count!=4 for count in match_counts.values()):
             flash("Lịch GĐ2 chưa bảo đảm 32 trận và 4 trận/HLV; chưa ghi dữ liệu.","error")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
         try:
             validate_four_match_draw(rounds, {str(m.get("user_id")):int(m.get("pot_no") or 0) for m in members})
         except ValueError as exc:
             flash(f"Không sinh lịch: {exc} Chưa ghi database.","error")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
 
         execute_query(db.table("tournament_settings").upsert({
             "tournament_id":tournament_id,
@@ -181,7 +186,7 @@ def register_league(context):
         # Never delete league fixtures: a second generation request must not destroy real results.
         if _matches(tournament_id,"league"):
             flash("Đã có lịch GĐ2. Dừng sinh lịch để bảo vệ dữ liệu.","error")
-            return redirect_admin("tournaments")
+            return _gd2_admin_return(tournament_id)
 
         idx=0
         for round_no,pairs in enumerate(rounds,1):
@@ -195,7 +200,7 @@ def register_league(context):
                     "status":"pending","leg_no":1,"created_at":now_iso(),"updated_at":now_iso(),
                 }),"ops_league_insert",attempts=2)
         flash(f"Đã sinh {idx} trận GĐ2: mỗi HLV đúng 4 trận · 4 trận/HLV · đủ 3 Tier đối thủ/HLV · không lặp đối thủ.","success")
-        return redirect_admin("tournaments")
+        return _gd2_admin_return(tournament_id)
 
     @app.post('/admin/tournaments/<tournament_id>/registration-status')
     @login_required
@@ -511,6 +516,9 @@ def register_league(context):
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return jsonify({"ok": category == "success", "message": message}), (200 if category == "success" else 409)
         flash(message, category)
+        tournament_id=str((request.view_args or {}).get("tournament_id") or "")
+        if (request.form.get("return_to") or "").strip()=="draw_control" and tournament_id:
+            return redirect(url_for("admin_tournament_draw_preview",tournament_id=tournament_id))
         return redirect(url_for("admin") + "#c1-admin-gd2")
 
     def _base_draft_config(tournament_id):
@@ -693,6 +701,53 @@ def register_league(context):
         flash("Nút Random hạng 4–16 cũ đã ngừng sử dụng do phân bổ sai Tier/Pot. Hãy dùng nút Admin Random lại đủ 16 CLB.","warning")
         return redirect_admin("tournaments")
 
+    @app.post('/admin/tournaments/<tournament_id>/league/revoke-opponents')
+    @login_required
+    @admin_required
+    def admin_tournament_league_revoke_opponents(tournament_id):
+        """V1.6.4: revoke the generated GĐ2 opponent graph before play starts.
+
+        This is intentionally separate from club revocation: Admin must revoke
+        opponents first, then clubs. Completed/started GĐ2 data is never deleted.
+        """
+        stages,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id),"ops_revoke_league_stage")
+        status={str(x.get("stage_code")):str(x.get("status") or "") for x in stages}
+        league_status=status.get("league")
+        matches=_matches(tournament_id,"league")
+        if not matches:
+            flash("Chưa có lịch đối thủ GĐ2 để thu hồi.","warning")
+            return _gd2_admin_return(tournament_id)
+        if league_status not in {"draft","pending"}:
+            flash("Không thể thu hồi đối thủ sau khi GĐ2 đã mở hoặc hoàn tất.","error")
+            return _gd2_admin_return(tournament_id)
+        if any(str(m.get("status") or "pending")!="pending" for m in matches):
+            flash("Có trận GĐ2 đã thay đổi trạng thái/kết quả; không được thu hồi đối thủ.","error")
+            return _gd2_admin_return(tournament_id)
+        try:
+            execute_query(
+                db.table("tournament_matches").delete().eq("tournament_id",tournament_id).eq("stage_code","league"),
+                "ops_revoke_league_matches",attempts=2,
+            )
+            execute_query(db.table("tournament_settings").upsert({
+                "tournament_id":tournament_id,"setting_key":"league_draw_v2",
+                "setting_value":{"active":False,"completed":False,"order":[],"current_index":0,"pot_index":0,"pots":[1,2,3],"revealed":{},"history":[]},
+                "updated_at":now_iso(),
+            },on_conflict="tournament_id,setting_key"),"ops_revoke_league_draw_state",attempts=2)
+            execute_query(db.table("tournament_settings").upsert({
+                "tournament_id":tournament_id,"setting_key":"league_player_reveals",
+                "setting_value":{},"updated_at":now_iso(),
+            },on_conflict="tournament_id,setting_key"),"ops_revoke_league_player_reveals",attempts=2)
+            remaining=_matches(tournament_id,"league")
+            if remaining:
+                raise RuntimeError("League match rows remain after revoke")
+            log_admin_action("Thu hồi đối thủ GĐ2","tournament_match",details={"tournament_id":tournament_id,"match_count":len(matches)})
+        except Exception:
+            app.logger.exception("Could not revoke GĐ2 opponents: %s",tournament_id)
+            flash("Thu hồi đối thủ chưa được xác nhận ở database. Dữ liệu không được coi là đã thu hồi.","error")
+            return _gd2_admin_return(tournament_id)
+        flash(f"Đã thu hồi {len(matches)} trận/đối thủ GĐ2. CLB và vé thưởng được giữ nguyên.","success")
+        return _gd2_admin_return(tournament_id)
+
     @app.post('/admin/tournaments/<tournament_id>/league-draw/start')
     @login_required
     @admin_required
@@ -703,11 +758,11 @@ def register_league(context):
         # Ticket rerolls modify fixed_club_* only; they never regenerate or mutate
         # tournament_matches, so the opponents stay fixed.
         if not _matches(tournament_id,"league"):
-            flash("Hãy sinh lịch League Phase trước.","error"); return redirect_admin("tournaments")
+            flash("Hãy sinh lịch League Phase trước.","error"); return _gd2_admin_return(tournament_id)
         state={"active":True,"completed":False,"order":order,"current_index":0,"pot_index":0,"pots":[1,2,3],"revealed":{},"history":[]}
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"league_draw_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_draw_start",attempts=2)
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"league_player_reveals","setting_value":{},"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_player_reveal_reset",attempts=2)
-        flash("Đã bắt đầu Lễ bốc thăm League Phase chung.","success"); return redirect_admin("tournaments")
+        flash("Đã bắt đầu Lễ bốc thăm League Phase chung.","success"); return _gd2_admin_return(tournament_id)
 
     @app.post('/admin/tournaments/<tournament_id>/league-draw/next')
     @login_required
@@ -716,7 +771,7 @@ def register_league(context):
         state=_setting(tournament_id,"league_draw_v2",{}) or {}; order=state.get("order") or []; pots=state.get("pots") or [1,2,3]
         i=int(state.get("current_index") or 0); pi=int(state.get("pot_index") or 0)
         if not state.get("active") or i>=len(order):
-            flash("Lễ bốc thăm đã hoàn tất hoặc chưa bắt đầu.","warning"); return redirect_admin("tournaments")
+            flash("Lễ bốc thăm đã hoàn tất hoặc chưa bắt đầu.","warning"); return _gd2_admin_return(tournament_id)
         uid=str(order[i]); pot=int(pots[pi]); member_map={str(m.get("user_id")):m for m in _all_members(tournament_id)}
         opponents=[]
         for m in _matches(tournament_id,"league"):
@@ -745,7 +800,7 @@ def register_league(context):
         opened=False
         if state.get("completed") and _reward_ticket_phase_status(tournament_id).get("all_finalized"):
             opened,_msg=_open_league_stage(tournament_id,"all_reward_holders_finalized")
-        flash(("Đã hoàn tất bốc thăm đối thủ. Cả 3 HLV vé thưởng đã chốt nên GĐ2 tự mở." if opened else f"Đã bốc Tier đối thủ {pot} cho HLV hiện tại."),"success"); return redirect_admin("tournaments")
+        flash(("Đã hoàn tất bốc thăm đối thủ. Cả 3 HLV vé thưởng đã chốt nên GĐ2 tự mở." if opened else f"Đã bốc Tier đối thủ {pot} cho HLV hiện tại."),"success"); return _gd2_admin_return(tournament_id)
 
     @app.post('/tournaments/<tournament_id>/league/reveal')
     @login_required

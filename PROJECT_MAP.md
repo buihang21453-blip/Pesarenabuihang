@@ -383,3 +383,12 @@ V1.5.90: Admin `POST /admin/tournaments/<id>/clubs/rerandom-by-tier` tại `modu
 - `static/js/tournament_draw_preview.js`: chuyển phase, fullscreen và countdown theo giờ Việt Nam.
 - `templates/admin.html`: nút mở preview tại đầu tab `GĐ2 · Pot / CLB / Lịch`.
 - Preview không gọi API POST và không có nút thay đổi dữ liệu; mọi thao tác vận hành thật vẫn thực hiện tại Admin GĐ2.
+
+
+### V1.6.4 — Admin Control Lễ bốc thăm GĐ2
+- `modules/tournament_competition_parts/admin.py`: dựng payload dữ liệu thật và payload rehearsal in-memory.
+- `modules/tournament_competition_parts/league.py`: route thao tác live, trả về màn hình điều hành và route thu hồi đối thủ GĐ2.
+- `templates/tournament/draw_admin_preview.html`: giao diện điều hành thật + giả lập.
+- `static/js/tournament_draw_preview.js`: chuyển mode Live/Simulation, chạy giả lập toàn bộ lễ.
+- `static/css/tournament_draw_preview.css`: style bảng điều khiển live/simulation.
+Luồng rollback trước GĐ2: Thu hồi đối thủ → Thu hồi CLB. Simulation không ghi dữ liệu.

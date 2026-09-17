@@ -1,25 +1,30 @@
 (function(){
+  var body=document.body;
+  var simulation=null;
+  try{simulation=JSON.parse((document.getElementById('draw-simulation-data')||{}).textContent||'{}');}catch(e){simulation={};}
+  var sim={mode:false,step:0,timer:null,events:[]};
+
   function activate(phase){
     document.querySelectorAll('[data-phase-panel]').forEach(function(panel){panel.classList.toggle('active',panel.dataset.phasePanel===phase);});
     document.querySelectorAll('[data-preview-phase]').forEach(function(btn){btn.classList.toggle('active',btn.dataset.previewPhase===phase);});
   }
-  document.addEventListener('click',function(e){
-    var phaseBtn=e.target.closest('[data-preview-phase]');
-    if(phaseBtn){activate(phaseBtn.dataset.previewPhase);return;}
-    if(e.target.closest('[data-preview-fullscreen]')){
-      if(!document.fullscreenElement){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}
-      else{document.exitFullscreen&&document.exitFullscreen();}
-    }
-  });
+  function setMode(mode){
+    sim.mode=mode==='simulation';
+    body.dataset.controlMode=mode;
+    document.querySelectorAll('[data-control-select]').forEach(function(btn){btn.classList.toggle('active',btn.dataset.controlSelect===mode);});
+    var live=document.querySelector('[data-live-controls]'), demo=document.querySelector('[data-simulation-controls]');
+    if(live)live.hidden=sim.mode;
+    if(demo)demo.hidden=!sim.mode;
+    var badge=document.querySelector('[data-control-badge]'), sub=document.querySelector('[data-control-subtitle]'), foot=document.querySelector('[data-footer-mode]');
+    if(badge)badge.textContent=sim.mode?'GIẢ LẬP AN TOÀN':'ĐIỀU HÀNH THẬT';
+    if(sub)sub.textContent=sim.mode?'Không ghi database · Không trừ vé':'Thao tác trực tiếp dữ liệu giải';
+    if(foot)foot.textContent=sim.mode?'ADMIN CONTROL · SIMULATION':'ADMIN CONTROL · LIVE';
+    if(sim.mode) resetSimulation(); else stopAuto();
+  }
   function fmtVN(iso){
     var d=new Date(iso); if(isNaN(d.getTime())) return '—';
     return new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric',hourCycle:'h23'}).format(d).replace(',', ' ·');
   }
-  var body=document.body;
-  var deadlineLabel=document.querySelector('[data-preview-deadline-label]');
-  var startLabel=document.querySelector('[data-preview-start-label]');
-  if(deadlineLabel)deadlineLabel.textContent=fmtVN(body.dataset.rewardDeadline);
-  if(startLabel)startLabel.textContent=fmtVN(body.dataset.leagueStart);
   function tick(){
     var now=Date.now(), draw=Date.parse(body.dataset.drawAt||''), reward=Date.parse(body.dataset.rewardDeadline||''), league=Date.parse(body.dataset.leagueStart||'');
     var target=draw, caption='Đếm ngược đến lễ bốc thăm';
@@ -31,5 +36,71 @@
     var ms=Math.max(0,target-now), sec=Math.floor(ms/1000), d=Math.floor(sec/86400), h=Math.floor((sec%86400)/3600), m=Math.floor((sec%3600)/60), s=sec%60;
     el.textContent=(d?d+'d ':'')+String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
   }
-  tick();setInterval(tick,1000);
+
+  function buildEvents(){
+    var members=(simulation.members||[]).slice().sort(function(a,b){return (a.seed_no||99)-(b.seed_no||99);});
+    var events=[];
+    members.forEach(function(m){events.push({type:'club',member:m,club:(simulation.clubs||{})[m.user_id]||'CLB mô phỏng'});});
+    members.slice().sort(function(a,b){return (a.tier-b.tier)||((a.seed_no||99)-(b.seed_no||99));}).forEach(function(m){
+      events.push({type:'opponents',member:m,opponents:((simulation.opponents||{})[m.user_id]||[]).slice(0,4)});
+    });
+    return events;
+  }
+  function setSimProgress(text){var el=document.querySelector('[data-sim-progress]');if(el)el.textContent=text;}
+  function resetSimulation(){
+    stopAuto();sim.step=0;sim.events=buildEvents();setSimProgress('Sẵn sàng · '+sim.events.length+' bước');activate('club');
+    document.querySelectorAll('[data-club-row]').forEach(function(row){row.classList.remove('sim-done');var cell=row.querySelector('[data-club-cell]');if(cell)cell.textContent='Chờ giả lập';});
+    var rn=document.querySelector('[data-club-reveal-name]'), ri=document.querySelector('[data-club-reveal-icon]');if(rn)rn.textContent='CLB BÍ ẨN';if(ri)ri.textContent='?';
+  }
+  function renderClub(ev){
+    activate('club');
+    var m=ev.member||{};
+    var a=document.querySelector('[data-club-avatar]'), n=document.querySelector('[data-club-name]'), meta=document.querySelector('[data-club-meta]'), rn=document.querySelector('[data-club-reveal-name]'), ri=document.querySelector('[data-club-reveal-icon]'), pot=document.querySelector('[data-club-pot]');
+    if(a)a.textContent=(m.display_name||'?').charAt(0).toUpperCase();if(n)n.textContent=m.display_name||'HLV';if(meta)meta.textContent='TIER '+m.tier+' · HẠNG '+m.seed_no+' GĐ1';
+    if(rn)rn.textContent=ev.club;if(ri)ri.textContent='⚽';if(pot)pot.textContent='Kết quả giả lập · Pot '+(4-m.tier);
+    var row=document.querySelector('[data-club-row="'+m.user_id+'"]');if(row){row.classList.add('sim-done');var cell=row.querySelector('[data-club-cell]');if(cell)cell.textContent=ev.club;}
+  }
+  function renderOpponents(ev){
+    activate('opponent');
+    var m=ev.member||{}, a=document.querySelector('[data-opp-avatar]'), n=document.querySelector('[data-opp-name]'), meta=document.querySelector('[data-opp-meta]');
+    if(a)a.textContent=(m.display_name||'?').charAt(0).toUpperCase();if(n)n.textContent=m.display_name||'HLV';if(meta)meta.textContent='TIER '+m.tier+' · HẠNG '+m.seed_no+' GĐ1 · GIẢ LẬP';
+    var wrap=document.querySelector('[data-opponent-slots]');
+    if(wrap){
+      wrap.innerHTML='';
+      for(var i=0;i<4;i++){
+        var o=(ev.opponents||[])[i];
+        var div=document.createElement('div');div.className='opponent-slot '+(o?'revealed':'');
+        div.innerHTML='<small>Trận '+(i+1)+'</small><span>'+(o?(o.display_name||'?').charAt(0).toUpperCase():'?')+'</span><strong>'+(o?(o.display_name||'HLV'):'Chưa có')+'</strong><em>'+(o?('Tier '+o.tier):'—')+'</em>';
+        wrap.appendChild(div);
+      }
+    }
+  }
+  function nextSimulation(){
+    if(!sim.mode)return;
+    if(!sim.events.length)sim.events=buildEvents();
+    if(sim.step>=sim.events.length){setSimProgress('✅ Hoàn tất lễ giả lập');stopAuto();return;}
+    var ev=sim.events[sim.step++];
+    if(ev.type==='club')renderClub(ev);else renderOpponents(ev);
+    var clubDone=Math.min(sim.step,16), oppDone=Math.max(0,sim.step-16);
+    setSimProgress((sim.step>=sim.events.length?'✅ Hoàn tất':'Đang chạy')+' · CLB '+clubDone+'/16 · HLV đối thủ '+oppDone+'/16');
+  }
+  function stopAuto(){if(sim.timer){clearInterval(sim.timer);sim.timer=null;}}
+  function runAuto(){
+    if(!sim.mode)return;stopAuto();
+    if(sim.step>=sim.events.length)resetSimulation();
+    nextSimulation();sim.timer=setInterval(function(){nextSimulation();if(sim.step>=sim.events.length)stopAuto();},850);
+  }
+
+  document.addEventListener('click',function(e){
+    var modeBtn=e.target.closest('[data-control-select]');if(modeBtn){setMode(modeBtn.dataset.controlSelect);return;}
+    var phaseBtn=e.target.closest('[data-preview-phase]');if(phaseBtn){activate(phaseBtn.dataset.previewPhase);return;}
+    if(e.target.closest('[data-preview-fullscreen]')){if(!document.fullscreenElement){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}else{document.exitFullscreen&&document.exitFullscreen();}return;}
+    if(e.target.closest('[data-sim-auto]')){runAuto();return;}
+    if(e.target.closest('[data-sim-next]')){nextSimulation();return;}
+    if(e.target.closest('[data-sim-reset]')){resetSimulation();return;}
+  });
+
+  var deadlineLabel=document.querySelector('[data-preview-deadline-label]');var startLabel=document.querySelector('[data-preview-start-label]');
+  if(deadlineLabel)deadlineLabel.textContent=fmtVN(body.dataset.rewardDeadline);if(startLabel)startLabel.textContent=fmtVN(body.dataset.leagueStart);
+  tick();setInterval(tick,1000);setMode('live');
 })();

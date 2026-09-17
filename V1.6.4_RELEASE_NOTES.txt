@@ -1,0 +1,21 @@
+PES ARENA V1.6.4 — ADMIN CONTROL LỄ BỐC THĂM GĐ2
+
+1. Admin có thể thao tác trực tiếp ngay trên giao diện Lễ bốc thăm:
+   - Random toàn bộ 16 CLB theo Tier/Pot
+   - Mở Random từng HLV 1→16 và Random HLV đến lượt
+   - Sinh lịch GĐ2 · 4 trận
+   - Bắt đầu công bố đối thủ và Bốc tiếp
+   - Bắt đầu GĐ2 ngay
+
+2. Rollback an toàn trước khi thi đấu:
+   - Thu hồi đối thủ GĐ2 (xóa lịch pending + reset trạng thái công bố)
+   - Sau đó mới Thu hồi CLB
+   - Không cho thu hồi nếu GĐ2 đã mở/hoàn tất hoặc trận đã có trạng thái/kết quả.
+
+3. Lễ bốc thăm giả lập:
+   - Chạy thử toàn bộ lễ bằng dữ liệu tạo trong bộ nhớ/trình duyệt
+   - 16 CLB đúng Tier/Pot
+   - Lịch 4 trận/HLV đủ 3 Tier theo thuật toán V1.6
+   - Không ghi database, không dùng vé, không thay đổi giải thật.
+
+Không có SQL migration mới.

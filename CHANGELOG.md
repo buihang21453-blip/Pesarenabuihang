@@ -1,3 +1,10 @@
+## V1.6.4 – Điều hành trực tiếp & giả lập Lễ bốc thăm GĐ2
+- Nâng màn hình Admin Preview thành **Admin Control**: Admin thao tác trực tiếp Random CLB, sinh lịch, bắt đầu công bố, Bốc tiếp và mở GĐ2.
+- Bổ sung **Thu hồi đối thủ GĐ2** an toàn trước khi GĐ2 bắt đầu; thao tác này giữ nguyên CLB và vé thưởng.
+- Cho phép làm lại theo thứ tự: Thu hồi đối thủ → Thu hồi CLB.
+- Bổ sung chế độ **Lễ bốc thăm giả lập** chạy toàn bộ 16 CLB + công bố đối thủ Tier 1→2→3 hoàn toàn trong trình duyệt, không ghi database/không trừ vé.
+- Giữ các khóa an toàn: không thu hồi đối thủ khi GĐ2 đã mở hoặc có trận đổi trạng thái/kết quả.
+
 ## V1.6.3 – Admin Preview giao diện Lễ bốc thăm GĐ2
 - Thêm route Admin read-only `/admin/tournaments/<id>/draw-preview` để xem trước sân khấu Lễ bốc thăm trước khi livestream/vận hành thật.
 - Thêm nút `👁 Xem trước giao diện Lễ bốc thăm` ngay đầu khối `GĐ2 · Pot / CLB / Lịch`.
