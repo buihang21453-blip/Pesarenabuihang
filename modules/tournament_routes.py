@@ -759,6 +759,8 @@ def register_routes(context):
                         "ga": 0,
                         "gd": 0,
                         "points": 0,
+                        "stage1_points": 0,
+                        "league_points": 0,
                         "recent_form": [],
                         "winrate": 0,
                     }
@@ -782,12 +784,16 @@ def register_routes(context):
                     H, A = ranking[h], ranking[a]
                     H["played"] += 1; A["played"] += 1
                     H["gf"] += hs; H["ga"] += as_; A["gf"] += as_; A["ga"] += hs
+                    # Duy nhất BXH C1: GĐ1 + GĐ2, chỉ trận completed tính điểm.
+                    stage_points_key = "stage1_points" if match.get("stage_code") == "stage1" else "league_points"
                     if hs > as_:
-                        H["wins"] += 1; H["points"] += 3; A["losses"] += 1
+                        H["wins"] += 1; H["points"] += 3; H[stage_points_key] += 3; A["losses"] += 1
                     elif hs < as_:
-                        A["wins"] += 1; A["points"] += 3; H["losses"] += 1
+                        A["wins"] += 1; A["points"] += 3; A[stage_points_key] += 3; H["losses"] += 1
                     else:
-                        H["draws"] += 1; A["draws"] += 1; H["points"] += 1; A["points"] += 1
+                        H["draws"] += 1; A["draws"] += 1
+                        H["points"] += 1; A["points"] += 1
+                        H[stage_points_key] += 1; A[stage_points_key] += 1
                     completed_matches.append({
                         "home_user_id": h,
                         "away_user_id": a,

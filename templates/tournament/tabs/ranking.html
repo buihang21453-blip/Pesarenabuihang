@@ -2,8 +2,8 @@
           <div class="tournament-public-ranking" id="ranking">
             <div class="tournament-public-ranking-head">
               <div>
-                <h4>📊 BXH C1 · HLV / TIER / CLB</h4>
-                <p>Tier gắn với HLV · CLB thuộc Pot tương ứng. CLB hiển thị theo phân bổ hiện tại, kể cả sau khi dùng vé đổi CLB.</p>
+                <h4>📊 BXH C1 TỔNG · GĐ1 + GĐ2</h4>
+                <p>Một BXH xuyên suốt: điểm GĐ1 + điểm GĐ2 = tổng điểm C1. Chỉ cộng trận đã xác nhận; Tier gắn với HLV, CLB lấy từ phân bổ hiện tại theo Pot.</p>
               </div>
             </div>
             {% if tournament.can_admin_manage %}
@@ -60,7 +60,9 @@
                     <th>CLB hiện tại</th>
                     <th>Pot CLB</th>
                     <th>Trận</th>
-                    <th>Điểm</th>
+                    <th>Điểm GĐ1</th>
+                    <th>Điểm GĐ2</th>
+                    <th>Tổng điểm C1</th>
                     <th>Thành tích</th>
                     <th>BT</th>
                     <th>BB</th>
@@ -78,7 +80,9 @@
                     <td class="c1-rank-club-cell"><strong class="c1-rank-club">{{ r.club_name or 'Chưa Random CLB' }}</strong></td>
                     <td>{% if r.club_pot in [1,2,3] %}<span class="c1-rank-pot">Pot {{ r.club_pot }}</span>{% elif r.club_name %}<span class="c1-rank-unassigned">Chưa xác định</span>{% else %}<span class="c1-rank-unassigned">—</span>{% endif %}</td>
                     <td><strong>{{ r.played }}</strong></td>
-                    <td><span class="points">{{ r.points }}</span></td>
+                    <td>{{ r.stage1_points }}</td>
+                    <td>{{ r.league_points }}</td>
+                    <td><span class="points" title="GĐ1 {{ r.stage1_points }} + GĐ2 {{ r.league_points }}">{{ r.points }}</span></td>
                     <td>
                       <div class="leaderboard-record">
                         <span class="record-chip record-chip-win">{{ r.wins }}T</span>
@@ -104,7 +108,7 @@
                   {% if tournament.can_admin_manage %}
                   {% set ap = tournament.central_admin_players.get(r.user_id|string, {}) %}
                   <tr class="tournament-admin-detail-row" data-central-player-panel="{{ tournament.id }}-{{ r.user_id }}">
-                    <td colspan="13" class="tournament-admin-detail-cell">
+                    <td colspan="15" class="tournament-admin-detail-cell">
                       <div class="tournament-admin-detail-grid">
                         <div class="tournament-admin-detail-card">
                           <h5>👤 {{ r.display_name }} · Thông tin</h5>

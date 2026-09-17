@@ -1,3 +1,10 @@
+## V1.6.25 — BXH C1 cộng dồn & phòng C1 GĐ2
+- BXH công khai /tournaments hiển thị Điểm GĐ1, Điểm GĐ2 và Tổng điểm C1; cộng đúng một lần chỉ những trận completed của stage1/league.
+- BXH trung tâm /tournaments/<id> hiển thị cùng 3 cột từ nguồn _combined_ranking; Knockout không cộng điểm.
+- Phòng C1 GĐ2 giữ nguyên route và xác nhận kết quả, bổ sung hướng dẫn điểm GĐ2 cộng BXH chung; không tạo phòng GĐ2 riêng.
+- CLB theo HLV vẫn lấy mới trước trận, khóa lúc bắt đầu; không làm mất vé hoặc thay đổi 32 trận.
+- Không SQL mới; không ảnh hưởng dữ liệu trận đã xác nhận hoặc tài khoản test.
+
 ## V1.6.24 — Phòng C1 GĐ2 sử dụng CLB gắn với HLV
 - Tách UI phòng GĐ2/Knockout khỏi Random CLB GĐ1, bao gồm cả giao diện polling realtime.
 - Trước trận hiển thị CLB hiện tại từ tournament_members; vé đổi CLB trước giờ thi đấu không làm dùng đội cũ.

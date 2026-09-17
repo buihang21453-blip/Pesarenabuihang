@@ -1,0 +1,5 @@
+PES Arena V1.6.25 — BXH C1 cộng dồn GĐ1 + GĐ2 và giao diện Phòng đấu C1 GĐ2
+- BXH /tournaments: Điểm GĐ1, Điểm GĐ2, Tổng điểm C1; chỉ trận completed, không tính Knockout.
+- BXH trung tâm: hiển thị cùng cách chia điểm.
+- Phòng C1 hiện tại tự đổi giao diện theo giai đoạn; GĐ2 CLB cố định theo HLV, nhập tỷ số / khách xác nhận.
+- Không SQL mới. Giữ lịch 32 trận, vé chưa dùng và dữ liệu test độc lập.

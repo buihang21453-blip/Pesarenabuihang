@@ -1,3 +1,8 @@
+## V1.6.25
+- BXH C1 chính thức phải cộng điểm GĐ1 và GĐ2 một lần/trận completed, không cộng Knockout; không tách thành hai BXH độc lập.
+- GĐ2 sử dụng cùng Phòng đấu C1, phân nhánh UI theo stage_code; CLB cố định theo HLV lúc bắt đầu, không Random trong phòng.
+- Không thay đổi lịch 32 trận, vé đang còn hạn, hoặc dữ liệu BXH test khi chỉnh điểm hiển thị.
+
 ## V1.6.24
 - GĐ1 mới dùng Random CLB trong phòng; GĐ2/KO phải lấy CLB HLV từ tournament_members và khóa tại thời điểm bắt đầu trận.
 - Vé chỉ sử dụng ngoài phòng, không đổi ảnh chụp CLB của trận đang diễn ra; không ảnh hưởng 32 trận và BXH test.

@@ -757,6 +757,7 @@ def register_core(context):
                 "display_name":m.get("display_name") or "HLV",
                 "played":0,"wins":0,"draws":0,"losses":0,
                 "gf":0,"ga":0,"gd":0,"points":0,
+                "stage1_points":0,"league_points":0,
                 "pot_no":m.get("pot_no"),
                 "club":m.get("fixed_club_name") or "",
                 "recent_form":[],
@@ -772,6 +773,7 @@ def register_core(context):
                     continue
                 for k in ("played","wins","draws","losses","gf","ga","points"):
                     row[k]+=int(r.get(k) or 0)
+                row["stage1_points" if code=="stage1" else "league_points"]+=int(r.get("points") or 0)
 
         # V1.5.20: lịch sử 5 trận C1 đã được xác nhận gần nhất của mỗi HLV.
         # Dùng completed_at để đảm bảo đúng thứ tự thời gian thực tế.

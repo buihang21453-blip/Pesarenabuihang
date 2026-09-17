@@ -7,7 +7,7 @@
 <section class="c1-enter">
   <small>CHAMPION LEAGUE ARENA</small>
   <h1>🏆 Phòng đấu C1</h1>
-  <p>Bấm <strong>Vào phòng đấu C1</strong> để vào một phòng thi đấu giống phòng Rank. Sau khi vào phòng, bạn chọn và mời HLV trong danh sách C1.</p>
+  <p>Vẫn sử dụng <strong>Phòng đấu C1</strong> hiện tại. Khi trận thuộc GĐ2, phòng tự chuyển giao diện CLB cố định theo HLV: vào phòng → bắt đầu trận → nhập tỷ số → đối thủ xác nhận. Điểm GĐ2 cộng dồn với GĐ1 trên cùng BXH C1.</p>
   {% if is_c1_admin and not member %}<p>👑 Admin đang vào bằng chính tài khoản Admin. Đây không phải chế độ “Xem như HLV” khác.</p>{% endif %}
   <div class="c1-actions">
     <form method="post" action="{{ url_for('c1_room_open') }}"><input type="hidden" name="tournament_id" value="{{ tournament.id }}"><button class="btn green" type="submit">🎮 Vào phòng đấu C1</button></form>

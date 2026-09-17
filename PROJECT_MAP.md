@@ -1,3 +1,10 @@
+## V1.6.25
+- modules/tournament_routes.py: BXH public points, stage1_points, league_points tính từ tournament_matches completed của hai giai đoạn.
+- modules/tournament_competition_parts/core.py: _combined_ranking cộng và trả về chi tiết điểm từng giai đoạn.
+- templates/tournament/tabs/ranking.html, templates/tournament_detail.html: hiển thị hai cột điểm theo giai đoạn + tổng C1.
+- templates/room_detail.html, templates/_room_live_content.html, templates/c1_rooms.html: hướng dẫn giao diện C1 GĐ2 trên đúng phòng đấu C1.
+- app.py, templates/admin.html: đồng bộ version. DB không thay đổi, không tạo route mới.
+
 ## V1.6.24
 - modules/tournament_competition_parts/rooms.py: endpoint start-fixed-match, khóa CLB lúc bắt đầu.
 - modules/room_access_routes.py: làm mới CLB trước trận cho full view và polling.
