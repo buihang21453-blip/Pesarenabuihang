@@ -6,7 +6,7 @@
   <title>PES Arena · Lễ bốc thăm GĐ2</title>
   <link rel="stylesheet" href="{{ static_asset('css/tournament_draw_preview.css') }}">
 </head>
-<body class="draw-preview-page" data-draw-at="{{ preview.club_draw_at }}" data-reward-deadline="{{ preview.reward_deadline_at }}" data-league-start="{{ preview.league_start_at }}" data-control-mode="live" data-last-club="{{ preview.last_club_name }}" data-default-phase="{{ 'opponent' if preview.league_match_count==32 else 'club' }}">
+<body class="draw-preview-page" data-draw-at="{{ preview.club_draw_at }}" data-reward-deadline="{{ preview.reward_deadline_at }}" data-league-start="{{ preview.league_start_at }}" data-control-mode="live" data-last-club="{{ preview.last_club_name }}" data-default-phase="{{ 'opponent' if preview.assigned_count==16 and preview.revealed_count>0 else 'club' }}">
   <header class="draw-preview-header">
     <div class="draw-brand"><span class="draw-crown">♛</span><strong>PES ARENA</strong><small>ADMIN CONTROL · GĐ2</small></div>
     <div class="draw-title"><span>🏆</span><div><h1>LỄ BỐC THĂM GIAI ĐOẠN 2</h1><p>{{ preview.tournament.name or 'PES Arena Champion League' }}</p></div></div>
@@ -123,7 +123,7 @@
           <div class="opponent-slots" data-opponent-slots>{% for i in range(4) %}{% set o=preview.current_opponents[i] if i < preview.current_opponents|length else none %}<div class="opponent-slot {{ 'revealed' if o else '' }}"><small>Trận {{ i+1 }}</small><span class="draw-opponent-avatar">{% if o and o.avatar_url %}<img src="{{ o.avatar_url }}" alt="Ảnh đại diện {{ o.display_name }}" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><i hidden>{{ o.display_name[:1]|upper }}</i>{% else %}<i>{{ (o.display_name[:1]|upper) if o else '?' }}</i>{% endif %}</span><strong>{{ o.display_name if o else 'Chưa công bố' }}</strong><em>{{ ('Tier ' ~ o.tier) if o else '—' }}</em></div>{% endfor %}</div>
 <small class="preview-hint">Điều hành thật: mỗi lần Bốc tiếp công bố đủ 4 đối thủ của một HLV, hạng 1 đến 16.</small>
       <div class="draw-ceremony-actions" aria-label="Điều khiển công bố đối thủ">
-        <form class="draw-primary-action" data-live-action="opponent" method="post" action="{{ url_for('admin_tournament_league_draw_next',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><button class="ceremony-button" type="submit" {{ 'disabled' if preview.league_match_count!=32 or preview.revealed_count>=16 else '' }}>🎲 Bốc tiếp</button></form>
+        <form class="draw-primary-action" data-live-action="opponent" method="post" action="{{ url_for('admin_tournament_league_draw_next',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><button class="ceremony-button" type="submit" {{ 'disabled' if preview.league_match_count!=32 or preview.assigned_count!=16 or preview.revealed_count>=16 else '' }}>🎲 Bốc tiếp</button></form>
         <button class="ceremony-button draw-sim-primary" data-sim-next type="button" hidden>🎲 Bốc tiếp</button>
         <span class="draw-action-description">Từng HLV · thứ tự hạng 1 → 16 · mỗi lần công bố 4 đối thủ</span>
       </div>

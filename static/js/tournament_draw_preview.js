@@ -112,6 +112,11 @@
   function nextSimulation(){
     if(!sim.mode)return;
     if(!sim.events.length)sim.events=buildEvents();
+    var activePanel=document.querySelector('[data-phase-panel].active');
+    var nextEvent=sim.events[sim.step];
+    if(nextEvent && activePanel && activePanel.dataset.phasePanel!==(nextEvent.type==='club'?'club':'opponent')){
+      setSimProgress('Chọn đúng phần bốc thăm trước khi quay tiếp.');return;
+    }
     if(sim.step>=sim.events.length){setSimProgress('✅ Hoàn tất lễ giả lập');stopAuto();return;}
     var ev=sim.events[sim.step++];
     if(ev.type==='club')renderClub(ev);else renderOpponents(ev);

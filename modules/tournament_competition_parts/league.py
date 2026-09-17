@@ -515,6 +515,13 @@ def register_league(context):
             return redirect(url_for("admin_tournament_draw_preview",tournament_id=tournament_id))
         return redirect(url_for("admin") + "#c1-admin-gd2")
 
+    def _club_draw_fixtures_safe(tournament_id):
+        """Pre-generated 32 pending fixtures are independent of base club assignments."""
+        fixtures=_matches(tournament_id,"league")
+        return (len(fixtures) in (0,32) and
+                all(str(m.get("status") or "pending")=="pending" for m in fixtures) and
+                not _matches(tournament_id,"knockout"))
+
     def _base_draft_config(tournament_id):
         return _setting(tournament_id, "club_base_draft_v1", {}) or {}
 
@@ -533,8 +540,8 @@ def register_league(context):
             return _club_admin_reply("Chọn thứ tự 1→16 hoặc 16→1 và người Random hợp lệ.")
         stages, _ = _rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id), "ops_base_draft_stages")
         stages = {str(r.get("stage_code")): r.get("status") for r in stages}
-        if stages.get("stage1") != "completed" or stages.get("league") not in {"draft", "pending"} or _matches(tournament_id,"league") or _matches(tournament_id,"knockout"):
-            return _club_admin_reply("Chỉ cấu hình sau GĐ1, trước khi sinh lịch/trận GĐ2.")
+        if stages.get("stage1") != "completed" or stages.get("league") not in {"draft", "pending"} or not _club_draw_fixtures_safe(tournament_id):
+            return _club_admin_reply("Chỉ cấu hình sau GĐ1; lịch GĐ2 nếu đã sinh phải có đúng 32 trận chưa thi đấu.")
         members = _all_members(tournament_id)
         ranks = sorted(int(m.get("seed_no") or 0) for m in members)
         if len(members) != 16 or ranks != list(range(1,17)) or [sum(int(m.get("pot_no") or 0)==t for m in members) for t in (1,2,3)] != [5,6,5]:
@@ -596,8 +603,8 @@ def register_league(context):
             stages,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id),"ops_draw_next_stages")
             status={str(x.get("stage_code")):x.get("status") for x in stages}
             state=_club_draft_state(tournament_id,False) or {}
-            if status.get("stage1")!="completed" or status.get("league") not in {"draft","pending"} or _matches(tournament_id,"league") or _matches(tournament_id,"knockout"):
-                return _club_admin_reply("Chỉ Random khi GĐ1 hoàn tất, GĐ2 chưa có lịch và chưa bắt đầu.")
+            if status.get("stage1")!="completed" or status.get("league") not in {"draft","pending"} or not _club_draw_fixtures_safe(tournament_id):
+                return _club_admin_reply("Chỉ Random sau GĐ1; lịch GĐ2 đã sinh phải có đúng 32 trận đang chờ, chưa thi đấu.")
             if len(state.get("all_order") or [])!=16 or (_setting(tournament_id,"club_selection",{}) or {}).get("open"):
                 return _club_admin_reply("Cần khởi tạo hồ sơ Random đủ 16 HLV và khóa chọn CLB thủ công.")
             if any(int(e.get("tickets_remaining") or 0)<int(e.get("tickets_total") or 0) for e in (state.get("entries") or {}).values() if e.get("allocation_type")=="EARLY_REWARD"):
@@ -805,6 +812,9 @@ def register_league(context):
         matches=[m for m in _matches(tournament_id,"league") if m.get("status")!="cancelled"]
         if len(matches)!=32:
             flash("Phải sinh đủ 32 trận GĐ2 trước khi bốc đối thủ.","error"); return _gd2_admin_return(tournament_id)
+        if any(not m.get("fixed_club_name") for m in members):
+            flash("Hãy quay đủ 16 CLB trước khi công bố đối thủ; lịch 32 trận đã sinh vẫn được giữ nguyên.","warning")
+            return _gd2_admin_return(tournament_id)
         member_map={str(m.get("user_id")):m for m in members}
         opponent_map={uid:[] for uid in member_map}
         pairs=set()
