@@ -1,3 +1,11 @@
+## V1.6.22 — BXH C1
+
+- modules/tournament_routes.py: kết hợp hàng BXH với tournament_members theo user_id; ánh xạ fixed_club_name → Pot thông qua C1_CLUB_POT_BY_NAME.
+- templates/tournament/tabs/ranking.html: BXH công khai có Tier HLV, CLB hiện tại, Pot CLB; giữ chi tiết Admin.
+- templates/tournament/styles.html: huy hiệu Tier/Pot và khung bảng cuộn ngang trên màn nhỏ.
+- app.py, templates/admin.html: đồng bộ version.
+- DB/API: chỉ đọc tournament_members, không đổi schema, route hoặc tính điểm.
+
 ## V1.6.21 — Phòng đấu và C1
 
 - modules/legacy_room_service.py: bảo vệ phòng tournament khỏi đóng / xóa note / trừ RP theo quy tắc Rank khi host offline hoặc timeout generic.

@@ -1,3 +1,11 @@
+## V1.6.22 — BXH C1: Tier HLV và Pot CLB
+
+- BXH chính tại /tournaments hiển thị công khai Tier HLV, CLB đang sở hữu và Pot CLB ở từng dòng, kể cả tài khoản không phải Admin.
+- Dữ liệu lấy trực tiếp từ tournament_members theo user_id, Pot tra từ pool C1 24 CLB; cập nhật tự nhiên theo mỗi lượt tải trang sau khi đổi CLB bằng vé.
+- Giữ nguyên cách cộng điểm, sắp xếp BXH, 2 tài khoản test riêng biệt, lịch GĐ2 và cơ chế vé.
+- Làm rõ cột Pot cũ trong chi tiết Admin thực tế là Tier HLV; tăng colspan phù hợp.
+- Không cần SQL migration.
+
 ## V1.6.21 — Kiểm tra và sửa Phòng đấu / Phòng C1
 
 - Ngăn cơ chế offline và auto-timeout 30/60 phút của Rank đóng phòng C1, phá note hoặc trừ RP / ghi nhận bỏ cuộc sai loại trận.

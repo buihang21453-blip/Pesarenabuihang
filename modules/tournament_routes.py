@@ -1,4 +1,5 @@
 from datetime import datetime, timezone, timedelta
+from modules.tournament_competition import C1_CLUB_POT_BY_NAME
 import json
 
 """Independent Tournament module routes.
@@ -700,8 +701,14 @@ def register_routes(context):
                             "availability_days": day_defs,
                             "availability_by_day": per_player_availability.get(uid, {}),
                         }
+                # Tier belongs to the coach (legacy pot_no); Club/Pot belong to
+                # the CURRENT tournament_members assignment, never to a draw snapshot.
+                member_lookup = {str(m.get("user_id")): m for m in member_rows_full}
                 ranking = {
                     uid: {
+                        "tier_hlv": member_lookup[uid].get("pot_no"),
+                        "club_name": member_lookup[uid].get("fixed_club_name") or "",
+                        "club_pot": C1_CLUB_POT_BY_NAME.get(member_lookup[uid].get("fixed_club_name") or ""),
                         "user_id": uid,
                         "display_name": names.get(uid, "HLV"),
                         "played": 0,

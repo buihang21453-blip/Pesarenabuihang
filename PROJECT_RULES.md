@@ -1,3 +1,11 @@
+## V1.6.22 — Quy tắc hiển thị BXH C1
+
+- Tier HLV gắn với user_id từ tournament_members.pot_no; không nhầm với Pot CLB.
+- Pot CLB xác định từ tên CLB đang được gán trong tournament_members.fixed_club_name, không từ lịch sử lễ bốc thăm.
+- Đổi CLB bằng vé không thay đổi Tier, kết quả, điểm số, thứ hạng hoặc đối thủ.
+- Hiển thị trạng thái chưa phân bổ trung thực, không tự gán CLB hay Pot.
+- Tài khoản test không được chèn vào BXH C1 chính thức.
+
 ## V1.6.21 — Quy tắc phòng đấu
 
 - Luồng phạt RP và timeout Rank không được áp dụng cho phòng C1 (TOURNAMENT_ROOM hoặc match_mode=tournament).
