@@ -1,3 +1,12 @@
+## V1.6.21 — Phòng đấu và C1
+
+- modules/legacy_room_service.py: bảo vệ phòng tournament khỏi đóng / xóa note / trừ RP theo quy tắc Rank khi host offline hoặc timeout generic.
+- modules/room_access_routes.py: phân loại Giao hữu khi vào link/rời phòng, chặn kick Rank phá metadata C1.
+- modules/room_team_routes.py: guest-ready Giao hữu không kiểm tra giới hạn Rank; ready C1 cập nhật có điều kiện status và guest_user_id.
+- modules/tournament_competition_parts/rooms.py: nhận lời mời C1 với điều kiện guest còn trống, chống ghi đè và nhận lặp.
+- templates/room_detail.html: ẩn kick theo Rank tại phòng C1.
+- app.py, templates/admin.html: version.
+
 ## V1.6.20
 # V1.6.20 — Vé CLB: SQL migration đổi thứ tự ghi
 

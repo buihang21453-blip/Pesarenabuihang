@@ -149,6 +149,10 @@ def close_room_if_host_browser_offline(room):
     """
     if not room or room.get("status") not in HOST_BROWSER_OFFLINE_ROOM_STATUSES:
         return False
+    # V1.6.21: C1 uses tournament results/forfeit rules, never Rank's automatic
+    # offline penalty. In particular, do not overwrite TOURNAMENT_ROOM metadata.
+    if str(room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament":
+        return False
 
     host_id = room.get("host_user_id")
     guest_id = room.get("guest_user_id")
@@ -270,6 +274,12 @@ def close_room_with_timeout_penalty(room, offender_role, reason):
 
 def expire_room_if_needed(room):
     if not room:
+        return room
+    # C1 results and room lifetime belong to tournament routes, not the
+    # generic 30/60-minute Rank timeout. Do not clear the TOURNAMENT_ROOM note.
+    if str(room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament":
+        room["state_expires_at"] = None
+        room["timeout_seconds"] = 0
         return room
 
     expires_at = room_expiry_dt(room)

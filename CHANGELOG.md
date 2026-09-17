@@ -1,3 +1,11 @@
+## V1.6.21 — Kiểm tra và sửa Phòng đấu / Phòng C1
+
+- Ngăn cơ chế offline và auto-timeout 30/60 phút của Rank đóng phòng C1, phá note hoặc trừ RP / ghi nhận bỏ cuộc sai loại trận.
+- Sửa nhận phòng C1: chỉ ghi khách khi phòng waiting_ready và guest_user_id còn trống; không reset ready khi nhận lặp; chặn ghi đè khách khi có race. Bấm Sẵn Sàng cũng kiểm tra status và đúng khách ở thời điểm ghi.
+- Chặn endpoint kick khách của Rank xóa metadata TOURNAMENT_ROOM; ẩn nút Rank kick ở phòng C1.
+- Không áp giới hạn Rank/ngày khi vào phòng Giao hữu qua link, bấm Sẵn sàng hoặc rời phòng; luồng Rank giữ nguyên.
+- Không chỉnh tournament_matches, BXH, lịch 32 trận hay ticket RPC. Không yêu cầu migration SQL mới.
+
 ## V1.6.20
 # V1.6.20 — Sửa xung đột UNIQUE khi dùng vé Random CLB
 

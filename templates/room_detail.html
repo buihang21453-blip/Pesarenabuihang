@@ -454,7 +454,7 @@
                 <div class="room-ready-status {{ 'is-ready' if room.guest_ready else 'is-not-ready' }}">
                     <span class="room-ready-dot"></span>{{ room.guest_ready_label }}
                 </div>
-                {% if room.status == "waiting_ready" and room_room_viewer_is_host %}
+                {% if room.status == "waiting_ready" and room_room_viewer_is_host and not is_tournament_room %}
                 <form class="room-guest-card-kick room-exit-confirm-form" method="post" action="{{ url_for('room_kick_guest', room_id=room.id) }}"
                       data-modal-tone="danger"
                       data-modal-icon="🚫"

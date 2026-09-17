@@ -1,3 +1,10 @@
+## V1.6.21 — Quy tắc phòng đấu
+
+- Luồng phạt RP và timeout Rank không được áp dụng cho phòng C1 (TOURNAMENT_ROOM hoặc match_mode=tournament).
+- Mọi route ghi guest phải khóa theo status/guest_user_id và xác minh kết quả trước khi flash thành công.
+- Route Rank/Giao hữu không được thay thế note metadata của C1 bằng chuỗi tự do.
+- Giới hạn lượt Rank không chặn tham gia hoặc Sẵn sàng Giao hữu.
+
 ## V1.6.20 — Kiểm tra ràng buộc DB trong luồng đổi CLB
 
 - Bắt buộc kiểm tra UNIQUE(tournament_id,selected_by) khi viết transaction đổi CLB: nhả quyền sở hữu CLB cũ trước khi gán CLB mới trong cùng transaction, để DB rollback nguyên trạng nếu bất kỳ bước nào lỗi.

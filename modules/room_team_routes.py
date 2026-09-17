@@ -552,7 +552,7 @@ def register_routes(context):
             flash("Không thể đổi trạng thái sẵn sàng lúc này.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
         is_tournament_room = str(room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament"
-        if not is_tournament_room:
+        if not is_tournament_room and str(room.get("match_mode") or "").lower()!=MATCH_MODE_FRIENDLY:
             limit_message = daily_rank_block_message(room.get("host_user_id"), room.get("guest_user_id"))
             if limit_message:
                 # Đảm bảo phòng không mắc kẹt ở trạng thái đã cam kết thi đấu.
@@ -576,7 +576,8 @@ def register_routes(context):
         # dòng nào; Guest thấy thông báo đã sẵn sàng trong khi Host vẫn đọc False.
         if is_tournament_room:
             execute_query(
-                db.table("match_rooms").update(patch).eq("id", room_id),
+                db.table("match_rooms").update(patch).eq("id", room_id)
+                .eq("status", "waiting_ready").eq("guest_user_id", user.get("id")),
                 "room_guest_ready_tournament",
                 attempts=2,
             )
@@ -586,7 +587,9 @@ def register_routes(context):
                 attempts=2,
             )
             verified = dict((verified_result.data or [{}])[0]) if verified_result is not None else {}
-            if str(verified.get("status") or "") != "waiting_ready" or not bool(verified.get("guest_ready")):
+            if (str(verified.get("status") or "") != "waiting_ready"
+                    or str(verified.get("guest_user_id") or "") != str(user.get("id") or "")
+                    or not bool(verified.get("guest_ready"))):
                 app.logger.warning(
                     "C1 ready verify failed room=%s status=%s guest_ready=%s",
                     room_id, verified.get("status"), verified.get("guest_ready"),

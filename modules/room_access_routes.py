@@ -91,10 +91,12 @@ def register_routes(context):
             flash(f"Bạn đang trong thời gian chờ {cooldown_text(user)}.", "warning")
             return redirect(url_for("dashboard"))
 
-        limit_message = daily_rank_block_message(room.get("host_user_id"), user_id)
-        if limit_message:
-            flash(limit_message, "warning")
-            return redirect(url_for("dashboard"))
+        # Giao hữu is not a Rank match; daily Rank caps must not block its link.
+        if str(room.get("match_mode") or "").lower() not in {"friendly", "tournament"}:
+            limit_message = daily_rank_block_message(room.get("host_user_id"), user_id)
+            if limit_message:
+                flash(limit_message, "warning")
+                return redirect(url_for("dashboard"))
 
         existing_room = active_room_for_user(user_id)
         if existing_room:
@@ -542,6 +544,11 @@ def register_routes(context):
             flash("Chỉ chủ phòng mới có thể đưa đối thủ ra khỏi phòng.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
+        # Generic kick overwrites note with plain text and erases C1 match metadata.
+        # Do not use it on tournament rooms; use the C1 room leave/invite lifecycle.
+        if str(room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament":
+            flash("Phòng C1 không hỗ trợ nút đuổi khách của Rank. Hãy dùng thao tác phòng C1 để bảo toàn trận giải.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
         if room.get("status") != "waiting_ready":
             flash("Chỉ có thể đưa đối thủ ra khi trận chưa bắt đầu.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
@@ -705,6 +712,7 @@ def register_routes(context):
         # giao diện cũ vẫn còn guest_ready=true, để tránh bị trừ RP oan.
         daily_limit_blocked = bool(
             room.get("status") == "waiting_ready"
+            and str(room.get("match_mode") or "").lower() not in {"friendly", "tournament"}
             and daily_rank_block_message(room.get("host_user_id"), room.get("guest_user_id"))
         )
         if daily_limit_blocked:

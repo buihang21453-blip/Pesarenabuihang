@@ -340,8 +340,13 @@ def register_rooms(context):
             flash("Phòng này không mời tài khoản của bạn.","error"); return redirect(url_for("c1_rooms",tournament_id=tournament_id))
         if not is_admin_user(user) and not _member(tournament_id,uid) and not (meta.get("test_sandbox_room") and _is_c1_test_user(tournament_id,uid)):
             flash("Chỉ HLV chính thức hoặc tài khoản thử nghiệm được cấp quyền mới vào phòng.","error"); return redirect(url_for("tournaments"))
-        if room.get("guest_user_id") and str(room.get("guest_user_id"))!=uid:
+        if room.get("guest_user_id"):
+            if str(room.get("guest_user_id"))==uid:
+                return redirect(url_for("room_detail",room_id=room_id))
             flash("Phòng đã đủ 2 HLV.","warning"); return redirect(url_for("c1_rooms",tournament_id=tournament_id))
+        if str(room.get("status") or "")!="waiting_ready":
+            flash("Phòng đã bắt đầu hoặc không còn nhận khách.","warning")
+            return redirect(url_for("c1_rooms",tournament_id=tournament_id))
         active=active_room_for_user(uid)
         if active and str(active.get("id"))!=str(room_id):
             # Người được mời có thể đã tự mở một phòng trống trước đó. Khi họ
@@ -384,10 +389,18 @@ def register_rooms(context):
             guest_patch["guest_team"]=fixed_guest
             guest_patch["host_team"]=(_member(tournament_id,room.get("host_user_id")) or {}).get("fixed_club_name")
         accept_result=execute_query(
-            db.table("match_rooms").update(guest_patch).eq("id",room_id),
+            db.table("match_rooms").update(guest_patch).eq("id",room_id)
+            .eq("status","waiting_ready").is_("guest_user_id","null"),
             "ops_c1_room_accept",attempts=2,
         )
-        # Legacy update body removed below.
+        if not (accept_result.data or []):
+            # Another request changed this room. Never overwrite an existing guest.
+            cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
+            latest=get_room(room_id)
+            if latest and str(latest.get("guest_user_id") or "")==uid:
+                return redirect(url_for("room_detail",room_id=room_id))
+            flash("Phòng vừa thay đổi hoặc đã có khách khác. Hãy tải lại danh sách phòng C1.","warning")
+            return redirect(url_for("c1_rooms",tournament_id=tournament_id))
         # V1.5.13: không báo nhận phòng thành công nếu guest_user_id chưa thật sự
         # được ghi xuống DB. Điều này tránh tình trạng khách vào được URL nhưng
         # phía chủ vẫn thấy "Đang chờ đối thủ".
