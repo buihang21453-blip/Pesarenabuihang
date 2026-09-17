@@ -50,17 +50,36 @@
 .draw-logo-sync-status{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;padding:10px 12px;border:1px solid rgba(244,195,75,.3);border-radius:10px;background:rgba(10,28,43,.65);font-size:12px}
 .draw-logo-sync-status strong{color:#f5c451}.draw-logo-sync-status small{width:100%;color:#bacbd9}
 
-/* V1.6.10: Supabase ceremony art; centre-stage actions, one button per phase. */
-body.draw-preview-page{background-image:linear-gradient(180deg,rgba(1,8,16,.48),rgba(1,9,19,.80)),url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_draw_ceremony_stadium.webp");background-size:cover;background-position:center top;background-attachment:fixed}
-.draw-preview-page:before{background-image:linear-gradient(180deg,transparent 65%,rgba(1,9,19,.55)),url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_crowd_silhouette.webp");background-size:cover,100% auto;background-position:center,bottom center;background-repeat:no-repeat;opacity:.30;z-index:0}
+/* V1.6.10 — ceremony assets hosted in the owner-provided public Supabase bucket.
+   CSS layers preserve the existing dark gradient when a remote image is unavailable. */
+:root{
+  --gd2-crowd-silhouette:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_crowd_silhouette.webp");
+  --gd2-ui-icons-spritesheet:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_ui_icons_spritesheet.webp");
+  --gd2-coach-avatar-placeholder:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_coach_avatar_placeholder.webp");
+  --gd2-club-reveal-frame:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_club_reveal_frame.webp");
+  --gd2-club-reveal-stage:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_club_reveal_stage.webp");
+  --gd2-random-club-card:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_random_club_card.webp");
+  --gd2-stadium-lights-frame:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_stadium_lights_frame.webp");
+  --gd2-draw-ceremony-stadium:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_draw_ceremony_stadium.webp");
+}
+/* Stadium backdrop and audience are decorative only; the live controls stay clickable. */
+.draw-preview-page{background-image:linear-gradient(180deg,rgba(2,12,24,.78),rgba(2,10,19,.91)),var(--gd2-draw-ceremony-stadium);background-size:cover;background-position:center top;background-attachment:fixed}
+.draw-preview-page::before{background-image:linear-gradient(180deg,rgba(2,10,19,.34),rgba(2,10,19,.58)),var(--gd2-stadium-lights-frame);background-size:cover;background-position:center top;opacity:.32;z-index:0}
+.draw-preview-page::after{content:"";position:fixed;pointer-events:none;bottom:0;left:0;right:0;height:min(22vh,200px);background:var(--gd2-crowd-silhouette) center bottom / 100% auto no-repeat;opacity:.22;z-index:0}
 .draw-preview-header,.draw-stepbar,.draw-preview-shell,.draw-preview-footer{position:relative;z-index:1}
-.draw-center-stage{position:relative;isolation:isolate;overflow:hidden;justify-content:center;padding:24px 16px 32px;min-height:610px}
+.draw-preview-header{position:sticky;z-index:10;top:0}
+.draw-title>span{display:inline-block;flex:none;width:48px;height:48px;font-size:0;background:var(--gd2-ui-icons-spritesheet) left top / 500% 400% no-repeat}
+.draw-center-stage{position:relative;isolation:isolate;overflow:hidden;background-image:linear-gradient(180deg,rgba(4,21,38,.54),rgba(2,11,22,.86)),var(--gd2-club-reveal-stage);background-size:cover,contain;background-position:center,center bottom;background-repeat:no-repeat;border-color:rgba(243,199,93,.75)}
 .draw-center-stage>*{position:relative;z-index:1}
-.draw-center-stage:before{content:"";position:absolute;inset:0;background:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_stadium_lights_frame.webp") center/cover no-repeat;pointer-events:none;opacity:.24;z-index:0}
-.draw-center-stage:after{content:"";position:absolute;inset:auto 0 0;height:48%;background:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_club_reveal_stage.webp") center bottom/contain no-repeat;pointer-events:none;opacity:.27;z-index:0}
-.draw-club-reveal{position:relative;isolation:isolate;min-height:185px;align-content:center;background:linear-gradient(180deg,rgba(1,12,24,.89),rgba(1,12,24,.90));border-color:rgba(243,199,93,.55)}
-.draw-club-reveal:before{content:"";position:absolute;inset:-5px;background:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_club_reveal_frame.webp") center/100% 100% no-repeat;opacity:.46;pointer-events:none;z-index:-1}
-.draw-club-reveal:not(:has(.draw-club-logo:not([hidden])))>span{background-image:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_random_club_card.webp");background-size:contain;background-position:center;background-repeat:no-repeat;width:80px;height:84px;border-radius:0;background-color:transparent;text-shadow:0 2px 6px #000}
-.draw-avatar,.draw-mini-avatar,.draw-opponent-avatar{background-image:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_coach_avatar_placeholder.webp");background-position:center;background-size:cover}
-.draw-ceremony-actions{width:100%;margin:20px auto 0;flex-direction:column;gap:8px;padding:12px 10px;border:0;background:transparent;box-shadow:none}.draw-ceremony-actions .draw-primary-action,.draw-ceremony-actions .draw-sim-primary{width:min(365px,100%)}.draw-ceremony-actions .ceremony-button{width:100%;min-height:56px}.draw-action-description{text-align:center}.draw-center-stage .preview-hint{max-width:90%}.draw-ceremony-actions button:not(:disabled):hover{filter:brightness(1.1)}.draw-ceremony-actions button:disabled{opacity:.48;cursor:not-allowed}.draw-center-stage .draw-ceremony-actions{z-index:3}
-@media(max-width:650px){.draw-center-stage{min-height:570px}.draw-ceremony-actions{margin-top:12px}.draw-center-stage:after{opacity:.15}}
+.draw-center-stage::before{content:"";position:absolute;inset:0;background:var(--gd2-stadium-lights-frame) center/100% 100% no-repeat;opacity:.22;pointer-events:none;z-index:0}
+.draw-avatar{position:relative;background-image:var(--gd2-coach-avatar-placeholder),linear-gradient(160deg,#dcecf8,#536f82);background-position:center;background-size:cover;border-color:rgba(245,203,103,.65)}
+.draw-avatar:has(img:not([hidden])){background-image:linear-gradient(160deg,#dcecf8,#536f82)}
+.draw-club-reveal{min-height:265px;width:min(420px,95%);padding:54px 52px 42px;align-content:center;background-image:linear-gradient(180deg,rgba(2,15,28,.38),rgba(2,15,28,.64)),var(--gd2-club-reveal-frame);background-size:100% 100%;background-position:center;background-repeat:no-repeat;border:0;box-shadow:none}
+.draw-club-reveal>span{background-image:var(--gd2-random-club-card);background-size:contain;background-position:center;background-repeat:no-repeat;background-color:transparent;width:86px;height:104px;border-radius:0;color:#ffde78;text-shadow:0 2px 5px #000}
+.draw-club-reveal .draw-club-logo{filter:drop-shadow(0 3px 6px #000)}
+.draw-club-reveal strong{color:#fff1bb;text-shadow:0 2px 8px #000}
+.draw-club-reveal small{color:#e3d6b2;text-shadow:0 1px 4px #000}
+.opponent-stage{background-image:linear-gradient(180deg,rgba(4,21,38,.56),rgba(2,11,22,.90)),var(--gd2-club-reveal-stage);background-size:cover,contain;background-position:center,center bottom;background-repeat:no-repeat}
+.opponent-slot{background-image:linear-gradient(180deg,rgba(5,22,38,.83),rgba(3,15,28,.91)),var(--gd2-random-club-card);background-size:cover,100% 100%;background-position:center;background-repeat:no-repeat}
+.draw-ceremony-actions{position:relative;z-index:2;justify-content:center}
+@media(max-width:650px){.draw-club-reveal{min-height:230px;padding:42px 28px 32px}.draw-preview-page::after{opacity:.12}.draw-center-stage{background-size:cover,auto 85%}}
