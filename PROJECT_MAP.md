@@ -99,6 +99,19 @@ Render UI
 
 ## 5. Backend — Giải đấu C1
 
+### V1.6.1 — Điều hành Lễ bốc thăm GĐ2
+- `modules/tournament_competition_parts/core.py`: `_reward_ticket_phase_status`, `_close_reward_ticket_phase`, `_league_launch_readiness`, `_open_league_stage`, `_sync_competition_deadlines`; quản lý hạn vé và điều kiện mở GĐ2.
+- `modules/tournament_competition_parts/admin.py`: POST `/admin/tournaments/<id>/gd2/draw-time`; lưu 3 mốc `club_draw_at`, `gd2_reward_ticket_deadline_at`, `league_start_at`.
+- `modules/tournament_competition_parts/league.py`: Random CLB/vé thưởng, POST `/tournaments/<id>/club-draft/finalize`, gate sinh lịch, lễ công bố đối thủ Tier 1→2→3, Admin mở GĐ2.
+- `modules/tournament_competition_parts/league_draw.py`: thuật toán 32 trận V1.6 giữ nguyên; 4 trận/HLV, đủ 3 Tier, không trùng.
+- `modules/tournament_routes.py`: đưa mốc lễ/hạn vé/mở GĐ2 vào public tournament hub/card.
+- `templates/admin.html`: khối kịch bản 5 bước + điều khiển 3 mốc + điều hành CLB/đối thủ.
+- `templates/tournament/cards/c1_actions.html`: HLV dùng vé và `Chốt CLB cuối cùng`.
+- `templates/tournament/cards/c1_media.html` + `templates/tournament/scripts/page_scripts.html`: countdown chuyển pha Lễ bốc thăm → Vé thưởng → Mở GĐ2.
+- Dữ liệu: không schema mới; dùng `tournament_settings.setting_key=competition_timing`, `club_draft_v2`, `league_draw_v2`, `deadline_sync`.
+
+**Luồng chuẩn V1.6.1:** 16 CLB gốc → pha vé thưởng đóng (3 HLV chốt hoặc hết hạn) → sinh 32 trận → công bố Tier 1→2→3 → mở GĐ2 theo lịch / tự mở sớm khi đủ điều kiện / Admin mở ngay.
+
 Đây là miền nghiệp vụ lớn nhất hiện tại.
 
 | Module | Vai trò |

@@ -23,13 +23,20 @@
           {% set early=hub.early_reward_entry %}
           <div style="margin:10px 0;padding:12px;border:1px solid rgba(241,202,104,.38);border-radius:10px;background:rgba(241,202,104,.06)">
             <strong>🎟 Vé thưởng sớm GĐ1 · còn {{ early.get('tickets_remaining',0) }}/{{ early.get('tickets_total',0) }} vé</strong>
-            <p class="small" style="margin:6px 0">Không giới hạn thời gian · vé chưa dùng được bảo lưu. CLB đã bỏ sẽ không xuất hiện lại cho bạn.</p>
+            <p class="small" style="margin:6px 0">Dùng đến <strong>12:00 · 18/09/2026</strong> (hoặc mốc Admin đã chỉnh). CLB đã bỏ không quay lại cho chính bạn; CLB cũ được trả về kho.</p>
             {% if not (hub.get('club_draft',{}).get('system_assigned') and hub.get('club_draft',{}).get('tier_club_pot_rule') == '1:3;2:2;3:1' and hub.get('club_draft',{}).get('completed')) %}
               <p class="small">⏳ Chờ Admin phân CLB gốc đủ 16 HLV theo Tier/Pot. Vé vẫn được bảo lưu.</p>
             {% elif early.get('status')=='selected' %}
               <div class="small">CLB hiện tại: <strong>{{ tournament.my_member.fixed_club_name or early.get('selected_club','—') }}</strong></div>
-              {% if early.get('tickets_remaining',0)|int > 0 %}
-              <form method="post" action="{{ url_for('tournament_club_draft_reward_reroll',tournament_id=tournament.id) }}" style="margin-top:8px"><button class="btn gold" type="submit">🎲 Dùng 1 vé Random lại CLB</button></form>
+              {% if early.get('reward_finalized') %}
+                <div class="small" style="margin-top:7px;color:#2ecc71">✅ Đã chốt CLB cuối cùng · không dùng thêm vé.</div>
+              {% elif hub.get('gd2_reward_deadline_active') %}
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+                  {% if early.get('tickets_remaining',0)|int > 0 %}<form method="post" action="{{ url_for('tournament_club_draft_reward_reroll',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">🎲 Dùng 1 vé Random lại CLB</button></form>{% endif %}
+                  <form method="post" action="{{ url_for('tournament_club_draft_finalize',tournament_id=tournament.id) }}" onsubmit="return confirm('Chốt CLB cuối cùng? Vé chưa dùng sẽ hết hiệu lực và bạn không thể Random lại nữa.');"><button class="btn green" type="submit">✅ Chốt CLB cuối cùng</button></form>
+                </div>
+              {% else %}
+                <div class="small" style="margin-top:7px;color:#f1ca68">⏰ Đã hết hạn dùng vé; hệ thống sẽ giữ CLB hiện tại.</div>
               {% endif %}
             {% else %}
               {% if early.get('candidate') %}

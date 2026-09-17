@@ -1,8 +1,8 @@
         <div class="tournament-card-media">
           <span class="tournament-card-status {{ 'registration' if tournament.status in ['registration','upcoming'] else '' }}">● {{ 'Đăng ký' if tournament.status in ['registration','upcoming'] else 'Đang diễn ra' }}</span>
           {% if tournament.club_draw_at %}
-          <div class="tournament-progress-overlay tournament-draw-overlay">
-            <div class="tournament-progress-head"><strong>⏳ LỄ BỐC THĂM CLB GĐ2</strong><span class="tournament-progress-slogan">Chiến hết mình – Cháy cùng đam mê!</span></div>
+          <div class="tournament-progress-overlay tournament-draw-overlay" data-gd2-ceremony-card data-draw-at="{{ tournament.club_draw_at }}" data-reward-deadline="{{ tournament.gd2_reward_ticket_deadline_at }}" data-league-start="{{ tournament.league_start_at }}">
+            <div class="tournament-progress-head"><strong data-gd2-phase-title>⏳ LỄ BỐC THĂM CLB GĐ2</strong><span class="tournament-progress-slogan">Chiến hết mình – Cháy cùng đam mê!</span></div>
             <span class="tournament-progress-label"><span data-draw-date="{{ tournament.club_draw_at }}">20:00 · 17/09/2026</span> (giờ Việt Nam)</span>
             <div class="tournament-progress-mini" data-center-countdown="{{ tournament.club_draw_at }}" data-draw-event="1"><b data-d>0<small>Ngày</small></b><b data-h>0<small>Giờ</small></b><b data-m>0<small>Phút</small></b><b data-s>0<small>Giây</small></b></div>
             <span class="tournament-draw-status" data-draw-status>Đếm ngược đến lễ bốc thăm</span>

@@ -1,3 +1,12 @@
+## V1.6.1 – Kịch bản Lễ bốc thăm GĐ2, hạn vé và mở GĐ2 theo điều kiện
+- Chốt quy trình vận hành: 20:00 17/09/2026 mở lễ → Random CLB gốc đủ 16 theo Tier/Pot → 3 HLV dùng vé đến 12:00 18/09/2026 → bốc đối thủ theo Tier 1→2→3 → mở GĐ2.
+- Admin chỉnh được 3 mốc `club_draw_at`, `gd2_reward_ticket_deadline_at`, `league_start_at` trong `competition_timing`; mặc định lần lượt 20:00 17/09, 12:00 18/09, 12:00 18/09 (UTC+7).
+- Vé thưởng sớm: chỉ dùng sau đủ 16 CLB gốc; HLV có thể dùng tùy ý hoặc bấm `Chốt CLB cuối cùng`. Chốt sớm làm vé chưa dùng hết hiệu lực; dùng hết vé tự chốt. Đến deadline hệ thống chốt/khóa vé còn lại.
+- Sinh lịch/công bố đối thủ chỉ khi pha vé đã đóng; thứ tự công bố HLV là Tier 1 → Tier 2 → Tier 3. Luật V1.6.0 4 trận/HLV, đủ 3 Tier và không trùng đối thủ giữ nguyên.
+- GĐ2 tự thử mở ở mốc 12:00 khi đủ 32 trận hợp lệ và công bố xong; có thể mở sớm khi cả 3 HLV vé thưởng đã chốt và lễ công bố hoàn tất. Admin `Bắt đầu GĐ2 ngay` đóng vé còn lại nhưng không bỏ qua kiểm tra lịch/công bố.
+- UI Admin có timeline 5 bước; UI HLV có hạn vé + nút chốt; card Giải đấu đổi countdown theo pha. Không schema/SQL mới.
+- Kiểm tra local: Python compile + Jinja parse OK; thuật toán lịch validate 500 lượt. Chưa kiểm thử Supabase Production/2 tài khoản test/Admin thật.
+
 ## V1.6.0 – GĐ2: bắt buộc gặp đủ 3 Tier trong 4 trận
 - Thay thuật toán chấm điểm/xác suất bằng lịch mẫu hợp lệ 4 lượt × 8 trận, hoán vị ngẫu nhiên HLV trong mỗi Tier 5–6–5; mỗi HLV có đúng 4 đối thủ khác nhau, gặp đủ Tier 1/2/3 trên CẢ BỐN trận (không ép đủ trong 3 trận đầu).
 - Bộ kiểm tra độc lập xác nhận 32 trận, bốn lượt hoàn chỉnh, mỗi HLV 4 trận, không trùng cặp và phủ đủ 3 Tier; từ chối trước khi ghi dữ liệu nếu sai. Nút mở GĐ2 kiểm tra lại độ phủ của lịch đã lưu.

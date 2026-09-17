@@ -56,21 +56,25 @@
 </script>
 <script>
 (function(){
-  var boxes=Array.from(document.querySelectorAll('[data-center-countdown]'));
-  if(!boxes.length) return;
-  function tick(box){var t=Date.parse(box.dataset.centerCountdown||'');if(!isFinite(t))return;var sec=Math.max(0,Math.floor((t-Date.now())/1000));var vals={d:Math.floor(sec/86400),h:Math.floor((sec%86400)/3600),m:Math.floor((sec%3600)/60),s:sec%60};Object.keys(vals).forEach(function(k){var el=box.querySelector('[data-'+k+']');if(el)el.firstChild.nodeValue=vals[k];});}
-  boxes.forEach(function(box){
-    var dateEl=box.parentNode.querySelector('[data-draw-date]');
-    if(dateEl){var dt=new Date(dateEl.dataset.drawDate);if(!isNaN(dt.getTime())){
-      dateEl.textContent=new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric',hour12:false}).format(dt);
-    }}
-  });
-  function refresh(){boxes.forEach(function(box){tick(box);if(box.dataset.drawEvent==='1'){
-    var status=box.parentNode.querySelector('[data-draw-status]');
-    var target=Date.parse(box.dataset.centerCountdown||'');
-    if(status&&isFinite(target))status.textContent=Date.now()>=target?'🔴 ĐÃ ĐẾN GIỜ LỄ BỐC THĂM CLB GĐ2':'Đếm ngược đến lễ bốc thăm';
-  }});}
-  refresh();window.setInterval(refresh,1000);
+  var cards=Array.from(document.querySelectorAll('[data-gd2-ceremony-card]'));
+  if(!cards.length) return;
+  function fmt(ts){var dt=new Date(ts);if(isNaN(dt.getTime()))return '';return new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric',hour12:false}).format(dt);}
+  function render(card){
+    var now=Date.now(), draw=Date.parse(card.dataset.drawAt||''), reward=Date.parse(card.dataset.rewardDeadline||''), league=Date.parse(card.dataset.leagueStart||'');
+    var box=card.querySelector('[data-center-countdown]'), title=card.querySelector('[data-gd2-phase-title]'), label=card.querySelector('[data-draw-date]'), status=card.querySelector('[data-draw-status]');
+    var target=draw, phase='draw';
+    if(isFinite(draw)&&now>=draw){target=reward;phase='reward';}
+    if(isFinite(reward)&&now>=reward){target=league;phase='league';}
+    if(phase==='draw'){if(title)title.textContent='⏳ LỄ BỐC THĂM CLB GĐ2';if(status)status.textContent='Đếm ngược đến lễ bốc thăm';}
+    else if(phase==='reward'){if(title)title.textContent='🎟 THỜI GIAN SỬ DỤNG VÉ THƯỞNG';if(status)status.textContent='3 HLV có vé có thể Random lại và chốt CLB';}
+    else {if(title)title.textContent='⚡ GĐ2 SẴN SÀNG MỞ';if(status)status.textContent='Đã đến mốc mở GĐ2 · chờ đủ điều kiện bốc thăm đối thủ';}
+    if(label&&isFinite(target))label.textContent=fmt(new Date(target).toISOString());
+    if(!box||!isFinite(target))return;
+    box.dataset.centerCountdown=new Date(target).toISOString();
+    var sec=Math.max(0,Math.floor((target-now)/1000)),vals={d:Math.floor(sec/86400),h:Math.floor((sec%86400)/3600),m:Math.floor((sec%3600)/60),s:sec%60};
+    Object.keys(vals).forEach(function(k){var el=box.querySelector('[data-'+k+']');if(el)el.firstChild.nodeValue=vals[k];});
+  }
+  function refresh(){cards.forEach(render);} refresh(); window.setInterval(refresh,1000);
 })();
 </script>
 <script>

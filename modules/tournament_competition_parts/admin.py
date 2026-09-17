@@ -353,17 +353,33 @@ def register_admin(context):
     @login_required
     @admin_required
     def admin_tournament_gd2_draw_time(tournament_id):
-        # HTML datetime-local is interpreted in Asia/Ho_Chi_Minh (UTC+07), never in server TZ.
-        raw=(request.form.get("club_draw_local") or "").strip()
-        try:
-            parsed=datetime.strptime(raw,"%Y-%m-%dT%H:%M")
-            draw_iso=parsed.replace(tzinfo=timezone(timedelta(hours=7))).isoformat(timespec="seconds")
-        except (TypeError,ValueError):
-            flash("Thời gian lễ bốc thăm không hợp lệ. Hãy chọn ngày và giờ.","error")
+        # All datetime-local values are interpreted in Asia/Ho_Chi_Minh (UTC+07).
+        def parse_local(name, default_value):
+            raw=(request.form.get(name) or default_value).strip()
+            try:
+                parsed=datetime.strptime(raw,"%Y-%m-%dT%H:%M")
+                return parsed.replace(tzinfo=timezone(timedelta(hours=7))).isoformat(timespec="seconds")
+            except (TypeError,ValueError):
+                return None
+        draw_iso=parse_local("club_draw_local","2026-09-17T20:00")
+        reward_deadline_iso=parse_local("reward_ticket_deadline_local","2026-09-18T12:00")
+        league_start_iso=parse_local("league_start_local","2026-09-18T12:00")
+        if not draw_iso or not reward_deadline_iso or not league_start_iso:
+            flash("Mốc thời gian GĐ2 không hợp lệ. Hãy chọn đủ ngày và giờ.","error")
+            return redirect(url_for("admin")+"#c1-admin-gd2")
+        if _parse_iso(reward_deadline_iso) <= _parse_iso(draw_iso):
+            flash("Hạn dùng vé thưởng phải sau thời điểm mở lễ bốc thăm.","error")
+            return redirect(url_for("admin")+"#c1-admin-gd2")
+        if _parse_iso(league_start_iso) < _parse_iso(reward_deadline_iso):
+            flash("Mốc mở GĐ2 theo lịch không được sớm hơn hạn dùng vé thưởng.","error")
             return redirect(url_for("admin")+"#c1-admin-gd2")
         cfg=_setting(tournament_id,"competition_timing",{}) or {}
         cfg=dict(cfg) if isinstance(cfg,dict) else {}
         cfg["club_draw_at"]=draw_iso
+        cfg["gd2_reward_ticket_deadline_at"]=reward_deadline_iso
+        cfg["league_start_at"]=league_start_iso
+        if not cfg.get("league_end_at"):
+            cfg["league_end_at"]=(_parse_iso(league_start_iso)+timedelta(days=7)).isoformat()
         cfg["updated_at"]=now_iso()
         try:
             result=execute_query(db.table("tournament_settings").upsert({
@@ -371,12 +387,12 @@ def register_admin(context):
                 "setting_value":cfg,"updated_at":now_iso(),
             },on_conflict="tournament_id,setting_key"),"ops_gd2_draw_time",attempts=2)
             if result is None:
-                raise RuntimeError("Không nhận được xác nhận lưu thời gian từ database")
+                raise RuntimeError("Database did not confirm GĐ2 timing save")
         except Exception:
-            app.logger.exception("Cannot save GĐ2 draw time for tournament %s",tournament_id)
-            flash("Chưa lưu được thời gian bốc thăm. Kiểm tra log server và thử lại.","error")
+            app.logger.exception("Cannot save GĐ2 ceremony timing for tournament %s",tournament_id)
+            flash("Chưa lưu được lịch vận hành GĐ2. Kiểm tra log server và thử lại.","error")
             return redirect(url_for("admin")+"#c1-admin-gd2")
-        flash("Đã lưu lịch lễ bốc thăm CLB GĐ2 (giờ Việt Nam).","success")
+        flash("Đã lưu: mở lễ bốc thăm, hạn dùng vé thưởng và mốc mở GĐ2.","success")
         return redirect(url_for("admin")+"#c1-admin-gd2")
 
     @app.post('/admin/tournaments/<tournament_id>/stage1/settings')

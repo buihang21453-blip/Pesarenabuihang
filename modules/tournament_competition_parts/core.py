@@ -937,15 +937,145 @@ def register_core(context):
 
     def _timing_payload(tournament_id):
         cfg=_setting(tournament_id,"competition_timing",{}) or {}
+        reward_deadline=cfg.get("gd2_reward_ticket_deadline_at") or "2026-09-18T12:00:00+07:00"
+        league_start=cfg.get("league_start_at") or "2026-09-18T12:00:00+07:00"
         return {
             "config":cfg,
             "stage1_start":_countdown_info(cfg.get("stage1_start_at")),
             "stage1_end":_countdown_info(cfg.get("stage1_end_at")),
             "stage1_early_end":_countdown_info(cfg.get("stage1_early_end_at")),
             "stage1_extension_end":_countdown_info(cfg.get("stage1_extension_end_at")),
-            "league_start":_countdown_info(cfg.get("league_start_at")),
+            "club_draw":_countdown_info(cfg.get("club_draw_at") or "2026-09-17T20:00:00+07:00"),
+            "gd2_reward_ticket_deadline":_countdown_info(reward_deadline),
+            "league_start":_countdown_info(league_start),
             "league_end":_countdown_info(cfg.get("league_end_at")),
         }
+
+    def _reward_ticket_phase_status(tournament_id, state=None, now=None):
+        """Return GĐ1 early-ticket phase status for the three rewarded HLV.
+
+        V1.6.1: tickets are usable only after the 16 base clubs exist and until the
+        Admin-configured deadline. A holder may voluntarily finalize early; unused
+        tickets are then forfeited so GĐ2 can start before the deadline.
+        """
+        state=state if isinstance(state,dict) else (_club_draft_state(tournament_id,False) or {})
+        cfg=_setting(tournament_id,"competition_timing",{}) or {}
+        deadline=_parse_iso(cfg.get("gd2_reward_ticket_deadline_at") or "2026-09-18T12:00:00+07:00")
+        vn=timezone(timedelta(hours=7))
+        now=now or datetime.now(vn)
+        if deadline and deadline.tzinfo is None: deadline=deadline.replace(tzinfo=vn)
+        reward_ids=[str(uid) for uid in (state.get("order") or [])][:3]
+        entries=state.get("entries") or {}
+        holders=[]
+        for uid in reward_ids:
+            e=entries.get(uid) or {}
+            holders.append({
+                "user_id":uid,
+                "finalized":bool(e.get("reward_finalized")),
+                "tickets_remaining":int(e.get("tickets_remaining") or 0),
+                "tickets_total":int(e.get("tickets_total") or 0),
+                "selected":e.get("status")=="selected",
+            })
+        deadline_reached=bool(deadline and now>=deadline)
+        all_finalized=bool(holders) and len(holders)==3 and all(h["finalized"] for h in holders)
+        return {
+            "deadline_at": deadline.isoformat() if deadline else None,
+            "deadline_reached": deadline_reached,
+            "holders": holders,
+            "holder_count": len(holders),
+            "finalized_count": sum(1 for h in holders if h["finalized"]),
+            "all_finalized": all_finalized,
+            "closed": deadline_reached or all_finalized,
+            "open": (not deadline_reached) and (not all_finalized),
+        }
+
+    def _close_reward_ticket_phase(tournament_id, reason="deadline"):
+        """Finalize all remaining reward holders and forfeit unused early tickets."""
+        state=_club_draft_state(tournament_id,False) or {}
+        entries=state.get("entries") or {}
+        reward_ids=[str(uid) for uid in (state.get("order") or [])][:3]
+        changed=False
+        for uid in reward_ids:
+            e=entries.get(uid) or {}
+            if e.get("allocation_type")!="EARLY_REWARD" or e.get("reward_finalized"):
+                continue
+            left=int(e.get("tickets_remaining") or 0)
+            e["reward_finalized"]=True
+            e["reward_finalized_at"]=now_iso()
+            e["reward_finalized_reason"]=reason
+            e["tickets_forfeited"]=int(e.get("tickets_forfeited") or 0)+left
+            e["tickets_remaining"]=0
+            entries[uid]=e
+            state.setdefault("history",[]).append({
+                "at":now_iso(),"user_id":uid,"action":"REWARD_FINALIZE",
+                "message":("Hết hạn sử dụng vé; CLB hiện tại được chốt tự động." if reason=="deadline" else "BTC chốt giai đoạn vé thưởng; vé chưa dùng không còn hiệu lực."),
+            })
+            changed=True
+        if changed:
+            state["entries"]=entries
+            state["reward_phase_closed_at"]=now_iso()
+            state["reward_phase_close_reason"]=reason
+            execute_query(db.table("tournament_settings").upsert({
+                "tournament_id":tournament_id,"setting_key":"club_draft_v2",
+                "setting_value":state,"updated_at":now_iso(),
+            },on_conflict="tournament_id,setting_key"),"ops_reward_phase_close",attempts=2)
+        return state
+
+    def _league_launch_readiness(tournament_id):
+        """Single source of truth for opening GĐ2 in V1.6.1."""
+        stages,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id),"ops_league_launch_stages")
+        stage={str(r.get("stage_code")):r.get("status") for r in stages}
+        members=_all_members(tournament_id)
+        result={"ready":False,"reasons":[],"stage":stage}
+        if stage.get("stage1")!="completed": result["reasons"].append("GĐ1 chưa completed")
+        if stage.get("league") not in {"pending","open"}: result["reasons"].append("GĐ2 không ở trạng thái chuẩn bị")
+        if len(members)!=16: result["reasons"].append("không đủ 16 HLV active")
+        tier_counts=[sum(int(m.get("pot_no") or 0)==t for m in members) for t in (1,2,3)]
+        if tier_counts!=[5,6,5]: result["reasons"].append("Tier HLV chưa đúng 5–6–5")
+        if any(not m.get("fixed_club_name") for m in members): result["reasons"].append("chưa đủ 16 CLB")
+        if any(m.get("fixed_club_name") and C1_CLUB_POT_BY_NAME.get(m.get("fixed_club_name")) != 4-int(m.get("pot_no") or 0) for m in members):
+            result["reasons"].append("có CLB sai quy tắc Tier/Pot")
+        if not (_setting(tournament_id,"pots_locked",{}) or {}).get("locked"): result["reasons"].append("Pot chưa khóa")
+        if (_setting(tournament_id,"club_selection",{}) or {}).get("open"): result["reasons"].append("chọn CLB thủ công còn mở")
+        matches=[m for m in _matches(tournament_id,"league") if m.get("status")!="cancelled"]
+        ids={str(m.get("user_id")) for m in members}
+        counts={uid:0 for uid in ids}; pairs=set(); tiers={str(m.get("user_id")):int(m.get("pot_no") or 0) for m in members}; seen={uid:set() for uid in ids}
+        fixture_ok=True
+        for match in matches:
+            a,b=str(match.get("home_user_id") or ""),str(match.get("away_user_id") or "")
+            key=tuple(sorted((a,b)))
+            if not a or not b or a==b or a not in ids or b not in ids or key in pairs:
+                fixture_ok=False; break
+            pairs.add(key); counts[a]+=1; counts[b]+=1; seen[a].add(tiers[b]); seen[b].add(tiers[a])
+        if len(matches)!=32 or not fixture_ok or any(v!=4 for v in counts.values()): result["reasons"].append("lịch GĐ2 chưa đủ 32 trận / 4 trận mỗi HLV")
+        elif any(seen[uid]!={1,2,3} for uid in ids): result["reasons"].append("có HLV chưa gặp đủ 3 Tier")
+        draw=_setting(tournament_id,"league_draw_v2",{}) or {}
+        if not draw.get("completed"): result["reasons"].append("lễ bốc thăm đối thủ chưa công bố xong")
+        result.update({"member_count":len(members),"tier_counts":tier_counts,"match_count":len(matches),"draw_completed":bool(draw.get("completed"))})
+        result["ready"]=not result["reasons"]
+        return result
+
+    def _open_league_stage(tournament_id, reason="admin", force_close_rewards=False, start_at=None):
+        """Open GĐ2 after validating all invariants; optionally close unused tickets."""
+        if force_close_rewards:
+            _close_reward_ticket_phase(tournament_id,"admin")
+        reward_status=_reward_ticket_phase_status(tournament_id)
+        if not reward_status.get("closed") and reason!="admin_force":
+            return False,"3 HLV có vé thưởng chưa chốt xong và chưa đến hạn sử dụng vé."
+        readiness=_league_launch_readiness(tournament_id)
+        if not readiness.get("ready"):
+            return False,"; ".join(readiness.get("reasons") or ["GĐ2 chưa sẵn sàng"])
+        if (readiness.get("stage") or {}).get("league")=="open":
+            return True,"GĐ2 đã mở."
+        vn=timezone(timedelta(hours=7)); now=datetime.now(vn); start=start_at or now
+        if start.tzinfo is None: start=start.replace(tzinfo=vn)
+        cfg=_setting(tournament_id,"competition_timing",{}) or {}; cfg=dict(cfg) if isinstance(cfg,dict) else {}
+        cfg["league_start_at"]=start.isoformat(); cfg["league_end_at"]=(start+timedelta(days=7)).isoformat(); cfg["league_started_reason"]=reason
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"competition_timing","setting_value":cfg,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_open_timing",attempts=2)
+        execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","league").in_("status",["pending","open"]),"ops_league_open_stage",attempts=2)
+        sync=_setting(tournament_id,"deadline_sync",{}) or {}; sync["league_started"]=now_iso(); sync["league_started_reason"]=reason; sync.pop("league_blocked",None); sync.pop("league_awaiting_admin",None)
+        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"deadline_sync","setting_value":sync,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_league_open_sync",attempts=2)
+        return True,"Đã mở GĐ2."
 
     def _sync_c1_club_pool(tournament_id):
         """Ensure the official C1 random pool is exactly the 24 approved clubs."""
@@ -976,7 +1106,7 @@ def register_core(context):
     def _club_draft_state(tournament_id, auto_resolve=True):
         state=_setting(tournament_id,"club_draft_v2",{}) or {}
         if state.get("order") and any((state.get("entries") or {}).get(str(uid),{}).get("allocation_type")=="EARLY_REWARD" for uid in state.get("order",[])):
-            # GĐ1 early tickets have no expiry; legacy deadlines must never auto-consume them.
+            # Legacy per-turn timers stay disabled; V1.6.1 uses one global GĐ2 reward-ticket deadline.
             state["countdown"]={}
             return state
         if not state.get("active") or not state.get("order"):
@@ -1059,11 +1189,20 @@ def register_core(context):
                 state.pop("stage1_blocked",None)
             else:
                 state["stage1_blocked"]={"at":now_iso(),**readiness}
-        lgstart=_parse_iso(cfg.get("league_start_at"))
+        reward_deadline=_parse_iso(cfg.get("gd2_reward_ticket_deadline_at") or "2026-09-18T12:00:00+07:00")
+        if reward_deadline and reward_deadline.tzinfo is None: reward_deadline=reward_deadline.replace(tzinfo=vn)
+        if reward_deadline and now>=reward_deadline:
+            _close_reward_ticket_phase(tournament_id,"deadline")
+            state["gd2_reward_deadline_processed"]=state.get("gd2_reward_deadline_processed") or now_iso()
+
+        lgstart=_parse_iso(cfg.get("league_start_at") or "2026-09-18T12:00:00+07:00")
         if lgstart and lgstart.tzinfo is None: lgstart=lgstart.replace(tzinfo=vn)
         if lgstart and now>=lgstart and not state.get("league_started"):
-            # A timer alone must NEVER open the live competition: admin confirms readiness.
-            state["league_awaiting_admin"] = True
+            ok,msg=_open_league_stage(tournament_id,"scheduled",start_at=now)
+            if ok:
+                state["league_started"]=now_iso(); state["league_started_reason"]="scheduled"; state.pop("league_blocked",None)
+            else:
+                state["league_blocked"]={"at":now_iso(),"reason":msg}
         ext=_parse_iso(cfg.get("stage1_extension_end_at"))
         if ext and ext.tzinfo is None: ext=ext.replace(tzinfo=timezone(timedelta(hours=7)))
         now=datetime.now((ext.tzinfo if ext else vn))
@@ -1098,6 +1237,8 @@ def register_core(context):
                 "allocation_type":"EARLY_REWARD" if pos<=3 else "SYSTEM",
                 "tickets_total":int(entry.get("tickets_total") or (2 if pos==1 else (1 if pos<=3 else 0))),
                 "tickets_remaining":int(entry.get("tickets_remaining") or 0),
+                "reward_finalized":bool(entry.get("reward_finalized")),
+                "reward_finalized_at":entry.get("reward_finalized_at"),
                 "club":club,"club_pot":C1_CLUB_POT_BY_NAME.get(club),
                 "status":entry.get("status") or ("selected" if member.get("fixed_club_name") else "waiting"),
                 "reroll_count":len(rerolls),"history":user_history,
@@ -1114,7 +1255,7 @@ def register_core(context):
         ordered=sorted(_all_members(tournament_id),key=lambda m:int(m.get("seed_no") or 9999),reverse=base_config.get("direction")=="descending")
         base_turn=next((m for m in ordered if not m.get("fixed_club_name")),None) if base_config.get("mode")=="sequential" else None
         return {"base_draft_config":base_config,"base_draft_next":base_turn,
-                "timing":_timing_payload(tournament_id),"completion_ranking":cr,"my_completion":mine,
+                "timing":_timing_payload(tournament_id),"reward_ticket_phase":_reward_ticket_phase_status(tournament_id),"completion_ranking":cr,"my_completion":mine,
                 "stage1_confirmation_audit":_stage1_confirmation_audit(tournament_id),
                 "club_draft":_club_draft_state(tournament_id),"club_draft_admin_rows":_club_draft_admin_rows(tournament_id),
                 "stage1_early_reward_state":_stage1_early_reward_state(tournament_id),
@@ -1379,6 +1520,8 @@ def register_core(context):
         payload.update({
             "ready":True,"tournament":tour,"members":members,"progress":progress,
             "club_draw_at":(_setting(tid,"competition_timing",{}) or {}).get("club_draw_at") or "2026-09-17T20:00:00+07:00",
+            "gd2_reward_ticket_deadline_at":(_setting(tid,"competition_timing",{}) or {}).get("gd2_reward_ticket_deadline_at") or "2026-09-18T12:00:00+07:00",
+            "league_start_at":(_setting(tid,"competition_timing",{}) or {}).get("league_start_at") or "2026-09-18T12:00:00+07:00",
             "combined_ranking":_combined_ranking(tid),
             "knockout_flow":_setting(tid,"knockout_flow",{}) or {},
             "scale":_tournament_scale(tid),"c1_test_user_ids":test_ids,"c1_test_users":test_users,

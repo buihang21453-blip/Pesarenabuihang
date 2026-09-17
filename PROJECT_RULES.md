@@ -57,6 +57,13 @@ Mỗi yêu cầu phải xác định tối thiểu:
 - State phòng C1 (`waiting_ready`, `playing`, `waiting_confirm`, `confirmed`, v.v.) là vùng rủi ro cao. Sửa chuyển state phải kiểm tra cả Host và Guest.
 - Khi thay đổi lịch/Stage/Random CLB/thưởng phải kiểm tra luật giải hiện hành, không dùng giả định cứng từ version cũ.
 
+### Quy tắc vận hành GĐ2 từ V1.6.1
+- Không sinh/công bố đối thủ khi pha vé thưởng sớm chưa đóng.
+- Pha vé đóng khi cả 3 HLV có vé bấm chốt/dùng hết vé hoặc đến deadline do Admin đặt.
+- Không mở GĐ2 nếu chưa có đúng 32 trận, mỗi HLV 4 trận, đủ 3 Tier, không trùng đối thủ và lễ công bố chưa hoàn tất.
+- Admin có thể ép thời điểm bắt đầu sớm, nhưng không được bỏ qua các kiểm tra lịch/đối thủ; vé chưa dùng sẽ hết hiệu lực khi Admin mở GĐ2 ngay.
+- Các mốc thời gian GĐ2 dùng UTC+7 khi nhập từ `datetime-local` và phải được bảo toàn khi sửa các mốc GĐ1 khác.
+
 ### Test tối thiểu cho chức năng Host/Sảnh chờ
 - TK test A có Host + online + không ở room → TK test B và Admin nhìn thấy A.
 - A vào room active → A biến mất khỏi Host đang rảnh.
