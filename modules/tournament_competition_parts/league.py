@@ -110,21 +110,15 @@ def register_league(context):
             flash("Admin phải kết thúc GĐ1 trước khi sinh lịch GĐ2.","error")
             return _gd2_admin_return(tournament_id)
         if not (_setting(tournament_id,"pots_locked",{}) or {}).get("locked"):
-            flash("Hãy khóa Pot trước khi sinh lịch GĐ2.","error")
+            flash("Hãy khóa Tier HLV 5–6–5 trước khi sinh lịch GĐ2.","error")
             return _gd2_admin_return(tournament_id)
-        if any(C1_CLUB_POT_BY_NAME.get(m.get("fixed_club_name")) != 4-int(m.get("pot_no") or 0) for m in members):
-            flash("Có HLV đang dùng CLB sai Tier/Pot. Admin cần Random lại đúng quy tắc trước khi sinh lịch.","error")
+        if len(members)!=16:
+            flash("Cần đúng 16 HLV active trước khi sinh lịch GĐ2.","error")
             return _gd2_admin_return(tournament_id)
-        if (_setting(tournament_id,"club_selection",{}) or {}).get("open"):
-            flash("Hãy khóa Random/chọn CLB trước khi sinh lịch GĐ2.","error")
-            return _gd2_admin_return(tournament_id)
-        if len(members)!=16 or any(not m.get("fixed_club_name") for m in members):
-            flash("Cần đủ 16 HLV đã được gán CLB cố định trước khi sinh lịch.","error")
-            return _gd2_admin_return(tournament_id)
-        # V1.6.2: opponent fixtures are independent from early-reward club rerolls.
-        # As soon as all 16 active HLV have a valid base club, the 32-match fixture
-        # graph may be generated and then remains fixed while eligible HLV continue
-        # to use reward tickets to change only their own club.
+        # V1.6.11: opponent fixtures depend ONLY on the 16 HLV + Tier 5–6–5.
+        # They may be generated BEFORE the club ceremony and stay secret until
+        # Admin reveals them HLV-by-HLV. Club assignment/rerolls never mutate the
+        # stored tournament_matches graph.
         if _matches(tournament_id,"league"):
             flash("Lịch GĐ2 đã tồn tại. Không cho sinh lại/xóa lịch tự động để bảo vệ đối thủ đã công bố.","error")
             return _gd2_admin_return(tournament_id)
@@ -199,7 +193,7 @@ def register_league(context):
                     "round_code":f"LP-R{round_no}-{idx}","home_user_id":h,"away_user_id":a2,
                     "status":"pending","leg_no":1,"created_at":now_iso(),"updated_at":now_iso(),
                 }),"ops_league_insert",attempts=2)
-        flash(f"Đã sinh {idx} trận GĐ2: mỗi HLV đúng 4 trận · 4 trận/HLV · đủ 3 Tier đối thủ/HLV · không lặp đối thủ.","success")
+        flash(f"Đã sinh bí mật {idx} trận GĐ2 theo Tier 5–6–5. Chưa công bố cho HLV; Random/đổi CLB sau đó không làm thay đổi đối thủ.","success")
         return _gd2_admin_return(tournament_id)
 
     @app.post('/admin/tournaments/<tournament_id>/registration-status')

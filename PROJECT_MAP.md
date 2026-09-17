@@ -1,8 +1,3 @@
-### V1.6.10 – Asset giao diện Lễ bốc thăm GĐ2
-- Module: `modules/tournament_competition_parts/admin.py` render `templates/tournament/draw_admin_preview.html`; CSS `static/css/tournament_draw_preview.css` tích hợp 8 ảnh WebP public Supabase qua custom properties, không copy file vào source.
-- Luồng: màn hình Admin → CSS tải ảnh trực tiếp từ `pes-assets/LeBocThamGD2/`; fallback gradient khi ảnh lỗi. Không thêm API, route, DB, SQL hoặc tác động lượt Random.
-- Vùng cần kiểm thử: responsive, avatar fallback, logo CLB reveal, hai pha và chế độ giả lập/thật; không thay đổi xử lý nghiệp vụ.
-
 ### V1.6.9 – Chuẩn hóa logo GĐ2 từ CSV
 - `modules/tournament_club_logos.py`: alias LOSC Lille/Calcio Como, fallback URL Porto/Leipzig sau clubs_import/teams; PSV dùng psv.png trong import.
 - `templates/tournament/draw_admin_preview.html`: báo nguồn fallback cho Admin. Không có mutation DB/Storage.
@@ -423,3 +418,15 @@ Luồng rollback trước GĐ2: Thu hồi đối thủ → Thu hồi CLB. Simula
 - `modules/tournament_competition_parts/admin.py`: truyền logo + trạng thái đồng bộ cho màn hình Lễ bốc thăm.
 - `templates/tournament/draw_admin_preview.html`, `static/css/tournament_draw_preview.css`: trạng thái đồng bộ trong Công cụ quản trị phụ; logo trên sân khấu dùng nguồn trên.
 - `clubs_import` chỉ đọc. Không migration, không ghi Storage; 3 CLB chưa có bản ghi do chủ dự án bổ sung sau.
+
+### V1.6.10 – GD2 ceremony assets / layout
+- `modules/tournament_draw_assets.py`: danh mục 8 URL WebP trên Supabase, tham chiếu cho bảo trì.
+- `templates/tournament/draw_admin_preview.html`: hai nút live/simulation đặt trong khung `.draw-center-stage`, mỗi pha một nút hiện ra.
+- `static/css/tournament_draw_preview.css`: nền sân vận động, crowd, đèn, frame, card và fallback khi ảnh không tải. Spritesheet chưa cắt icon.
+- Không thay `league.py`, RPC/DB, logic vé hoặc lịch.
+
+
+### V1.6.11 – Secret fixture / centered ceremony action
+- `league.py`: lịch GĐ2 sinh từ Tier trước lễ CLB; không phụ thuộc fixed_club.
+- `core.py`: ẩn league matches với HLV cho tới khi chính HLV đó được công bố hoặc GĐ2 mở.
+- `draw_admin_preview.html` + CSS: mô tả luồng mới và căn giữa tuyệt đối nút hành động sân khấu.

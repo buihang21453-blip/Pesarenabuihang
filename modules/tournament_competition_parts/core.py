@@ -1312,6 +1312,23 @@ def register_core(context):
         host_ready.sort(key=lambda x: str(x.get("display_name") or "").casefold())
         return host_ready
 
+    def _viewer_visible_matches(tournament_id, user_id, rows):
+        """Hide pre-generated GĐ2 opponents until that HLV is revealed or GĐ2 opens."""
+        stage=_stage(tournament_id,"league") or {}
+        league_open=str(stage.get("status") or "").lower() in {"open","completed"}
+        if league_open:
+            return rows
+        draw=_setting(tournament_id,"league_draw_v2",{}) or {}
+        revealed={str(k) for k in (draw.get("revealed") or {}).keys()}
+        uid=str(user_id or "")
+        visible=[]
+        for m in rows:
+            if str(m.get("stage_code") or "")!="league":
+                visible.append(m); continue
+            if uid and uid in revealed and uid in {str(m.get("home_user_id") or ""),str(m.get("away_user_id") or "")}:
+                visible.append(m)
+        return visible
+
     def _detail_payload(tournament_id, user_id):
         tour=_tour(tournament_id)
         if not tour: return None
@@ -1319,7 +1336,8 @@ def register_core(context):
         stages,_=_rows(db.table("tournament_stages").select("*").eq("tournament_id",tournament_id).order("sort_order"),"ops_stages")
         s1=_stage1_progress(tournament_id)
         league=_ranking(tournament_id,"league")
-        matches=_decorate_matches(tournament_id,_matches(tournament_id))
+        matches=_viewer_visible_matches(tournament_id,user_id,_matches(tournament_id))
+        matches=_decorate_matches(tournament_id,matches)
         matches=_attach_schedule_state(tournament_id,matches,user_id)
         availability=_availability_payload(tournament_id,user_id,matches) if member else {"days":_availability_days(),"mine":[],"mine_set":set(),"status":"missing","slot_count":0}
         hosts,_=_rows(db.table("tournament_hosts").select("*").eq("tournament_id",tournament_id).order("region").order("name"),"ops_hosts")

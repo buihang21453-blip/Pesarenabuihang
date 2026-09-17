@@ -1,7 +1,3 @@
-PES Arena V1.6.10 — Tích hợp WebP Lễ bốc thăm GĐ2 (17/09/2026)
-Base: PES Arena V1.6.9 Club Logo Canonical Sync.
-8 ảnh được dùng qua URL public Supabase do chủ dự án cung cấp, không đóng gói assets.
-Phạm vi: CSS màn điều hành Lễ bốc thăm; APP_VERSION; nhãn Admin; CHANGELOG và PROJECT_MAP.
-Không thay đổi JS, backend, DB, API, route, SQL, vé random, thuật toán hay kết quả giải.
-Giữ nút Random CLB / Bốc tiếp ở giữa thanh điều khiển; không thêm nút mới.
-Chưa kiểm thử kết nối Supabase Production hoặc dữ liệu thật của 2 tài khoản test.
+PES Arena V1.6.10
+Tích hợp bộ ảnh WebP Lễ bốc thăm GĐ2 từ Supabase và đưa hai nút chính vào giữa sân khấu.
+Không SQL mới. Chưa xác minh URL HTTP/Production.

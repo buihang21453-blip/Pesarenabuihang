@@ -1,7 +1,16 @@
-## V1.6.10 – Tích hợp 8 asset WebP Supabase vào Lễ bốc thăm GĐ2
-- `static/css/tournament_draw_preview.css`: dùng trực tiếp 8 URL public dưới `pes-assets/LeBocThamGD2/` cho nền SVĐ, khán giả, khung ánh sáng, sân khấu, khung công bố, thẻ CLB bí ẩn, avatar fallback và icon tiêu đề; giữ màu nền dự phòng nếu mất mạng.
-- Nút Random CLB và Bốc tiếp ở giữa thanh điều khiển như V1.6.9; không thay đổi JS, route POST, quyền Admin, luật bốc thăm, vé thưởng, database hoặc Storage.
-- Đồng bộ APP_VERSION, nhãn Admin và tài liệu. Các URL ảnh chỉ được khai báo; cần thử trực tiếp trên Production để xác nhận đủ 8 object và hiển thị trên các kích thước màn hình.
+## V1.6.11 – Sinh lịch bí mật trước Random CLB & căn giữa nút sân khấu
+- `Sinh lịch GĐ2` giờ chỉ phụ thuộc 16 HLV active + Tier 5–6–5 đã khóa; không cần Random CLB trước.
+- 32 trận được lưu bí mật; HLV không thấy đối thủ trước khi tới lượt được công bố hoặc GĐ2 mở.
+- Random CLB và vé thưởng chỉ đổi CLB, không thay đổi đối thủ đã sinh.
+- Phần 2 `Bốc tiếp` chỉ công bố 4 đối thủ đã lưu, không sinh lại lịch.
+- Ép nút `🎲 RANDOM CLB` và `🎲 Bốc tiếp` nằm chính giữa cột sân khấu bằng CSS grid/place-items.
+- Không SQL mới.
+
+## V1.6.10 – Tích hợp bộ ảnh WebP GĐ2 và chuyển nút quay về giữa sân khấu
+- Dùng URL 8 tài nguyên từ bucket pes-assets/LeBocThamGD2 do chủ dự án cung cấp; giao diện fallback nền CSS/initials khi ảnh lỗi. Bộ spritesheet được khai báo nhưng chưa dùng vì chưa có tọa độ cắt icon.
+- Chuyển hai cụm điều khiển từ thanh phía trên vào chính giữa phần sân khấu, dưới nội dung công bố; mỗi pha chỉ có một nút thao tác hiển thị theo mode Live/Simulation.
+- Phần 1: RANDOM CLB 16→1. Phần 2: Bốc tiếp 1→16. Không đổi form action, RPC, quyền, thuật toán, luật vé thưởng và cơ chế thu hồi.
+- Không xác minh được HTTP đến Supabase trong môi trường đóng gói; cần thử tải 8 asset trong trình duyệt ở Production. Không cần SQL.
 
 ## V1.6.9 – Chuẩn hóa mapping logo CLB GĐ2
 - Đối chiếu CSV clubs_import 182 hàng: PSV đã có logo psv.png; Porto và RB Leipzig chưa có bản ghi.

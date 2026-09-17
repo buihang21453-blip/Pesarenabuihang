@@ -206,3 +206,14 @@ V1.5.87: không đưa lên Production khi chưa kiểm thử luồng giao dịch
 - Đọc `clubs_import` trước, chỉ fallback sang `teams` nếu nguồn chính thiếu URL; giữ nguyên 24 CLB và tên Pot trong mã.
 - Không đưa ảnh minh họa thành logo CLB chính thức; không tạo đường dẫn Storage giả cho club chưa có file.
 - Chỉ tích hợp asset nền WebP sau khi biết URL/đường dẫn thật người dùng upload; tuyệt đối không lưu Supabase credentials trong source.
+
+### Giao diện Lễ bốc thăm từ V1.6.10
+- Giữ đúng một nút chính giữa sân khấu mỗi pha: RANDOM CLB hoặc Bốc tiếp; ẩn nút không thuộc chế độ Live/Simulation.
+- Logo CLB dùng dữ liệu clubs_import/teams đã đồng bộ; asset WebP trang trí lấy từ Supabase, không hardcode logo mới.
+- Ảnh lỗi phải có nền CSS dự phòng; không sử dụng toàn bộ spritesheet làm một icon.
+
+
+### Quy tắc GĐ2 từ V1.6.11
+- Có thể sinh bí mật 32 trận ngay khi GĐ1 xong và Tier HLV 5–6–5 đã khóa.
+- Random/đổi CLB không được sửa lịch đối thủ đã sinh.
+- Đối thủ chỉ hiện cho HLV sau công bố hoặc khi GĐ2 mở.
