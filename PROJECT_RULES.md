@@ -1,3 +1,8 @@
+## V1.6.20 — Kiểm tra ràng buộc DB trong luồng đổi CLB
+
+- Bắt buộc kiểm tra UNIQUE(tournament_id,selected_by) khi viết transaction đổi CLB: nhả quyền sở hữu CLB cũ trước khi gán CLB mới trong cùng transaction, để DB rollback nguyên trạng nếu bất kỳ bước nào lỗi.
+- Không tắt / xóa UNIQUE để xử lý lỗi này; không trừ vé riêng; không tự retry một RPC có trạng thái commit chưa xác định.
+
 ## V1.6.19
 # V1.6.19 — Quy tắc chẩn đoán giao dịch vé
 

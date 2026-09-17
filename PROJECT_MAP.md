@@ -1,3 +1,10 @@
+## V1.6.20
+# V1.6.20 — Vé CLB: SQL migration đổi thứ tự ghi
+
+- SQL_V1.6.20_FIX_ATOMIC_CLUB_REROLL_ORDER.sql: CREATE OR REPLACE RPC c1_use_early_club_reroll_ticket; nhả CLB cũ trước khi gán CLB mới trong transaction để đáp ứng unique(tournament_id,selected_by).
+- modules/tournament_competition_parts/league.py: giữ nguyên 2 route HLV/Admin gọi chung RPC; không sửa backend ở version này.
+- app.py, templates/admin.html: đồng bộ version V1.6.20.
+
 ## V1.6.19
 # V1.6.19 — Chẩn đoán Random vé
 

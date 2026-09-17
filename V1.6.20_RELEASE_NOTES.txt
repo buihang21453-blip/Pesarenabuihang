@@ -1,0 +1,16 @@
+PES Arena V1.6.20 — Fix ticket reroll UNIQUE violation
+
+Nguyên nhân phát hiện trong source V1.6.19:
+- tournament_clubs có UNIQUE(tournament_id,selected_by).
+- SQL V1.6.18 gán CLB mới trước khi nhả CLB cũ, khiến UPDATE giữ CLB mới lỗi 23505; giao dịch rollback nên vé không trừ và CLB không đổi.
+
+Khắc phục:
+- SQL V1.6.20 thay đúng function c1_use_early_club_reroll_ticket, nhả CLB cũ TRƯỚC khi gán CLB mới, vẫn nguyên tử trong một transaction.
+- HLV tự quay và Admin quay hộ dùng chung hàm, không sửa route hay dữ liệu vé hiện tại.
+
+Triển khai đúng thứ tự:
+1) Supabase SQL Editor: chạy SQL_V1.6.20_FIX_ATOMIC_CLUB_REROLL_ORDER.sql trên đúng project Production.
+2) Vercel: deploy ZIP V1.6.20 và Promote Production.
+3) Kiểm tra số vé/CLB rồi thử quay duy nhất một lần. Nếu còn lỗi, xem SQLSTATE trong Vercel log.
+
+Chưa kiểm thử kết nối database Production; đây là lỗi xác định bằng audit mã nguồn và schema.

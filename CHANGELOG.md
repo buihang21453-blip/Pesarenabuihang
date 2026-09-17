@@ -1,3 +1,10 @@
+## V1.6.20
+# V1.6.20 — Sửa xung đột UNIQUE khi dùng vé Random CLB
+
+- Kiểm toán SQL V1.6.18: hàm giữ CLB mới trước khi nhả CLB cũ dù tournament_clubs ràng buộc UNIQUE(tournament_id,selected_by), gây 23505 và rollback vé/CLB.
+- SQL V1.6.20 thay thế đúng hàm RPC: chọn CLB mới đang trống, nhả CLB cũ, giữ CLB mới, cập nhật member, trừ vé và lưu lịch sử trong cùng một transaction; mọi lỗi rollback toàn bộ.
+- Không thay đổi route HLV/Admin, số vé, danh sách Pot, lịch 32 trận, hay BXH. Bắt buộc chạy SQL V1.6.20 trước khi triển khai web.
+
 ## V1.6.19
 # V1.6.19 — Chẩn đoán lỗi RPC Random vé CLB
 
