@@ -1,14 +1,9 @@
-## V1.6.13 — Sửa phân tách quay CLB và công bố đối thủ
-- Module: tournament_competition_parts/league.py; draw_admin_preview.html; tournament_draw_preview.js.
-- Màn hình mặc định ở Phần 1 khi chưa quay đủ 16 CLB dù đã sinh sẵn 32 trận; chỉ tự mở Phần 2 khi đã đủ CLB và đã bắt đầu công bố đối thủ.
-- Mỗi lần bấm RANDOM CLB gọi riêng route clubs/draw-next và phân đúng 1 CLB; không random CLB khi chỉ tải trang hoặc mở lễ.
-- Cho phép cấu hình và quay CLB khi lịch có đúng 32 trận pending, vẫn cấm lịch thiếu/dở, trận đã thi đấu, hoặc Knockout.
-- Chặn công bố đối thủ trước khi đủ 16 CLB; lịch đối thủ đã sinh không đổi.
-- SQL bắt buộc: chạy SQL_V1.6.13_FIX_PREGENERATED_CLUB_DRAW.sql trên Supabase trước triển khai ứng dụng. Giữ SQL V1.5.96 để đối chiếu, không chạy lại bản cũ sau migration.
-- Không sửa schema, lịch đã lưu, vé thưởng, hoặc tài khoản test và BXH.
+## V1.6.14
+# V1.6.14 — Vé Random lại CLB / UX HLV
 
-## V1.6.12
-# V1.6.12 — Giao diện lễ bốc thăm / asset composition
+- Khi sửa UX cho HLV trên /tournaments phải ưu tiên popup phong cách PES Arena, tránh alert/confirm mặc định nếu có thể.
+- Các nút làm thay đổi CLB hoặc tiêu vé phải hiển thị rõ hành động sẽ xảy ra và trạng thái vé còn lại.
+- Mọi lần bump version phải đồng bộ APP_VERSION, label giao diện Admin và tài liệu gốc ở thư mục root.
 - Đưa chế độ tập dượt vào Công cụ quản trị phụ; màn hình chính không nhắc tới giả lập. Chế độ tập dượt vẫn hoạt động khi Admin chủ động chọn.
 - Giảm lớp phủ trên nền sân vận động; hiển thị crowd overlay ở chân trang.
 - Khung ánh sáng phủ sân khấu; bục ở lớp đáy, không che nội dung.

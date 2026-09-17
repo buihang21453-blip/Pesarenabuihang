@@ -267,3 +267,95 @@ document.addEventListener('click',function(e){
   });
 })();
 </script>
+<script>
+(function(){
+  var countdowns=Array.from(document.querySelectorAll('[data-ticket-countdown]'));
+  function renderCountdown(el){
+    var ts=Date.parse(el.getAttribute('data-ticket-countdown')||'');
+    if(!isFinite(ts)) return;
+    var sec=Math.max(0,Math.floor((ts-Date.now())/1000));
+    var d=Math.floor(sec/86400),h=Math.floor((sec%86400)/3600),m=Math.floor((sec%3600)/60);
+    if(sec<=0){ el.textContent='Đã đến hạn dùng vé'; return; }
+    if(d>0) el.textContent='Còn '+d+' ngày '+h+' giờ để sử dụng';
+    else if(h>0) el.textContent='Còn '+h+' giờ '+m+' phút để sử dụng';
+    else el.textContent='Còn '+m+' phút để sử dụng';
+  }
+  if(countdowns.length){
+    countdowns.forEach(renderCountdown);
+    window.setInterval(function(){countdowns.forEach(renderCountdown);},60000);
+  }
+
+  var modal=document.createElement('div');
+  modal.className='pes-confirm-backdrop';
+  modal.innerHTML=''
+    +'<div class="pes-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="pesConfirmTitle">'
+    +  '<h3 id="pesConfirmTitle">Xác nhận thao tác</h3>'
+    +  '<p data-confirm-message></p>'
+    +  '<small class="pes-confirm-note">Thao tác này sẽ áp dụng trực tiếp lên dữ liệu giải đấu.</small>'
+    +  '<div class="pes-confirm-actions">'
+    +    '<button class="btn" type="button" data-confirm-cancel>Hủy</button>'
+    +    '<button class="btn gold" type="button" data-confirm-ok>Tiếp tục</button>'
+    +  '</div>'
+    +'</div>';
+  document.body.appendChild(modal);
+
+  var loading=document.createElement('div');
+  loading.className='ticket-loading-backdrop';
+  loading.innerHTML=''
+    +'<div class="ticket-loading-box">'
+    +  '<div class="ticket-loading-spinner"></div>'
+    +  '<strong data-loading-title>Đang xử lý...</strong>'
+    +  '<span>Vui lòng chờ trong giây lát</span>'
+    +'</div>';
+  document.body.appendChild(loading);
+
+  var activeForm=null;
+  function openModal(form){
+    activeForm=form;
+    modal.querySelector('#pesConfirmTitle').textContent=form.getAttribute('data-pes-confirm-title')||'Xác nhận thao tác';
+    modal.querySelector('[data-confirm-message]').textContent=form.getAttribute('data-pes-confirm')||'Bạn có chắc muốn tiếp tục?';
+    modal.querySelector('[data-confirm-ok]').textContent=form.getAttribute('data-pes-confirm-action')||'Tiếp tục';
+    modal.classList.add('is-open');
+  }
+  function closeModal(){
+    activeForm=null;
+    modal.classList.remove('is-open');
+  }
+  function showLoading(form){
+    var title=(form && form.getAttribute('data-pes-loading')) || 'Đang xử lý...';
+    loading.querySelector('[data-loading-title]').textContent=title;
+    loading.classList.add('is-open');
+  }
+
+  document.addEventListener('submit',function(e){
+    var form=e.target;
+    if(!(form instanceof HTMLFormElement)) return;
+    if(form.dataset.pesConfirmed==='1'){
+      form.dataset.pesConfirmed='';
+      showLoading(form);
+      return;
+    }
+    if(form.hasAttribute('data-pes-confirm')){
+      e.preventDefault();
+      openModal(form);
+      return;
+    }
+    if(form.hasAttribute('data-pes-loading')) showLoading(form);
+  },true);
+
+  modal.addEventListener('click',function(e){
+    if(e.target===modal || e.target.hasAttribute('data-confirm-cancel')) closeModal();
+    if(e.target.hasAttribute('data-confirm-ok') && activeForm){
+      var form=activeForm;
+      closeModal();
+      form.dataset.pesConfirmed='1';
+      showLoading(form);
+      form.requestSubmit ? form.requestSubmit() : form.submit();
+    }
+  });
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape' && modal.classList.contains('is-open')) closeModal();
+  });
+})();
+</script>

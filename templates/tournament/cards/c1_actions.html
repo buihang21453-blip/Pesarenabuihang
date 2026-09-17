@@ -10,6 +10,7 @@
             {% else %}
             {% endif %}
           </div>
+
           {% if tournament.my_member and hub and hub.get('base_draft_config',{}).get('mode')=='sequential' and hub.get('base_draft_config',{}).get('actor')=='player' and hub.get('base_draft_turn')==tournament.my_member.user_id|string %}
           <div style="margin:10px 0;padding:12px;border:1px solid rgba(241,202,104,.38);border-radius:10px">
             <strong>🎲 Đến lượt bạn Random CLB gốc GĐ2</strong>
@@ -19,41 +20,132 @@
           {% elif tournament.my_member and hub and hub.get('base_draft_config',{}).get('mode')=='sequential' and hub.get('base_draft_config',{}).get('actor')=='player' and not hub.get('club_draft',{}).get('completed') and not tournament.my_member.fixed_club_name %}
           <p class="small">⏳ Chưa đến lượt Random CLB gốc của bạn.</p>
           {% endif %}
+
           {% if tournament.my_member and hub and hub.early_reward_entry and hub.early_reward_entry.get('allocation_type')=='EARLY_REWARD' %}
           {% set early=hub.early_reward_entry %}
-          <div style="margin:10px 0;padding:12px;border:1px solid rgba(241,202,104,.38);border-radius:10px;background:rgba(241,202,104,.06)">
-            <strong>🎟 Vé thưởng sớm GĐ1 · còn {{ early.get('tickets_remaining',0) }}/{{ early.get('tickets_total',0) }} vé</strong>
-            <p class="small" style="margin:6px 0">Dùng đến <strong>12:00 · 18/09/2026</strong> (hoặc mốc Admin đã chỉnh). CLB đã bỏ không quay lại cho chính bạn; CLB cũ được trả về kho.</p>
-            {% if not (hub.get('club_draft',{}).get('system_assigned') and hub.get('club_draft',{}).get('tier_club_pot_rule') == '1:3;2:2;3:1' and hub.get('club_draft',{}).get('completed')) %}
-              <p class="small">⏳ Chờ Admin phân CLB gốc đủ 16 HLV theo Tier/Pot. Vé vẫn được bảo lưu.</p>
+          {% set early_ready = hub.get('club_draft',{}).get('system_assigned') and hub.get('club_draft',{}).get('tier_club_pot_rule') == '1:3;2:2;3:1' and hub.get('club_draft',{}).get('completed') %}
+          {% set early_current_club = tournament.my_member.fixed_club_name or early.get('selected_club') or early.get('candidate',{}).get('name') or '—' %}
+          {% set early_deadline_label = format_vn_datetime(hub.get('gd2_reward_deadline')) if hub.get('gd2_reward_deadline') else '—' %}
+          <section class="ticket-panel">
+            <div class="ticket-panel-head">
+              <div>
+                <span class="ticket-panel-kicker">GIAI ĐOẠN 2 · VÉ THƯỞNG SỚM</span>
+                <h4>🎟 Vé Random lại CLB GĐ1</h4>
+                <p>Chỉ Top 1–3 được dùng sau khi đủ 16 CLB gốc. CLB đã bỏ sẽ không xuất hiện lại cho chính bạn.</p>
+              </div>
+              <div class="ticket-status-stack">
+                <span class="ticket-status {% if early.get('reward_finalized') %}is-done{% elif not early_ready %}is-wait{% elif hub.get('gd2_reward_deadline_active') %}is-live{% else %}is-expired{% endif %}">
+                  {% if early.get('reward_finalized') %}✅ Đã chốt cuối cùng
+                  {% elif not early_ready %}⏳ Chờ đủ 16 CLB gốc
+                  {% elif hub.get('gd2_reward_deadline_active') %}🎲 Đang dùng vé
+                  {% else %}⏰ Hết hạn dùng vé{% endif %}
+                </span>
+                {% if hub.get('gd2_reward_deadline_active') %}<small class="ticket-live-note" data-ticket-countdown="{{ hub.get('gd2_reward_deadline') }}"></small>{% endif %}
+              </div>
+            </div>
+
+            <div class="ticket-summary-grid">
+              <div class="ticket-metric"><span>Vé còn lại</span><strong>{{ early.get('tickets_remaining',0) }}/{{ early.get('tickets_total',0) }}</strong></div>
+              <div class="ticket-metric"><span>CLB hiện tại</span><strong>{{ early_current_club }}</strong></div>
+              <div class="ticket-metric"><span>Hạn dùng</span><strong>{{ early_deadline_label }}</strong></div>
+            </div>
+
+            <div class="ticket-steps">
+              <div class="ticket-step is-done"><b>1</b><span>Admin Random đủ 16 CLB gốc</span></div>
+              <div class="ticket-step {% if early_ready %}is-live{% else %}is-wait{% endif %}"><b>2</b><span>Dùng vé để Random lại CLB nếu muốn</span></div>
+              <div class="ticket-step {% if early.get('reward_finalized') %}is-done{% elif early.get('status')=='selected' %}is-live{% else %}is-wait{% endif %}"><b>3</b><span>Chốt CLB cuối cùng để kết thúc quyền đổi</span></div>
+            </div>
+
+            <div class="ticket-rule-list">
+              <span>✓ CLB cũ được trả về kho sau khi Random thành công</span>
+              <span>✓ Vé chỉ bị trừ khi bạn dùng để đổi CLB</span>
+              <span>✓ Bấm <strong>Chốt CLB cuối cùng</strong> thì vé còn lại sẽ hết hiệu lực</span>
+            </div>
+
+            {% if not early_ready %}
+              <div class="ticket-callout is-wait">⏳ Chờ Admin phân CLB gốc đủ 16 HLV theo Tier/Pot. Vé vẫn được bảo lưu.</div>
+            {% elif early.get('reward_finalized') %}
+              <div class="ticket-callout is-done">✅ Bạn đã chốt CLB cuối cùng là <strong>{{ early_current_club }}</strong>. Vé chưa dùng không còn hiệu lực.</div>
             {% elif early.get('status')=='selected' %}
-              <div class="small">CLB hiện tại: <strong>{{ tournament.my_member.fixed_club_name or early.get('selected_club','—') }}</strong></div>
-              {% if early.get('reward_finalized') %}
-                <div class="small" style="margin-top:7px;color:#2ecc71">✅ Đã chốt CLB cuối cùng · không dùng thêm vé.</div>
-              {% elif hub.get('gd2_reward_deadline_active') %}
-                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-                  {% if early.get('tickets_remaining',0)|int > 0 %}<form method="post" action="{{ url_for('tournament_club_draft_reward_reroll',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">🎲 Dùng 1 vé Random lại CLB</button></form>{% endif %}
-                  <form method="post" action="{{ url_for('tournament_club_draft_finalize',tournament_id=tournament.id) }}" onsubmit="return confirm('Chốt CLB cuối cùng? Vé chưa dùng sẽ hết hiệu lực và bạn không thể Random lại nữa.');"><button class="btn green" type="submit">✅ Chốt CLB cuối cùng</button></form>
+              <div class="ticket-current-club">
+                <div>
+                  <small>CLB đang giữ</small>
+                  <strong>{{ early_current_club }}</strong>
                 </div>
-              {% else %}
-                <div class="small" style="margin-top:7px;color:#f1ca68">⏰ Đã hết hạn dùng vé; hệ thống sẽ giữ CLB hiện tại.</div>
+                {% if hub.get('gd2_reward_deadline_active') %}<span class="ticket-pill">Có thể đổi tiếp hoặc chốt ngay</span>{% else %}<span class="ticket-pill is-muted">Đã hết hạn dùng vé</span>{% endif %}
+              </div>
+              {% if hub.get('gd2_reward_deadline_active') %}
+              <div class="ticket-actions">
+                {% if early.get('tickets_remaining',0)|int > 0 %}
+                <form method="post" action="{{ url_for('tournament_club_draft_reward_reroll',tournament_id=tournament.id) }}" data-pes-confirm="Dùng 1 vé để Random lại CLB? CLB hiện tại sẽ được trả về kho và CLB cũ sẽ không xuất hiện lại cho chính bạn." data-pes-confirm-title="Dùng vé Random lại CLB" data-pes-confirm-action="Dùng vé ngay" data-pes-loading="Đang Random CLB mới...">
+                  <button class="btn gold" type="submit">🎲 Dùng 1 vé Random lại CLB</button>
+                </form>
+                {% endif %}
+                <form method="post" action="{{ url_for('tournament_club_draft_finalize',tournament_id=tournament.id) }}" data-pes-confirm="Chốt CLB cuối cùng? {{ early.get('tickets_remaining',0) }} vé chưa dùng còn lại sẽ hết hiệu lực và bạn không thể Random lại nữa." data-pes-confirm-title="Chốt CLB cuối cùng" data-pes-confirm-action="Chốt CLB" data-pes-loading="Đang chốt CLB cuối cùng...">
+                  <button class="btn green" type="submit">✅ Chốt CLB cuối cùng</button>
+                </form>
+              </div>
               {% endif %}
             {% else %}
               {% if early.get('candidate') %}
-                <div class="small">CLB vừa Random: <strong>{{ early.get('candidate',{}).get('name') }}</strong></div>
-                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
-                  <form method="post" action="{{ url_for('tournament_club_draft_accept',tournament_id=tournament.id) }}"><button class="btn green" type="submit">✅ Chốt CLB</button></form>
-                  {% if early.get('tickets_remaining',0)|int > 0 %}<form method="post" action="{{ url_for('tournament_club_draft_random',tournament_id=tournament.id) }}"><button class="btn gold" type="submit">🎲 Dùng 1 vé để Random lại</button></form>{% endif %}
+                <div class="ticket-current-club is-candidate">
+                  <div>
+                    <small>CLB vừa Random ra</small>
+                    <strong>{{ early.get('candidate',{}).get('name') }}</strong>
+                  </div>
+                  <span class="ticket-pill">CLB đầu tiên miễn phí · chưa trừ vé</span>
+                </div>
+                <div class="ticket-actions">
+                  <form method="post" action="{{ url_for('tournament_club_draft_accept',tournament_id=tournament.id) }}" data-pes-loading="Đang chốt CLB...">
+                    <button class="btn green" type="submit">✅ Chốt CLB này</button>
+                  </form>
+                  {% if early.get('tickets_remaining',0)|int > 0 %}
+                  <form method="post" action="{{ url_for('tournament_club_draft_random',tournament_id=tournament.id) }}" data-pes-confirm="Bỏ CLB {{ early.get('candidate',{}).get('name') }} và dùng 1 vé để Random lại CLB khác?" data-pes-confirm-title="Random lại bằng vé thưởng" data-pes-confirm-action="Random lại" data-pes-loading="Đang Random CLB khác...">
+                    <button class="btn gold" type="submit">🎲 Dùng 1 vé để Random lại</button>
+                  </form>
+                  {% endif %}
                 </div>
               {% else %}
-                <form method="post" action="{{ url_for('tournament_club_draft_random',tournament_id=tournament.id) }}" style="margin-top:8px"><button class="btn gold" type="submit">🎲 Random CLB đầu tiên (miễn phí)</button></form>
+                <div class="ticket-callout">🎯 Bước đầu tiên: bấm quay để nhận CLB ban đầu. Lượt này miễn phí, chưa trừ vé.</div>
+                <form method="post" action="{{ url_for('tournament_club_draft_random',tournament_id=tournament.id) }}" style="margin-top:8px" data-pes-loading="Đang Random CLB đầu tiên..."><button class="btn gold" type="submit">🎲 Random CLB đầu tiên (miễn phí)</button></form>
               {% endif %}
             {% endif %}
-          </div>
+          </section>
           {% endif %}
+
           {% if hub and hub.league_reroll_entry and hub.league_reroll_entry.get('tickets_remaining',0)|int > 0 %}
-          <div style="margin:10px 0;padding:10px 12px;border:1px solid rgba(241,202,104,.3);border-radius:10px;background:rgba(241,202,104,.05);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-            <div><strong>🎟 Vé Random lại CLB sau GĐ2</strong><div class="small">Top {{ hub.league_reroll_entry.get('rank') }} · còn {{ hub.league_reroll_entry.get('tickets_remaining') }} vé. CLB bỏ qua sẽ không xuất hiện lại cho bạn.</div></div>
-            <form method="post" action="{{ url_for('tournament_league_top3_reroll_club',tournament_id=tournament.id) }}" onsubmit="return confirm('Dùng 1 vé để bỏ CLB hiện tại và Random CLB khác? CLB cũ sẽ không xuất hiện lại cho bạn.');"><button class="btn gold" type="submit">🎲 Random lại CLB</button></form>
-          </div>
+          {% set league_entry = hub.league_reroll_entry %}
+          <section class="ticket-panel is-secondary">
+            <div class="ticket-panel-head">
+              <div>
+                <span class="ticket-panel-kicker">SAU GĐ2 · THƯỞNG TOP 1–3</span>
+                <h4>🏆 Vé Random lại CLB trước Knockout</h4>
+                <p>Top {{ league_entry.get('rank') }} được 1 vé Random lại CLB. Đối thủ Knockout không thay đổi khi đổi CLB.</p>
+              </div>
+              <span class="ticket-status is-live">🎟 Còn {{ league_entry.get('tickets_remaining') }} vé</span>
+            </div>
+            <div class="ticket-summary-grid">
+              <div class="ticket-metric"><span>Xếp hạng nhận thưởng</span><strong>Top {{ league_entry.get('rank') }}</strong></div>
+              <div class="ticket-metric"><span>CLB hiện tại</span><strong>{{ tournament.my_member.fixed_club_name or '—' }}</strong></div>
+              <div class="ticket-metric"><span>Luật dùng vé</span><strong>1 lần / không quay lại CLB cũ</strong></div>
+            </div>
+            <div class="ticket-rule-list">
+              <span>✓ Dùng 1 vé để đổi CLB hiện tại sang CLB mới</span>
+              <span>✓ CLB cũ sẽ không xuất hiện lại cho chính bạn</span>
+              <span>✓ Sau khi dùng hết vé, CLB mới sẽ được giữ cho vòng Knockout</span>
+            </div>
+            <div class="ticket-actions">
+              <form method="post" action="{{ url_for('tournament_league_top3_reroll_club',tournament_id=tournament.id) }}" data-pes-confirm="Dùng 1 vé để bỏ CLB hiện tại và Random CLB khác? CLB cũ sẽ không xuất hiện lại cho bạn." data-pes-confirm-title="Vé Random lại CLB sau GĐ2" data-pes-confirm-action="Dùng vé ngay" data-pes-loading="Đang Random CLB mới...">
+                <button class="btn gold" type="submit">🎲 Random lại CLB</button>
+              </form>
+            </div>
+            {% if league_entry.get('history') %}
+            <div class="ticket-history">
+              <strong>Lần đổi gần nhất</strong>
+              {% for item in league_entry.get('history',[])[-3:]|reverse %}
+              <div><span>{{ item.get('from','—') }}</span><b>→</b><span>{{ item.get('to','—') }}</span></div>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </section>
           {% endif %}
