@@ -1,3 +1,11 @@
+## V1.6.26
+- modules/tournament_competition_parts/core.py: _host_ready_rows bỏ opt-in; nguồn API Host live và trang chi tiết.
+- modules/tournament_routes.py: payload /tournaments tính Host từ online + không trong phòng.
+- modules/tournament_competition_parts/scheduling.py: POST host-ready cũ tương thích và không còn ghi setting.
+- templates/tournament/tabs/lobby.html: bỏ form bật/tắt chế độ rảnh.
+- templates/admin.html: cập nhật hướng dẫn và trạng thái trống, polling 15 giây giữ nguyên.
+- app.py: APP_VERSION V1.6.26.
+
 ## V1.6.25
 - modules/tournament_routes.py: BXH public points, stage1_points, league_points tính từ tournament_matches completed của hai giai đoạn.
 - modules/tournament_competition_parts/core.py: _combined_ranking cộng và trả về chi tiết điểm từng giai đoạn.

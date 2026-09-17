@@ -1273,7 +1273,7 @@ def register_core(context):
     def _host_ready_rows(tournament_id, members_all=None):
         """Danh sách Host đang rảnh dùng chung cho render trang và API live-polling.
 
-        Chỉ lấy HLV active thuộc đúng giải, có Host, chủ động bật rảnh,
+        Chỉ lấy HLV active thuộc đúng giải, có Host,
         online theo presence hiện tại và không ở phòng đấu đang hoạt động.
         """
         members_all = members_all if members_all is not None else _all_members(tournament_id)
@@ -1303,12 +1303,11 @@ def register_core(context):
                 if gid in member_ids:
                     busy_user_ids.add(gid)
 
-        ready_state=_setting(tournament_id,"host_live_ready",{}) or {}
         host_ready=[]
         for hm in members_all:
             huid=str(hm.get("user_id") or "")
             user_row=hm.get("user") or {}
-            if hm.get("has_host") and ready_state.get(huid) and is_user_online_now(user_row) and huid not in busy_user_ids:
+            if hm.get("has_host") and is_user_online_now(user_row) and huid not in busy_user_ids:
                 host_ready.append({
                     "user_id":huid,
                     "display_name":hm.get("display_name") or "HLV",
@@ -1351,8 +1350,8 @@ def register_core(context):
         ops_events=_event_ops_payload(tournament_id,user_id)
         members_all=_all_members(tournament_id)
 
-        # V1.6.23: Host đang rảnh = HLV active, có Host, đã bật rảnh,
-        # online thật và không nằm trong phòng đấu đang hoạt động.
+        # V1.6.26: Host đang rảnh = HLV active, có Host, online thật
+        # và không nằm trong phòng đấu đang hoạt động. Không cần nút bật rảnh.
         # `confirmed` là trạng thái trận đã xong nên không được giữ HLV ở trạng thái bận.
         host_ready=_host_ready_rows(tournament_id, members_all=members_all)
         my_host_profile=next((hm for hm in members_all if str(hm.get("user_id"))==str(user_id)),{})
@@ -1360,7 +1359,7 @@ def register_core(context):
         c1_test_ranking=_c1_test_ranking(tournament_id)
         return {"tournament":tour,"member":member,"stages":stages,"stage1_ranking":s1,"league_ranking":league,"combined_ranking":_combined_ranking(tournament_id),
                 "matches":matches,"hosts":hosts,"clubs":clubs,"me_progress":me_progress,"rewards":_reward_summary(tournament_id,user_id),"availability":availability,
-                "host_ready":host_ready,"my_has_host":bool(my_host_profile.get("has_host")),"my_host_ready":bool((_setting(tournament_id,"host_live_ready",{}) or {}).get(str(user_id))),
+                "host_ready":host_ready,"my_has_host":bool(my_host_profile.get("has_host")),
                 "event_ops":ops_events,"knockout_flow":_setting(tournament_id,"knockout_flow",{}) or {},
                 "stage1_club_pool":_stage1_club_pool(tournament_id),"tournament_rooms":_tournament_rooms(tournament_id),
                 "all_team_options":_stage1_eligible_clubs(),"stage1_team_options":_stage1_eligible_clubs(),"league_config":_setting(tournament_id,"league_config",{}) or {},

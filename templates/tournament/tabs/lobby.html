@@ -7,14 +7,7 @@
         <p style="color:#91a3b1;font-size:12px">Sảnh trung tâm để theo dõi phòng giải, HLV đang chờ và Host đang rảnh.</p>
         <div class="td-host-ready" data-host-ready-list data-tournament-id="{{ tournament.id }}">
           <strong style="width:100%;color:#f1ca68">Host đang rảnh</strong>
-          <small style="width:100%;color:#91a3b1">Chỉ hiển thị HLV có Host, bật chế độ rảnh, đang online và không ở trong phòng đấu.</small>
-        {% if hub.my_has_host and not hub.is_test %}
-        <form method="post" action="{{ url_for('tournament_host_ready_toggle',tournament_id=tournament.id) }}" style="width:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input type="hidden" name="ready" value="{{ '0' if hub.my_host_ready else '1' }}">
-          <span class="small">Chế độ Host của tôi: <strong>{{ '🟢 Đang rảnh' if hub.my_host_ready else '⚪ Chưa bật rảnh' }}</strong></span>
-          <button class="btn {{ 'red' if hub.my_host_ready else 'green' }}" type="submit">{{ 'Tắt chế độ rảnh' if hub.my_host_ready else 'Bật chế độ rảnh' }}</button>
-        </form>
-        {% endif %}
+          <small style="width:100%;color:#91a3b1">HLV thuộc giải có Host, đang online và không ở trong phòng đấu sẽ tự động hiển thị. Không cần bật chế độ rảnh.</small>
           <div class="td-host-ready-items" data-host-ready-items>{% for h in hub.host_ready %}<span class="td-host-chip">🟢 {{ h.display_name }} · {{ h.region }}</span>{% else %}<small class="td-host-ready-empty" style="color:#91a3b1">Hiện chưa có Host nào đang rảnh.</small>{% endfor %}</div>
         </div>
         <div class="td-room-list">{% for r in hub.center_rooms %}<article class="td-room-card"><small>PHÒNG GIẢI · {{ (r.tournament_match.stage_code or 'stage1')|upper }}</small><strong>{{ r.public_label }}</strong><span>{{ r.public_status }}</span>{% if r.host_team and r.guest_team %}<p>{{ r.host_team }} ⚔ {{ r.guest_team }}</p>{% endif %}{% if hub.member and (hub.member.user_id|string == r.tournament_match.home_user_id|string or hub.member.user_id|string == r.tournament_match.away_user_id|string) %}<div style="margin-top:8px"><a class="btn" href="{{ url_for('room_detail',room_id=r.id) }}">Vào phòng</a></div>{% endif %}</article>{% else %}<div class="td-empty">Chưa có phòng giải nào đang hoạt động trong Sảnh chờ.</div>{% endfor %}</div>

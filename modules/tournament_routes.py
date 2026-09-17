@@ -475,11 +475,10 @@ def register_routes(context):
             if str(r.get('status') or '') in active_room_statuses:
                 if r.get('host_user_id'): busy.add(str(r.get('host_user_id')))
                 if r.get('guest_user_id'): busy.add(str(r.get('guest_user_id')))
-        ready_state=_landing_setting(tournament_id,'host_live_ready',{}) or {}
         host_ready=[]
         for mid in all_ids:
             rr=reg_map.get(mid) or {}; uu=all_user_map.get(mid) or {}
-            if rr.get('has_host') and ready_state.get(mid) and is_user_online_now(uu) and mid not in busy:
+            if rr.get('has_host') and is_user_online_now(uu) and mid not in busy:
                 host_ready.append({'user_id':mid,'display_name':uu.get('display_name') or uu.get('username') or 'HLV','region':rr.get('host_region') or '—'})
         host_ready.sort(key=lambda x:str(x.get('display_name') or '').casefold())
 
@@ -518,7 +517,7 @@ def register_routes(context):
             'stage1_opened':bool(s1_reveals.get(uid)), 'league_mine':league_mine,
             'league_opened':bool(league_reveals.get(uid)) or bool(league_draw.get('completed')) or league_started,
             'league_started':league_started,'league_opponents':league_opponents,
-            'my_host_ready':bool(ready_state.get(uid)), 'my_has_host':bool((reg_map.get(uid) or {}).get('has_host')),
+            'my_has_host':bool((reg_map.get(uid) or {}).get('has_host')),
             'test_opponent':test_opponent,
             'test_opponent_days':test_opp_days,
             'opponent_slot_set':opponent_slot_set,

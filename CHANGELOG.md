@@ -1,3 +1,9 @@
+## V1.6.26 — Host rảnh tự động
+- Host đang rảnh = HLV active có Host, online theo heartbeat và không tham gia phòng đang hoạt động; bỏ điều kiện bật rảnh.
+- Xóa nút bật/tắt chế độ rảnh trong Sảnh chờ; API và danh sách Admin tiếp tục cập nhật tự động 15 giây.
+- POST bật/tắt cũ tương thích nhưng không ghi dữ liệu; loại bỏ đọc host_live_ready khỏi các luồng hiển thị.
+- Giữ nguyên phòng C1, BXH, vé, lịch 32 trận; không cần SQL.
+
 ## V1.6.25 — BXH C1 cộng dồn & phòng C1 GĐ2
 - BXH công khai /tournaments hiển thị Điểm GĐ1, Điểm GĐ2 và Tổng điểm C1; cộng đúng một lần chỉ những trận completed của stage1/league.
 - BXH trung tâm /tournaments/<id> hiển thị cùng 3 cột từ nguồn _combined_ranking; Knockout không cộng điểm.

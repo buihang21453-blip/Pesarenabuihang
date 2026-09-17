@@ -1,3 +1,8 @@
+## V1.6.26
+- Host rảnh được tính tự động: HLV active thuộc giải, có Host, online theo heartbeat, không tham gia phòng đang hoạt động. Không phụ thuộc host_live_ready.
+- Admin và HLV cùng sử dụng API /api/tournaments/<id>/host-ready và tự động refresh 15 giây.
+- Không áp dụng quy tắc host rảnh cho thứ hạng, dữ liệu vé, CLB, trận C1 và tài khoản test.
+
 ## V1.6.25
 - BXH C1 chính thức phải cộng điểm GĐ1 và GĐ2 một lần/trận completed, không cộng Knockout; không tách thành hai BXH độc lập.
 - GĐ2 sử dụng cùng Phòng đấu C1, phân nhánh UI theo stage_code; CLB cố định theo HLV lúc bắt đầu, không Random trong phòng.

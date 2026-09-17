@@ -199,16 +199,9 @@ def register_scheduling(context):
     @app.post('/tournaments/<tournament_id>/host-ready')
     @login_required
     def tournament_host_ready_toggle(tournament_id):
-        uid=str((current_user() or {}).get("id") or "")
-        prof=next((x for x in _all_members(tournament_id) if str(x.get("user_id"))==uid),None)
-        if not prof or not prof.get("has_host"):
-            flash("Chỉ HLV đã đăng ký có Host mới dùng được mục này.","warning"); return redirect(url_for('tournaments')+"#rooms")
-        state=_setting(tournament_id,"host_live_ready",{}) or {}
-        ready=(request.form.get("ready") or "") in {"1","true","on","yes"}
-        if ready: state[uid]=now_iso()
-        else: state.pop(uid,None)
-        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"host_live_ready","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_host_live_ready",attempts=2)
-        flash("Đã cập nhật trạng thái Host đang rảnh.","success")
+        # Tương thích biểu mẫu cũ: trạng thái rảnh được tính tự động, không ghi
+        # host_live_ready hay thay đổi dữ liệu giải đấu nếu có client gửi POST cũ.
+        flash("Host đang rảnh được cập nhật tự động theo online và trạng thái phòng.", "success")
         return redirect(url_for('tournaments')+"#rooms")
 
     @app.post('/tournaments/matches/<match_id>/schedule-from-availability')
