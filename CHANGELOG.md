@@ -1,3 +1,10 @@
+## V1.6.8 – Đồng bộ logo Lễ bốc thăm từ clubs_import
+- Admin GĐ2 đọc `clubs_import` (read-only) để lấy URL logo của đúng 24 CLB; ưu tiên dữ liệu clubs_import trước `teams`.
+- Chuẩn hóa các biến thể tên CLB (Manchester United/Man United, FC Porto/Porto, v.v.) để khớp đúng tên đã chốt trong Pot; không đổi tên hoặc danh sách CLB gốc.
+- Nếu clubs_import chưa có bản ghi/URL hoặc không đọc được, thử logo có sẵn trong teams; nếu vẫn thiếu, giao diện hiển thị tên CLB và biểu tượng dự phòng, không phát minh logo.
+- Admin có bảng kiểm tra số logo tìm được và danh sách CLB thiếu; ba CLB Porto, RB Leipzig, PSV sẽ được tự phát hiện khi chưa có trong clubs_import, tự có logo khi người quản trị bổ sung.
+- Chưa tải bộ asset WebP do người dùng sẽ tự chuyển và upload lên Supabase; không sửa database, Storage, vé thưởng, thuật toán hay lịch đối thủ. Chưa xác minh schema/dữ liệu Supabase Production.
+
 ## V1.6.7 – Gom đúng một nút điều hành cho mỗi phần lễ bốc thăm
 - Phần 1: giữ một nút 🎲 RANDOM CLB tại thanh điều khiển phía trên sân khấu; mỗi lần bấm bốc CLB cho một HLV theo thứ tự 16→1.
 - Phần 2: giữ một nút 🎲 Bốc tiếp tại thanh điều khiển phía trên sân khấu; mỗi lần bấm công bố bốn đối thủ cho một HLV theo thứ tự 1→16.

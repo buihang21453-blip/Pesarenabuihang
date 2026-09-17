@@ -201,3 +201,8 @@ V1.5.87: không đưa lên Production khi chưa kiểm thử luồng giao dịch
 
 ### V1.6.5 – Luật thao tác lễ bốc thăm
 - CLB gốc: đúng 1 lần bấm = 1 HLV, thứ tự 16→1; đối thủ: đúng 1 lần bấm = công bố 4 đối thủ của 1 HLV, thứ tự 1→16. Không nhầm công bố với sinh lại trận. Không vượt ràng buộc/ghi đè dữ liệu giải đã có.
+
+### Logo GĐ2 – V1.6.8
+- Đọc `clubs_import` trước, chỉ fallback sang `teams` nếu nguồn chính thiếu URL; giữ nguyên 24 CLB và tên Pot trong mã.
+- Không đưa ảnh minh họa thành logo CLB chính thức; không tạo đường dẫn Storage giả cho club chưa có file.
+- Chỉ tích hợp asset nền WebP sau khi biết URL/đường dẫn thật người dùng upload; tuyệt đối không lưu Supabase credentials trong source.

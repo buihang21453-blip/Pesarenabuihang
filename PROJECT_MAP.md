@@ -408,3 +408,9 @@ Luồng rollback trước GĐ2: Thu hồi đối thủ → Thu hồi CLB. Simula
 - `templates/tournament/draw_admin_preview.html`: di chuyển form POST Random CLB / Bốc tiếp ra thanh điều khiển phía trên sân khấu, xóa nút trùng trong sân khấu; vẫn dùng endpoint cũ.
 - `static/css/tournament_draw_preview.css`: định dạng thanh điều khiển; responsive.
 - `static/js/tournament_draw_preview.js`: không đổi; tiếp tục dùng `data-live-action` / `data-sim-next` để chỉ hiển thị nút đúng chế độ.
+
+### V1.6.8 – Logo CLB lễ bốc thăm
+- `modules/tournament_club_logos.py`: ánh xạ tên 24 CLB, đọc clubs_import trước rồi teams; URL công khai hợp lệ; báo cáo thiếu logo/bản ghi read-only.
+- `modules/tournament_competition_parts/admin.py`: truyền logo + trạng thái đồng bộ cho màn hình Lễ bốc thăm.
+- `templates/tournament/draw_admin_preview.html`, `static/css/tournament_draw_preview.css`: trạng thái đồng bộ trong Công cụ quản trị phụ; logo trên sân khấu dùng nguồn trên.
+- `clubs_import` chỉ đọc. Không migration, không ghi Storage; 3 CLB chưa có bản ghi do chủ dự án bổ sung sau.

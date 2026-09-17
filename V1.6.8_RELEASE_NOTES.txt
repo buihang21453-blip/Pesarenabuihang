@@ -1,0 +1,1 @@
+PES Arena V1.6.8: GĐ2 dùng clubs_import làm nguồn logo ưu tiên, teams fallback, kiểm tra 24 CLB + báo thiếu. Porto/RB Leipzig/PSV sẽ tự đồng bộ sau khi được thêm vào clubs_import. Chưa tích hợp WebP chưa upload. Không migration; chưa test production.

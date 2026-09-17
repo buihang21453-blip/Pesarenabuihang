@@ -45,6 +45,16 @@
         <form method="post" action="{{ url_for('admin_tournament_revoke_clubs',tournament_id=preview.tournament.id) }}"><input type="hidden" name="return_to" value="draw_control"><input type="hidden" name="confirm_revoke" value="REVOKE_ALL_16_CLUBS"><button class="action-red" type="submit" {{ 'disabled' if not preview.can_revoke_clubs else '' }}>Thu hồi CLB</button></form>
       </div>
       <small class="control-order-note">Thu hồi đối thủ trước, sau đó mới thu hồi CLB. Không thu hồi khi GĐ2 đã bắt đầu hoặc đã có kết quả.</small>
+      <div class="draw-logo-sync-status" role="status">
+        <strong>🛡 Đồng bộ logo CLB từ Supabase</strong>
+        <span>clubs_import: {{ preview.logo_sync_status.clubs_import }}/24 logo · teams dự phòng: {{ preview.logo_sync_status.teams_fallback }}</span>
+        {% if preview.logo_sync_status.import_available %}
+          <small>Chưa có bản ghi clubs_import: {{ preview.logo_sync_status.missing_in_import|join(', ') if preview.logo_sync_status.missing_in_import else 'Không có' }}.</small>
+        {% else %}
+          <small>Chưa đọc được clubs_import; không thể xác nhận CLB nào thiếu. Đang dùng nguồn teams dự phòng.</small>
+        {% endif %}
+        {% if preview.logo_sync_status.without_logo %}<small>Chưa có URL logo khả dụng: {{ preview.logo_sync_status.without_logo|join(', ') }}. Giao diện tự hiển thị tên CLB.</small>{% endif %}
+      </div>
     </details>
 
     <section class="draw-card simulation-control-panel" data-simulation-controls hidden>

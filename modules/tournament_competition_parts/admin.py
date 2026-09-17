@@ -34,28 +34,18 @@ def register_admin(context):
         for member in members:
             member["avatar_url"]=(member.get("user") or {}).get("avatar_url") or ""
         member_map={str(m.get("user_id")):m for m in members}
-        # Use the existing Supabase teams catalog; absent logos fall back to text.
-        club_logo_urls={}
-        try:
-            from modules.legacy_team_random_service import _load_teams_from_supabase
-            for team in _load_teams_from_supabase():
-                name=str(team.get("team") or team.get("display") or "").strip()
-                url=str(team.get("logo_url") or "").strip()
-                if name and url.startswith(("https://","http://","/static/")):
-                    club_logo_urls[name.casefold()]=url
-        except Exception:
-            app.logger.warning("Draw preview club logos unavailable: %s", tournament_id)
-        # Known display-name variants only; every URL still comes from the
-        # real teams catalog, never a guessed third-party image or endpoint.
-        club_aliases={
-            "bayern":"bayern munich", "man united":"manchester united",
-            "man city":"manchester city", "inter":"inter milan",
-            "psg":"paris saint-germain", "porto":"fc porto",
-            "dortmund":"borussia dortmund", "atletico madrid":"atlético madrid",
-        }
+        # V1.6.8: use clubs_import as the primary Supabase source for draw logos.
+        # Missing imports (notably Porto, RB Leipzig, PSV) can be added later;
+        # do not create fake rows, generate brand marks, or change Pot membership.
+        from modules.tournament_club_logos import load_draw_club_logos
+        from modules.legacy_team_random_service import _load_teams_from_supabase
+        approved_clubs=[name for pot in C1_CLUB_POTS.values() for name in pot]
+        draw_club_logos, logo_sync_status = load_draw_club_logos(
+            db, execute_query, __import__("os").getenv("SUPABASE_URL", ""), approved_clubs,
+            team_loader=_load_teams_from_supabase, logger=app.logger,
+        )
         def draw_logo(name):
-            key=str(name or "").strip().casefold()
-            return club_logo_urls.get(key) or club_logo_urls.get(club_aliases.get(key,""), "")
+            return draw_club_logos.get(str(name or "").strip(), "")
         draft_rows=_club_draft_admin_rows(tournament_id)
         timing_cfg=_setting(tournament_id,"competition_timing",{}) or {}
         reward_phase=_reward_ticket_phase_status(tournament_id)
@@ -147,6 +137,7 @@ def register_admin(context):
             "draft_rows":draft_rows,
             "club_pots":club_pots,
             "club_logo_urls":{c.casefold():draw_logo(c) for pot in C1_CLUB_POTS.values() for c in pot},
+            "logo_sync_status":logo_sync_status,
             "assigned_count":assigned_count,
             "reward_phase":reward_phase,
             "league_match_count":len(league_matches),
