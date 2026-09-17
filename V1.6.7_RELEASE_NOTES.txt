@@ -1,0 +1,1 @@
+PES Arena V1.6.7: Giữ đúng một nút 🎲 RANDOM CLB tại Phần 1 và một nút 🎲 Bốc tiếp tại Phần 2, nằm ngoài sân khấu. Không thay endpoint hoặc logic. Không cần SQL mới. Chưa kiểm thử Production.

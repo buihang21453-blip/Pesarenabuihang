@@ -1,3 +1,9 @@
+## V1.6.7 – Gom đúng một nút điều hành cho mỗi phần lễ bốc thăm
+- Phần 1: giữ một nút 🎲 RANDOM CLB tại thanh điều khiển phía trên sân khấu; mỗi lần bấm bốc CLB cho một HLV theo thứ tự 16→1.
+- Phần 2: giữ một nút 🎲 Bốc tiếp tại thanh điều khiển phía trên sân khấu; mỗi lần bấm công bố bốn đối thủ cho một HLV theo thứ tự 1→16.
+- Gỡ hai nút bốc trùng khỏi khu vực sân khấu; chế độ giả lập dùng cùng vị trí nút tương ứng, không hiển thị đồng thời.
+- Giữ nguyên endpoint POST, quyền Admin, thuật toán, các thao tác quản trị phụ, vé thưởng và dữ liệu giải. Không cần SQL mới.
+
 ## V1.6.6 – Giao diện sân khấu tối giản và avatar HLV
 - Sân khấu mỗi pha có đúng một nút chính: CLB 16→1 / Đối thủ 1→16; chuyển các thao tác quản trị khác vào mục thu gọn, vẫn giữ đầy đủ endpoint và khóa an toàn.
 - Hiển thị avatar thật từ users.avatar_url cho danh sách, HLV trên sân khấu và bốn đối thủ; khi không có ảnh/ảnh lỗi, dùng chữ cái đầu.

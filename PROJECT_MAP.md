@@ -403,3 +403,8 @@ Luồng rollback trước GĐ2: Thu hồi đối thủ → Thu hồi CLB. Simula
 - `templates/tournament/draw_admin_preview.html`: một nút chính trong mỗi sân khấu; công cụ quản trị chuyển vào `<details>`; avatar HLV/opponent có fallback và logo chỉ hiện tại kết quả công bố CLB.
 - `static/js/tournament_draw_preview.js`: render avatar an toàn bằng DOM, logo theo kết quả; giả lập CLB thứ tự 16→1.
 - `static/css/tournament_draw_preview.css`: layout gọn, responsive, avatar và logo. Không migration.
+
+### V1.6.7 – Một nút điều khiển trên mỗi phần
+- `templates/tournament/draw_admin_preview.html`: di chuyển form POST Random CLB / Bốc tiếp ra thanh điều khiển phía trên sân khấu, xóa nút trùng trong sân khấu; vẫn dùng endpoint cũ.
+- `static/css/tournament_draw_preview.css`: định dạng thanh điều khiển; responsive.
+- `static/js/tournament_draw_preview.js`: không đổi; tiếp tục dùng `data-live-action` / `data-sim-next` để chỉ hiển thị nút đúng chế độ.
