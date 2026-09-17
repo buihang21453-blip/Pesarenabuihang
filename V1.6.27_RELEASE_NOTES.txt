@@ -1,0 +1,9 @@
+PES ARENA V1.6.27 — BẢNG 4 ĐỐI THỦ GĐ2 CHO ADMIN
+
+Admin > Điều hành giải đấu > GĐ2 > Bảng đối thủ GĐ2.
+- Bộ chọn HLV: xem đồng thời bốn thẻ đối thủ hoặc tất cả 16 HLV.
+- Thẻ hiện HLV, Tier HLV, CLB đang sở hữu, Pot CLB, logo (nếu nguồn hợp lệ), trạng thái, kết quả.
+- Lấy lịch trận league đã được lưu; không sinh mới, không thay đổi cặp đấu.
+- CLB và Pot lấy từ dữ liệu thành viên hiện tại mỗi lần tải trang; nút Làm mới CLB tải lại trang.
+- Chỉ hiển thị ở Admin; không làm lộ lịch bí mật cho HLV trước công bố.
+- Không thay đổi vé, điểm, BXH, kết quả, SQL hoặc phòng C1.

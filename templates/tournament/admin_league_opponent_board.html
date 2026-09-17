@@ -1,0 +1,66 @@
+{# Admin-only, live read of existing 32 fixtures. No randomization or mutation. #}
+<section class="c1-opponent-board" id="c1-opponent-board" data-c1-opponent-board>
+  <div class="c1-opponent-board-head">
+    <div>
+      <span class="c1-opponent-board-eyebrow">PES ARENA · C1 GIAI ĐOẠN 2</span>
+      <h3>🎯 Bảng đối thủ GĐ2 · Theo từng HLV</h3>
+      <p>Chọn HLV để xem đồng thời 4 đối thủ theo lịch đã bốc thăm. CLB được đọc từ phân bổ hiện tại; tải lại trang sau khi có người dùng vé đổi CLB.</p>
+    </div>
+    <span class="c1-opponent-board-total">{{ ops.get('league_fixture_count',0) }}/32 trận</span>
+  </div>
+  {% if ops.get('league_opponent_board') %}
+    <div class="c1-opponent-board-controls">
+      <label for="c1OpponentPlayer">HLV cần kiểm tra
+        <select id="c1OpponentPlayer" data-c1-opponent-select>
+          <option value="all">Tất cả HLV ({{ ops.get('league_opponent_board',[])|length }})</option>
+          {% for player in ops.get('league_opponent_board',[]) %}
+          <option value="{{ player.user_id }}" {% if loop.first %}selected{% endif %}>{{ player.name }} · {{ player.count }}/4 đối thủ</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="button" class="btn gray" data-c1-opponent-all>👥 Xem tất cả</button>
+      <button type="button" class="btn gray" data-c1-opponent-refresh>↻ Làm mới CLB</button>
+    </div>
+    {% for player in ops.get('league_opponent_board',[]) %}
+    <article class="c1-opponent-player" data-c1-opponent-player="{{ player.user_id }}" {% if not loop.first %}hidden{% endif %}>
+      <header class="c1-opponent-player-head">
+        <div><h4>{{ player.name }}</h4><span>Tier HLV {{ player.tier or '—' }} · CLB {{ player.club or 'Chờ phân bổ' }} · Pot CLB {{ player.club_pot or '—' }}</span></div>
+        <strong>{{ player.completed }}/{{ player.count }} đã hoàn thành · {{ player.count }}/4 đối thủ</strong>
+      </header>
+      <div class="c1-opponent-card-grid">
+        {% for rival in player.opponents %}
+        <div class="c1-opponent-card">
+          <div class="c1-opponent-card-top"><span>ĐỐI THỦ {{ loop.index }}</span><span class="c1-opponent-card-status {{ 'done' if rival.status=='completed' else 'pending' }}">{{ '✓ Đã thi đấu' if rival.status=='completed' else ('Đang thi đấu' if rival.status in ['playing','in_progress'] else 'Chưa hoàn thành') }}</span></div>
+          <div class="c1-opponent-card-main">
+            {% if rival.logo %}<img src="{{ rival.logo }}" alt="Logo {{ rival.club }}" loading="lazy">{% else %}<span class="c1-opponent-card-placeholder">⚽</span>{% endif %}
+            <div><h5>{{ rival.name }}</h5><p>{{ rival.club or 'CLB đang chờ cập nhật' }}</p></div>
+          </div>
+          <div class="c1-opponent-card-tags"><span>Tier HLV {{ rival.tier or '—' }}</span><span>Pot CLB {{ rival.club_pot or '—' }}</span></div>
+          <div class="c1-opponent-card-foot">
+            <span>{{ 'Chủ nhà' if rival.is_home else 'Đội khách' }}</span>
+            {% if rival.status=='completed' and rival.home_score is not none and rival.away_score is not none %}<strong>{{ rival.home_score }} – {{ rival.away_score }}</strong>{% else %}<strong>Chưa có kết quả</strong>{% endif %}
+          </div>
+        </div>
+        {% else %}
+        <p class="c1-opponent-board-empty">HLV chưa có trận GĐ2 hợp lệ trong lịch đã lưu.</p>
+        {% endfor %}
+      </div>
+      {% if player.count != 4 %}<p class="c1-opponent-board-alert">⚠ Đang có {{ player.count }}/4 trận cho HLV này. Kiểm tra lịch GĐ2; bảng không tự sinh trận mới.</p>{% endif %}
+    </article>
+    {% endfor %}
+  {% else %}<p class="c1-opponent-board-empty">Chưa có HLV trong giải để hiển thị lịch GĐ2.</p>{% endif %}
+</section>
+<style>
+.c1-opponent-board{margin:14px 0;padding:18px;border:1px solid rgba(241,202,104,.42);border-radius:16px;background:linear-gradient(135deg,#091c2b,#06121f);color:#e9eff6}.c1-opponent-board-head,.c1-opponent-player-head{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.c1-opponent-board-eyebrow{font-size:10px;letter-spacing:.18em;color:#91a9bb;font-weight:800}.c1-opponent-board h3{margin:5px 0;color:#f1ca68;font-size:20px}.c1-opponent-board-head p{margin:0;max-width:750px;color:#aabac7;font-size:12px;line-height:1.55}.c1-opponent-board-total{color:#f1ca68;border:1px solid rgba(241,202,104,.38);border-radius:999px;padding:8px 12px;font-weight:900;white-space:nowrap}.c1-opponent-board-controls{display:flex;align-items:end;gap:9px;flex-wrap:wrap;margin:16px 0}.c1-opponent-board-controls label{font-size:12px;color:#afc1cf;font-weight:700;min-width:230px;flex:1}.c1-opponent-board-controls select{width:100%;margin-top:5px;min-height:40px;background:#0b2233;color:#fff;border:1px solid rgba(241,202,104,.38);border-radius:9px;padding:6px 10px}.c1-opponent-board-controls .btn{min-height:40px}.c1-opponent-player[hidden]{display:none!important}.c1-opponent-player{margin-top:12px;border:1px solid rgba(255,255,255,.09);border-radius:14px;overflow:hidden;background:#071725}.c1-opponent-player-head{padding:13px 15px;border-bottom:1px solid rgba(255,255,255,.08)}.c1-opponent-player-head h4{color:#f1ca68;margin:0 0 4px;font-size:17px}.c1-opponent-player-head span{font-size:12px;color:#bdcbd5}.c1-opponent-player-head>strong{font-size:12px;color:#b8edcf}.c1-opponent-card-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px}.c1-opponent-card{min-width:0;padding:12px;border:1px solid rgba(241,202,104,.19);border-radius:12px;background:#0a2130}.c1-opponent-card-top,.c1-opponent-card-foot{display:flex;align-items:center;justify-content:space-between;gap:7px;font-size:10px;color:#9db4c5;font-weight:800}.c1-opponent-card-status{padding:4px 6px;border-radius:99px;border:1px solid rgba(255,255,255,.12);font-size:10px;white-space:nowrap}.c1-opponent-card-status.done{color:#8ff0ad;border-color:rgba(46,204,113,.35)}.c1-opponent-card-main{display:flex;gap:10px;align-items:center;min-height:74px;margin:10px 0}.c1-opponent-card-main img,.c1-opponent-card-placeholder{width:52px;height:52px;object-fit:contain;flex:0 0 52px}.c1-opponent-card-placeholder{display:grid;place-items:center;border:1px dashed rgba(255,255,255,.15);border-radius:10px;font-size:23px}.c1-opponent-card-main h5{margin:0 0 4px;color:#fff;font-size:15px;overflow-wrap:anywhere}.c1-opponent-card-main p{margin:0;color:#f1ca68;font-size:12px;overflow-wrap:anywhere}.c1-opponent-card-tags{display:flex;gap:6px;flex-wrap:wrap}.c1-opponent-card-tags span{padding:5px 7px;border-radius:7px;background:#12344b;border:1px solid rgba(106,163,210,.23);color:#d5e7f5;font-size:11px;font-weight:700}.c1-opponent-card-foot{margin-top:13px;padding-top:9px;border-top:1px solid rgba(255,255,255,.09)}.c1-opponent-card-foot strong{color:#eaf2f8}.c1-opponent-board-empty,.c1-opponent-board-alert{margin:10px 12px;color:#efc86a;font-size:12px}@media(max-width:1190px){.c1-opponent-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:690px){.c1-opponent-board{padding:12px}.c1-opponent-card-grid{grid-template-columns:1fr}.c1-opponent-board-controls label{flex:1 1 100%}}
+</style>
+<script>
+(function(){
+  var board=document.querySelector('[data-c1-opponent-board]');if(!board)return;
+  var select=board.querySelector('[data-c1-opponent-select]');if(!select)return;
+  function show(id){board.querySelectorAll('[data-c1-opponent-player]').forEach(function(card){card.hidden=id!=='all'&&card.dataset.c1OpponentPlayer!==id;});}
+  select.addEventListener('change',function(){show(select.value);});
+  var all=board.querySelector('[data-c1-opponent-all]');if(all)all.addEventListener('click',function(){select.value='all';show('all');});
+  var refresh=board.querySelector('[data-c1-opponent-refresh]');if(refresh)refresh.addEventListener('click',function(){window.location.reload();});
+  show(select.value);
+})();
+</script>

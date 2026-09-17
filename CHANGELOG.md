@@ -1,3 +1,9 @@
+## V1.6.27 — Bảng đối thủ GĐ2 theo từng HLV dành cho Admin
+- Thêm giao diện riêng trong Admin → GĐ2: chọn HLV, xem đồng thời bốn thẻ đối thủ hoặc toàn bộ HLV.
+- Hiển thị Tier HLV, CLB hiện tại, Pot CLB, logo nếu có, trạng thái trận và tỷ số đã xác nhận.
+- Tải từ lịch league đã lưu; CLB cập nhật khi Admin bấm làm mới; không sinh lại lịch hay tác động vé, BXH.
+- Không cần SQL mới.
+
 ## V1.6.26 — Host rảnh tự động
 - Host đang rảnh = HLV active có Host, online theo heartbeat và không tham gia phòng đang hoạt động; bỏ điều kiện bật rảnh.
 - Xóa nút bật/tắt chế độ rảnh trong Sảnh chờ; API và danh sách Admin tiếp tục cập nhật tự động 15 giây.

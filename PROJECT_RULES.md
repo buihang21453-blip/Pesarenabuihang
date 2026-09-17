@@ -1,3 +1,9 @@
+## V1.6.27
+- Bảng đối thủ GĐ2 dành riêng cho Admin phải đọc trận league đã lưu, tuyệt đối không gọi random/sinh lịch lại.
+- Tier gắn thành viên, CLB và Pot CLB tra từ phân bổ hiện hành để phản ánh vé đổi CLB.
+- Danh sách trước công bố chỉ dành cho Admin; không tiết lộ lịch đối thủ bí mật cho HLV.
+- Không đụng dữ liệu BXH, vé, trận đã xác nhận và hai tài khoản test.
+
 ## V1.6.26
 - Host rảnh được tính tự động: HLV active thuộc giải, có Host, online theo heartbeat, không tham gia phòng đang hoạt động. Không phụ thuộc host_live_ready.
 - Admin và HLV cùng sử dụng API /api/tournaments/<id>/host-ready và tự động refresh 15 giây.

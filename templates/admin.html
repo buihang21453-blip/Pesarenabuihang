@@ -1194,7 +1194,7 @@
       <div class="tournament-op-tab-panel" id="c1-admin-gd2" data-tournament-op-panel="potclub" style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
         {% set reward_phase=ev.get('reward_ticket_phase',{}) %}
         <div style="border:1px solid rgba(241,202,104,.45);border-radius:12px;padding:13px;margin-bottom:14px;background:#0b1c29">
-          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><strong>🏆 Kịch bản Lễ bốc thăm GĐ2 · V1.6.26</strong><a class="btn green" href="{{ url_for('admin_tournament_draw_preview',tournament_id=ot.id) }}" target="_blank" rel="noopener">🎛 Mở bảng điều hành Lễ bốc thăm</a></div>
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><strong>🏆 Kịch bản Lễ bốc thăm GĐ2 · V1.6.27</strong><a class="btn green" href="{{ url_for('admin_tournament_draw_preview',tournament_id=ot.id) }}" target="_blank" rel="noopener">🎛 Mở bảng điều hành Lễ bốc thăm</a></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0">
             <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>1 · 20:00 17/09</b><div class="small">Mở lễ bốc thăm</div></div>
             <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>2 · Random 16 CLB</b><div class="small">Tier 1→Pot 3 · Tier 2→Pot 2 · Tier 3→Pot 1</div></div>
@@ -1211,6 +1211,7 @@
           <p class="small" style="margin:7px 0 0">Sau khi đủ 16 CLB gốc, Admin có thể sinh và công bố lịch đối thủ ngay. Lịch 32 trận được khóa cố định; HLV có vé vẫn được Random đổi CLB đến khi chốt/dùng hết vé/hết hạn. Đến hạn vé, vé chưa dùng tự hết hiệu lực. GĐ2 có thể mở ngay khi đủ điều kiện lịch/CLB, kể cả khi còn vé chưa chốt. Vé chưa dùng vẫn có hiệu lực đến hạn Admin đã đặt.</p>
           <script>(function(){document.querySelectorAll('[data-admin-draw-input]').forEach(function(el){var d=new Date(el.dataset.adminDrawInput);if(isNaN(d.getTime()))return;var parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d);var f={};parts.forEach(function(p){f[p.type]=p.value;});el.value=f.year+'-'+f.month+'-'+f.day+'T'+f.hour+':'+f.minute;});})();</script>
         </div>
+        {% include "tournament/admin_league_opponent_board.html" %}
         <section style="margin:12px 0;padding:13px;border:1px solid rgba(46,204,113,.35);border-radius:12px;background:#0b1c29" data-host-ready-list data-tournament-id="{{ ot.id }}">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><strong>🟢 Host đang rảnh · HLV của giải C1</strong><a class="btn" href="{{ url_for('tournaments') }}#rooms">Mở Sảnh chờ</a></div>
           <p class="small">HLV thuộc giải có Host, đang online và không ở trong phòng. Không cần bật chế độ rảnh; danh sách cập nhật tự động.</p>

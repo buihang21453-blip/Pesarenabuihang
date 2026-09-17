@@ -1439,6 +1439,56 @@ def register_core(context):
             m["stage1_target"]=pr.get("target",6)
             m["stage1_percent"]=pr.get("percent",0)
             m["stage1_points"]=pr.get("points",0)
+        # V1.6.27: admin-only fixture board. Read the stored league matches rather than
+        # the viewer-filtered detail payload or re-running the opponent draw.
+        league_fixture_rows=[dict(row) for row in _matches(tid,"league") if row.get("status") != "cancelled"]
+        member_by_id={str(row.get("user_id")):row for row in members}
+        league_cards_by_id={uid:[] for uid in member_by_id}
+        for match in league_fixture_rows:
+            home=str(match.get("home_user_id") or "")
+            away=str(match.get("away_user_id") or "")
+            if home not in member_by_id or away not in member_by_id or home==away:
+                continue
+            for owner_id,opponent_id in ((home,away),(away,home)):
+                rival=member_by_id[opponent_id]
+                club=str(rival.get("fixed_club_name") or "")
+                league_cards_by_id[owner_id].append({
+                    "match_id":str(match.get("id") or ""),
+                    "name":rival.get("display_name") or "HLV",
+                    "tier":rival.get("pot_no"),
+                    "club":club,
+                    "club_pot":C1_CLUB_POT_BY_NAME.get(club),
+                    "status":match.get("status") or "pending",
+                    "home_score":match.get("home_score"),
+                    "away_score":match.get("away_score"),
+                    "scheduled_at":match.get("scheduled_at"),
+                    "is_home":owner_id==home,
+                })
+        logo_by_club={}
+        if league_fixture_rows:
+            try:
+                import os
+                from modules.tournament_club_logos import load_draw_club_logos
+                club_names=sorted({str(m.get("fixed_club_name")) for m in members if m.get("fixed_club_name")})
+                if club_names:
+                    logo_by_club,_=load_draw_club_logos(db,execute_query,os.getenv("SUPABASE_URL", ""),club_names,
+                        team_loader=_load_teams_from_supabase,logger=app.logger)
+            except Exception:
+                app.logger.exception("Admin GĐ2 opponent club logo lookup failed: tournament=%s",tid)
+        league_opponent_board=[]
+        for row in sorted(members,key=lambda x:(int(x.get("seed_no") or 999),str(x.get("display_name") or "").casefold())):
+            uid=str(row.get("user_id"))
+            opponents=league_cards_by_id.get(uid,[])
+            for card in opponents:
+                card["logo"]=logo_by_club.get(card["club"], "")
+            league_opponent_board.append({
+                "user_id":uid,"name":row.get("display_name") or "HLV",
+                "tier":row.get("pot_no"),"club":row.get("fixed_club_name") or "",
+                "club_pot":C1_CLUB_POT_BY_NAME.get(row.get("fixed_club_name") or ""),
+                "opponents":opponents,"count":len(opponents),
+                "completed":sum(1 for card in opponents if card["status"]=="completed"),
+            })
+
         test_ids=_c1_test_user_ids(tid)
         test_users=_c1_test_users(tid) if test_ids else []
         # V1.5.5: Trung tâm C1 Admin là nơi duy nhất nạp toàn bộ dữ liệu vận hành giải.
@@ -1551,6 +1601,8 @@ def register_core(context):
             "c1_club_pots":C1_CLUB_POTS,"c1_club_pool":C1_CLUB_POOL,
             "host_list":host_list,"host_count":len(host_list),
             "all_matches":payload.get("matches") or [],
+            "league_opponent_board":league_opponent_board,
+            "league_fixture_count":len(league_fixture_rows),
             "upcoming_3day_matches":upcoming_3day_matches,
             "upcoming_3day_window":{
                 "from":now_vn.date().isoformat(),

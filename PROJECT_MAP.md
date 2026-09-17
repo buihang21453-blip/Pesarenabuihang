@@ -1,3 +1,9 @@
+## V1.6.27
+- modules/tournament_competition_parts/core.py: _admin_payload thêm league_opponent_board từ trận league lưu và phân bổ CLB hiện tại.
+- templates/admin.html: nhúng bảng đối thủ độc lập trong tab GĐ2.
+- templates/tournament/admin_league_opponent_board.html: 4 thẻ đối thủ / HLV; chọn HLV, xem tất cả, làm mới CLB.
+- app.py: APP_VERSION V1.6.27.
+
 ## V1.6.26
 - modules/tournament_competition_parts/core.py: _host_ready_rows bỏ opt-in; nguồn API Host live và trang chi tiết.
 - modules/tournament_routes.py: payload /tournaments tính Host từ online + không trong phòng.
