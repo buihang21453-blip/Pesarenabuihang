@@ -1,3 +1,10 @@
+## V1.6.16
+# Quy ước lỗi khi dùng vé Random CLB
+
+- Không trừ vé trước khi giữ CLB mới và cập nhật CLB thành công.
+- Thất bại khi lưu vé phải có bước bù trừ tốt nhất cho bản ghi CLB và log lỗi để Admin kiểm tra.
+- Các lỗi hậu xử lý không được làm người dùng tưởng thao tác đã thất bại nếu vé đã được ghi thành công.
+
 ## V1.6.15
 # Quy ước Admin quay hộ vé CLB
 

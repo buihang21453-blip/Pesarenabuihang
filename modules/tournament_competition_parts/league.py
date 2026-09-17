@@ -338,7 +338,7 @@ def register_league(context):
         state["deadline_at"]=None
         state["active"]=any(entries.get(uid,{}).get("status")!="selected" for uid in reward_ids)
         state["completed"]=bool(all_ids) and all(entries.get(uid,{}).get("status")=="selected" for uid in all_ids)
-        execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),label,attempts=2)
+        return execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"club_draft_v2","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),label,attempts=2)
 
     def _early_reward_ticket_phase_open(tournament_id, state):
         """All 16 must receive their base Tier/Pot clubs before any early ticket can be used."""
@@ -411,7 +411,11 @@ def register_league(context):
         return redirect(url_for('tournaments'))
 
     def _reroll_early_ticket_for(tournament_id, uid, admin_actor=None):
-        """One ticket operation shared by a player and an authorized admin proxy."""
+        """One guarded POST for a player's ticket or an authorized admin proxy.
+
+        Return to the correct page on database errors; never spend a ticket before
+        the new club has been reserved and the member's assignment was written.
+        """
         uid=str(uid or "")
         redirect_target = (
             (url_for('admin_tournament_draw_preview',tournament_id=tournament_id)
@@ -419,68 +423,141 @@ def register_league(context):
              else url_for('admin') + '#c1-admin-gd2')
             if admin_actor else url_for('tournaments')
         )
-        member=_member(tournament_id,uid)
-        state=_club_draft_state(tournament_id,False) or {}
-        entry=(state.get("entries") or {}).get(uid) or {}
-        if (not member or str(member.get("status") or "")!="active"
-                or uid not in [str(x) for x in (state.get("order") or [])][:3]
-                or entry.get("allocation_type")!="EARLY_REWARD"
-                or int(entry.get("tickets_remaining") or 0)<=0):
-            flash("Bạn không có vé thưởng sớm để dùng.","warning"); return redirect(redirect_target)
-        phase=_reward_ticket_phase_status(tournament_id,state)
-        if entry.get("reward_finalized"):
-            flash("Bạn đã chốt CLB cuối cùng; vé thưởng còn lại không còn hiệu lực.","warning"); return redirect(redirect_target)
-        if phase.get("deadline_reached"):
-            _close_reward_ticket_phase(tournament_id,"deadline")
-            flash("Đã hết hạn sử dụng vé thưởng GĐ1.","warning"); return redirect(redirect_target)
-        if not state.get("tier_club_pot_rule"):
-            flash("Admin cần sửa phân bổ 16 CLB đúng Tier/Pot trước khi HLV sử dụng vé đổi CLB.","warning")
+        def reply(message, category='warning'):
+            flash(message,category)
             return redirect(redirect_target)
-        if not _early_reward_ticket_phase_open(tournament_id,state):
-            flash("Chờ Admin Random CLB gốc cho đủ 16 HLV theo Tier/Pot trước khi dùng vé thưởng sớm.","warning")
-            return redirect(redirect_target)
-        old_name=str(member.get("fixed_club_name") or "")
-        if not old_name or entry.get("status")!="selected":
-            flash("Bạn cần chốt CLB ban đầu trước khi dùng vé đổi CLB.","warning"); return redirect(redirect_target)
-        old,_=_one(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("name",old_name).eq("selected_by",uid),"ops_early_reroll_old")
-        if not old:
-            flash("Không xác minh được CLB hiện tại, chưa trừ vé.","error"); return redirect(redirect_target)
-        skipped=set(str(x) for x in (entry.get("skipped") or []))
-        skipped.add(str(old["id"]))
-        pool=_available_clubs(tournament_id,skipped)
-        if state.get("tier_club_pot_rule"):
-            required_pot=4-int(member.get("pot_no") or 0)
-            pool=[c for c in pool if C1_CLUB_POT_BY_NAME.get(c.get("name"))==required_pot]
-        if not pool:
-            flash("Pool không còn CLB phù hợp, vé vẫn được giữ nguyên.","warning"); return redirect(redirect_target)
-        new=random.choice(pool)
-        reserved=execute_query(db.table("tournament_clubs").update({"selected_by":uid,"selected_at":now_iso()}).eq("tournament_id",tournament_id).eq("id",new["id"]).is_("selected_by","null"),"ops_early_reroll_reserve",attempts=2)
-        if not getattr(reserved,"data",None):
-            flash("CLB vừa được người khác chọn; chưa trừ vé. Hãy thử lại.","warning"); return redirect(redirect_target)
-        execute_query(db.table("tournament_members").update({"fixed_club_id":new.get("club_key"),"fixed_club_name":new.get("name")}).eq("tournament_id",tournament_id).eq("user_id",uid),"ops_early_reroll_member",attempts=2)
-        entry["tickets_remaining"]=int(entry["tickets_remaining"])-1
-        entry["skipped"]=list(skipped); entry["selected_club"]=new.get("name")
-        entry["candidate"]={"id":str(new["id"]),"name":new.get("name")}; entry["status"]="selected"
-        if int(entry.get("tickets_remaining") or 0)==0:
-            entry["reward_finalized"]=True
-            entry["reward_finalized_at"]=now_iso()
-            entry["reward_finalized_reason"]="tickets_exhausted"
-        state["entries"][uid]=entry
-        actor_label="Admin quay hộ" if admin_actor else "HLV tự quay"
-        state.setdefault("history",[]).append({
-            "at":now_iso(),"user_id":uid,"action":"REROLL","club":new.get("name"),
-            "actor_user_id":str(admin_actor or uid),"actor_role":"admin" if admin_actor else "player",
-            "message":f"{actor_label} dùng 1 vé thưởng sớm: {old_name} → {new.get('name')}."
-        })
-        if entry.get("reward_finalized"):
-            state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":"REWARD_FINALIZE","club":new.get("name"),"message":"Đã dùng hết vé thưởng; CLB hiện tại tự động trở thành CLB cuối cùng."})
-        _save_reward_draft(tournament_id,state,"ops_early_reroll_save")
-        execute_query(db.table("tournament_clubs").update({"selected_by":None,"selected_at":None}).eq("tournament_id",tournament_id).eq("id",old["id"]).eq("selected_by",uid),"ops_early_reroll_release_old",attempts=2)
-        opened=False
-        if _reward_ticket_phase_status(tournament_id,state).get("all_finalized"):
-            opened,_msg=_open_league_stage(tournament_id,"all_reward_holders_finalized")
-        flash((f"Đã dùng vé cuối: {old_name} → {new.get('name')}. CLB đã chốt cuối cùng." if entry.get("reward_finalized") else f"Đã dùng 1 vé: {old_name} → {new.get('name')}. Còn {entry['tickets_remaining']} vé.") + (" GĐ2 đã tự mở." if opened else ""),"success")
-        return redirect(redirect_target)
+
+        try:
+            member=_member(tournament_id,uid)
+            state=_club_draft_state(tournament_id,False) or {}
+            entry=(state.get('entries') or {}).get(uid) or {}
+            if (not member or str(member.get('status') or '')!='active'
+                    or uid not in [str(x) for x in (state.get('order') or [])][:3]
+                    or entry.get('allocation_type')!='EARLY_REWARD'
+                    or int(entry.get('tickets_remaining') or 0)<=0):
+                return reply('HLV không có vé thưởng sớm hợp lệ để dùng.')
+            if entry.get('reward_finalized'):
+                return reply('CLB đã chốt cuối cùng; không thể dùng thêm vé.')
+            phase=_reward_ticket_phase_status(tournament_id,state)
+            if phase.get('deadline_reached'):
+                _close_reward_ticket_phase(tournament_id,'deadline')
+                return reply('Đã hết hạn sử dụng vé thưởng GĐ1.')
+            if state.get('tier_club_pot_rule')!='1:3;2:2;3:1':
+                return reply('Admin cần xác nhận phân bổ CLB theo Tier/Pot trước khi đổi vé.')
+            if not _early_reward_ticket_phase_open(tournament_id,state):
+                return reply('Chờ đủ 16 CLB gốc hợp lệ trước khi dùng vé thưởng sớm.')
+            old_name=str(member.get('fixed_club_name') or '')
+            if not old_name or entry.get('status')!='selected':
+                return reply('HLV cần có CLB ban đầu đã chốt trước khi sử dụng vé.')
+            old,_=_one(db.table('tournament_clubs').select('*').eq('tournament_id',tournament_id)
+                       .eq('name',old_name).eq('selected_by',uid),'ops_early_reroll_old')
+            if not old:
+                return reply('Không xác minh được quyền sở hữu CLB hiện tại; vé chưa bị trừ.','error')
+            skipped=set(str(x) for x in (entry.get('skipped') or []))
+            skipped.add(str(old['id']))
+            pot_no=int(member.get('pot_no') or 0)
+            if pot_no not in (1,2,3):
+                return reply('Tier HLV chưa hợp lệ. Admin cần kiểm tra trước khi đổi vé.','error')
+            required_pot=4-pot_no
+            pool=[c for c in _available_clubs(tournament_id,skipped)
+                  if C1_CLUB_POT_BY_NAME.get(c.get('name'))==required_pot]
+            if not pool:
+                return reply('Pot không còn CLB phù hợp; vé vẫn được giữ nguyên.')
+            new=random.choice(pool)
+
+            # Reserve the new club first; do not mutate the ticket state yet.
+            reserved=execute_query(db.table('tournament_clubs').update({
+                'selected_by':uid,'selected_at':now_iso()
+            }).eq('tournament_id',tournament_id).eq('id',new['id'])
+              .is_('selected_by','null'),'ops_early_reroll_reserve',attempts=2)
+            if not getattr(reserved,'data',None):
+                return reply('CLB vừa được chọn bởi người khác. Vé chưa bị trừ; hãy thử lại.')
+
+            def restore_old_assignment():
+                # The old club remains reserved until the whole operation completes.
+                try:
+                    execute_query(db.table('tournament_members').update({
+                        'fixed_club_id':old.get('club_key'),'fixed_club_name':old_name
+                    }).eq('tournament_id',tournament_id).eq('user_id',uid),
+                    'ops_early_reroll_restore_member',attempts=2)
+                except Exception:
+                    app.logger.exception('Could not restore member after reroll failure tournament=%s user=%s',tournament_id,uid)
+                try:
+                    execute_query(db.table('tournament_clubs').update({
+                        'selected_by':None,'selected_at':None
+                    }).eq('tournament_id',tournament_id).eq('id',new['id']).eq('selected_by',uid),
+                    'ops_early_reroll_rollback_club',attempts=2)
+                except Exception:
+                    app.logger.exception('Could not release reserved replacement club tournament=%s user=%s',tournament_id,uid)
+
+            try:
+                updated=execute_query(db.table('tournament_members').update({
+                    'fixed_club_id':new.get('club_key'),'fixed_club_name':new.get('name')
+                }).eq('tournament_id',tournament_id).eq('user_id',uid).eq('fixed_club_name',old_name),
+                'ops_early_reroll_member',attempts=2)
+                if not getattr(updated,'data',None):
+                    restore_old_assignment()
+                    return reply('CLB đã thay đổi ở phiên khác; vé chưa bị trừ. Hãy tải lại trang.','warning')
+            except Exception:
+                restore_old_assignment()
+                raise
+
+            # Only persist one ticket spend after the replacement is assigned.
+            new_entry=dict(entry)
+            new_entry['tickets_remaining']=int(entry['tickets_remaining'])-1
+            new_entry['skipped']=list(skipped)
+            new_entry['selected_club']=new.get('name')
+            new_entry['candidate']={'id':str(new['id']),'name':new.get('name')}
+            new_entry['status']='selected'
+            if new_entry['tickets_remaining']==0:
+                new_entry['reward_finalized']=True
+                new_entry['reward_finalized_at']=now_iso()
+                new_entry['reward_finalized_reason']='tickets_exhausted'
+            new_state=dict(state)
+            new_state['entries']=dict(state.get('entries') or {})
+            new_state['entries'][uid]=new_entry
+            new_state['history']=list(state.get('history') or [])
+            actor_label='Admin quay hộ' if admin_actor else 'HLV tự quay'
+            new_state['history'].append({
+                'at':now_iso(),'user_id':uid,'action':'REROLL','club':new.get('name'),
+                'actor_user_id':str(admin_actor or uid),'actor_role':'admin' if admin_actor else 'player',
+                'message':f"{actor_label} dùng 1 vé thưởng sớm: {old_name} → {new.get('name')}."
+            })
+            if new_entry.get('reward_finalized'):
+                new_state['history'].append({
+                    'at':now_iso(),'user_id':uid,'action':'REWARD_FINALIZE','club':new.get('name'),
+                    'message':'Đã dùng hết vé; CLB mới tự động trở thành CLB cuối cùng.'
+                })
+            try:
+                saved=_save_reward_draft(tournament_id,new_state,'ops_early_reroll_save')
+                if not getattr(saved,'data',None):
+                    raise RuntimeError('Reward ticket state was not persisted')
+            except Exception:
+                restore_old_assignment()
+                raise
+
+            # Do not turn a successful ticket exchange into a broken link if a
+            # non-critical cleanup/league-open step fails. Keep an operator log.
+            try:
+                execute_query(db.table('tournament_clubs').update({
+                    'selected_by':None,'selected_at':None
+                }).eq('tournament_id',tournament_id).eq('id',old['id']).eq('selected_by',uid),
+                'ops_early_reroll_release_old',attempts=2)
+            except Exception:
+                app.logger.exception('Reroll succeeded but old club release needs operator review tournament=%s user=%s',tournament_id,uid)
+            opened=False
+            try:
+                if _reward_ticket_phase_status(tournament_id,new_state).get('all_finalized'):
+                    opened,_msg=_open_league_stage(tournament_id,'all_reward_holders_finalized')
+            except Exception:
+                app.logger.exception('Reroll succeeded but automatic league opening failed tournament=%s',tournament_id)
+            message=(f"Đã dùng vé cuối: {old_name} → {new.get('name')}. CLB đã chốt cuối cùng."
+                     if new_entry.get('reward_finalized') else
+                     f"Đã dùng 1 vé: {old_name} → {new.get('name')}. Còn {new_entry['tickets_remaining']} vé.")
+            return reply(message+(' GĐ2 đã tự mở.' if opened else ''),'success')
+        except Exception:
+            app.logger.exception('Early club ticket reroll failed tournament=%s user=%s admin_proxy=%s',tournament_id,uid,bool(admin_actor))
+            return reply('Đổi CLB chưa hoàn tất vì lỗi dữ liệu. Hãy kiểm tra CLB/vé trước khi thử lại hoặc báo Admin.','error')
 
     @app.post('/tournaments/<tournament_id>/club-draft/reward-reroll')
     @login_required

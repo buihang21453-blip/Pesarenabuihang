@@ -1,3 +1,11 @@
+## V1.6.16
+# V1.6.16 — Fix route dùng vé Random CLB
+
+- modules/tournament_competition_parts/league.py: hàm `_reroll_early_ticket_for` dùng chung cho HLV và Admin, xử lý lỗi thao tác ghi và trả về trang hợp lệ.
+- `_save_reward_draft`: trả về kết quả Supabase để caller kiểm tra thành công.
+- app.py và templates/admin.html: đồng bộ version.
+- Không thay đổi schema/SQL, route URLs hoặc template form action.
+
 ## V1.6.15
 # Admin quay hộ vé CLB GĐ1
 

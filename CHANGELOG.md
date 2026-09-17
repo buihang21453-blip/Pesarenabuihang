@@ -1,3 +1,12 @@
+## V1.6.16
+# V1.6.16 — Fix HLV dùng vé Random CLB bị trang lỗi
+
+- Bảo vệ route POST của HLV và Admin quay hộ: lỗi dữ liệu được ghi log và đưa về đúng trang với thông báo thay vì trang lỗi máy chủ.
+- Chỉ lưu trừ vé khi đã giữ được CLB mới và cập nhật CLB thành công; kiểm tra kết quả trả về từ các thao tác ghi Supabase.
+- Nếu cập nhật CLB hoặc lưu vé không thành công, cố gắng khôi phục CLB cũ và giải phóng CLB mới đã giữ.
+- Sau khi lượt quay thành công, sự cố dọn CLB cũ hoặc tự mở GĐ2 được ghi log riêng thay vì biến lượt quay thành trang lỗi.
+- Giữ nguyên route/form của HLV, nút Admin quay hộ, pool theo Pot, 32 trận và bảng xếp hạng.
+
 ## V1.6.15
 # V1.6.15 — Admin quay hộ vé thưởng CLB
 
