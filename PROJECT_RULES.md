@@ -1,3 +1,10 @@
+## V1.6.23
+- Không sinh lại lịch 32 trận khi hiển thị đối thủ hoặc Random lại CLB.
+- Chỉ hiển thị đối thủ GĐ2 khi đã công bố; dữ liệu CLB phải lấy lại từ tournament_members mỗi lần tải trang.
+- Bắt đầu GĐ2 không tự hủy vé thưởng; vé hết hiệu lực theo hạn đã cấu hình hoặc do HLV chốt.
+- Host rảnh yêu cầu HLV chủ động bật chế độ, online, không ở phòng hoạt động.
+- Chạy SQL V1.6.23 trước khi deploy: RPC cũ cấm đổi CLB khi league open.
+
 ## V1.6.22 — Quy tắc hiển thị BXH C1
 
 - Tier HLV gắn với user_id từ tournament_members.pot_no; không nhầm với Pot CLB.

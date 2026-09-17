@@ -81,10 +81,11 @@ def register_league(context):
         vn=timezone(timedelta(hours=7)); now=datetime.now(vn)
         force=request.form.get("start_now")=="1"
         if force:
-            ok,msg=_open_league_stage(tournament_id,"admin_force",force_close_rewards=True,start_at=now)
+            # V1.6.23: open immediately without terminating any unexpired ticket.
+            ok,msg=_open_league_stage(tournament_id,"admin_keep_rewards",start_at=now)
             if not ok:
                 flash("Không thể bắt đầu GĐ2: "+msg,"error"); return _gd2_admin_return(tournament_id)
-            flash("Admin đã bắt đầu GĐ2 ngay. Vé thưởng chưa dùng đã hết hiệu lực; thời hạn thi đấu 7 ngày.","success")
+            flash("Đã bắt đầu GĐ2. Vé chưa dùng vẫn có hiệu lực đến hạn; lịch 32 trận không thay đổi.","success")
             return _gd2_admin_return(tournament_id)
         scheduled=_parse_iso(cfg.get("league_start_at") or "2026-09-18T12:00:00+07:00")
         if scheduled and scheduled.tzinfo is None: scheduled=scheduled.replace(tzinfo=vn)

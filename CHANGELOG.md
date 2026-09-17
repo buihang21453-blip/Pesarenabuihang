@@ -1,3 +1,9 @@
+## V1.6.23 — Đối thủ GĐ2, Host rảnh, mở giải giữ vé
+- Hiển thị bốn đối thủ từ lịch 32 trận đã lưu, Tier HLV, CLB hiện tại, Pot, logo, Zalo, trạng thái và nút trận khi GĐ2 mở.
+- Cho Admin mở GĐ2 ngay mà không chốt/hủy vé chưa dùng.
+- Host rảnh yêu cầu bật chế độ rảnh, online và không ở phòng; thêm bảng Admin cập nhật trực tiếp.
+- Không tạo lại lịch. Cần chạy SQL_V1.6.23_KEEP_TICKETS_AFTER_LEAGUE_START.sql để RPC cho phép dùng vé khi league open.
+
 ## V1.6.22 — BXH C1: Tier HLV và Pot CLB
 
 - BXH chính tại /tournaments hiển thị công khai Tier HLV, CLB đang sở hữu và Pot CLB ở từng dòng, kể cả tài khoản không phải Admin.

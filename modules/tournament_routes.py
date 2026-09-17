@@ -354,6 +354,13 @@ def register_routes(context):
         mine_set=set(mine)
 
         match_rows,_=_safe_rows(db.table('tournament_matches').select('*').eq('tournament_id',tournament_id).or_(f'home_user_id.eq.{uid},away_user_id.eq.{uid}').order('created_at'),'tournament_landing_my_matches') if member else ([],None)
+        # A pre-generated 32-match schedule stays secret until this HLV has been
+        # publicly drawn, the entire ceremony completes, or the league opens.
+        league_draw=_landing_setting(tournament_id,'league_draw_v2',{}) or {}
+        league_stage_rows,_=_safe_rows(db.table('tournament_stages').select('status').eq('tournament_id',tournament_id).eq('stage_code','league').limit(1),'tournament_landing_league_stage')
+        league_started=bool(league_stage_rows and league_stage_rows[0].get('status') in ('open','completed'))
+        if not (league_draw.get('completed') or (league_draw.get('revealed') or {}).get(uid) or league_started):
+            match_rows=[m for m in match_rows if m.get('stage_code')!='league']
         ids={uid}
         for m in match_rows:
             if m.get('home_user_id'): ids.add(str(m.get('home_user_id')))
@@ -421,7 +428,7 @@ def register_routes(context):
         league_reroll_state=_landing_setting(tournament_id,'league_top3_club_reroll_v1',{}) or {}
         league_reroll_entry=(league_reroll_state.get('entries') or {}).get(uid,{}) if isinstance(league_reroll_state,dict) else {}
 
-        all_members,_=_safe_rows(db.table('tournament_members').select('user_id,seed_no,fixed_club_name').eq('tournament_id',tournament_id).eq('status','active'),'tournament_landing_center_members')
+        all_members,_=_safe_rows(db.table('tournament_members').select('user_id,seed_no,pot_no,fixed_club_name').eq('tournament_id',tournament_id).eq('status','active'),'tournament_landing_center_members')
         all_ids=[str(x.get('user_id')) for x in all_members if x.get('user_id')]
         base_order=sorted(all_members,key=lambda m:int(m.get('seed_no') or 9999),reverse=base_draft_config.get('direction')=='descending')
         base_turn=next((str(m.get('user_id')) for m in base_order if not m.get('fixed_club_name')),None) if base_draft_config.get('mode')=='sequential' else None
@@ -431,20 +438,50 @@ def register_routes(context):
             all_regs,_=_safe_rows(db.table('tournament_registrations').select('user_id,has_host,host_region').eq('tournament_id',tournament_id).in_('user_id',all_ids),'tournament_landing_center_regs')
         all_user_map={str(x.get('id')):x for x in all_users}
         reg_map={str(x.get('user_id')):x for x in all_regs}
+        member_map={str(x.get('user_id')):x for x in all_members}
+        league_visible=bool(league_draw.get('completed') or (league_draw.get('revealed') or {}).get(uid) or league_started)
+        league_opponents=[]
+        if member and league_visible:
+            # The four opponent IDs come from the saved matches, never from a second random draw.
+            league_matches=[m for m in match_rows if m.get('stage_code')=='league' and m.get('status')!='cancelled']
+            if len(league_matches)==4:
+                from modules.tournament_club_logos import load_draw_club_logos
+                from modules.legacy_team_random_service import _load_teams_from_supabase
+                import os
+                club_names={str(member_map.get(str(m.get('away_user_id') if str(m.get('home_user_id'))==uid else m.get('home_user_id')),{}).get('fixed_club_name') or '') for m in league_matches}
+                club_names.discard('')
+                try:
+                    club_logos,_=load_draw_club_logos(db,execute_query,os.getenv('SUPABASE_URL',''),sorted(club_names),team_loader=_load_teams_from_supabase,logger=app.logger)
+                except Exception:
+                    club_logos={}
+                    app.logger.exception('Could not load opponent club logos for tournament %s',tournament_id)
+                for m in league_matches:
+                    oid=str(m.get('away_user_id') if str(m.get('home_user_id'))==uid else m.get('home_user_id'))
+                    om=member_map.get(oid) or {}
+                    club=om.get('fixed_club_name') or ''
+                    league_opponents.append({'user_id':oid,'name':names.get(oid,'HLV'),'tier':om.get('pot_no'),
+                        'club':club,'club_pot':C1_CLUB_POT_BY_NAME.get(club),'club_logo':club_logos.get(club,''),
+                        'zalo':zalos.get(oid,''),'match_id':m.get('id'),'status':m.get('status'),
+                        'scheduled_at':m.get('scheduled_at'),'round_code':m.get('round_code')})
+            else:
+                app.logger.warning('League opponents not ready: user=%s, count=%s',uid,len(league_matches))
 
         room_rows,_=_safe_rows(db.table('match_rooms').select('*').order('updated_at',desc=True).limit(160),'tournament_landing_center_rooms')
         tournament_match_rows,_=_safe_rows(db.table('tournament_matches').select('*').eq('tournament_id',tournament_id),'tournament_landing_center_match_rows')
         match_map={str(x.get('id')):x for x in tournament_match_rows}
-        busy=set(); active_room_statuses={'waiting_ready','playing','friendly_playing','waiting_result_confirm','disputed','confirmed'}
-        for r in room_rows:
+        busy=set(); active_room_statuses={'waiting_ready','playing','friendly_playing','waiting_result_confirm','waiting_confirm','disputed'}
+        active_rooms,_=_safe_rows(db.table('match_rooms').select('host_user_id,guest_user_id,status').in_('status',list(active_room_statuses)).limit(500),'tournament_landing_busy_rooms')
+        for r in active_rooms:
             if str(r.get('status') or '') in active_room_statuses:
                 if r.get('host_user_id'): busy.add(str(r.get('host_user_id')))
                 if r.get('guest_user_id'): busy.add(str(r.get('guest_user_id')))
+        ready_state=_landing_setting(tournament_id,'host_live_ready',{}) or {}
         host_ready=[]
         for mid in all_ids:
             rr=reg_map.get(mid) or {}; uu=all_user_map.get(mid) or {}
-            if rr.get('has_host') and is_user_online_now(uu) and mid not in busy:
+            if rr.get('has_host') and ready_state.get(mid) and is_user_online_now(uu) and mid not in busy:
                 host_ready.append({'user_id':mid,'display_name':uu.get('display_name') or uu.get('username') or 'HLV','region':rr.get('host_region') or '—'})
+        host_ready.sort(key=lambda x:str(x.get('display_name') or '').casefold())
 
         center_rooms=[]; seen_match_ids=set()
         room_active={'waiting_ready','playing','friendly_playing','waiting_result_confirm','disputed'}
@@ -479,7 +516,10 @@ def register_routes(context):
             'member': member or {'user_id':uid}, 'is_test':is_test, 'days':days, 'mine_set':mine_set,
             'matches':decorated, 'names':names, 'zalos':zalos,
             'stage1_opened':bool(s1_reveals.get(uid)), 'league_mine':league_mine,
-            'league_opened':bool(league_reveals.get(uid)), 'test_opponent':test_opponent,
+            'league_opened':bool(league_reveals.get(uid)) or bool(league_draw.get('completed')) or league_started,
+            'league_started':league_started,'league_opponents':league_opponents,
+            'my_host_ready':bool(ready_state.get(uid)), 'my_has_host':bool((reg_map.get(uid) or {}).get('has_host')),
+            'test_opponent':test_opponent,
             'test_opponent_days':test_opp_days,
             'opponent_slot_set':opponent_slot_set,
             'club_draw_at':club_draw_at,'gd2_reward_deadline':gd2_reward_deadline,'gd2_reward_deadline_active':gd2_reward_deadline_active,'progress_label':progress_label,'progress_deadline':progress_deadline,'early_deadline':early_deadline,'early_deadline_active':early_deadline_active,

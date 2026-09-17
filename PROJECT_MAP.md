@@ -1,3 +1,11 @@
+## V1.6.23
+- modules/tournament_routes.py: tải bốn đối thủ đã công bố và thông tin CLB/Tier hiện thời, host rảnh theo opt-in.
+- modules/tournament_competition_parts/core.py: host opt-in và chế độ mở giải giữ vé.
+- modules/tournament_competition_parts/league.py: Admin mở GĐ2 không đóng vé.
+- templates/tournament/tabs/lobby.html, styles.html: thẻ đối thủ và bật rảnh.
+- templates/admin.html: danh sách Host rảnh real-time, nút mở giải bảo lưu vé.
+- SQL_V1.6.23_KEEP_TICKETS_AFTER_LEAGUE_START.sql: thay thế RPC để vé vẫn đổi CLB khi GĐ2 đã mở nhưng chưa hết hạn.
+
 ## V1.6.22 — BXH C1
 
 - modules/tournament_routes.py: kết hợp hàng BXH với tournament_members theo user_id; ánh xạ fixed_club_name → Pot thông qua C1_CLUB_POT_BY_NAME.

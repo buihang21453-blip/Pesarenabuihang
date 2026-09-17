@@ -1,0 +1,8 @@
+PES Arena V1.6.23 — Đối thủ GĐ2, Host rảnh và Admin mở GĐ2 giữ nguyên vé.
+
+BẮT BUỘC: chạy SQL_V1.6.23_KEEP_TICKETS_AFTER_LEAGUE_START.sql trên Supabase Production trước khi deploy source. RPC cũ từ V1.6.20 cấm đổi CLB sau khi league open. SQL mới cho phép dùng vé còn hạn trong thời gian GĐ2 open, không chạm vào vé/CLB/lịch đã có.
+
+1. Admin nhìn Host rảnh real-time, chỉ HLV có Host chủ động bật rảnh + online + không ở phòng mới được hiển thị.
+2. HLV thấy đủ 4 đối thủ đã công bố, Tier, CLB/Pot/logo hiện tại, Zalo, trạng thái và nút vào trận khi GĐ2 mở.
+3. Admin bắt đầu GĐ2 ngay mà không hủy vé còn hạn; lịch 32 trận giữ nguyên.
+4. Không tự sinh lại lịch hoặc thay đổi thứ hạng, điểm, dữ liệu test.
