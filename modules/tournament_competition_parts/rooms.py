@@ -739,6 +739,71 @@ def register_rooms(context):
             flash("Không gửi được thông báo C1. Đối thủ vẫn có thể vào từ Phòng đấu C1.","warning")
         return redirect(url_for("room_detail",room_id=room_id))
 
+    @app.post('/tournaments/<tournament_id>/rooms/<room_id>/start-fixed-match')
+    @login_required
+    def tournament_room_start_fixed_match(tournament_id, room_id):
+        """GĐ2/KO: lock both members' current clubs and start without any random draw."""
+        user=current_user() or {}; uid=str(user.get("id") or "")
+        url=url_for("room_detail",room_id=room_id)
+        try:
+            room,meta,match=_room_match_or_error(tournament_id,room_id)
+            if not room or not meta or not match or str(match.get("stage_code") or "") not in {"league","knockout"}:
+                flash("Phòng chưa gắn với trận GĐ2/Knockout hợp lệ.","warning"); return redirect(url)
+            if uid != str(room.get("host_user_id") or ""):
+                flash("Chỉ chủ phòng mới bắt đầu trận C1.","warning"); return redirect(url)
+            if str(room.get("status") or "") != "waiting_ready" or not room.get("guest_user_id"):
+                flash("Phòng cần đủ hai HLV và chưa được bắt đầu.","warning"); return redirect(url)
+            host_id=str(room.get("host_user_id") or ""); guest_id=str(room.get("guest_user_id") or "")
+            pair={str(match.get("home_user_id") or ""),str(match.get("away_user_id") or "")}
+            if {host_id,guest_id} != pair or host_id==guest_id:
+                flash("Hai người trong phòng không khớp lịch thi đấu.","error"); return redirect(url)
+            stage=_stage(tournament_id,str(match.get("stage_code"))) or {}
+            if str(stage.get("status") or "")!="open" or str(match.get("status") or "") not in {"pending","scheduled"}:
+                flash("Giai đoạn chưa mở hoặc trận không còn ở trạng thái chờ.","warning"); return redirect(url)
+            hm=_member(tournament_id,host_id) or {}; gm=_member(tournament_id,guest_id) or {}
+            host_club=str(hm.get("fixed_club_name") or "").strip()
+            guest_club=str(gm.get("fixed_club_name") or "").strip()
+            if not host_club or not guest_club or host_club==guest_club:
+                flash("Hai HLV phải có CLB khác nhau và được phân bổ hợp lệ trước khi bắt đầu.","warning"); return redirect(url)
+            # No random and no ticket mutation here. The latest member allocation is
+            # captured for THIS match at start; later ticket changes affect future games only.
+            started=execute_query(
+                db.table("match_rooms").update({
+                    "host_team":host_club,"guest_team":guest_club,
+                    "host_team_overall":None,"guest_team_overall":None,
+                    "host_team_logo_url":None,"guest_team_logo_url":None,
+                    "host_team_league":None,"guest_team_league":None,
+                    "team_tier":"TOURNAMENT","match_mode":"tournament",
+                    "status":"playing","guest_ready":True,"updated_at":now_iso(),
+                }).eq("id",room_id).eq("status","waiting_ready")
+                  .eq("host_user_id",host_id).eq("guest_user_id",guest_id),
+                "ops_c1_fixed_start_room",attempts=2,
+            )
+            if not (getattr(started,"data",None) or []):
+                flash("Phòng vừa thay đổi. Hãy tải lại để kiểm tra trạng thái.","warning"); return redirect(url)
+            try:
+                match_result=execute_query(
+                    db.table("tournament_matches").update({"status":"playing","updated_at":now_iso()})
+                    .eq("id",match.get("id")).eq("tournament_id",tournament_id).eq("status",match.get("status")),
+                    "ops_c1_fixed_start_match",attempts=2,
+                )
+                if not (getattr(match_result,"data",None) or []):
+                    raise RuntimeError("C1 fixed start match update returned no rows")
+            except Exception:
+                # Never leave a playing room whose official match failed to start.
+                try:
+                    execute_query(db.table("match_rooms").update({"status":"waiting_ready","guest_ready":False,"updated_at":now_iso()})
+                                  .eq("id",room_id).eq("status","playing"),"ops_c1_fixed_start_rollback",attempts=2)
+                except Exception:
+                    app.logger.exception("C1 fixed start rollback failed room=%s match=%s",room_id,match.get("id"))
+                raise
+            cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
+            flash(f"Đã bắt đầu trận C1: {host_club} vs {guest_club}. CLB được khóa cho trận này.","success")
+        except Exception:
+            app.logger.exception("C1 fixed match start failed room=%s tournament=%s",room_id,tournament_id)
+            flash("Chưa bắt đầu được trận C1. Hãy kiểm tra trạng thái phòng và thử lại.","error")
+        return redirect(url)
+
     @app.post('/tournaments/<tournament_id>/rooms/<room_id>/random-stage1-clubs')
     @login_required
     def tournament_room_random_stage1_clubs(tournament_id,room_id):
@@ -963,7 +1028,7 @@ def register_rooms(context):
                         return redirect(url_for("room_detail",room_id=room_id))
 
             cache_delete("_rz_rooms_all"); ttl_cache_delete("rooms_raw")
-            flash(f"Đã xác nhận Trận {int(match.get('leg_no') or 1)}. Phòng đã chuyển sang Trận {int(next_match.get('leg_no') or (int(match.get('leg_no') or 1)+1))}. Đội khách hãy bấm Sẵn Sàng; sau đó Chủ phòng mới Quay đội.","success")
+            flash(f"Đã xác nhận Trận {int(match.get('leg_no') or 1)}. Phòng đã chuyển sang Trận {int(next_match.get('leg_no') or (int(match.get('leg_no') or 1)+1))}. Hai HLV vào trận tiếp theo; với GĐ2, Chủ phòng bấm Bắt đầu trận (không quay CLB).","success")
             return redirect(url_for("room_detail",room_id=room_id))
 
         # Chỉ khi không còn bất kỳ trận kế tiếp nào theo lịch/luật của đúng cặp mới kết thúc.

@@ -1,0 +1,1 @@
+V1.6.24: C1 GĐ2 dùng CLB hiện tại của từng HLV; không có nút quay đội trong phòng. Chủ phòng bắt đầu khi cả hai vào, sau đó nhập tỷ số và khách xác nhận. Vé còn hiệu lực cho trận chưa bắt đầu. Không có SQL mới.

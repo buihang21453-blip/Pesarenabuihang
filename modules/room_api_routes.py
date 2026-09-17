@@ -65,6 +65,31 @@ def register_routes(context):
         if user["id"] not in [room["host_user_id"], room["guest_user_id"]] and not is_admin_user(user):
             return polling_stop_response("room_access_ended")
 
+        # V1.6.24: while a scheduled GĐ2/KO match is waiting, ticket rerolls
+        # must invalidate the room state key so both HLV see the new club.
+        # Match already playing keeps the clubs captured when it started.
+        note=str(room.get("note") or "")
+        if note.startswith("TOURNAMENT_ROOM|") and str(room.get("status") or "")=="waiting_ready":
+            try:
+                import json
+                meta=json.loads(note[len("TOURNAMENT_ROOM|"):])
+                if (str(meta.get("stage_code") or "") in {"league","knockout"}
+                        and not meta.get("test_sandbox_room")):
+                    host=str(room.get("host_user_id") or "")
+                    guest=str(room.get("guest_user_id") or "")
+                    ids=[x for x in (host,guest) if x]
+                    if ids:
+                        result=execute_query(
+                            db.table("tournament_members").select("user_id,fixed_club_name")
+                            .eq("tournament_id",meta.get("tournament_id")).in_("user_id",ids),
+                            "c1_fixed_polling_clubs",attempts=1,
+                        )
+                        clubs={str(r.get("user_id") or ""):r.get("fixed_club_name") for r in (getattr(result,"data",None) or [])}
+                        room["host_team"]=clubs.get(host)
+                        room["guest_team"]=clubs.get(guest)
+            except Exception:
+                app.logger.exception("C1 fixed-club polling failed room=%s",room_id)
+
         state_key = build_room_state_key(room)
 
         # V4.1: nếu trạng thái chưa đổi, trả response rỗng để giảm dữ liệu truyền.

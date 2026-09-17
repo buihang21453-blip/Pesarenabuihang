@@ -1,3 +1,8 @@
+## V1.6.24
+- modules/tournament_competition_parts/rooms.py: endpoint start-fixed-match, khóa CLB lúc bắt đầu.
+- modules/room_access_routes.py: làm mới CLB trước trận cho full view và polling.
+- templates/room_detail.html, templates/_room_live_content.html: giao diện GĐ2 không Random CLB.
+
 ## V1.6.23
 - modules/tournament_routes.py: tải bốn đối thủ đã công bố và thông tin CLB/Tier hiện thời, host rảnh theo opt-in.
 - modules/tournament_competition_parts/core.py: host opt-in và chế độ mở giải giữ vé.

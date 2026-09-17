@@ -1,3 +1,10 @@
+## V1.6.24 — Phòng C1 GĐ2 sử dụng CLB gắn với HLV
+- Tách UI phòng GĐ2/Knockout khỏi Random CLB GĐ1, bao gồm cả giao diện polling realtime.
+- Trước trận hiển thị CLB hiện tại từ tournament_members; vé đổi CLB trước giờ thi đấu không làm dùng đội cũ.
+- Chủ phòng bắt đầu trận khi đủ hai HLV và CLB hợp lệ; server khóa CLB cho trận, không trừ vé, không random và không đụng 32 trận.
+- Giữ quy trình Chủ phòng nhập tỷ số, Khách xác nhận và GĐ1/test độc lập.
+- Không thay đổi cấu trúc database; dự án vẫn cần các SQL migration trước đó nếu chưa triển khai.
+
 ## V1.6.23 — Đối thủ GĐ2, Host rảnh, mở giải giữ vé
 - Hiển thị bốn đối thủ từ lịch 32 trận đã lưu, Tier HLV, CLB hiện tại, Pot, logo, Zalo, trạng thái và nút trận khi GĐ2 mở.
 - Cho Admin mở GĐ2 ngay mà không chốt/hủy vé chưa dùng.

@@ -392,6 +392,47 @@ def register_routes(context):
             except Exception as exc:
                 app.logger.warning("Tournament room context failed room=%s: %s", room.get("id"), exc)
                 tournament_meta = None
+        # V1.6.24: fixed HLV clubs on GĐ2/KO. Display the CURRENT allocation
+        # while waiting; never change persisted room teams during GET/polling.
+        # Once playing, the team snapshot belongs to that match and is immutable.
+        tournament_fixed_club_mode = bool(
+            tournament_meta and not tournament_meta.get("test_sandbox_room")
+            and str(((tournament_match or {}).get("stage_code") or tournament_meta.get("stage_code") or "")) in {"league","knockout"}
+        )
+        tournament_fixed_clubs_ready = False
+        if tournament_fixed_club_mode and str(room.get("status") or "") == "waiting_ready":
+            try:
+                t_id=str(tournament_meta.get("tournament_id") or "")
+                h_id=str(room.get("host_user_id") or "")
+                g_id=str(room.get("guest_user_id") or "")
+                ids=[x for x in (h_id,g_id) if x]
+                rows=execute_query(
+                    db.table("tournament_members").select("user_id,fixed_club_name")
+                    .eq("tournament_id",t_id).in_("user_id",ids),
+                    "room_c1_fixed_club_display",attempts=2,
+                ) if ids else None
+                clubs={str(r.get("user_id") or ""):str(r.get("fixed_club_name") or "").strip() for r in (getattr(rows,"data",None) or [])}
+                tournament_fixed_clubs_ready=bool(h_id and g_id and clubs.get(h_id) and clubs.get(g_id) and clubs.get(h_id)!=clubs.get(g_id))
+                # In-memory display only: new tickets can change allocations
+                # before start. Do not overwrite the previous game's snapshot.
+                for side,player_id in (("host",h_id),("guest",g_id)):
+                    fresh=clubs.get(player_id) or None
+                    if room.get(side+"_team")!=fresh:
+                        room[side+"_team"]=fresh
+                        room[side+"_team_overall"]=None
+                        room[side+"_team_logo_url"]=None
+                        room[side+"_team_league"]=None
+                        room[side+"_team_league_logo_url"]=None
+                        room[side+"_team_total_stats"]=0
+                        if fresh:
+                            info=get_db_team_info(fresh) or {}
+                            room[side+"_team_logo_url"]=info.get("logo_url")
+                            room[side+"_team_league"]=info.get("league")
+                            room[side+"_team_league_logo_url"]=get_league_logo_url(info.get("league"))
+                            room[side+"_team_total_stats"]=int(info.get("total_stats") or 0)
+            except Exception:
+                app.logger.exception("C1 fixed club display unavailable room=%s",room.get("id"))
+                tournament_fixed_clubs_ready=False
         daily_limit_message = None
         if room.get("status") == "waiting_ready" and room.get("match_mode") not in {MATCH_MODE_FRIENDLY, "tournament"} and not tournament_meta:
             daily_limit_message = daily_rank_block_message(
@@ -426,6 +467,8 @@ def register_routes(context):
             "tournament_pair_is_complete": tournament_pair_is_complete,
             "tournament_has_next_match": tournament_has_next_match,
             "tournament_stage1_pool": tournament_stage1_pool,
+            "tournament_fixed_club_mode": tournament_fixed_club_mode,
+            "tournament_fixed_clubs_ready": tournament_fixed_clubs_ready,
             "tournament_stage1_pool_count": len(tournament_stage1_pool),
             "tournament_invite_members": tournament_invite_members,
             "tournament_viewer_is_member": tournament_viewer_is_member,

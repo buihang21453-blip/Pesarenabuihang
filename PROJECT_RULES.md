@@ -1,3 +1,7 @@
+## V1.6.24
+- GĐ1 mới dùng Random CLB trong phòng; GĐ2/KO phải lấy CLB HLV từ tournament_members và khóa tại thời điểm bắt đầu trận.
+- Vé chỉ sử dụng ngoài phòng, không đổi ảnh chụp CLB của trận đang diễn ra; không ảnh hưởng 32 trận và BXH test.
+
 ## V1.6.23
 - Không sinh lại lịch 32 trận khi hiển thị đối thủ hoặc Random lại CLB.
 - Chỉ hiển thị đối thủ GĐ2 khi đã công bố; dữ liệu CLB phải lấy lại từ tournament_members mỗi lần tải trang.
