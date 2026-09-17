@@ -1,3 +1,10 @@
+## V1.6.19
+# V1.6.19 — Quy tắc chẩn đoán giao dịch vé
+
+- Không coi mã tham chiếu 10 ký tự là nguyên nhân lỗi; phải đối chiếu log SQLSTATE thật và kiểm tra Production.
+- Không tự chạy lại RPC nếu chưa biết lượt trước đã commit hay chưa.
+- Không dùng SQL sửa số vé/CLB thủ công khi chưa xác minh dữ liệu thực tế.
+
 ## V1.6.18
 # V1.6.18 — Ticket transaction rules
 

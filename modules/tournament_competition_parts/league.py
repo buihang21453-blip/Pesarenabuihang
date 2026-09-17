@@ -436,6 +436,9 @@ def register_league(context):
                 'p_actor_role':'admin' if admin_actor else 'player',
             }),'ops_atomic_early_reroll',attempts=1)
             data=getattr(result,'data',None)
+            # PostgREST can wrap a scalar JSON object in one list, depending on gateway version.
+            if isinstance(data,list) and len(data)==1 and isinstance(data[0],dict):
+                data=data[0]
             if not isinstance(data,dict) or data.get('ok') is not True:
                 raise RuntimeError('RPC did not confirm one committed ticket exchange')
             old_name=str(data.get('old_club') or '')
@@ -458,17 +461,30 @@ def register_league(context):
         except Exception as exc:
             app.logger.exception('ATOMIC_EARLY_REROLL_FAILED op=%s tournament=%s target_user=%s admin_proxy=%s',
                                  operation_id,tournament_id,uid,bool(admin_actor))
+            # Include SQLSTATE for diagnostics without disclosing raw SQL, credentials or stack traces.
+            # Postgrest exceptions expose code/message/details; network failures may not.
             err=str(exc).lower()
-            if 'pgrst202' in err or 'could not find the function' in err or ('c1_use_early_club_reroll_ticket' in err and 'does not exist' in err):
-                return reply('Chưa cài SQL V1.6.18 trên Supabase. Admin cần chạy SQL trước khi HLV dùng vé; chưa xác nhận có vé bị trừ.','error')
-            # PostgreSQL raises expected business-rule exceptions with Vietnamese text.
-            # Database timeout/network failures can have an unknown commit result;
-            # do NOT claim the ticket is untouched or automatically retry the POST.
+            sqlstate=str(getattr(exc,'code','') or '').strip().upper()
+            if not sqlstate and isinstance(exc.args[0] if exc.args else None,dict):
+                sqlstate=str(exc.args[0].get('code') or '').strip().upper()
+            app.logger.exception('EARLY_REROLL_DIAG op=%s sqlstate=%s exc_type=%s error=%s',
+                             operation_id,sqlstate or 'none',type(exc).__name__,str(exc)[:1300])
+            if sqlstate=='PGRST202' or 'pgrst202' in err or 'could not find the function' in err:
+                return reply('Hàm Random vé chưa tồn tại trong database Production hoặc schema cache chưa được làm mới. Kiểm tra SQL V1.6.18 và Supabase project. Mã '+operation_id,'error')
+            if sqlstate in ('42501','PGRST301','PGRST302') or 'permission denied for function' in err or 'permission denied for table' in err or 'invalid jwt' in err:
+                return reply('Database từ chối quyền gọi RPC (SQLSTATE '+(sqlstate or 'unknown')+'). Admin kiểm tra SUPABASE_SERVICE_ROLE_KEY trên Vercel; không công khai khóa. Mã '+operation_id,'error')
+            if sqlstate in ('42883','42703','42P01','42804','22P02','22023','23503','23505'):
+                return reply('Lỗi schema / dữ liệu Supabase (SQLSTATE '+sqlstate+'). Admin chạy SQL chẩn đoán V1.6.19 và đối chiếu log mã '+operation_id+'. Chưa tự thử quay lại.','error')
+            # Business-rule exceptions raised within the transaction always roll back.
             known=('không còn clb','đã hết hạn','không thuộc','chưa phân đủ','chưa có clb',
-                   'vé đã hết','clb hiện tại','hlv không','pot không','gđ2 đã mở')
-            if any(x in err for x in known):
-                return reply(f'Không thể đổi CLB: {str(exc)[:250]}. Kiểm tra trạng thái vé trên trang.','warning')
-            return reply(f'Không xác nhận được lượt quay (mã {operation_id}). Hãy tải lại trang để kiểm tra CLB và số vé trước khi thử tiếp; gửi mã cho Admin đối chiếu Vercel log.','error')
+                   'vé đã hết','clb hiện tại','hlv không','pot không','gđ2 đã mở',
+                   'không còn clb trống','không khớp tier','không khớp chủ sở hữu',
+                   'hlv chưa có','chưa phân','hồ sơ vé','chưa tồn tại','không hợp lệ')
+            if sqlstate=='P0001' or any(x in err for x in known):
+                # Only application-level rule text, never raw query details.
+                safe=str(getattr(exc,'message','') or str(exc))[:240]
+                return reply('Không thể đổi CLB: '+safe+' (mã '+operation_id+'). Admin kiểm tra vé và CLB.','warning')
+            return reply('Không xác nhận được lượt quay (mã '+operation_id+', SQLSTATE '+(sqlstate or 'không có')+'). Hãy tải lại trang để kiểm tra CLB và số vé; Admin đối chiếu Vercel log. Không bấm quay liên tiếp.','error')
 
     @app.post('/tournaments/<tournament_id>/club-draft/reward-reroll')
     @login_required

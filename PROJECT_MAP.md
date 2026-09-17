@@ -1,3 +1,9 @@
+## V1.6.19
+# V1.6.19 — Chẩn đoán Random vé
+
+- modules/tournament_competition_parts/league.py: route HLV/Admin gọi atomic RPC; log SQLSTATE phân loại lỗi.
+- SQL_V1.6.19_DIAGNOSE_REROLL_READ_ONLY.sql: kiểm tra RPC, quyền, draft, thời hạn, số lượng CLB và vé; không sửa dữ liệu.
+
 ## V1.6.18
 # V1.6.18 — Atomic GĐ1 ticket reroll
 

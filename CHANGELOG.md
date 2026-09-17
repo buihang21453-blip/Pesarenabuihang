@@ -1,3 +1,11 @@
+## V1.6.19
+# V1.6.19 — Chẩn đoán lỗi RPC Random vé CLB
+
+- Phân biệt RPC chưa cài, sai quyền service_role, lỗi schema/SQLSTATE, lỗi quy tắc nghiệp vụ và lỗi kết nối không rõ trạng thái commit.
+- Thêm log mã giao dịch + SQLSTATE; không tự retry khi không xác nhận được giao dịch.
+- Chấp nhận cả định dạng JSON object và một object trong mảng do API trả về.
+- Thêm SQL chẩn đoán CHỈ ĐỌC, không đổi CLB, vé, lịch.
+
 ## V1.6.18
 # V1.6.18 — Đổi CLB & trừ vé bằng giao dịch SQL duy nhất
 
