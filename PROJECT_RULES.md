@@ -1,3 +1,10 @@
+## V1.6.15
+# Quy ước Admin quay hộ vé CLB
+
+- Chỉ Admin mới được thao tác thay HLV Top 1–3 có vé hợp lệ, còn hạn và chưa chốt.
+- Không cấp vé mới; mỗi lần quay thành công trừ 1 vé hiện có của HLV; lưu `actor_user_id` và `actor_role` trong history.
+- Áp dụng cùng các điều kiện random, Pot, loại trừ CLB cũ với nút HLV; không động vào lịch thi đấu hoặc BXH.
+
 ## V1.6.14
 # V1.6.14 — Vé Random lại CLB / UX HLV
 

@@ -1,3 +1,12 @@
+## V1.6.15
+# V1.6.15 — Admin quay hộ vé thưởng CLB
+
+- Bổ sung route POST Admin xác thực quay hộ một vé cho HLV Top 1–3 GĐ1.
+- Tái sử dụng chính xác luồng đổi CLB hiện hữu của HLV: kiểm tra hạn, vé, trạng thái đã chốt, đủ 16 CLB, Pot, CLB cũ đã bỏ.
+- Bổ sung nút Quay hộ · 1 vé riêng từng HLV trong Admin và màn điều hành lễ; có xác nhận trước khi trừ vé.
+- Lưu actor_user_id/actor_role=admin trong lịch sử lượt quay để phân biệt người thao tác.
+- Không thay đổi lịch đối thủ, bảng xếp hạng, schema hay việc cấp vé; giữ nguyên SQL V1.6.13.
+
 ## V1.6.14
 # V1.6.14 — Vé Random lại CLB / UX HLV
 

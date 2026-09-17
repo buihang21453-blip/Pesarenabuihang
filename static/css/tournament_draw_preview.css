@@ -150,3 +150,6 @@ body.draw-preview-page{
 .draw-mini-avatar,.draw-avatar,.draw-opponent-avatar{background-color:#0b2540}
 @media(max-width:1100px){.draw-stage-grid{grid-template-columns:1fr}.draw-center-stage{min-height:650px}}
 @media(max-width:650px){.draw-center-stage{min-height:635px;padding:18px 10px}.draw-club-reveal{height:280px;width:245px}.draw-center-stage .draw-ceremony-actions .draw-primary-action,.draw-center-stage .draw-ceremony-actions .draw-sim-primary{width:min(350px,95%)!important}.draw-preview-page:before{background-size:auto 38%}}
+
+/* V1.6.15: Admin ticket proxy is a LIVE-only control, never part of rehearsal. */
+.reward-holders .admin-proxy-reroll{margin:7px 0 0}.reward-holders .admin-proxy-reroll .ceremony-button{min-width:0;width:100%;font-size:11px;padding:7px 9px;box-shadow:none;cursor:pointer}body[data-control-mode="simulation"] .admin-proxy-reroll{display:none!important}

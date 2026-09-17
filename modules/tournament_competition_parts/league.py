@@ -410,33 +410,41 @@ def register_league(context):
         flash(f"Đã chốt {club.get('name')}. Vé còn lại có thể dùng bất cứ lúc nào.","success")
         return redirect(url_for('tournaments'))
 
-    @app.post('/tournaments/<tournament_id>/club-draft/reward-reroll')
-    @login_required
-    def tournament_club_draft_reward_reroll(tournament_id):
-        uid=str((current_user() or {}).get("id") or "")
+    def _reroll_early_ticket_for(tournament_id, uid, admin_actor=None):
+        """One ticket operation shared by a player and an authorized admin proxy."""
+        uid=str(uid or "")
+        redirect_target = (
+            (url_for('admin_tournament_draw_preview',tournament_id=tournament_id)
+             if (request.form.get('return_to') or '').strip()=='draw_control'
+             else url_for('admin') + '#c1-admin-gd2')
+            if admin_actor else url_for('tournaments')
+        )
         member=_member(tournament_id,uid)
         state=_club_draft_state(tournament_id,False) or {}
         entry=(state.get("entries") or {}).get(uid) or {}
-        if not member or entry.get("allocation_type")!="EARLY_REWARD" or int(entry.get("tickets_remaining") or 0)<=0:
-            flash("Bạn không có vé thưởng sớm để dùng.","warning"); return redirect(url_for('tournaments'))
+        if (not member or str(member.get("status") or "")!="active"
+                or uid not in [str(x) for x in (state.get("order") or [])][:3]
+                or entry.get("allocation_type")!="EARLY_REWARD"
+                or int(entry.get("tickets_remaining") or 0)<=0):
+            flash("Bạn không có vé thưởng sớm để dùng.","warning"); return redirect(redirect_target)
         phase=_reward_ticket_phase_status(tournament_id,state)
         if entry.get("reward_finalized"):
-            flash("Bạn đã chốt CLB cuối cùng; vé thưởng còn lại không còn hiệu lực.","warning"); return redirect(url_for('tournaments'))
+            flash("Bạn đã chốt CLB cuối cùng; vé thưởng còn lại không còn hiệu lực.","warning"); return redirect(redirect_target)
         if phase.get("deadline_reached"):
             _close_reward_ticket_phase(tournament_id,"deadline")
-            flash("Đã hết hạn sử dụng vé thưởng GĐ1.","warning"); return redirect(url_for('tournaments'))
+            flash("Đã hết hạn sử dụng vé thưởng GĐ1.","warning"); return redirect(redirect_target)
         if not state.get("tier_club_pot_rule"):
             flash("Admin cần sửa phân bổ 16 CLB đúng Tier/Pot trước khi HLV sử dụng vé đổi CLB.","warning")
-            return redirect(url_for('tournaments'))
+            return redirect(redirect_target)
         if not _early_reward_ticket_phase_open(tournament_id,state):
             flash("Chờ Admin Random CLB gốc cho đủ 16 HLV theo Tier/Pot trước khi dùng vé thưởng sớm.","warning")
-            return redirect(url_for('tournaments'))
+            return redirect(redirect_target)
         old_name=str(member.get("fixed_club_name") or "")
         if not old_name or entry.get("status")!="selected":
-            flash("Bạn cần chốt CLB ban đầu trước khi dùng vé đổi CLB.","warning"); return redirect(url_for('tournaments'))
+            flash("Bạn cần chốt CLB ban đầu trước khi dùng vé đổi CLB.","warning"); return redirect(redirect_target)
         old,_=_one(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("name",old_name).eq("selected_by",uid),"ops_early_reroll_old")
         if not old:
-            flash("Không xác minh được CLB hiện tại, chưa trừ vé.","error"); return redirect(url_for('tournaments'))
+            flash("Không xác minh được CLB hiện tại, chưa trừ vé.","error"); return redirect(redirect_target)
         skipped=set(str(x) for x in (entry.get("skipped") or []))
         skipped.add(str(old["id"]))
         pool=_available_clubs(tournament_id,skipped)
@@ -444,11 +452,11 @@ def register_league(context):
             required_pot=4-int(member.get("pot_no") or 0)
             pool=[c for c in pool if C1_CLUB_POT_BY_NAME.get(c.get("name"))==required_pot]
         if not pool:
-            flash("Pool không còn CLB phù hợp, vé vẫn được giữ nguyên.","warning"); return redirect(url_for('tournaments'))
+            flash("Pool không còn CLB phù hợp, vé vẫn được giữ nguyên.","warning"); return redirect(redirect_target)
         new=random.choice(pool)
         reserved=execute_query(db.table("tournament_clubs").update({"selected_by":uid,"selected_at":now_iso()}).eq("tournament_id",tournament_id).eq("id",new["id"]).is_("selected_by","null"),"ops_early_reroll_reserve",attempts=2)
         if not getattr(reserved,"data",None):
-            flash("CLB vừa được người khác chọn; chưa trừ vé. Hãy thử lại.","warning"); return redirect(url_for('tournaments'))
+            flash("CLB vừa được người khác chọn; chưa trừ vé. Hãy thử lại.","warning"); return redirect(redirect_target)
         execute_query(db.table("tournament_members").update({"fixed_club_id":new.get("club_key"),"fixed_club_name":new.get("name")}).eq("tournament_id",tournament_id).eq("user_id",uid),"ops_early_reroll_member",attempts=2)
         entry["tickets_remaining"]=int(entry["tickets_remaining"])-1
         entry["skipped"]=list(skipped); entry["selected_club"]=new.get("name")
@@ -458,7 +466,12 @@ def register_league(context):
             entry["reward_finalized_at"]=now_iso()
             entry["reward_finalized_reason"]="tickets_exhausted"
         state["entries"][uid]=entry
-        state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":"REROLL","club":new.get("name"),"message":f"Dùng 1 vé thưởng sớm: {old_name} → {new.get('name')}."})
+        actor_label="Admin quay hộ" if admin_actor else "HLV tự quay"
+        state.setdefault("history",[]).append({
+            "at":now_iso(),"user_id":uid,"action":"REROLL","club":new.get("name"),
+            "actor_user_id":str(admin_actor or uid),"actor_role":"admin" if admin_actor else "player",
+            "message":f"{actor_label} dùng 1 vé thưởng sớm: {old_name} → {new.get('name')}."
+        })
         if entry.get("reward_finalized"):
             state.setdefault("history",[]).append({"at":now_iso(),"user_id":uid,"action":"REWARD_FINALIZE","club":new.get("name"),"message":"Đã dùng hết vé thưởng; CLB hiện tại tự động trở thành CLB cuối cùng."})
         _save_reward_draft(tournament_id,state,"ops_early_reroll_save")
@@ -467,7 +480,26 @@ def register_league(context):
         if _reward_ticket_phase_status(tournament_id,state).get("all_finalized"):
             opened,_msg=_open_league_stage(tournament_id,"all_reward_holders_finalized")
         flash((f"Đã dùng vé cuối: {old_name} → {new.get('name')}. CLB đã chốt cuối cùng." if entry.get("reward_finalized") else f"Đã dùng 1 vé: {old_name} → {new.get('name')}. Còn {entry['tickets_remaining']} vé.") + (" GĐ2 đã tự mở." if opened else ""),"success")
-        return redirect(url_for('tournaments'))
+        return redirect(redirect_target)
+
+    @app.post('/tournaments/<tournament_id>/club-draft/reward-reroll')
+    @login_required
+    def tournament_club_draft_reward_reroll(tournament_id):
+        uid=str((current_user() or {}).get("id") or "")
+        return _reroll_early_ticket_for(tournament_id, uid)
+
+    @app.post('/admin/tournaments/<tournament_id>/club-draft/reward-reroll-for')
+    @login_required
+    @admin_required
+    def admin_tournament_reward_reroll_for(tournament_id):
+        """Admin may spend exactly one existing ticket on behalf of a selected winner."""
+        uid=str(request.form.get("user_id") or "").strip()
+        state=_club_draft_state(tournament_id,False) or {}
+        if not uid or uid not in [str(x) for x in (state.get("order") or [])][:3]:
+            flash("HLV không thuộc Top 1–3 có vé thưởng sớm; không thể quay hộ.","warning")
+            return _gd2_admin_return(tournament_id)
+        admin_uid=str((current_user() or {}).get("id") or "")
+        return _reroll_early_ticket_for(tournament_id, uid, admin_actor=admin_uid)
 
     @app.post('/tournaments/<tournament_id>/club-draft/finalize')
     @login_required
@@ -502,7 +534,7 @@ def register_league(context):
     @login_required
     @admin_required
     def admin_tournament_club_draft_force(tournament_id):
-        flash("Vé thưởng sớm dùng đến hạn Admin đã đặt. HLV tự Random/chốt CLB; Admin không Random thay để tránh mất quyền thưởng.","warning")
+        flash("Để quay hộ, dùng nút Quay hộ · 1 vé ở hàng của HLV Top 1–3. Vé được trừ đúng người và ghi lịch sử.","warning")
         return redirect_admin("tournaments")
 
     def _club_admin_reply(message, category="error"):

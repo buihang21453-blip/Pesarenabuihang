@@ -1,3 +1,11 @@
+## V1.6.15
+# Admin quay hộ vé CLB GĐ1
+
+- modules/tournament_competition_parts/league.py: `_reroll_early_ticket_for` dùng chung cho HLV và route `admin_tournament_reward_reroll_for` (admin-only).
+- templates/admin.html: cột Quay hộ trong bảng 16 HLV.
+- templates/tournament/draw_admin_preview.html: điều khiển quay hộ trên màn điều hành lễ.
+- Data: `tournament_settings.club_draft_v2.entries`, `history`; không sửa `tournament_matches` hoặc schema.
+
 ## V1.6.14
 # V1.6.14 — Vé Random lại CLB / UX HLV
 
