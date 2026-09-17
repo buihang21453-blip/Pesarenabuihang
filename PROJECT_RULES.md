@@ -57,8 +57,9 @@ Mỗi yêu cầu phải xác định tối thiểu:
 - State phòng C1 (`waiting_ready`, `playing`, `waiting_confirm`, `confirmed`, v.v.) là vùng rủi ro cao. Sửa chuyển state phải kiểm tra cả Host và Guest.
 - Khi thay đổi lịch/Stage/Random CLB/thưởng phải kiểm tra luật giải hiện hành, không dùng giả định cứng từ version cũ.
 
-### Quy tắc vận hành GĐ2 từ V1.6.1
-- Không sinh/công bố đối thủ khi pha vé thưởng sớm chưa đóng.
+### Quy tắc vận hành GĐ2 từ V1.6.2
+- Có thể sinh và công bố đối thủ ngay khi đủ 16 CLB gốc hợp lệ; pha vé thưởng không khóa việc sinh/công bố lịch.
+- Sau khi sinh, đối thủ phải cố định; reroll vé thưởng chỉ được thay CLB của HLV, tuyệt đối không tái sinh/xóa/sửa `tournament_matches`.
 - Pha vé đóng khi cả 3 HLV có vé bấm chốt/dùng hết vé hoặc đến deadline do Admin đặt.
 - Không mở GĐ2 nếu chưa có đúng 32 trận, mỗi HLV 4 trận, đủ 3 Tier, không trùng đối thủ và lễ công bố chưa hoàn tất.
 - Admin có thể ép thời điểm bắt đầu sớm, nhưng không được bỏ qua các kiểm tra lịch/đối thủ; vé chưa dùng sẽ hết hiệu lực khi Admin mở GĐ2 ngay.

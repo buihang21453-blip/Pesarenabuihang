@@ -1,3 +1,10 @@
+## V1.6.2 – Tách lịch đối thủ khỏi vé Random CLB
+- Cho phép sinh 32 trận GĐ2 ngay khi đủ 16 CLB gốc hợp lệ, không cần chờ 3 HLV dùng/chốt hết vé thưởng.
+- Cho phép bắt đầu công bố đối thủ Tier 1 → Tier 2 → Tier 3 trong lúc vé thưởng vẫn còn hiệu lực.
+- Cặp đối thủ sau khi sinh được giữ cố định; reroll vé thưởng chỉ đổi CLB của HLV, không đụng `tournament_matches`.
+- Giữ nguyên điều kiện mở GĐ2: lịch hợp lệ, công bố xong và pha vé đóng; Admin mở ngay vẫn có thể đóng vé còn lại.
+- Cập nhật giao diện Admin để diễn đạt đúng luồng mới.
+
 ## V1.6.1 – Kịch bản Lễ bốc thăm GĐ2, hạn vé và mở GĐ2 theo điều kiện
 - Chốt quy trình vận hành: 20:00 17/09/2026 mở lễ → Random CLB gốc đủ 16 theo Tier/Pot → 3 HLV dùng vé đến 12:00 18/09/2026 → bốc đối thủ theo Tier 1→2→3 → mở GĐ2.
 - Admin chỉnh được 3 mốc `club_draw_at`, `gd2_reward_ticket_deadline_at`, `league_start_at` trong `competition_timing`; mặc định lần lượt 20:00 17/09, 12:00 18/09, 12:00 18/09 (UTC+7).

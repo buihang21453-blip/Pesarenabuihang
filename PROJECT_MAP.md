@@ -368,3 +368,10 @@ V1.5.90: Admin `POST /admin/tournaments/<id>/clubs/rerandom-by-tier` tại `modu
 ### V1.5.98 – Sửa đếm thành viên của RPC thu hồi/Random
 - SQL_V1.5.98_FIX_ACTIVE_16_REVOKE_RERANDOM.sql thay thế RPC V1.5.90 và V1.5.91 để đếm 16 HLV active thay vì 17 bản ghi gồm 1 inactive; ID trong `all_order` vẫn được kiểm tra thuộc active.
 - Nút Admin tại `modules/tournament_competition_parts/league.py` và UI `templates/admin.html` giữ nguyên; không thay thưởng, vé, lịch, KO và BXH.
+### V1.6.2 — Lịch đối thủ cố định, vé thưởng đổi CLB độc lập
+- `modules/tournament_competition_parts/league.py`: sau khi đủ 16 CLB gốc hợp lệ, cho phép sinh 32 trận và bắt đầu công bố đối thủ ngay; không chờ pha vé đóng. Route reroll vé thưởng chỉ cập nhật CLB, không thay đổi lịch.
+- `modules/tournament_competition_parts/core.py`: mở GĐ2 vẫn kiểm tra pha vé đã đóng, 32 trận hợp lệ và lễ công bố hoàn tất.
+- `templates/admin.html`: luồng hiển thị 16 CLB gốc → sinh/công bố đối thủ cố định → vé thưởng tiếp tục đổi CLB đến deadline → mở GĐ2.
+
+**Luồng chuẩn V1.6.2:** 16 CLB gốc → sinh 32 trận cố định → công bố Tier 1→2→3 (có thể song song thời gian dùng vé) → 3 HLV tiếp tục reroll CLB nếu còn vé → khi pha vé đóng và các điều kiện lịch/công bố đạt thì mở GĐ2.
+

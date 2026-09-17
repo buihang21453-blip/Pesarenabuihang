@@ -65,7 +65,7 @@ def register_league(context):
         return pairs
 
     def _league_four_match_pairs(tournament_id, members):
-        """V1.6.1: enforce coverage of ALL THREE HLV Tiers across FOUR matches."""
+        """V1.6.2: enforce coverage of ALL THREE HLV Tiers across FOUR matches."""
         return generate_four_match_draw(members)
 
     @app.post('/admin/tournaments/<tournament_id>/league/start')
@@ -116,10 +116,10 @@ def register_league(context):
         if len(members)!=16 or any(not m.get("fixed_club_name") for m in members):
             flash("Cần đủ 16 HLV đã được gán CLB cố định trước khi sinh lịch.","error")
             return redirect_admin("tournaments")
-        reward_phase=_reward_ticket_phase_status(tournament_id)
-        if not reward_phase.get("closed"):
-            flash(f"Chưa thể sinh lịch đối thủ: mới có {reward_phase.get('finalized_count',0)}/3 HLV vé thưởng chốt CLB và chưa đến hạn vé.","warning")
-            return redirect_admin("tournaments")
+        # V1.6.2: opponent fixtures are independent from early-reward club rerolls.
+        # As soon as all 16 active HLV have a valid base club, the 32-match fixture
+        # graph may be generated and then remains fixed while eligible HLV continue
+        # to use reward tickets to change only their own club.
         if _matches(tournament_id,"league"):
             flash("Lịch GĐ2 đã tồn tại. Không cho sinh lại/xóa lịch tự động để bảo vệ đối thủ đã công bố.","error")
             return redirect_admin("tournaments")
@@ -699,9 +699,9 @@ def register_league(context):
     def admin_tournament_league_draw_start(tournament_id):
         members=sorted(_all_members(tournament_id),key=lambda m:(int(m.get("pot_no") or 99),int(m.get("seed_no") or 9999),m.get("display_name") or ""))
         order=[str(m.get("user_id")) for m in members]
-        reward_phase=_reward_ticket_phase_status(tournament_id)
-        if not reward_phase.get("closed"):
-            flash("Chưa thể bốc đối thủ: 3 HLV có vé thưởng chưa chốt xong và chưa đến hạn.","warning"); return redirect_admin("tournaments")
+        # V1.6.2: the opponent draw may be revealed while reward tickets are still active.
+        # Ticket rerolls modify fixed_club_* only; they never regenerate or mutate
+        # tournament_matches, so the opponents stay fixed.
         if not _matches(tournament_id,"league"):
             flash("Hãy sinh lịch League Phase trước.","error"); return redirect_admin("tournaments")
         state={"active":True,"completed":False,"order":order,"current_index":0,"pot_index":0,"pots":[1,2,3],"revealed":{},"history":[]}

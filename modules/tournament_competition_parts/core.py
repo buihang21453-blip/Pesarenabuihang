@@ -954,9 +954,9 @@ def register_core(context):
     def _reward_ticket_phase_status(tournament_id, state=None, now=None):
         """Return GĐ1 early-ticket phase status for the three rewarded HLV.
 
-        V1.6.1: tickets are usable only after the 16 base clubs exist and until the
-        Admin-configured deadline. A holder may voluntarily finalize early; unused
-        tickets are then forfeited so GĐ2 can start before the deadline.
+        V1.6.2: tickets are usable after the 16 base clubs exist and may remain active while
+        the fixed opponent schedule is generated/revealed, until the Admin-configured deadline.
+        A holder may voluntarily finalize early; unused tickets are then forfeited so GĐ2 can start.
         """
         state=state if isinstance(state,dict) else (_club_draft_state(tournament_id,False) or {})
         cfg=_setting(tournament_id,"competition_timing",{}) or {}
@@ -1022,7 +1022,7 @@ def register_core(context):
         return state
 
     def _league_launch_readiness(tournament_id):
-        """Single source of truth for opening GĐ2 in V1.6.1."""
+        """Single source of truth for opening GĐ2 in V1.6.2."""
         stages,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id),"ops_league_launch_stages")
         stage={str(r.get("stage_code")):r.get("status") for r in stages}
         members=_all_members(tournament_id)
@@ -1106,7 +1106,7 @@ def register_core(context):
     def _club_draft_state(tournament_id, auto_resolve=True):
         state=_setting(tournament_id,"club_draft_v2",{}) or {}
         if state.get("order") and any((state.get("entries") or {}).get(str(uid),{}).get("allocation_type")=="EARLY_REWARD" for uid in state.get("order",[])):
-            # Legacy per-turn timers stay disabled; V1.6.1 uses one global GĐ2 reward-ticket deadline.
+            # Legacy per-turn timers stay disabled; V1.6.2 uses one global GĐ2 reward-ticket deadline.
             state["countdown"]={}
             return state
         if not state.get("active") or not state.get("order"):

@@ -1194,12 +1194,12 @@
       <div class="tournament-op-tab-panel" id="c1-admin-gd2" data-tournament-op-panel="potclub" style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
         {% set reward_phase=ev.get('reward_ticket_phase',{}) %}
         <div style="border:1px solid rgba(241,202,104,.45);border-radius:12px;padding:13px;margin-bottom:14px;background:#0b1c29">
-          <strong>🏆 Kịch bản Lễ bốc thăm GĐ2 · V1.6.1</strong>
+          <strong>🏆 Kịch bản Lễ bốc thăm GĐ2 · V1.6.2</strong>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0">
             <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>1 · 20:00 17/09</b><div class="small">Mở lễ bốc thăm</div></div>
             <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>2 · Random 16 CLB</b><div class="small">Tier 1→Pot 3 · Tier 2→Pot 2 · Tier 3→Pot 1</div></div>
-            <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>3 · Vé thưởng</b><div class="small">Dùng đến 12:00 18/09 · đã chốt {{ reward_phase.get('finalized_count',0) }}/3 HLV</div></div>
-            <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>4 · Bốc đối thủ</b><div class="small">Công bố Tier 1 → Tier 2 → Tier 3</div></div>
+            <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>3 · Sinh lịch / bốc đối thủ</b><div class="small">32 trận cố định · công bố Tier 1 → Tier 2 → Tier 3</div></div>
+            <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>4 · Vé thưởng vẫn hoạt động</b><div class="small">Đổi CLB đến 12:00 18/09 · đã chốt {{ reward_phase.get('finalized_count',0) }}/3 HLV</div></div>
             <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>5 · Mở GĐ2</b><div class="small">12:00 18/09 hoặc sớm khi 3 HLV chốt / Admin mở ngay</div></div>
           </div>
           <form method="post" action="{{ url_for('admin_tournament_gd2_draw_time',tournament_id=ot.id) }}" style="display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:9px">
@@ -1208,7 +1208,7 @@
             <label>Mở GĐ2 theo lịch<input type="datetime-local" name="league_start_local" data-admin-draw-input="{{ ops.get('league_start_at','2026-09-18T12:00:00+07:00') }}" value="2026-09-18T12:00" required></label>
             <button class="btn gold" type="submit">💾 Lưu kịch bản GĐ2</button>
           </form>
-          <p class="small" style="margin:7px 0 0">Đến hạn vé, vé chưa dùng tự hết hiệu lực. GĐ2 chỉ tự mở khi đã có đủ 32 trận hợp lệ và hoàn tất công bố đối thủ. Nếu 3 HLV có vé chốt sớm, hệ thống có thể mở sớm ngay khi bốc đối thủ xong.</p>
+          <p class="small" style="margin:7px 0 0">Sau khi đủ 16 CLB gốc, Admin có thể sinh và công bố lịch đối thủ ngay. Lịch 32 trận được khóa cố định; HLV có vé vẫn được Random đổi CLB đến khi chốt/dùng hết vé/hết hạn. Đến hạn vé, vé chưa dùng tự hết hiệu lực. GĐ2 chỉ mở khi lịch hợp lệ, công bố xong và pha vé đã đóng (hoặc Admin chọn bắt đầu ngay).</p>
           <script>(function(){document.querySelectorAll('[data-admin-draw-input]').forEach(function(el){var d=new Date(el.dataset.adminDrawInput);if(isNaN(d.getTime()))return;var parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d);var f={};parts.forEach(function(p){f[p.type]=p.value;});el.value=f.year+'-'+f.month+'-'+f.day+'T'+f.hour+':'+f.minute;});})();</script>
         </div>
         <h3 style="margin:0 0 6px">3️⃣ Chia Pot & chọn CLB</h3>
@@ -1278,10 +1278,10 @@
       </div>
 
       <div class="tournament-op-tab-panel" data-tournament-op-panel="league" style="padding:15px;border:1px solid rgba(155,89,182,.32);border-radius:14px;margin-bottom:12px">
-        <h3 style="margin:0 0 6px">4️⃣ Phần 2 — Random đối thủ & mở GĐ2</h3><p class="small">Chỉ sinh lịch sau khi giai đoạn vé thưởng đã đóng: cả 3 HLV chốt CLB sớm hoặc đến hạn 12:00 18/09. Công bố đối thủ theo thứ tự HLV Tier 1 → Tier 2 → Tier 3.</p>
-        <p class="small"><strong>Luật chính thức:</strong> 3 Pot · mỗi HLV đúng 4 trận = 4 trận gặp đủ 3 Tier (không trùng đối thủ), không lặp đối thủ. Khóa GĐ2 xong Top 1–3 nhận mỗi người 1 vé Random lại CLB.</p>
+        <h3 style="margin:0 0 6px">4️⃣ Phần 2 — Random đối thủ & mở GĐ2</h3><p class="small"><strong>Ngay khi đủ 16 CLB gốc</strong> có thể sinh lịch và công bố đối thủ theo Tier 1 → Tier 2 → Tier 3. Sau khi sinh, 32 cặp đấu được giữ cố định; HLV có vé thưởng vẫn có thể Random đổi <strong>CLB</strong> mà không làm thay đổi đối thủ.</p>
+        <p class="small"><strong>Luật chính thức:</strong> Tier HLV 5–6–5 · mỗi HLV đúng 4 trận · 4 đối thủ khác nhau · bắt buộc gặp đủ Tier 1, Tier 2, Tier 3. Khóa GĐ2 xong Top 1–3 nhận mỗi người 1 vé Random lại CLB.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <form method="post" action="{{ url_for('admin_tournament_league_generate',tournament_id=ot.id) }}" onsubmit="return confirm('Sinh 32 trận GĐ2: mỗi HLV 4 trận, đủ 3 Tier, không trùng đối thủ?');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gold" type="submit">🎲 Sinh lịch GĐ2 · 4 trận</button></form>
+          <form method="post" action="{{ url_for('admin_tournament_league_generate',tournament_id=ot.id) }}" onsubmit="return confirm('Sinh 32 trận GĐ2 cố định: mỗi HLV 4 trận, đủ 3 Tier, không trùng đối thủ? Vé thưởng vẫn tiếp tục dùng để đổi CLB.');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gold" type="submit">🎲 Sinh lịch GĐ2 · 4 trận</button></form>
           <form method="post" action="{{ url_for('admin_tournament_league_draw_start',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gray" type="submit">▶ Bắt đầu công bố đối thủ</button></form>
           <form method="post" action="{{ url_for('admin_tournament_league_draw_next',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn green" type="submit">🎲 Công bố tiếp</button></form>
           <form method="post" action="{{ url_for('admin_tournament_league_start',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gold" type="submit">▶ Mở GĐ2 theo lịch</button></form><form method="post" action="{{ url_for('admin_tournament_league_start',tournament_id=ot.id) }}" onsubmit="return confirm('Bắt đầu GĐ2 ngay? Vé thưởng chưa dùng sẽ hết hiệu lực.');"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="start_now" value="1"><button class="btn green" type="submit">⚡ Admin bắt đầu GĐ2 ngay</button></form>
