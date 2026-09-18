@@ -1,3 +1,13 @@
+## V1.6.33 — Sảnh chờ: lịch rảnh 4 đối thủ và tổng quan Admin 16 HLV
+
+- Khắc phục CSS V1.6.32 bị đặt ngoài thẻ style khiến khối Lịch của tôi không có định dạng đúng.
+- Truy vấn lịch rảnh theo lô từ tournament_availability_slots, bao gồm mốc giờ tùy chọn và lịch trận hoàn thành; không bỏ cả 4 thẻ chỉ vì số trận khác bốn.
+- Truy vấn trực tiếp lịch GĐ2 đã lưu theo HLV, giữ điều kiện công bố/đã mở giải để không lộ lịch bí mật.
+- Sảnh chờ HLV chỉ còn Lịch của tôi và lịch 4 đối thủ GĐ2 (mỗi người ba ngày); loại dải Host khỏi Sảnh chờ.
+- Admin thấy bảng giờ rảnh toàn bộ HLV (ba ngày) và có Góc nhìn HLV chỉ đọc bên dưới.
+- Nếu truy vấn Supabase thất bại, hiển thị thông báo lỗi thay vì nói HLV chưa đăng ký giờ.
+- Không thay đổi DB, lịch 32 trận, tỷ số, BXH, vé hay phòng đấu.
+
 ## V1.6.32 — Lịch của tôi trên, lịch 4 đối thủ dưới trong Sảnh chờ
 
 - Hiển thị lịch rảnh đã đăng ký của HLV theo Hôm nay / Ngày mai / Ngày kia phía trên danh sách đối thủ.

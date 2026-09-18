@@ -371,14 +371,27 @@ def register_routes(context):
         reg_rows,_=_safe_rows(db.table('tournament_registrations').select('user_id,zalo_name').eq('tournament_id',tournament_id).in_('user_id',list(ids)),'tournament_landing_zalo') if ids else ([],None)
         zalos={str(x.get('user_id')):(x.get('zalo_name') or '') for x in reg_rows}
 
+        # V1.6.33: Batch all registered availability (including custom half-hour slots)
+        # once, rather than querying once per match and silently returning empty days.
+        availability_by_id={}
+        availability_error=None
+        if ids:
+            av_rows,availability_error=_safe_rows(
+                db.table('tournament_availability_slots').select('user_id,slot_at')
+                .eq('tournament_id',tournament_id).in_('user_id',list(ids)),
+                'tournament_lobby_all_opponent_availability',
+            )
+            for av in av_rows:
+                aid=str(av.get('user_id') or '')
+                if aid:
+                    availability_by_id.setdefault(aid,[]).append(av.get('slot_at'))
         decorated=[]
         opponent_slot_set=set()
         for m in match_rows:
             row=dict(m); h=str(row.get('home_user_id') or ''); a=str(row.get('away_user_id') or '')
             row['home_name']=names.get(h,'HLV'); row['away_name']=names.get(a,'HLV'); row['home_zalo_name']=zalos.get(h,''); row['away_zalo_name']=zalos.get(a,'')
             oid=a if h==uid else h
-            opp_rows,_=_safe_rows(db.table('tournament_availability_slots').select('slot_at').eq('tournament_id',tournament_id).eq('user_id',oid),'tournament_landing_opp_availability')
-            opp=_landing_parse_slots([r.get('slot_at') for r in opp_rows])
+            opp=_landing_parse_slots(availability_by_id.get(oid,[]))
             opponent_slot_set.update(opp)
             row['opponent_availability_days']=_landing_group_slots(opp,mine_set)
             decorated.append(row)
@@ -441,33 +454,64 @@ def register_routes(context):
         member_map={str(x.get('user_id')):x for x in all_members}
         league_visible=bool(league_draw.get('completed') or (league_draw.get('revealed') or {}).get(uid) or league_started)
         league_opponents=[]
+        league_opponent_error=None
         if member and league_visible:
-            # The four opponent IDs come from the saved matches, never from a second random draw.
-            league_matches=[m for m in match_rows if m.get('stage_code')=='league' and m.get('status')!='cancelled']
-            if len(league_matches)==4:
-                from modules.tournament_club_logos import load_draw_club_logos
-                from modules.legacy_team_random_service import _load_teams_from_supabase
-                import os
-                club_names={str(member_map.get(str(m.get('away_user_id') if str(m.get('home_user_id'))==uid else m.get('home_user_id')),{}).get('fixed_club_name') or '') for m in league_matches}
-                club_names.discard('')
+            # Read four saved league fixtures directly, independent of the mixed
+            # GĐ1/GĐ2 listing and its response size; never redraw opponents.
+            league_matches,league_opponent_error=_safe_rows(
+                db.table('tournament_matches').select('*').eq('tournament_id',tournament_id)
+                .eq('stage_code','league').or_(f'home_user_id.eq.{uid},away_user_id.eq.{uid}')
+                .order('created_at'), 'tournament_lobby_four_league_fixtures',
+            )
+            league_matches=[m for m in league_matches if m.get('status')!='cancelled']
+            rival_ids={str(m.get('away_user_id') if str(m.get('home_user_id'))==uid else m.get('home_user_id')) for m in league_matches}
+            missing_ids={rid for rid in rival_ids if rid not in member_map and rid}
+            if missing_ids:
+                extra_members,_=_safe_rows(db.table('tournament_members').select('user_id,pot_no,fixed_club_name')
+                    .eq('tournament_id',tournament_id).in_('user_id',list(missing_ids)),
+                    'tournament_lobby_opponent_member_fallback')
+                member_map.update({str(m.get('user_id')):m for m in extra_members})
+            missing_names={rid for rid in rival_ids if rid not in names and rid}
+            if missing_names:
+                extra_users,_=_safe_rows(db.table('users').select('id,username,display_name').in_('id',list(missing_names)),
+                    'tournament_lobby_opponent_names_fallback')
+                names.update({str(x.get('id')):x.get('display_name') or x.get('username') or 'HLV' for x in extra_users})
+            # A separate availability lookup covers fixtures that were absent from
+            # the initial mixed match response, including completed fixtures.
+            unqueried={rid for rid in rival_ids if rid and rid not in availability_by_id}
+            if unqueried and not availability_error:
+                extra_av,av_error=_safe_rows(db.table('tournament_availability_slots').select('user_id,slot_at')
+                    .eq('tournament_id',tournament_id).in_('user_id',list(unqueried)),
+                    'tournament_lobby_four_opponent_availability_fallback')
+                if av_error:
+                    availability_error=av_error
+                for av in extra_av:
+                    availability_by_id.setdefault(str(av.get('user_id')),[]).append(av.get('slot_at'))
+            club_names={str((member_map.get(rid) or {}).get('fixed_club_name') or '') for rid in rival_ids}
+            club_names.discard('')
+            club_logos={}
+            if club_names:
                 try:
-                    club_logos,_=load_draw_club_logos(db,execute_query,os.getenv('SUPABASE_URL',''),sorted(club_names),team_loader=_load_teams_from_supabase,logger=app.logger)
+                    from modules.tournament_club_logos import load_draw_club_logos
+                    from modules.legacy_team_random_service import _load_teams_from_supabase
+                    import os
+                    club_logos,_=load_draw_club_logos(db,execute_query,os.getenv('SUPABASE_URL',''),sorted(club_names),
+                        team_loader=_load_teams_from_supabase,logger=app.logger)
                 except Exception:
-                    club_logos={}
                     app.logger.exception('Could not load opponent club logos for tournament %s',tournament_id)
-                for m in league_matches:
-                    oid=str(m.get('away_user_id') if str(m.get('home_user_id'))==uid else m.get('home_user_id'))
-                    om=member_map.get(oid) or {}
-                    club=om.get('fixed_club_name') or ''
-                    league_opponents.append({'user_id':oid,'name':names.get(oid,'HLV'),'tier':om.get('pot_no'),
-                        'club':club,'club_pot':C1_CLUB_POT_BY_NAME.get(club),'club_logo':club_logos.get(club,''),
-                        'zalo':zalos.get(oid,''),'match_id':m.get('id'),'status':m.get('status'),
-                        'scheduled_at':m.get('scheduled_at'),'round_code':m.get('round_code'),
-                        # Reuse the same availability already loaded for this fixture;
-                        # no additional queries or stale duplicated schedule state.
-                        'availability_days':m.get('opponent_availability_days') or []})
-            else:
-                app.logger.warning('League opponents not ready: user=%s, count=%s',uid,len(league_matches))
+            for m in league_matches:
+                oid=str(m.get('away_user_id') if str(m.get('home_user_id'))==uid else m.get('home_user_id'))
+                om=member_map.get(oid) or {}
+                club=om.get('fixed_club_name') or ''
+                opp=_landing_parse_slots(availability_by_id.get(oid,[]))
+                opponent_slot_set.update(opp)
+                league_opponents.append({'user_id':oid,'name':names.get(oid,'HLV'),'tier':om.get('pot_no'),
+                    'club':club,'club_pot':C1_CLUB_POT_BY_NAME.get(club),'club_logo':club_logos.get(club,''),
+                    'zalo':zalos.get(oid,''),'match_id':m.get('id'),'status':m.get('status'),
+                    'scheduled_at':m.get('scheduled_at'),'round_code':m.get('round_code'),
+                    'availability_days':_landing_group_slots(opp,mine_set)})
+            if len(league_opponents)!=4:
+                app.logger.warning('League opponents incomplete: user=%s, count=%s, error=%s',uid,len(league_opponents),league_opponent_error)
 
         room_rows,_=_safe_rows(db.table('match_rooms').select('*').order('updated_at',desc=True).limit(160),'tournament_landing_center_rooms')
         tournament_match_rows,_=_safe_rows(db.table('tournament_matches').select('*').eq('tournament_id',tournament_id),'tournament_landing_center_match_rows')
@@ -520,6 +564,7 @@ def register_routes(context):
             'stage1_opened':bool(s1_reveals.get(uid)), 'league_mine':league_mine,
             'league_opened':bool(league_reveals.get(uid)) or bool(league_draw.get('completed')) or league_started,
             'league_started':league_started,'league_opponents':league_opponents,
+            'league_opponent_error':bool(league_opponent_error),'availability_error':bool(availability_error),
             'my_has_host':bool((reg_map.get(uid) or {}).get('has_host')),
             'test_opponent':test_opponent,
             'test_opponent_days':test_opp_days,
@@ -567,6 +612,24 @@ def register_routes(context):
         if hub:
             hub['admin_preview'] = True
             hub['preview_name'] = names.get(selected, 'HLV')
+        # V1.6.33: Admin sees ALL active HLV and 3-day free times above a selectable
+        # read-only HLV perspective. This does not change auth/session or bookings.
+        all_availability, all_av_error = _safe_rows(
+            db.table('tournament_availability_slots').select('user_id,slot_at')
+            .eq('tournament_id',tournament_id).in_('user_id',ids),
+            'admin_c1_lobby_full_availability',
+        ) if ids else ([], None)
+        all_av_by_user={uid:[] for uid in ids}
+        for av in all_availability:
+            aid=str(av.get('user_id') or '')
+            if aid in all_av_by_user:
+                all_av_by_user[aid].append(av.get('slot_at'))
+        overview=[]
+        for row in members:
+            rid=str(row.get('user_id') or '')
+            grouped=_landing_group_slots(_landing_parse_slots(all_av_by_user.get(rid,[])),hub.get('mine_set') if hub else set())
+            overview.append({'user_id':rid,'name':names.get(rid,'HLV'),'tier':row.get('pot_no'),
+                'club':row.get('fixed_club_name') or '', 'days':grouped})
         tournament = dict(rows[0])
         tournament['landing_hub'] = hub
         tournament['needs_availability_gate'] = False
@@ -574,7 +637,8 @@ def register_routes(context):
         player_options = [{'id': uid, 'name': names.get(uid, 'HLV')} for uid in ids]
         return render_template('tournament/admin_lobby.html', tournaments=[tournament],
                                tournament=tournament, hub=hub, selected=selected,
-                               player_options=player_options,
+                               player_options=player_options, availability_overview=overview,
+                               availability_overview_error=bool(all_av_error),
                                tournament_design=tournament_design_settings())
 
     @app.get('/admin/tournaments/<tournament_id>/league-opponent-wall')

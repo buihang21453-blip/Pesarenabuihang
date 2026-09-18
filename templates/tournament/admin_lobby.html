@@ -10,7 +10,7 @@
 .admin-lobby-toolbar label{display:grid;gap:5px;color:#aeb9c3;font-size:12px;font-weight:800}
 .admin-lobby-toolbar select{min-width:230px;min-height:40px;background:#0b1c29;border:1px solid rgba(241,202,104,.35);color:white;border-radius:9px;padding:7px}
 .admin-lobby-shell .tournament-center-stack{margin-top:15px}
-.admin-lobby-schedule{margin-top:15px}
+.admin-lobby-overview{margin:15px 0;padding:16px}.admin-lobby-overview-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.admin-lobby-overview-head h2{margin:4px 0 12px;color:#f1ca68;font-size:19px}.admin-lobby-all-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.admin-lobby-all-player{background:#091a29;border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px;min-width:0}.admin-lobby-all-player header{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:9px}.admin-lobby-all-player header strong{color:#f1ca68;font-size:13px}.admin-lobby-all-player header span{color:#aabdc9;font-size:11px}.admin-lobby-all-player header a{margin-left:auto;color:#b8e9ce;font-size:11px}.admin-lobby-all-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.admin-lobby-all-day{background:#071522;border-radius:8px;padding:7px;min-width:0}.admin-lobby-all-day b{font-size:11px;color:#dbe8f0}.admin-lobby-all-day small{display:block;color:#869fad;font-size:10px}.admin-lobby-all-slots{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.admin-lobby-slot{display:inline-block;padding:4px 6px;border-radius:6px;font-size:10px;font-weight:700;background:#124136;color:#b6f1cd}.admin-lobby-no-times{color:#8298a5;font-size:10px}.admin-lobby-error{color:#f1ca68}.admin-lobby-perspective-heading{margin-top:18px;border-bottom:1px solid rgba(241,202,104,.20);padding:0 0 9px}.admin-lobby-perspective-heading h2{font-size:18px;margin:5px 0 0;color:#f1ca68}@media(max-width:1050px){.admin-lobby-all-grid{grid-template-columns:1fr}}@media(max-width:650px){.admin-lobby-all-days{grid-template-columns:1fr}}.admin-lobby-schedule{margin-top:15px}
 .admin-lobby-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .admin-lobby-day{background:#091a29;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px}
 .admin-lobby-day strong{display:block;color:#f1ca68;margin-bottom:9px}
@@ -22,7 +22,7 @@
 <div class="admin-lobby-shell">
   <header class="admin-lobby-head">
     <h1>🏟️ Sảnh chờ C1 · Góc nhìn Admin</h1>
-    <p>Xem cùng giao diện Sảnh chờ của HLV: đối thủ GĐ2, Tier, CLB có logo, giờ rảnh và Host đang rảnh. Chỉ xem; không thao tác trận hoặc vé.</p>
+    <p>Phía trên: lịch rảnh của toàn bộ HLV trong ba ngày. Phía dưới: chọn Góc nhìn HLV để xem lịch của người đó và giờ rảnh riêng của bốn đối thủ GĐ2. Chỉ xem, không đăng nhập thay hoặc thao tác trận/vé.</p>
     <div class="admin-lobby-toolbar">
       <form method="get" action="{{ url_for('admin_tournament_lobby',tournament_id=tournament.id) }}" class="admin-lobby-toolbar">
         <label>Góc nhìn HLV
@@ -38,6 +38,21 @@
       <button type="button" class="btn" onclick="window.location.reload()">↻ Làm mới dữ liệu</button>
     </div>
   </header>
+  <section class="td-section admin-lobby-overview" id="admin-c1-all-availability">
+    <div class="admin-lobby-overview-head"><div><span class="c1-lobby-section-kicker">TỔNG QUAN C1 · 3 NGÀY</span><h2>📅 Lịch rảnh của toàn bộ {{ availability_overview|length }} HLV</h2></div><button type="button" class="btn" onclick="window.location.reload()">↻ Làm mới</button></div>
+    {% if availability_overview_error %}<p class="admin-lobby-error">Không đọc được dữ liệu lịch rảnh. Vui lòng làm mới hoặc kiểm tra kết nối Supabase.</p>{% endif %}
+    <div class="admin-lobby-all-grid">
+    {% for player in availability_overview %}
+      <article class="admin-lobby-all-player">
+        <header><strong>{{ player.name }}</strong><span>Tier {{ player.tier or '—' }} · {{ player.club or 'Chưa có CLB' }}</span><a href="{{ url_for('admin_tournament_lobby', tournament_id=tournament.id, hlv=player.user_id) }}#admin-c1-perspective">Góc nhìn HLV ↗</a></header>
+        <div class="admin-lobby-all-days">
+        {% for day in player.days %}<div class="admin-lobby-all-day"><b>{{ day.label }}</b><small>{{ day.weekday }}</small><div class="admin-lobby-all-slots">{% for slot in day.opponent_slots %}<span class="admin-lobby-slot">{{ slot.label }}</span>{% else %}<span class="admin-lobby-no-times">Chưa đăng ký</span>{% endfor %}</div></div>{% endfor %}
+        </div>
+      </article>
+    {% else %}<p class="admin-lobby-error">Chưa có HLV tham gia giải.</p>{% endfor %}
+    </div>
+  </section>
+  <section id="admin-c1-perspective" class="admin-lobby-perspective-heading"><span class="c1-lobby-section-kicker">GÓC NHÌN HLV · CHỈ XEM</span><h2>👤 {{ hub.preview_name if hub else 'Chưa có HLV' }} · Lịch của tôi &amp; 4 đối thủ GĐ2</h2></section>
   {% if hub %}
     {% include "tournament/tabs/lobby.html" %}
   {% else %}

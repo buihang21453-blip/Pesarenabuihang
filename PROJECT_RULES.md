@@ -1,3 +1,10 @@
+## V1.6.33
+
+- Sảnh chờ HLV chỉ hiển thị Lịch của tôi và lịch rảnh của bốn đối thủ GĐ2 theo ba ngày; không trộn chức năng tạo trận/trạng thái thi đấu.
+- Sảnh chờ Admin phải có lịch rảnh mọi HLV và Góc nhìn HLV chỉ đọc.
+- Giữ quyền công bố GĐ2: chỉ mở thông tin bốn đối thủ khi họ đã được công bố hoặc GĐ2 đã bắt đầu.
+- Lỗi truy vấn phải được phân biệt với lịch rảnh trống; không sinh lại lịch đối thủ hoặc ảnh hưởng dữ liệu thực.
+
 ## V1.6.32
 
 - Sảnh chờ C1 phải hiển thị lịch rảnh của chính HLV ở phía trên, sau đó mới đến lịch rảnh của từng đối thủ trong 3 ngày; giữ chức năng chỉ xem.

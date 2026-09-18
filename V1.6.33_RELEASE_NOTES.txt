@@ -1,0 +1,6 @@
+PES Arena V1.6.33 — Sảnh chờ xem giờ rảnh GĐ2
+
+HLV: Lịch của tôi ở trên, bốn đối thủ với Tier, CLB, logo, Pot và giờ rảnh từng ngày ở dưới. Giờ trùng tô xanh. Bỏ Host khỏi Sảnh chờ.
+Admin: tổng quan giờ rảnh tất cả HLV trong ba ngày, chọn Góc nhìn HLV bên dưới để xem lịch của từng người và bốn đối thủ.
+Sửa truy vấn lịch rảnh theo lô, truy vấn bốn trận GĐ2 trực tiếp; sửa lỗi CSS V1.6.32 nằm ngoài thẻ style.
+Không thêm SQL mới. Không đổi lịch thi đấu, kết quả, BXH hoặc vé.

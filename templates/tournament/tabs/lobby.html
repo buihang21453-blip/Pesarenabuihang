@@ -9,7 +9,7 @@
       <div>
         <span class="c1-lobby-eyebrow">PES ARENA · CHAMPIONS LEAGUE · GĐ2</span>
         <h2>🏟️ Sảnh chờ · Đối thủ {{ 'của ' ~ hub.preview_name if hub.admin_preview|default(false) else 'của tôi' }}</h2>
-        <p>Lịch của tôi phía trên · lịch rảnh của 4 đối thủ bên dưới. So sánh khung giờ trong 3 ngày; giờ trùng được tô xanh.</p>
+        <p>Lịch của tôi ở trên, bên dưới là lịch rảnh riêng của từng đối thủ trong Hôm nay – Ngày mai – Ngày kia; giờ trùng được tô xanh.</p>
       </div>
       <div class="c1-lobby-summary">{{ hub.league_opponents|length }}/4 <span>đối thủ GĐ2</span></div>
     </header>
@@ -38,7 +38,7 @@
     </section>
     <div class="c1-lobby-rivals-heading"><span class="c1-lobby-section-kicker">02 · LỊCH RẢNH CỦA ĐỐI THỦ</span><h3>👥 4 đối thủ GĐ2</h3><p>Tier · CLB · logo · Pot và giờ rảnh từng ngày. <span class="c1-lobby-legend-dot"></span> Xanh lá = giờ trùng với lịch của tôi.</p></div>
 
-    {% if hub.is_test %}
+    {% if hub.is_test and hub.league_opponents|length != 4 %}
       {% if hub.test_opponent %}
       <div class="c1-lobby-opponent-grid">
         <article class="c1-lobby-rival">
@@ -46,7 +46,7 @@
           <div class="c1-lobby-rival-identity"><span class="c1-lobby-placeholder" aria-hidden="true">⚽</span><div><h3>{{ hub.test_opponent.display_name }}</h3><span class="c1-lobby-muted">CLB / Tier theo dữ liệu tài khoản test</span></div></div>
           <div class="c1-lobby-time-title">Giờ rảnh của đối thủ · 3 ngày</div>
           <div class="c1-lobby-availability">
-            {% for day in hub.test_opponent_days %}<div class="c1-lobby-day"><div class="c1-lobby-day-name">{{ day.label }} <small>{{ day.weekday }}</small></div><div class="c1-lobby-times">{% for slot in day.opponent_slots %}<span class="c1-lobby-time{{ ' is-overlap' if slot.is_overlap else '' }}" data-opponent-slot-iso="{{ slot.iso }}" data-availability-scope="{{ tournament.id }}">{{ slot.label }}</span>{% else %}<span class="c1-lobby-no-times">Chưa có giờ</span>{% endfor %}</div></div>{% endfor %}
+            {% for day in hub.test_opponent_days %}<div class="c1-lobby-day"><div class="c1-lobby-day-name">{{ day.label }} <small>{{ day.weekday }}</small></div><div class="c1-lobby-times">{% for slot in day.opponent_slots %}<span class="c1-lobby-time{{ ' is-overlap' if slot.is_overlap else '' }}" data-opponent-slot-iso="{{ slot.iso }}" data-availability-scope="{{ tournament.id }}">{{ slot.label }}</span>{% else %}<span class="c1-lobby-no-times">Đối thủ chưa đăng ký giờ rảnh</span>{% endfor %}</div></div>{% endfor %}
           </div>
         </article>
       </div>
@@ -66,11 +66,12 @@
           </div>
           <div class="c1-lobby-time-title">Giờ rảnh của đối thủ · 3 ngày</div>
           <div class="c1-lobby-availability">
+            {% if hub.availability_error %}<p class="c1-lobby-av-error">Không đọc được lịch rảnh. Vui lòng tải lại.</p>{% endif %}
             {% for day in o.availability_days %}
               <div class="c1-lobby-day">
                 <div class="c1-lobby-day-name">{{ day.label }} <small>{{ day.weekday }}</small></div>
                 <div class="c1-lobby-times">
-                {% for slot in day.opponent_slots %}<span class="c1-lobby-time{{ ' is-overlap' if slot.is_overlap else '' }}" data-opponent-slot-iso="{{ slot.iso }}" data-availability-scope="{{ tournament.id }}">{{ slot.label }}</span>{% else %}<span class="c1-lobby-no-times">Chưa có giờ</span>{% endfor %}
+                {% for slot in day.opponent_slots %}<span class="c1-lobby-time{{ ' is-overlap' if slot.is_overlap else '' }}" data-opponent-slot-iso="{{ slot.iso }}" data-availability-scope="{{ tournament.id }}">{{ slot.label }}</span>{% else %}<span class="c1-lobby-no-times">Đối thủ chưa đăng ký giờ rảnh</span>{% endfor %}
                 </div>
               </div>
             {% else %}
@@ -81,6 +82,8 @@
       {% endfor %}
       </div>
       <p class="c1-lobby-footnote"><span class="c1-lobby-legend-dot"></span> Xanh lá: giờ trùng giữa lịch của tôi và đối thủ. CLB cập nhật theo phân bổ mới nhất khi tải lại trang.</p>
+    {% elif hub.league_opponent_error %}
+      <div class="td-empty">Không đọc được lịch GĐ2. Vui lòng làm mới trang hoặc liên hệ Admin.</div>
     {% elif hub.admin_preview|default(false) and hub.league_mine and not hub.league_opened %}
       <div class="td-empty">HLV chưa mở danh sách đối thủ; Admin chỉ xem, không mở thay HLV.</div>
     {% elif hub.league_mine and not hub.league_opened %}
@@ -91,10 +94,6 @@
       <div class="td-empty">Chưa công bố danh sách đối thủ GĐ2.</div>
     {% endif %}
 
-    <aside class="c1-lobby-hosts td-host-ready" data-host-ready-list data-tournament-id="{{ tournament.id }}">
-      <strong>🟢 Host đang rảnh</strong>
-      <div class="td-host-ready-items" data-host-ready-items>{% for h in hub.host_ready %}<span class="td-host-chip">🟢 {{ h.display_name }} · {{ h.region }}</span>{% else %}<small class="td-host-ready-empty">Chưa có Host nào đang rảnh.</small>{% endfor %}</div>
-    </aside>
   </section>
 </div>
 {% endif %}

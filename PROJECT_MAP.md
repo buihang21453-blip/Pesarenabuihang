@@ -1,3 +1,11 @@
+## V1.6.33
+
+- `modules/tournament_routes.py`: `_landing_hub_payload` truy vấn lịch rảnh theo lô; đọc riêng bốn trận GĐ2 của HLV; `admin_tournament_lobby` nạp lịch toàn bộ HLV.
+- `templates/tournament/tabs/lobby.html`: Lịch của tôi + giờ rảnh bốn đối thủ theo ba ngày; bỏ Host; hiện lỗi tải dữ liệu.
+- `templates/tournament/admin_lobby.html`: tổng quan giờ rảnh toàn bộ HLV và bộ chọn Góc nhìn HLV.
+- `templates/tournament/styles.html`: sửa ranh giới thẻ style và bổ sung cảnh báo lịch rảnh.
+- `app.py`, `templates/admin.html`: phiên bản V1.6.33.
+
 ## V1.6.32
 
 - `templates/tournament/tabs/lobby.html`: thêm khối Lịch của tôi (3 ngày) từ `hub.days` và `hub.mine_set` phía trên 4 thẻ đối thủ.
