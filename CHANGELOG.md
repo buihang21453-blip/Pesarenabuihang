@@ -1,3 +1,9 @@
+## V1.6.36 — Cập nhật hướng dẫn công khai RP và Zcoin
+- Thay phần giải thích công thức RP chi tiết trong Hướng dẫn bằng giới hạn lượt Rank, chống farm, thưởng chuỗi thắng và thưởng hoạt động tuần đã công khai.
+- Thêm phần Zcoin: điểm danh, Gift Code, phần thưởng sự kiện, Ví, Cửa hàng, Lucky Box; liên kết đến các trang người chơi.
+- Không công khai hệ số RP, tỷ lệ CLB/Lucky Box, quy tắc vận hành nội bộ hoặc cấu hình Admin. Không thêm hướng dẫn C1.
+- Chỉ thay đổi template Hướng dẫn, version và tài liệu; không thay đổi logic hay SQL.
+
 ## V1.6.35 — Khôi phục chỉnh/Import tỷ lệ Rank; sửa gửi thông báo Admin
 - Mở module RANK_CLUB_TIER_WEIGHTS trong Admin → Hệ thống: chỉnh 10 Rank, import JSON/Python literal, export JSON, validate 100% mỗi Rank.
 - Lưu system_settings rank_club_tier_weights và làm mới bộ đệm; không ảnh hưởng trận cũ.

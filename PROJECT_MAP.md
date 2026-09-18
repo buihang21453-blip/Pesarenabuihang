@@ -1,3 +1,7 @@
+## V1.6.36
+- `templates/guide.html`: hướng dẫn chung phòng đấu, cơ chế RP công khai và Zcoin; có liên kết Phần thưởng/Ví/Cửa hàng.
+- `app.py`: nâng APP_VERSION. Không sửa DB/API/route/service.
+
 ## V1.6.35
 - `modules/admin_system_routes.py`: save/import/export RANK_CLUB_TIER_WEIGHTS.
 - `modules/admin_dashboard_routes.py`: tải tỷ lệ Rank cho giao diện.

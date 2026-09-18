@@ -1,0 +1,6 @@
+PES Arena V1.6.36 — Hướng dẫn người chơi: RP và Zcoin
+
+- Hướng dẫn RP: giới hạn trận Rank theo ngày, chống farm, thưởng chuỗi thắng, thưởng tuần, xác nhận kết quả.
+- Hướng dẫn Zcoin: điểm danh 7 ngày, Gift Code, nhận quà, ví, cửa hàng, Lucky Box.
+- Bỏ thông số công thức RP chi tiết không cần công khai. Không đưa cơ chế giải C1.
+- Không thay đổi chức năng tính RP/Zcoin, dữ liệu hoặc SQL.

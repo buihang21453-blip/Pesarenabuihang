@@ -1,3 +1,7 @@
+## V1.6.36
+- Trang Hướng dẫn dành cho người chơi chỉ đưa quy tắc đã công khai; không mô tả công thức tính chi tiết, hệ số, tỷ lệ random, cấu hình nội bộ hoặc công cụ Admin.
+- Không bổ sung hướng dẫn giải C1 vào trang Hướng dẫn chung khi không được yêu cầu.
+
 ## V1.6.35
 - Import tỷ lệ Rank chỉ nhận JSON/Python literal an toàn, đủ 10 Rank và tổng 100% cho từng Rank; tuyệt đối không dùng eval.
 - Thông báo Admin chỉ gửi sau khi kiểm tra quyền users_approve và tài khoản hợp lệ.
