@@ -1,4 +1,4 @@
-{# V1.6.31: Sảnh chờ is a read-only opponent and availability directory.
+{# V1.6.32: Sảnh chờ shows my three-day availability ABOVE opponent availability.
    Enter/create room, active-room status and detailed scheduling stay in their own tabs. #}
 {% for tournament in tournaments %}
 {% set hub=tournament.landing_hub|default(none) %}
@@ -9,10 +9,34 @@
       <div>
         <span class="c1-lobby-eyebrow">PES ARENA · CHAMPIONS LEAGUE · GĐ2</span>
         <h2>🏟️ Sảnh chờ · Đối thủ {{ 'của ' ~ hub.preview_name if hub.admin_preview|default(false) else 'của tôi' }}</h2>
-        <p>Đối thủ, Tier, CLB và khung giờ rảnh trong 3 ngày. Giờ trùng với bạn được tô xanh.</p>
+        <p>Lịch của tôi phía trên · lịch rảnh của 4 đối thủ bên dưới. So sánh khung giờ trong 3 ngày; giờ trùng được tô xanh.</p>
       </div>
       <div class="c1-lobby-summary">{{ hub.league_opponents|length }}/4 <span>đối thủ GĐ2</span></div>
     </header>
+
+    {# Read-only snapshot from the same availability source used by tab "Lịch của tôi". #}
+    <section class="c1-lobby-mine" aria-labelledby="c1-lobby-mine-title-{{ tournament.id }}">
+      <div class="c1-lobby-block-head">
+        <div><span class="c1-lobby-section-kicker">01 · LỊCH CỦA TÔI</span><h3 id="c1-lobby-mine-title-{{ tournament.id }}">📅 {{ hub.preview_name if hub.admin_preview|default(false) else 'Lịch của tôi' }} · Giờ rảnh 3 ngày</h3></div>
+        <span class="c1-lobby-block-hint">Các khung giờ đã đăng ký</span>
+      </div>
+      <div class="c1-lobby-my-days">
+        {% for day in hub.days %}
+        <div class="c1-lobby-my-day">
+          <div class="c1-lobby-my-day-label"><strong>{{ day.label }}</strong><small>{{ day.weekday }}</small></div>
+          <div class="c1-lobby-times">
+            {% set mine=namespace(count=0) %}
+            {% for slot in day.slots if slot.iso in hub.mine_set %}
+              {% set mine.count=mine.count+1 %}
+              <span class="c1-lobby-time c1-lobby-my-time" data-my-slot-iso="{{ slot.iso }}" data-availability-scope="{{ tournament.id }}">{{ slot.label }}</span>
+            {% endfor %}
+            {% if mine.count == 0 %}<span class="c1-lobby-no-times">Chưa đăng ký giờ rảnh</span>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    <div class="c1-lobby-rivals-heading"><span class="c1-lobby-section-kicker">02 · LỊCH RẢNH CỦA ĐỐI THỦ</span><h3>👥 4 đối thủ GĐ2</h3><p>Tier · CLB · logo · Pot và giờ rảnh từng ngày. <span class="c1-lobby-legend-dot"></span> Xanh lá = giờ trùng với lịch của tôi.</p></div>
 
     {% if hub.is_test %}
       {% if hub.test_opponent %}
@@ -20,7 +44,7 @@
         <article class="c1-lobby-rival">
           <div class="c1-lobby-rival-top"><span>ĐỐI THỦ TEST</span></div>
           <div class="c1-lobby-rival-identity"><span class="c1-lobby-placeholder" aria-hidden="true">⚽</span><div><h3>{{ hub.test_opponent.display_name }}</h3><span class="c1-lobby-muted">CLB / Tier theo dữ liệu tài khoản test</span></div></div>
-          <div class="c1-lobby-time-title">Khung giờ rảnh · 3 ngày</div>
+          <div class="c1-lobby-time-title">Giờ rảnh của đối thủ · 3 ngày</div>
           <div class="c1-lobby-availability">
             {% for day in hub.test_opponent_days %}<div class="c1-lobby-day"><div class="c1-lobby-day-name">{{ day.label }} <small>{{ day.weekday }}</small></div><div class="c1-lobby-times">{% for slot in day.opponent_slots %}<span class="c1-lobby-time{{ ' is-overlap' if slot.is_overlap else '' }}" data-opponent-slot-iso="{{ slot.iso }}" data-availability-scope="{{ tournament.id }}">{{ slot.label }}</span>{% else %}<span class="c1-lobby-no-times">Chưa có giờ</span>{% endfor %}</div></div>{% endfor %}
           </div>
@@ -40,7 +64,7 @@
               <small>Pot CLB {{ o.club_pot or '—' }}{% if o.zalo %} · Zalo: {{ o.zalo }}{% endif %}</small>
             </div>
           </div>
-          <div class="c1-lobby-time-title">Khung giờ rảnh · 3 ngày</div>
+          <div class="c1-lobby-time-title">Giờ rảnh của đối thủ · 3 ngày</div>
           <div class="c1-lobby-availability">
             {% for day in o.availability_days %}
               <div class="c1-lobby-day">
@@ -56,7 +80,7 @@
         </article>
       {% endfor %}
       </div>
-      <p class="c1-lobby-footnote"><span class="c1-lobby-legend-dot"></span> Màu xanh: giờ rảnh trùng với bạn. CLB hiển thị theo phân bổ mới nhất khi tải lại trang.</p>
+      <p class="c1-lobby-footnote"><span class="c1-lobby-legend-dot"></span> Xanh lá: giờ trùng giữa lịch của tôi và đối thủ. CLB cập nhật theo phân bổ mới nhất khi tải lại trang.</p>
     {% elif hub.admin_preview|default(false) and hub.league_mine and not hub.league_opened %}
       <div class="td-empty">HLV chưa mở danh sách đối thủ; Admin chỉ xem, không mở thay HLV.</div>
     {% elif hub.league_mine and not hub.league_opened %}

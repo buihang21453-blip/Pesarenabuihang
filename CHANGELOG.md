@@ -1,3 +1,10 @@
+## V1.6.32 — Lịch của tôi trên, lịch 4 đối thủ dưới trong Sảnh chờ
+
+- Hiển thị lịch rảnh đã đăng ký của HLV theo Hôm nay / Ngày mai / Ngày kia phía trên danh sách đối thủ.
+- Bên dưới là 4 thẻ đối thủ GĐ2, giữ tên/Tier/CLB/logo/Pot và lịch rảnh 3 ngày của từng người.
+- Giờ trùng lịch tô xanh; Admin xem lịch của HLV đã chọn ở cùng bố cục chỉ đọc.
+- Không khôi phục trạng thái trận, thao tác xem lịch, tạo trận trong Sảnh chờ; không đổi DB hay lịch 32 trận.
+
 ## V1.6.31 — Sảnh chờ C1 gọn: đối thủ, Tier, CLB và khung giờ rảnh
 
 - Thiết kế lại Sảnh chờ thành 4 thẻ đối thủ GĐ2; mỗi thẻ gắn HLV, Tier, CLB hiện tại, logo CLB, Pot và giờ rảnh 3 ngày.

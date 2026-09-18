@@ -1,3 +1,8 @@
+## V1.6.32
+
+- Sảnh chờ C1 phải hiển thị lịch rảnh của chính HLV ở phía trên, sau đó mới đến lịch rảnh của từng đối thủ trong 3 ngày; giữ chức năng chỉ xem.
+- Admin xem theo góc nhìn HLV sử dụng chính dữ liệu lịch HLV đó, không giả danh hoặc thay đổi thông tin.
+
 ## V1.6.31
 
 - Sảnh chờ C1 là nơi xem thông tin đối thủ/Tier/CLB/logo và giờ rảnh; không đặt nút tạo trận hoặc trạng thái phòng trong Sảnh chờ.

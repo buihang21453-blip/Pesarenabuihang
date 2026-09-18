@@ -1,3 +1,10 @@
+## V1.6.32
+
+- `templates/tournament/tabs/lobby.html`: thêm khối Lịch của tôi (3 ngày) từ `hub.days` và `hub.mine_set` phía trên 4 thẻ đối thủ.
+- `templates/tournament/styles.html`: bổ sung style lịch cá nhân 3 cột và tiêu đề phân tách.
+- `modules/tournament_routes.py`: không thay đổi; tái sử dụng dữ liệu lịch hiện có.
+- `app.py`, `templates/admin.html`: đồng bộ version.
+
 ## V1.6.31
 
 - `templates/tournament/tabs/lobby.html`: Sảnh chờ chỉ xem đối thủ, logo, Tier, Pot, 3 ngày giờ rảnh và Host rảnh; loại bỏ phòng, trạng thái trận và tạo trận.
