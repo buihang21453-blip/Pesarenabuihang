@@ -3,6 +3,7 @@
 {% include "tournament/styles.html" %}
 <style>
 .admin-lobby-shell{max-width:1450px;margin:18px auto;padding:0 12px 30px}
+.admin-lobby-view-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px;border:1px solid rgba(241,202,104,.22);background:#071522;border-radius:12px;position:sticky;top:0;z-index:20}.admin-lobby-view-tabs a{display:inline-flex;justify-content:center;align-items:center;min-height:41px;padding:10px 15px;text-decoration:none;border:1px solid rgba(241,202,104,.24);background:#0b1c29;border-radius:9px;color:#dfe8ef;font-size:13px;font-weight:850}.admin-lobby-view-tabs a.is-selected{background:#e9bf63;color:#101c27;border-color:#e9bf63}.admin-lobby-view[hidden]{display:none!important}
 .admin-lobby-head{padding:18px;border:1px solid rgba(241,202,104,.30);border-radius:16px;background:#071522}
 .admin-lobby-head h1{margin:0 0 8px;color:#f1ca68;font-size:24px}
 .admin-lobby-head p{margin:0 0 12px;color:#b2bfca;font-size:13px}
@@ -20,11 +21,16 @@
 {% endblock %}
 {% block content %}
 <div class="admin-lobby-shell">
-  <header class="admin-lobby-head">
+  <nav class="admin-lobby-view-tabs" aria-label="Chọn nội dung Sảnh chờ Admin">
+    <a href="{{ url_for('admin_tournament_lobby',tournament_id=tournament.id, view='all') }}#admin-c1-all-availability" class="{{ 'is-selected' if active_view == 'all' else '' }}" aria-current="{{ 'page' if active_view == 'all' else 'false' }}">📅 Lịch rảnh toàn bộ 16 HLV</a>
+    <a href="{{ url_for('admin_tournament_lobby',tournament_id=tournament.id, view='perspective', hlv=selected) }}#admin-c1-perspective" class="{{ 'is-selected' if active_view == 'perspective' else '' }}" aria-current="{{ 'page' if active_view == 'perspective' else 'false' }}">👤 Góc nhìn HLV</a>
+  </nav>
+  <header class="admin-lobby-head" {% if active_view != 'perspective' %}hidden{% endif %}>
     <h1>🏟️ Sảnh chờ C1 · Góc nhìn Admin</h1>
-    <p>Phía trên: lịch rảnh của toàn bộ HLV trong ba ngày. Phía dưới: chọn Góc nhìn HLV để xem lịch của người đó và giờ rảnh riêng của bốn đối thủ GĐ2. Chỉ xem, không đăng nhập thay hoặc thao tác trận/vé.</p>
+    <p>Chọn HLV để xem lịch của người đó và giờ rảnh của bốn đối thủ GĐ2. Đây chỉ là chế độ xem, không đăng nhập thay hoặc thao tác trận/vé.</p>
     <div class="admin-lobby-toolbar">
       <form method="get" action="{{ url_for('admin_tournament_lobby',tournament_id=tournament.id) }}" class="admin-lobby-toolbar">
+        <input type="hidden" name="view" value="perspective">
         <label>Góc nhìn HLV
           <select name="hlv" aria-label="Chọn HLV để xem Sảnh chờ" onchange="this.form.submit()">
             {% for player in player_options %}<option value="{{ player.id }}" {{ 'selected' if player.id == selected else '' }}>{{ player.name }}</option>{% endfor %}
@@ -38,13 +44,13 @@
       <button type="button" class="btn" onclick="window.location.reload()">↻ Làm mới dữ liệu</button>
     </div>
   </header>
-  <section class="td-section admin-lobby-overview" id="admin-c1-all-availability">
+  <section class="td-section admin-lobby-overview admin-lobby-view" id="admin-c1-all-availability" {% if active_view != 'all' %}hidden{% endif %}>
     <div class="admin-lobby-overview-head"><div><span class="c1-lobby-section-kicker">TỔNG QUAN C1 · 3 NGÀY</span><h2>📅 Lịch rảnh của toàn bộ {{ availability_overview|length }} HLV</h2></div><button type="button" class="btn" onclick="window.location.reload()">↻ Làm mới</button></div>
     {% if availability_overview_error %}<p class="admin-lobby-error">Không đọc được dữ liệu lịch rảnh. Vui lòng làm mới hoặc kiểm tra kết nối Supabase.</p>{% endif %}
     <div class="admin-lobby-all-grid">
     {% for player in availability_overview %}
       <article class="admin-lobby-all-player">
-        <header><strong>{{ player.name }}</strong><span>Tier {{ player.tier or '—' }} · {{ player.club or 'Chưa có CLB' }}</span><a href="{{ url_for('admin_tournament_lobby', tournament_id=tournament.id, hlv=player.user_id) }}#admin-c1-perspective">Góc nhìn HLV ↗</a></header>
+        <header><strong>{{ player.name }}</strong><span>Tier {{ player.tier or '—' }} · {{ player.club or 'Chưa có CLB' }}</span><a href="{{ url_for('admin_tournament_lobby', tournament_id=tournament.id, view='perspective', hlv=player.user_id) }}#admin-c1-perspective">Góc nhìn HLV ↗</a></header>
         <div class="admin-lobby-all-days">
         {% for day in player.days %}<div class="admin-lobby-all-day"><b>{{ day.label }}</b><small>{{ day.weekday }}</small><div class="admin-lobby-all-slots">{% for slot in day.opponent_slots %}<span class="admin-lobby-slot">{{ slot.label }}</span>{% else %}<span class="admin-lobby-no-times">Chưa đăng ký</span>{% endfor %}</div></div>{% endfor %}
         </div>
@@ -52,12 +58,14 @@
     {% else %}<p class="admin-lobby-error">Chưa có HLV tham gia giải.</p>{% endfor %}
     </div>
   </section>
-  <section id="admin-c1-perspective" class="admin-lobby-perspective-heading"><span class="c1-lobby-section-kicker">GÓC NHÌN HLV · CHỈ XEM</span><h2>👤 {{ hub.preview_name if hub else 'Chưa có HLV' }} · Lịch của tôi &amp; 4 đối thủ GĐ2</h2></section>
+  <div class="admin-lobby-view" id="admin-c1-perspective" {% if active_view != 'perspective' %}hidden{% endif %}>
+  <section class="admin-lobby-perspective-heading"><span class="c1-lobby-section-kicker">GÓC NHÌN HLV · CHỈ XEM</span><h2>👤 {{ hub.preview_name if hub else 'Chưa có HLV' }} · Lịch của tôi &amp; 4 đối thủ GĐ2</h2></section>
   {% if hub %}
     {% include "tournament/tabs/lobby.html" %}
   {% else %}
     <section class="td-section">Chưa có HLV đang tham gia giải để lựa chọn.</section>
   {% endif %}
+  </div>
 </div>
 <script>
 (function(){

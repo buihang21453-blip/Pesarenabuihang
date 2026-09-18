@@ -1,3 +1,9 @@
+## V1.6.34
+
+- Không dùng xanh lá mặc định cho lịch cá nhân; xanh lá là tín hiệu trùng giờ của đối thủ theo cùng ngày và giờ.
+- Sảnh chờ Admin có hai view chỉ đọc loại trừ nhau; không hiển thị cùng lúc bảng 16 HLV và Góc nhìn HLV.
+- Giữ lịch trận cố định, vé và dữ liệu kết quả không đổi.
+
 ## V1.6.33
 
 - Sảnh chờ HLV chỉ hiển thị Lịch của tôi và lịch rảnh của bốn đối thủ GĐ2 theo ba ngày; không trộn chức năng tạo trận/trạng thái thi đấu.

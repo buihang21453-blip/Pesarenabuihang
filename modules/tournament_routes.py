@@ -602,6 +602,7 @@ def register_routes(context):
         names = {str(u.get('id')): u.get('display_name') or u.get('username') or 'HLV' for u in users}
         # Only allow active tournament members as the selected perspective.
         selected = str(request.args.get('hlv') or '')
+        active_view = 'perspective' if request.args.get('view') == 'perspective' else 'all'
         member_by_id = {str(m.get('user_id')): m for m in members}
         if selected not in member_by_id:
             selected = ids[0] if ids else ''
@@ -627,7 +628,7 @@ def register_routes(context):
         overview=[]
         for row in members:
             rid=str(row.get('user_id') or '')
-            grouped=_landing_group_slots(_landing_parse_slots(all_av_by_user.get(rid,[])),hub.get('mine_set') if hub else set())
+            grouped=_landing_group_slots(_landing_parse_slots(all_av_by_user.get(rid,[])),set())
             overview.append({'user_id':rid,'name':names.get(rid,'HLV'),'tier':row.get('pot_no'),
                 'club':row.get('fixed_club_name') or '', 'days':grouped})
         tournament = dict(rows[0])
@@ -637,7 +638,7 @@ def register_routes(context):
         player_options = [{'id': uid, 'name': names.get(uid, 'HLV')} for uid in ids]
         return render_template('tournament/admin_lobby.html', tournaments=[tournament],
                                tournament=tournament, hub=hub, selected=selected,
-                               player_options=player_options, availability_overview=overview,
+                               player_options=player_options, active_view=active_view, availability_overview=overview,
                                availability_overview_error=bool(all_av_error),
                                tournament_design=tournament_design_settings())
 

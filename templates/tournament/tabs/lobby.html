@@ -9,7 +9,7 @@
       <div>
         <span class="c1-lobby-eyebrow">PES ARENA · CHAMPIONS LEAGUE · GĐ2</span>
         <h2>🏟️ Sảnh chờ · Đối thủ {{ 'của ' ~ hub.preview_name if hub.admin_preview|default(false) else 'của tôi' }}</h2>
-        <p>Lịch của tôi ở trên, bên dưới là lịch rảnh riêng của từng đối thủ trong Hôm nay – Ngày mai – Ngày kia; giờ trùng được tô xanh.</p>
+        <p>Lịch của tôi ở trên, bên dưới là lịch rảnh riêng của từng đối thủ trong Hôm nay – Ngày mai – Ngày kia; chỉ giờ trùng chính xác mới tô xanh lá.</p>
       </div>
       <div class="c1-lobby-summary">{{ hub.league_opponents|length }}/4 <span>đối thủ GĐ2</span></div>
     </header>
@@ -36,7 +36,7 @@
         {% endfor %}
       </div>
     </section>
-    <div class="c1-lobby-rivals-heading"><span class="c1-lobby-section-kicker">02 · LỊCH RẢNH CỦA ĐỐI THỦ</span><h3>👥 4 đối thủ GĐ2</h3><p>Tier · CLB · logo · Pot và giờ rảnh từng ngày. <span class="c1-lobby-legend-dot"></span> Xanh lá = giờ trùng với lịch của tôi.</p></div>
+    <div class="c1-lobby-rivals-heading"><span class="c1-lobby-section-kicker">02 · LỊCH RẢNH CỦA ĐỐI THỦ</span><h3>👥 4 đối thủ GĐ2</h3><p>Tier · CLB · logo · Pot và giờ rảnh từng ngày. Lịch của tôi màu xanh dương; <span class="c1-lobby-legend-dot"></span> xanh lá chỉ dành cho giờ đối thủ trùng cả ngày và giờ.</p></div>
 
     {% if hub.is_test and hub.league_opponents|length != 4 %}
       {% if hub.test_opponent %}

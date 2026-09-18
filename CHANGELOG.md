@@ -1,3 +1,11 @@
+## V1.6.34 — Sảnh chờ: sửa màu trùng giờ, chuyển chế độ Admin
+
+- Lịch của tôi hiển thị xanh dương; chỉ khung giờ đối thủ trùng chính xác ngày và giờ với lịch của tôi mới xanh lá. Khắc phục hiểu nhầm do tất cả giờ cá nhân đều màu xanh lá.
+- Admin có thanh chọn ở đầu trang: Lịch rảnh toàn bộ 16 HLV / Góc nhìn HLV; mặc định hiển thị tổng quan, mỗi lần chỉ hiển thị một phần.
+- Chọn HLV qua danh sách hoặc liên kết tại bảng tổng quan sẽ chuyển sang Góc nhìn HLV, không cần cuộn qua 16 HLV.
+- Bảng tổng quan không gắn cờ trùng giờ với HLV đang xem; chỉ hiển thị giờ đăng ký.
+- Không thay đổi DB, lịch 32 trận, kết quả, BXH, vé hoặc phòng đấu.
+
 ## V1.6.33 — Sảnh chờ: lịch rảnh 4 đối thủ và tổng quan Admin 16 HLV
 
 - Khắc phục CSS V1.6.32 bị đặt ngoài thẻ style khiến khối Lịch của tôi không có định dạng đúng.

@@ -1,3 +1,10 @@
+## V1.6.34
+
+- `templates/tournament/admin_lobby.html`: hai chế độ loại trừ nhau, nút chọn ở đầu trang; tổng quan 16 HLV mặc định.
+- `modules/tournament_routes.py`: `admin_tournament_lobby` nhận query `view=all|perspective` và chỉ dùng lịch cá nhân để tính trùng ở Góc nhìn HLV.
+- `templates/tournament/styles.html`, `templates/tournament/tabs/lobby.html`: màu xanh dương cho lịch cá nhân, xanh lá chỉ cho giờ đối thủ trùng chính xác.
+- `app.py`, `templates/admin.html`: đồng bộ version.
+
 ## V1.6.33
 
 - `modules/tournament_routes.py`: `_landing_hub_payload` truy vấn lịch rảnh theo lô; đọc riêng bốn trận GĐ2 của HLV; `admin_tournament_lobby` nạp lịch toàn bộ HLV.
