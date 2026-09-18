@@ -1,3 +1,10 @@
+## V1.6.37 — Gom menu Admin, thanh tiến trình C1 và rà soát tính năng
+- Gom tab Admin theo chức năng, giữ nguyên quyền truy cập và route hiện có.
+- Tách giao diện C1 thành template tổng, thanh tiến trình, GĐ1, GĐ2 CLB, GĐ2 trận đấu và Knockout.
+- Thanh giai đoạn C1 đọc trạng thái DB, chọn giai đoạn đang mở theo mặc định, chỉ hiển thị một giai đoạn. Đăng ký/HLV và sơ đồ cũ thu gọn.
+- Thêm khu Owner “Rà soát tính năng trùng”: đánh dấu đề xuất loại bỏ, ẩn có thể hoàn tác một số bản hiển thị phụ và xuất JSON; không xóa bất kỳ mã/route/DB nào.
+- Xem chi tiết tại ADMIN_FEATURE_AUDIT.md. Không thêm SQL.
+
 ## V1.6.36 — Cập nhật hướng dẫn công khai RP và Zcoin
 - Thay phần giải thích công thức RP chi tiết trong Hướng dẫn bằng giới hạn lượt Rank, chống farm, thưởng chuỗi thắng và thưởng hoạt động tuần đã công khai.
 - Thêm phần Zcoin: điểm danh, Gift Code, phần thưởng sự kiện, Ví, Cửa hàng, Lucky Box; liên kết đến các trang người chơi.

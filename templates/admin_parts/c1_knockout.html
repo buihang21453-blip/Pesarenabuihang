@@ -1,0 +1,9 @@
+      <div class="tournament-op-tab-panel" id="c1-admin-ko" data-tournament-op-panel="knockout" style="padding:15px;border:1px solid rgba(231,76,60,.3);border-radius:14px;margin-bottom:12px">
+        <h3 style="margin:0 0 6px">5️⃣ Knockout → Chung kết</h3>
+        <p class="small"><strong>Luật chính thức:</strong> bỏ Play-off. Top 8 BXH tổng GĐ1 + GĐ2 vào thẳng Tứ kết. Hệ thống ghép 1–8, 2–7, 3–6, 4–5 và tự đẩy người thắng.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <form method="post" action="{{ url_for('admin_tournament_knockout_generate',tournament_id=ot.id) }}" onsubmit="return confirm('Sinh Knockout Top 8 vào thẳng Tứ kết?');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn green" type="submit">🏆 Sinh Top 8 → Tứ kết</button></form>
+        </div>
+        {% set kf=ops.get('knockout_flow',{}) %}<p class="small">Vòng hiện tại: <strong>{{ kf.get('current_round','Chưa sinh')|upper }}</strong>{% if kf.get('completed') %} · 🏆 Giải đã hoàn tất{% endif %}</p>
+      </div>
+

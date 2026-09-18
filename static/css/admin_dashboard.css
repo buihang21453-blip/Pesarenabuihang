@@ -50,3 +50,32 @@ body[data-page="admin"] .admin-module-frame{display:block;width:100%;min-height:
   color: #f1cf72;
   border-bottom-color: currentColor;
 }
+
+/* V1.6.37 Admin functional navigation and C1 stage status */
+.admin-functional-nav{display:flex;align-items:stretch;flex-wrap:wrap;gap:8px;margin:12px 0 20px;padding:10px;border:1px solid rgba(148,163,184,.20);border-radius:16px;background:#091b2a}
+.admin-functional-nav>.admin-tab-button{align-self:flex-start}
+.admin-menu-group{min-width:165px;position:relative;border:1px solid rgba(148,163,184,.25);border-radius:11px;background:#0d2638}
+.admin-menu-group>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 13px;color:#e6f0f8;font-size:13px;font-weight:800}
+.admin-menu-group>summary::-webkit-details-marker{display:none}
+.admin-menu-group[open]{border-color:rgba(241,202,104,.43)}
+.admin-menu-items{display:grid;gap:5px;padding:6px 8px 10px;border-top:1px solid rgba(148,163,184,.15)}
+.admin-menu-items .admin-tab-button{display:block;width:100%;text-align:left;font-size:12px;min-height:34px}
+.admin-menu-items a.admin-tab-button{text-decoration:none;box-sizing:border-box}
+.c1-stage-console{position:sticky;top:9px;z-index:15;margin:12px 0 16px;padding:15px;background:#071725;border:1px solid rgba(241,202,104,.30);border-radius:14px}
+.c1-console-title{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.c1-console-title strong{color:#f1ca68}.c1-console-title small{color:#afc0cf}
+.c1-stage-console .c1-phase-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 8px}
+.c1-stage-console .c1-stage-choice{display:grid;gap:5px;text-align:center;padding:12px 8px!important;border-radius:10px;white-space:normal}
+.c1-stage-choice[data-c1-stage-status="completed"]{border-color:#218b51!important;color:#a7efc0!important;background:rgba(20,112,54,.20)}
+.c1-stage-choice[data-c1-stage-status="open"]{border-color:#3b82f6!important;color:#c4ddff!important;background:rgba(30,80,165,.22)}
+.c1-stage-choice[data-c1-stage-status="pending"]{border-color:#475569!important;color:#cbd5e1!important;background:rgba(71,85,105,.18)}
+.c1-stage-choice[aria-current="true"]{outline:2px solid #f1ca68;outline-offset:2px}
+.c1-stage-choice .c1-phase-status{font-size:10px;font-weight:700;opacity:.9}
+.c1-console-hint{margin:8px 0 0;color:#afc0cf}
+.c1-registration-shell,.c1-flow-legacy{margin:10px 0;border:1px solid rgba(148,163,184,.22);border-radius:12px;padding:9px 12px;background:#091c2b}
+.c1-registration-shell>summary,.c1-flow-legacy>summary{cursor:pointer;color:#f1ca68;font-weight:800}
+.c1-registration-shell>.tournament-op-tab-panel{margin-top:12px}
+.admin-feature-review .admin-review-items{display:grid;gap:10px;margin:16px 0}.admin-review-item{display:grid;grid-template-columns:minmax(0,1fr) minmax(215px,280px);gap:12px;align-items:center;border:1px solid rgba(148,163,184,.2);padding:12px;border-radius:12px;background:#0b2031}
+.admin-review-item p{margin:5px 0 0}.admin-review-item label{display:grid;gap:5px;font-size:12px;font-weight:700}.admin-review-item select{min-height:38px;background:#102e43;color:#fff;border:1px solid rgba(148,163,184,.35);border-radius:8px;padding:6px}
+.admin-review-actions{display:flex;gap:8px;flex-wrap:wrap}@media(max-width:850px){.admin-functional-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.admin-menu-group{min-width:0}.c1-stage-console .c1-phase-nav{grid-template-columns:1fr}.admin-review-item{grid-template-columns:1fr}}
+
+.admin-review-item .admin-review-check{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;gap:9px;color:#f1ca68}.admin-review-check input{width:17px;height:17px;accent-color:#d6a744}

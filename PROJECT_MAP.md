@@ -1,3 +1,14 @@
+## V1.6.37 — Sắp xếp Admin
+- `templates/admin.html`: giữ lõi người dùng, Rank, kinh tế, hệ thống và include các module mới.
+- `templates/admin_parts/function_menu.html`: menu theo 7 nhóm chức năng.
+- `templates/admin_parts/c1_console.html`: wrapper Admin giải C1.
+- `templates/admin_parts/c1_stage_header.html`: trạng thái giai đoạn từ `ops.stages`.
+- `templates/admin_parts/c1_stage1.html`, `c1_gd2_clubs.html`, `c1_gd2_matches.html`, `c1_knockout.html`: giao diện giai đoạn tách file.
+- `templates/admin_parts/feature_review.html`: Owner đánh dấu rà soát chức năng.
+- `static/js/admin_dashboard.js`: điều hướng menu và quyết định rà soát trình duyệt.
+- `static/css/admin_dashboard.css`: nhóm menu, trạng thái giai đoạn, khu rà soát.
+- `ADMIN_FEATURE_AUDIT.md`: các tính năng trùng/ít dùng và ranh giới không xóa.
+
 ## V1.6.36
 - `templates/guide.html`: hướng dẫn chung phòng đấu, cơ chế RP công khai và Zcoin; có liên kết Phần thưởng/Ví/Cửa hàng.
 - `app.py`: nâng APP_VERSION. Không sửa DB/API/route/service.

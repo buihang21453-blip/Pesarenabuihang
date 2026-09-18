@@ -1,3 +1,9 @@
+## V1.6.37 — Quy tắc Admin UI
+- Thay đổi giao diện không được xóa route hoặc dữ liệu nếu Owner chỉ yêu cầu rà soát/đánh dấu.
+- Trạng thái giai đoạn phải lấy từ `tournament_stages.status`, không suy đoán hoàn thành chỉ từ giờ hoặc số trận sinh.
+- Các lựa chọn ẩn giao diện Owner phải hoàn tác được; đề xuất xóa source không tự thực thi.
+- Giữ nguyên test account cách ly BXH, dữ liệu Supabase, tài liệu và đồng bộ version.
+
 ## V1.6.36
 - Trang Hướng dẫn dành cho người chơi chỉ đưa quy tắc đã công khai; không mô tả công thức tính chi tiết, hệ số, tỷ lệ random, cấu hình nội bộ hoặc công cụ Admin.
 - Không bổ sung hướng dẫn giải C1 vào trang Hướng dẫn chung khi không được yêu cầu.

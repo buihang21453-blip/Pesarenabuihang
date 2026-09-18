@@ -1,0 +1,32 @@
+{# V1.6.37: group only links; permission checks unchanged. Keep data-admin-tab for old handlers. #}
+<nav class="admin-functional-nav" aria-label="Điều hướng Admin theo chức năng">
+  <button class="admin-tab-button" type="button" data-admin-tab="overview">📌 Tổng quan</button>
+  <details class="admin-menu-group" data-admin-menu-group><summary>👥 Người dùng <span>▾</span></summary><div class="admin-menu-items">
+    <button class="admin-tab-button" type="button" data-admin-tab="users">Tài khoản{% if duplicate_ip_groups %} · ⚠ {{ duplicate_ip_groups|length }} IP trùng{% endif %}</button>
+    <button class="admin-tab-button" type="button" data-admin-tab="passwords">Khôi phục mật khẩu{% if password_reset_requests %} · {{ password_reset_requests|length }}{% endif %}</button>
+  </div></details>
+  <details class="admin-menu-group" data-admin-menu-group><summary>🎮 Rank & Phòng đấu <span>▾</span></summary><div class="admin-menu-items">
+    <button class="admin-tab-button" type="button" data-admin-tab="rooms">Phòng & lời mời</button>
+    {% if can_admin('matches_view') %}<button class="admin-tab-button" type="button" data-admin-tab="matches">Trận đấu</button><button class="admin-tab-button" type="button" data-admin-tab="match-report">Báo cáo trận đấu</button>{% endif %}
+    {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="room-design">Thiết kế phòng đấu</button>{% endif %}
+  </div></details>
+  <details class="admin-menu-group" data-admin-menu-group><summary>🏆 Giải đấu C1 <span>▾</span></summary><div class="admin-menu-items">
+    <button class="admin-tab-button" type="button" data-admin-tab="tournaments">Điều hành C1</button>
+    {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="season">Mùa giải</button>{% endif %}
+  </div></details>
+  <details class="admin-menu-group" data-admin-menu-group><summary>🪙 Kinh tế & Thưởng <span>▾</span></summary><div class="admin-menu-items">
+    <button class="admin-tab-button" type="button" data-admin-tab="economy">Zcoin & Gift Code</button>
+    <a class="admin-tab-button" href="{{ url_for('admin_luckybox') }}">Lucky Box ↗</a>
+  </div></details>
+  <details class="admin-menu-group" data-admin-menu-group><summary>⚙️ Hệ thống <span>▾</span></summary><div class="admin-menu-items">
+    {% if can_admin('system_features_manage') or can_admin('announcements_manage') or can_admin('daily_rank_limits_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="system">Cài đặt & thông báo</button>{% endif %}
+    {% if can_admin('system_features_manage') %}<button class="admin-tab-button" type="button" data-admin-tab="database">Database / SQL{% if migration_summary and migration_summary.missing %} · ⚠ {{ migration_summary.missing }}{% endif %}</button>{% endif %}
+  </div></details>
+  <details class="admin-menu-group" data-admin-menu-group><summary>🧰 Công cụ nâng cao <span>▾</span></summary><div class="admin-menu-items">
+    {% if can_create_test_account or can_import_accounts_csv %}<button class="admin-tab-button" type="button" data-admin-tab="test-data">Test & Import tài khoản</button>{% endif %}
+    <button class="admin-tab-button" type="button" data-admin-tab="tournament-test">Test Mode C1</button>
+    {% if can_admin('rp_view') and current_user.admin_level == 'owner' %}<button class="admin-tab-button" type="button" data-admin-tab="rp-tools">Backup / Restore RP</button>{% endif %}
+    {% if can_admin('admin_logs_view') and current_user.admin_level == 'owner' %}<button class="admin-tab-button" type="button" data-admin-tab="logs">Nhật ký</button>{% endif %}
+    {% if current_user.admin_level == 'owner' %}<button class="admin-tab-button" type="button" data-admin-tab="review">Rà soát tính năng trùng</button>{% endif %}
+  </div></details>
+</nav>

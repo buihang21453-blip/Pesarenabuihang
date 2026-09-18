@@ -13,6 +13,11 @@
         panels.forEach(function (panel) {
             panel.hidden = panel.dataset.adminPanel !== selected;
         });
+        const chosen = buttons.find(function (button) { return button.dataset.adminTab === selected; });
+        if (chosen) {
+            const group = chosen.closest('[data-admin-menu-group]');
+            if (group) group.open = true;
+        }
     }
 
     buttons.forEach(function (button) {
@@ -199,4 +204,73 @@
     }
 
     syncPreview();
+})();
+
+// V1.6.37: Owner review panel, reversible presentation settings only.
+(function () {
+    const root = document.querySelector('[data-feature-review]');
+    const items = root ? Array.from(root.querySelectorAll('[data-review-item]')) : [];
+    const storageKey = 'pes_admin_v1637_feature_review';
+    const permitted = new Set(items.map(function (row) { return row.dataset.reviewItem; }));
+    function read() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (_) { return {}; }
+    }
+    function apply(decisions) {
+        document.querySelectorAll('[data-admin-review-target]').forEach(function (target) {
+            const key = target.dataset.adminReviewTarget;
+            const item = items.find(function (row) { return row.dataset.reviewItem === key; });
+            // Never hide an essential feature; only explicitly hideable presentational duplicates.
+            target.hidden = Boolean(item && item.dataset.reviewHideable === '1' && decisions[key] === 'hide');
+        });
+    }
+    if (!root) return;
+    const initial = read();
+    items.forEach(function (item) {
+        const control = item.querySelector('[data-review-choice]');
+        const choice = initial[item.dataset.reviewItem];
+        control.value = Array.from(control.options).some(function (opt) { return opt.value === choice; }) ? choice : 'keep';
+        const mark = item.querySelector('[data-review-propose]');
+        if (mark) {
+            mark.checked = control.value === 'propose';
+            mark.addEventListener('change', function () { control.value = mark.checked ? 'propose' : 'keep'; });
+            control.addEventListener('change', function () { mark.checked = control.value === 'propose'; });
+        }
+    });
+    apply(initial);
+    const status = root.querySelector('[data-review-status]');
+    function selected() {
+        const decisions = {};
+        items.forEach(function (item) {
+            if (permitted.has(item.dataset.reviewItem)) decisions[item.dataset.reviewItem] = item.querySelector('[data-review-choice]').value;
+        });
+        return decisions;
+    }
+    root.querySelector('[data-review-save]').addEventListener('click', function () {
+        const values = selected();
+        try { localStorage.setItem(storageKey, JSON.stringify(values)); status.textContent = 'Đã lưu lựa chọn trên trình duyệt. Không xóa source hoặc dữ liệu.'; }
+        catch (_) { status.textContent = 'Không thể lưu trên trình duyệt này. Các lựa chọn chưa được lưu.'; }
+        apply(values);
+    });
+    root.querySelector('[data-review-reset]').addEventListener('click', function () {
+        try { localStorage.removeItem(storageKey); } catch (_) { /* storage disabled */ }
+        items.forEach(function (item) {
+            item.querySelector('[data-review-choice]').value = 'keep';
+            const mark = item.querySelector('[data-review-propose]'); if (mark) mark.checked = false;
+        });
+        apply({});
+        status.textContent = 'Đã hiện lại toàn bộ các khối đã ẩn.';
+    });
+    root.querySelector('[data-review-export]').addEventListener('click', function () {
+        const data = {version: 'V1.6.37', purpose: 'feature-review-only-no-deletion', decisions: selected()};
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url; link.download = 'PES_Arena_Admin_Feature_Review.json';
+        document.body.appendChild(link); link.click(); link.remove();
+        URL.revokeObjectURL(url);
+        status.textContent = 'Đã xuất danh sách lựa chọn. Source và dữ liệu giữ nguyên.';
+    });
 })();

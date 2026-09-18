@@ -1,0 +1,492 @@
+<section class="admin-tab-panel" data-admin-panel="tournaments">
+  {% set td = tournament_admin_data|default({}) %}
+  {% set ops = tournament_ops_admin|default({}) %}
+  <div class="panel">
+    <style>
+    .c1-phase-nav{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0;background:#0b1c29;padding:9px;border-radius:12px}.c1-phase-nav a{color:#f1ca68;border:1px solid rgba(241,202,104,.45);border-radius:8px;padding:8px 12px;text-decoration:none;font-weight:700}.c1-phase-nav a:hover{background:rgba(241,202,104,.14)}#c1-admin-gd1,#c1-admin-gd2,#c1-admin-ko{scroll-margin-top:76px}
+    .tournament-op-tabs{display:none;gap:6px;flex-wrap:wrap;margin:10px 0 14px;padding:6px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.08);border-radius:12px}
+    .tournament-op-tab-btn{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:inherit;border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;line-height:1.2}
+    .tournament-op-tab-btn:hover{background:rgba(255,255,255,.08)}
+    .tournament-op-tab-btn.active{background:linear-gradient(180deg,#f5d57a,#d9a93e);color:#17130a;border-color:#f1ca68}
+    .tournament-op-tab-panel{display:block;width:100%;box-sizing:border-box}
+    .tournament-op-tab-panel.active{display:block}
+    @media(max-width:900px){.tournament-op-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.tournament-op-tab-btn{width:100%;text-align:left}}
+    .tournament-compact table{font-size:12px}.tournament-compact th,.tournament-compact td{padding:5px 7px;line-height:1.2;vertical-align:middle}.tournament-compact .btn{padding:5px 8px;font-size:11px}.tournament-compact select,.tournament-compact input{min-height:28px;padding:3px 6px;font-size:12px}.tournament-compact .small{font-size:10px;line-height:1.15}.tournament-compact details>summary{white-space:nowrap}</style>
+    <h2>🏟️ Điều hành giải đấu</h2>
+    <p class="muted">Thanh trạng thái C1 giúp phân biệt <strong>đã hoàn tất / đang diễn ra / chưa bắt đầu</strong>. Chỉ mở nội dung giai đoạn đang chọn; khối HLV, lịch toàn giải và cấu hình nâng cao được thu gọn riêng.</p>
+    {% if not td.get('db_ready', false) %}
+      <div style="padding:14px;border:1px solid rgba(231,76,60,.35);border-radius:12px"><strong>🗄️ Database Giải đấu chưa sẵn sàng</strong><p class="small">Chạy SQL của module giải đấu trước khi vận hành.</p></div>
+    {% elif not td.get('selected') %}
+      <p class="small">Database đã sẵn sàng nhưng chưa có giải đấu.</p>
+    {% else %}
+      {% set tour = td.get('selected') %}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px">
+        <span class="btn gray" style="cursor:default">🏆 {{ tour.name }}</span>
+        <span class="btn {{ 'green' if tour.registration_open else 'gray' }}" style="cursor:default">Đăng ký: {{ 'ĐANG MỞ' if tour.registration_open else 'ĐÃ ĐÓNG' }}</span>
+        <span class="btn green" style="cursor:default;font-weight:700">Tổng đăng ký: {{ (td.get('members',[])|length) + (td.get('pending',[])|length) + (td.get('fee_unmatched',[])|length) }}</span>
+        <span class="btn gray" style="cursor:default">Chờ duyệt: {{ td.get('pending',[])|length }}</span>
+        <span class="btn gray" style="cursor:default">Đã duyệt: {{ (td.get('members',[])|length) + (td.get('fee_unmatched',[])|length) }}</span>
+      </div>
+
+
+      <details class="c1-flow-legacy" data-admin-review-target="c1-flow-summary"><summary>ℹ️ Sơ đồ chức năng cũ (có thể ẩn ở Rà soát)</summary>
+      <div class="tournament-admin-flow" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:12px 0 14px">
+        <div style="padding:10px 12px;border:1px solid rgba(52,152,219,.25);border-radius:10px"><strong>👥 HLV & Trận đấu</strong><div class="small">Bấm HLV để xem đối thủ, nhập/sửa tỷ số.</div></div>
+        <div style="padding:10px 12px;border:1px solid rgba(46,204,113,.25);border-radius:10px"><strong>📅 Lịch & Phòng</strong><div class="small">Theo dõi lịch, phòng C1 và trạng thái thi đấu.</div></div>
+        <div style="padding:10px 12px;border:1px solid rgba(241,202,104,.25);border-radius:10px"><strong>🏆 BXH</strong><div class="small">BXH trung tâm tự cập nhật theo kết quả.</div></div>
+        <div style="padding:10px 12px;border:1px solid rgba(155,89,182,.25);border-radius:10px"><strong>🎯 Điều hành vòng</strong><div class="small">Random, Pot, League và Knockout.</div></div>
+      </div>
+      </details>
+      {% include "admin_parts/c1_stage_header.html" %}
+      <details class="c1-registration-shell" data-admin-review-target="c1-registration" id="c1-admin-hlv"><summary>👥 HLV, đăng ký & lịch toàn giải · Mở khi cần</summary>
+      <div class="tournament-op-tab-panel active" data-tournament-op-panel="registration" style="padding:15px;border:1px solid rgba(52,152,219,.3);border-radius:14px;margin-bottom:12px">
+        <h3 style="margin:0 0 6px">👥 HLV & Trận đấu</h3>
+        <p class="small">Quản lý danh sách HLV ngay tại đây. Bấm từng HLV để xem đối thủ, cặp đấu, lịch, tỷ số và nhập/sửa kết quả mà không cần sang Công cụ riêng.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn green" href="{{ url_for('admin_tournament_export_excel', tournament_id=tour.id) }}">📊 Xuất Excel</a>
+          {% if tour.registration_open %}
+          <form method="post" action="{{ url_for('admin_tournament_registration_status',tournament_id=tour.id) }}" onsubmit="return confirm('Kết thúc đăng ký? HLV sẽ không thể gửi đơn mới cho tới khi Admin mở lại.');"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="open" value="0"><button class="btn red" type="submit">🔒 Kết thúc đăng ký</button></form>
+          {% else %}
+          <form method="post" action="{{ url_for('admin_tournament_registration_status',tournament_id=tour.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="open" value="1"><button class="btn gray" type="submit">↺ Mở lại đăng ký</button></form>
+          {% endif %}
+        </div>
+        <details style="margin-top:12px" {% if td.get('pending') %}open{% endif %}><summary><strong>👥 Danh sách đăng ký / duyệt HLV</strong></summary>
+          <div style="padding-top:10px">
+            <form method="post" action="{{ url_for('admin_tournament_member_add', tournament_id=tour.id) }}" class="system-toggle-grid"><input type="hidden" name="_admin_tab" value="tournaments"><label><span>Thêm HLV trực tiếp</span><select name="user_id" required><option value="">-- Chọn HLV --</option>{% for player in players|sort(attribute='display_name') %}<option value="{{ player.id }}">{{ player.display_name }}</option>{% endfor %}</select></label><button class="btn green" type="submit">Thêm vào giải</button></form>
+            {% if td.get('pending') %}<h4>Chờ duyệt ({{ td.get('pending')|length }})</h4><div class="admin-table-wrap tournament-compact"><table><thead><tr><th style="width:44px;text-align:center">STT</th><th>HLV</th><th>Zalo</th><th>Host</th><th>Đã thu</th><th>Phân bổ</th><th>Thiếu / Dư</th><th>Thao tác</th></tr></thead><tbody>{% for row in td.get('pending',[]) %}<tr><td style="text-align:center;font-weight:700">{{ loop.index }}</td><td><strong>{{ row.display_name }}</strong></td><td>{{ row.zalo_name|default('—',true) }}</td><td>{{ '✓ Có' if row.has_host else '—' }} {{ row.host_region|default('',true) }}</td><td><form method="post" action="{{ url_for('admin_tournament_registration_finance_quick',registration_id=row.id) }}" style="display:flex;gap:4px;align-items:center"><input type="hidden" name="_admin_tab" value="tournaments"><select name="amount_paid" onchange="this.form.submit()"><option value="0" {{ 'selected' if row.amount_paid|int==0 else '' }}>0k</option><option value="50000" {{ 'selected' if row.amount_paid|int==50000 else '' }}>50k</option><option value="100000" {{ 'selected' if row.amount_paid|int==100000 else '' }}>100k</option><option value="200000" {{ 'selected' if row.amount_paid|int==200000 else '' }}>200k</option></select></form></td><td><span class="small">Giải: {{ [row.amount_paid|int,50000]|min // 1000 }}k</span><br><span class="small">TN: {{ [[row.amount_paid|int-50000,0]|max,50000]|min // 1000 }}k</span></td><td>{% if row.amount_missing|int>0 %}<span style="color:#e67e22">Thiếu {{ row.amount_missing//1000 }}k</span>{% elif row.amount_surplus|int>0 %}<span style="color:#e74c3c">Cần hoàn {{ row.amount_surplus//1000 }}k</span>{% else %}<span style="color:#27ae60">✓ Đủ</span>{% endif %}</td><td style="display:flex;gap:4px;flex-wrap:wrap"><details><summary class="btn gray">✎</summary><form method="post" action="{{ url_for('admin_tournament_registration_profile_update',registration_id=row.id) }}" style="position:absolute;z-index:5;background:#101820;border:1px solid #455;padding:8px;display:grid;gap:5px;min-width:220px"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="tournament_id" value="{{ tour.id }}"><input type="hidden" name="user_id" value="{{ row.user_id }}"><input name="zalo_name" value="{{ row.zalo_name|default('',true) }}" placeholder="Tên Zalo"><select name="host_region"><option value="Bắc" {{ 'selected' if row.host_region=='Bắc' else '' }}>Bắc</option><option value="Trung" {{ 'selected' if row.host_region=='Trung' else '' }}>Trung</option><option value="Nam" {{ 'selected' if row.host_region=='Nam' else '' }}>Nam</option></select><select name="host_choice"><option value="yes" {{ 'selected' if row.has_host else '' }}>Có Host</option><option value="no" {{ 'selected' if not row.has_host else '' }}>Không Host</option></select><button class="btn green" type="submit">Lưu</button></form></details><form method="post" action="{{ url_for('admin_tournament_registration_approve',registration_id=row.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn green" type="submit">✓ Duyệt</button></form><form method="post" action="{{ url_for('admin_tournament_registration_reject',registration_id=row.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn red" type="submit">Từ chối</button></form><form method="post" action="{{ url_for('admin_tournament_registration_cancel',registration_id=row.id) }}" onsubmit="return confirm('Hủy đơn đăng ký này?');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn" type="submit">↺ Hủy đơn</button></form></td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="small">Không có đơn đang chờ duyệt.</p>{% endif %}
+            {% set approved_members = ops.get('members',[]) if ops.get('members') else td.get('members',[]) %}
+            <h4>Đã duyệt ({{ approved_members|length + td.get('fee_unmatched',[])|length }})</h4>
+            {% if approved_members or td.get('fee_unmatched') %}<div class="admin-table-wrap tournament-compact"><table><thead><tr><th style="width:44px;text-align:center">STT</th><th>HLV</th><th>Khu vực</th><th>Host</th><th>Đã thu</th><th>Phân bổ</th><th>Thiếu / Dư</th><th>Tiến độ GĐ1</th><th>Thao tác</th></tr></thead><tbody>
+            {% for row in approved_members %}
+              <tr>
+                <td style="text-align:center;font-weight:700">{{ loop.index }}</td>
+                <td><strong>{{ row.display_name }}</strong><div class="small">{{ row.zalo_name|default('—',true) }}</div></td>
+                <td>{{ row.host_region|default('—',true) }}</td>
+                <td>{{ '✅ Có Host' if row.has_host else '❌ Không Host' }}</td>
+                <td><form method="post" action="{{ url_for('admin_tournament_registration_finance_quick',registration_id=row.registration_id|default(row.id)) }}" style="display:flex;gap:4px;align-items:center"><input type="hidden" name="_admin_tab" value="tournaments"><select name="amount_paid" onchange="this.form.submit()"><option value="0" {{ 'selected' if row.amount_paid|default(0)|int==0 else '' }}>0k</option><option value="50000" {{ 'selected' if row.amount_paid|default(0)|int==50000 else '' }}>50k</option><option value="100000" {{ 'selected' if row.amount_paid|default(0)|int==100000 else '' }}>100k</option><option value="200000" {{ 'selected' if row.amount_paid|default(0)|int==200000 else '' }}>200k</option></select></form></td>
+                <td><span class="small">Giải: {{ [row.amount_paid|default(0)|int,50000]|min // 1000 }}k</span><br><span class="small">TN: {{ [[row.amount_paid|default(0)|int-50000,0]|max,50000]|min // 1000 }}k</span></td>
+                <td>{% if row.amount_missing|default(100000)|int>0 %}<span style="color:#e67e22">Thiếu {{ row.amount_missing|int//1000 }}k</span>{% elif row.amount_surplus|default(0)|int>0 %}<span style="color:#e74c3c">Cần hoàn {{ row.amount_surplus|int//1000 }}k</span>{% else %}<span style="color:#27ae60">✓ Đủ</span>{% endif %}</td>
+                <td>{{ row.stage1_played|default(0) }}/{{ row.stage1_target|default(6) }} · {{ row.stage1_percent|default(0) }}%</td>
+                <td style="min-width:165px;white-space:nowrap">
+                  <div style="display:flex;gap:4px;align-items:center;flex-wrap:nowrap">
+                  <details style="display:inline-block"><summary class="btn gray" style="display:inline-block;cursor:pointer">👁 Xem</summary>
+                    <div style="min-width:300px;padding:10px 0">
+                      <div class="small"><strong>ID HLV:</strong> {{ row.user_id }}</div>
+                      <div class="small"><strong>Zalo:</strong> {{ row.zalo_name|default('—',true) }}</div>
+                      <div class="small"><strong>Khu vực:</strong> {{ row.host_region|default('—',true) }}</div>
+                      <div class="small"><strong>Đã thu:</strong> {{ '{:,}'.format(row.amount_paid|default(0)|int).replace(',', '.') }}đ</div>
+                      <div class="small"><strong>Phí giải:</strong> 50.000đ · <strong>Trách nhiệm:</strong> 50.000đ</div>
+                      {% if row.amount_surplus|default(0)|int>0 %}<div class="small" style="color:#e74c3c"><strong>Cần hoàn thừa:</strong> {{ '{:,}'.format(row.amount_surplus|int).replace(',', '.') }}đ</div>{% endif %}
+                      <div class="small"><strong>Pot:</strong> {{ row.pot_no|default('—',true) }}</div>
+                      <div class="small"><strong>CLB:</strong> {{ row.fixed_club_name|default('—',true) }}</div>
+                      <form method="post" action="{{ url_for('admin_tournament_registration_profile_update',registration_id=(row.registration_id or row.id or 'none')) }}" style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:5px"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="tournament_id" value="{{ tour.id }}"><input type="hidden" name="user_id" value="{{ row.user_id }}"><input name="zalo_name" value="{{ row.zalo_name|default('',true) }}" placeholder="Tên Zalo" style="grid-column:1/-1"><select name="host_region"><option value="Bắc" {{ 'selected' if row.host_region=='Bắc' else '' }}>Bắc</option><option value="Trung" {{ 'selected' if row.host_region=='Trung' else '' }}>Trung</option><option value="Nam" {{ 'selected' if row.host_region=='Nam' else '' }}>Nam</option></select><select name="host_choice"><option value="yes" {{ 'selected' if row.has_host else '' }}>Có Host</option><option value="no" {{ 'selected' if not row.has_host else '' }}>Không Host</option></select><button class="btn green" type="submit" style="grid-column:1/-1">Lưu thông tin</button></form>
+                    </div>
+                  </details>
+                  <details style="display:inline-block">
+                    <summary class="btn gold" style="display:inline-block;cursor:pointer">🔄 Thay HLV</summary>
+                    <div style="min-width:340px;padding:10px 0">
+                      <div class="small" style="margin-bottom:7px"><strong>{{ row.display_name }}</strong> sẽ rời giải. HLV mới kế thừa CLB, Pot, lịch đấu và toàn bộ tỷ số đã có.</div>
+                      <form method="post" action="{{ url_for('admin_tournament_member_replace',tournament_id=tour.id,old_user_id=row.user_id) }}" onsubmit="return confirm('Xác nhận thay HLV? Kết quả đã đá, CLB, Pot và lịch còn lại sẽ chuyển sang HLV mới. Lịch rảnh không được kế thừa.');" style="display:grid;gap:7px">
+                        <input type="hidden" name="_admin_tab" value="tournaments">
+                        <select name="new_user_id" required>
+                          <option value="">Chọn HLV thay thế...</option>
+                          {% for candidate in players|sort(attribute='display_name') %}
+                            {% if candidate.id != row.user_id %}
+                              <option value="{{ candidate.id }}">{{ candidate.display_name }}{% if candidate.username and candidate.username != candidate.display_name %} · {{ candidate.username }}{% endif %}</option>
+                            {% endif %}
+                          {% endfor %}
+                        </select>
+                        <div class="small">✓ Giữ tỷ số/BXH · ✓ CLB/Pot · ✓ đối thủ/lịch còn lại<br>✗ Không kế thừa lịch rảnh · ✗ Không phát lại thưởng đã nhận</div>
+                        <button class="btn gold" type="submit">XÁC NHẬN THAY HLV</button>
+                      </form>
+                    </div>
+                  </details>
+                  <form method="post" action="{{ url_for('admin_tournament_member_remove',tournament_id=tour.id,user_id=row.user_id) }}" onsubmit="return confirm('Xóa HLV này khỏi giải? Tài khoản web và lịch sử lệ phí vẫn được giữ lại.');" style="display:inline-block"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn red" type="submit">Xóa khỏi giải</button></form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+            {% set approved_count = approved_members|length %}
+            {% set fee_rows_link = td.get('pending',[]) + td.get('approved',[]) %}
+            {% for fee in td.get('fee_unmatched',[]) %}
+              {% set paid = fee.amount_paid|default(0)|int %}
+              <tr style="background:rgba(241,196,15,.045)">
+                <td style="text-align:center;font-weight:700">{{ approved_count + loop.index }}</td>
+                <td><strong>{{ fee.payer_name }}</strong><div class="small" style="color:#f1c40f">⚠ Chưa ghép tài khoản</div><div class="small">{{ fee.zalo_contact|default('—',true) }}</div></td>
+                <td>—</td>
+                <td>—</td>
+                <td><strong>{{ paid//1000 }}k</strong></td>
+                <td><span class="small">Giải: {{ [paid,50000]|min // 1000 }}k</span><br><span class="small">TN: {{ [[paid-50000,0]|max,50000]|min // 1000 }}k</span></td>
+                <td>{% if paid < 100000 %}<span style="color:#e67e22">Thiếu {{ (100000-paid)//1000 }}k</span>{% elif paid > 100000 %}<span style="color:#e74c3c">Cần hoàn {{ (paid-100000)//1000 }}k</span>{% else %}<span style="color:#27ae60">✓ Đủ</span>{% endif %}</td>
+                <td><span class="small">Chờ ghép TK</span></td>
+                <td style="min-width:330px"><div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;white-space:nowrap"><form method="post" action="{{ url_for('admin_tournament_fee_unmatched_link',fee_id=fee.id) }}" class="tournament-link-account" style="display:flex;align-items:center;gap:5px;margin:0;flex:1 1 auto;min-width:0"><input type="hidden" name="_admin_tab" value="tournaments"><select name="user_id" required title="Gõ chữ cái đầu để nhảy nhanh tới tài khoản" style="width:180px;max-width:180px;min-width:140px"><option value="">Ghép TK...</option>{% for p in players|sort(attribute='display_name') %}<option value="{{ p.id }}">{{ p.display_name }}{% if p.username and p.username != p.display_name %} · {{ p.username }}{% endif %}{% if p.account_status != 'approved' %} · {{ p.account_status|upper }}{% endif %}</option>{% endfor %}</select><button class="btn green" type="submit" style="flex:0 0 auto">Ghép</button></form><form method="post" action="{{ url_for('admin_tournament_fee_unmatched_remove',fee_id=fee.id) }}" onsubmit="return confirm('Bỏ HLV chưa ghép tài khoản này khỏi danh sách theo dõi?');" style="display:flex;align-items:center;margin:0;flex:0 0 auto"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn red" type="submit">Xóa</button></form></div></td>
+              </tr>
+            {% endfor %}
+            </tbody></table></div>{% endif %}
+
+            <div style="margin-top:10px;padding:10px;border:1px dashed rgba(241,196,15,.35);border-radius:10px;background:rgba(241,196,15,.03)">
+              <strong>+ Thêm HLV đã đóng tiền nhưng chưa có tài khoản</strong>
+              <form method="post" action="{{ url_for('admin_tournament_fee_unmatched_add',tournament_id=tour.id) }}" class="system-toggle-grid" style="align-items:end;margin-top:6px"><input type="hidden" name="_admin_tab" value="tournaments"><label><span>Tên HLV / người chuyển</span><input name="payer_name" required></label><label><span>Zalo / liên hệ</span><input name="zalo_contact"></label><label><span>Đã thu</span><select name="amount_paid" required><option value="50000">50k</option><option value="100000" selected>100k</option><option value="200000">200k</option></select></label><label><span>Ghi chú</span><input name="note"></label><button class="btn green" type="submit">+ Thêm vào Đã duyệt</button></form>
+            </div>
+          </div>
+        </details>
+
+        <div style="display:none">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><h4 style="margin:0">💵 Đã nhận tiền – chưa có tài khoản web ({{ td.get('fee_unmatched',[])|length }})</h4><span class="small">Lưu trước, ghép vào HLV sau khi họ có tài khoản.</span></div>
+          <form method="post" action="{{ url_for('admin_tournament_fee_unmatched_add',tournament_id=tour.id) }}" class="system-toggle-grid" style="align-items:end;margin-top:8px"><input type="hidden" name="_admin_tab" value="tournaments"><label><span>Tên người chuyển / HLV</span><input name="payer_name" required></label><label><span>Zalo / liên hệ</span><input name="zalo_contact"></label><label><span>Đã thu</span><select name="amount_paid" required><option value="50000">50k</option><option value="100000" selected>100k</option><option value="200000">200k</option></select></label><label><span>Ghi chú</span><input name="note"></label><button class="btn green" type="submit">+ Thêm</button></form>
+          {% if td.get('fee_unmatched') %}<div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table><thead><tr><th>Người chuyển</th><th>Liên hệ</th><th>Đã thu</th><th>Ghi chú</th><th>Ghép HLV</th></tr></thead><tbody>{% set fee_rows_link = td.get('pending',[]) + td.get('approved',[]) %}{% for fee in td.get('fee_unmatched',[]) %}<tr><td><strong>{{ fee.payer_name }}</strong></td><td>{{ fee.zalo_contact|default('—',true) }}</td><td><strong>{{ fee.amount_paid//1000 }}k</strong></td><td>{{ fee.note|default('—',true) }}</td><td style="min-width:330px"><div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;white-space:nowrap"><form method="post" action="{{ url_for('admin_tournament_fee_unmatched_link',fee_id=fee.id) }}" class="tournament-link-account" style="display:flex;align-items:center;gap:5px;margin:0;flex:1 1 auto;min-width:0"><input type="hidden" name="_admin_tab" value="tournaments"><select name="user_id" required title="Gõ chữ cái đầu để nhảy nhanh tới tài khoản" style="width:180px;max-width:180px;min-width:140px"><option value="">-- Chọn tài khoản web --</option>{% for p in players|sort(attribute='display_name') %}<option value="{{ p.id }}">{{ p.display_name }}{% if p.username and p.username != p.display_name %} · {{ p.username }}{% endif %}{% if p.account_status != 'approved' %} · {{ p.account_status|upper }}{% endif %}</option>{% endfor %}</select><button class="btn green" type="submit" style="flex:0 0 auto">Ghép</button></form><form method="post" action="{{ url_for('admin_tournament_fee_unmatched_remove',fee_id=fee.id) }}" style="display:flex;align-items:center;margin:0;flex:0 0 auto"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn red" type="submit">Xóa</button></form></div></td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="small" style="margin:7px 0 0">Chưa có khoản tiền nào đang chờ ghép.</p>{% endif %}
+        </div>
+
+        {% set fs = td.get('finance_summary',{}) %}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px">
+          <div class="panel" style="margin:0;padding:10px"><div class="small">Tổng đã thu</div><strong>{{ '{:,}'.format(fs.get('total_collected',0)|int).replace(',', '.') }}đ</strong></div>
+          <div class="panel" style="margin:0;padding:10px"><div class="small">Tiền giải 50k</div><strong>{{ '{:,}'.format(fs.get('tournament_fee_collected',0)|int).replace(',', '.') }}đ</strong></div>
+          <div class="panel" style="margin:0;padding:10px"><div class="small">Trách nhiệm 50k</div><strong>{{ '{:,}'.format(fs.get('responsibility_collected',0)|int).replace(',', '.') }}đ</strong></div>
+          <div class="panel" style="margin:0;padding:10px"><div class="small">Cần hoàn thừa</div><strong style="color:#e74c3c">{{ '{:,}'.format(fs.get('total_surplus',0)|int).replace(',', '.') }}đ</strong></div>
+          <div class="panel" style="margin:0;padding:10px"><div class="small">Còn thiếu</div><strong style="color:#e67e22">{{ '{:,}'.format(fs.get('total_missing',0)|int).replace(',', '.') }}đ</strong></div>
+        </div>
+        {% if fs.get('surplus_players') %}<div style="margin-top:8px;padding:10px;border:1px solid rgba(231,76,60,.3);border-radius:10px"><strong>↩ HLV đóng thừa cần hoàn:</strong> {% for r in fs.get('surplus_players') %}<span class="badge" style="margin:2px">{{ r.display_name }} · {{ r.amount_surplus//1000 }}k</span>{% endfor %}</div>{% endif %}
+
+        <details style="margin-top:12px"><summary><strong>💰 Chi tiết lệ phí / hoàn / khấu trừ</strong></summary>
+          <div style="padding-top:10px">
+            <p class="small">Mức hiện tại: <strong>50.000đ lệ phí + 50.000đ trách nhiệm = 100.000đ</strong>. Nhập số tiền thực tế đã thu; hệ thống tự tính thiếu/dư. Tiền trách nhiệm có thể khấu trừ nếu vi phạm và hoàn phần còn lại sau giải.</p>
+            {% set fee_rows = td.get('pending',[]) + td.get('approved',[]) %}
+            {% if fee_rows %}<div class="admin-table-wrap tournament-compact"><table><thead><tr><th>HLV</th><th>Đã thu</th><th>Cần thu</th><th>Thiếu / Dư</th><th>Trách nhiệm</th><th>Cập nhật</th></tr></thead><tbody>
+            {% for row in fee_rows %}<tr>
+              <td><strong>{{ row.display_name }}</strong><div class="small">{{ row.zalo_name|default('—',true) }}</div></td>
+              <td><strong>{{ '{:,}'.format(row.amount_paid|default(0)|int).replace(',', '.') }}đ</strong></td>
+              <td>{{ '{:,}'.format(row.required_amount|default(100000)|int).replace(',', '.') }}đ</td>
+              <td>{% if row.amount_missing|default(0)|int > 0 %}<span style="color:#e67e22">Thiếu {{ '{:,}'.format(row.amount_missing|int).replace(',', '.') }}đ</span>{% elif row.amount_surplus|default(0)|int > 0 %}<span style="color:#27ae60">Dư {{ '{:,}'.format(row.amount_surplus|int).replace(',', '.') }}đ</span>{% else %}<span style="color:#27ae60">✓ Đủ</span>{% endif %}</td>
+              <td>Giữ {{ '{:,}'.format(row.responsibility_amount|default(50000)|int).replace(',', '.') }}đ<div class="small">Khấu trừ {{ '{:,}'.format(row.responsibility_deducted|default(0)|int).replace(',', '.') }}đ · Đã hoàn {{ '{:,}'.format(row.amount_refunded|default(0)|int).replace(',', '.') }}đ</div></td>
+              <td><details><summary class="btn gray" style="cursor:pointer">Sửa tiền</summary><form method="post" action="{{ url_for('admin_tournament_registration_finance',registration_id=row.id) }}" style="min-width:300px;padding-top:8px;display:grid;gap:6px"><input type="hidden" name="_admin_tab" value="tournaments"><label>Đã thu<input type="number" name="amount_paid" min="0" step="1000" value="{{ row.amount_paid|default(0) }}"></label><input type="hidden" name="fee_amount" value="50000"><input type="hidden" name="responsibility_amount" value="50000"><label>Khấu trừ trách nhiệm<input type="number" name="responsibility_deducted" min="0" max="50000" step="1000" value="{{ row.responsibility_deducted|default(0) }}"></label><label>Đã hoàn cho HLV<input type="number" name="amount_refunded" min="0" step="1000" value="{{ row.amount_refunded|default(0) }}"></label><label>Ghi chú<input name="payment_note" maxlength="500" value="{{ row.payment_note|default('',true) }}"></label><button class="btn green" type="submit">Lưu</button></form></details></td>
+            </tr>{% endfor %}</tbody></table></div>{% else %}<p class="small">Chưa có HLV đăng ký để ghi nhận lệ phí.</p>{% endif %}
+
+          </div>
+        </details>
+
+        {% if not tour.registration_open %}
+        {% set sc = ops.get('scale',{}) %}
+        <div style="margin-top:14px;padding:14px;border:1px solid rgba(46,204,113,.32);border-radius:13px;background:rgba(46,204,113,.05)">
+          <h4 style="margin:0 0 6px">📊 Tổng quan quy mô giải</h4>
+          <p class="small" style="margin-top:0">Tự tính theo <strong>{{ sc.get('member_count',0) }} HLV đã duyệt</strong> và cấu hình hiện tại. Chung kết Bo3 có thể kết thúc sau 2 trận.</p>
+          <div class="admin-table-wrap tournament-compact"><table><thead><tr><th>Giai đoạn</th><th>Cấu hình</th><th>Dự kiến</th><th>Đã hoàn thành</th></tr></thead><tbody>
+            <tr><td><strong>GĐ1</strong></td><td>{{ sc.get('stage1',{}).get('per_hlv',6) }} trận/HLV</td><td><strong>{{ sc.get('stage1',{}).get('planned',0) }}</strong> trận</td><td>{{ sc.get('stage1',{}).get('completed',0) }}</td></tr>
+            <tr><td><strong>GĐ2 · League Phase</strong></td><td>3 Pot · <strong>4 trận/HLV</strong> = 4 trận gặp đủ 3 Tier (không trùng đối thủ)</td><td><strong>{{ sc.get('league',{}).get('planned',0) }}</strong> trận</td><td>{{ sc.get('league',{}).get('completed',0) }}</td></tr>
+            <tr><td><strong>Knockout</strong></td><td><strong>Top 8 vào thẳng Tứ kết</strong> → BK → CK · Không Play-off</td><td><strong>{{ sc.get('knockout',{}).get('label','—') }}</strong></td><td>{{ sc.get('knockout',{}).get('completed',0) }}</td></tr>
+            <tr><td><strong>Chung kết</strong></td><td>Bo3</td><td>{{ sc.get('final_label','2–3 trận') }}</td><td>—</td></tr>
+          </tbody></table></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <span class="btn gray" style="cursor:default">Tổng dự kiến: <strong>{% if sc.get('total_min',0)==sc.get('total_max',0) %}{{ sc.get('total_max',0) }}{% else %}{{ sc.get('total_min',0) }}–{{ sc.get('total_max',0) }}{% endif %}</strong> trận</span>
+            <span class="btn green" style="cursor:default">Đã xong: {{ sc.get('completed',0) }}</span>
+            <span class="btn gray" style="cursor:default">Còn lại dự kiến: {{ sc.get('remaining',0) }}</span>
+            <span class="btn gray" style="cursor:default">Tiến độ toàn giải: {{ sc.get('percent',0) }}%</span>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  {% if ops.get('ready') and ops.get('tournament') %}
+    {% set ot=ops.get('tournament') %}{% set ev=ops.get('event_ops',{}) %}{% set tm=ev.get('timing',{}) %}{% set cd=ev.get('club_draft',{}) %}{% set ld=ev.get('league_draw',{}).get('state',{}) %}
+    <div class="panel" style="margin-top:14px">
+      <div class="panel tournament-direct-manager" style="margin:14px 0;padding:15px;border:1px solid rgba(241,202,104,.28);border-radius:14px">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+          <div><h3 style="margin:0">👥 HLV & các trận đấu</h3><p class="small" style="margin:4px 0 0">Bấm vào từng HLV để xem đối thủ, cặp đấu, lịch và kết quả. Admin nhập hoặc sửa tỷ số ngay tại đây.</p></div>
+          <span class="btn gray" style="cursor:default">{{ ops.get('members',[])|length }} HLV</span>
+        </div>
+        {% if ops.get('members') %}
+        <div style="display:grid;gap:8px">
+          {% for member_row in ops.get('members',[]) %}
+          <details style="border:1px solid rgba(255,255,255,.10);border-radius:11px;background:rgba(255,255,255,.025);padding:0 12px">
+            <summary style="cursor:pointer;padding:12px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+              <span><strong style="font-size:15px">{{ member_row.display_name }}</strong>{% if member_row.zalo_name %}<span class="small"> · Zalo: {{ member_row.zalo_name }}</span>{% endif %}</span>
+              {% set mcount=namespace(total=0,done=0) %}{% for mm in ops.get('matches',[]) if member_row.user_id|string in [mm.home_user_id|string,mm.away_user_id|string] %}{% set mcount.total=mcount.total+1 %}{% if mm.status=='completed' %}{% set mcount.done=mcount.done+1 %}{% endif %}{% endfor %}
+              <span class="small">{{ mcount.done }}/{{ mcount.total }} trận hoàn thành</span>
+            </summary>
+            <div style="padding:0 0 12px">
+              <div class="admin-table-wrap tournament-compact"><table><thead><tr><th>GĐ</th><th>Đối thủ</th><th>Lịch</th><th>Trạng thái</th><th>Tỷ số / Admin sửa</th></tr></thead><tbody>
+              {% set pm=namespace(count=0) %}
+              {% for mm in ops.get('matches',[]) if member_row.user_id|string in [mm.home_user_id|string,mm.away_user_id|string] %}
+                {% set pm.count=pm.count+1 %}
+                <tr>
+                  <td>{{ mm.stage_code }}{% if mm.round_code %} · {{ mm.round_code }}{% endif %}</td>
+                  <td><strong>{{ mm.away_name if member_row.user_id|string == mm.home_user_id|string else mm.home_name }}</strong></td>
+                  <td>{{ mm.scheduled_at or 'Chưa đặt' }}</td>
+                  <td>{{ 'Hoàn thành' if mm.status=='completed' else ('Tranh chấp' if mm.status=='disputed' else mm.status) }}</td>
+                  <td>
+                    <form method="post" action="{{ url_for('admin_tournament_match_result',match_id=mm.id) }}" style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+                      <input type="hidden" name="_admin_tab" value="tournaments">
+                      <span class="small">{{ mm.home_name }}</span>
+                      <input name="home_score" type="number" min="0" max="99" value="{{ mm.home_score if mm.home_score is not none else '' }}" placeholder="0" style="width:52px">
+                      <span>–</span>
+                      <input name="away_score" type="number" min="0" max="99" value="{{ mm.away_score if mm.away_score is not none else '' }}" placeholder="0" style="width:52px">
+                      <span class="small">{{ mm.away_name }}</span>
+                      {% if mm.stage_code=='knockout' %}<small>Pen</small><input name="home_pen" type="number" min="0" max="99" value="{{ mm.home_pen if mm.home_pen is not none else '' }}" placeholder="—" style="width:46px"><span>–</span><input name="away_pen" type="number" min="0" max="99" value="{{ mm.away_pen if mm.away_pen is not none else '' }}" placeholder="—" style="width:46px">{% endif %}
+                      <button class="btn {{ 'gray' if mm.status=='completed' else 'gold' }}" type="submit">{{ 'Sửa tỷ số' if mm.status=='completed' else 'Nhập tỷ số' }}</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+              {% if pm.count==0 %}<tr><td colspan="5" class="small">HLV này chưa có cặp đấu.</td></tr>{% endif %}
+              </tbody></table></div>
+            </div>
+          </details>
+          {% endfor %}
+        </div>
+        {% else %}<p class="small">Chưa có HLV được duyệt vào giải.</p>{% endif %}
+      </div>
+
+      <div style="padding:15px;border:1px solid rgba(46,204,113,.25);border-radius:14px;margin-bottom:12px">
+        <h3 style="margin:0 0 6px">🖥️ Danh sách Host của giải</h3>
+        <p class="small">Chỉ Admin thấy danh sách này. HLV có Host luôn được đánh dấu ✅ Host và hiển thị khu vực.</p>
+        {% set host_rows=ops.get('host_list',[]) %}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><span class="btn green" style="cursor:default">✅ Có Host: {{ ops.get('host_count',0) }}/{{ ops.get('members',[])|length }}</span></div>
+        <div class="admin-table-wrap tournament-compact"><table><thead><tr><th>#</th><th>HLV</th><th>Host</th><th>Khu vực</th><th>Zalo</th><th>Trạng thái</th></tr></thead><tbody>
+        {% for h in host_rows %}<tr><td>{{ loop.index }}</td><td><strong>{{ h.display_name }}</strong></td><td><strong>✅ Host</strong></td><td>{{ h.host_region|default('—',true) }}</td><td>{{ h.zalo_name|default('—',true) }}</td><td>{{ '🟢 Online' if h.user and h.user.is_online else '⚪ Offline' }}</td></tr>{% endfor %}
+        {% if not host_rows %}<tr><td colspan="6" class="small">Chưa có HLV nào đăng ký Host.</td></tr>{% endif %}
+        </tbody></table></div>
+      </div>
+
+      <div style="padding:15px;border:1px solid rgba(46,204,113,.25);border-radius:14px;margin-bottom:12px">
+        <h3 style="margin:0 0 6px">📅 Lịch thi đấu & Phòng C1 · Admin</h3>
+        <p class="small">Toàn bộ lịch, trạng thái trận và phòng đang hoạt động được theo dõi ngay trong Giải đấu C1. Không cần mở giao diện HLV để xem toàn giải.</p>
+        {% set all_c1_matches=ops.get('all_matches',[]) %}
+        {% set upcoming_3day_matches=ops.get('upcoming_3day_matches',[]) %}
+        {% set upcoming_window=ops.get('upcoming_3day_window',{}) %}
+        {% set active_c1_rooms=ops.get('active_c1_rooms',[]) %}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><span class="btn gray" style="cursor:default">Tổng trận: {{ all_c1_matches|length }}</span><span class="btn {{ 'green' if upcoming_3day_matches else 'gray' }}" style="cursor:default">📅 3 ngày tới: {{ upcoming_3day_matches|length }} trận</span><span class="btn {{ 'green' if active_c1_rooms else 'gray' }}" style="cursor:default">Phòng đang hoạt động: {{ active_c1_rooms|length }}</span></div>
+
+        <details open style="margin-top:8px"><summary><strong>🕒 Đăng ký giờ rảnh của từng HLV trong 3 ngày tới</strong></summary>
+          <div style="padding-top:8px">
+            {% set availability_rows=ops.get('availability_status_rows',[]) %}
+            <p class="small" style="margin:0 0 8px">Chỉ Admin thấy. <strong>✅ Đã đăng ký</strong>: {{ ops.get('availability_registered_count',0) }} · <strong>📅 Đã có lịch, không cần khai</strong>: {{ ops.get('availability_scheduled_exempt_count',0) }} · <strong style="color:#ff8b73">🔴 Chưa đăng ký</strong>: {{ ops.get('availability_missing_count',0) }}</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+              <button class="btn gray c1-avail-filter active" type="button" data-avail-filter="all">Tất cả ({{ availability_rows|length }})</button>
+              <button class="btn gray c1-avail-filter" type="button" data-avail-filter="registered">✅ Đã đăng ký ({{ ops.get('availability_registered_count',0) }})</button>
+              <button class="btn gray c1-avail-filter" type="button" data-avail-filter="scheduled">📅 Đã có lịch ({{ ops.get('availability_scheduled_exempt_count',0) }})</button>
+              <button class="btn red c1-avail-filter" type="button" data-avail-filter="missing">🔴 Chưa đăng ký ({{ ops.get('availability_missing_count',0) }})</button>
+            </div>
+            <div class="admin-table-wrap tournament-compact"><table><thead><tr><th>#</th><th>HLV</th><th>Trạng thái</th><th>Giờ rảnh đã khai</th><th>Lịch thi đấu 3 ngày tới</th><th>Host</th></tr></thead><tbody id="c1AvailabilityBody">
+            {% for a in availability_rows %}
+              <tr data-avail-status="{{ a.status_code }}">
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ a.display_name }}</strong>{% if a.zalo_name %}<br><span class="small">Zalo: {{ a.zalo_name }}</span>{% endif %}</td>
+                <td><strong>{{ a.status_label }}</strong></td>
+                <td>{% if a.slot_labels %}{% for label in a.slot_labels %}<span class="small" style="display:inline-block;margin:2px 6px 2px 0">🕒 {{ label }}</span>{% endfor %}{% else %}<span class="small">—</span>{% endif %}</td>
+                <td>{% if a.scheduled_matches %}{% for m in a.scheduled_matches %}<div class="small"><strong>{{ m.schedule_day_label }} {{ m.schedule_time_label }}</strong> · {{ m.home_name }} vs {{ m.away_name }}</div>{% endfor %}{% else %}<span class="small">Chưa có lịch</span>{% endif %}</td>
+                <td>{% if a.has_host %}<strong>✅ Host</strong><br><span class="small">{{ a.host_region }}</span>{% else %}<span class="small">—</span>{% endif %}</td>
+              </tr>
+            {% endfor %}
+            {% if not availability_rows %}<tr><td colspan="6" class="small">Chưa có HLV được duyệt vào giải.</td></tr>{% endif %}
+            </tbody></table></div>
+          </div>
+        </details>
+
+        <script>
+        (function(){
+          const buttons=document.querySelectorAll('.c1-avail-filter');
+          const rows=document.querySelectorAll('#c1AvailabilityBody tr[data-avail-status]');
+          buttons.forEach(btn=>btn.addEventListener('click',function(){
+            const filter=this.dataset.availFilter || 'all';
+            buttons.forEach(b=>b.classList.remove('active')); this.classList.add('active');
+            rows.forEach(row=>{ row.style.display=(filter==='all'||row.dataset.availStatus===filter)?'':'none'; });
+          }));
+        })();
+        </script>
+
+        <details open style="margin-top:8px"><summary><strong>📅 Lịch thi đấu của tất cả HLV trong 3 ngày tới</strong></summary>
+          <div style="padding-top:8px">
+            <p class="small" style="margin:0 0 8px">Chỉ Admin thấy. Cửa sổ hiện tại: <strong>{{ upcoming_window.get('from_label','—') }} → {{ upcoming_window.get('to_label','—') }}</strong> (giờ Việt Nam). Chỉ hiển thị các trận đã chốt ngày/giờ thi đấu.</p>
+            <div class="admin-table-wrap tournament-compact"><table><thead><tr><th>#</th><th>Ngày</th><th>Giờ</th><th>Giai đoạn</th><th>HLV 1</th><th>HLV 2</th><th>Host</th><th>Trạng thái</th></tr></thead><tbody>
+            {% for m in upcoming_3day_matches %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ m.schedule_day_label }}</strong><br><span class="small">{{ m.schedule_date_label }}</span></td>
+                <td><strong>{{ m.schedule_time_label }}</strong></td>
+                <td>{{ m.stage_code|default('—',true) }}{% if m.round_code %}<br><span class="small">{{ m.round_code }}</span>{% endif %}</td>
+                <td><strong>{{ m.home_name|default('HLV 1',true) }}</strong>{% if m.home_has_host %}<br><span class="small">✅ Host · {{ m.home_host_region|default('—',true) }}</span>{% endif %}</td>
+                <td><strong>{{ m.away_name|default('HLV 2',true) }}</strong>{% if m.away_has_host %}<br><span class="small">✅ Host · {{ m.away_host_region|default('—',true) }}</span>{% endif %}</td>
+                <td>{% if m.host %}<strong>{{ m.host.name|default('Host',true) }}</strong><br><span class="small">{{ m.host.region|default('—',true) }}</span>{% elif m.home_has_host or m.away_has_host %}<span class="small">Có HLV hỗ trợ Host</span>{% else %}<span class="small">Chưa có Host</span>{% endif %}</td>
+                <td>{{ m.status|default('scheduled',true) }}</td>
+              </tr>
+            {% endfor %}
+            {% if not upcoming_3day_matches %}<tr><td colspan="8" class="small">Chưa có trận nào được chốt lịch trong 3 ngày tới.</td></tr>{% endif %}
+            </tbody></table></div>
+          </div>
+        </details>
+        <details open><summary><strong>🎮 Phòng C1 đang hoạt động</strong></summary><div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table><thead><tr><th>#</th><th>Cặp đấu</th><th>Chủ phòng</th><th>Khách</th><th>Trạng thái</th><th>Vào phòng</th></tr></thead><tbody>
+        {% for r in active_c1_rooms %}<tr><td>{{ loop.index }}</td><td>{{ r.public_label|default('—',true) }}</td><td>{{ r.host_name|default('—',true) }}</td><td>{{ r.guest_name|default('Chưa vào',true) }}</td><td>{{ r.public_status|default(r.status,true) }}</td><td><a class="btn gray" href="{{ url_for('room_detail',room_id=r.id) }}">Mở</a></td></tr>{% endfor %}
+        {% if not active_c1_rooms %}<tr><td colspan="6" class="small">Không có phòng C1 nào đang hoạt động.</td></tr>{% endif %}
+        </tbody></table></div></details>
+        <details style="margin-top:8px"><summary><strong>📋 Toàn bộ lịch/trận của giải ({{ all_c1_matches|length }})</strong></summary><div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table><thead><tr><th>#</th><th>Giai đoạn</th><th>HLV 1</th><th>HLV 2</th><th>Lịch</th><th>Tỷ số</th><th>Trạng thái</th></tr></thead><tbody>
+        {% for m in all_c1_matches %}<tr><td>{{ loop.index }}</td><td>{{ m.stage_code|default('—',true) }}</td><td>{{ m.home_name|default('HLV 1',true) }}</td><td>{{ m.away_name|default('HLV 2',true) }}</td><td>{{ m.scheduled_at|default('Chưa chốt',true) }}</td><td>{% if m.home_score is not none and m.away_score is not none %}<strong>{{ m.home_score }} - {{ m.away_score }}</strong>{% else %}—{% endif %}</td><td>{{ m.status|default('pending',true) }}</td></tr>{% endfor %}
+        {% if not all_c1_matches %}<tr><td colspan="7" class="small">Chưa sinh lịch thi đấu.</td></tr>{% endif %}
+        </tbody></table></div></details>
+      </div>
+
+      </details>
+      <script>
+      // V1.5.94: no browser confirmation; show errors in the GĐ2 panel itself.
+      document.addEventListener('DOMContentLoaded', function () {
+        const panel = document.getElementById('c1-admin-gd2');
+        if (!panel) return;
+        const status = panel.querySelector('[data-c1-club-action-status]');
+        panel.querySelectorAll('form[data-c1-club-admin-action]').forEach(function (form) {
+          form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            if (!button || button.disabled) return;
+            button.disabled = true;
+            status.hidden = false;
+            status.style.color = '#f1ca68';
+            status.textContent = 'Đang xử lý...';
+            try {
+              const response = await fetch(form.action, {
+                method: 'POST', body: new FormData(form), credentials: 'same-origin',
+                headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json'},
+                redirect: 'follow'
+              });
+              const result = await response.json();
+              if (!response.ok || !result.ok) {
+                status.style.color = '#ff9b85';
+                status.textContent = result.message || 'Không thể thực hiện. Kiểm tra trạng thái giải và log server.';
+                return;
+              }
+              // Reload only when the database confirms success; display fresh allocation table.
+              window.location.assign(window.location.pathname + '?c1_club_updated=' + Date.now() + '#c1-admin-gd2');
+            } catch (error) {
+              status.style.color = '#ff9b85';
+              status.textContent = 'Không nhận được kết quả từ máy chủ. Hãy tải lại trang để kiểm tra trước khi thử tiếp.';
+            } finally {
+              button.disabled = false;
+            }
+          });
+        });
+      });
+      // Panels are below this script: initialize only after the document is parsed.
+      document.addEventListener('DOMContentLoaded', function () {
+        const nav = document.querySelector('.c1-stage-admin-tabs');
+        if (!nav) return;
+        const root = nav.closest('[data-admin-panel="tournaments"]');
+        if (!root) return;
+        const panels = {
+          gd1: [root.querySelector('#c1-admin-gd1')],
+          gd2: [root.querySelector('#c1-admin-gd2'), root.querySelector('[data-tournament-op-panel="league"]')],
+          ko: [root.querySelector('#c1-admin-ko')]
+        };
+        if (Object.values(panels).flat().some(panel => !panel)) {
+          console.error('PES Arena: missing C1 stage admin panel');
+          return;
+        }
+        const keyName = 'pes_c1_admin_stage';
+        function activate(key) {
+          if (!panels[key]) key = 'gd1';
+          Object.entries(panels).forEach(([name, items]) => items.forEach(panel => {
+            panel.hidden = name !== key;
+            panel.style.display = name === key ? 'block' : 'none';
+          }));
+          nav.querySelectorAll('[data-c1-stage-tab]').forEach(button => {
+            const active = button.dataset.c1StageTab === key;
+            if (active) button.setAttribute('aria-current', 'true');
+            else button.removeAttribute('aria-current');
+            button.classList.toggle('gold', active);
+            button.classList.toggle('gray', !active);
+          });
+          try { sessionStorage.setItem(keyName, key); } catch (_) { /* optional */ }
+        }
+        nav.addEventListener('click', event => {
+          const button = event.target.closest('[data-c1-stage-tab]');
+          if (button && nav.contains(button)) {
+            // Reveal target before default fragment navigation scrolls into view.
+            activate(button.dataset.c1StageTab);
+          }
+        });
+        const hashToStage = {'#c1-admin-gd1': 'gd1', '#c1-admin-gd2': 'gd2', '#c1-admin-ko': 'ko'};
+        let saved = nav.dataset.c1DefaultStage || 'gd1';
+        activate(hashToStage[window.location.hash] || saved);
+        window.addEventListener('hashchange', () => {
+          if (hashToStage[window.location.hash]) activate(hashToStage[window.location.hash]);
+        });
+      });
+      </script>
+
+      {% include "admin_parts/c1_stage1.html" %}
+      {% include "admin_parts/c1_gd2_clubs.html" %}
+      {% include "admin_parts/c1_gd2_matches.html" %}
+      {% include "admin_parts/c1_knockout.html" %}
+    </div>
+      <details style="margin-top:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px 14px">
+        <summary style="cursor:pointer"><strong>⚙️ Cấu hình giải đấu · Ít dùng</strong> <span class="small">(bấm để mở)</span></summary>
+        <div style="padding-top:12px">
+          <p class="small">Chỉ mở khi cần đổi luật, hình ảnh, pool CLB, Pot, mốc thời gian hoặc công cụ dự phòng. Các thao tác vận hành hằng ngày đã ở phía trên.</p>
+
+    <h3>🌐 Hiển thị khu vực Giải đấu</h3>
+    <form method="post" action="{{ url_for('admin_tournament_access') }}" class="system-toggle-grid"><input type="hidden" name="_admin_tab" value="tournaments"><label class="admin-permission-option"><span><strong>Mở khu vực Giải đấu</strong><small style="display:block">Tắt = người chơi thấy thông báo giải tạm đóng.</small></span><span class="admin-switch"><input type="checkbox" name="enabled" value="1" {% if tournament_area_enabled %}checked{% endif %}><span class="admin-switch-track"></span></span></label><button class="btn green" type="submit">Lưu</button></form>
+
+    <h3 style="margin-top:20px">🎨 Hình ảnh giải đấu</h3>
+    <div class="tournament-design-admin" id="tournament-design-admin"><form method="post" action="{{ url_for('admin_tournament_design') }}" class="tournament-design-form" id="tournament-design-form"><input type="hidden" name="_admin_tab" value="tournaments"><div class="tournament-design-controls"><section class="tournament-design-group"><h4>🏆 Ảnh Cúp</h4><label><span>Kích thước (px)</span><input data-preview-control type="range" name="hero_cup_width" min="80" max="420" value="{{ tournament_design.hero_cup_width|default(220) }}"><output data-output-for="hero_cup_width"></output></label><label><span>Cách mép phải (px)</span><input data-preview-control type="range" name="hero_cup_right" min="-120" max="260" value="{{ tournament_design.hero_cup_right|default(24) }}"><output data-output-for="hero_cup_right"></output></label><label><span>Cách đáy (px)</span><input data-preview-control type="range" name="hero_cup_bottom" min="-160" max="160" value="{{ tournament_design.hero_cup_bottom|default(-14) }}"><output data-output-for="hero_cup_bottom"></output></label></section><section class="tournament-design-group"><h4>🛡️ Huy hiệu C1</h4><label><span>Kích thước (px)</span><input data-preview-control type="range" name="arena_badge_width" min="80" max="420" value="{{ tournament_design.arena_badge_width|default(230) }}"><output data-output-for="arena_badge_width"></output></label><label><span>Vị trí ngang (%)</span><input data-preview-control type="range" name="arena_badge_x" min="0" max="100" value="{{ tournament_design.arena_badge_x|default(50) }}"><output data-output-for="arena_badge_x"></output></label><label><span>Vị trí dọc (%)</span><input data-preview-control type="range" name="arena_badge_y" min="0" max="100" value="{{ tournament_design.arena_badge_y|default(46) }}"><output data-output-for="arena_badge_y"></output></label></section></div><div class="tournament-design-preview-wrap"><div class="tournament-preview-title"><strong>👁 Preview</strong><span>Kéo thanh để xem ngay</span></div><div class="tournament-preview-grid"><section class="tournament-preview-card"><div class="tournament-preview-label">Banner Giải đấu</div><div class="tournament-preview-hero" id="preview-tournament-hero"><div class="tournament-preview-hero-copy"><small>PES eFOOTBALL 2026</small><strong>★ GIẢI ĐẤU PES ARENA ★</strong></div><img id="preview-hero-cup" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/Giaidau/C1mua1/Cupnen.webp" alt="Preview Cúp"></div></section><section class="tournament-preview-card"><div class="tournament-preview-label">Banner C1</div><div class="tournament-preview-c1" id="preview-tournament-c1"><span class="tournament-preview-status">● Đang diễn ra</span><img id="preview-arena-badge" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/Giaidau/C1mua1/Huyhieu.webp" alt="Preview Huy hiệu"></div></section></div></div><div class="tournament-design-actions"><button class="btn gray" type="button" id="tournament-design-reset-preview">↺ Mặc định</button><button class="btn green" type="submit">💾 Lưu hình ảnh</button></div></form></div>
+
+    {% if ops.get('ready') and ops.get('tournament') %}{% set ot=ops.get('tournament') %}
+    <div style="margin-top:18px;padding:14px;border:1px solid rgba(241,202,104,.28);border-radius:12px;background:rgba(241,202,104,.06)">
+      <strong>👑 Admin tham gia giao diện C1 bằng chính tài khoản Admin</strong>
+      <p class="small">Không cần chọn “Xem như HLV”. Admin có thể mở Giải đấu và Phòng đấu C1 như một người dùng bình thường; quyền quản trị vẫn nằm ở khu Admin.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn gold" href="{{ url_for('tournaments') }}">🏟️ Vào Giải đấu</a><form method="post" action="{{ url_for('c1_room_open') }}"><input type="hidden" name="tournament_id" value="{{ot.id}}"><button class="btn green" type="submit">🎮 Vào Phòng đấu C1</button></form></div>
+    </div>
+
+    <h3 style="margin-top:22px">🧩 Cấu hình thể thức</h3>
+    <details open><summary><strong>GĐ1 & thời gian</strong></summary><div style="padding-top:10px"><form method="post" action="{{ url_for('admin_tournament_stage1_settings',tournament_id=ot.id) }}" class="system-toggle-grid"><input type="hidden" name="_admin_tab" value="tournaments"><label>Số trận/HLV<input name="match_target" type="number" min="5" max="6" value="6"></label><label>Tối thiểu đối thủ<input name="min_opponents" type="number" value="3"></label><label>Tối đa trận/cùng HLV<input name="max_per_opponent" type="number" value="2"></label><button class="btn" type="submit">Lưu luật GĐ1</button></form>
+<div style="margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:12px" data-stage1-club-pool>
+<strong>🏆 Pool CLB C1 · Chọn đúng 16 đội Tier S+ / S</strong>
+<p class="small">Đây là nơi Admin chọn <strong>16 CLB dùng để quay đội trong Phòng đấu C1</strong>. Chỉ chọn đội Tier <strong>S+</strong> hoặc <strong>S</strong>; phòng C1 sẽ không dùng đội ngoài danh sách này.</p>
+{% set selected_names = ops.get('stage1_club_pool',[])|map(attribute='name')|list %}
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 10px">
+  <span class="small"><strong>Đang chọn: <span data-stage1-club-count>{{ selected_names|length }}</span> / {{ ops.get('stage1_team_options',[])|length }} CLB</strong></span>
+  <button class="btn gray" type="button" data-stage1-club-splus>Chọn toàn bộ S+</button>
+  <button class="btn gray" type="button" data-stage1-club-s>Chọn toàn bộ S</button>
+  <button class="btn gray" type="button" data-stage1-club-all>Chọn cả S+ và S</button>
+  <button class="btn gray" type="button" data-stage1-club-none>Bỏ chọn tất cả</button>
+</div>
+<form method="post" action="{{ url_for('admin_tournament_stage1_clubs',tournament_id=ot.id) }}" data-stage1-club-form>
+<input type="hidden" name="_admin_tab" value="tournaments">
+<div class="table-wrap" style="margin-top:8px"><table><thead><tr><th style="width:70px">Chọn</th><th>CLB</th><th style="width:90px">Tier</th><th style="width:100px">Điểm</th></tr></thead><tbody>
+{% for team in ops.get('stage1_team_options',[]) %}
+<tr><td><input type="checkbox" name="clubs" value="{{ team.display }}" data-stage1-club-box data-tier="{{ team.tier }}" {% if team.display in selected_names %}checked{% endif %}></td><td><strong>{{ team.display }}</strong></td><td>{{ team.tier }}</td><td>{{ team.overall }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+<button class="btn green" type="submit" style="margin-top:10px">💾 Lưu 16 CLB cho Phòng C1</button>
+</form>
+<form method="post" action="{{ url_for('admin_tournament_stage1_clubs_reset',tournament_id=ot.id) }}" style="margin-top:6px"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gray" type="submit">↺ Chọn lại toàn bộ S+ và S</button></form>
+</div>{% set rd=ops.get('stage1_readiness',{}) %}<div style="margin-top:12px;padding:12px;border:1px solid {{ 'rgba(46,204,113,.35)' if rd.get('ready') else 'rgba(255,120,90,.35)' }};border-radius:12px"><strong>{{ '✅ Sẵn sàng khai mạc' if rd.get('ready') else '⚠️ Chưa sẵn sàng khai mạc' }}</strong><div style="display:grid;gap:7px;margin-top:10px"><div class="small">{{ '✅' if rd.get('member_count',0) >= 4 else '❌' }} <strong>HLV tham gia:</strong> {{ rd.get('member_count',0) }} HLV {% if rd.get('member_count',0) >= 4 %}<span class="muted">· Đã có HLV</span>{% else %}<span style="color:#ff8b73">· Chưa đủ HLV</span>{% endif %}</div><div class="small">{{ '✅' if rd.get('club_count',0) >= 2 else '❌' }} <strong>Pool CLB GĐ1:</strong> {{ rd.get('club_count',0) }} CLB {% if rd.get('club_count',0) >= 2 %}<span class="muted">· Đã chọn</span>{% else %}<span style="color:#ff8b73">· Cần chọn ít nhất 2 CLB</span>{% endif %}</div><div class="small">{{ '✅' if rd.get('expected_matches',0) > 0 and rd.get('actual_matches',0) == rd.get('expected_matches',0) else '❌' }} <strong>Lịch GĐ1:</strong> {{ rd.get('actual_matches',0) }}/{{ rd.get('expected_matches',0) }} trận {% if rd.get('actual_matches',0) < rd.get('expected_matches',0) %}<span style="color:#ff8b73">· Còn thiếu {{ rd.get('expected_matches',0) - rd.get('actual_matches',0) }} trận</span>{% else %}<span class="muted">· Đủ lịch</span>{% endif %}</div><div class="small">{{ '✅' if not rd.get('bad_player_count') else '❌' }} <strong>HLV đủ 6 trận:</strong> {{ rd.get('member_count',0) - rd.get('bad_player_count',0) }}/{{ rd.get('member_count',0) }} {% if rd.get('bad_player_count') %}<span style="color:#ff8b73">· {{ rd.get('bad_player_count') }} HLV chưa đủ lịch</span>{% else %}<span class="muted">· Hoàn tất</span>{% endif %}</div></div>{% if rd.get('actual_matches',0) < rd.get('expected_matches',0) %}<form method="post" action="{{ url_for('admin_tournament_stage1_random_generate',tournament_id=ot.id) }}" style="margin-top:10px" onsubmit="return confirm('Sinh lịch GĐ1 cho toàn bộ HLV? Nếu đã có lịch cũ, hệ thống sẽ Random lại khi chưa có kết quả.');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gold" type="submit">🎲 Sinh lịch GĐ1</button></form>{% endif %}<p class="small" style="margin:8px 0 0">{% if rd.get('ready') %}Đã đủ điều kiện. Đến giờ khai mạc, GĐ1 sẽ tự mở.{% else %}Hoàn thành các dòng có dấu ❌ ở trên. Không cần tìm ở khu khác.{% endif %}</p></div>{% set tcfg=ops.get('event_ops',{}).get('timing',{}).get('config',{}) %}<div style="margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:12px"><strong>⏱️ Đồng hồ & mốc thời gian giải</strong><p class="small">Chỉ cần đặt giờ khai mạc GĐ1. Nếu để trống các mốc còn lại, hệ thống tự tính: thưởng sớm +3 ngày · kết thúc GĐ1 +7 ngày · gia hạn +9 ngày.</p><form method="post" action="{{ url_for('admin_tournament_timing',tournament_id=ot.id) }}" class="system-toggle-grid" style="margin-top:10px"><input type="hidden" name="_admin_tab" value="tournaments"><label>🏁 Khai mạc / Bắt đầu GĐ1<input type="datetime-local" name="stage1_start_at" value="{{ (tcfg.get('stage1_start_at') or '')[:16] }}"></label><label>🎁 Hạn thưởng hoàn thành sớm<input type="datetime-local" name="stage1_early_end_at" value="{{ (tcfg.get('stage1_early_end_at') or '')[:16] }}"></label><label>Hết GĐ1<input type="datetime-local" name="stage1_end_at" value="{{ (tcfg.get('stage1_end_at') or '')[:16] }}"></label><label>Hết gia hạn GĐ1<input type="datetime-local" name="stage1_extension_end_at" value="{{ (tcfg.get('stage1_extension_end_at') or '')[:16] }}"></label><label>Bắt đầu GĐ2<input type="datetime-local" name="league_start_at" value="{{ (tcfg.get('league_start_at') or '')[:16] }}"></label><label>Hết GĐ2<input type="datetime-local" name="league_end_at" value="{{ (tcfg.get('league_end_at') or '')[:16] }}"></label><button class="btn gold" type="submit">💾 Lưu mốc thời gian</button></form></div></div></details>
+    <details style="margin-top:10px"><summary><strong>Pot / CLB / League</strong></summary><div style="padding-top:10px"><div class="system-toggle-grid"><form method="post" action="{{ url_for('admin_tournament_generate_pots',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><label>Cấu trúc Pot<input value="Pot 1: 5 · Pot 2: 6 · Pot 3: 5" readonly></label><label>Số CLB GĐ2<input name="club_count" type="number" min="2" max="64" value="{{ ops.get('league_config',{}).get('club_count', ops.get('members',[])|length or 10) }}"></label><button class="btn" type="submit">Lưu & chia Pot 5–6–5</button></form><form method="post" action="{{ url_for('admin_tournament_club_selection',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn green" name="open" value="1" type="submit">Mở chọn CLB</button><button class="btn red" name="open" value="0" type="submit">Khóa chọn CLB</button></form><form method="post" action="{{ url_for('admin_tournament_club_add',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><label>Tên CLB<input name="name" required></label><label>Mã CLB<input name="club_key"></label><button class="btn" type="submit">Thêm CLB</button></form><form method="post" action="{{ url_for('admin_tournament_league_generate',tournament_id=ot.id) }}" onsubmit="return confirm('Sinh lịch GĐ2 đúng 4 trận/HLV, gặp đủ 3 Tier?');"><input type="hidden" name="_admin_tab" value="tournaments"><label>Luật GĐ2<input value="Tier 5–6–5 · 4 trận/HLV · đủ 3 Tier" readonly></label><button class="btn gold" type="submit">Sinh lịch GĐ2</button></form></div></div></details>
+    <details open style="margin-top:10px"><summary><strong>🎁 Thưởng hoàn thành sớm</strong></summary><div style="padding-top:10px"><p class="small">Mốc hết thưởng lấy từ ô <strong>Hạn thưởng hoàn thành sớm</strong> phía trên. Bạn có thể thêm nhiều mức thưởng khác nhau.</p><form method="post" action="{{ url_for('admin_tournament_reward_add',tournament_id=ot.id) }}" class="system-toggle-grid"><input type="hidden" name="_admin_tab" value="tournaments"><label>Tên thưởng<input name="name" value="Hoàn thành sớm"></label><label>Giai đoạn<select name="stage_code"><option value="stage1">GĐ1</option><option value="league">League</option><option value="knockout">Knockout</option></select></label><label>Loại<select name="reward_type"><option value="zcoin">Zcoin</option><option value="badge">Badge</option><option value="luckybox">Lucky Box</option></select></label><label>Giá trị<input name="reward_value" required placeholder="VD: 500"></label><label>Hạn riêng của mức thưởng (tuỳ chọn)<input type="datetime-local" name="deadline_at" value="{{ (tcfg.get('stage1_early_end_at') or '')[:16] }}"></label><button class="btn gold" type="submit">+ Thêm mức thưởng</button></form><div style="margin-top:10px">{% for r in ops.get('rewards',{}).get('rules',[]) %}<div style="padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:8px;margin-top:6px"><strong>{{ r.name }}</strong> · {{ r.reward_type }}: {{ r.reward_value }} <span class="small">· Hạn: {{ r.deadline_at or tcfg.get('stage1_early_end_at') or 'chưa đặt' }}</span></div>{% else %}<p class="small">Chưa có mức thưởng nào. Đồng hồ thưởng vẫn có thể chạy theo mốc thời gian đã cấu hình.</p>{% endfor %}</div></div></details>
+    <details style="margin-top:10px"><summary><strong>Host / Công cụ dự phòng</strong></summary><div style="padding-top:10px"><form method="post" action="{{ url_for('admin_tournament_host_add',tournament_id=ot.id) }}" class="system-toggle-grid"><input type="hidden" name="_admin_tab" value="tournaments"><label>Tên Host<input name="name" required></label><label>Khu vực<select name="region"><option>Bắc</option><option>Trung</option><option>Nam</option><option>Khác</option></select></label><label>Ghi chú<input name="note"></label><button class="btn" type="submit">Thêm Host</button></form><form method="post" action="{{ url_for('admin_tournament_match_add',tournament_id=ot.id) }}" class="system-toggle-grid" style="margin-top:10px"><input type="hidden" name="_admin_tab" value="tournaments"><label>Giai đoạn<select name="stage_code"><option value="stage1">GĐ1</option><option value="league">League</option></select></label><label>HLV 1<select name="home_user_id" required>{% for m in ops.get('members',[]) %}<option value="{{ m.user_id }}">{{ m.display_name }}</option>{% endfor %}</select></label><label>HLV 2<select name="away_user_id" required>{% for m in ops.get('members',[]) %}<option value="{{ m.user_id }}">{{ m.display_name }}</option>{% endfor %}</select></label><button class="btn" type="submit">Tạo trận thủ công</button></form></div></details>
+    {% endif %}
+
+        </div>
+      </details>
+
+  {% endif %}
+</section>
+
+
+<script>
+(function(){
+  const root=document.querySelector('[data-stage1-club-pool]');
+  if(!root) return;
+  const boxes=Array.from(root.querySelectorAll('[data-stage1-club-box]'));
+  const count=root.querySelector('[data-stage1-club-count]');
+  const refresh=()=>{ if(count) count.textContent=String(boxes.filter(x=>x.checked).length); };
+  boxes.forEach(x=>x.addEventListener('change',refresh));
+  root.querySelector('[data-stage1-club-splus]')?.addEventListener('click',()=>{ boxes.forEach(x=>x.checked=x.dataset.tier==='S+'); refresh(); });
+  root.querySelector('[data-stage1-club-s]')?.addEventListener('click',()=>{ boxes.forEach(x=>x.checked=x.dataset.tier==='S'); refresh(); });
+  root.querySelector('[data-stage1-club-all]')?.addEventListener('click',()=>{ boxes.forEach(x=>x.checked=true); refresh(); });
+  root.querySelector('[data-stage1-club-none]')?.addEventListener('click',()=>{ boxes.forEach(x=>x.checked=false); refresh(); });
+  root.querySelector('[data-stage1-club-form]')?.addEventListener('submit',(e)=>{
+    const n=boxes.filter(x=>x.checked).length;
+    if(n<2){ e.preventDefault(); alert('GĐ1 cần chọn ít nhất 2 CLB.'); }
+  });
+  refresh();
+})();
+</script>
+
