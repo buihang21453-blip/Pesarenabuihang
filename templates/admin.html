@@ -715,6 +715,10 @@
 {% endif %}
 
 
+{# V1.6.39: Jinja include variables are local to the included template.
+   Define ops in this parent scope for the C1 console AND the Test Mode below;
+   without this, ops.get(...) raises UndefinedError and GET /admin returns 500. #}
+{% set ops = tournament_ops_admin|default({}, true) %}
 {% include "admin_parts/c1_console.html" %}
 
 <section class="admin-tab-panel" data-admin-panel="tournament-test">

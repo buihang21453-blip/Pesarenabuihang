@@ -1,8 +1,9 @@
-## V1.6.38 — Hotfix HTTP 500 trang Admin
-- Giữ giao diện Admin module V1.6.37 làm giao diện chính.
-- Thêm recovery ở route /admin: nếu render template module lỗi, ghi full traceback vào Vercel logs và tự động dùng lại giao diện Admin V1.6.36 đã chạy trước đó.
-- Không chạm CSDL, kết quả, RP, Zcoin, lịch hay vé C1.
-- Bước tiếp theo: dựa vào traceback Production để sửa tận gốc template/module và gỡ fallback.
+## V1.6.39 — Sửa nguyên nhân HTTP 500 của Admin V1.6.37
+
+- Sửa phạm vi biến Jinja `ops` sau khi tách `admin_parts/c1_console.html`: khai báo ở `templates/admin.html` trước include, để phần Test Mode vẫn đọc được `ops.get('tournament')`.
+- Giữ toàn bộ menu 7 nhóm, tiến trình C1, module giao diện tách file và công cụ rà soát/đánh dấu tính năng từ V1.6.37.
+- Không sử dụng giao diện Admin V1.6.36 dự phòng, không chỉnh SQL, route, BXH hay dữ liệu giải đấu.
+- Bổ sung kiểm thử hồi quy phạm vi biến Jinja khi tách template và kiểm thử render giả lập không cần database.
 
 ## V1.6.37 — Gom menu Admin, thanh tiến trình C1 và rà soát tính năng
 - Gom tab Admin theo chức năng, giữ nguyên quyền truy cập và route hiện có.

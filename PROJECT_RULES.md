@@ -1,7 +1,8 @@
-## V1.6.38 — Fail-safe Admin
-- UI refactors must test rendering with production-like tournament data in addition to compiling Jinja syntax.
-- Keep Admin reachable by safe fallbacks; remove fallback only after the original error is verified fixed.
-- Never treat a 500 as a CSS-only issue.
+## V1.6.39 — Quy tắc tách template Jinja
+
+- Biến `{% set ... %}` đặt trong template `{% include ... %}` không được coi là biến xuất ra template cha. Mọi biến được dùng bởi nhiều phần phải khai báo ở scope cha hoặc truyền riêng bằng cấu trúc context rõ ràng.
+- Kiểm thử phải render template, không chỉ parse cú pháp; với các tab ở cuối trang phải kiểm tra khi `tournament_ops_admin` có và không có giải.
+- Không sử dụng fallback về giao diện cũ để che lỗi render giao diện mới.
 
 ## V1.6.37 — Quy tắc Admin UI
 - Thay đổi giao diện không được xóa route hoặc dữ liệu nếu Owner chỉ yêu cầu rà soát/đánh dấu.

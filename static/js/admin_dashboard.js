@@ -264,7 +264,7 @@
         status.textContent = 'Đã hiện lại toàn bộ các khối đã ẩn.';
     });
     root.querySelector('[data-review-export]').addEventListener('click', function () {
-        const data = {version: 'V1.6.37', purpose: 'feature-review-only-no-deletion', decisions: selected()};
+        const data = {version: 'V1.6.39', purpose: 'feature-review-only-no-deletion', decisions: selected()};
         const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);

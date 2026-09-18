@@ -1,7 +1,9 @@
-## V1.6.38 — Admin recovery
-- `modules/admin_dashboard_routes.py`: guarded template render and exception traceback.
-- `templates/admin_legacy_recovery.html`: preserved original V1.6.36 Admin for emergency fallback.
-- `templates/admin.html`: unchanged V1.6.37 modular UI as preferred path.
+## V1.6.39 — Admin template scope hotfix
+
+- `templates/admin.html`: định nghĩa `ops` ở scope cha để được chia sẻ giữa `admin_parts/c1_console.html` và khối Test Mode kế tiếp.
+- `templates/admin_parts/`: giữ toàn bộ cấu trúc module V1.6.37; không dùng `admin_legacy_recovery.html`.
+- `tests/test_admin_template_scope.py`: kiểm thử Jinja include scope và bản render Admin mô phỏng.
+- `app.py`, `templates/admin_parts/c1_gd2_clubs.html`: đồng bộ version.
 
 ## V1.6.37 — Sắp xếp Admin
 - `templates/admin.html`: giữ lõi người dùng, Rank, kinh tế, hệ thống và include các module mới.

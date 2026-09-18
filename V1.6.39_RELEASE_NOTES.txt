@@ -1,0 +1,7 @@
+PES Arena V1.6.39 — Sửa tận gốc Admin 500 của V1.6.37
+
+Lỗi: `ops` chỉ được khai báo bên trong template include c1_console.html, trong khi Test Mode phía dưới nằm ở admin.html vẫn gọi ops.get('tournament'). Include không xuất biến về template cha → Jinja UndefinedError → GET /admin HTTP 500.
+
+Sửa: khai báo ops = tournament_ops_admin|default({}, true) tại scope admin.html trước include. Giữ nguyên Admin thiết kế V1.6.37, không fallback V1.6.36.
+
+Không cần SQL mới. Kiểm thử giả lập Jinja không phải xác nhận trực tiếp Supabase Production.
