@@ -1,3 +1,11 @@
+## V1.6.31
+
+- `templates/tournament/tabs/lobby.html`: Sảnh chờ chỉ xem đối thủ, logo, Tier, Pot, 3 ngày giờ rảnh và Host rảnh; loại bỏ phòng, trạng thái trận và tạo trận.
+- `modules/tournament_routes.py`: thêm `availability_days` vào từng `league_opponents` từ dữ liệu lịch đã đọc; không phát sinh query mới.
+- `templates/tournament/styles.html`: CSS Sảnh chờ compact mới.
+- `templates/tournament/admin_lobby.html`: Admin tái sử dụng Sảnh chờ mới, bỏ bảng lịch trùng lặp.
+- `app.py`, `templates/admin.html`: đồng bộ V1.6.31.
+
 ## V1.6.30
 
 - `templates/tournament/admin_league_opponent_wall.html`: đổi từ card lớn thành ma trận 16×4 compact one-screen.

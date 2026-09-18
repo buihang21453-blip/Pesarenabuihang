@@ -462,7 +462,10 @@ def register_routes(context):
                     league_opponents.append({'user_id':oid,'name':names.get(oid,'HLV'),'tier':om.get('pot_no'),
                         'club':club,'club_pot':C1_CLUB_POT_BY_NAME.get(club),'club_logo':club_logos.get(club,''),
                         'zalo':zalos.get(oid,''),'match_id':m.get('id'),'status':m.get('status'),
-                        'scheduled_at':m.get('scheduled_at'),'round_code':m.get('round_code')})
+                        'scheduled_at':m.get('scheduled_at'),'round_code':m.get('round_code'),
+                        # Reuse the same availability already loaded for this fixture;
+                        # no additional queries or stale duplicated schedule state.
+                        'availability_days':m.get('opponent_availability_days') or []})
             else:
                 app.logger.warning('League opponents not ready: user=%s, count=%s',uid,len(league_matches))
 

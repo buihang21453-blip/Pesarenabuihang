@@ -1,0 +1,5 @@
+PES Arena V1.6.31 — Thiết kế lại Sảnh chờ
+
+Sảnh chờ chỉ hiển thị 4 đối thủ GĐ2, tên HLV, Tier, CLB hiện tại, logo, Pot CLB, giờ rảnh 3 ngày và khung giờ trùng được tô xanh. Host rảnh nằm dải gọn bên dưới, cập nhật 15 giây.
+Đã bỏ bảng phòng/trạng thái thi đấu, lịch hẹn riêng, link xem lịch, nút tạo/vào trận khỏi Sảnh chờ. Phòng đấu C1 và Lịch của tôi tiếp tục hoạt động tại tab riêng.
+Admin nhìn thấy cùng Sảnh chờ ở chế độ chỉ xem. Không cần SQL mới.

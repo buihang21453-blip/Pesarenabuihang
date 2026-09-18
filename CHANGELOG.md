@@ -1,3 +1,12 @@
+## V1.6.31 — Sảnh chờ C1 gọn: đối thủ, Tier, CLB và khung giờ rảnh
+
+- Thiết kế lại Sảnh chờ thành 4 thẻ đối thủ GĐ2; mỗi thẻ gắn HLV, Tier, CLB hiện tại, logo CLB, Pot và giờ rảnh 3 ngày.
+- Giờ trùng lịch của HLV được tô xanh và tiếp tục cập nhật trực quan khi tick giờ tại tab Lịch của tôi.
+- Bỏ danh sách phòng đang thi đấu, bảng trạng thái trận, link xem lịch và toàn bộ nút tạo/vào trận khỏi Sảnh chờ. Các chức năng điều hành phòng vẫn tồn tại ở Phòng đấu C1.
+- Giữ danh sách Host đang rảnh dạng dải gọn phía dưới, cập nhật tự động như cũ.
+- Admin dùng đúng giao diện Sảnh chờ mới ở chế độ chỉ xem; bỏ bảng lịch rảnh trùng lặp dưới trang Admin.
+- Không thay đổi 32 trận, quyền vé, BXH, kết quả hay DB.
+
 ## V1.6.30 — Ma trận 16 HLV × 4 đối thủ GĐ2 trong 1 màn hình
 
 - Thiết kế lại bảng Admin thành ma trận 5 cột: HLV + Đối thủ 1–4.

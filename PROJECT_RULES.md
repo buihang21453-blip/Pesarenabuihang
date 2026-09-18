@@ -1,3 +1,9 @@
+## V1.6.31
+
+- Sảnh chờ C1 là nơi xem thông tin đối thủ/Tier/CLB/logo và giờ rảnh; không đặt nút tạo trận hoặc trạng thái phòng trong Sảnh chờ.
+- Phòng đấu C1 tiếp tục chịu trách nhiệm bắt đầu trận và xử lý kết quả; Lịch của tôi tiếp tục dùng để sửa giờ rảnh.
+- Sử dụng cùng dữ liệu đã lưu về 32 trận và phân bổ CLB hiện tại; không sinh lại lịch hay thay đổi vé.
+
 ## V1.6.30
 
 - Bảng tổng quan GĐ2 ưu tiên nhìn đồng thời 16 HLV × 4 đối thủ trên một màn hình desktop.

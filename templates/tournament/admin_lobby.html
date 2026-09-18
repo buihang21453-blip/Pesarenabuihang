@@ -22,7 +22,7 @@
 <div class="admin-lobby-shell">
   <header class="admin-lobby-head">
     <h1>🏟️ Sảnh chờ C1 · Góc nhìn Admin</h1>
-    <p>Xem giống HLV: Host đang rảnh, phòng C1, trận và 4 đối thủ GĐ2. Chọn HLV để xem đúng dữ liệu của họ; đây là chế độ chỉ xem, không đăng nhập thay và không thao tác trận/vé.</p>
+    <p>Xem cùng giao diện Sảnh chờ của HLV: đối thủ GĐ2, Tier, CLB có logo, giờ rảnh và Host đang rảnh. Chỉ xem; không thao tác trận hoặc vé.</p>
     <div class="admin-lobby-toolbar">
       <form method="get" action="{{ url_for('admin_tournament_lobby',tournament_id=tournament.id) }}" class="admin-lobby-toolbar">
         <label>Góc nhìn HLV
@@ -40,22 +40,6 @@
   </header>
   {% if hub %}
     {% include "tournament/tabs/lobby.html" %}
-    <section class="td-section admin-lobby-schedule" id="admin-lobby-schedule">
-      <h2>📅 Giờ rảnh của {{ hub.preview_name }}</h2>
-      <div class="admin-lobby-days">
-      {% for day in hub.days %}
-        <div class="admin-lobby-day"><strong>{{ day.label }} · {{ day.weekday }}</strong>
-        {% for slot in day.slots if slot.iso in hub.mine_set %}<span class="admin-lobby-slot">{{ slot.label }}</span>{% else %}<small style="color:#91a3b1">Chưa đăng ký giờ rảnh.</small>{% endfor %}
-        </div>
-      {% endfor %}
-      </div>
-      <h3 style="margin-top:14px">Lịch rảnh của các đối thủ</h3>
-      {% for m in hub.matches if m.status in ['pending','scheduled'] %}
-      <details class="admin-lobby-day" style="margin:8px 0"><summary style="cursor:pointer;color:#f1ca68">{{ m.away_name if m.home_user_id|string == selected else m.home_name }} · {{ 'GĐ2' if m.stage_code == 'league' else 'GĐ1' }}</summary>
-      <div class="admin-lobby-days" style="margin-top:10px">{% for day in m.opponent_availability_days %}<div class="admin-lobby-day"><strong>{{ day.label }}</strong>{% for slot in day.opponent_slots %}<span class="admin-lobby-slot">{{ slot.label }}</span>{% else %}<small>Chưa có giờ rảnh.</small>{% endfor %}</div>{% endfor %}</div>
-      </details>
-      {% endfor %}
-    </section>
   {% else %}
     <section class="td-section">Chưa có HLV đang tham gia giải để lựa chọn.</section>
   {% endif %}
