@@ -1,3 +1,8 @@
+## V1.6.38 — Admin recovery
+- `modules/admin_dashboard_routes.py`: guarded template render and exception traceback.
+- `templates/admin_legacy_recovery.html`: preserved original V1.6.36 Admin for emergency fallback.
+- `templates/admin.html`: unchanged V1.6.37 modular UI as preferred path.
+
 ## V1.6.37 — Sắp xếp Admin
 - `templates/admin.html`: giữ lõi người dùng, Rank, kinh tế, hệ thống và include các module mới.
 - `templates/admin_parts/function_menu.html`: menu theo 7 nhóm chức năng.

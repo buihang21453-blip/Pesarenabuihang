@@ -298,8 +298,17 @@ def register_routes(context):
             "missing": sum(1 for m in migration_checks if not m["ok"]),
         }
 
-        return render_template(
-            "admin.html",
+        # V1.6.38: the modular V1.6.37 Admin template may fail at render time
+        # for some production contexts. Keep the previously working Admin UI
+        # as a safe fallback while logging the full original traceback.
+        def _render_admin_with_recovery(**template_context):
+            try:
+                return render_template("admin.html", **template_context)
+            except Exception:
+                app.logger.exception("Admin V1.6.37 modular template render failed; restoring legacy Admin UI")
+                return render_template("admin_legacy_recovery.html", **template_context)
+
+        return _render_admin_with_recovery(
             admin_users=admin_users,
             players=players,
             admins=admins,

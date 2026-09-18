@@ -1,3 +1,9 @@
+## V1.6.38 — Hotfix HTTP 500 trang Admin
+- Giữ giao diện Admin module V1.6.37 làm giao diện chính.
+- Thêm recovery ở route /admin: nếu render template module lỗi, ghi full traceback vào Vercel logs và tự động dùng lại giao diện Admin V1.6.36 đã chạy trước đó.
+- Không chạm CSDL, kết quả, RP, Zcoin, lịch hay vé C1.
+- Bước tiếp theo: dựa vào traceback Production để sửa tận gốc template/module và gỡ fallback.
+
 ## V1.6.37 — Gom menu Admin, thanh tiến trình C1 và rà soát tính năng
 - Gom tab Admin theo chức năng, giữ nguyên quyền truy cập và route hiện có.
 - Tách giao diện C1 thành template tổng, thanh tiến trình, GĐ1, GĐ2 CLB, GĐ2 trận đấu và Knockout.

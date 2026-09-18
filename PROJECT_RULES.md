@@ -1,3 +1,8 @@
+## V1.6.38 — Fail-safe Admin
+- UI refactors must test rendering with production-like tournament data in addition to compiling Jinja syntax.
+- Keep Admin reachable by safe fallbacks; remove fallback only after the original error is verified fixed.
+- Never treat a 500 as a CSS-only issue.
+
 ## V1.6.37 — Quy tắc Admin UI
 - Thay đổi giao diện không được xóa route hoặc dữ liệu nếu Owner chỉ yêu cầu rà soát/đánh dấu.
 - Trạng thái giai đoạn phải lấy từ `tournament_stages.status`, không suy đoán hoàn thành chỉ từ giờ hoặc số trận sinh.

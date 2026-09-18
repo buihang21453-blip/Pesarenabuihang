@@ -1,0 +1,5 @@
+PES Arena V1.6.38 — HOTFIX /admin HTTP 500
+
+Giao diện module V1.6.37 vẫn ưu tiên. Nếu render lỗi, tự mở giao diện Admin V1.6.36 đã lưu trong cùng source; lỗi nguyên nhân được ghi chi tiết trong Vercel Runtime Logs. Không cần SQL.
+
+Nếu vẫn lỗi 500 sau deploy, cần cung cấp log tại Vercel → Logs (GET /admin) để xác định lỗi xảy ra trước khi render hoặc ngay trong giao diện fallback.
