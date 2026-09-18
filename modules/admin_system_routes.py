@@ -37,6 +37,111 @@ def register_routes(context):
             "room_discord_link": get_room_discord_link(),
         }
 
+    @app.post("/admin/system/rank-tier-weights")
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_save_rank_tier_weights():
+        """Edit or import the live Rank -> Club Tier percentages, never via eval."""
+        import ast
+        import json as _json
+
+        source = str(request.form.get("config_action") or "edit").strip()
+        if source == "import":
+            uploaded = request.files.get("weights_file")
+            if uploaded and uploaded.filename:
+                raw_bytes = uploaded.read(65537)
+                if len(raw_bytes) > 65536:
+                    flash("File Import vượt quá 64 KB.", "danger")
+                    return redirect_admin("system")
+                try:
+                    raw = raw_bytes.decode("utf-8-sig")
+                except UnicodeError:
+                    flash("File cần mã hóa UTF-8.", "danger")
+                    return redirect_admin("system")
+            else:
+                raw = (request.form.get("weights_json") or "").strip()
+            if not raw or len(raw) > 65536:
+                flash("Vui lòng nhập JSON hoặc chọn file nhỏ hơn 64 KB.", "danger")
+                return redirect_admin("system")
+            try:
+                if raw.lstrip().startswith("RANK_CLUB_TIER_WEIGHTS"):
+                    raw = raw.partition("=")[2].strip()
+                try:
+                    payload = _json.loads(raw)
+                except _json.JSONDecodeError:
+                    payload = ast.literal_eval(raw)
+                if isinstance(payload, dict) and "RANK_CLUB_TIER_WEIGHTS" in payload:
+                    payload = payload["RANK_CLUB_TIER_WEIGHTS"]
+                if not isinstance(payload, dict):
+                    raise ValueError("Dữ liệu Import phải là một object/dictionary.")
+                # Accept original app.py mapping (internal keys 0..9), as well
+                # as exported/editable mapping with Rank labels 1..10.
+                indices = {str(key) for key in payload}
+                if indices == {str(n) for n in range(10)}:
+                    payload = {str(int(k) + 1): v for k, v in payload.items()}
+                elif indices != {str(n) for n in range(1, 11)}:
+                    raise ValueError("Import phải có đủ 10 Rank: khóa 1–10 hoặc 0–9.")
+            except (ValueError, SyntaxError, TypeError, MemoryError) as exc:
+                flash(f"Import không hợp lệ: {exc}", "danger")
+                return redirect_admin("system")
+        elif source == "edit":
+            payload = {}
+            for rank_no in range(1, 11):
+                payload[rank_no] = {}
+                for tier in CLUB_TIER_ORDER:
+                    raw = (request.form.get(f"weight_{rank_no}_{tier}") or "").strip()
+                    if not raw or not raw.isascii() or not raw.isdecimal():
+                        flash(f"Rank {rank_no} · Tier {tier}: tỷ lệ phải là số nguyên 0–100.", "danger")
+                        return redirect_admin("system")
+                    payload[rank_no][tier] = int(raw)
+        else:
+            flash("Thao tác không hợp lệ.", "danger")
+            return redirect_admin("system")
+
+        try:
+            normalized = _validate_rank_tier_weights(payload)
+            # Store human-facing keys 1..10. The loader converts to 0..9.
+            persisted = {str(level + 1): {tier: normalized[level].get(tier, 0)
+                         for tier in CLUB_TIER_ORDER} for level in range(10)}
+            execute_query(
+                db.table("system_settings").upsert({
+                    "setting_key": RANK_TIER_SETTING_KEY,
+                    "setting_value": persisted,
+                    "updated_at": now_iso(),
+                }, on_conflict="setting_key"),
+                "admin_save_rank_club_tier_weights", attempts=2,
+            )
+        except ValueError as exc:
+            flash(f"Không thể lưu tỷ lệ: {exc}", "danger")
+            return redirect_admin("system")
+        except Exception:
+            app.logger.exception("Cannot save rank club tier weights")
+            flash("Lưu tỷ lệ thất bại. Kiểm tra kết nối Supabase và log máy chủ.", "danger")
+            return redirect_admin("system")
+        _rank_tier_config_cache.update({"value": normalized, "expires_at": time.time() + 30})
+        log_admin_action("Cập nhật tỷ lệ Tier CLB Rank", "system", details={"source": source, "weights": persisted})
+        flash("Đã lưu tỷ lệ CLB Rank. Các lần Random Rank tiếp theo sử dụng cấu hình mới.", "success")
+        return redirect_admin("system")
+
+    @app.get("/admin/system/rank-tier-weights/export")
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_export_rank_tier_weights():
+        import json as _json
+        from flask import Response
+        try:
+            active = load_rank_tier_weights(force=True)
+            data = {str(level + 1): {tier: active[level].get(tier, 0)
+                    for tier in CLUB_TIER_ORDER} for level in range(10)}
+        except Exception:
+            app.logger.exception("Cannot export rank club tier weights")
+            flash("Không tải được tỷ lệ Rank hiện hành.", "danger")
+            return redirect_admin("system")
+        return Response(_json.dumps(data, ensure_ascii=False, indent=2), mimetype="application/json",
+                        headers={"Content-Disposition": "attachment; filename=RANK_CLUB_TIER_WEIGHTS.json"})
+
     @app.route("/admin/system/maintenance", methods=["POST"])
     @login_required
     @admin_required

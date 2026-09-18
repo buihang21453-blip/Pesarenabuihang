@@ -1,3 +1,10 @@
+## V1.6.35
+- `modules/admin_system_routes.py`: save/import/export RANK_CLUB_TIER_WEIGHTS.
+- `modules/admin_dashboard_routes.py`: tải tỷ lệ Rank cho giao diện.
+- `templates/admin.html`: module chỉnh và Import Tier CLB Rank.
+- `modules/admin_account_routes.py`: sửa route gửi thông báo Admin.
+- `modules/legacy_team_random_service.py`: kiểm tra tỷ lệ nguyên chính xác.
+
 ## V1.6.34
 
 - `templates/tournament/admin_lobby.html`: hai chế độ loại trừ nhau, nút chọn ở đầu trang; tổng quan 16 HLV mặc định.

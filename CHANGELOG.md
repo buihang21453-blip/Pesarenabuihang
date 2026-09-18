@@ -1,3 +1,9 @@
+## V1.6.35 — Khôi phục chỉnh/Import tỷ lệ Rank; sửa gửi thông báo Admin
+- Mở module RANK_CLUB_TIER_WEIGHTS trong Admin → Hệ thống: chỉnh 10 Rank, import JSON/Python literal, export JSON, validate 100% mỗi Rank.
+- Lưu system_settings rank_club_tier_weights và làm mới bộ đệm; không ảnh hưởng trận cũ.
+- Sửa lỗi HTTP 500 của tuyến gửi thông báo: thay hai hàm không tồn tại bằng decorator quyền và get_user hiện có.
+- Không thay đổi schema/SQL.
+
 ## V1.6.34 — Sảnh chờ: sửa màu trùng giờ, chuyển chế độ Admin
 
 - Lịch của tôi hiển thị xanh dương; chỉ khung giờ đối thủ trùng chính xác ngày và giờ với lịch của tôi mới xanh lá. Khắc phục hiểu nhầm do tất cả giờ cá nhân đều màu xanh lá.

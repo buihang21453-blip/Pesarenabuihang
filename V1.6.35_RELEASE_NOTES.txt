@@ -1,0 +1,4 @@
+V1.6.35
+- Admin → Hệ thống → RANK_CLUB_TIER_WEIGHTS: chỉnh/import/export JSON.
+- Fix route POST /admin/users/<user_id>/notification: undefined require_admin_permission/get_user_by_id.
+- No SQL. Test trên môi trường production cần được thực hiện sau deploy.

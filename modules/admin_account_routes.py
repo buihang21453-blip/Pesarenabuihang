@@ -437,10 +437,13 @@ def register_routes(context):
 
 
     @app.route("/admin/users/<user_id>/notification", methods=["POST"])
+    @login_required
     @admin_required
+    @admin_permission_required("users_approve")
     def admin_send_user_notification(user_id):
-        require_admin_permission("users_approve")
-        user = get_user_by_id(user_id)
+        # V1.6.35: use the existing player service and permission decorator.
+        # The old require_admin_permission/get_user_by_id names do not exist.
+        user = get_user(user_id)
         if not user:
             flash("Không tìm thấy tài khoản.", "danger")
             return redirect(url_for("admin") + "#users")
@@ -453,9 +456,13 @@ def register_routes(context):
             "general": ("📢 Thông báo từ Admin", "Bạn có một thông báo mới từ Admin PES Arena."),
         }
         title, default_message = presets.get(preset, presets["general"])
-        created = create_user_notification(user_id, title, custom or default_message, "/notifications", f"admin_{preset}")
-        flash(f"Đã gửi thông báo tới {user.get('username')}." if created else "Không gửi được thông báo.", "success" if created else "danger")
-        return redirect(url_for("admin") + "#users")
+        try:
+            created = create_user_notification(user_id, title, custom or default_message, "/notifications", f"admin_{preset}")
+        except Exception:
+            app.logger.exception("Admin send notification failed for user=%s", user_id)
+            created = None
+        flash(f"Đã gửi thông báo tới {user.get('username')}." if created else "Không gửi được thông báo. Hãy kiểm tra log máy chủ.", "success" if created else "danger")
+        return redirect_admin("users")
 
     @app.route("/admin/invite-code/create", methods=["POST"])
     @login_required

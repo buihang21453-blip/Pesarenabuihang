@@ -1194,7 +1194,7 @@
       <div class="tournament-op-tab-panel" id="c1-admin-gd2" data-tournament-op-panel="potclub" style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
         {% set reward_phase=ev.get('reward_ticket_phase',{}) %}
         <div style="border:1px solid rgba(241,202,104,.45);border-radius:12px;padding:13px;margin-bottom:14px;background:#0b1c29">
-          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><strong>🏆 Kịch bản Lễ bốc thăm GĐ2 · V1.6.34</strong><a class="btn green" href="{{ url_for('admin_tournament_draw_preview',tournament_id=ot.id) }}" target="_blank" rel="noopener">🎛 Mở bảng điều hành Lễ bốc thăm</a></div>
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><strong>🏆 Kịch bản Lễ bốc thăm GĐ2 · V1.6.35</strong><a class="btn green" href="{{ url_for('admin_tournament_draw_preview',tournament_id=ot.id) }}" target="_blank" rel="noopener">🎛 Mở bảng điều hành Lễ bốc thăm</a></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0">
             <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>1 · 20:00 17/09</b><div class="small">Mở lễ bốc thăm</div></div>
             <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>2 · Random 16 CLB</b><div class="small">Tier 1→Pot 3 · Tier 2→Pot 2 · Tier 3→Pot 1</div></div>
@@ -1431,6 +1431,34 @@
 {% endif %}
 
 <section class="admin-tab-panel" data-admin-panel="system">
+    {% if can_admin('system_features_manage') %}
+    <div class="panel" id="rank-club-tier-weights">
+      <h2>🎲 RANK_CLUB_TIER_WEIGHTS · Tỷ lệ Random CLB theo Rank</h2>
+      <p class="muted">Chỉnh trực tiếp tỷ lệ Tier CLB cho 10 Rank. Mỗi hàng phải cộng đúng 100%. Cấu hình lưu tại Supabase, áp dụng cho những lần Random Rank tiếp theo; không đổi CLB/trận đã có.</p>
+      <form action="{{ url_for('admin_save_rank_tier_weights') }}" method="post">
+        <input type="hidden" name="_admin_tab" value="system"><input type="hidden" name="config_action" value="edit">
+        <div class="table-wrap admin-table-wrap"><table><thead><tr><th>Rank</th>{% for tier in rank_tier_order %}<th>{{ tier }} (%)</th>{% endfor %}<th>Tổng</th></tr></thead><tbody>
+          {% for rank in rank_tier_ranges %}{% set level=loop.index0 %}{% set row=rank_tier_weights.get(level,{}) %}
+          <tr data-rank-tier-row><td><strong>{{ loop.index }} · {{ rank.name }}</strong></td>
+            {% for tier in rank_tier_order %}<td><input aria-label="Rank {{ level+1 }} · {{ tier }}" name="weight_{{ level+1 }}_{{ tier }}" type="number" min="0" max="100" step="1" required value="{{ row.get(tier,0) }}" style="width:66px;max-width:100%;padding:7px" data-rank-tier-weight></td>{% endfor %}
+            <td><strong data-rank-tier-total>100%</strong></td>
+          </tr>{% endfor %}
+        </tbody></table></div>
+        <button type="submit" class="btn gold">💾 Lưu tỷ lệ 10 Rank</button>
+        <a class="btn" href="{{ url_for('admin_export_rank_tier_weights') }}">↓ Xuất JSON hiện tại</a>
+      </form>
+      <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:800">📥 Import tỷ lệ từ JSON / file Python dictionary</summary>
+        <form action="{{ url_for('admin_save_rank_tier_weights') }}" method="post" enctype="multipart/form-data" style="display:grid;gap:10px;margin-top:12px">
+          <input type="hidden" name="_admin_tab" value="system"><input type="hidden" name="config_action" value="import">
+          <label>Chọn file JSON hoặc TXT (tối đa 64 KB)<input type="file" name="weights_file" accept=".json,.txt,.py,application/json,text/plain"></label>
+          <label>Hoặc dán JSON / RANK_CLUB_TIER_WEIGHTS = {{ '{' }}...{{ '}' }}<textarea name="weights_json" rows="6" placeholder='{{ '{' }}"1": {{ '{' }}"S+": 100{{ '}' }}, ... "10": {{ '{' }}"D": 60, "C": 25, "B": 15{{ '}' }}{{ '}' }}' style="width:100%;font-family:monospace"></textarea></label>
+          <p class="muted">Chấp nhận đủ 10 Rank khóa 1–10 hoặc dictionary trong app.py khóa 0–9. Import kiểm tra tổng từng Rank = 100%, sai sẽ từ chối toàn bộ.</p>
+          <button type="submit" class="btn gold" onclick="return confirm('Thay thế toàn bộ tỷ lệ Rank hiện tại bằng dữ liệu Import?')">📥 Kiểm tra & Import tỷ lệ</button>
+        </form>
+      </details>
+      <script>(function(){document.querySelectorAll('[data-rank-tier-row]').forEach(function(row){var inputs=row.querySelectorAll('[data-rank-tier-weight]');var total=row.querySelector('[data-rank-tier-total]');function update(){var sum=0;inputs.forEach(function(input){sum+=Number(input.value)||0;});total.textContent=sum+'%';total.style.color=sum===100?'#79e4a2':'#ff867d';}inputs.forEach(function(input){input.addEventListener('input',update);});update();});})();</script>
+    </div>
+    {% endif %}
     {% if can_admin('daily_rank_limits_manage') %}
     <div class="panel">
         <h2>🏆 Giới hạn RP theo số trận Rank mỗi ngày</h2>

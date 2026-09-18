@@ -283,6 +283,8 @@ def _validate_rank_tier_weights(raw_weights):
                 raise ValueError(f"Rank {rank_number} có Tier không hợp lệ: {tier}.")
             if isinstance(percent, bool) or not isinstance(percent, (int, float)):
                 raise ValueError(f"Tỷ lệ {tier} của Rank {rank_number} phải là số.")
+            if not float(percent).is_integer():
+                raise ValueError(f"Tỷ lệ {tier} của Rank {rank_number} phải là số nguyên.")
             percent = int(percent)
             if percent < 0 or percent > 100:
                 raise ValueError(f"Tỷ lệ {tier} của Rank {rank_number} phải từ 0 đến 100.")

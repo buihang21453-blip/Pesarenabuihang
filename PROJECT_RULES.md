@@ -1,3 +1,7 @@
+## V1.6.35
+- Import tỷ lệ Rank chỉ nhận JSON/Python literal an toàn, đủ 10 Rank và tổng 100% cho từng Rank; tuyệt đối không dùng eval.
+- Thông báo Admin chỉ gửi sau khi kiểm tra quyền users_approve và tài khoản hợp lệ.
+
 ## V1.6.34
 
 - Không dùng xanh lá mặc định cho lịch cá nhân; xanh lá là tín hiệu trùng giờ của đối thủ theo cùng ngày và giờ.
