@@ -5,23 +5,21 @@
     <span class="room-center-random-title">🏆 PHÒNG ĐẤU C1 GĐ2</span>
     <span class="room-center-random-sub">{{ room.host_team or 'CLB chủ phòng chưa có' }} · Chờ đối thủ vào phòng</span>
   </div>
-  {% elif not tournament_fixed_clubs_ready %}
-  <div class="room-center-random-trigger disabled c1-random-center">
-    <span class="room-center-random-title">⏳ CHỜ CLB HỢP LỆ</span>
-    <span class="room-center-random-sub">Hai HLV cần được gán hai CLB hợp lệ trước trận</span>
-  </div>
   {% elif not room.guest_ready %}
     {% if room_viewer_is_guest %}
-    <form method="post" action="{{ url_for('room_guest_ready',room_id=room.id) }}" class="room-center-random-form">
-      <button class="room-center-random-trigger c1-random-center" type="submit">
-        <span class="room-center-random-title">✓ SẴN SÀNG THI ĐẤU</span>
-        <span class="room-center-random-sub">{{ room.host_team }} vs {{ room.guest_team }} · Tự bắt đầu, không quay CLB</span>
+    <form method="post" action="{{ url_for('room_guest_ready',room_id=room.id) }}" class="room-center-random-form" data-room-async="1">
+      <button class="room-center-random-trigger c1-random-center c1-ready-button" type="submit">
+        <span class="room-center-random-title room-random-button-label">✓ SẴN SÀNG THI ĐẤU</span>
+        <span class="room-center-random-sub">{{ room.host_team or 'CLB chủ phòng đang cập nhật' }} vs {{ room.guest_team or 'CLB khách đang cập nhật' }} · Không quay CLB</span>
       </button>
     </form>
+    {% if not tournament_fixed_clubs_ready %}
+    <p class="c1-ready-diagnostic" role="status">Đang kiểm tra CLB. Nếu chưa đủ CLB, hệ thống sẽ báo rõ sau khi bấm Sẵn sàng và chưa bắt đầu trận.</p>
+    {% endif %}
     {% else %}
     <div class="room-center-random-trigger disabled c1-random-center">
-      <span class="room-center-random-title">✓ ĐÃ GÁN CLB</span>
-      <span class="room-center-random-sub">{{ room.host_team }} vs {{ room.guest_team }} · Chờ khách Sẵn sàng</span>
+      <span class="room-center-random-title">{{ '⏳ ĐANG KIỂM TRA CLB' if not tournament_fixed_clubs_ready else '✓ ĐÃ GÁN CLB' }}</span>
+      <span class="room-center-random-sub">{{ (room.host_team or 'Chưa có CLB') ~ ' vs ' ~ (room.guest_team or 'Chưa có CLB') }} · Chờ khách Sẵn sàng</span>
     </div>
     {% endif %}
   {% elif room_room_viewer_is_host %}
@@ -29,6 +27,13 @@
     <button class="room-center-random-trigger c1-random-center" type="submit">
       <span class="room-center-random-title">▶ TIẾP TỤC TRẬN C1</span>
       <span class="room-center-random-sub">Khách đã sẵn sàng · Khôi phục nếu chưa tự bắt đầu</span>
+    </button>
+  </form>
+  {% elif room_viewer_is_guest %}
+  <form method="post" action="{{ url_for('tournament_room_start_fixed_match',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" class="room-center-random-form" data-room-async="1">
+    <button class="room-center-random-trigger c1-random-center c1-ready-button" type="submit">
+      <span class="room-center-random-title room-random-button-label">↻ THỬ BẮT ĐẦU LẠI</span>
+      <span class="room-center-random-sub">Bạn đã Sẵn sàng · Thử đồng bộ lại nếu trận chưa tự mở</span>
     </button>
   </form>
   {% else %}
@@ -39,6 +44,11 @@
   {% endif %}
 </div>
 <div class="room-center-primary-actions room-action-zone">
+  {% if room_viewer_is_guest and room.guest_ready %}
+  <form method="post" action="{{ url_for('room_guest_unready',room_id=room.id) }}" data-room-async="1">
+    <button class="btn gray room-center-action-btn" type="submit">Hủy Sẵn sàng</button>
+  </form>
+  {% endif %}
   <form method="post" action="{{ url_for('room_leave',room_id=room.id) }}">
     <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
   </form>

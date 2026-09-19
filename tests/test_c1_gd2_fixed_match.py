@@ -108,6 +108,43 @@ class UIContractTests(unittest.TestCase):
         self.assertNotIn('🎲', html)
         self.assertIn('room_guest_ready', html)
 
+    def test_guest_ready_visible_when_club_preview_lookup_fails(self):
+        """Missing preview must not remove Ready; service checks actual club data."""
+        tpl = self.env.get_template('partials/c1_fixed_waiting_controls.html')
+        html = tpl.render(room=dict(id='room', has_guest=True, guest_ready=False,
+                                    host_team=None, guest_team=None),
+                          room_viewer_is_guest=True, room_room_viewer_is_host=False,
+                          tournament_fixed_clubs_ready=False,
+                          tournament_meta=dict(tournament_id='tour'))
+        self.assertIn('SẴN SÀNG THI ĐẤU', html)
+        self.assertIn('room_guest_ready', html)
+        self.assertIn('Đang kiểm tra CLB', html)
+        self.assertNotIn('QUAY ĐỘI', html)
+
+    def test_guest_ready_retry_is_visible_if_start_fails(self):
+        tpl = self.env.get_template('partials/c1_fixed_waiting_controls.html')
+        html = tpl.render(room=dict(id='room', has_guest=True, guest_ready=True,
+                                    host_team='Porto', guest_team='Napoli'),
+                          room_viewer_is_guest=True, room_room_viewer_is_host=False,
+                          tournament_fixed_clubs_ready=True,
+                          tournament_meta=dict(tournament_id='tour'))
+        self.assertIn('THỬ BẮT ĐẦU LẠI', html)
+        self.assertIn('tournament_room_start_fixed_match', html)
+        self.assertIn('room_guest_unready', html)
+
+    def test_ready_badge_does_not_claim_ready_before_guest_click(self):
+        for page in ('room_detail.html', '_room_live_content.html'):
+            source = (Path(__file__).resolve().parents[1] / 'templates' / page).read_text()
+            self.assertIn('Chưa sẵn sàng · CLB theo HLV', source)
+            self.assertNotIn('✓ Đã vào phòng · CLB theo HLV', source)
+            self.assertIn('room_room_viewer_is_host and not is_tournament_room', source)
+
+    def test_rank_forfeit_routes_reject_c1(self):
+        source = (Path(__file__).resolve().parents[1] / 'modules' / 'room_rematch_routes.py').read_text()
+        for name in ('room_guest_forfeit', 'room_host_forfeit'):
+            body = source.split('def ' + name + '(room_id):', 1)[1].split('    @app.route(', 1)[0]
+            self.assertLess(body.index('TOURNAMENT_ROOM|'), body.index('apply_room_abandon_penalty'))
+
     def test_same_result_ui_for_league_host_and_guest(self):
         tpl = self.env.get_template('partials/tournament_room_result.html')
         common = dict(is_tournament_room=True,

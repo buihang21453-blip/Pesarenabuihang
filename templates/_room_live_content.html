@@ -377,6 +377,9 @@
                 {% endif %}
             {% endif %}
 
+            {% if is_tournament_room and room.status == 'playing' %}
+            <p class="c1-room-live-help">Trận C1 đang diễn ra · Chủ phòng nhập tỷ số bên dưới, đội khách xác nhận sau khi gửi. Nếu trận gián đoạn, liên hệ Admin C1; không áp dụng bỏ cuộc Rank.</p>
+            {% endif %}
             {% if is_tournament_room %}
             <div class="c1-center-result-wrap">
                 {% include "partials/tournament_room_result.html" %}
@@ -404,14 +407,10 @@
                 <div class="room-player-rankline empty"><span>Đang chờ người chơi</span></div>
                 {% endif %}
                 {% if room.has_guest %}
-                {% if tournament_fixed_club_mode %}
-                <div class="room-ready-status is-ready"><span class="room-ready-dot"></span>✓ Đã vào phòng · CLB theo HLV</div>
-                {% else %}
                 <div class="room-ready-status {{ 'is-ready' if room.guest_ready else 'is-not-ready' }}">
-                    <span class="room-ready-dot"></span>{{ room.guest_ready_label }}
+                    <span class="room-ready-dot"></span>{{ '✓ Đã sẵn sàng · CLB theo HLV' if tournament_fixed_club_mode and room.guest_ready else ('Chưa sẵn sàng · CLB theo HLV' if tournament_fixed_club_mode else room.guest_ready_label) }}
                 </div>
-                {% endif %}
-                {% if room.status == "waiting_ready" and room_room_viewer_is_host %}
+                {% if room.status == "waiting_ready" and room_room_viewer_is_host and not is_tournament_room %}
                 <form class="room-guest-card-kick room-exit-confirm-form" method="post" action="{{ url_for('room_kick_guest', room_id=room.id) }}"
                       data-modal-tone="danger"
                       data-modal-icon="🚫"
@@ -586,7 +585,7 @@
     </div>
     {% endif %}
 
-    {% if room.status == "playing" and room_viewer_is_guest %}
+    {% if room.status == "playing" and not is_tournament_room and room_viewer_is_guest %}
     <div class="guest-forfeit-box">
         <form class="inline-form room-exit-confirm-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}"
               data-modal-tone="danger"
@@ -601,7 +600,7 @@
     </div>
     {% endif %}
 
-    {% if room.status == "playing" and room_room_viewer_is_host %}
+    {% if room.status == "playing" and not is_tournament_room and room_room_viewer_is_host %}
     <div class="guest-forfeit-box host-forfeit-box">
         <form class="inline-form room-exit-confirm-form" method="post" action="{{ url_for('room_host_forfeit', room_id=room.id) }}"
               data-modal-tone="danger"

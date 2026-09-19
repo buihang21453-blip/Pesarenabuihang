@@ -1,3 +1,9 @@
+## V1.6.41
+
+- UI preview CLB lỗi không được chặn quyền bấm Ready; service có trách nhiệm từ chối bắt đầu khi CLB không hợp lệ.
+- C1 không được hiện nút hoặc chạy endpoint Rank có thể trừ RP và ghi đè metadata trận giải.
+- Badge Ready phải lấy từ `guest_ready`, không suy luận từ việc có khách trong phòng.
+
 ## V1.6.40
 
 - C1 GĐ2 không Random lại CLB trong phòng; dùng CLB hiện tại lúc bắt đầu, không tiêu vé và không đổi lịch.

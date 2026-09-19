@@ -1,3 +1,13 @@
+## V1.6.41
+
+- `templates/partials/c1_fixed_waiting_controls.html`: nút Sẵn sàng độc lập với preview CLB, cho khách thử lại/hủy khi start lỗi.
+- `templates/room_detail.html`, `templates/_room_live_content.html`: sửa badge readiness, ẩn kick/forfeit Rank C1.
+- `modules/room_rematch_routes.py`: chặn thao tác bỏ cuộc Rank lên C1 tại backend.
+- `modules/tournament_competition_parts/rooms.py`: cho phép guest đã ready gọi lại start an toàn (service xác thực trận và CLB).
+- `static/style.css`: CSS nút Ready C1 và hướng dẫn trạng thái.
+- `tests/test_c1_gd2_fixed_match.py`: kiểm thử trường hợp lookup CLB thất bại.
+- `C1_GD2_ROOM_AUDIT.md`: ma trận luồng lỗi/biện pháp và các rủi ro DB cần theo dõi.
+
 ## V1.6.40 — Luồng Phòng đấu C1 GĐ2
 
 - `modules/c1_fixed_match_service.py`: khởi chạy trận GĐ2/KO bằng CLB gắn với 2 HLV, kiểm tra lịch và trạng thái, rollback khi lỗi.

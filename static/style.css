@@ -6414,3 +6414,8 @@ html[data-theme="light"] .sidebar-zalo-group strong{color:#405063}
   .room-layout-v137 .room-share-button{width:auto;min-width:38px;min-height:36px;padding:5px 7px}
   .room-layout-v137 .room-share-copy{display:none}
 }
+
+/* V1.6.41: C1 GĐ2 ready remains clickable even if the read-only club preview fails. */
+.room-layout-v137 .c1-ready-button{position:relative;z-index:2;cursor:pointer!important;pointer-events:auto!important;min-height:84px!important;width:100%!important;max-width:360px!important}
+.c1-ready-diagnostic{font-size:12px;color:#f1ca68;line-height:1.5;text-align:center;margin:8px auto;max-width:380px}
+.c1-room-live-help{margin:12px auto 4px;max-width:420px;color:#e9cb79;font-size:12px;text-align:center;line-height:1.55}

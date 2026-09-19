@@ -1,0 +1,1 @@
+V1.6.41: Fix C1 GĐ2 guest ready UI and Rank action leakage. No SQL. Source based on V1.6.40.

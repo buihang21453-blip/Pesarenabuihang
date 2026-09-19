@@ -748,8 +748,11 @@ def register_rooms(context):
         from modules.c1_fixed_match_service import start_assigned_club_match
         user=current_user() or {}
         room=get_room(room_id)
-        if not room or str(user.get("id") or "")!=str(room.get("host_user_id") or ""):
-            flash("Chỉ chủ phòng mới được khôi phục bước bắt đầu trận C1.","warning")
+        uid = str(user.get("id") or "")
+        is_host = bool(room and uid == str(room.get("host_user_id") or ""))
+        is_ready_guest = bool(room and uid == str(room.get("guest_user_id") or "") and room.get("guest_ready"))
+        if not (is_host or is_ready_guest):
+            flash("Chỉ chủ phòng hoặc khách đã Sẵn sàng mới được thử bắt đầu trận C1.","warning")
             return redirect(url_for("room_detail",room_id=room_id))
         try:
             success,message,_=start_assigned_club_match(db,execute_query,tournament_id,room_id,now_iso)

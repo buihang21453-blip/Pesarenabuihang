@@ -1,3 +1,12 @@
+## V1.6.41 — Rà soát sẵn sàng C1 GĐ2, chặn nhầm xử lý Rank
+
+- Gỡ điều kiện dữ liệu xem trước CLB chặn nút Sẵn sàng của khách; bấm nút luôn được, việc bắt đầu chỉ diễn ra sau khi service xác minh CLB/đối thủ/trạng thái.
+- Khi bắt đầu lỗi, khách đã ready có nút thử lại hoặc hủy sẵn sàng; endpoint retry xác minh quyền, service kiểm tra lại trận và CLB.
+- Sửa nhãn sẵn sàng sai: vào phòng chưa có nghĩa đã bấm Sẵn sàng.
+- Ẩn nút đuổi khách Rank trong C1, ẩn các form bỏ cuộc Rank khi đang đấu C1 và chặn POST trực tiếp tới hai route phạt RP Rank.
+- Thêm hướng dẫn xử lý trận đang đấu, giữ nguyên biểu mẫu nhập tỷ số/xác nhận C1.
+- Bổ sung kiểm thử hồi quy cho giao diện khách và route guard. Không có SQL mới.
+
 ## V1.6.40 — Phòng đấu C1 GĐ2 dùng luồng GĐ1, CLB tự gán
 
 - Dùng chung một giao diện chờ trận cho render ban đầu và cập nhật trực tiếp trong Phòng C1 GĐ2.

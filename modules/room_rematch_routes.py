@@ -44,6 +44,11 @@ def register_routes(context):
             flash("Chỉ người chơi Sân Khách mới có thể dùng chức năng này.", "danger")
             return redirect(url_for("room_detail", room_id=room_id))
 
+        # C1 results/forfeits require tournament-specific handling, never Rank RP penalties.
+        if str(room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament":
+            flash("Trận C1 đang diễn ra. Không dùng bỏ cuộc Rank; hãy hoàn tất kết quả hoặc liên hệ Admin C1.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
         allowed_statuses = {"waiting_ready", "playing", "friendly_playing"}
         if room.get("status") not in allowed_statuses:
             flash("Bạn không thể thoát ở trạng thái này. Nếu kết quả đang chờ xác nhận, hãy Xác nhận hoặc Gửi tranh chấp trước.", "warning")
@@ -143,6 +148,11 @@ def register_routes(context):
 
         if user["id"] != room.get("host_user_id"):
             flash("Chỉ Chủ Phòng mới có thể dùng chức năng này.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        # C1 results/forfeits require tournament-specific handling, never Rank RP penalties.
+        if str(room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament":
+            flash("Trận C1 đang diễn ra. Không dùng bỏ cuộc Rank; hãy hoàn tất kết quả hoặc liên hệ Admin C1.", "warning")
             return redirect(url_for("room_detail", room_id=room_id))
 
         original_status = room.get("status")
