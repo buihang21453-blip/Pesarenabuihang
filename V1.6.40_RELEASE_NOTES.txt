@@ -1,0 +1,8 @@
+PES Arena V1.6.40 — C1 GĐ2 giống GĐ1, tự gán CLB
+
+1. Vẫn là phòng C1 và màn hình nhập tỷ số/xác nhận giống GĐ1.
+2. Hai CLB gắn theo hai HLV, khách bấm Sẵn sàng để tự bắt đầu GĐ2, không quay quân.
+3. Nếu tự bắt đầu thất bại, chủ phòng có nút khôi phục; lỗi được ghi log.
+4. Kết quả chỉ cộng BXH C1 sau xác nhận; Rank không liên quan.
+5. Vé đổi CLB chưa dùng vẫn có hiệu lực đến hạn, chỉ tác động các trận chưa bắt đầu.
+6. Không cần SQL mới; chưa kiểm thử Supabase Production.

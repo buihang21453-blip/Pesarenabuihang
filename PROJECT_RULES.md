@@ -1,3 +1,10 @@
+## V1.6.40
+
+- C1 GĐ2 không Random lại CLB trong phòng; dùng CLB hiện tại lúc bắt đầu, không tiêu vé và không đổi lịch.
+- Trước khi tự bắt đầu phải kiểm tra chính xác ID phòng, ID trận, hai HLV, trạng thái GĐ2 và readiness.
+- Mọi template phòng C1 (tải đầu và polling) dùng chung khối điều khiển để tránh khác UI.
+- Chỉ ghi kết quả khi có match ID chính thức; CLB trận đã bắt đầu không được ghi đè do reroll về sau.
+
 ## V1.6.39 — Quy tắc tách template Jinja
 
 - Biến `{% set ... %}` đặt trong template `{% include ... %}` không được coi là biến xuất ra template cha. Mọi biến được dùng bởi nhiều phần phải khai báo ở scope cha hoặc truyền riêng bằng cấu trúc context rõ ràng.

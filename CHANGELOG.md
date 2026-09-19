@@ -1,3 +1,14 @@
+## V1.6.40 — Phòng đấu C1 GĐ2 dùng luồng GĐ1, CLB tự gán
+
+- Dùng chung một giao diện chờ trận cho render ban đầu và cập nhật trực tiếp trong Phòng C1 GĐ2.
+- Lấy hai CLB hiện tại theo tournament_members; khách bấm Sẵn sàng thì tự khóa CLB và bắt đầu trận, không quay quân và không trừ vé.
+- Giữ nguyên biểu mẫu GĐ1: chủ phòng nhập tỷ số, khách xác nhận hoặc báo sai; trận chính thức cập nhật BXH C1 sau xác nhận.
+- Sửa lỗi GĐ2 không có nút Sẵn sàng, chỉ hiện nút Bắt đầu trận của chủ phòng.
+- Không ghi đè snapshot CLB của trận đang thi đấu khi HLV dùng vé đổi CLB sau đó.
+- Giữ C1 metadata khi truy vấn thông tin phụ gặp lỗi; hiển thị cảnh báo nếu không đọc được trận liên kết.
+- Giữ nút khôi phục bắt đầu trận cho chủ phòng khi tự bắt đầu không thành công; không thay đổi GĐ1, Rank hay giải khác.
+- Không có migration SQL mới.
+
 ## V1.6.39 — Sửa nguyên nhân HTTP 500 của Admin V1.6.37
 
 - Sửa phạm vi biến Jinja `ops` sau khi tách `admin_parts/c1_console.html`: khai báo ở `templates/admin.html` trước include, để phần Test Mode vẫn đọc được `ops.get('tournament')`.

@@ -602,6 +602,29 @@ def register_routes(context):
                 "room_guest_ready",
             )
 
+        # C1 GĐ2: guest readiness is the final start action. Reuse the same
+        # scheduled-match transition as the host recovery endpoint; never draw clubs.
+        if is_tournament_room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            try:
+                import json
+                metadata = json.loads(str(room.get("note"))[len("TOURNAMENT_ROOM|"):])
+                if (str(metadata.get("stage_code") or "") == "league"
+                        and not metadata.get("test_sandbox_room")):
+                    from modules.c1_fixed_match_service import start_assigned_club_match
+                    started, message, _ = start_assigned_club_match(
+                        db, execute_query, metadata.get("tournament_id"), room_id, now_iso,
+                    )
+                    cache_delete("_rz_rooms_all")
+                    ttl_cache_delete("rooms_raw")
+                    flash(message if started else message + " Chủ phòng có thể thử bắt đầu lại.",
+                          "success" if started else "warning")
+                    return redirect(url_for("room_detail", room_id=room_id))
+            except Exception:
+                app.logger.exception("C1 GĐ2 start after guest-ready failed room=%s", room_id)
+                cache_delete("_rz_rooms_all")
+                ttl_cache_delete("rooms_raw")
+                flash("Đã sẵn sàng nhưng chưa bắt đầu được GĐ2; chủ phòng có thể thử lại.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
         cache_delete("_rz_rooms_all")
         ttl_cache_delete("rooms_raw")
         flash("Bạn đã sẵn sàng.", "success")

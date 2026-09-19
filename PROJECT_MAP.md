@@ -1,3 +1,13 @@
+## V1.6.40 — Luồng Phòng đấu C1 GĐ2
+
+- `modules/c1_fixed_match_service.py`: khởi chạy trận GĐ2/KO bằng CLB gắn với 2 HLV, kiểm tra lịch và trạng thái, rollback khi lỗi.
+- `modules/room_team_routes.py`: khách Sẵn sàng tự khởi động GĐ2 qua service.
+- `modules/tournament_competition_parts/rooms.py`: host retry dùng cùng service; chỉ đồng bộ CLB cho phòng chưa bắt đầu.
+- `modules/room_access_routes.py`: giữ metadata C1 khi truy vấn phụ lỗi.
+- `templates/partials/c1_fixed_waiting_controls.html`: điều khiển GĐ2 dùng chung ở cả hai đường render.
+- `templates/room_detail.html` và `templates/_room_live_content.html`: include điều khiển chung.
+- `templates/partials/tournament_room_result.html`: biểu mẫu GĐ1 tái sử dụng cho GĐ2 và cảnh báo khi thiếu trận liên kết.
+
 ## V1.6.39 — Admin template scope hotfix
 
 - `templates/admin.html`: định nghĩa `ops` ở scope cha để được chia sẻ giữa `admin_parts/c1_console.html` và khối Test Mode kế tiếp.

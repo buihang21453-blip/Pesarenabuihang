@@ -390,8 +390,11 @@ def register_routes(context):
                     sr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key",f"match_result_proposal:{mid}").limit(1),"room_tournament_result_context",attempts=2)
                     tournament_result_proposal = ((sr.data or [{}])[0].get("setting_value") or {})
             except Exception as exc:
+                # Keep successfully parsed C1 metadata and any already loaded match.
+                # A supplementary query failure must not silently turn a C1 room
+                # into Rank or hide its result controls; missing matches get an
+                # explicit warning instead of exposing an unsafe result form.
                 app.logger.warning("Tournament room context failed room=%s: %s", room.get("id"), exc)
-                tournament_meta = None
         # V1.6.24: fixed HLV clubs on GĐ2/KO. Display the CURRENT allocation
         # while waiting; never change persisted room teams during GET/polling.
         # Once playing, the team snapshot belongs to that match and is immutable.

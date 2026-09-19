@@ -37,8 +37,11 @@
     {% if tr.reason %}<p class="small">Lý do: {{ tr.reason }}</p>{% endif %}
   {% endif %}
   {% else %}
-  <strong>🏆 XÁC NHẬN KẾT QUẢ C1 · {{ (tournament_meta.stage_code or 'stage1')|upper }}</strong>
-  <p class="small" style="margin:5px 0 10px">Chủ phòng gửi tỷ số → Đội khách xác nhận hoặc báo sai → nếu tranh chấp, Admin C1 chốt kết quả. Không cộng/trừ RP và không ảnh hưởng Rank.</p>
+  <strong>🏆 XÁC NHẬN KẾT QUẢ C1 · {{ 'GĐ2' if tournament_fixed_club_mode else (tournament_meta.stage_code or 'stage1')|upper }}</strong>
+  {% if tournament_fixed_club_mode %}
+  <p class="small" style="margin:5px 0 8px;color:#f1ca68">CLB trận này: {{ room.host_name }} · {{ room.host_team or 'Chưa gán' }} vs {{ room.guest_name }} · {{ room.guest_team or 'Chưa gán' }}. Không quay CLB.</p>
+  {% endif %}
+  <p class="small" style="margin:5px 0 10px">Chủ phòng gửi tỷ số → Đội khách xác nhận hoặc báo sai → nếu tranh chấp, Admin C1 chốt kết quả. Chỉ cộng điểm BXH C1 sau khi xác nhận; không cộng/trừ RP Rank.</p>
   {% set pr=tournament_result_proposal or {} %}
   {% if room.status == 'playing' and room_room_viewer_is_host %}
   <form method="post" action="{{ url_for('tournament_room_submit_result',tournament_id=tournament_meta.tournament_id,room_id=room.id) }}" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
@@ -85,5 +88,10 @@
     <strong>⚠ KẾT QUẢ ĐANG TRANH CHẤP · CHỜ ADMIN C1 XỬ LÝ.</strong><p class="small" style="margin:6px 0 0">HLV không thể tự sửa kết quả trong trạng thái này.</p>
   {% endif %}
   {% endif %}
+</div>
+{% elif is_tournament_room and tournament_meta and tournament_fixed_club_mode %}
+<div class="panel c1-result-context-warning" role="alert" style="margin:12px 0;padding:14px;border:1px solid #bd903a;border-radius:12px">
+  <strong>⚠ Không tải được trận C1 GĐ2 đã liên kết</strong>
+  <p class="small">Không thể nhập hoặc xác nhận tỷ số khi thiếu mã trận chính thức. Hãy làm mới phòng; nếu vẫn còn lỗi, báo Admin kiểm tra liên kết lịch GĐ2. Hệ thống không tạo trận mới hoặc ghi điểm sai.</p>
 </div>
 {% endif %}
