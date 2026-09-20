@@ -171,7 +171,7 @@ def apply_match_result(match):
                 delta2 = max(22, min(29, delta2))
 
         # Giảm RP khi gặp lại cùng một đối thủ trong ngày. Quy tắc này được áp dụng
-        # sau toàn bộ công thức thắng hiện tại/ưu đãi Chủ phòng và trước trần +150 RP.
+        # sau toàn bộ công thức thắng hiện tại/ưu đãi Chủ phòng và trước trần RP cơ bản theo ngày.
         repeat_context = repeat_opponent_context(match)
         delta1, delta2, repeat_details = apply_repeat_opponent_rules(
             match, player1, player2, score1, score2, delta1, delta2,
@@ -189,13 +189,23 @@ def apply_match_result(match):
             repeat_details["streak_eligible"] = False
             match["_streak_eligible"] = False
 
-        # Giới hạn RP dương theo ngày được áp dụng sau khi tính đủ công thức,
-        # nhưng trước khi ghi điểm. RP âm khi thua không bị thay đổi.
+        # Chỉ RP cơ bản bị trần ngày; thưởng chuỗi hợp lệ được cộng riêng.
+        # Đủ trần trước trận thì thua không bị trừ. Hết lượt trận vẫn luôn 0 RP.
+        bonus1 = (int(repeat_details.get("winner_streak_bonus") or 0)
+                  if repeat_details.get("enabled") else int(streak_bonus1))
+        bonus2 = (int(repeat_details.get("winner_streak_bonus") or 0)
+                  if repeat_details.get("enabled") else int(streak_bonus2))
+        if not daily_game_status.get("rp_eligible", True) or not repeat_details.get("streak_eligible", True):
+            bonus1 = bonus2 = 0
+        if score1 <= score2:
+            bonus1 = 0
+        if score2 <= score1:
+            bonus2 = 0
         delta1, daily_cap1 = apply_daily_positive_rp_cap(
-            player1_id, delta1, exclude_match_id=match.get("id")
+            player1_id, delta1, exclude_match_id=match.get("id"), streak_bonus=bonus1
         )
         delta2, daily_cap2 = apply_daily_positive_rp_cap(
-            player2_id, delta2, exclude_match_id=match.get("id")
+            player2_id, delta2, exclude_match_id=match.get("id"), streak_bonus=bonus2
         )
 
         affect_streak = bool(repeat_details.get("streak_eligible", True))
@@ -274,14 +284,15 @@ def apply_match_result(match):
         for user_id, detail in ((player1_id, daily_cap1), (player2_id, daily_cap2)):
             if not detail:
                 continue
-            applied = int(detail.get("applied_delta") or 0)
-            earned_after = int(detail.get("earned_before") or 0) + max(0, applied)
-            if detail.get("capped") or earned_after >= int(detail.get("limit") or 150):
+            applied_base = int(detail.get("base_applied") or 0)
+            earned_after = int(detail.get("earned_before") or 0) + max(0, applied_base)
+            if earned_after >= int(detail.get("limit") or 180) and int(detail.get("earned_before") or 0) < int(detail.get("limit") or 180):
                 create_user_notification(
                     user_id,
                     "Đã đạt giới hạn RP trong ngày",
-                    f"Bạn đã được cộng tổng cộng {earned_after}/150 RP hôm nay. "
-                    "Phần RP vượt giới hạn không được cộng; giới hạn làm mới lúc 00:00.",
+                    f"Bạn đã đạt {earned_after}/{detail.get('limit')} RP cơ bản hôm nay. "
+                    "Thưởng chuỗi và thưởng hoạt động tuần vẫn được cộng; "
+                    "các trận còn lượt không bị trừ RP sau khi đạt trần. Giới hạn làm mới lúc 00:00.",
                     "/notifications",
                     "rank_limit",
                 )

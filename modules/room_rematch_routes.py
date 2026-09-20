@@ -17,7 +17,9 @@ def register_routes(context):
         wins = int(winner.get("wins", 0) or 0) + 1
         draws = int(winner.get("draws", 0) or 0)
         losses = int(winner.get("losses", 0) or 0)
-        streak = int(winner.get("streak", 0) or 0) + 1
+        # A win by forfeit above the Rank daily quota must not extend a streak.
+        over_limit = daily_rank_limits_enabled() and ranked_games_today(winner_id) > current_daily_game_limit()
+        streak = int(winner.get("streak", 0) or 0) + (0 if over_limit else 1)
         result = execute_query(
             db.table("users").update({
                 "wins": wins,
@@ -84,7 +86,7 @@ def register_routes(context):
             return redirect(url_for("dashboard"))
 
         original_status = room.get("status")
-        reason = f'{user["display_name"]} đã chủ động bỏ cuộc và bị trừ {ROOM_ABANDON_PENALTY} RP.'
+        reason = f'{user["display_name"]} đã chủ động bỏ cuộc.'
         result = execute_query(
             db.table("match_rooms").update({
                 "status": "cancelled",
@@ -114,18 +116,18 @@ def register_routes(context):
         create_user_notification(
             room.get("host_user_id"),
             "🚪 Đối thủ đã bỏ cuộc",
-            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn được tính 1 trận thắng và tăng chuỗi thắng, nhưng không được cộng RP.',
+            f'{user["display_name"]} đã bỏ cuộc (RP bị trừ: {abs(int(penalty_delta or 0))}). Bạn được tính một trận thắng, không cộng RP.',
             "/matches",
             "guest_forfeit",
         )
         create_user_notification(
             user["id"],
             "⚠️ Bạn đã bỏ cuộc",
-            f"Bạn bị trừ {ROOM_ABANDON_PENALTY} RP và được tính một trận thua.",
+            f"Bạn được tính một trận thua; RP bị trừ: {abs(int(penalty_delta or 0))}.",
             "/matches",
             "room_forfeit_penalty",
         )
-        flash(f"Bạn đã bỏ cuộc và bị trừ {ROOM_ABANDON_PENALTY} RP.", "danger")
+        flash(f"Bạn đã bỏ cuộc. RP bị trừ: {abs(int(penalty_delta or 0))}.", "danger")
         return redirect(url_for("dashboard"))
 
 
@@ -175,9 +177,9 @@ def register_routes(context):
                 return redirect(url_for("room_detail", room_id=room_id))
 
         if original_status == "playing":
-            reason = f'{user["display_name"]} đã rời phòng khi trận đang thi đấu và bị trừ {ROOM_ABANDON_PENALTY} RP.'
+            reason = f'{user["display_name"]} đã rời phòng khi trận đang thi đấu.'
         else:
-            reason = f'{user["display_name"]} đã rời phòng sau khi khách Sẵn Sàng và bị trừ {ROOM_ABANDON_PENALTY} RP.'
+            reason = f'{user["display_name"]} đã rời phòng sau khi khách Sẵn Sàng.'
 
         query = (
             db.table("match_rooms").update({
@@ -213,18 +215,18 @@ def register_routes(context):
         create_user_notification(
             room.get("guest_user_id"),
             "🚪 Chủ phòng đã bỏ cuộc",
-            f'{user["display_name"]} đã thoát phòng và bị trừ {ROOM_ABANDON_PENALTY} RP. Bạn được tính 1 trận thắng và tăng chuỗi thắng, nhưng không được cộng RP.',
+            f'{user["display_name"]} đã bỏ cuộc (RP bị trừ: {abs(int(penalty_delta or 0))}). Bạn được tính một trận thắng, không cộng RP.',
             "/matches",
             "host_forfeit",
         )
         create_user_notification(
             user["id"],
             "⚠️ Bạn đã bỏ cuộc",
-            f"Bạn bị trừ {ROOM_ABANDON_PENALTY} RP và được tính một trận thua do rời phòng khi trận đã cam kết.",
+            f"Bạn được tính một trận thua do rời phòng; RP bị trừ: {abs(int(penalty_delta or 0))}.",
             "/matches",
             "room_forfeit_penalty",
         )
-        flash(f"Bạn đã bỏ cuộc và bị trừ {ROOM_ABANDON_PENALTY} RP.", "danger")
+        flash(f"Bạn đã bỏ cuộc. RP bị trừ: {abs(int(penalty_delta or 0))}.", "danger")
         return redirect(url_for("dashboard"))
 
 

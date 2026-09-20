@@ -110,7 +110,7 @@ def _bounded_week_window(now=None):
 def _load_week_activity(user_id, week_start, week_end):
     result = execute_query(
         db.table("matches")
-        .select("id,player1_id,player2_id,status,created_at")
+        .select("id,player1_id,player2_id,status,created_at,rp_details")
         .eq("status", "confirmed")
         .gte("created_at", week_start.isoformat())
         .lt("created_at", week_end.isoformat())
@@ -120,13 +120,22 @@ def _load_week_activity(user_id, week_start, week_end):
     )
     rows = list(result.data or [])
     opponents = set()
+    eligible_match_count = 0
     for row in rows:
+        # RP thưởng tuần không bị giới hạn bởi trần RP cơ bản, nhưng một trận
+        # đã vượt giới hạn lượt ngày không được tạo thêm quyền nhận thưởng.
+        details = row.get("rp_details") or {}
+        daily = details.get("daily_rank_limits") or {} if isinstance(details, dict) else {}
+        game_status = daily.get("game_limit") or {} if isinstance(daily, dict) else {}
+        if isinstance(game_status, dict) and game_status.get("rp_eligible") is False:
+            continue
+        eligible_match_count += 1
         p1 = str(row.get("player1_id") or "")
         p2 = str(row.get("player2_id") or "")
         opponent_id = p2 if p1 == str(user_id) else p1
         if opponent_id and opponent_id != str(user_id):
             opponents.add(opponent_id)
-    return len(rows), len(opponents)
+    return eligible_match_count, len(opponents)
 
 
 def _claim_and_apply_reward(user_id, season_number, week_start, reward_code, reward_name, reward_rp):

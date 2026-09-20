@@ -5,6 +5,7 @@ kết quả. Vì vậy các trạng thái playing, waiting_confirm, disputed và
 đều chiếm một lượt. Trận bỏ cuộc hợp lệ cũng chiếm một lượt Rank.
 """
 from datetime import datetime, timedelta, timezone
+from modules.rank_daily_policy import day_limits, apply_match_cap
 
 EXPORTED_NAMES = [
     "daily_rank_limits_enabled",
@@ -18,14 +19,15 @@ EXPORTED_NAMES = [
     "daily_rank_match_rp_status",
     "assert_can_start_ranked_match",
     "apply_daily_positive_rp_cap",
+    "current_daily_positive_rp_limit",
     "reset_user_daily_rank_games",
     "get_user_daily_rank_reset",
 ]
 
 SETTING_KEY = "rank_daily_limits_config"
 WEEKDAY_GAME_LIMIT = 10
-WEEKEND_GAME_LIMIT = 15
-DAILY_POSITIVE_RP_LIMIT = 150
+WEEKEND_GAME_LIMIT = 20
+DAILY_POSITIVE_RP_LIMIT = 180
 VN_TZ = timezone(timedelta(hours=7))
 COUNTED_MATCH_STATUSES = {"playing", "waiting_confirm", "waiting_result_confirm", "processing_result", "disputed", "confirmed"}
 
@@ -39,9 +41,13 @@ def _now_vn():
 
 
 def current_daily_game_limit(moment=None):
-    """Trả về giới hạn trận theo ngày Việt Nam: T2-T6 là 10, T7-CN là 15."""
-    current = moment or _now_vn()
-    return WEEKEND_GAME_LIMIT if current.weekday() in {5, 6} else WEEKDAY_GAME_LIMIT
+    """10 trận ngày thường; 20 trận cuối tuần (giờ Việt Nam)."""
+    return day_limits(moment)[0]
+
+
+def current_daily_positive_rp_limit(moment=None):
+    """Chỉ RP cơ bản: 180 ngày thường, 250 cuối tuần; không gồm thưởng."""
+    return day_limits(moment)[1]
 
 
 def _day_bounds_utc_iso(moment=None):
@@ -91,7 +97,7 @@ def get_user_daily_rank_reset(user_id, moment=None):
 
 
 def reset_user_daily_rank_games(user_id, actor_id=None):
-    """Đặt mốc đếm mới cho riêng số trận Rank hôm nay, không xóa lịch sử và không reset trần +150 RP."""
+    """Đặt mốc đếm mới cho riêng số trận Rank hôm nay, không xóa lịch sử và không reset trần RP cơ bản."""
     if not user_id:
         raise ValueError("Thiếu người chơi cần reset.")
     config = _load_daily_rank_config()
@@ -100,6 +106,7 @@ def reset_user_daily_rank_games(user_id, actor_id=None):
         "weekday_game_limit": WEEKDAY_GAME_LIMIT,
         "weekend_game_limit": WEEKEND_GAME_LIMIT,
         "daily_positive_rp_limit": DAILY_POSITIVE_RP_LIMIT,
+        "weekend_positive_rp_limit": 250,
     })
     resets = config.get("user_game_resets")
     if not isinstance(resets, dict):
@@ -159,6 +166,7 @@ def set_daily_rank_limits_enabled(enabled, actor_id=None):
         "weekday_game_limit": WEEKDAY_GAME_LIMIT,
         "weekend_game_limit": WEEKEND_GAME_LIMIT,
         "daily_positive_rp_limit": DAILY_POSITIVE_RP_LIMIT,
+        "weekend_positive_rp_limit": 250,
         "user_game_resets": current.get("user_game_resets") or {},
         "updated_by": actor_id,
         "updated_at": now_iso(),
@@ -254,7 +262,7 @@ def ranked_games_today(user_id):
 
 
 def positive_rp_today(user_id, exclude_match_id=None):
-    """Chỉ RP dương đã chốt ở trận confirmed mới được cộng vào trần +150."""
+    """Chỉ cộng RP cơ bản của trận confirmed, không tính thưởng chuỗi/tuần."""
     total = 0
     for match in _matches_today(user_id):
         if str(match.get("status") or "") != "confirmed":
@@ -266,7 +274,16 @@ def positive_rp_today(user_id, exclude_match_id=None):
         else:
             delta = int(match.get("delta2") or 0)
         if delta > 0:
-            total += delta
+            details = match.get("rp_details") or {}
+            caps = ((details.get("daily_rank_limits") or {}).get("positive_rp_cap") or {}) if isinstance(details, dict) else {}
+            side = "player1" if str(match.get("player1_id")) == str(user_id) else "player2"
+            cap = caps.get(side) if isinstance(caps, dict) else None
+            # For old matches, remove the *documented* streak portion if available.
+            # Without metadata, conservatively retain the stored delta unchanged.
+            repeat = details.get("repeat_opponent") or {} if isinstance(details, dict) else {}
+            legacy_bonus = max(0, int(repeat.get("winner_streak_bonus") or 0)) if isinstance(repeat, dict) else 0
+            base = cap.get("base_applied") if isinstance(cap, dict) and cap.get("base_applied") is not None else max(0, delta - legacy_bonus)
+            total += max(0, int(base))
     return total
 
 
@@ -281,8 +298,8 @@ def rank_daily_status(user_id):
         "games_remaining": max(0, current_daily_game_limit() - games),
         "is_weekend": _now_vn().weekday() in {5, 6},
         "positive_rp": positive,
-        "positive_rp_limit": DAILY_POSITIVE_RP_LIMIT,
-        "positive_rp_remaining": max(0, DAILY_POSITIVE_RP_LIMIT - positive),
+        "positive_rp_limit": current_daily_positive_rp_limit(),
+        "positive_rp_remaining": max(0, current_daily_positive_rp_limit() - positive),
     }
 
 
@@ -341,20 +358,10 @@ def assert_can_start_ranked_match(*user_ids):
     return True
 
 
-def apply_daily_positive_rp_cap(user_id, delta, exclude_match_id=None):
+def apply_daily_positive_rp_cap(user_id, delta, exclude_match_id=None, streak_bonus=0):
+    """Cap only normal match RP; preserve eligible streak bonuses and protect losses at cap."""
     delta = int(delta or 0)
-    if delta <= 0 or not daily_rank_limits_enabled():
+    if not daily_rank_limits_enabled():
         return delta, None
     earned = positive_rp_today(user_id, exclude_match_id=exclude_match_id)
-    remaining = max(0, DAILY_POSITIVE_RP_LIMIT - earned)
-    applied = min(delta, remaining)
-    detail = {
-        "enabled": True,
-        "earned_before": earned,
-        "formula_delta": delta,
-        "applied_delta": applied,
-        "remaining_before": remaining,
-        "limit": DAILY_POSITIVE_RP_LIMIT,
-        "capped": applied < delta,
-    }
-    return applied, detail
+    return apply_match_cap(delta, earned, current_daily_positive_rp_limit(), streak_bonus)

@@ -581,12 +581,12 @@ def register_routes(context):
             details={
                 "enabled": enabled,
                 "weekday_game_limit": 10,
-                "weekend_game_limit": 15,
-                "daily_positive_rp_limit": 150,
+                "weekend_game_limit": 20,
+                "daily_positive_rp_limit": {"weekday": 180, "weekend": 250},
             },
         )
         flash(
-            "Đã bật giới hạn RP theo số trận: 10 trận tính RP từ Thứ 2 đến Thứ 6, 15 trận tính RP vào cuối tuần. Các trận chơi thêm vẫn lưu lịch sử nhưng nhận 0 RP; tối đa +150 RP mỗi ngày."
+            "Đã bật giới hạn RP theo số trận: 10 trận tính RP từ Thứ 2 đến Thứ 6, 20 trận tính RP vào cuối tuần. Các trận chơi thêm vẫn lưu lịch sử nhưng nhận 0 RP; trần RP cơ bản là 180 ngày thường/250 cuối tuần; thưởng chuỗi và thưởng tuần không bị trần."
             if enabled else
             "Đã tắt giới hạn RP theo số trận Rank và trần RP cộng theo ngày.",
             "success",
@@ -622,7 +622,7 @@ def register_routes(context):
         )
         flash(
             f"Đã reset số trận Rank hôm nay của {target.get('display_name') or 'người chơi'}. "
-            f"Tài khoản có thể chơi lại tối đa {result.get('game_limit')} trận; trần +150 RP không được reset.",
+            f"Tài khoản có thể chơi lại tối đa {result.get('game_limit')} trận; trần RP cơ bản không được reset.",
             "success",
         )
         return redirect_admin("system")

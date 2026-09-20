@@ -6,9 +6,11 @@ Supabase hoặc dữ liệu người dùng. Mọi thay đổi công thức RP ph
 """
 from __future__ import annotations
 
-RP_FORMULA_VERSION = "RP_V1.14.5"
-RP_FORMULA_NAME = "PES Arena RP – Tách thưởng chuỗi khỏi hệ số gặp lại"
-RP_RANDOM_SEED_NAMESPACE = f"PES_ARENA|{RP_FORMULA_VERSION}"
+RP_FORMULA_VERSION = "RP_V1.14.6"
+RP_FORMULA_NAME = "PES Arena RP – Trần RP ngày 180/250 chỉ áp dụng điểm cơ bản"
+# Preserve the existing random seed: this release changes only the daily cap,
+# not random RP components of prior matches during an Admin chronological replay.
+RP_RANDOM_SEED_NAMESPACE = "PES_ARENA|RP_V1.14.5"
 
 PLACEMENT_MATCHES = 10
 MAX_POSITIVE_POINTS_PER_MATCH = 50

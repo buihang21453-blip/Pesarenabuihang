@@ -802,17 +802,17 @@
     {% if can_admin('daily_rank_limits_manage') %}
     <div class="panel">
         <h2>🏆 Giới hạn RP theo số trận Rank mỗi ngày</h2>
-        <p class="muted">Mỗi người tối đa 10 trận Rank từ Thứ 2 đến Thứ 6; riêng Thứ 7 và Chủ nhật tối đa 15 trận. Mức cộng tối đa vẫn là 150 RP/ngày; RP bị trừ khi thua vẫn tính bình thường.</p>
+        <p class="muted">Mỗi người tối đa 10 trận Rank từ Thứ 2 đến Thứ 6; riêng Thứ 7 và Chủ nhật 20 trận. RP cơ bản tối đa 180/ngày thường và 250/cuối tuần. Đạt trần RP cơ bản sẽ không bị trừ điểm khi thua; thưởng chuỗi thắng và thưởng tuần vẫn được cộng. Trận vượt lượt nhận 0 RP và không tính chuỗi.</p>
         <form method="post" action="{{ url_for('admin_update_rank_daily_limits') }}" class="system-toggle-grid">
             <label class="admin-permission-option">
-                <span><strong>Bật giới hạn Rank ngày</strong><small style="display:block">Ngày thường 10 trận • Cuối tuần 15 trận • Làm mới lúc 00:00 giờ Việt Nam</small></span>
+                <span><strong>Bật giới hạn Rank ngày</strong><small style="display:block">Ngày thường 10 trận • Cuối tuần 20 trận • Làm mới lúc 00:00 giờ Việt Nam</small></span>
                 <span class="admin-switch"><input type="checkbox" name="enabled" value="1" {% if rank_daily_limits_enabled %}checked{% endif %}><span class="admin-switch-track"></span></span>
             </label>
             <button class="btn" type="submit">Lưu giới hạn Rank</button>
         </form>
         <hr style="margin:18px 0">
         <h3>🔄 Reset lượt Rank của người chơi</h3>
-        <p class="muted">Tạo một mốc đếm mới cho hôm nay. Lịch sử trận cũ vẫn được giữ nguyên; người chơi được tính RP lại đủ 10 trận ngày thường hoặc 15 trận cuối tuần. Trần cộng tối đa +150 RP/ngày không bị reset.</p>
+        <p class="muted">Tạo một mốc đếm mới cho hôm nay. Lịch sử trận cũ vẫn được giữ nguyên; người chơi được tính RP lại đủ 10 trận ngày thường hoặc 20 trận cuối tuần. Trần RP cơ bản 180/250 không bị reset.</p>
         {% if rank_daily_limits_enabled %}
         <form method="post" action="{{ url_for('admin_reset_user_rank_daily_games') }}" class="system-toggle-grid" onsubmit="return confirm('Reset toàn bộ lượt Rank hôm nay của người chơi này? Lịch sử trận không bị xóa.');">
             <label><span>Chọn người chơi</span>

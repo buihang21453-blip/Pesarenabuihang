@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.6.42"
+APP_VERSION = "V1.6.43"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -1933,6 +1933,20 @@ def apply_room_abandon_penalty(user_id, amount=ROOM_ABANDON_PENALTY):
     if not player:
         return None
     penalty = max(0, int(amount or 0))
+    over_daily_games = False
+    # When the player has already reached either daily threshold, a forfeit
+    # still records the loss but does NOT bypass the new zero-deduction rule.
+    try:
+        if daily_rank_limits_enabled():
+            games_today = ranked_games_today(user_id)
+            over_daily_games = games_today > current_daily_game_limit()
+            if games_today >= current_daily_game_limit() or positive_rp_today(user_id) >= current_daily_positive_rp_limit():
+                penalty = 0
+    except Exception as exc:
+        # Database could be transiently unavailable after a room status changed;
+        # do not take an unverified penalty from the player in that situation.
+        app.logger.warning("Daily RP forfeiture protection lookup failed: %s", exc)
+        penalty = 0
     old_points = int(player.get("rank_points", 0) or 0)
     new_points = max(0, old_points - penalty)
     execute_query(
@@ -1940,7 +1954,7 @@ def apply_room_abandon_penalty(user_id, amount=ROOM_ABANDON_PENALTY):
             "rank_points": new_points,
             "losses": int(player.get("losses", 0) or 0) + 1,
             "total_matches": int(player.get("wins", 0) or 0) + int(player.get("draws", 0) or 0) + int(player.get("losses", 0) or 0) + 1,
-            "streak": 0,
+            "streak": int(player.get("streak", 0) or 0) if over_daily_games else 0,
         }).eq("id", user_id),
         "apply_room_abandon_penalty",
     )

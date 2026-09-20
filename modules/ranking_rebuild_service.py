@@ -61,7 +61,7 @@ def rebuild_rankings_after_admin_change(
         formula_version=RP_FORMULA_VERSION,
         formula_summary=formula_summary,
         seed_namespace=RP_RANDOM_SEED_NAMESPACE,
-        daily_positive_rp_limit=150 if daily_rank_limits_enabled() else None,
+        daily_positive_rp_limit=180 if daily_rank_limits_enabled() else None,
         repeat_opponent_rules_enabled=system_feature_enabled("repeat_opponent_rp_enabled"),
         repeat_opponent_winner_factors=tuple(repeat_opponent_winner_factors()),
         repeat_opponent_loser_factors=tuple(repeat_opponent_loser_factors()),

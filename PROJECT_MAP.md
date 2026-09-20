@@ -1,3 +1,15 @@
+## V1.6.43 — Bộ giới hạn RP Rank
+
+- `modules/rank_daily_policy.py`: quy tắc thuần Python xác định giới hạn 10/180 ngày thường, 20/250 cuối tuần và tách RP cơ bản/thưởng chuỗi.
+- `modules/daily_rank_limit_service.py`: thống kê lượt và RP cơ bản đã nhận; ghi cấu hình giới hạn; zero loss khi đạt trần.
+- `modules/match_result_service.py`: xác nhận trận, trần RP cơ bản, thưởng chuỗi ngoài trần, thông báo đạt trần.
+- `modules/admin_ranking_rebuild.py`, `modules/ranking_rebuild_service.py`: áp dụng cùng quy tắc cho Admin phát lại lịch sử; giữ cột created_at gốc.
+- `modules/weekly_rp_rewards_service.py`: thưởng tuần ngoài trần; bỏ các trận đã đánh dấu vượt hạn lượt ngày.
+- `app.py`, `modules/room_rematch_routes.py`, `modules/legacy_room_service.py`: bảo vệ RP khi bỏ cuộc sau giới hạn, cập nhật thông báo đúng số RP bị trừ.
+- `modules/admin_system_routes.py`, `templates/admin.html`, `templates/guide.html`: cập nhật hiển thị và nội dung công khai.
+- `modules/rp_formula.py`: bump formula version, giữ nguyên seed RP hiện tại.
+- `tests/test_rank_daily_policy_v1643.py`: kiểm thử mốc tuần, cap/bonus, zero-loss và Admin replay.
+
 ## V1.6.42
 
 - `templates/register.html`: CSS thẻ nhóm Zalo nằm trong `page_styles`; giới hạn kích thước QR và căn giữa trên mobile/desktop.

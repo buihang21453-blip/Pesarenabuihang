@@ -1,3 +1,13 @@
+## V1.6.43 — RP 180/250 ngày thường/cuối tuần, trần chỉ áp dụng RP cơ bản
+
+- Thứ Hai–Thứ Sáu: 10 trận Rank có tính RP; trần +180 RP cơ bản/ngày.
+- Thứ Bảy–Chủ Nhật: 20 trận Rank có tính RP; trần +250 RP cơ bản/ngày (múi giờ Việt Nam).
+- Trận vượt giới hạn lượt: cả hai nhận 0 RP, không thay đổi chuỗi; vẫn lưu lịch sử theo cơ chế hiện hành.
+- Khi đã đạt trần RP cơ bản, các trận còn lượt không cộng RP cơ bản và không bị trừ RP; thưởng chuỗi thắng hợp lệ vẫn cộng đầy đủ ngoài trần.
+- Thưởng hoạt động tuần/đối thủ khác nhau cộng riêng ngoài trần RP cơ bản; trận vượt giới hạn lượt không làm phát sinh quyền nhận thưởng tuần mới.
+- Sửa cả luồng xác nhận trận thường, đếm RP cơ bản, xử lý bỏ cuộc/timeout, Admin replay, thông báo, Admin cấu hình và Hướng dẫn công khai; giữ seed random cũ để không thay đổi ngẫu nhiên các trận lịch sử khi replay.
+- Không thay đổi dữ liệu/trận đã xác nhận lúc deploy; không có SQL mới.
+
 ## V1.6.42 — Thu gọn QR trang Đăng ký
 
 - Đưa CSS QR Zalo vào `page_styles` của Jinja (CSS trước đây nằm ngoài block và bị bỏ qua khi render template kế thừa).

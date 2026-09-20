@@ -15,6 +15,7 @@ import random
 import math
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Iterable, Mapping
+from modules.rank_daily_policy import day_limits, apply_match_cap
 
 
 def _int(value: Any, default: int = 0) -> int:
@@ -437,13 +438,12 @@ def build_replay_plan(
 
         daily_limit_details = None
         if daily_positive_rp_limit is not None and int(daily_positive_rp_limit) >= 0:
-            # Khi bật giới hạn ngày, trận thứ 11 trong ngày thường hoặc thứ 16
-            # vào cuối tuần vẫn được lưu nhưng không tính RP/chuỗi.
+            # Giới hạn theo ngày Việt Nam; trận quá lượt nhận 0 RP, 0 thưởng chuỗi.
             try:
-                day_dt = datetime.fromisoformat(str(day_key))
-                game_limit = 15 if day_dt.weekday() in {5, 6} else 10
+                day_dt = datetime.fromisoformat(str(day_key)).replace(tzinfo=timezone(timedelta(hours=7)))
+                game_limit, base_rp_limit = day_limits(day_dt)
             except Exception:
-                game_limit = 10
+                game_limit, base_rp_limit = 10, 180
             p1_previous_games = ranked_games_by_day.get((p1_id, day_key), 0)
             p2_previous_games = ranked_games_by_day.get((p2_id, day_key), 0)
             p1_games = p1_previous_games + 1
@@ -471,20 +471,19 @@ def build_replay_plan(
                 game_status["reason"] = "daily_game_limit_exceeded"
 
             cap_details = {}
-            for user_id, key, delta in ((p1_id, "player1", delta1), (p2_id, "player2", delta2)):
-                if delta <= 0:
-                    cap_details[key] = None
-                    continue
+            for user_id, key, delta, bonus in (
+                (p1_id, "player1", delta1, streak_bonus1 if score1 > score2 else 0),
+                (p2_id, "player2", delta2, streak_bonus2 if score2 > score1 else 0),
+            ):
+                # Existing repeat rules may suppress a streak bonus entirely.
+                if not rp_eligible or not affect_streak:
+                    bonus = 0
+                elif repeat_details.get("enabled"):
+                    bonus = int(repeat_details.get("winner_streak_bonus") or 0)
                 earned = positive_rp_by_day.get((user_id, day_key), 0)
-                remaining = max(0, int(daily_positive_rp_limit) - earned)
-                applied = min(delta, remaining)
-                cap_details[key] = {
-                    "enabled": True, "earned_before": earned,
-                    "formula_delta": delta, "applied_delta": applied,
-                    "remaining_before": remaining, "limit": int(daily_positive_rp_limit),
-                    "capped": applied < delta,
-                }
-                positive_rp_by_day[(user_id, day_key)] = earned + max(0, applied)
+                applied, detail = apply_match_cap(delta, earned, base_rp_limit, bonus)
+                cap_details[key] = detail
+                positive_rp_by_day[(user_id, day_key)] = earned + detail["base_applied"]
                 if key == "player1":
                     delta1 = applied
                 else:

@@ -176,7 +176,7 @@ def close_room_if_host_browser_offline(room):
     original_status = room.get("status")
     reason = (
         f"{host.get('display_name') or host.get('username') or 'Chủ phòng'} "
-        f"đã đóng trình duyệt khi trận đang diễn ra và bị trừ {ROOM_ABANDON_PENALTY} RP."
+        "đã đóng trình duyệt khi trận đang diễn ra."
     )
     update_data = {
         "status": "cancelled",
@@ -207,7 +207,7 @@ def close_room_if_host_browser_offline(room):
     create_user_notification(
         host_id,
         "⚠️ Bạn đã thoát trận",
-        f"Phòng đã đóng vì trình duyệt của bạn Offline. Bạn bị trừ {ROOM_ABANDON_PENALTY} RP và mất chuỗi thắng.",
+        f"Phòng đã đóng do bạn Offline. RP bị trừ: {abs(int(penalty_delta or 0))}.",
         "/matches",
         "host_browser_offline_penalty",
     )
@@ -258,7 +258,7 @@ def close_room_with_timeout_penalty(room, offender_role, reason):
     create_user_notification(
         offender_id,
         "⏱️ Trận bị tính là bỏ trận",
-        f"Bạn bị trừ {abs(int(penalty_delta or -penalty_amount))} RP vì {reason.lower()}",
+        f"Bạn bị tính bỏ trận; RP bị trừ: {abs(int(penalty_delta or 0))}. {reason}",
         "/matches",
         "room_timeout_penalty",
     )

@@ -1,3 +1,12 @@
+## V1.6.43 — Quy tắc RP Rank
+
+- Hai giới hạn độc lập: số trận (10 ngày thường / 20 cuối tuần) và RP cơ bản dương (+180 / +250). Mọi ngày theo giờ Việt Nam 00:00.
+- Trận vượt giới hạn lượt luôn nhận 0 RP, 0 thưởng chuỗi và không cập nhật chuỗi; giới hạn lượt được tính theo trận đã bắt đầu.
+- RP cơ bản không vượt trần dương trong ngày; người đã đạt trần không bị trừ RP khi thua; thưởng chuỗi hợp lệ và thưởng tuần cộng riêng ngoài trần.
+- Dữ liệu `matches.rp_details.daily_rank_limits.positive_rp_cap` ghi rõ base_applied và streak_bonus để giới hạn không đếm nhầm thưởng.
+- Admin replay phải thống nhất với live policy; không thay đổi created_at; không hồi tố điểm các trận đã xác nhận bằng cách tự động chạy rebuild trên deploy.
+- Cơ chế C1, giao hữu và Zcoin hoàn toàn tách khỏi giới hạn RP Rank.
+
 ## V1.6.42
 
 - Với Jinja `{% extends %}`, CSS phải nằm trong block được template cha render (vd `page_styles`); không đặt CSS trôi nổi ngoài block.
