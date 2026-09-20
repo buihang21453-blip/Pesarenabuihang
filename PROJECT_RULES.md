@@ -1,3 +1,8 @@
+## V1.6.42
+
+- Với Jinja `{% extends %}`, CSS phải nằm trong block được template cha render (vd `page_styles`); không đặt CSS trôi nổi ngoài block.
+- Giới hạn kích thước và chỉ áp dụng CSS QR trong trang Đăng ký; không ảnh hưởng QR của trang khác.
+
 ## V1.6.41
 
 - UI preview CLB lỗi không được chặn quyền bấm Ready; service có trách nhiệm từ chối bắt đầu khi CLB không hợp lệ.

@@ -1,3 +1,9 @@
+## V1.6.42
+
+- `templates/register.html`: CSS thẻ nhóm Zalo nằm trong `page_styles`; giới hạn kích thước QR và căn giữa trên mobile/desktop.
+- `app.py`, `templates/admin_parts/c1_gd2_clubs.html`: đồng bộ nhãn version.
+- Không đổi route, model, database, logic C1, Rank hoặc tài khoản.
+
 ## V1.6.41
 
 - `templates/partials/c1_fixed_waiting_controls.html`: nút Sẵn sàng độc lập với preview CLB, cho khách thử lại/hủy khi start lỗi.

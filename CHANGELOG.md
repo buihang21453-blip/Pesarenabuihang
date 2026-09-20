@@ -1,3 +1,9 @@
+## V1.6.42 — Thu gọn QR trang Đăng ký
+
+- Đưa CSS QR Zalo vào `page_styles` của Jinja (CSS trước đây nằm ngoài block và bị bỏ qua khi render template kế thừa).
+- Giới hạn QR 112 × 112 px trên desktop, 100 × 100 px trên mobile, căn giữa trong thẻ Zalo.
+- Giữ liên kết nhóm Zalo, không đổi nghiệp vụ đăng ký, API hoặc DB. Không cần SQL mới.
+
 ## V1.6.41 — Rà soát sẵn sàng C1 GĐ2, chặn nhầm xử lý Rank
 
 - Gỡ điều kiện dữ liệu xem trước CLB chặn nút Sẵn sàng của khách; bấm nút luôn được, việc bắt đầu chỉ diễn ra sau khi service xác minh CLB/đối thủ/trạng thái.

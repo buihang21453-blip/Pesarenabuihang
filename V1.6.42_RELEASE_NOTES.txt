@@ -1,0 +1,4 @@
+PES Arena V1.6.42 — Thu gọn ảnh QR đăng ký
+- CSS QR chuyển vào Jinja page_styles để trình duyệt nhận đúng.
+- QR 112px desktop, 100px mobile, căn giữa, giữ liên kết Zalo.
+- Không thay đổi backend, database, API hay nghiệp vụ đăng ký. Không cần SQL.
