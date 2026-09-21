@@ -3,7 +3,11 @@
 {% block content %}
 {% set room_room_viewer_is_host = viewer_is_host|default(false) %}
 {% set room_viewer_is_guest = viewer_is_guest|default(false) %}
-<div id="roomLiveShell" class="room-view-shell room-layout-v137" data-room-style="{{ room_visual_style|default('default') }}" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}" data-room-guest-id="{{ room.guest_user_id|default('', true)|e }}" style="--room-mode-logo-bg-opacity: {{ (room_mode_logo_config.background_opacity|default(0)) / 100 }}; --room-mode-logo-scale: {{ (room_mode_logo_config.scale|default(100)) / 100 }}; --room-mode-dock-logo-scale: {{ (room_mode_logo_config.dock_scale|default(135)) / 100 }}; --room-panel-height: {{ room_panel_layout_config.panel_height|default(600) }}px; --room-center-stage-padding: {{ room_center_design_config.stage_padding|default(18) }}px; --room-center-stage-gap: {{ room_center_design_config.stage_gap|default(18) }}px; --room-center-mode-width: {{ room_center_design_config.mode_width|default(320) }}px; --room-center-mode-padding: {{ room_center_design_config.mode_padding|default(13) }}px; --room-center-vs-size: {{ room_center_design_config.vs_size|default(150) }}px; --room-center-score-width: {{ room_center_design_config.score_width|default(340) }}px; --room-center-score-padding: {{ room_center_design_config.score_padding|default(14) }}px; --room-center-score-input-height: {{ room_center_design_config.score_input_height|default(44) }}px; --room-center-action-height: {{ room_center_design_config.action_height|default(46) }}px;" data-center-bars="{{ 'visible' if room_panel_layout_config.center_bars_visible|default(true) else 'hidden' }}" data-center-layout="{{ room_center_design_config.vertical_layout|default('compact') }}">
+{% set room_ui_mode = 'c1' if is_tournament_room else 'rank' %}
+{% set room_stage_subtitle_rank = room.match_mode_label ~ ' • 1 vs 1' %}
+{% set room_stage_subtitle_c1 = ('C1 GĐ2 • CLB CỐ ĐỊNH THEO HLV • 1 vs 1' if tournament_fixed_club_mode else 'C1 GĐ1 • RANDOM CLB • 1 vs 1') %}
+{% set room_stage_subtitle_mini = 'MINI CUP • THI ĐẤU LOẠI TRỰC TIẾP • 1 vs 1' %}
+<div id="roomLiveShell" class="room-view-shell room-layout-v137 room-ui-mode-{{ room_ui_mode }}" data-base-room-mode="{{ room_ui_mode }}" data-room-ui-mode="{{ room_ui_mode }}" data-room-style="{{ room_visual_style|default('default') }}" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}" data-room-guest-id="{{ room.guest_user_id|default('', true)|e }}" style="--room-mode-logo-bg-opacity: {{ (room_mode_logo_config.background_opacity|default(0)) / 100 }}; --room-mode-logo-scale: {{ (room_mode_logo_config.scale|default(100)) / 100 }}; --room-mode-dock-logo-scale: {{ (room_mode_logo_config.dock_scale|default(135)) / 100 }}; --room-panel-height: {{ room_panel_layout_config.panel_height|default(600) }}px; --room-center-stage-padding: {{ room_center_design_config.stage_padding|default(18) }}px; --room-center-stage-gap: {{ room_center_design_config.stage_gap|default(18) }}px; --room-center-mode-width: {{ room_center_design_config.mode_width|default(320) }}px; --room-center-mode-padding: {{ room_center_design_config.mode_padding|default(13) }}px; --room-center-vs-size: {{ room_center_design_config.vs_size|default(150) }}px; --room-center-score-width: {{ room_center_design_config.score_width|default(340) }}px; --room-center-score-padding: {{ room_center_design_config.score_padding|default(14) }}px; --room-center-score-input-height: {{ room_center_design_config.score_input_height|default(44) }}px; --room-center-action-height: {{ room_center_design_config.action_height|default(46) }}px;" data-center-bars="{{ 'visible' if room_panel_layout_config.center_bars_visible|default(true) else 'hidden' }}" data-center-layout="{{ room_center_design_config.vertical_layout|default('compact') }}">
 
 {% include "_streak_animation.html" %}
 
@@ -12,7 +16,7 @@
         <div class="room-stage-title-wrap">
             <div>
                 <h1 class="room-stage-title">{% if is_tournament_room %}PHÒNG ĐẤU C1{% else %}PHÒNG ĐẤU{% endif %} <span class="room-code-badge">#{{ room.room_code }}</span></h1>
-                <p class="room-stage-subtitle">{% if is_tournament_room %}{% if tournament_fixed_club_mode %}C1 GĐ2 • CLB CỐ ĐỊNH THEO HLV • 1 vs 1{% else %}C1 GĐ1 • RANDOM CLB • 1 vs 1{% endif %}{% else %}{{ room.match_mode_label }} • 1 vs 1{% endif %}</p>
+                <p class="room-stage-subtitle" data-room-mode-subtitle data-mode-rank="{{ room_stage_subtitle_rank }}" data-mode-c1="{{ room_stage_subtitle_c1 }}" data-mode-mini="{{ room_stage_subtitle_mini }}">{% if is_tournament_room %}{{ room_stage_subtitle_c1 }}{% else %}{{ room_stage_subtitle_rank }}{% endif %}</p>
             </div>
         </div>
         {% if room.status == 'waiting_ready' and not room.has_guest and (room_room_viewer_is_host or current_user.role == 'admin') %}
@@ -31,6 +35,47 @@
             <span id="roomShareStatus" class="room-share-status" role="status" aria-live="polite"></span>
         </div>
         {% endif %}
+    </div>
+
+    <div class="room-mode-switch-strip panel">
+        <div class="room-mode-switch-grid">
+            {% if not is_tournament_room %}
+            <button class="room-mode-switch-card is-active" type="button" data-room-layout-tab="rank">
+                <span class="room-mode-switch-kicker">RANK</span>
+                <strong>Xếp hạng</strong>
+            </button>
+            {% else %}
+            <button class="room-mode-switch-card" type="button" onclick="event.preventDefault(); document.getElementById('quickCreateRoomForm').submit();">
+                <span class="room-mode-switch-kicker">RANK</span>
+                <strong>Xếp hạng</strong>
+            </button>
+            {% endif %}
+
+            {% if is_tournament_room %}
+            <button class="room-mode-switch-card is-active" type="button" data-room-layout-tab="c1">
+                <span class="room-mode-switch-kicker">C1</span>
+                <strong>Giải đấu</strong>
+            </button>
+            {% else %}
+            <button class="room-mode-switch-card" type="button" onclick="event.preventDefault(); document.getElementById('quickCreateC1RoomForm').submit();">
+                <span class="room-mode-switch-kicker">C1</span>
+                <strong>Giải đấu</strong>
+            </button>
+            {% endif %}
+
+            {% if not is_tournament_room %}
+            <button class="room-mode-switch-card" type="button" data-room-layout-tab="mini_cup">
+                <span class="room-mode-switch-kicker">MINI CUP</span>
+                <strong>Đấu cúp</strong>
+            </button>
+            {% else %}
+            <button class="room-mode-switch-card is-disabled" type="button" disabled title="Mini Cup dùng chung khung Phòng đấu thường">
+                <span class="room-mode-switch-kicker">MINI CUP</span>
+                <strong>Đấu cúp</strong>
+            </button>
+            {% endif %}
+        </div>
+        <p class="room-mode-switch-note">Một giao diện chung cho nhiều chức năng. Với phòng thường, bạn có thể đổi layout <strong>Rank ↔ Mini Cup</strong>; với phòng giải, tab <strong>C1</strong> dùng chung khung này.</p>
     </div>
 
     <div class="room-match-shell room-arena-frame">
@@ -100,6 +145,41 @@
         </section>
 
         <section class="room-center-stage-plain" aria-label="Khu vực điều khiển trận đấu">
+            <div class="room-mode-layout-hero" aria-label="Bố cục chế độ phòng đấu">
+                <div class="room-mode-layout-card" data-layout-mode="rank">
+                    <div class="room-mode-layout-copy">
+                        <span class="room-mode-layout-kicker">RANK</span>
+                        <strong>Phòng đấu Xếp hạng</strong>
+                        <p>Tìm nhanh đối thủ, chọn chế độ phù hợp và vào trận ngay trong cùng một giao diện.</p>
+                    </div>
+                    <div class="room-mode-layout-pills">
+                        <span>1 vs 1</span><span>Random</span><span>RP</span>
+                    </div>
+                </div>
+                {% if is_tournament_room %}
+                <div class="room-mode-layout-card" data-layout-mode="c1">
+                    <div class="room-mode-layout-copy">
+                        <span class="room-mode-layout-kicker">C1</span>
+                        <strong>Phòng đấu C1</strong>
+                        <p>Dùng cùng khung phòng đấu nhưng ưu tiên lịch giải, thể thức lượt đi/lượt về và xác nhận kết quả ngay trong phòng.</p>
+                    </div>
+                    <div class="room-mode-layout-pills">
+                        <span>Giải đấu</span><span>1 vs 1</span><span>Xác nhận tỷ số</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="room-mode-layout-card" data-layout-mode="mini_cup">
+                    <div class="room-mode-layout-copy">
+                        <span class="room-mode-layout-kicker">MINI CUP</span>
+                        <strong>Phòng đấu Mini Cup</strong>
+                        <p>Giữ nguyên khung phòng đấu nhưng đổi không khí sang thi đấu cúp: gọn hơn, nhanh hơn và phù hợp giải nhỏ.</p>
+                    </div>
+                    <div class="room-mode-layout-pills">
+                        <span>Đấu cúp</span><span>Knockout</span><span>1 trận duy nhất</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
             {# UI Rank selector uses system_features.rank_standard_enabled; visible label: RANDOM #}
         {% include "partials/room_mode_center_display.html" %}
 
@@ -545,6 +625,34 @@
 .c1-center-result-wrap{width:100%;margin-top:12px}.c1-center-result-wrap>.panel{margin:0!important;padding:14px!important;border-color:rgba(245,184,55,.28)!important;background:rgba(8,12,20,.72)}.c1-center-result-wrap form{justify-content:center}.c1-center-result-wrap .room-result-review{text-align:center}.room-center-c1-random-wrap{display:flex;justify-content:center;width:100%}.c1-random-center{width:min(330px,92%);min-height:88px;border:1px solid rgba(245,184,55,.55);box-shadow:0 0 22px rgba(245,184,55,.12)}.c1-random-center:not(.disabled){cursor:pointer;border-color:#f5b837;box-shadow:0 0 30px rgba(245,184,55,.25)}
 .tournament-only-random-card{border:1px solid rgba(245,184,55,.35);background:linear-gradient(135deg,rgba(245,184,55,.08),rgba(255,255,255,.02));}
 .tournament-room-mode-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}.tournament-room-mode-head h3{margin:0 0 6px}.tournament-pool-badge{display:inline-flex;align-items:center;min-height:32px;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.16);font-size:12px;font-weight:700}.tournament-mode-rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}.tournament-mode-rules span{padding:9px 10px;border:1px solid rgba(255,255,255,.1);border-radius:9px;font-size:13px}.tournament-random-action{display:flex;justify-content:center;margin-top:14px}.tournament-random-btn{min-width:220px;font-size:16px;font-weight:800}.tournament-room-wait,.tournament-room-live{text-align:center;margin:14px 0 0;font-weight:700}@media(max-width:640px){.tournament-mode-rules{grid-template-columns:1fr}.tournament-room-mode-head{display:block}.tournament-pool-badge{margin-top:8px}}
+
+.room-mode-switch-strip{margin:14px 0 18px;padding:16px 18px;background:linear-gradient(180deg,rgba(7,21,54,.92),rgba(5,15,40,.88));border:1px solid rgba(90,163,255,.18)}
+.room-mode-switch-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.room-mode-switch-card{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;min-height:78px;padding:14px 18px;border-radius:18px;border:1px solid rgba(98,164,255,.2);background:linear-gradient(180deg,rgba(11,25,58,.98),rgba(6,18,42,.98));color:#eef5ff;cursor:pointer;transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;text-align:left}
+.room-mode-switch-card:hover{transform:translateY(-1px);border-color:rgba(241,202,104,.58);box-shadow:0 12px 26px rgba(0,0,0,.28)}
+.room-mode-switch-card.is-active{border-color:rgba(241,202,104,.88);background:linear-gradient(180deg,rgba(62,48,8,.95),rgba(20,27,53,.98));box-shadow:0 0 0 1px rgba(241,202,104,.16) inset,0 18px 32px rgba(0,0,0,.32)}
+.room-mode-switch-card.is-disabled{opacity:.56;cursor:not-allowed}
+.room-mode-switch-kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#f1ca68;font-weight:900}
+.room-mode-switch-card strong{font-size:20px;line-height:1.1}
+.room-mode-switch-note{margin:12px 2px 0;color:#a8bfdc;font-size:13px}
+.room-mode-layout-hero{margin:0 0 14px;display:block}
+.room-mode-layout-card{display:none;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border-radius:18px;border:1px solid rgba(91,160,255,.18);background:linear-gradient(135deg,rgba(8,23,54,.94),rgba(6,17,38,.96));box-shadow:0 10px 22px rgba(0,0,0,.2)}
+.room-mode-layout-copy{display:flex;flex-direction:column;gap:4px}
+.room-mode-layout-kicker{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#f1ca68;font-weight:900}
+.room-mode-layout-copy strong{font-size:24px;color:#fff}
+.room-mode-layout-copy p{margin:0;color:#bdd1ec;font-size:13px;max-width:760px}
+.room-mode-layout-pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.room-mode-layout-pills span{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);font-size:12px;font-weight:800;color:#f4f8ff}
+#roomLiveShell[data-room-ui-mode="rank"] .room-mode-layout-card[data-layout-mode="rank"],
+#roomLiveShell[data-room-ui-mode="c1"] .room-mode-layout-card[data-layout-mode="c1"],
+#roomLiveShell[data-room-ui-mode="mini_cup"] .room-mode-layout-card[data-layout-mode="mini_cup"]{display:flex}
+#roomLiveShell[data-room-ui-mode="mini_cup"] .room-center-stage-plain{background:linear-gradient(180deg,rgba(9,22,43,.96),rgba(16,13,37,.98));box-shadow:0 0 0 1px rgba(255,97,145,.1) inset,0 22px 48px rgba(0,0,0,.32)}
+#roomLiveShell[data-room-ui-mode="mini_cup"] .room-mode-layout-card[data-layout-mode="mini_cup"]{border-color:rgba(255,84,132,.34);background:linear-gradient(135deg,rgba(20,16,50,.96),rgba(43,10,34,.96))}
+#roomLiveShell[data-room-ui-mode="mini_cup"] .room-mode-layout-card[data-layout-mode="mini_cup"] .room-mode-layout-kicker{color:#ff77a8}
+#roomLiveShell[data-room-ui-mode="mini_cup"] .room-stage-topbar{background:linear-gradient(90deg,rgba(8,24,55,.92),rgba(43,10,34,.92));border-color:rgba(255,109,154,.24)}
+#roomLiveShell[data-room-ui-mode="mini_cup"] .room-match-shell{box-shadow:0 24px 44px rgba(0,0,0,.36),0 0 0 1px rgba(255,93,154,.08) inset}
+@media(max-width:980px){.room-mode-switch-grid{grid-template-columns:1fr}.room-mode-layout-card{flex-direction:column;align-items:flex-start}.room-mode-layout-pills{justify-content:flex-start}}
+
 </style>
     {% include "partials/tournament_room_invite.html" %}
 {% if is_tournament_room and tournament_meta and tournament_fixed_club_mode %}
@@ -865,6 +973,8 @@ const currentRoomUserIsHost = {{ (room_room_viewer_is_host or current_user.role 
 const currentRoomUserIsGuest = {{ (room_viewer_is_guest)|tojson }};
 const currentRoomIsTournament = {{ (is_tournament_room)|tojson }};
 const currentRoomPath = {{ url_for('room_detail', room_id=room.id)|tojson }};
+const currentRoomRefreshPath = {{ (request.full_path[:-1] if request.full_path.endswith('?') else request.full_path)|tojson }};
+const ROOM_LAYOUT_STORAGE_KEY = "pes_arena_room_layout_mode";
 
 let roomCountdownSeconds = 0;
 let roomStartCountdownSeconds = 0;
@@ -1070,8 +1180,59 @@ function getFlashFromDocument(doc) {
     };
 }
 
+function getSavedRoomLayoutMode() {
+    try {
+        return window.localStorage ? localStorage.getItem(ROOM_LAYOUT_STORAGE_KEY) || "" : "";
+    } catch (error) {
+        return "";
+    }
+}
+
+function applyRoomLayoutMode(mode) {
+    const shell = document.getElementById("roomLiveShell");
+    if (!shell) return;
+    const baseMode = shell.dataset.baseRoomMode || "rank";
+    const effectiveMode = baseMode === "c1" ? "c1" : (mode === "mini_cup" ? "mini_cup" : "rank");
+    shell.dataset.roomUiMode = effectiveMode;
+    shell.classList.remove("room-ui-mode-rank", "room-ui-mode-mini_cup", "room-ui-mode-c1");
+    shell.classList.add(`room-ui-mode-${effectiveMode}`);
+
+    const subtitle = shell.querySelector("[data-room-mode-subtitle]");
+    if (subtitle) {
+        if (effectiveMode === "mini_cup") subtitle.textContent = subtitle.dataset.modeMini || subtitle.textContent;
+        else if (effectiveMode === "c1") subtitle.textContent = subtitle.dataset.modeC1 || subtitle.textContent;
+        else subtitle.textContent = subtitle.dataset.modeRank || subtitle.textContent;
+    }
+
+    shell.querySelectorAll("[data-room-layout-tab]").forEach(function (button) {
+        button.classList.toggle("is-active", button.dataset.roomLayoutTab === effectiveMode);
+    });
+
+    if (baseMode !== "c1") {
+        try {
+            if (window.localStorage) localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, effectiveMode);
+        } catch (error) {}
+    }
+}
+
+function bindRoomModeTabs() {
+    const shell = document.getElementById("roomLiveShell");
+    if (!shell) return;
+    shell.querySelectorAll("[data-room-layout-tab]").forEach(function (button) {
+        if (button.dataset.roomLayoutBound === "1") return;
+        button.dataset.roomLayoutBound = "1";
+        button.addEventListener("click", function () {
+            applyRoomLayoutMode(button.dataset.roomLayoutTab || "rank");
+        });
+    });
+    const baseMode = shell.dataset.baseRoomMode || "rank";
+    const preferredMode = baseMode === "c1" ? "c1" : getSavedRoomLayoutMode() || "rank";
+    applyRoomLayoutMode(preferredMode);
+}
+
 function rebindRoomDynamicUi() {
     bindRoomShareButton();
+    bindRoomModeTabs();
     bindRoomScoreDraft();
     bindRoomAjaxForms();
     if (typeof bindRoomChatForm === "function") bindRoomChatForm();
@@ -1116,7 +1277,7 @@ async function refreshRoomView() {
     if (roomViewRefreshInFlight || roomStateStopped) return false;
     roomViewRefreshInFlight = true;
     try {
-        const result = await fetchRoomDocument(currentRoomPath);
+        const result = await fetchRoomDocument(currentRoomRefreshPath);
         if (!result.response.ok) return false;
         return replaceRoomShellFromDocument(result.doc);
     } catch (error) {

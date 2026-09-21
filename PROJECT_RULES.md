@@ -1,3 +1,10 @@
+## V1.6.44 — Quy tắc Phòng đấu đa chức năng
+
+- Một khung Phòng đấu có thể chứa nhiều layout, nhưng **không được trộn logic nghiệp vụ** giữa Rank, C1 và Mini Cup.
+- Tab **C1** phải tiếp tục dùng luồng Phòng đấu C1 hiện tại; không được làm mất metadata trận giải hoặc quyền truy cập của 2 HLV.
+- **Mini Cup** ở version này là lớp giao diện/layout trong phòng thường; chưa tự ý sinh backend hoặc DB mới nếu chưa có đặc tả giải Mini Cup hoàn chỉnh.
+- Khi đổi layout trong cùng phòng thường, các khối chức năng sẵn có (Parsec, lịch sử phòng, lịch sử đối đầu, hành động trận) phải tiếp tục hoạt động như cũ.
+
 ## V1.6.43 — Quy tắc RP Rank
 
 - Hai giới hạn độc lập: số trận (10 ngày thường / 20 cuối tuần) và RP cơ bản dương (+180 / +250). Mọi ngày theo giờ Việt Nam 00:00.

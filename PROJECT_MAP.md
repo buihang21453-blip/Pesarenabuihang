@@ -1,3 +1,10 @@
+## V1.6.44 — Phòng đấu đa chức năng
+
+- `templates/room_detail.html`: thêm thanh chọn chế độ phía trên, hero theo chế độ và CSS/JS đổi layout trong cùng một giao diện.
+- `app.py`: bump `APP_VERSION` lên `V1.6.44`.
+- `templates/admin_parts/c1_gd2_clubs.html`: đồng bộ nhãn version hiển thị.
+- Không thêm route, không thay đổi database hay API; tận dụng luồng Phòng đấu thường và Phòng đấu C1 hiện có.
+
 ## V1.6.43 — Bộ giới hạn RP Rank
 
 - `modules/rank_daily_policy.py`: quy tắc thuần Python xác định giới hạn 10/180 ngày thường, 20/250 cuối tuần và tách RP cơ bản/thưởng chuỗi.

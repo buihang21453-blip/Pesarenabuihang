@@ -1,3 +1,12 @@
+## V1.6.44 — Phòng đấu đa chức năng với thanh chọn chế độ
+
+- Nâng Phòng đấu thành một khung giao diện đa chức năng với thanh chọn chế độ phía trên gồm **RANK / C1 / MINI CUP**.
+- Giữ chung một giao diện phòng đấu, nhưng bổ sung layout hiển thị khác nhau theo từng chế độ để dễ mở rộng về sau.
+- Tab **RANK** và **MINI CUP** dùng chung phòng thường; **MINI CUP** hiện là layout giao diện trong cùng phòng để duyệt thiết kế và dùng làm nền triển khai tiếp.
+- Tab **C1** đưa người dùng vào luồng Phòng đấu C1 hiện có, không phá vỡ logic giải đấu đang dùng.
+- Bổ sung hero/header theo chế độ, ghi nhớ layout Mini Cup ở trình duyệt và vẫn giữ nguyên các khối Parsec, lịch sử phòng, lịch sử đối đầu.
+- Chỉ thay đổi giao diện/template + JavaScript phía client; không đổi schema, không cần SQL mới.
+
 ## V1.6.43 — RP 180/250 ngày thường/cuối tuần, trần chỉ áp dụng RP cơ bản
 
 - Thứ Hai–Thứ Sáu: 10 trận Rank có tính RP; trần +180 RP cơ bản/ngày.
