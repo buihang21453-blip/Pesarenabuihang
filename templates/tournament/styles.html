@@ -99,4 +99,20 @@
 @media(max-width:760px){.c1-lobby-my-days{grid-template-columns:1fr}}
 
 .c1-lobby-av-error{color:#f2c778;background:rgba(164,83,20,.13);border:1px solid rgba(242,199,120,.25);border-radius:7px;padding:6px 8px;font-size:11px}
+
+/* V1.6.49 — countdown GĐ2: start time, end time, actual time remaining. */
+.c1-gd2-clock{margin:12px 0 15px;padding:14px 16px;border-radius:14px;border:1px solid rgba(241,202,104,.35);background:linear-gradient(120deg,rgba(16,34,53,.98),rgba(6,20,33,.98));box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.c1-gd2-clock-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.c1-gd2-clock-head strong{font-size:15px;color:#f1ca68;letter-spacing:.035em}
+.c1-gd2-clock-head>span{font-size:11px;color:#a7d4f3;font-weight:800}
+.c1-gd2-clock-dates{display:flex;gap:8px 24px;align-items:center;flex-wrap:wrap;margin-top:9px;color:#c4d3e2;font-size:12px}
+.c1-gd2-clock-dates b{color:#fff;font-variant-numeric:tabular-nums}.c1-gd2-clock-dates small{color:#94abc0}
+.c1-gd2-clock-caption{font-size:12px;color:#e9f1fa;font-weight:800;margin-top:12px;margin-bottom:7px}
+.c1-gd2-clock-units{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;max-width:520px}
+.c1-gd2-clock-units>div{min-width:0;text-align:center;padding:9px 6px;background:#051420;border:1px solid rgba(241,202,104,.22);border-radius:10px}
+.c1-gd2-clock-units b{display:block;color:#f1ca68;font-size:24px;font-variant-numeric:tabular-nums;line-height:1.1}
+.c1-gd2-clock-units small{display:block;color:#9caebf;font-size:10px;margin-top:4px;text-transform:uppercase}
+.c1-gd2-clock[data-phase="ended"] .c1-gd2-clock-units b{color:#9baebd}
+.c1-gd2-clock[data-phase="active"] .c1-gd2-clock-head>span{color:#84e3aa}
+@media(max-width:520px){.c1-gd2-clock{padding:12px}.c1-gd2-clock-dates{display:grid;gap:5px}.c1-gd2-clock-units b{font-size:20px}.c1-gd2-clock-units{gap:5px}}
 </style>

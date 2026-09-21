@@ -144,7 +144,7 @@ def get_team_tier(team_name):
 
 
 def build_friendly_random3_state(host_player, guest_player):
-    """Chia 3 CLB mỗi bên; tránh đội trong 5 trận gần nhất với đúng đối thủ."""
+    """Chia 3 CLB mỗi bên; cấm trùng CLB của 5 trận Rank gần nhất mỗi HLV."""
     if not host_player or not guest_player:
         raise ValueError("Không tải được thông tin Rank của hai người chơi.")
 
@@ -153,9 +153,10 @@ def build_friendly_random3_state(host_player, guest_player):
         raise ValueError("Cần ít nhất 6 CLB để dùng Random 3 chọn 1.")
 
     picked_names = []
-    selected_history = {
-        "host": _recent_pair_team_names(host_player.get("id"), guest_player.get("id")),
-        "guest": _recent_pair_team_names(guest_player.get("id"), host_player.get("id")),
+    # Chỉ đọc lịch sử một lần cho từng HLV trong mỗi lượt quay 6 CLB.
+    recent_history_by_side = {
+        "host": _recent_rank_team_names(host_player.get("id")),
+        "guest": _recent_rank_team_names(guest_player.get("id")),
     }
 
     def pack(team):
@@ -170,17 +171,14 @@ def build_friendly_random3_state(host_player, guest_player):
 
     def pick_three(player, side):
         options = []
-        opponent_id = guest_player.get("id") if side == "host" else host_player.get("id")
         for _ in range(3):
-            # picked_names là danh sách cấm cứng để 6 lựa chọn của hai bên
-            # không bao giờ trùng nhau. Lịch sử đối đầu là danh sách cấm mềm:
-            # hệ thống ưu tiên tránh, nhưng có thể nới khi pool Tier đã cạn.
+            # Không lặp trong 6 lựa chọn hiện tại hoặc 5 trận Rank gần nhất.
+            # Khi pool cạn, báo lỗi thay vì cấp lại CLB đang bị khóa.
             team, _, _, _ = _pick_rank_team(
                 player,
                 all_teams,
                 extra_excluded=picked_names,
-                opponent_id=opponent_id,
-                include_pair_history=True,
+                recent_history=recent_history_by_side[side],
             )
             name = team.get("display")
             picked_names.append(name)
@@ -427,37 +425,27 @@ def _nearest_rank_tier_candidates(tier_weights, teams, excluded_names):
     return selected_tier, candidates
 
 
-def _pick_rank_team(player, all_teams, extra_excluded=None, opponent_id=None, include_pair_history=True):
+def _pick_rank_team(player, all_teams, extra_excluded=None, opponent_id=None,
+                    include_pair_history=True, recent_history=None):
+    """Random theo Tier, khóa cứng CLB đã cấp trong 5 trận Rank gần nhất.
+
+    opponent_id được giữ trong chữ ký để tương thích với lời gọi cũ, nhưng
+    lịch sử được tính theo HLV xuyên mọi đối thủ, không còn giới hạn theo cặp.
+    """
     level = get_rank_level(player.get("rank_points", 0))
     tier_weights = get_rank_tier_weights(level)
-    recent = (
-        _recent_pair_team_names(player.get("id"), opponent_id)
-        if include_pair_history and opponent_id
-        else []
-    )
-    # extra là danh sách cấm cứng (đội đã xuất hiện trong lượt hiện tại).
-    # recent là danh sách cấm mềm (đội đã dùng trong lịch sử đối đầu gần đây).
-    extra = list(extra_excluded or [])
-    strict_excluded = list(dict.fromkeys(recent + extra))
-
-    selected_tier, candidates = _weighted_tier_choice(tier_weights, all_teams, strict_excluded)
+    recent = (list(recent_history) if recent_history is not None
+              else _recent_rank_team_names(player.get("id")))
+    excluded = list(dict.fromkeys(list(recent) + list(extra_excluded or [])))
+    selected_tier, candidates = _weighted_tier_choice(tier_weights, all_teams, excluded)
     if not candidates:
         selected_tier, candidates = _nearest_rank_tier_candidates(
-            tier_weights, all_teams, strict_excluded
+            tier_weights, all_teams, excluded
         )
-
-    # Nếu lịch sử 5 trận làm cạn toàn bộ pool, nới riêng lịch sử nhưng vẫn
-    # tuyệt đối không cho trùng đội trong 6 lựa chọn của lượt hiện tại.
-    if not candidates and recent:
-        selected_tier, candidates = _weighted_tier_choice(tier_weights, all_teams, extra)
-        if not candidates:
-            selected_tier, candidates = _nearest_rank_tier_candidates(
-                tier_weights, all_teams, extra
-            )
-
     if not candidates:
         raise ValueError(
-            f"Không đủ CLB hoạt động để tạo lựa chọn cho rank {load_rank_ranges()[level]['name']}."
+            "Không còn đủ CLB hợp lệ sau khi loại đội đã sử dụng trong 5 trận Rank "
+            "gần nhất. Hãy liên hệ Admin bổ sung CLB hoạt động; không quay lặp đội."
         )
     return random.choice(candidates), selected_tier, tier_weights, recent
 
@@ -470,7 +458,7 @@ def get_smart_random_rule(player_a, player_b):
         "level_b": level_b,
         "rank_gap": abs(level_a - level_b),
         "advantage": "Mỗi Rank có tỷ lệ xuất hiện Tier CLB riêng.",
-        "summary": "Random theo tỷ lệ Tier riêng; tránh CLB đã dùng trong 5 trận confirmed gần nhất với đúng đối thủ, dùng chung cả Rank thường và Random 3 chọn 1; hai bên không trùng CLB.",
+        "summary": "Random theo tỷ lệ Tier riêng; cấm lặp CLB đã cấp cho mỗi HLV ở 5 trận Rank gần nhất với mọi đối thủ, áp dụng Rank thường và Random 3 chọn 1; hai bên không trùng CLB.",
         "rule_a": get_rank_tier_weights(level_a),
         "rule_b": get_rank_tier_weights(level_b),
     }
@@ -483,30 +471,16 @@ def smart_random_team_pair(player_a, player_b):
         raise ValueError("Không đủ dữ liệu CLB để Smart Random.")
 
     team_a, tier_a_selected, weights_a, recent_a = _pick_rank_team(
-        player_a, all_teams, opponent_id=player_b.get("id")
+        player_a, all_teams
     )
     team_b, tier_b_selected, weights_b, recent_b = _pick_rank_team(
         player_b,
         all_teams,
         extra_excluded=[team_a.get("display")],
-        opponent_id=player_a.get("id"),
     )
 
-    if str(team_a.get("display")).casefold() == str(team_b.get("display")).casefold():
-        allowed_b = set(weights_b.keys())
-        excluded_b = {
-            _normalize_team_name(name)
-            for name in list(recent_b) + [team_a.get("display")]
-            if name
-        }
-        alternatives = [
-            team for team in all_teams
-            if _normalize_team_name(team.get("display")) not in excluded_b
-            and str(team.get("tier") or "").upper() in allowed_b
-        ]
-        if not alternatives:
-            raise ValueError("Không tìm được hai CLB khác nhau trong các Tier phù hợp.")
-        team_b = random.choice(alternatives)
+    if _normalize_team_name(team_a.get("display")) == _normalize_team_name(team_b.get("display")):
+        raise ValueError("Hai HLV không được nhận cùng một CLB trong trận Rank.")
 
     return {
         "mode": SMART_RANDOM_MODE,

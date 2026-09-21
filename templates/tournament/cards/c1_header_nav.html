@@ -13,6 +13,28 @@
             <div class="timer"><div class="unit"><b data-cd-d>0</b><span>Ngày</span></div><div class="unit"><b data-cd-h>0</b><span>Giờ</span></div><div class="unit"><b data-cd-m>0</b><span>Phút</span></div><div class="unit"><b data-cd-s>0</b><span>Giây</span></div></div>
           </div>
           {% endif %}
+          {# V1.6.49: GĐ2 clock reads the existing saved start/end fields. #}
+          <section class="c1-gd2-clock" data-c1-gd2-clock
+                   data-start="{{ tournament.league_start_at or '' }}"
+                   data-end="{{ tournament.league_end_at or '' }}"
+                   aria-label="Đồng hồ thời gian Giai đoạn 2">
+            <div class="c1-gd2-clock-head">
+              <strong>⏱️ GIAI ĐOẠN 2 · C1</strong>
+              <span data-gd2-clock-status>Đang kiểm tra mốc thời gian…</span>
+            </div>
+            <div class="c1-gd2-clock-dates">
+              <span>🚩 Khởi tranh: <b>{{ tournament.league_start_label or 'Chưa thiết lập' }}</b></span>
+              <span>🏁 Kết thúc: <b>{{ tournament.league_end_label or 'Chưa thiết lập' }}</b></span>
+              <small>Múi giờ Việt Nam (UTC+7)</small>
+            </div>
+            <div class="c1-gd2-clock-caption" data-gd2-clock-caption>Thời gian còn lại</div>
+            <div class="c1-gd2-clock-units" role="timer" aria-live="off">
+              <div><b data-gd2-d>--</b><small>Ngày</small></div>
+              <div><b data-gd2-h>--</b><small>Giờ</small></div>
+              <div><b data-gd2-m>--</b><small>Phút</small></div>
+              <div><b data-gd2-s>--</b><small>Giây</small></div>
+            </div>
+          </section>
           {% if not tournament.needs_availability_gate %}
           <nav class="tournament-quick-nav" data-tournament-quick-nav aria-label="Điều hướng giải đấu">
             <a class="tournament-quick-tab" data-nav-key="ranking" href="{{ url_for('tournaments') }}#ranking"><span class="tab-icon">📊</span><span class="tab-label">BXH</span></a>

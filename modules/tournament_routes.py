@@ -791,6 +791,17 @@ def register_routes(context):
                 item["stage1_end_at"] = timing.get("stage1_end_at")
                 item["stage1_extension_end_at"] = timing.get("stage1_extension_end_at")
                 item["league_end_at"] = timing.get("league_end_at")
+                # V1.6.49: derive displayed VN labels from saved tournament timing;
+                # never assume a GĐ2 completion deadline if Admin did not set one.
+                def _gd2_vn_label(raw):
+                    dt = _parse_tournament_dt(raw)
+                    if dt is None:
+                        return None
+                    vn = timezone(timedelta(hours=7))
+                    dt = dt.replace(tzinfo=vn) if dt.tzinfo is None else dt.astimezone(vn)
+                    return dt.strftime("%H:%M · %d/%m/%Y")
+                item["league_start_label"] = _gd2_vn_label(item["league_start_at"])
+                item["league_end_label"] = _gd2_vn_label(item["league_end_at"])
                 item["stage1_early_end_at"] = timing.get("stage1_early_end_at")
 
                 # V1.5.61: Tiến trình giải là dữ liệu công khai của giải, không phụ thuộc landing_hub/member.

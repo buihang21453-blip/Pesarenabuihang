@@ -1,0 +1,2 @@
+PES ARENA V1.6.49 — Đồng hồ Giai đoạn 2 C1
+Hiển thị giờ khởi tranh, thời gian còn lại đến hạn kết thúc GĐ2 trên trang Giải đấu. Đếm ngược theo thời gian đã lưu, cập nhật mỗi giây. Nếu chưa có hạn kết thúc thì hiển thị chưa thiết lập. Không có SQL mới.

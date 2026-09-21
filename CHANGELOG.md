@@ -1,3 +1,19 @@
+## V1.6.49 — Đồng hồ đếm ngược GĐ2 C1
+
+- Trang Giải đấu C1 hiển thị giờ khởi tranh và hạn kết thúc GĐ2 theo cấu hình Admin đã lưu (giờ Việt Nam).
+- Trước giờ khởi tranh: đếm đến giờ bắt đầu; trong khoảng GĐ2: đếm thời gian còn lại đến hạn kết thúc; sau hạn: hiển thị đã hết thời gian.
+- Chưa đặt hạn kết thúc: báo chưa thiết lập thay vì tự bịa ngày; không can thiệp mở/đóng giải.
+- Đồng hồ cập nhật mỗi giây, responsive; không chỉnh database, RP, lịch thi đấu hoặc trạng thái giải.
+
+## V1.6.48 — Chặn CLB lặp trong 5 trận Rank gần nhất
+
+- Sửa cơ chế Smart Random: tra trực tiếp 5 trận Rank gần nhất **của từng HLV, không phụ thuộc đối thủ**, thay vì chỉ 5 trận gặp đúng một đối thủ.
+- Áp dụng khóa cứng CLB đã dùng cho Rank Random 1 đội, Random 3 chọn 1 và Random Selection Match (3 CLB); không còn nhánh tự nới lỏng lịch sử khi pool Tier cạn. Chuyển sang Tier khác có CLB hợp lệ; nếu toàn bộ pool đều hết thì thông báo, không quay trùng.
+- Lịch sử gồm những trận đã cấp CLB, kể cả trận đang đấu/đang chờ xác nhận và trường hợp bỏ cuộc sau khi đã quay. Trận hủy trước lúc quay không chiếm một trong 5 lượt.
+- Truy vấn `matches` trực tiếp để tránh cache lịch sử chậm cập nhật; tính 5 **trận**, riêng Random Selection Match đưa cả 3 CLB trong cùng trận vào danh sách cấm.
+- Nếu không đọc được lịch sử sẽ chặn quay và báo lỗi thay vì bỏ kiểm tra. Giữ tỷ lệ Tier theo Rank khi còn đội hợp lệ và không ảnh hưởng giao hữu/C1.
+- Thêm kiểm thử hồi quy `tests/test_rank_random_no_repeat_v1648.py`. Không thay đổi database hoặc SQL.
+
 ## V1.6.47 — Căn giữa ba chế độ trên thanh phòng đấu, tạm ẩn logo
 
 - Bỏ thẻ ảnh `pes-arena-room-logo.webp` chỉ trong `room-stage-topbar` của Phòng đấu. Không xóa tài nguyên logo khỏi dự án.

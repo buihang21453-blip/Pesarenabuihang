@@ -1,3 +1,17 @@
+## V1.6.49 — Quy tắc hiển thị thời gian C1 GĐ2
+
+- Mốc khởi tranh và hạn kết thúc phải đọc từ `competition_timing.league_start_at` / `league_end_at`; định dạng múi giờ Việt Nam (UTC+7).
+- Không suy diễn giờ kết thúc khi chưa có cấu hình; không lấy giờ hiện tại thay thế.
+- Đồng hồ chỉ hiển thị, không thay đổi trạng thái giải, không bắt đầu/kết thúc giải, không ghi DB.
+- Trước giờ khởi tranh đếm đến start; sau start đếm đến end; sau end về 0 và hiển thị hết giờ.
+
+## V1.6.48 — Quy tắc chống lặp CLB Rank
+
+- Mỗi HLV bị khóa toàn bộ CLB đã được sử dụng/cấp trong 5 trận Rank gần nhất trên mọi đối thủ; sau 5 trận hợp lệ khác mới có thể quay lại CLB cũ.
+- Random Selection Match có 3 đội cùng trận: khóa đủ 3 CLB nhưng chỉ tính là 1 trận trong cửa sổ 5 trận. Random 3 chọn 1 phải có 6 lựa chọn khác nhau; đội đã cấp trong 5 trận gần nhất không nằm trong lựa chọn.
+- Khi tỷ lệ Tier ban đầu không còn CLB hợp lệ, tìm Tier gần nhất còn CLB hợp lệ theo chính cơ chế Rank; không được nới danh sách lịch sử. Nếu hết pool thì dừng và báo lỗi.
+- Khi lịch sử Supabase không đọc được, từ chối quay, không lặng lẽ bỏ khóa. Chỉ áp dụng Rank; không đưa cơ chế này vào C1 hoặc giao hữu.
+
 ## V1.6.47 — Thanh chế độ
 
 - Chỉ ẩn logo `pes-arena-room-logo.webp` trong thanh tiêu đề Phòng đấu; giữ nguyên file/URL logo ở nơi khác.

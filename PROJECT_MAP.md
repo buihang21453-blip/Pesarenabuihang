@@ -1,3 +1,20 @@
+## V1.6.49 — Đồng hồ GĐ2 C1
+
+- `modules/tournament_routes.py`: thêm nhãn giờ khởi tranh/hạn kết thúc GĐ2 theo Asia/Ho_Chi_Minh từ competition_timing.
+- `templates/tournament/cards/c1_header_nav.html`: hiển thị khung giờ và đồng hồ GĐ2 dưới thông tin giải.
+- `templates/tournament/scripts/page_scripts.html`: đếm ngược phía trình duyệt theo thời gian ISO được server cung cấp, xử lý thiếu hạn và hết giờ.
+- `templates/tournament/styles.html`: định dạng responsive của đồng hồ.
+- `tests/test_c1_gd2_clock_v1649.py`: kiểm tra template, kịch bản đồng hồ, không ảnh hưởng dữ liệu.
+- `app.py`, `templates/admin_parts/c1_gd2_clubs.html`: đồng bộ phiên bản V1.6.49.
+- Không cần SQL mới.
+
+## V1.6.48 — Chống trùng CLB xuyên đối thủ (Rank)
+
+- `app.py`: phiên bản `V1.6.48`; `_recent_rank_team_names` lấy trực tiếp 5 trận Rank có CLB đã cấp của từng HLV trong `matches`, bao gồm Random Selection Match.
+- `modules/legacy_team_random_service.py`: `_pick_rank_team` loại cứng danh sách 5 trận; `smart_random_team_pair` và `build_friendly_random3_state` áp dụng cùng quy tắc; giữ phân bố Tier và không trùng 2 phía/6 lựa chọn.
+- `tests/test_rank_random_no_repeat_v1648.py`: kiểm thử lịch sử nhiều đối thủ, hai vị trí chủ/khách, lựa chọn ba đội, thiếu pool và lỗi truy vấn.
+- Không thay đổi route, form, `tournament_matches`, schema, SQL hoặc nghiệp vụ C1.
+
 ## V1.6.47 — Header Phòng đấu
 
 - `templates/room_detail.html`: bỏ thẻ img logo tại topbar, đặt 3 mode buttons ở grid column giữa với hai cột hai bên có kích thước bằng nhau; responsive có hàng thứ hai.

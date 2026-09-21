@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.6.47"
+APP_VERSION = "V1.6.49"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -1251,53 +1251,64 @@ _rank_tier_config_cache = {"value": None, "expires_at": 0.0}
 
 
 
-def _recent_pair_team_names(user_id, opponent_id, limit=RECENT_TEAM_EXCLUSION_COUNT):
-    """CLB người chơi đã dùng trong N trận confirmed gần nhất với đúng đối thủ.
+def _recent_rank_team_names(user_id, limit=RECENT_TEAM_EXCLUSION_COUNT):
+    """CLB đã được cấp cho người chơi trong 5 trận Rank gần nhất, bất kỳ đối thủ nào.
 
-    Lịch sử dùng chung cho Rank thường và Random 3 chọn 1. Khi đổi đối thủ,
-    danh sách chống lặp tự tách theo cặp người chơi mới.
+    Truy vấn trực tiếp bảng matches (không dùng list_matches/cache có thể bị trễ).
+    Chỉ đếm những trận có CLB thật; trận hủy trước khi quay đội không chiếm lượt.
+    Random Selection Match có thể dùng 3 CLB nên phải tách đủ cả ba tên.
+    Nếu lịch sử không đọc được, chặn quay để không vô tình vi phạm cấm lặp.
     """
-    if not user_id or not opponent_id:
-        return []
-    names = []
+    if not user_id:
+        raise ValueError("Không xác định được HLV để kiểm tra 5 trận Rank gần nhất.")
     try:
-        matches = sorted(
-            list_matches(),
-            key=lambda item: str(item.get("created_at") or item.get("updated_at") or ""),
-            reverse=True,
-        )
-        for match in matches:
-            if str(match.get("status") or "").lower() != "confirmed":
-                continue
-            p1 = match.get("player1_id")
-            p2 = match.get("player2_id")
-            if p1 == user_id and p2 == opponent_id:
-                name = match.get("team1")
-            elif p2 == user_id and p1 == opponent_id:
-                name = match.get("team2")
-            else:
-                continue
-            if name:
-                names.append(str(name).strip())
-            if len(names) >= limit:
-                break
+        limit = max(1, int(limit))
+        columns = "id,player1_id,player2_id,team1,team2,status,note,created_at,updated_at"
+        rows = []
+        for column in ("player1_id", "player2_id"):
+            result = execute_query(
+                db.table("matches").select(columns)
+                .eq(column, user_id).order("created_at", desc=True).limit(100),
+                f"recent_rank_teams_{column}", attempts=2,
+            )
+            rows.extend(result.data or [])
     except Exception as exc:
-        print(f"recent_pair_team_history warning: {exc}")
-    return names
+        app.logger.warning("recent_rank_team_history lookup failed user=%s: %s", user_id, exc)
+        raise ValueError("Không đọc được lịch sử 5 trận Rank gần nhất. Hãy thử quay lại sau.") from exc
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    recent = []
+    recent_match_count = 0
+    seen_match_ids = set()
+    rows.sort(
+        key=lambda match: (
+            str(match.get("created_at") or match.get("updated_at") or ""),
+            str(match.get("id") or ""),
+        ), reverse=True,
+    )
+    for match in rows:
+        match_id = str(match.get("id") or "")
+        if match_id and match_id in seen_match_ids:
+            continue
+        if match_id:
+            seen_match_ids.add(match_id)
+        status = str(match.get("status") or "").lower()
+        if status not in {"playing", "pending", "waiting_confirm", "processing_result", "confirmed", "disputed", "resolved"}:
+            # Bỏ cuộc sau khi đã quay đội cũng là một lần sử dụng đội.
+            if status != "cancelled" or "[FORFEIT:" not in str(match.get("note") or "").upper():
+                continue
+        name = (match.get("team1") if str(match.get("player1_id")) == str(user_id)
+                else match.get("team2") if str(match.get("player2_id")) == str(user_id) else None)
+        name = str(name or "").strip()
+        if not name or name.casefold() in {"chưa quay đội", "chưa chọn đội", "3 clb random"}:
+            continue
+        # Lịch sử Random Selection Match lưu ba tên chung một trường.
+        is_selection = "[mode:random_selection_match]" in str(match.get("note") or "").lower()
+        clubs = name.split(" + ") if is_selection else [name]
+        recent.extend(club.strip() for club in clubs if club.strip())
+        recent_match_count += 1
+        if recent_match_count >= limit:
+            break
+    return recent
 
 
 

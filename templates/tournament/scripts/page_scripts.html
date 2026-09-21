@@ -1,4 +1,38 @@
 <script>
+/* V1.6.49: client-only clock; deadlines always read from persisted server values. */
+(function(){
+  var clocks=Array.from(document.querySelectorAll('[data-c1-gd2-clock]'));
+  if(!clocks.length)return;
+  function render(box){
+    var start=Date.parse(box.dataset.start||''), end=Date.parse(box.dataset.end||'');
+    var now=Date.now(), phase, target, caption, status;
+    if(!Number.isFinite(start)){
+      phase='unconfigured';caption='Chưa có mốc giờ khởi tranh';status='Admin chưa thiết lập lịch GĐ2';
+    }else if(now<start){
+      phase='upcoming';target=start;caption='Đếm ngược đến giờ khởi tranh';status='Sắp khởi tranh';
+    }else if(!Number.isFinite(end)){
+      phase='unconfigured';caption='Chưa thiết lập hạn kết thúc GĐ2';status='Đã đến giờ khởi tranh dự kiến';
+    }else if(now<end){
+      phase='active';target=end;caption='Thời gian còn lại của GĐ2';status='Đang trong thời gian GĐ2';
+    }else{
+      phase='ended';target=end;caption='Đã hết thời gian GĐ2';status='Đã đến hạn kết thúc';
+    }
+    box.dataset.phase=phase;
+    var label=box.querySelector('[data-gd2-clock-status]');if(label)label.textContent=status;
+    label=box.querySelector('[data-gd2-clock-caption]');if(label)label.textContent=caption;
+    var remaining=Number.isFinite(target)?Math.max(0,Math.floor((target-now)/1000)):null;
+    var parts=remaining===null?['--','--','--','--']:[
+      Math.floor(remaining/86400),Math.floor((remaining%86400)/3600),
+      Math.floor((remaining%3600)/60),remaining%60
+    ];
+    ['d','h','m','s'].forEach(function(k,i){var el=box.querySelector('[data-gd2-'+k+']');if(el)el.textContent=parts[i];});
+  }
+  function tick(){clocks.forEach(render);}
+  tick();window.setInterval(tick,1000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)tick();});
+})();
+</script>
+<script>
 (function(){
   // V1.5.75: cập nhật Host đang rảnh ngay trong Sảnh chờ cho mọi viewer đã đăng nhập
   // (bao gồm 2 tài khoản test và Admin), không cần F5 trang.
