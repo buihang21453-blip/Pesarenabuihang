@@ -1,3 +1,8 @@
+## V1.6.46 — Thanh chế độ cùng hàng tiêu đề
+
+- Ba tab mode là phần tử con trong `.room-stage-topbar`, không tạo panel riêng phía dưới và không che logo/chia sẻ.
+- Responsive tại 1120px/620px chỉ xuống dòng bên trong topbar; không thay đổi hành vi, quyền truy cập và cơ chế C1/Rank; Mini Cup chưa phải backend giải đấu.
+
 ## V1.6.45 — Thanh chế độ không chiếm không gian trận đấu
 
 - Chỉ hiển thị ba nút chế độ ngắn gọn phía trên; không đặt lời giải thích dài hoặc các banner trùng lặp làm mất diện tích phòng đấu.

@@ -1,3 +1,9 @@
+## V1.6.46 — Thanh mode trong topbar
+
+- `templates/room_detail.html`: tái bố trí HTML thanh mode vào `.room-stage-topbar` và CSS grid responsive; JS điều khiển mode giữ nguyên.
+- `app.py`, `templates/admin_parts/c1_gd2_clubs.html`: đồng bộ version V1.6.46.
+- `tests/test_room_mode_header_v1646.py`: kiểm tra vị trí nav trong topbar, thứ tự 3 tab và CSS responsive. Không thêm endpoint, bảng hay SQL.
+
 ## V1.6.45 — Giao diện thanh chế độ gọn
 
 - `templates/room_detail.html`: loại phần diễn giải và hero banner theo mode; CSS nút chế độ chiều cao nhỏ, tối đa 670px, responsive. Giữ nguyên liên kết route và JS đổi mode.

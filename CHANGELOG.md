@@ -1,3 +1,9 @@
+## V1.6.46 — Đưa 3 chế độ lên thanh tiêu đề Phòng đấu
+
+- Di chuyển RANK / C1 / MINI CUP vào chính `.room-stage-topbar`, nằm giữa tiêu đề phòng và nút Chia sẻ phòng; xóa hàng chế độ riêng bên dưới.
+- Chuyển logo PES Arena sang vị trí cột trái để tránh đè lên thanh tab; bố cục desktop một hàng, màn hình hẹp tự xuống hàng bên trong chính topbar.
+- Giữ nguyên hành vi tab, luồng phòng C1, Mini Cup chỉ là layout hiển thị như V1.6.45; không sửa backend/DB/API. Không có SQL mới.
+
 ## V1.6.45 — Thu gọn thanh chế độ Phòng đấu
 
 - Bỏ hoàn toàn đoạn diễn giải "Một giao diện chung cho nhiều chức năng..." phía dưới thanh chọn chế độ.

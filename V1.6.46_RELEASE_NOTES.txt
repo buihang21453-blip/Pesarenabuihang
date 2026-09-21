@@ -1,0 +1,4 @@
+PES ARENA V1.6.46 — CHUYỂN THANH CHỌN RANK / C1 / MINI CUP VÀO TOPBAR
+- Ba nút nằm ngay trong thanh PHÒNG ĐẤU, giữa tiêu đề và chia sẻ.
+- Thu gọn và responsive; không còn hàng chế độ riêng bên dưới.
+- Giữ logic C1, Rank, Mini Cup layout; không SQL mới.
