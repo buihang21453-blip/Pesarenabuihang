@@ -12,7 +12,6 @@
 {% include "_streak_animation.html" %}
 
     <div class="room-stage-topbar panel">
-        <img class="room-stage-arena-logo" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/pes-arena-room-logo.webp" alt="PES Arena" loading="eager">
         <div class="room-stage-title-wrap">
             <div>
                 <h1 class="room-stage-title">{% if is_tournament_room %}PHÒNG ĐẤU C1{% else %}PHÒNG ĐẤU{% endif %} <span class="room-code-badge">#{{ room.room_code }}</span></h1>
@@ -604,64 +603,50 @@
 #roomLiveShell[data-room-ui-mode="mini_cup"] .room-match-shell{box-shadow:0 24px 44px rgba(0,0,0,.36),0 0 0 1px rgba(255,93,154,.08) inset}
 @media(max-width:560px){.room-mode-switch-strip{padding:5px}.room-mode-switch-grid{gap:4px}.room-mode-switch-card{flex-direction:column;gap:2px;min-height:42px;padding:5px 2px}.room-mode-switch-kicker{font-size:11px}.room-mode-switch-card strong{font-size:10px}}
 
-/* V1.6.46: three mode tabs live INSIDE the room title bar (no extra strip). */
+/* V1.6.47: no room logo; equal side tracks keep the three mode buttons centered. */
 #roomLiveShell .room-stage-topbar{
   display:grid;
-  grid-template-columns:clamp(82px,9vw,150px) minmax(175px,1fr) minmax(350px,520px) auto;
+  grid-template-columns:minmax(205px,1fr) minmax(315px,520px) minmax(205px,1fr);
   align-items:center;
-  column-gap:clamp(10px,1.4vw,24px);
-  row-gap:10px;
-  min-height:76px;
+  column-gap:clamp(10px,1.2vw,22px);
+  row-gap:8px;
+  min-height:68px;
   padding:10px 16px;
   overflow:visible;
 }
-#roomLiveShell .room-stage-topbar .room-stage-arena-logo{
-  position:static;
-  width:100%;
-  max-width:150px;
-  max-height:54px;
-  transform:none;
-  object-fit:contain;
-  justify-self:start;
-  z-index:2;
+#roomLiveShell .room-stage-topbar .room-stage-title-wrap{
+  grid-column:1;grid-row:1;min-width:0;justify-self:start;
 }
-#roomLiveShell .room-stage-topbar .room-stage-title-wrap{min-width:0;grid-column:2}
 #roomLiveShell .room-stage-topbar .room-stage-title{font-size:clamp(19px,1.55vw,28px);gap:6px}
 #roomLiveShell .room-stage-topbar .room-code-badge{font-size:12px;padding:4px 7px;border-radius:7px}
 #roomLiveShell .room-stage-topbar .room-stage-subtitle{font-size:11px;margin-top:3px;line-height:1.35}
 #roomLiveShell .room-stage-topbar .room-mode-switch-strip{
-  grid-column:3;
-  display:block;
-  min-width:0;
-  width:100%;
-  margin:0;
-  padding:0;
-  border:0;
-  border-radius:0;
-  background:transparent;
-  box-shadow:none;
-  position:relative;
-  z-index:3;
+  grid-column:2;grid-row:1;justify-self:center;
+  display:block;min-width:0;width:100%;max-width:520px;
+  margin:0;padding:0;border:0;border-radius:0;
+  background:transparent;box-shadow:none;position:relative;z-index:3;
 }
 #roomLiveShell .room-stage-topbar .room-mode-switch-grid{max-width:none;gap:5px;margin:0}
 #roomLiveShell .room-stage-topbar .room-mode-switch-card{min-height:39px;padding:5px 6px;gap:5px;border-radius:8px}
 #roomLiveShell .room-stage-topbar .room-mode-switch-kicker{font-size:11px}
 #roomLiveShell .room-stage-topbar .room-mode-switch-card strong{font-size:11px}
-#roomLiveShell .room-stage-topbar .room-stage-share-wrap{grid-column:4;min-width:0}
+#roomLiveShell .room-stage-topbar .room-stage-share-wrap{
+  grid-column:3;grid-row:1;min-width:0;justify-self:end;
+}
 #roomLiveShell .room-stage-topbar .room-share-button{min-width:145px;min-height:42px;padding:6px 9px;gap:7px}
 #roomLiveShell .room-stage-topbar .room-share-icon{width:26px;height:26px;font-size:14px}
 #roomLiveShell .room-stage-topbar .room-share-copy strong{font-size:12px}
 #roomLiveShell .room-stage-topbar .room-share-copy small{font-size:10px;margin-top:2px}
 @media(max-width:1120px){
-  #roomLiveShell .room-stage-topbar{grid-template-columns:76px minmax(0,1fr) auto;}
-  #roomLiveShell .room-stage-topbar .room-stage-arena-logo{grid-column:1;grid-row:1;max-height:50px}
-  #roomLiveShell .room-stage-topbar .room-stage-title-wrap{grid-column:2;grid-row:1}
-  #roomLiveShell .room-stage-topbar .room-stage-share-wrap{grid-column:3;grid-row:1}
-  #roomLiveShell .room-stage-topbar .room-mode-switch-strip{grid-column:1/-1;grid-row:2;justify-self:center;max-width:550px}
+  #roomLiveShell .room-stage-topbar{grid-template-columns:minmax(0,1fr) auto;}
+  #roomLiveShell .room-stage-topbar .room-stage-title-wrap{grid-column:1;grid-row:1}
+  #roomLiveShell .room-stage-topbar .room-stage-share-wrap{grid-column:2;grid-row:1}
+  #roomLiveShell .room-stage-topbar .room-mode-switch-strip{
+    grid-column:1/-1;grid-row:2;justify-self:center;max-width:520px;
+  }
 }
 @media(max-width:620px){
-  #roomLiveShell .room-stage-topbar{grid-template-columns:54px minmax(0,1fr) auto;padding:9px;column-gap:7px}
-  #roomLiveShell .room-stage-topbar .room-stage-arena-logo{max-height:36px}
+  #roomLiveShell .room-stage-topbar{padding:9px;column-gap:7px}
   #roomLiveShell .room-stage-topbar .room-stage-title{font-size:18px}
   #roomLiveShell .room-stage-topbar .room-stage-subtitle{font-size:10px}
   #roomLiveShell .room-stage-topbar .room-share-button{min-width:36px;width:38px;height:38px;min-height:38px;padding:5px}

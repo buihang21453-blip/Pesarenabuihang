@@ -1,3 +1,10 @@
+## V1.6.47 — Header Phòng đấu
+
+- `templates/room_detail.html`: bỏ thẻ img logo tại topbar, đặt 3 mode buttons ở grid column giữa với hai cột hai bên có kích thước bằng nhau; responsive có hàng thứ hai.
+- `app.py`, `templates/admin_parts/c1_gd2_clubs.html`: version V1.6.47.
+- `tests/test_room_mode_header_v1647.py`: xác nhận logo không xuất hiện trong header, thứ tự vùng, CSS center và breakpoint.
+- Không thay đổi nghiệp vụ, Supabase/API/DB.
+
 ## V1.6.46 — Thanh mode trong topbar
 
 - `templates/room_detail.html`: tái bố trí HTML thanh mode vào `.room-stage-topbar` và CSS grid responsive; JS điều khiển mode giữ nguyên.

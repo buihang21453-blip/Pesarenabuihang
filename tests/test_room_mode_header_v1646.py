@@ -41,11 +41,11 @@ class RoomModeHeaderTests(unittest.TestCase):
         self.assertIn('function bindRoomModeTabs()', self.source)
 
     def test_responsive_header_layout(self):
-        self.assertIn('/* V1.6.46: three mode tabs live INSIDE', self.source)
-        self.assertIn('grid-column:3;', self.source)
+        self.assertIn('three mode buttons centered', self.source)
+        self.assertIn('grid-column:2;grid-row:1;justify-self:center;', self.source)
         self.assertIn('@media(max-width:1120px)', self.source)
         self.assertIn('@media(max-width:620px)', self.source)
-        self.assertIn('position:static;', self.source)
+        self.assertNotIn('room-stage-arena-logo', self.source.split('<div class="room-stage-topbar panel">',1)[1].split('<div class="room-match-shell room-arena-frame">',1)[0])
 
 
 if __name__ == '__main__':

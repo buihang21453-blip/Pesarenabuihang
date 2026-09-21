@@ -1,3 +1,10 @@
+## V1.6.47 — Căn giữa ba chế độ trên thanh phòng đấu, tạm ẩn logo
+
+- Bỏ thẻ ảnh `pes-arena-room-logo.webp` chỉ trong `room-stage-topbar` của Phòng đấu. Không xóa tài nguyên logo khỏi dự án.
+- Desktop: topbar có ba cột với hai cột ngoài rộng bằng nhau; tiêu đề ở cột trái, bộ nút RANK / C1 / MINI CUP căn chính giữa, Chia sẻ phòng ở cột phải. Vẫn căn giữa nếu nút Chia sẻ không hiển thị.
+- Màn hình hẹp: thanh chế độ tự xuống hàng thứ hai bên trong topbar, không tràn hoặc đè tiêu đề.
+- Giữ nguyên nghiệp vụ Rank/C1 và trạng thái Mini Cup chỉ là layout; không thay đổi route/API/DB, không SQL.
+
 ## V1.6.46 — Đưa 3 chế độ lên thanh tiêu đề Phòng đấu
 
 - Di chuyển RANK / C1 / MINI CUP vào chính `.room-stage-topbar`, nằm giữa tiêu đề phòng và nút Chia sẻ phòng; xóa hàng chế độ riêng bên dưới.

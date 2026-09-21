@@ -1,3 +1,9 @@
+## V1.6.47 — Thanh chế độ
+
+- Chỉ ẩn logo `pes-arena-room-logo.webp` trong thanh tiêu đề Phòng đấu; giữ nguyên file/URL logo ở nơi khác.
+- Thanh RANK / C1 / MINI CUP phải nằm chính giữa khu vực topbar trên desktop, bất kể nút Chia sẻ phòng có hiển thị hay không.
+- Với viewport hẹp, bố cục được xuống hàng trong topbar, không chồng lên nội dung. Không sửa logic chuyển phòng C1 hoặc trạng thái nghiệp vụ Mini Cup.
+
 ## V1.6.46 — Thanh chế độ cùng hàng tiêu đề
 
 - Ba tab mode là phần tử con trong `.room-stage-topbar`, không tạo panel riêng phía dưới và không che logo/chia sẻ.
