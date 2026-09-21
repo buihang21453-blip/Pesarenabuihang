@@ -1,0 +1,8 @@
+# V1.6.14 — Vé Random lại CLB / UX HLV
+
+1. Làm mới giao diện hiển thị vé thưởng sớm GĐ1 và vé Random lại CLB sau GĐ2 trên /tournaments.
+2. Hiển thị đúng hạn dùng vé theo mốc Admin đã cấu hình thay vì text cố định.
+3. Bổ sung trạng thái rõ ràng: chờ đủ 16 CLB, đang dùng vé, đã chốt cuối cùng, hết hạn.
+4. Bổ sung popup xác nhận phong cách PES Arena khi dùng vé / random lại / chốt CLB.
+5. Bổ sung overlay loading “Đang Random CLB...” để thao tác của HLV rõ ràng hơn.
+6. Giữ nguyên logic backend cấp vé và tiêu vé, chỉ làm rõ luồng thao tác và UX phía HLV.

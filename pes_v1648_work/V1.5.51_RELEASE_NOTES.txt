@@ -1,0 +1,9 @@
+PES ARENA V1.5.51 - DIRECT C1 ROOM + MOVE SCHEDULE TO BOTTOM
+
+- Nút Phòng đấu C1 tại /tournaments POST trực tiếp c1_room_open với tournament_id.
+- Nếu HLV đã có phòng C1 đang hoạt động: vào thẳng room_detail.
+- Nếu chưa có phòng: tạo Phòng C1 thật và redirect thẳng room_detail.
+- Không đi qua trang trung gian /c1-rooms trong luồng bình thường.
+- Chuyển Đối thủ của tôi xuống cuối nội dung giải.
+- Chuyển Lịch thi đấu / Giờ rảnh và Lịch của đối thủ xuống cuối nội dung giải.
+- Giữ link Lịch của tôi trỏ #schedule.

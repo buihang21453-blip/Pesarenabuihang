@@ -1,0 +1,7 @@
+PES ARENA V1.5.62
+
+- Khôi phục gate bắt buộc khai báo giờ rảnh ngay trên /tournaments.
+- HLV thật và tài khoản test: chưa có giờ rảnh => chỉ thấy ĐẶT LỊCH THI ĐẤU 3 ngày + Giờ linh hoạt.
+- Khi gate khóa: ẩn Phòng đấu C1, BXH, Phòng thi đấu, Đối thủ, Lịch đối thủ.
+- Lưu ít nhất một khung giờ => mở toàn bộ giao diện giải.
+- Admin được miễn gate.

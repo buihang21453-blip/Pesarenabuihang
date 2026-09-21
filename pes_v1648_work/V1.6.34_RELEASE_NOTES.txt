@@ -1,0 +1,5 @@
+PES Arena V1.6.34
+- Lịch của tôi: xanh dương. Chỉ khung giờ đối thủ khớp ngày + giờ mới tô xanh lá.
+- Admin: thanh chọn ở đầu trang với 2 phần loại trừ nhau: toàn bộ 16 HLV hoặc Góc nhìn HLV.
+- Mặc định Admin mở bảng tổng quan; chọn tên HLV chuyển thẳng sang Góc nhìn HLV.
+- Không cần SQL mới.

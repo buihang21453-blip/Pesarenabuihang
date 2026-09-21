@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Phòng đấu C1 - PES Arena{% endblock %}
+{% block content %}
+<style>
+.c1-enter{max-width:760px;margin:20px auto;background:#0c1722;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:22px}.c1-enter h1{margin:4px 0 8px}.c1-enter p{color:#9fb0be;line-height:1.6}.c1-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+</style>
+<section class="c1-enter">
+  <small>CHAMPION LEAGUE ARENA</small>
+  <h1>🏆 Phòng đấu C1</h1>
+  <p>Vẫn sử dụng <strong>Phòng đấu C1</strong> hiện tại. Khi trận thuộc GĐ2, phòng tự chuyển giao diện CLB cố định theo HLV: vào phòng → bắt đầu trận → nhập tỷ số → đối thủ xác nhận. Điểm GĐ2 cộng dồn với GĐ1 trên cùng BXH C1.</p>
+  {% if is_c1_admin and not member %}<p>👑 Admin đang vào bằng chính tài khoản Admin. Đây không phải chế độ “Xem như HLV” khác.</p>{% endif %}
+  <div class="c1-actions">
+    <form method="post" action="{{ url_for('c1_room_open') }}"><input type="hidden" name="tournament_id" value="{{ tournament.id }}"><button class="btn green" type="submit">🎮 Vào phòng đấu C1</button></form>
+    <a class="btn" href="{{ url_for('tournaments') }}">← Giải đấu</a>
+  </div>
+</section>
+{% endblock %}

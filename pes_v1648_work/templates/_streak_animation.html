@@ -1,0 +1,41 @@
+<!-- MODULE: PES STREAK ANIMATION -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/streak_animation.css') }}?v=1.14.0">
+
+{% if room.streak_event %}
+<div id="winStreakToast"
+     class="streak-toast"
+     data-event-id="{{ room.streak_event.id }}"
+     data-kind="{{ room.streak_event.kind }}"
+     data-title="{{ room.streak_event.title }}"
+     data-duration="{{ room.streak_event.toast_duration or 6000 }}">
+    <div class="streak-toast-mark" aria-hidden="true"><span></span></div>
+    <div class="streak-toast-copy">
+        <small>{{ room.streak_event.toast_title or 'THÔNG BÁO HỆ THỐNG' }}</small>
+        <div><strong>{{ room.streak_event.title }}</strong> {{ room.streak_event.subtitle }}</div>
+    </div>
+    <button type="button" class="streak-toast-close" aria-label="Đóng thông báo">×</button>
+</div>
+
+<div id="winStreakAnnouncement"
+     class="streak-scene"
+     data-event-id="{{ room.streak_event.id }}"
+     data-kind="{{ room.streak_event.kind }}"
+     data-title="{{ room.streak_event.title }}"
+     data-duration="{{ room.streak_event.overlay_duration or 4000 }}"
+     role="status" aria-live="polite">
+    <div class="streak-dimmer"></div>
+    <div class="streak-rays" aria-hidden="true"></div>
+    <div class="streak-particles" aria-hidden="true"></div>
+    <div class="streak-energy-line left" aria-hidden="true"></div>
+    <div class="streak-energy-line right" aria-hidden="true"></div>
+    <div class="streak-panel">
+        <div class="streak-panel-edge"></div>
+        <div class="streak-scan"></div>
+        <div class="streak-icon" aria-hidden="true"></div>
+        <strong class="streak-main-title">{{ room.streak_event.title }}</strong>
+        <span class="streak-main-subtitle">{{ room.streak_event.subtitle }}</span>
+    </div>
+</div>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/streak_animation.js') }}?v=1.14.0" defer></script>

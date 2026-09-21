@@ -1,0 +1,7 @@
+PES ARENA V1.5.45 - UNIFIED C1 ROOM FLOW
+
+- Phòng C1 chính thức và khu kiểm thử dùng chung một hàm reset/chuyển trạng thái sau khi xác nhận kết quả.
+- State chuẩn giống Rank: waiting_ready + guest_ready=False + xóa đội/tỷ số/match cũ.
+- Chỉ lớp dữ liệu khác nhau: giải chính thức dùng tournament_matches; khu kiểm thử dùng lịch sử riêng.
+- Dọn các nhãn C1 TEST / SANDBOX khỏi giao diện người chơi để tránh gây nhầm với phòng C1 chính thức.
+- Không thay đổi dữ liệu BXH/lịch giải chính thức khi dùng tài khoản thử nghiệm.

@@ -1,0 +1,10 @@
+<div class="tournament-section-grid">
+  {% for tournament in tournaments %}
+    {% if tournament.name == 'CHAMPION LEAGUE ARENA' %}
+      {% set hub=tournament.landing_hub|default(none) %}
+      {% include "tournament/cards/champions_league.html" %}
+    {% else %}
+      {% include "tournament/cards/generic.html" %}
+    {% endif %}
+  {% endfor %}
+</div>

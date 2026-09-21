@@ -1,0 +1,2 @@
+V1.5.89 | Bảo lưu vé thưởng sớm Top 1–3
+Không migration SQL mới. KHÔNG bấm lại nút ③ mở draft. Cần backup dữ liệu tournament_settings trước deploy; xác thực cả 3 HLV và 2 tài khoản test trước Production.

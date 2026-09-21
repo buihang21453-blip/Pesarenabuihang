@@ -1,0 +1,8 @@
+PES ARENA V1.5.39 - C1 Stage1 Continue Guard
+
+- Sửa lỗi sau Trận 1 cả Host và Guest vẫn thấy "✅ Cặp đấu đã hoàn tất".
+- Nguyên nhân: UI coi tournament_has_next_match=False là bằng chứng cặp đã hoàn tất; trong khi biến này có thể False khi truy vấn trạng thái trận kế tiếp thiếu/chậm/lỗi.
+- GĐ1 giờ chỉ hiện "Cặp đấu đã hoàn tất" khi tournament_pair_is_complete=True.
+- Nếu là stage1 và chưa chứng minh hoàn tất, luôn hiện nút "Đá Tiếp"; route nghiệp vụ sẽ kiểm tra/tìm/tạo leg 2.
+- room_rematch tự khôi phục stage_code và cặp HLV từ tournament_match hiện tại nếu metadata phòng cũ thiếu dữ liệu.
+- Không thay đổi luật Rank/Friendly và không tự sửa DB khi render trang.

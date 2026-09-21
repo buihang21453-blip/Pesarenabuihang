@@ -1,0 +1,6 @@
+PES Arena V1.5.94 — Admin GĐ2: sửa hai nút Random lại / Thu hồi CLB.
+- Không còn popup confirm của trình duyệt.
+- POST xử lý tại chỗ; chỉ tải lại khi server xác nhận SQL RPC hoàn tất 16 HLV.
+- Nếu không đáp ứng điều kiện, lỗi xuất hiện ngay dưới hai nút; không thay đổi dữ liệu.
+- Không cần SQL mới, nhưng bắt buộc SQL V1.5.90 và V1.5.91 phải được chạy thành công từ trước.
+- Chưa xác nhận trên Supabase Production; cần test các thao tác ở môi trường thử nghiệm trước.

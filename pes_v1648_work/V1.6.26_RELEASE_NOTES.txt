@@ -1,0 +1,5 @@
+PES Arena V1.6.26 — Host đang rảnh tự động
+- HLV thuộc giải có Host, online và không trong phòng sẽ tự động lên danh sách.
+- Bỏ hoàn toàn yêu cầu bật/tắt chế độ rảnh từ giao diện.
+- Admin và Sảnh chờ cập nhật mỗi 15 giây qua API đã có.
+- Không cần SQL mới.

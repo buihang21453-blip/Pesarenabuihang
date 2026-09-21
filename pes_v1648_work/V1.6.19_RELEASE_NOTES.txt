@@ -1,0 +1,5 @@
+V1.6.19 — Chẩn đoán lỗi sử dụng vé Random CLB
+
+Source tiếp tục dùng RPC nguyên tử V1.6.18, không thay đổi logic trừ vé/CLB.
+Không cần migration ghi dữ liệu mới; SQL_V1.6.19_DIAGNOSE_REROLL_READ_ONLY.sql chỉ đọc.
+Sau triển khai lấy SQLSTATE + lỗi Vercel cùng mã giao dịch để xác định lỗi thực.

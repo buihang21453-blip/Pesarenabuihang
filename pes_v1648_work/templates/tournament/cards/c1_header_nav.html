@@ -1,0 +1,26 @@
+          <div class="tournament-card-headline">
+            <h3 class="tournament-card-title">PES Arena Champions League</h3>
+            {% if tournament.registration_open %}
+              <button class="btn tournament-share-register header-share" type="button" data-share-path="{{ url_for('tournament_register_shortcut') }}">🔗 Chia sẻ</button>
+            {% endif %}
+          </div>
+          <div class="tournament-card-meta">
+            <span>👥 {{ tournament.member_count|default(0) }} HLV</span><span>•</span><span>◯ {{ tournament.phase_name|default('Đang diễn ra') }}</span>{% if tournament.stage1_start_label %}<span>•</span><span class="tournament-start-time">📅 Khởi tranh: <strong>{{ tournament.stage1_start_label }}</strong></span>{% endif %}
+          </div>
+          {% if tournament.show_stage1_start_countdown %}
+          <div class="tournament-public-countdown" data-public-countdown="{{ tournament.stage1_start_at }}">
+            <div class="label"><span>⏱️ Khai mạc GĐ1 sau</span><small>Ai cũng có thể theo dõi</small></div>
+            <div class="timer"><div class="unit"><b data-cd-d>0</b><span>Ngày</span></div><div class="unit"><b data-cd-h>0</b><span>Giờ</span></div><div class="unit"><b data-cd-m>0</b><span>Phút</span></div><div class="unit"><b data-cd-s>0</b><span>Giây</span></div></div>
+          </div>
+          {% endif %}
+          {% if not tournament.needs_availability_gate %}
+          <nav class="tournament-quick-nav" data-tournament-quick-nav aria-label="Điều hướng giải đấu">
+            <a class="tournament-quick-tab" data-nav-key="ranking" href="{{ url_for('tournaments') }}#ranking"><span class="tab-icon">📊</span><span class="tab-label">BXH</span></a>
+            <a class="tournament-quick-tab" data-nav-key="schedule" href="{{ url_for('tournaments') }}#schedule-{{ tournament.id }}"><span class="tab-icon">📅</span><span class="tab-label">Lịch của tôi</span></a>
+            <a class="tournament-quick-tab" data-nav-key="rooms" href="{{ url_for('admin_tournament_lobby',tournament_id=tournament.id) if tournament.can_admin_manage else url_for('tournaments') ~ '#rooms-' ~ tournament.id }}"><span class="tab-icon">🏟️</span><span class="tab-label">Sảnh chờ</span></a>
+            <form method="post" action="{{ url_for('c1_room_open') }}" class="tournament-quick-nav-form">
+              <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+              <button class="tournament-quick-tab" type="submit" data-nav-key="c1-room"><span class="tab-icon">🎮</span><span class="tab-label">Phòng đấu C1</span></button>
+            </form>
+          </nav>
+          {% endif %}

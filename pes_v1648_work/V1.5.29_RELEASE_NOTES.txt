@@ -1,0 +1,10 @@
+PES ARENA V1.5.29
+
+C1 - tự chuyển Trận 2 theo luồng Rank
+- Sau khi Host gửi kết quả Trận 1 và Guest xác nhận, phòng tự chuyển sang Trận 2 (waiting_ready).
+- Guest bấm Sẵn Sàng ngay trong phòng.
+- Khi Guest sẵn sàng, Host có thể Quay Đội Trận 2 ngay.
+- Bỏ bước Host phải bấm nút Trận 2 / Guest phải chờ Chủ phòng mở Trận 2.
+- Giữ nguyên kết quả Trận 1 và liên kết sang đúng leg còn lại của cùng cặp HLV.
+- Không thay đổi database schema/SQL.
+- Đồng bộ APP_VERSION lên V1.5.29.

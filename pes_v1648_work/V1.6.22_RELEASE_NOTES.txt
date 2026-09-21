@@ -1,0 +1,2 @@
+PES Arena V1.6.22 — BXH C1 gắn Tier HLV / CLB / Pot CLB
+BXH /tournaments hiển thị dữ liệu trực tiếp theo tournament_members; không thay đổi điểm, giải, vé hay schema. Không cần SQL mới.

@@ -1,0 +1,1 @@
+V1.6.32 - Sảnh chờ: Lịch của tôi phía trên, lịch rảnh 4 đối thủ GĐ2 phía dưới; 3 ngày; giờ trùng tô xanh. Không cần SQL mới.

@@ -1,0 +1,23 @@
+PES Arena V1.5.75
+
+1. Sảnh chờ
+- Đổi tiêu đề “🏟️ Phòng thi đấu” thành “🏟️ Sảnh chờ”.
+- Đổi mô tả thành: “Sảnh trung tâm để theo dõi phòng giải, HLV đang chờ và Host đang rảnh.”
+
+2. Host đang rảnh
+- Chỉ lấy HLV active thuộc đúng giải, có đăng ký Host, đang online thật và không ở phòng đấu đang hoạt động.
+- Bỏ trạng thái room `confirmed` khỏi danh sách trạng thái bận vì trận đã hoàn tất.
+- Bổ sung `waiting_confirm` vào trạng thái bận để tránh hiển thị Host khi còn đang xử lý kết quả.
+- Thêm API đọc `/api/tournaments/<tournament_id>/host-ready`.
+- Sảnh chờ tự cập nhật danh sách mỗi 15 giây và khi quay lại tab; 2 tài khoản test, Admin và HLV thường đều nhận cùng danh sách live.
+- Polling lỗi sẽ giữ nguyên dữ liệu server-render hiện có, không làm trống UI giả.
+
+3. Version
+- Đồng bộ APP_VERSION toàn hệ thống lên V1.5.75.
+- Không thay đổi SQL/database schema.
+
+File tác động:
+- app.py
+- modules/tournament_competition.py
+- templates/tournaments.html
+- V1.5.75_RELEASE_NOTES.txt

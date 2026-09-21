@@ -1,0 +1,7 @@
+PES Arena V1.5.90: Admin Random lại 16 CLB theo Tier 1 -> Pot 3, Tier 2 -> Pot 2, Tier 3 -> Pot 1.
+1) Chạy SQL_V1.5.88_STAGE_STATUS_PENDING.sql nếu chưa chạy.
+2) Chạy SQL_V1.5.90_ADMIN_RERANDOM_TIER_POT.sql trong Supabase SQL Editor.
+3) Deploy ZIP V1.5.90; Admin vào Giải đấu > Chia Pot & chọn CLB > Admin Random lại 16 CLB.
+4) Kiểm tra 16 HLV, 0 trùng CLB, 5/6/5, số vé 2/1/1 nếu chưa dùng; chưa sinh lịch GĐ2.
+5) KHÔNG chạy nếu GĐ2 đã sinh lịch, có trận hoặc bắt đầu.
+Chưa xác minh Production.

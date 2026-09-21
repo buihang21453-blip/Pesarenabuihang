@@ -1,0 +1,6 @@
+PES ARENA V1.6.48 — KHÓA CLB TRONG 5 TRẬN RANK GẦN NHẤT
+
+- Mỗi HLV không thể quay trúng CLB đã được cấp ở 5 trận Rank gần nhất, dù đổi đối thủ.
+- Random một đội, Random 3 chọn 1 và Random Selection Match áp dụng cùng lịch sử.
+- Không tự bỏ khóa khi Tier hết đội; chuyển Tier gần nhất hợp lệ hoặc thông báo hết đội.
+- Giữ nguyên C1, giao hữu, công thức RP, giao diện và DB. Không cần SQL.

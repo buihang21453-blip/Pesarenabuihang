@@ -1,0 +1,1 @@
+V1.5.93: Đưa 3 nút GĐ1/GĐ2/KO lên đầu Điều hành giải đấu; sửa deep link /admin#c1-admin-gd1, gd2, ko. Không cần SQL mới. Chưa kiểm thử Production.

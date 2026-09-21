@@ -1,0 +1,10 @@
+# V1.6.17 — Chặn 500 khi Admin quay hộ vé CLB
+
+- Bỏ bước đọc club_draft_v2 dư thừa nằm ngoài try/except ở route Admin; shared reroll tự kiểm tra Top 1–3, vé, Pot, deadline, CLB.
+- Bảo vệ cả route Admin; lỗi DB được ghi traceback với mã thao tác và bước lỗi để tra Vercel, trả redirect + thông báo thay vì HTTP 500 trong phạm vi route.
+- Bổ sung nhãn bước lỗi load_member/load_draft/validate_phase/load_current_club/load_available_pool/reserve_new_club/assign_new_club/save_ticket/release_old_club.
+- Rollback CLB chỉ khi member vẫn giữ CLB mới từ yêu cầu này; không ghi đè cập nhật từ phiên khác.
+- Không sửa dữ liệu đang tồn tại, không đổi route URL, không thay đổi lịch 32 trận, không cần SQL mới.
+- Không có traceback Production trong gói; nguyên nhân 500 thực tế chưa thể kết luận khi chưa đối chiếu mã lỗi trong Vercel logs.
+
+Kiểm thử: 7 smoke test mock route/Admin PASS; Python compileall và 5 Jinja parse PASS. Không thay cho kiểm thử Supabase/Vercel thật.

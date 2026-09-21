@@ -1,0 +1,9 @@
+PES ARENA V1.5.66
+
+Realtime giờ rảnh trùng đối thủ
+- Tick/bỏ tick giờ rảnh cập nhật ngay, không cần bấm Lưu.
+- Khung giờ HLV chọn mà trùng ít nhất một đối thủ được tô xanh lá ngay.
+- Khung đã chọn nhưng không trùng giữ màu xanh dương.
+- Các khung trong Lịch của đối thủ cũng đổi xanh realtime theo lựa chọn chưa lưu.
+- Tích toàn bộ cũng cập nhật realtime.
+- Áp dụng đồng nhất cho HLV thật và tài khoản test.

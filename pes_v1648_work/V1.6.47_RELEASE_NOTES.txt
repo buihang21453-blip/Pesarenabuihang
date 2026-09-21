@@ -1,0 +1,6 @@
+PES ARENA V1.6.47 — TOPBAR KHÔNG LOGO, BA NÚT CHẾ ĐỘ CĂN GIỮA
+
+- Tạm ẩn logo PES Arena trong thanh tiêu đề Phòng đấu; tài nguyên gốc được giữ nguyên.
+- Canh giữa RANK / C1 / MINI CUP bằng grid 3 cột; tiêu đề bên trái, chia sẻ phòng bên phải.
+- Responsive: màn hình hẹp tự xếp các nút ở hàng thứ hai trong topbar.
+- Không thay đổi luồng Rank/C1/Mini Cup, dữ liệu hay SQL.

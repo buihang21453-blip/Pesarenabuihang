@@ -1,0 +1,1 @@
+V1.6.0: Thuật toán sinh lịch GĐ2 cứng: 16 HLV 5–6–5, 32 trận, 4 trận mỗi HLV, 4 đối thủ khác nhau, đủ Tier 1/2/3 trong 4 trận. Không cần SQL mới. Không xóa/sửa lịch tồn tại. Cần kiểm tra Production trước triển khai.

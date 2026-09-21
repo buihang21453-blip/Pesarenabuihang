@@ -1,0 +1,7 @@
+PES ARENA V1.6.44 — PHÒNG ĐẤU ĐA CHỨC NĂNG
+
+- Thêm thanh chọn chế độ ở phía trên Phòng đấu: RANK / C1 / MINI CUP.
+- Dùng chung một giao diện phòng đấu, nhưng đổi layout hiển thị theo chế độ để dễ mở rộng.
+- Phòng đấu C1 được đưa vào cùng ngôn ngữ giao diện mới, vẫn giữ logic C1 đang chạy.
+- Mini Cup hiện triển khai ở mức layout giao diện trong phòng thường, phục vụ duyệt và làm nền cho bước triển khai tiếp theo.
+- Không có SQL mới.

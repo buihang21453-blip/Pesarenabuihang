@@ -1,0 +1,1 @@
+PES Arena V1.6.6: Giao diện lễ bốc thăm tối giản 1 nút/pha; avatar HLV từ users; logo từ teams chỉ hiện khi công bố CLB. Công cụ phụ trong mục thu gọn. Không migration. Chưa test Production. Giao diện giữ kết quả CLB vừa bốc sau reload; chỉ cần một nút sân khấu mỗi pha.

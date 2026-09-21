@@ -1,0 +1,48 @@
+      <div class="tournament-op-tab-panel" id="c1-admin-gd1" data-tournament-op-panel="stage1" style="padding:15px;border:1px solid rgba(46,204,113,.3);border-radius:14px;margin-bottom:12px">
+        <h3 style="margin:0 0 6px">2️⃣ Giai đoạn 1 — Random & thi đấu 6 trận</h3>
+        <p class="small"><strong>Làm theo thứ tự:</strong> Bắt đầu GĐ1 → Random đối thủ → theo dõi tiến độ → kết thúc GĐ1.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <form method="post" action="{{ url_for('admin_tournament_stage1_start_now',tournament_id=ot.id) }}" onsubmit="return confirm('Bắt đầu GĐ1 ngay? Hệ thống sẽ đóng đăng ký và mở GĐ1.');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn green" type="submit">▶ Bắt đầu GĐ1 ngay</button></form>
+          <form method="post" action="{{ url_for('admin_tournament_stage1_random_generate',tournament_id=ot.id) }}" onsubmit="return confirm('Random lại toàn bộ đối thủ GĐ1? Chỉ dùng trước khi có kết quả.');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gold" type="submit">🎲 Random đối thủ GĐ1</button></form>
+          <form method="post" action="{{ url_for('admin_tournament_stage1_finish',tournament_id=ot.id) }}" onsubmit="return confirm('Kết thúc GĐ1 sớm? Chỉ được khi toàn bộ trận hoàn thành.');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn green" type="submit">✅ Kết thúc GĐ1</button></form>
+          <form method="post" action="{{ url_for('admin_tournament_stage1_extend',tournament_id=ot.id) }}" onsubmit="return confirm('Gia hạn GĐ1 thêm 2 ngày?');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gray" type="submit">⏳ Gia hạn +2 ngày</button></form>
+        </div>
+        <p class="small" style="margin-top:9px">Thời gian còn lại: <strong>{{ tm.get('stage1_end',{}).get('days',0) }} ngày {{ tm.get('stage1_end',{}).get('hours',0) }} giờ</strong></p>
+        <details open style="margin-top:8px"><summary><strong>📊 Tiến độ GĐ1 & Thưởng hoàn thành sớm</strong></summary><div style="padding-top:10px">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;padding:10px;border:1px solid rgba(241,202,104,.24);border-radius:10px;background:rgba(241,202,104,.05)">
+          <div style="flex:1;min-width:260px">
+            <strong>🎁 Thưởng hoàn thành sớm GĐ1</strong><br>
+            <small><strong>#1:</strong> 1.000 ZCoin + 2 Lucky Box + 2 vé Random CLB GĐ2 · <strong>#2–3:</strong> 800 ZCoin + 1 Lucky Box + 1 vé Random CLB/người. Vé dùng khi ghép CLB GĐ2; CLB đã bỏ không xuất hiện lại.</small>
+          </div>
+          <form method="post" action="{{ url_for('admin_tournament_stage1_early_rewards_grant',tournament_id=ot.id) }}" onsubmit="return confirm('Trao thưởng Zcoin + Lucky Box cho Top hoàn thành sớm GĐ1? Hệ thống có chống cộng trùng.');">
+            <input type="hidden" name="_admin_tab" value="tournaments">
+            <button class="btn gold" type="submit">🏆 Trao thưởng GĐ1</button>
+          </form>
+        </div><div class="admin-table-wrap tournament-compact"><table class="stage1-progress-table"><thead><tr><th>HLV</th><th>Đã đá</th><th>Còn lại</th><th>Đối thủ</th><th>Điểm</th><th>Tiến độ</th><th>Trạng thái</th></tr></thead><tbody>{% for r in ops.get('progress',[]) %}{% set remain=r.remaining|default(0)|int %}<tr class="{% if remain<=0 %}stage1-row-complete{% elif remain==1 %}stage1-row-warning{% else %}stage1-row-danger{% endif %}"><td><strong>{{ r.display_name }}</strong></td><td>{{ r.played }}/{{ r.target }}</td><td><strong class="stage1-remaining {% if remain<=0 %}is-done{% elif remain==1 %}is-warning{% else %}is-danger{% endif %}">{{ remain }}</strong></td><td>{{ r.opponent_count }}</td><td>{{ r.points }}</td><td><strong>{{ r.percent }}%</strong></td><td>{% if remain<=0 %}<span class="stage1-status-done">✅ Hoàn thành</span>{% elif remain==1 %}<span class="stage1-status-warning">🟠 CÒN 1 TRẬN</span>{% else %}<span class="stage1-status-danger">🔴 CÒN {{ remain }} TRẬN</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% set reward_granted=ev.get('stage1_early_reward_state',{}).get('granted',{}) %}<div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table><thead><tr><th>Top</th><th>HLV</th><th>Phần thưởng</th><th>Vé Random</th><th>Hoàn tất GĐ1 lúc</th><th>Trạng thái</th></tr></thead><tbody>{% for r in ev.get('completion_ranking',[])[:16] %}<tr><td>{% if r.finish_rank %}<strong>#{{ r.finish_rank }}</strong>{% else %}—{% endif %}</td><td><strong>{{ r.display_name }}</strong></td><td>{% if r.finish_rank==1 %}1.000 ZCoin + 2 Lucky Box{% elif r.finish_rank in [2,3] %}800 ZCoin + 1 Lucky Box{% else %}—{% endif %}</td><td>{% if r.tickets %}🎟 {{ r.tickets }}{% else %}—{% endif %}</td><td>{% if r.completed_at_vn %}<strong>{{ r.completed_at_vn }}</strong>{% else %}Chưa hoàn tất{% endif %}</td><td>{% if reward_granted.get(r.user_id|string,{}).get('status')=='granted' %}<span style="color:#2ecc71">✅ Đã trao</span>{% elif r.finish_rank in [1,2,3] and r.early_eligible %}<span style="color:#f1ca68">Chờ trao</span>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+        <details style="margin-top:10px"><summary><strong>🕒 Xem thời gian xác nhận từng trận của từng HLV</strong></summary><div style="padding-top:10px">
+          {% for r in ev.get('completion_ranking',[])[:16] %}
+          <details style="margin:0 0 8px;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 10px">
+            <summary><strong>{{ r.display_name }}</strong> · {{ r.played }} trận{% if r.completed_at_vn %} · Hoàn tất: {{ r.completed_at_vn }}{% endif %}</summary>
+            <div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table>
+              <thead><tr><th>#</th><th>Đối thủ</th><th>Tỷ số</th><th>Trận</th><th>Xác nhận lúc</th><th>Người xác nhận</th></tr></thead>
+              <tbody>
+              {% for mt in r.match_confirmations %}
+                <tr{% if mt.is_completion_match %} style="background:rgba(241,202,104,.10)"{% endif %}>
+                  <td>{{ mt.sequence_no }}</td>
+                  <td>{{ mt.opponent_name }}{% if mt.is_completion_match %}<br><strong>🏁 TRẬN CÁN MỐC GĐ1</strong>{% endif %}</td>
+                  <td><strong>{{ mt.my_score }} - {{ mt.opponent_score }}</strong></td>
+                  <td>Lượt {{ mt.leg_no }}</td>
+                  <td><strong>{{ mt.confirmed_at_vn or '—' }}</strong></td>
+                  <td>{{ mt.confirmed_by_name }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="6">Chưa có trận GĐ1 nào được xác nhận.</td></tr>
+              {% endfor %}
+              </tbody>
+            </table></div>
+          </details>
+          {% endfor %}
+        </div></details></div></details>
+        <details style="margin-top:8px"><summary>⚠️ Trường hợp hết hạn mà còn trận thiếu</summary><div style="padding-top:8px"><form method="post" action="{{ url_for('admin_tournament_stage1_finish',tournament_id=ot.id) }}" onsubmit="return confirm('Các trận còn thiếu sẽ chuyển Chờ BTC xử lý. Tiếp tục?');"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="force" value="1"><button class="btn red" type="submit">Kết thúc & chuyển trận thiếu cho BTC</button></form></div></details>
+      </div>
+

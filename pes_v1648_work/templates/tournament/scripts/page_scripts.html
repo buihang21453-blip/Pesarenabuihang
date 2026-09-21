@@ -1,0 +1,361 @@
+<script>
+(function(){
+  // V1.5.75: cập nhật Host đang rảnh ngay trong Sảnh chờ cho mọi viewer đã đăng nhập
+  // (bao gồm 2 tài khoản test và Admin), không cần F5 trang.
+  var lists=Array.from(document.querySelectorAll('[data-host-ready-list]'));
+  if(!lists.length) return;
+
+  function render(box, hosts){
+    var target=box.querySelector('[data-host-ready-items]');
+    if(!target) return;
+    target.textContent='';
+    if(!Array.isArray(hosts) || !hosts.length){
+      var empty=document.createElement('small');
+      empty.className='td-host-ready-empty';
+      empty.style.color='#91a3b1';
+      empty.textContent='Hiện chưa có Host nào đang rảnh.';
+      target.appendChild(empty);
+      return;
+    }
+    hosts.forEach(function(host){
+      var chip=document.createElement('span');
+      chip.className='td-host-chip';
+      var name=(host && host.display_name) ? String(host.display_name) : 'HLV';
+      var region=(host && host.region) ? String(host.region) : '—';
+      chip.textContent='🟢 '+name+' · '+region;
+      target.appendChild(chip);
+    });
+  }
+
+  function refresh(box){
+    var tid=box.dataset.tournamentId;
+    if(!tid) return Promise.resolve();
+    return fetch('/api/tournaments/'+encodeURIComponent(tid)+'/host-ready',{
+      method:'GET',
+      credentials:'same-origin',
+      headers:{'Accept':'application/json'},
+      cache:'no-store'
+    }).then(function(res){
+      if(!res.ok) throw new Error('host-ready '+res.status);
+      return res.json();
+    }).then(function(data){
+      if(data && data.ok) render(box,data.hosts||[]);
+    }).catch(function(){
+      // Giữ dữ liệu render server hiện có nếu polling tạm lỗi.
+    });
+  }
+
+  function refreshAll(){ lists.forEach(refresh); }
+  // Đợi heartbeat chung của base.html kịp ghi presence trước lượt refresh đầu tiên.
+  window.setTimeout(refreshAll,1200);
+  window.setInterval(refreshAll,15000);
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden) refreshAll();
+  });
+})();
+</script>
+<script>
+(function(){
+  var cards=Array.from(document.querySelectorAll('[data-gd2-ceremony-card]'));
+  if(!cards.length) return;
+  function fmt(ts){var dt=new Date(ts);if(isNaN(dt.getTime()))return '';return new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric',hour12:false}).format(dt);}
+  function render(card){
+    var now=Date.now(), draw=Date.parse(card.dataset.drawAt||''), reward=Date.parse(card.dataset.rewardDeadline||''), league=Date.parse(card.dataset.leagueStart||'');
+    var box=card.querySelector('[data-center-countdown]'), title=card.querySelector('[data-gd2-phase-title]'), label=card.querySelector('[data-draw-date]'), status=card.querySelector('[data-draw-status]');
+    var target=draw, phase='draw';
+    if(isFinite(draw)&&now>=draw){target=reward;phase='reward';}
+    if(isFinite(reward)&&now>=reward){target=league;phase='league';}
+    if(phase==='draw'){if(title)title.textContent='⏳ LỄ BỐC THĂM CLB GĐ2';if(status)status.textContent='Đếm ngược đến lễ bốc thăm';}
+    else if(phase==='reward'){if(title)title.textContent='🎟 THỜI GIAN SỬ DỤNG VÉ THƯỞNG';if(status)status.textContent='3 HLV có vé có thể Random lại và chốt CLB';}
+    else {if(title)title.textContent='⚡ GĐ2 SẴN SÀNG MỞ';if(status)status.textContent='Đã đến mốc mở GĐ2 · chờ đủ điều kiện bốc thăm đối thủ';}
+    if(label&&isFinite(target))label.textContent=fmt(new Date(target).toISOString());
+    if(!box||!isFinite(target))return;
+    box.dataset.centerCountdown=new Date(target).toISOString();
+    var sec=Math.max(0,Math.floor((target-now)/1000)),vals={d:Math.floor(sec/86400),h:Math.floor((sec%86400)/3600),m:Math.floor((sec%3600)/60),s:sec%60};
+    Object.keys(vals).forEach(function(k){var el=box.querySelector('[data-'+k+']');if(el)el.firstChild.nodeValue=vals[k];});
+  }
+  function refresh(){cards.forEach(render);} refresh(); window.setInterval(refresh,1000);
+})();
+</script>
+<script>
+(function(){
+  var boxes=Array.from(document.querySelectorAll('[data-public-countdown]'));
+  if(!boxes.length) return;
+  function tick(box){
+    var t=Date.parse(box.dataset.publicCountdown||'');
+    if(!isFinite(t)) return;
+    var sec=Math.max(0,Math.floor((t-Date.now())/1000));
+    var d=Math.floor(sec/86400),h=Math.floor((sec%86400)/3600),m=Math.floor((sec%3600)/60),ss=sec%60;
+    var map={'[data-cd-d]':d,'[data-cd-h]':h,'[data-cd-m]':m,'[data-cd-s]':ss};
+    Object.keys(map).forEach(function(sel){var el=box.querySelector(sel);if(el)el.textContent=map[sel];});
+    if(sec===0){var label=box.querySelector('.label span');if(label)label.textContent='🏁 GĐ1 đã bắt đầu';}
+  }
+  boxes.forEach(tick); window.setInterval(function(){boxes.forEach(tick);},1000);
+})();
+(function(){
+  const buttons = document.querySelectorAll('.tournament-share-register');
+  if (!buttons.length) return;
+
+  function registrationUrl(button){
+    const path = button.dataset.sharePath || '/dang-ky-c1';
+    return new URL(path, window.location.origin).href;
+  }
+
+  async function copyFallback(text){
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand('copy');
+    area.remove();
+  }
+
+  buttons.forEach(function(button){
+    button.addEventListener('click', async function(){
+      const url = registrationUrl(button);
+      const original = button.textContent;
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: 'Đăng ký PES Arena Champions League',
+            text: 'Link đăng ký PES Arena Champions League',
+            url: url
+          });
+          button.textContent = '✓ Đã mở chia sẻ';
+        } else {
+          await copyFallback(url);
+          button.textContent = '✓ Đã sao chép link';
+        }
+      } catch (error) {
+        if (error && error.name === 'AbortError') return;
+        try {
+          await copyFallback(url);
+          button.textContent = '✓ Đã sao chép link';
+        } catch (_) {
+          button.textContent = 'Không thể sao chép';
+        }
+      }
+      window.setTimeout(function(){ button.textContent = original; }, 1800);
+    });
+  });
+})();
+</script>
+
+<script>
+document.addEventListener('click',function(e){
+  var btn=e.target.closest('[data-central-player-toggle]');
+  if(!btn) return;
+  var key=btn.getAttribute('data-central-player-toggle');
+  var panel=document.querySelector('[data-central-player-panel="'+CSS.escape(key)+'"]');
+  document.querySelectorAll('[data-central-player-panel]').forEach(function(row){
+    if(row!==panel) row.classList.remove('is-open');
+  });
+  if(panel) panel.classList.toggle('is-open');
+});
+</script>
+
+
+
+<script>
+(function(){
+  document.querySelectorAll('[data-auto-score-form]').forEach(function(form){
+    var timer=null;
+    var state=form.querySelector('[data-auto-save-state]');
+    var saving=false;
+    var pending=false;
+
+    function setState(text, cls){
+      if(!state) return;
+      state.textContent=text;
+      state.classList.remove('saving','saved','error');
+      if(cls) state.classList.add(cls);
+    }
+
+    async function save(){
+      if(saving){ pending=true; return; }
+      var hs=form.querySelector('input[name="home_score"]');
+      var aw=form.querySelector('input[name="away_score"]');
+      if(!hs || !aw || hs.value==='' || aw.value==='') return;
+
+      saving=true;
+      setState('Đang lưu…','saving');
+      try{
+        var response=await fetch(form.action,{
+          method:'POST',
+          body:new FormData(form),
+          credentials:'same-origin',
+          headers:{'X-Requested-With':'XMLHttpRequest'}
+        });
+        if(!response.ok) throw new Error('save_failed');
+        setState('✓ Đã lưu','saved');
+      }catch(e){
+        setState('Lỗi lưu','error');
+      }finally{
+        saving=false;
+        if(pending){pending=false; save();}
+      }
+    }
+
+    form.querySelectorAll('[data-auto-score]').forEach(function(input){
+      input.addEventListener('input',function(){
+        setState('Chờ lưu…','');
+        window.clearTimeout(timer);
+        timer=window.setTimeout(save,900);
+      });
+      input.addEventListener('change',function(){
+        window.clearTimeout(timer);
+        timer=window.setTimeout(save,250);
+      });
+    });
+
+    form.addEventListener('submit',function(e){
+      e.preventDefault();
+      window.clearTimeout(timer);
+      save();
+    });
+  });
+})();
+</script>
+
+<script>
+(function(){
+  function refreshAvailabilityScope(scope){
+    var selector='[data-fixed-schedule][data-availability-scope="'+CSS.escape(scope)+'"]';
+    var forms=Array.from(document.querySelectorAll(selector));
+    var selected=new Set();
+
+    forms.forEach(function(form){
+      form.querySelectorAll('[data-live-slot]').forEach(function(cb){
+        if(cb.checked) selected.add(cb.value);
+        var overlap=cb.checked && cb.getAttribute('data-opponent-match')==='1';
+        cb.setAttribute('data-live-overlap', overlap ? '1' : '0');
+      });
+    });
+
+    document.querySelectorAll('[data-opponent-slot-iso][data-availability-scope="'+CSS.escape(scope)+'"]').forEach(function(slot){
+      slot.classList.toggle('is-overlap', selected.has(slot.getAttribute('data-opponent-slot-iso')));
+    });
+  }
+
+  document.querySelectorAll('[data-fixed-schedule][data-availability-scope]').forEach(function(form){
+    var scope=form.getAttribute('data-availability-scope');
+
+    form.querySelectorAll('[data-select-all-day]').forEach(function(all){
+      all.addEventListener('change',function(){
+        var day=all.closest('.td-av-day'); if(!day) return;
+        day.querySelectorAll('.td-av-slot input[type="checkbox"]').forEach(function(cb){
+          cb.checked=all.checked;
+        });
+        refreshAvailabilityScope(scope);
+      });
+    });
+
+    form.querySelectorAll('[data-live-slot]').forEach(function(cb){
+      cb.addEventListener('change',function(){
+        refreshAvailabilityScope(scope);
+      });
+    });
+
+    refreshAvailabilityScope(scope);
+  });
+})();
+</script>
+<script>
+(function(){
+  var countdowns=Array.from(document.querySelectorAll('[data-ticket-countdown]'));
+  function renderCountdown(el){
+    var ts=Date.parse(el.getAttribute('data-ticket-countdown')||'');
+    if(!isFinite(ts)) return;
+    var sec=Math.max(0,Math.floor((ts-Date.now())/1000));
+    var d=Math.floor(sec/86400),h=Math.floor((sec%86400)/3600),m=Math.floor((sec%3600)/60);
+    if(sec<=0){ el.textContent='Đã đến hạn dùng vé'; return; }
+    if(d>0) el.textContent='Còn '+d+' ngày '+h+' giờ để sử dụng';
+    else if(h>0) el.textContent='Còn '+h+' giờ '+m+' phút để sử dụng';
+    else el.textContent='Còn '+m+' phút để sử dụng';
+  }
+  if(countdowns.length){
+    countdowns.forEach(renderCountdown);
+    window.setInterval(function(){countdowns.forEach(renderCountdown);},60000);
+  }
+
+  var modal=document.createElement('div');
+  modal.className='pes-confirm-backdrop';
+  modal.innerHTML=''
+    +'<div class="pes-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="pesConfirmTitle">'
+    +  '<h3 id="pesConfirmTitle">Xác nhận thao tác</h3>'
+    +  '<p data-confirm-message></p>'
+    +  '<small class="pes-confirm-note">Thao tác này sẽ áp dụng trực tiếp lên dữ liệu giải đấu.</small>'
+    +  '<div class="pes-confirm-actions">'
+    +    '<button class="btn" type="button" data-confirm-cancel>Hủy</button>'
+    +    '<button class="btn gold" type="button" data-confirm-ok>Tiếp tục</button>'
+    +  '</div>'
+    +'</div>';
+  document.body.appendChild(modal);
+
+  var loading=document.createElement('div');
+  loading.className='ticket-loading-backdrop';
+  loading.innerHTML=''
+    +'<div class="ticket-loading-box">'
+    +  '<div class="ticket-loading-spinner"></div>'
+    +  '<strong data-loading-title>Đang xử lý...</strong>'
+    +  '<span>Vui lòng chờ trong giây lát</span>'
+    +'</div>';
+  document.body.appendChild(loading);
+
+  var activeForm=null;
+  function openModal(form){
+    activeForm=form;
+    modal.querySelector('#pesConfirmTitle').textContent=form.getAttribute('data-pes-confirm-title')||'Xác nhận thao tác';
+    modal.querySelector('[data-confirm-message]').textContent=form.getAttribute('data-pes-confirm')||'Bạn có chắc muốn tiếp tục?';
+    modal.querySelector('[data-confirm-ok]').textContent=form.getAttribute('data-pes-confirm-action')||'Tiếp tục';
+    modal.classList.add('is-open');
+  }
+  function closeModal(){
+    activeForm=null;
+    modal.classList.remove('is-open');
+  }
+  function showLoading(form){
+    var title=(form && form.getAttribute('data-pes-loading')) || 'Đang xử lý...';
+    loading.querySelector('[data-loading-title]').textContent=title;
+    loading.classList.add('is-open');
+  }
+
+  document.addEventListener('submit',function(e){
+    var form=e.target;
+    if(!(form instanceof HTMLFormElement)) return;
+    if(form.dataset.pesConfirmed==='1'){
+      form.dataset.pesConfirmed='';
+      showLoading(form);
+      return;
+    }
+    if(form.hasAttribute('data-pes-confirm')){
+      e.preventDefault();
+      openModal(form);
+      return;
+    }
+    if(form.hasAttribute('data-pes-loading')) showLoading(form);
+  },true);
+
+  modal.addEventListener('click',function(e){
+    if(e.target===modal || e.target.hasAttribute('data-confirm-cancel')) closeModal();
+    if(e.target.hasAttribute('data-confirm-ok') && activeForm){
+      var form=activeForm;
+      closeModal();
+      form.dataset.pesConfirmed='1';
+      showLoading(form);
+      form.requestSubmit ? form.requestSubmit() : form.submit();
+    }
+  });
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape' && modal.classList.contains('is-open')) closeModal();
+  });
+})();
+</script>

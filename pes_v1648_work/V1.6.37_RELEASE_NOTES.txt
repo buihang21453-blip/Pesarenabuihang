@@ -1,0 +1,8 @@
+PES Arena V1.6.37 — Admin UI Reorganization
+
+1. Gom menu Admin thành 7 nhóm chức năng, không thay đổi quyền.
+2. Tách template C1 thành 6 file thành phần và thanh trạng thái riêng.
+3. C1 phân biệt hoàn thành/đang diễn ra/chưa bắt đầu theo status DB; giai đoạn đang hoạt động mặc định mở, giai đoạn khác ẩn.
+4. Thu gọn khối HLV toàn giải, giữ thao tác gốc.
+5. Owner có bảng rà soát: tick đề xuất xóa, ẩn hoàn tác bản hiển thị trùng và xuất JSON. Không xóa source/route/DB.
+6. Không cần SQL. Đề nghị kiểm thử thao tác trên Production trước khi duyệt loại bỏ chức năng.

@@ -1,0 +1,10 @@
+PES ARENA V1.6.43 — THAY ĐỔI GIỚI HẠN RP RANK
+
+1. T2–T6: 10 trận Rank; trần RP cơ bản +180/ngày.
+2. T7–CN: 20 trận Rank; trần RP cơ bản +250/ngày.
+3. Quá lượt: 0 RP, không tính chuỗi, không trừ RP cho cả hai.
+4. Đạt trần RP cơ bản: không bị trừ RP khi thua; thưởng chuỗi hợp lệ và thưởng tuần vẫn cộng ngoài trần.
+5. Các trận ngoài giới hạn lượt không tạo mốc thưởng tuần; thưởng tuần đã đạt vẫn hoạt động độc lập.
+6. Điều chỉnh giao diện Admin, thông báo giới hạn và trang Hướng dẫn công khai.
+7. Admin replay đồng bộ policy mới; KHÔNG tự động tính lại lịch sử khi deploy.
+8. Không cần SQL mới. Chưa thử trực tiếp trên Supabase Production; test chức năng trước khi deploy.

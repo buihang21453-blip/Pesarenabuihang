@@ -1,0 +1,3 @@
+V1.5.84 – BẢN CHƯA SẴN SÀNG PRODUCTION
+Đã bổ sung gate và validation 32 trận, không xóa lịch cũ, GĐ1 không tự mở GĐ2.
+Còn thiếu: 2 ngày/1 tuần, tab Admin GĐ1/GĐ2/KO, cố định CLB phòng C1, test runtime, atomic fixture creation.

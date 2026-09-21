@@ -1,0 +1,8 @@
+PES ARENA V1.5.50 - RESTORE TOURNAMENTS V1.5.48 LAYOUT + 24H SCHEDULE
+
+- Giữ nguyên bố cục /tournaments của V1.5.48.
+- Nút "◉ Xem giải đấu" đổi thành "🎮 Phòng đấu C1" và đi tới khu Phòng đấu C1.
+- Nút "Đăng ký đã đóng" / "Lịch đấu" đổi thành "📅 Lịch của tôi" và mở #schedule.
+- Bỏ dòng mô tả phụ dưới tiêu đề 📊 BXH.
+- Khung giờ thi đấu hiển thị theo định dạng 24h; bỏ ký hiệu phân chia sáng/chiều.
+- Không áp dụng cơ chế bung thẳng nội dung giải của V1.5.49.

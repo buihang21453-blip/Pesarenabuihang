@@ -1,0 +1,25 @@
+PES ARENA V1.6.3 — ADMIN PREVIEW LỄ BỐC THĂM GĐ2
+
+1. THÊM MÀN HÌNH XEM TRƯỚC
+- Admin > GĐ2 · Pot / CLB / Lịch > 👁 Xem trước giao diện Lễ bốc thăm.
+- Mở ở tab mới; hỗ trợ Fullscreen.
+- Chỉ Admin truy cập được.
+
+2. PHẦN 1 — RANDOM CLB
+- Danh sách 16 HLV, Tier, trạng thái CLB.
+- Sân khấu HLV đang đến lượt.
+- Kho 24 CLB theo Pot và số CLB còn trống.
+- Khu vé thưởng sớm và countdown.
+
+3. PHẦN 2 — RANDOM ĐỐI THỦ
+- Danh sách thứ tự Tier 1 → Tier 2 → Tier 3.
+- Sân khấu 4 đối thủ của HLV đang công bố.
+- Tiến độ 32 trận / tiến độ công bố.
+- Nhắc luật 4 trận, 4 đối thủ khác nhau, đủ Tier 1/2/3.
+
+4. AN TOÀN
+- Preview không có POST/action thay đổi database.
+- Nút mô phỏng trên sân khấu bị disabled.
+- Thuật toán V1.6.2 không thay đổi.
+
+SQL: Không cần migration mới.

@@ -1,0 +1,13 @@
+PES Arena V1.5.81
+
+THAY HLV GIỮA GIẢI
+- Admin có nút 🔄 Thay HLV tại danh sách HLV tham dự.
+- HLV mới kế thừa CLB, Pot/seed, toàn bộ lịch đấu, tỷ số đã đá, BXH và tiến độ của suất cũ.
+- Kết quả cũ không bị đá lại/reset.
+- Lưu lịch sử thay HLV + snapshot trận vào tournament_settings/replacement_history.
+- HLV cũ chuyển withdrawn; HLV mới active/approved.
+- Lịch rảnh không kế thừa, HLV mới phải đăng ký lại.
+- Reward đã cấp không phát lại.
+- Chặn thao tác khi phòng C1 của HLV cũ còn active hoặc HLV mới đã có lịch sử trận trong giải.
+- Gửi thông báo cho HLV mới sau khi thay.
+- Không cần migration SQL mới.

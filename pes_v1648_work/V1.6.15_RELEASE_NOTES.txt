@@ -1,0 +1,7 @@
+PES Arena V1.6.15 — Admin quay hộ vé thưởng GĐ1
+
+Admin > Giải đấu > GĐ2 > bảng 16 HLV: Quay hộ · 1 vé theo từng HLV.
+Màn điều hành lễ bốc thăm cũng có nút riêng cho từng HLV có vé.
+Chỉ hoạt động khi đủ 16 CLB, vé chưa hết hạn, HLV chưa chốt và có CLB gốc.
+Mỗi lần quay trừ đúng 1 vé; ghi lịch sử người thực hiện; không động lịch đối thủ.
+Không có SQL mới; nếu chưa chạy migration V1.6.13, chạy SQL có sẵn trong ZIP trước khi deploy.

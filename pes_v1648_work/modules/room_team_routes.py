@@ -1,0 +1,640 @@
+"""Route quay đội, quay lại giao hữu, kết thúc giao hữu và trạng thái sẵn sàng.
+
+Module đăng ký route theo dependency của app.py để giữ nguyên endpoint và tránh import vòng.
+"""
+
+def register_routes(context):
+    """Đăng ký nhóm route vào Flask app hiện tại."""
+    globals().update(context)
+
+    @app.route("/room/<room_id>/random-teams", methods=["POST"])
+    @login_required
+    def room_random_teams(room_id):
+        user = current_user()
+        room = get_room(room_id)
+
+        if not room:
+            flash("Không tìm thấy phòng.", "danger")
+            return redirect(url_for("rooms"))
+        if not _same_user_id(user.get("id"), room.get("host_user_id")) and not is_admin_user(user):
+            flash("Chỉ chủ phòng mới được quay đội.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if room["status"] != "waiting_ready":
+            flash("Phòng không còn ở bước chờ quay đội.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if not room.get("guest_user_id"):
+            flash("Phòng chưa có đối thủ. Hãy mời một người chơi vào phòng.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if not room.get("guest_ready"):
+            flash("Đội khách chưa sẵn sàng. Hãy chờ khách bấm Sẵn sàng.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if decode_friendly_random3_state(room.get("note")):
+            flash("Phòng đang ở bước Random 3 chọn 1. Hãy hoàn tất lựa chọn hiện tại.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if room.get("match_id") or room.get("host_team") or room.get("guest_team"):
+            flash("Phòng đã được quay đội hoặc đã tạo trận.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        # Phòng C1 có vòng đời riêng. Tuyệt đối không được rơi xuống logic Rank/Giao hữu.
+        tournament_note = str(room.get("note") or "")
+        is_tournament_room = tournament_note.startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower()=="tournament"
+        if is_tournament_room:
+            # Nếu metadata cũ bị mất nhưng match_mode vẫn là tournament, dừng tại đây thay vì fallback Rank.
+            if not tournament_note.startswith("TOURNAMENT_ROOM|"):
+                flash("Phòng C1 đang thiếu dữ liệu trận giải. Hãy quay lại Phòng đấu C1 và mở lại đúng trận.","warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+            try:
+                import json
+                meta = json.loads(tournament_note.split("|", 1)[1])
+            except Exception:
+                meta = {}
+            if str(meta.get("stage_code") or "") == "stage1":
+                tid = str(meta.get("tournament_id") or "")
+                setting = execute_query(
+                    db.table("tournament_settings").select("setting_value")
+                    .eq("tournament_id", tid).eq("setting_key", "stage1_club_pool").limit(1),
+                    "room_tournament_stage1_pool", attempts=2,
+                )
+                raw = ((setting.data or [{}])[0].get("setting_value") or {}).get("clubs") or []
+                if not raw:
+                    try:
+                        raw = [x for x in _load_teams_from_supabase() if str(x.get("tier") or "").strip().upper() in {"S+", "S"}]
+                    except Exception:
+                        from teams_data import TEAMS
+                        raw = [x for x in TEAMS if str(x.get("tier") or "").strip().upper() in {"S+", "S"}]
+                pool = []
+                for c in raw:
+                    name = (c.get("display") or c.get("name") or "").strip() if isinstance(c, dict) else str(c).strip()
+                    overall = int(c.get("overall") or 0) if isinstance(c, dict) else 0
+                    if name and not any(x["name"] == name for x in pool):
+                        pool.append({"name": name, "overall": overall})
+                if len(pool) < 2:
+                    flash("Pool CLB GĐ1 chưa đủ 2 đội. Hãy báo Admin kiểm tra.", "danger")
+                    return redirect(url_for("room_detail", room_id=room_id))
+                import random as _random
+                a, b = _random.sample(pool, 2)
+                execute_query(
+                    db.table("match_rooms").update({
+                        "host_team": a["name"], "guest_team": b["name"],
+                        "host_team_overall": a.get("overall") or None,
+                        "guest_team_overall": b.get("overall") or None,
+                        "team_tier": "TOURNAMENT_GD1", "match_mode": "tournament",
+                        "status": "playing", "updated_at": now_iso(),
+                    }).eq("id", room_id).eq("status", "waiting_ready"),
+                    "room_tournament_stage1_random", attempts=2,
+                )
+                flash(f'GĐ1 Random: {a["name"]} vs {b["name"]}.', "success")
+                return redirect(url_for("room_detail", room_id=room_id))
+
+            flash("Đây là Phòng đấu C1. Không thể chuyển sang Rank/Giao hữu từ phòng này.","warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        match_mode = (request.form.get("match_mode") or MATCH_MODE_RANKED).strip().lower()
+        if match_mode == MATCH_MODE_FRIENDLY and not system_feature_enabled("friendly_enabled"):
+            flash("Tính năng Giao hữu đang tạm tắt.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if match_mode not in {MATCH_MODE_RANKED, MATCH_MODE_FRIENDLY}:
+            match_mode = MATCH_MODE_RANKED
+
+        host = get_user(room["host_user_id"])
+        guest = get_user(room["guest_user_id"])
+        if not host or not guest:
+            flash("Không tải được thông tin hai người chơi.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        if match_mode == MATCH_MODE_RANKED and not system_feature_enabled("rank_standard_enabled"):
+            execute_query(
+                db.table("match_rooms").update({
+                    "team_tier": FRIENDLY_RANDOM3_MODE,
+                    "friendly_tier": None,
+                    "note": "Rank thường đang tắt. Hãy bắt đầu Random 3 chọn 1.",
+                    "updated_at": now_iso(),
+                }).eq("id", room_id).eq("status", "waiting_ready"),
+                "force_disabled_rank_room_to_random3",
+            )
+            flash("Rank thường đang tắt. Phòng đã chuyển sang Random 3 chọn 1.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        if match_mode == MATCH_MODE_RANKED:
+            try:
+                assert_can_start_ranked_match(host.get("id"), guest.get("id"))
+            except ValueError as exc:
+                flash(str(exc), "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+
+        try:
+            if match_mode == MATCH_MODE_FRIENDLY:
+                selected_tier = (request.form.get("friendly_tier") or room.get("friendly_tier") or "A").strip().upper()
+                result = friendly_random_team_pair(selected_tier)
+                execute_query(
+                    db.table("match_rooms").update({
+                        "host_team": result["team_a"],
+                        "guest_team": result["team_b"],
+                        "host_team_overall": result["overall_a"],
+                        "guest_team_overall": result["overall_b"],
+                        "host_team_logo_url": result.get("logo_a") or None,
+                        "guest_team_logo_url": result.get("logo_b") or None,
+                        "host_team_league": result.get("league_a") or None,
+                        "guest_team_league": result.get("league_b") or None,
+                        "team_tier": selected_tier,
+                        "friendly_tier": selected_tier,
+                        "match_mode": MATCH_MODE_FRIENDLY,
+                        "status": "friendly_playing",
+                        "match_id": None,
+                        "note": f"Giao hữu Tier {selected_tier}; không lưu lịch sử và không tính RP.",
+                        "state_expires_at": None,
+                        "updated_at": now_iso(),
+                    }).eq("id", room_id).eq("status", "waiting_ready"),
+                    "room_friendly_random",
+                )
+                flash(
+                    f'Giao hữu Tier {selected_tier}: {result["team_a"]} ({result.get("league_a") or "Không rõ giải"}) vs '
+                    f'{result["team_b"]} ({result.get("league_b") or "Không rõ giải"}). Không lưu lịch sử, không tính điểm.',
+                    "success",
+                )
+                return redirect(url_for("room_detail", room_id=room_id))
+
+            result = smart_random_team_pair(host, guest)
+            match_result = execute_query(
+                db.table("matches").insert({
+                    "player1_id": room["host_user_id"],
+                    "player2_id": room["guest_user_id"],
+                    "team1": result["team_a"],
+                    "team2": result["team_b"],
+                    "team1_overall": result["overall_a"],
+                    "team2_overall": result["overall_b"],
+                    "team1_logo_url": result.get("logo_a") or None,
+                    "team2_logo_url": result.get("logo_b") or None,
+                    "team1_league": result.get("league_a") or None,
+                    "team2_league": result.get("league_b") or None,
+                    "host_xp_factor": HOST_XP_FACTOR,
+                    "status": "playing",
+                    "note": "",
+                    "updated_at": now_iso(),
+                }),
+                "room_random_create_match",
+            )
+            match = match_result.data[0] if match_result.data else None
+            if not match:
+                flash("Không thể tạo trận sau khi quay đội. Vui lòng thử lại.", "danger")
+                return redirect(url_for("room_detail", room_id=room_id))
+
+            execute_query(
+                db.table("match_rooms").update({
+                    "host_team": result["team_a"],
+                    "guest_team": result["team_b"],
+                    "host_team_overall": result["overall_a"],
+                    "guest_team_overall": result["overall_b"],
+                    "host_team_logo_url": result.get("logo_a") or None,
+                    "guest_team_logo_url": result.get("logo_b") or None,
+                    "host_team_league": result.get("league_a") or None,
+                    "guest_team_league": result.get("league_b") or None,
+                    "team_tier": SMART_RANDOM_MODE,
+                    "match_mode": MATCH_MODE_RANKED,
+                    "status": "playing",
+                    "match_id": match["id"],
+                    "state_expires_at": None,
+                    "updated_at": now_iso(),
+                }).eq("id", room_id).eq("status", "waiting_ready"),
+                "room_random_start_match",
+            )
+        except ValueError as exc:
+            flash(str(exc), "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        return redirect(url_for("room_detail", room_id=room_id))
+
+
+    @app.route("/room/<room_id>/select-ranked-mode", methods=["POST"])
+    @login_required
+    def room_select_ranked_mode(room_id):
+        user = current_user()
+        room = get_room(room_id)
+        if room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            flash("Phòng giải đấu chỉ sử dụng chế độ Random CLB.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if not room or (user["id"] != room.get("host_user_id") and not is_admin_user(user)):
+            flash("Chỉ chủ phòng mới được chọn chế độ thi đấu.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if room.get("status") != "waiting_ready" or room.get("match_id") or room.get("host_team") or room.get("guest_team"):
+            flash("Không thể đổi chế độ ở trạng thái hiện tại.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if "__RANK_MODE_LOCKED__" in (room.get("note") or ""):
+            flash("Lượt đá tiếp giữ nguyên chế độ của trận trước, không cần chọn lại.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        selected_mode = (request.form.get("rank_mode") or SMART_RANDOM_MODE).strip()
+        if not system_feature_enabled("rank_standard_enabled"):
+            selected_mode = FRIENDLY_RANDOM3_MODE
+        if selected_mode == FRIENDLY_RANDOM3_MODE:
+            if not system_feature_enabled("friendly_random3_enabled"):
+                flash("Chế độ Random 3 chọn 1 đang tạm tắt.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+            label = "Random 3 chọn 1"
+        elif selected_mode == RANDOM_SELECTION_MATCH_MODE:
+            label = "Random Selection Match"
+        else:
+            selected_mode = SMART_RANDOM_MODE
+            label = "Random"
+        execute_query(
+            db.table("match_rooms").update({
+                "match_mode": MATCH_MODE_RANKED,
+                "team_tier": selected_mode,
+                "friendly_tier": None,
+                "note": f"Chủ phòng đã chọn chế độ {label}. Chờ khách Sẵn sàng.",
+                "updated_at": now_iso(),
+            }).eq("id", room_id).eq("status", "waiting_ready"),
+            "select_ranked_room_mode",
+        )
+        flash(f"Đã chọn chế độ {label}.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+    @app.route("/room/<room_id>/start-random-selection-match", methods=["POST"])
+    @login_required
+    def room_start_random_selection_match(room_id):
+        user = current_user()
+        room = get_room(room_id)
+        if room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            flash("Phòng giải đấu chỉ sử dụng chế độ Random CLB.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if not room or (user["id"] != room.get("host_user_id") and not is_admin_user(user)):
+            flash("Chỉ chủ phòng mới được mở chế độ này.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if room.get("status") != "waiting_ready" or not room.get("guest_user_id") or not room.get("guest_ready"):
+            flash("Cần đủ hai người và khách đã Sẵn sàng.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if room.get("team_tier") != RANDOM_SELECTION_MATCH_MODE:
+            flash("Phòng hiện không ở chế độ Random Selection Match.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        try:
+            assert_can_start_ranked_match(room.get("host_user_id"), room.get("guest_user_id"))
+        except ValueError as exc:
+            flash(str(exc), "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        host = get_user(room.get("host_user_id"))
+        guest = get_user(room.get("guest_user_id"))
+        try:
+            state = build_random_selection_match_state(host, guest)
+        except ValueError as exc:
+            flash(str(exc), "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        host_options = state.get("host_options") or []
+        guest_options = state.get("guest_options") or []
+        if len(host_options) != 3 or len(guest_options) != 3:
+            flash("Không thể tạo đủ 3 CLB cho mỗi bên. Vui lòng thử lại.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+        pack_names = lambda items: " + ".join(str(item.get("name") or "CLB") for item in items)
+        match_result = execute_query(db.table("matches").insert({
+            "player1_id": room["host_user_id"], "player2_id": room["guest_user_id"],
+            "team1": pack_names(host_options), "team2": pack_names(guest_options),
+            "team1_overall": int(round(sum(int(x.get("overall") or 0) for x in host_options) / 3)),
+            "team2_overall": int(round(sum(int(x.get("overall") or 0) for x in guest_options) / 3)),
+            "team1_logo_url": host_options[0].get("logo") or None, "team2_logo_url": guest_options[0].get("logo") or None,
+            "team1_league": "Random Selection Match", "team2_league": "Random Selection Match",
+            "host_xp_factor": HOST_XP_FACTOR, "status": "playing",
+            "note": "Random Selection Match - mỗi bên 3 CLB - trận xếp hạng tính RP. [MODE:random_selection_match]",
+            "updated_at": now_iso(),
+        }), "create_random_selection_ranked_match")
+        match = match_result.data[0] if match_result.data else None
+        if not match:
+            flash("Không thể tạo trận Random Selection Match. Vui lòng thử lại.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+        update = {
+            "host_team": "3 CLB Random", "guest_team": "3 CLB Random",
+            "host_team_overall": int(round(sum(int(x.get("overall") or 0) for x in host_options) / 3)),
+            "guest_team_overall": int(round(sum(int(x.get("overall") or 0) for x in guest_options) / 3)),
+            "host_team_logo_url": host_options[0].get("logo") or None, "guest_team_logo_url": guest_options[0].get("logo") or None,
+            "host_team_league": "Random Selection Match", "guest_team_league": "Random Selection Match",
+            "status": "playing", "match_id": match["id"], "match_mode": MATCH_MODE_RANKED,
+            "team_tier": RANDOM_SELECTION_MATCH_MODE, "note": encode_random_selection_match_state(state),
+            "state_expires_at": None, "updated_at": now_iso(),
+        }
+        result = execute_query(db.table("match_rooms").update(update).eq("id", room_id).eq("status", "waiting_ready"), "start_random_selection_ranked")
+        if not (result.data or []):
+            execute_query(db.table("matches").delete().eq("id", match["id"]).eq("status", "playing"), "rollback_random_selection_ranked_match", attempts=1)
+            flash("Trạng thái phòng vừa thay đổi. Trận chưa được bắt đầu.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        flash("Random Selection Match đã bắt đầu: mỗi bên nhận 3 CLB, không cần chọn lại.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+    @app.route("/room/<room_id>/start-random3-friendly", methods=["POST"])
+    @login_required
+    def room_start_random3_friendly(room_id):
+        user = current_user()
+        room = get_room(room_id)
+        if room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            flash("Phòng giải đấu chỉ sử dụng chế độ Random CLB.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if not room or (user["id"] != room.get("host_user_id") and not is_admin_user(user)):
+            flash("Chỉ chủ phòng mới được mở chế độ này.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if room.get("status") != "waiting_ready" or not room.get("guest_user_id") or not room.get("guest_ready"):
+            flash("Cần đủ hai người và khách đã Sẵn sàng.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if not system_feature_enabled("friendly_random3_enabled"):
+            flash("Chế độ Random 3 chọn 1 đang tạm tắt.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        host = get_user(room.get("host_user_id"))
+        guest = get_user(room.get("guest_user_id"))
+        try:
+            assert_can_start_ranked_match(room.get("host_user_id"), room.get("guest_user_id"))
+        except ValueError as exc:
+            flash(str(exc), "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        try:
+            state = build_friendly_random3_state(host, guest)
+        except ValueError as exc:
+            flash(str(exc), "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        execute_query(db.table("match_rooms").update({"match_mode": MATCH_MODE_RANKED, "friendly_tier": None, "team_tier": FRIENDLY_RANDOM3_MODE, "note": encode_friendly_random3_state(state), "updated_at": now_iso()}).eq("id", room_id).eq("status", "waiting_ready"), "start_random3_ranked")
+        flash("Đã random 3 CLB theo mức Rank riêng của mỗi người. Hãy chọn 1 CLB.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+    @app.route("/room/<room_id>/choose-random3-friendly", methods=["POST"])
+    @login_required
+    def room_choose_random3_friendly(room_id):
+        user = current_user()
+        room = get_room(room_id)
+        if room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            flash("Phòng giải đấu chỉ sử dụng chế độ Random CLB.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        state = decode_friendly_random3_state(room.get("note") if room else None)
+        if not system_feature_enabled("friendly_random3_enabled"):
+            flash("Chế độ Random 3 chọn 1 đang tạm tắt.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if not room or not state or room.get("status") != "waiting_ready":
+            flash("Lượt chọn CLB không còn hiệu lực.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        side = "host" if user["id"] == room.get("host_user_id") else "guest" if user["id"] == room.get("guest_user_id") else None
+        if not side and not is_admin_user(user):
+            flash("Bạn không thuộc phòng này.", "danger")
+            return redirect(url_for("rooms"))
+        side = side or (request.form.get("side") or "host")
+        try: idx = int(request.form.get("choice_index", -1))
+        except Exception: idx = -1
+        options = state.get(f"{side}_options") or []
+        if idx not in range(len(options)):
+            flash("Lựa chọn CLB không hợp lệ.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        state[f"{side}_choice"] = idx
+        update = {"note": encode_friendly_random3_state(state), "updated_at": now_iso()}
+        match = None
+        if state.get("host_choice") is not None and state.get("guest_choice") is not None:
+            try:
+                assert_can_start_ranked_match(room.get("host_user_id"), room.get("guest_user_id"))
+            except ValueError as exc:
+                flash(str(exc), "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+            h = state["host_options"][state["host_choice"]]
+            g = state["guest_options"][state["guest_choice"]]
+            match_result = execute_query(
+                db.table("matches").insert({
+                    "player1_id": room["host_user_id"],
+                    "player2_id": room["guest_user_id"],
+                    "team1": h["name"],
+                    "team2": g["name"],
+                    "team1_overall": h["overall"],
+                    "team2_overall": g["overall"],
+                    "team1_logo_url": h["logo"] or None,
+                    "team2_logo_url": g["logo"] or None,
+                    "team1_league": h["league"] or None,
+                    "team2_league": g["league"] or None,
+                    "host_xp_factor": HOST_XP_FACTOR,
+                    "status": "playing",
+                    "note": "Random 3 chọn 1 - trận xếp hạng tính RP.",
+                    "updated_at": now_iso(),
+                }),
+                "create_random3_ranked_match",
+            )
+            match = match_result.data[0] if match_result.data else None
+            if not match:
+                flash("Không thể tạo trận Random 3 chọn 1. Vui lòng thử lại.", "danger")
+                return redirect(url_for("room_detail", room_id=room_id))
+            update.update({
+                "host_team": h["name"], "guest_team": g["name"],
+                "host_team_overall": h["overall"], "guest_team_overall": g["overall"],
+                "host_team_logo_url": h["logo"] or None, "guest_team_logo_url": g["logo"] or None,
+                "host_team_league": h["league"] or None, "guest_team_league": g["league"] or None,
+                "status": "playing", "match_id": match["id"], "match_mode": MATCH_MODE_RANKED,
+                "team_tier": FRIENDLY_RANDOM3_MODE,
+                "note": "Random 3 chọn 1 - trận xếp hạng tính RP.",
+                "state_expires_at": None,
+            })
+        result = execute_query(db.table("match_rooms").update(update).eq("id", room_id).eq("status", "waiting_ready"), "choose_random3_ranked")
+        if match and not (result.data or []):
+            execute_query(db.table("matches").delete().eq("id", match["id"]).eq("status", "playing"), "rollback_random3_ranked_match", attempts=1)
+            flash("Trạng thái phòng vừa thay đổi. Trận chưa được bắt đầu.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        flash("Đã khóa lựa chọn của bạn." if update.get("status") != "playing" else "Cả hai đã chọn xong. Trận tính RP bắt đầu!", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+    @app.route("/room/<room_id>/reroll-friendly", methods=["POST"])
+    @login_required
+    def room_reroll_friendly(room_id):
+        user = current_user()
+        room = get_room(room_id)
+        if not room:
+            flash("Không tìm thấy phòng.", "danger")
+            return redirect(url_for("dashboard"))
+        required_feature = "friendly_random3_enabled" if room.get("team_tier") == FRIENDLY_RANDOM3_MODE else "friendly_enabled"
+        if not system_feature_enabled(required_feature):
+            flash("Chế độ giao hữu này đang tạm tắt.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if user["id"] != room.get("host_user_id") and not is_admin_user(user):
+            flash("Chỉ chủ phòng mới được quay lại đội giao hữu.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if room.get("status") != "friendly_playing":
+            flash("Phòng không có trận giao hữu đang diễn ra.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        selected_tier = (room.get("friendly_tier") or "A").strip().upper()
+        try:
+            result = friendly_random_team_pair(
+                selected_tier,
+                excluded_names=[room.get("host_team"), room.get("guest_team")],
+            )
+        except ValueError as exc:
+            flash(str(exc), "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        execute_query(
+            db.table("match_rooms").update({
+                "host_team": result["team_a"],
+                "guest_team": result["team_b"],
+                "host_team_overall": result["overall_a"],
+                "guest_team_overall": result["overall_b"],
+                "host_team_logo_url": result.get("logo_a") or None,
+                "guest_team_logo_url": result.get("logo_b") or None,
+                "host_team_league": result.get("league_a") or None,
+                "guest_team_league": result.get("league_b") or None,
+                "note": f"Đã quay lại đội giao hữu Tier {selected_tier}.",
+                "updated_at": now_iso(),
+            }).eq("id", room_id).eq("status", "friendly_playing"),
+            "reroll_friendly_match",
+        )
+        flash("Đã tự random tiếp hai CLB giao hữu.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+
+    @app.route("/room/<room_id>/finish-friendly", methods=["POST"])
+    @login_required
+    def room_finish_friendly(room_id):
+        user = current_user()
+        room = get_room(room_id)
+        if not room:
+            flash("Không tìm thấy phòng.", "danger")
+            return redirect(url_for("dashboard"))
+        required_feature = "friendly_random3_enabled" if room.get("team_tier") == FRIENDLY_RANDOM3_MODE else "friendly_enabled"
+        if not system_feature_enabled(required_feature):
+            flash("Chế độ giao hữu này đang tạm tắt.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if user["id"] not in [room.get("host_user_id"), room.get("guest_user_id")] and not is_admin_user(user):
+            flash("Bạn không thuộc phòng này.", "danger")
+            return redirect(url_for("dashboard"))
+        if room.get("status") != "friendly_playing":
+            flash("Phòng không có trận giao hữu đang diễn ra.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        execute_query(
+            db.table("match_rooms").update({
+                "host_team": None,
+                "guest_team": None,
+                "host_team_overall": None,
+                "guest_team_overall": None,
+                "host_team_logo_url": None,
+                "guest_team_logo_url": None,
+                "host_team_league": None,
+                "guest_team_league": None,
+                "guest_ready": bool(room.get("guest_user_id")),
+                "status": "waiting_ready",
+                "match_id": None,
+                "note": "Trận giao hữu đã kết thúc. Đang chờ Chủ Phòng quay đội tiếp theo.",
+                "updated_at": now_iso(),
+            }).eq("id", room_id).eq("status", "friendly_playing"),
+            "finish_friendly_match",
+        )
+        flash("Đã kết thúc giao hữu. Không lưu lịch sử và không thay đổi RP.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+
+    @app.route("/room/<room_id>/guest-unready", methods=["POST"])
+    @login_required
+    def room_guest_unready(room_id):
+        user = current_user()
+        room = get_room(room_id)
+        if not room or not _same_user_id(user.get("id"), room.get("guest_user_id")):
+            flash("Bạn không thuộc phòng đấu này.", "danger")
+            return redirect(url_for("dashboard"))
+        if room.get("status") != "waiting_ready":
+            flash("Không thể hủy sẵn sàng ở trạng thái hiện tại.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        is_tournament_room = str(room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament"
+        patch = {"guest_ready": False, "updated_at": now_iso()}
+        if not is_tournament_room:
+            patch["note"] = "Khách đã hủy sẵn sàng."
+        execute_query(
+            db.table("match_rooms").update(patch).eq("id", room_id).eq("status", "waiting_ready"),
+            "room_guest_unready",
+        )
+        cache_delete("_rz_rooms_all")
+        ttl_cache_delete("rooms_raw")
+        flash("Đã hủy trạng thái sẵn sàng.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+
+    @app.route("/room/<room_id>/guest-ready", methods=["POST"])
+    @login_required
+    def room_guest_ready(room_id):
+        user = current_user()
+        room = get_room(room_id)
+        if not room or not _same_user_id(user.get("id"), room.get("guest_user_id")):
+            flash("Bạn không thuộc phòng đấu này.", "danger")
+            return redirect(url_for("dashboard"))
+        if room.get("status") != "waiting_ready":
+            flash("Không thể đổi trạng thái sẵn sàng lúc này.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        is_tournament_room = str(room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament"
+        if not is_tournament_room and str(room.get("match_mode") or "").lower()!=MATCH_MODE_FRIENDLY:
+            limit_message = daily_rank_block_message(room.get("host_user_id"), room.get("guest_user_id"))
+            if limit_message:
+                # Đảm bảo phòng không mắc kẹt ở trạng thái đã cam kết thi đấu.
+                execute_query(
+                    db.table("match_rooms").update({
+                        "guest_ready": False,
+                        "note": "Đã chạm giới hạn trận Rank trong ngày. Có thể rời phòng không bị trừ RP.",
+                        "updated_at": now_iso(),
+                    }).eq("id", room_id).eq("status", "waiting_ready"),
+                    "block_guest_ready_daily_limit",
+                    attempts=2,
+                )
+                flash(limit_message, "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+        patch = {"guest_ready": True, "updated_at": now_iso()}
+        if not is_tournament_room:
+            patch["note"] = "Khách đã sẵn sàng. Chủ phòng có thể quay đội."
+
+        # V1.5.35: C1 dùng đúng cơ chế Ready của Rank nhưng xác minh trực tiếp DB.
+        # Trước đây request có thể trả về thành công dù update theo status không tác động
+        # dòng nào; Guest thấy thông báo đã sẵn sàng trong khi Host vẫn đọc False.
+        if is_tournament_room:
+            execute_query(
+                db.table("match_rooms").update(patch).eq("id", room_id)
+                .eq("status", "waiting_ready").eq("guest_user_id", user.get("id")),
+                "room_guest_ready_tournament",
+                attempts=2,
+            )
+            verified_result = execute_query(
+                db.table("match_rooms").select("id,status,guest_user_id,guest_ready,updated_at").eq("id", room_id).limit(1),
+                "room_guest_ready_tournament_verify",
+                attempts=2,
+            )
+            verified = dict((verified_result.data or [{}])[0]) if verified_result is not None else {}
+            if (str(verified.get("status") or "") != "waiting_ready"
+                    or str(verified.get("guest_user_id") or "") != str(user.get("id") or "")
+                    or not bool(verified.get("guest_ready"))):
+                app.logger.warning(
+                    "C1 ready verify failed room=%s status=%s guest_ready=%s",
+                    room_id, verified.get("status"), verified.get("guest_ready"),
+                )
+                flash("Chưa đồng bộ được trạng thái Sẵn Sàng. Hãy bấm lại một lần.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+        else:
+            execute_query(
+                db.table("match_rooms").update(patch).eq("id", room_id).eq("status", "waiting_ready"),
+                "room_guest_ready",
+            )
+
+        # C1 GĐ2: guest readiness is the final start action. Reuse the same
+        # scheduled-match transition as the host recovery endpoint; never draw clubs.
+        if is_tournament_room and str(room.get("note") or "").startswith("TOURNAMENT_ROOM|"):
+            try:
+                import json
+                metadata = json.loads(str(room.get("note"))[len("TOURNAMENT_ROOM|"):])
+                if (str(metadata.get("stage_code") or "") == "league"
+                        and not metadata.get("test_sandbox_room")):
+                    from modules.c1_fixed_match_service import start_assigned_club_match
+                    started, message, _ = start_assigned_club_match(
+                        db, execute_query, metadata.get("tournament_id"), room_id, now_iso,
+                    )
+                    cache_delete("_rz_rooms_all")
+                    ttl_cache_delete("rooms_raw")
+                    flash(message if started else message + " Chủ phòng có thể thử bắt đầu lại.",
+                          "success" if started else "warning")
+                    return redirect(url_for("room_detail", room_id=room_id))
+            except Exception:
+                app.logger.exception("C1 GĐ2 start after guest-ready failed room=%s", room_id)
+                cache_delete("_rz_rooms_all")
+                ttl_cache_delete("rooms_raw")
+                flash("Đã sẵn sàng nhưng chưa bắt đầu được GĐ2; chủ phòng có thể thử lại.", "warning")
+                return redirect(url_for("room_detail", room_id=room_id))
+        cache_delete("_rz_rooms_all")
+        ttl_cache_delete("rooms_raw")
+        flash("Bạn đã sẵn sàng.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+
+    @app.route("/room/<room_id>/start", methods=["POST"])
+    @login_required
+    def room_start(room_id):
+        # Giữ endpoint để tương thích với trang cũ đang được cache.
+        flash("V1.10.0 đã bỏ nút Sẵn sàng và Bắt đầu trận. Chủ phòng chỉ cần quay đội.", "warning")
+        return redirect(url_for("room_detail", room_id=room_id))
+

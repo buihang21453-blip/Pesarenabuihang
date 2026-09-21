@@ -1,0 +1,91 @@
+      <div class="tournament-op-tab-panel" id="c1-admin-gd2" data-tournament-op-panel="potclub" style="padding:15px;border:1px solid rgba(241,202,104,.3);border-radius:14px;margin-bottom:12px">
+        {% set reward_phase=ev.get('reward_ticket_phase',{}) %}
+        <div style="border:1px solid rgba(241,202,104,.45);border-radius:12px;padding:13px;margin-bottom:14px;background:#0b1c29">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><strong>🏆 Kịch bản Lễ bốc thăm GĐ2 · V1.6.48</strong><a class="btn green" href="{{ url_for('admin_tournament_draw_preview',tournament_id=ot.id) }}" target="_blank" rel="noopener">🎛 Mở bảng điều hành Lễ bốc thăm</a></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0">
+            <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>1 · 20:00 17/09</b><div class="small">Mở lễ bốc thăm</div></div>
+            <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>2 · Random 16 CLB</b><div class="small">Tier 1→Pot 3 · Tier 2→Pot 2 · Tier 3→Pot 1</div></div>
+            <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>3 · Sinh lịch / bốc đối thủ</b><div class="small">32 trận cố định · công bố Tier 1 → Tier 2 → Tier 3</div></div>
+            <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>4 · Vé thưởng vẫn hoạt động</b><div class="small">Đổi CLB đến 12:00 18/09 · đã chốt {{ reward_phase.get('finalized_count',0) }}/3 HLV</div></div>
+            <div style="padding:9px;border:1px solid rgba(241,202,104,.25);border-radius:9px"><b>5 · Mở GĐ2</b><div class="small">Theo lịch hoặc Admin mở ngay; vé còn lại vẫn dùng đến hạn</div></div>
+          </div>
+          <form method="post" action="{{ url_for('admin_tournament_gd2_draw_time',tournament_id=ot.id) }}" style="display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:9px">
+            <label>Mở lễ bốc thăm<input type="datetime-local" name="club_draw_local" data-admin-draw-input="{{ ops.get('club_draw_at','2026-09-17T20:00:00+07:00') }}" value="2026-09-17T20:00" required></label>
+            <label>Hạn dùng vé thưởng<input type="datetime-local" name="reward_ticket_deadline_local" data-admin-draw-input="{{ ops.get('gd2_reward_ticket_deadline_at','2026-09-18T12:00:00+07:00') }}" value="2026-09-18T12:00" required></label>
+            <label>Mở GĐ2 theo lịch<input type="datetime-local" name="league_start_local" data-admin-draw-input="{{ ops.get('league_start_at','2026-09-18T12:00:00+07:00') }}" value="2026-09-18T12:00" required></label>
+            <button class="btn gold" type="submit">💾 Lưu kịch bản GĐ2</button>
+          </form>
+          <p class="small" style="margin:7px 0 0">Sau khi đủ 16 CLB gốc, Admin có thể sinh và công bố lịch đối thủ ngay. Lịch 32 trận được khóa cố định; HLV có vé vẫn được Random đổi CLB đến khi chốt/dùng hết vé/hết hạn. Đến hạn vé, vé chưa dùng tự hết hiệu lực. GĐ2 có thể mở ngay khi đủ điều kiện lịch/CLB, kể cả khi còn vé chưa chốt. Vé chưa dùng vẫn có hiệu lực đến hạn Admin đã đặt.</p>
+          <script>(function(){document.querySelectorAll('[data-admin-draw-input]').forEach(function(el){var d=new Date(el.dataset.adminDrawInput);if(isNaN(d.getTime()))return;var parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d);var f={};parts.forEach(function(p){f[p.type]=p.value;});el.value=f.year+'-'+f.month+'-'+f.day+'T'+f.hour+':'+f.minute;});})();</script>
+        </div>
+        {% include "tournament/admin_league_opponent_board.html" %}
+        <section style="margin:12px 0;padding:13px;border:1px solid rgba(46,204,113,.35);border-radius:12px;background:#0b1c29" data-host-ready-list data-tournament-id="{{ ot.id }}">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><strong>🟢 Host đang rảnh · HLV của giải C1</strong><a class="btn green" href="{{ url_for('admin_tournament_lobby',tournament_id=ot.id) }}">🏟️ Vào Sảnh chờ C1 (Admin)</a></div>
+          <p class="small">HLV thuộc giải có Host, đang online và không ở trong phòng. Không cần bật chế độ rảnh; danh sách cập nhật tự động.</p>
+          <div data-host-ready-items style="display:flex;flex-wrap:wrap;gap:8px">{% for h in ops.get('host_ready',[]) %}<span class="td-host-chip" style="padding:7px 10px;border:1px solid rgba(46,204,113,.35);border-radius:9px">🟢 {{ h.display_name }} · {{ h.region }}</span>{% else %}<span class="small">Hiện chưa có Host nào đang rảnh.</span>{% endfor %}</div>
+          <small class="small" data-host-ready-count>{{ ops.get('host_ready',[])|length }} Host đang rảnh</small>
+          <script>(function(){var box=document.querySelector('[data-host-ready-list][data-tournament-id="{{ ot.id }}"]');if(!box)return;function refresh(){fetch('/api/tournaments/'+encodeURIComponent(box.dataset.tournamentId)+'/host-ready',{credentials:'same-origin',cache:'no-store'}).then(function(r){if(!r.ok)throw Error(r.status);return r.json();}).then(function(d){if(!d.ok)return;var target=box.querySelector('[data-host-ready-items]');target.textContent='';(d.hosts||[]).forEach(function(h){var chip=document.createElement('span');chip.className='td-host-chip';chip.textContent='🟢 '+h.display_name+' · '+h.region;target.appendChild(chip);});if(!d.count)target.textContent='Hiện chưa có Host nào đang rảnh.';box.querySelector('[data-host-ready-count]').textContent=d.count+' Host đang rảnh';}).catch(function(){});}refresh();window.setInterval(refresh,15000);})();</script>
+        </section>
+        <h3 style="margin:0 0 6px">3️⃣ Chia Pot & chọn CLB</h3>
+        <p class="small"><strong>Quy tắc CLB GĐ2:</strong> Tier HLV 1 (Top 1–5) → CLB Pot 3 · Tier HLV 2 (Top 6–11) → CLB Pot 2 · Tier HLV 3 (Top 12–16) → CLB Pot 1. Phần chia Tier HLV 5–6–5 giữ nguyên.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <form method="post" action="{{ url_for('admin_tournament_generate_pots',tournament_id=ot.id) }}" style="display:flex;gap:6px;align-items:end;flex-wrap:wrap"><input type="hidden" name="_admin_tab" value="tournaments"><label class="small">Cấu trúc Tier<input value="3 Tier · 5–6–5" readonly style="width:130px"></label><label class="small">Số CLB<input name="club_count" type="number" min="2" max="64" value="{{ ops.get('league_config',{}).get('club_count',ops.get('members',[])|length or 10) }}" style="width:80px"></label><button class="btn" type="submit">① Chia Tier 5–6–5</button></form>
+          <form method="post" action="{{ url_for('admin_tournament_lock_pots',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn" name="locked" value="1" type="submit">② 🔒 Khóa Tier</button></form>
+          <form method="post" action="{{ url_for('admin_tournament_club_draft_start',tournament_id=ot.id) }}"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn gold" type="submit" {% if cd.get('order') %}disabled title="Đã mở, không reset vé"{% endif %}>③ Khởi tạo hồ sơ 16 HLV</button></form>
+        </div>
+        {% set base_cfg=ev.get('base_draft_config',{}) %}{% set base_next=ev.get('base_draft_next') %}
+        <div style="margin-top:10px;padding:12px;border:1px solid rgba(241,202,104,.45);border-radius:10px;display:grid;gap:12px">
+          <strong>🎲 Điều hành Random CLB GĐ2 · tập trung một nơi</strong>
+          <p class="small" style="margin:0">Tier 1 → Pot 3 · Tier 2 → Pot 2 · Tier 3 → Pot 1. Chọn <strong>một</strong> cách phân CLB gốc; không thay đổi vé thưởng. HLV chỉ dùng vé sau khi đủ 16 CLB.</p>
+          <div style="padding:10px;border:1px solid rgba(255,255,255,.16);border-radius:9px;display:grid;gap:8px">
+            <strong>A. Random toàn bộ 16 CLB (Admin)</strong>
+            <form data-c1-club-admin-action method="post" action="{{ url_for('admin_tournament_rerandom_clubs_by_tier',tournament_id=ot.id) }}">
+              <input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="confirm_rule" value="TIER_POT_321">
+              <button class="btn gold" type="submit">🔄 Random toàn bộ 16 CLB theo Tier/Pot</button>
+            </form>
+            <span class="small">Chỉ Random lại toàn bộ khi chưa sử dụng vé và không có lượt Random từng người đang dở. Nếu cần đổi cách, dùng Thu hồi trước.</span>
+          </div>
+          <div style="padding:10px;border:1px solid rgba(255,255,255,.16);border-radius:9px;display:grid;gap:8px">
+            <strong>B. Random từng HLV · hạng 16 → 1</strong>
+            <p class="small" style="margin:0">Mỗi lần nhấn bốc đúng 1 CLB cho HLV chưa có CLB ở thứ hạng cao nhất (16 → 1). Lần đầu tự cấu hình chế độ Admin Random hộ. Đã có CLB từ chế độ khác thì cần thu hồi an toàn trước.</p>
+            <form data-c1-club-admin-action method="post" action="{{ url_for('admin_tournament_club_draw_next',tournament_id=ot.id) }}">
+              <input type="hidden" name="_admin_tab" value="tournaments">
+              <button class="btn gold" type="submit">🎲 Bốc CLB tiếp theo · 16 → 1</button>
+            </form>
+          </div>
+          <div style="padding:10px;border:1px solid rgba(255,255,255,.16);border-radius:9px">
+            <strong>Quản lý phân bổ</strong>
+            <form data-c1-club-admin-action method="post" action="{{ url_for('admin_tournament_revoke_clubs',tournament_id=ot.id) }}" style="margin-top:8px"><input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="confirm_revoke" value="REVOKE_ALL_16_CLUBS"><button class="btn red" type="submit">↩ Thu hồi CLB đã Random</button></form>
+            <p class="small" style="margin:8px 0 0">Không thu hồi nếu đã có lịch/trận GĐ2 hoặc vé thưởng đã sử dụng. Không hoàn vé, không xóa lịch sử.</p>
+          </div>
+          <p data-c1-club-action-status role="status" aria-live="polite" class="small" hidden style="padding:9px 12px;border:1px solid rgba(241,202,104,.35);border-radius:8px;margin:0"></p>
+        </div>
+        {% if cd.get('order') %}<p class="small">Vé thưởng sớm chỉ mở sau khi đủ 16 CLB gốc. Mỗi HLV dùng tùy ý đến hạn; có thể bấm <strong>Chốt CLB cuối cùng</strong> để kết thúc quyền dùng vé sớm.</p>{% endif %}
+        <details style="margin-top:8px"><summary><strong>⚽ Pool Random CLB chính thức · 24 CLB</strong></summary><div style="padding-top:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">{% for pot_no, club_names in ops.get('c1_club_pots',{}).items() %}<div style="padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px"><strong>Pot {{ pot_no }}</strong><div class="small" style="margin-top:5px">{{ club_names|join(' · ') }}</div></div>{% endfor %}</div></details>
+        {% set draft_rows=ev.get('club_draft_admin_rows',[]) %}
+        <details open style="margin-top:10px"><summary><strong>🎯 Theo dõi Random CLB · 16 HLV</strong></summary>
+          <div class="admin-table-wrap tournament-compact" style="margin-top:8px"><table>
+            <thead><tr><th>Thưởng sớm #</th><th>Hạng GĐ1</th><th>HLV</th><th>Tier HLV</th><th>Cơ chế</th><th>Vé</th><th>CLB hiện tại</th><th>Pot CLB</th><th>Reroll</th><th>Trạng thái</th><th>Admin quay hộ vé</th></tr></thead>
+            <tbody>
+            {% for r in draft_rows %}
+              <tr>
+                <td><strong>{{ r.position if r.allocation_type=='EARLY_REWARD' else '—' }}</strong></td><td><strong>{{ r.seed_no }}</strong></td><td>{{ r.display_name }}</td><td><strong>{{ ("Tier " ~ r.tier_hlv) if r.tier_hlv in [1,2,3] else "Chưa chia" }}</strong></td>
+                <td>{{ '🎟 Thưởng sớm' if r.allocation_type=='EARLY_REWARD' else '⚙️ Hệ thống' }}</td>
+                <td>{{ r.tickets_remaining }}/{{ r.tickets_total }}</td>
+                <td><strong>{{ r.club or 'Chưa Random' }}</strong></td><td>{{ ('Pot ' ~ r.club_pot) if r.club_pot else '—' }}</td>
+                <td>{{ r.reroll_count }}</td><td>{% if r.allocation_type=='EARLY_REWARD' and r.reward_finalized %}<span style="color:#2ecc71">✅ Đã chốt cuối cùng</span>{% elif r.status=='selected' and r.allocation_type=='EARLY_REWARD' %}🎟 Có thể dùng vé{% elif r.status=='selected' %}Đã chốt{% else %}Chờ phân CLB{% endif %}</td><td>
+                  {% if r.allocation_type=='EARLY_REWARD' and r.status=='selected' and r.tickets_remaining>0 and not r.reward_finalized and reward_phase.get('open') and cd.get('system_assigned') and cd.get('completed') and cd.get('tier_club_pot_rule')=='1:3;2:2;3:1' %}
+                  <form method="post" action="{{ url_for('admin_tournament_reward_reroll_for', tournament_id=ot.id) }}" onsubmit="return confirm('Admin sẽ dùng đúng 1 vé của HLV này để quay CLB mới theo Pot. CLB cũ không quay lại cho HLV. Bạn xác nhận?');">
+                    <input type="hidden" name="_admin_tab" value="tournaments"><input type="hidden" name="user_id" value="{{ r.user_id }}"><button class="btn gold" type="submit">🎲 Quay hộ · 1 vé</button>
+                  </form>
+                  {% elif r.allocation_type=='EARLY_REWARD' %}<span class="small">{{ 'Đã hết vé / đã chốt' if r.reward_finalized or r.tickets_remaining<=0 else 'Chưa đủ điều kiện / hết hạn' }}</span>{% else %}—{% endif %}
+                </td>
+              </tr>
+              {% if r.history %}<tr><td></td><td colspan="10"><details><summary class="small">Lịch sử {{ r.history|length }} sự kiện</summary><div class="small" style="padding:6px 0">{% for h in r.history %}<div>• {{ h.at }} · {{ h.message }}</div>{% endfor %}</div></details></td></tr>{% endif %}
+            {% endfor %}
+            {% if not draft_rows %}<tr><td colspan="11" class="small">Chưa mở cơ chế Random CLB 16 HLV.</td></tr>{% endif %}
+            </tbody></table></div>
+        </details>
+        <p class="small">Admin có thể Random CLB gốc hoặc bốc từng HLV theo hạng 16→1. Sau khi đủ 16 CLB, Admin có thể bấm Quay hộ cho từng HLV Top 1–3: mỗi lần trừ đúng 1 vé của HLV đó, ghi rõ Admin thực hiện; không đổi lịch đối thủ.</p>
+      </div>
+

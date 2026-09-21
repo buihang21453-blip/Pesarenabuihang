@@ -1,0 +1,5 @@
+PES ARENA V1.5.63
+- Gate lịch rảnh chỉ áp dụng cho HLV tham gia giải.
+- Người không tham gia giải xem bình thường.
+- Popup bắt buộc phong cách PES Arena, không window.alert, không nút đóng/Escape.
+- Form 3 ngày + giờ linh hoạt 24h.

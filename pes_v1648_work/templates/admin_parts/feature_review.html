@@ -1,0 +1,32 @@
+<section class="admin-tab-panel" data-admin-panel="review" hidden>
+  <div class="panel admin-feature-review" data-feature-review>
+    <h2>🧹 Rà soát module trùng & ít dùng</h2>
+    <p class="small">Chọn <strong>Ẩn giao diện</strong> để ẩn bản hiển thị phụ trên trình duyệt của bạn. Chọn <strong>Đề xuất bỏ source</strong> để đưa vào danh sách chờ duyệt. Không có lựa chọn nào xóa dữ liệu, route hoặc quyền truy cập.</p>
+    <p class="small" style="color:#f1ca68">Lựa chọn chỉ lưu trên trình duyệt hiện tại. Chức năng quan trọng vẫn ở module chính; muốn xóa code thật cần rà soát và phát hành phiên bản riêng.</p>
+    <div class="admin-review-items">
+      {% for key,name,desc,hideable in [
+        ('c1-flow-summary','Sơ đồ 4 ô giới thiệu C1','Trùng menu chức năng C1 mới; chỉ là hướng dẫn, không có thao tác.',true),
+        ('league-ranking-copy','BXH cộng dồn bên trong GĐ2','Bản hiển thị phụ; BXH chính vẫn giữ.',true),
+        ('c1-registration','Khối HLV & đăng ký trong trang C1','Đã có mục Người dùng và tổng quan; tuy nhiên khối này chứa tài chính và sửa trận, nên chỉ thu gọn, KHÔNG cho ẩn.',false),
+        ('match-report','Báo cáo trận Rank','Có dữ liệu chi tiết khác danh sách trận; cần kiểm tra mức sử dụng.',false),
+        ('rp-tools','Backup / Restore RP','Công cụ phục hồi dữ liệu quan trọng; không nên xóa.',false),
+        ('tournament-test','Test Mode C1','Khu kiểm thử tách dữ liệu thật; không nên xóa.',false),
+        ('database','SQL migration tracker','Công cụ phục hồi và kiểm tra schema; không nên xóa.',false)
+      ] %}
+      <div class="admin-review-item" data-review-item="{{ key }}" data-review-hideable="{{ '1' if hideable else '0' }}">
+        <div><strong>{{ name }}</strong><p class="small">{{ desc }}</p></div>
+        <label>Quyết định
+          <select data-review-choice aria-label="Quyết định đối với {{ name }}">
+            <option value="keep">Giữ nguyên</option>
+            {% if hideable %}<option value="hide">Ẩn bản hiển thị phụ</option>{% endif %}
+            <option value="propose">Đề xuất loại bỏ (chờ duyệt)</option>
+          </select>
+        </label>
+        <label class="admin-review-check"><input type="checkbox" data-review-propose> Đánh dấu đề xuất xóa code (chưa xóa)</label>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="admin-review-actions"><button type="button" class="btn green" data-review-save>Lưu lựa chọn giao diện</button><button type="button" class="btn gray" data-review-reset>Khôi phục tất cả</button><button type="button" class="btn" data-review-export>Xuất danh sách rà soát JSON</button></div>
+    <p class="small" role="status" data-review-status>Chưa thay đổi source hoặc database.</p>
+  </div>
+</section>

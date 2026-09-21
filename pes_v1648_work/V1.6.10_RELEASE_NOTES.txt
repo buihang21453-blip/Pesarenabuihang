@@ -1,0 +1,3 @@
+PES Arena V1.6.10
+Tích hợp bộ ảnh WebP Lễ bốc thăm GĐ2 từ Supabase và đưa hai nút chính vào giữa sân khấu.
+Không SQL mới. Chưa xác minh URL HTTP/Production.

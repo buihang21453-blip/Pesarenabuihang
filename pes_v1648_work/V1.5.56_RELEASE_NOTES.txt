@@ -1,0 +1,4 @@
+PES ARENA V1.5.56
+- Đưa Tiến trình giải đấu + thời gian GĐ1 + Thưởng hoàn thành sớm lên góc phải background card giải tại /tournaments.
+- Gộp Đối thủ của tôi vào khu Phòng thi đấu.
+- Nút Phòng thi đấu dẫn tới cụm Host đang rảnh + Trận của tôi + Đối thủ của tôi.

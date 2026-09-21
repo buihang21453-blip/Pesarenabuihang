@@ -1,0 +1,1 @@
+V1.5.96: Random toàn bộ hoặc tuần tự hạng 1→16 / 16→1; Admin random hộ / HLV tự random. Chạy SQL_V1.5.96_SEQUENTIAL_CLUB_DRAFT.sql trong Supabase trước khi deploy. Cần SQL V1.5.90/91 cho Random toàn bộ/Thu hồi. Chưa kiểm thử Production.

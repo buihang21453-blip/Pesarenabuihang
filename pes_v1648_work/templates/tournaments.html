@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+{% include "tournament/styles.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="tournament-shell" aria-label="Giải đấu">
+  {% include "tournament/components/hero.html" %}
+
+  {% if not tournament_open %}
+    {% include "tournament/components/closed.html" %}
+  {% else %}
+    <div class="tournament-workspace">
+      {% include "tournament/components/filterbar.html" %}
+
+      {% if not tournament_db_ready %}
+        {% include "tournament/components/database_not_ready.html" %}
+      {% else %}
+        {% include "tournament/tournament_list.html" %}
+        {% include "tournament/components/availability_gate.html" %}
+        {% include "tournament/tabs/lobby.html" %}
+        {% include "tournament/tabs/schedule.html" %}
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+
+{% include "tournament/scripts/page_scripts.html" %}
+{% endblock %}
+
+{% include "tournament/scripts/legacy_tail_scripts.html" %}

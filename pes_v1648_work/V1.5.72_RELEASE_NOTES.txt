@@ -1,0 +1,9 @@
+PES ARENA V1.5.72
+
+- Nâng cấp khối Tiến trình giải đấu trên card Champions League để nổi bật hơn.
+- Countdown GĐ1 được trình bày thành 4 ô Ngày / Giờ / Phút / Giây rõ ràng.
+- HLV thuộc giải thấy trạng thái cá nhân: số trận GĐ1 còn chưa hoàn thành hoặc xác nhận đã hoàn thành.
+- Hai tài khoản test dùng cùng luồng landing_hub để kiểm tra trạng thái cá nhân.
+- Thêm khẩu hiệu: “Chiến hết mình – Cháy cùng đam mê!”
+- Giữ nguyên phần Thưởng hoàn thành sớm.
+- Đồng bộ APP_VERSION lên V1.5.72.

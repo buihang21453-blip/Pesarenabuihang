@@ -1,0 +1,6 @@
+PES ARENA V1.6.21 — PHÒNG ĐẤU & PHÒNG C1
+- Ngăn đóng phòng C1, xóa metadata hoặc trừ RP theo offline/timeout Rank.
+- Ngăn khách C1 ghi đè khách khác, giữ nguyên trạng thái khi bấm nhận lặp; ready kiểm tra khách và status.
+- Bảo vệ metadata C1 khỏi nút kick Rank; ẩn nút này ở C1.
+- Không áp giới hạn Rank cho phòng Giao hữu ở link tham gia, ready và rời phòng.
+- Không cần SQL mới; chưa kiểm thử trên Supabase Production.

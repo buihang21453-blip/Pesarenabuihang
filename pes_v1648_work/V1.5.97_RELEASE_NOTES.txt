@@ -1,0 +1,1 @@
+V1.5.97: Chẩn đoán lỗi RPC thu hồi, không tự sửa dữ liệu. Chạy file SQL chẩn đoán chỉ đọc; cung cấp kết quả và mã lỗi nếu vẫn thất bại. Không có migration bắt buộc.

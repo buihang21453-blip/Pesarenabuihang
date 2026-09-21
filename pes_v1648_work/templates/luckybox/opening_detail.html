@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block head_extra %}<link rel="stylesheet" href="{{ static_asset('css/luckybox_user.css') }}">{% endblock %}
+{% block content %}
+<div class="lb3-detail-page">
+  <div class="lb3-detail-head">
+    <div><span class="lb3-kicker">CHI TIẾT LƯỢT MỞ</span><h1>Lucky Box PES Arena</h1></div>
+    <a class="btn gray" href="{{ url_for('luckybox_history') }}">← Lịch sử</a>
+  </div>
+  <div class="lb3-detail-summary">
+    <div><small>Thời gian</small><strong>{{ format_vn_datetime(opening.opened_at) }}</strong></div>
+    <div><small>Rate Version</small><strong>Version {{ opening.rate_version }}</strong></div>
+    <div><small>Chi phí</small><strong>{{ format_zcoin(opening.zcoin_cost) }} Zcoin</strong></div>
+    <div><small>Số dư sau</small><strong>{{ format_zcoin(opening.balance_after) }} Zcoin</strong></div>
+  </div>
+  <section class="lb3-panel">
+    <div class="lb3-section-head"><div><span class="lb3-kicker">KẾT QUẢ</span><h2>Ba phần thưởng</h2></div><span>Mã: {{ opening.request_id }}</span></div>
+    <div class="lb3-result-grid">
+      {% for reward in opening.rewards %}
+      <article class="lb3-result-card rarity-{{ reward.reward_rarity or 'common' }}">
+        {% if reward.image_url %}<img src="{{ reward.image_url }}" alt="{{ reward.reward_name }}">{% endif %}
+        <small>Ô {{ reward.reward_slot }} · {{ reward.rarity_label }}</small>
+        <h3>{{ reward.reward_name }}</h3>
+        {% if reward.reward_amount %}<strong>{{ format_zcoin(reward.reward_amount) }} Zcoin</strong>{% endif %}
+        {% if reward.duplicate_conversion %}<p>Đã quy đổi vật phẩm trùng: {{ format_zcoin(reward.duplicate_conversion) }} Zcoin</p>{% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

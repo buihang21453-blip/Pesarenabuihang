@@ -1,0 +1,3 @@
+# V1.6.30 — Ma trận 16 HLV × 4 đối thủ GĐ2
+
+Trang Admin tổng quan mới hiển thị 16 HLV theo hàng và 4 đối thủ GĐ2 theo cột trong một màn hình. Mỗi ô gồm tên đối thủ, Tier, CLB, Pot CLB và trạng thái/tỷ số. Có chế độ Toàn màn hình. Không cần SQL mới.

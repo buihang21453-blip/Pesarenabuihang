@@ -1,0 +1,8 @@
+PES Arena V1.6.11
+
+- Sinh 32 trận GĐ2 bí mật trước lễ Random CLB, chỉ dựa trên Tier 5-6-5.
+- Random CLB/vé thưởng không ảnh hưởng lịch đối thủ.
+- Bốc tiếp chỉ công bố lịch đã lưu.
+- Ẩn lịch GĐ2 với HLV trước công bố.
+- Căn chính giữa nút RANDOM CLB / Bốc tiếp dưới sân khấu.
+- Không cần SQL mới.

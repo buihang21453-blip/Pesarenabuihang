@@ -1,0 +1,11 @@
+PES ARENA V1.5.26
+
+- Lich cua doi thu duoc chia thanh 3 cot/ngay: Hom nay, Ngay mai, Ngay kia.
+- Moi ngay chi hien cac khung gio ranh cua doi thu thuoc ngay do.
+- Khung gio cua doi thu trung voi gio ranh cua HLV dang xem duoc to xanh de nhan biet nhanh.
+- Ap dung cho ca tai khoan Test C1 va HLV that.
+- Khong thay doi SQL/database schema, API luu gio ranh hay logic chot lich.
+
+Files sua:
+- modules/tournament_competition.py
+- templates/tournament_detail.html

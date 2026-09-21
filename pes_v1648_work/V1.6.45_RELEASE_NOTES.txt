@@ -1,0 +1,6 @@
+PES ARENA V1.6.45 — THU GỌN THANH CHẾ ĐỘ PHÒNG ĐẤU
+
+- Xóa phần diễn giải bên dưới ba nút chế độ.
+- Xóa các banner mô tả RANK, C1 và MINI CUP trong khu vực trung tâm.
+- Thu gọn 3 nút thành thanh ngang căn giữa, hỗ trợ màn hình nhỏ.
+- Không thay đổi logic phòng đấu, API, dữ liệu hoặc SQL.

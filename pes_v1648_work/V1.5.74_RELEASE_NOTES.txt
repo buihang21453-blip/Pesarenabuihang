@@ -1,0 +1,16 @@
+PES Arena V1.5.74
+=================
+
+Điều chỉnh thanh menu nhanh của giải đấu:
+- Đổi thứ tự: 📊 BXH · 📅 Lịch của tôi · 🏟️ Sảnh chờ · 🎮 Phòng đấu C1.
+- Đổi nhãn “Phòng thi đấu” trên menu nhanh thành “Sảnh chờ”; anchor/chức năng phía sau giữ nguyên.
+- Bỏ hoàn toàn trạng thái is-active khỏi menu nhanh.
+- Bỏ viền vàng cố định và vạch vàng 3px phía dưới tab đang chọn.
+- Giữ hiệu ứng hover nền sáng nhẹ + viền vàng.
+- Giữ thời gian khởi tranh đã bổ sung ở V1.5.73.
+
+Phạm vi tác động:
+- templates/tournaments.html
+- app.py (đồng bộ APP_VERSION V1.5.74)
+
+Không thay đổi database/SQL hoặc logic thi đấu.

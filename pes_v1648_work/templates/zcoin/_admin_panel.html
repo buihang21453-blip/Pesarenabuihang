@@ -1,0 +1,97 @@
+{% if can_view_zcoin %}
+<section class="admin-tab-panel" data-admin-panel="zcoin">
+    <div class="zcoin-admin-metrics">
+        <article><span>Zcoin đang lưu thông</span><strong>{{ format_zcoin(zcoin_stats.circulating) }}</strong><small>Tổng số dư của người chơi</small></article>
+        <article><span>Ví có số dư</span><strong>{{ zcoin_stats.wallet_count }}</strong><small>{{ players|length }} tài khoản player</small></article>
+        <article><span>Số dư cao nhất</span><strong>{{ format_zcoin(zcoin_stats.highest_balance) }}</strong><small>Zcoin trong một ví</small></article>
+        <article><span>100 giao dịch gần nhất</span><strong>+{{ format_zcoin(zcoin_stats.recent_issued) }}</strong><small>Đã trừ {{ format_zcoin(zcoin_stats.recent_withdrawn) }}</small></article>
+    </div>
+
+    {% if can_manage_zcoin %}
+    <div class="panel zcoin-admin-adjust-panel">
+        <div class="admin-section-heading">
+            <div>
+                <h2>🪙 Cộng hoặc trừ Zcoin</h2>
+                <p class="small">Mọi thao tác đều ghi sổ. Không sửa trực tiếp cột số dư và không xóa giao dịch cũ.</p>
+            </div>
+        </div>
+        <form method="post" action="{{ url_for('admin_adjust_zcoin') }}" class="zcoin-adjust-form" onsubmit="return confirm('Xác nhận điều chỉnh Zcoin cho tài khoản đã chọn?');">
+            <input type="hidden" name="request_token" value="{{ zcoin_adjustment_token }}">
+            <label>
+                <span>Người chơi</span>
+                <select name="target_user_id" required>
+                    <option value="">Chọn tài khoản...</option>
+                    {% for p in players %}
+                    <option value="{{ p.id }}">{{ p.display_name or p.username }} (@{{ p.username }}) — {{ format_zcoin(p.zcoin_balance|default(0, true)) }} Zcoin</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                <span>Thao tác</span>
+                <select name="operation" required>
+                    <option value="credit">Cộng Zcoin</option>
+                    <option value="debit">Trừ Zcoin</option>
+                </select>
+            </label>
+            <label>
+                <span>Số lượng</span>
+                <input type="number" name="amount" min="1" max="{{ 1000000 if current_user.admin_level == 'owner' else 100000 }}" step="1" placeholder="Ví dụ: 1000" required>
+            </label>
+            <label class="zcoin-reason-field">
+                <span>Lý do</span>
+                <input name="reason" minlength="3" maxlength="300" placeholder="Ví dụ: Thưởng giải đấu tháng 7" required>
+            </label>
+            <button class="btn gold" type="submit">Xác nhận giao dịch</button>
+        </form>
+        <p class="small zcoin-admin-warning">⚠️ Nếu nhập sai, hãy tạo một giao dịch ngược lại kèm lý do. Không chỉnh sửa lịch sử.</p>
+    </div>
+    {% endif %}
+
+    <div class="panel">
+        <div class="admin-section-heading">
+            <div><h2>💰 Số dư người chơi</h2><p class="small">Dữ liệu hiện tại của toàn bộ tài khoản player.</p></div>
+            <input id="zcoinPlayerSearch" type="search" placeholder="Tìm username hoặc tên hiển thị...">
+        </div>
+        <div class="table-wrap admin-table-wrap">
+            <table class="zcoin-player-table">
+                <thead><tr><th>#</th><th>Người chơi</th><th>Username</th><th>Số dư Zcoin</th><th>Trạng thái</th></tr></thead>
+                <tbody id="zcoinPlayerTableBody">
+                    {% for p in players %}
+                    <tr data-zcoin-player data-search="{{ ((p.display_name or '') ~ ' ' ~ (p.username or ''))|lower }}">
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ p.display_name or p.username }}</strong></td>
+                        <td>@{{ p.username }}</td>
+                        <td><span class="zcoin-inline-balance"><img src="{{ asset_url('zcoin-logo.webp') }}" alt="">{{ format_zcoin(p.zcoin_balance|default(0, true)) }}</span></td>
+                        <td><span class="badge {{ p.account_status or 'approved' }}">{{ p.account_status or 'approved' }}</span></td>
+                    </tr>
+                    {% else %}<tr><td colspan="5">Chưa có người chơi.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="admin-section-heading">
+            <div><h2>🧾 Giao dịch Zcoin gần nhất</h2><p class="small">Tối đa 100 giao dịch mới nhất trên hệ thống.</p></div>
+            <span class="admin-count">{{ zcoin_transactions|length }}</span>
+        </div>
+        <div class="table-wrap admin-table-wrap">
+            <table class="zcoin-admin-history-table">
+                <thead><tr><th>Thời gian</th><th>Người chơi</th><th>Thay đổi</th><th>Số dư trước → sau</th><th>Lý do</th><th>Admin</th></tr></thead>
+                <tbody>
+                    {% for tx in zcoin_transactions %}
+                    <tr>
+                        <td>{{ format_vn_datetime(tx.created_at) }}</td>
+                        <td><strong>{{ tx.user_name }}</strong></td>
+                        <td class="{{ 'positive' if tx.is_credit else 'negative' }}"><strong>{{ '+' if tx.is_credit else '-' }}{{ tx.amount_display }}</strong></td>
+                        <td>{{ tx.balance_before_display }} → <strong>{{ tx.balance_after_display }}</strong></td>
+                        <td>{{ tx.reason }}</td>
+                        <td>{{ tx.actor_name or '-' }}</td>
+                    </tr>
+                    {% else %}<tr><td colspan="6">Chưa có giao dịch Zcoin hoặc SQL chưa được chạy.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endif %}

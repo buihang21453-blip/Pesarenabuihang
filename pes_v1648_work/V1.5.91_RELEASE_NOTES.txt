@@ -1,0 +1,1 @@
+V1.5.91: Sửa tab Admin GĐ1/GĐ2/KO; thêm nút thu hồi toàn bộ CLB đã Random trước GĐ2. Chạy SQL_V1.5.91_ADMIN_REVOKE_CLUBS.sql trước triển khai. Giữ vé thưởng và lịch sử. Chưa kiểm thử Production.

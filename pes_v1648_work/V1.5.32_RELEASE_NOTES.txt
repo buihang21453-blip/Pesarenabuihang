@@ -1,0 +1,8 @@
+PES ARENA V1.5.32 — C1 Continue Match Like Rank
+
+- C1 no longer uses a special "Open Match 2" or "Sync next match" step.
+- After Guest confirms a result, backend checks the real tournament schedule for the same pair/stage.
+- If another match remains: reuse the same room, attach the next tournament_match_id, reset room to waiting_ready, Guest clicks Ready, Host randomizes teams, then play normally.
+- If no match remains: only then mark the room confirmed / pair completed.
+- Added compatibility recovery for rooms stuck as confirmed by V1.5.29–V1.5.31.
+- No database schema/SQL changes.

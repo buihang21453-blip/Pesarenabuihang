@@ -1,0 +1,41 @@
+PES Arena V1.5.76
+=================
+
+MỤC TIÊU
+- Refactor cấu trúc templates/tournaments.html để các lần sửa giao diện giải đấu sau nhanh hơn và ít ảnh hưởng chéo hơn.
+- Không thay đổi giao diện, dữ liệu, route, database hoặc luồng nghiệp vụ hiện tại.
+
+THAY ĐỔI
+1. templates/tournaments.html
+   - Giảm thành file điều phối chính (orchestrator).
+   - Giữ các điều kiện cấp trang: tournament_open và tournament_db_ready.
+   - Chuyển từng khu vực giao diện sang partial riêng bằng Jinja include.
+
+2. Tạo templates/tournament/
+   - styles.html: toàn bộ CSS hiện tại của trang giải đấu.
+   - tournament_list.html: vòng lặp danh sách giải.
+   - components/hero.html
+   - components/closed.html
+   - components/filterbar.html
+   - components/database_not_ready.html
+   - components/availability_gate.html
+   - cards/champions_league.html
+   - cards/c1_media.html
+   - cards/c1_header_nav.html
+   - cards/c1_actions.html
+   - cards/c1_registration.html
+   - cards/generic.html
+   - tabs/ranking.html
+   - tabs/lobby.html
+   - tabs/schedule.html
+   - scripts/page_scripts.html
+   - scripts/legacy_tail_scripts.html
+
+3. BẢO TOÀN TƯƠNG THÍCH
+   - Giữ nguyên id, class, data-* hook, form action và biến Jinja.
+   - Không sửa API/route/backend.
+   - Không sửa SQL/database.
+   - Không đổi logic 2 tài khoản test, Admin, Host đang rảnh, BXH, lịch thi đấu hoặc popup khai báo lịch.
+
+VERSION
+- APP_VERSION: V1.5.75 -> V1.5.76

@@ -1,0 +1,1 @@
+PES Arena V1.6.5: Lễ bốc thăm một nút mỗi HLV. CLB 16→1; đối thủ 1→16 (4 đối thủ mỗi lượt). Cần SQL V1.5.96 hiện hữu; không migration mới. Chưa xác thực Supabase Production.

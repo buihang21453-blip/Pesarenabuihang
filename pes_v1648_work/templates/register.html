@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block page_styles %}
+<style>
+/* Registration-only Zalo card: scoped styles must live in a Jinja block. */
+.auth-card .register-zalo-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    margin: 14px 0;
+    padding: 12px;
+    background: #0b1c29;
+    border: 1px solid rgba(210,174,75,.38);
+    border-radius: 12px;
+    color: #fff;
+    text-decoration: none;
+    text-align: center;
+}
+.auth-card .register-zalo-card:hover { border-color: #d2ae4b; background: #10283a; }
+.auth-card .register-zalo-card img {
+    display: block;
+    box-sizing: border-box;
+    width: 112px;
+    height: 112px;
+    max-width: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #fff;
+    padding: 5px;
+    flex: 0 0 auto;
+}
+.auth-card .register-zalo-card span { font-size: 12px; color: #b9c6d2; }
+.auth-card .register-zalo-card strong { font-size: 14px; }
+@media (max-width: 480px) {
+    .auth-card .register-zalo-card { padding: 10px; }
+    .auth-card .register-zalo-card img { width: 100px; height: 100px; }
+}
+</style>
+{% endblock %}
+{% block auth %}
+<div class="auth-body">
+    <div class="auth-card">
+        <div class="auth-emblem">PES</div><div class="logo">PES <span>eFootball 2026</span></div>
+        <div class="subtitle">Đăng ký tài khoản player</div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="post">
+            <div class="form-group"><input name="username" maxlength="30" placeholder="Tên tài khoản" required></div>
+            <div class="form-group"><input name="password" type="password" minlength="{{ minimum_password_length }}" placeholder="Mật khẩu" required></div>
+            <div class="form-group"><input name="zalo_name" maxlength="80" placeholder="Tên Zalo" required></div>
+            <button class="btn full green" type="submit">Gửi đăng ký</button>
+        </form>
+
+        <p class="small">IP đăng ký hoặc IP gần nhất không trùng sẽ được duyệt tự động. Nếu trùng, tài khoản sẽ chờ Admin kiểm tra.</p>
+<a class="register-zalo-card" href="https://zalo.me/g/bqbtai165" target="_blank" rel="noopener noreferrer" title="Bấm để tham gia nhóm Zalo PES Arena">
+<strong>💬 Nhóm Zalo PES Arena</strong>
+<img src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1/zalo_qr.webp" alt="QR nhóm Zalo PES Arena">
+<span>Bấm vào mã QR để mở nhóm Zalo</span></a>
+        <p class="small">Đã có tài khoản? <a href="{{ url_for('login') }}">Đăng nhập</a></p>
+    </div>
+</div>
+{% endblock %}

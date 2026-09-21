@@ -1,0 +1,1964 @@
+{% extends "base.html" %}
+{% from "_avatar_macros.html" import player_avatar %}
+{% block content %}
+{% set room_room_viewer_is_host = viewer_is_host|default(false) %}
+{% set room_viewer_is_guest = viewer_is_guest|default(false) %}
+{% set room_ui_mode = 'c1' if is_tournament_room else 'rank' %}
+{% set room_stage_subtitle_rank = room.match_mode_label ~ ' • 1 vs 1' %}
+{% set room_stage_subtitle_c1 = ('C1 GĐ2 • CLB CỐ ĐỊNH THEO HLV • 1 vs 1' if tournament_fixed_club_mode else 'C1 GĐ1 • RANDOM CLB • 1 vs 1') %}
+{% set room_stage_subtitle_mini = 'MINI CUP • THI ĐẤU LOẠI TRỰC TIẾP • 1 vs 1' %}
+<div id="roomLiveShell" class="room-view-shell room-layout-v137 room-ui-mode-{{ room_ui_mode }}" data-base-room-mode="{{ room_ui_mode }}" data-room-ui-mode="{{ room_ui_mode }}" data-room-style="{{ room_visual_style|default('default') }}" data-room-state-key="{{ initial_room_state_key|e }}" data-room-status="{{ room.status|e }}" data-room-guest-id="{{ room.guest_user_id|default('', true)|e }}" style="--room-mode-logo-bg-opacity: {{ (room_mode_logo_config.background_opacity|default(0)) / 100 }}; --room-mode-logo-scale: {{ (room_mode_logo_config.scale|default(100)) / 100 }}; --room-mode-dock-logo-scale: {{ (room_mode_logo_config.dock_scale|default(135)) / 100 }}; --room-panel-height: {{ room_panel_layout_config.panel_height|default(600) }}px; --room-center-stage-padding: {{ room_center_design_config.stage_padding|default(18) }}px; --room-center-stage-gap: {{ room_center_design_config.stage_gap|default(18) }}px; --room-center-mode-width: {{ room_center_design_config.mode_width|default(320) }}px; --room-center-mode-padding: {{ room_center_design_config.mode_padding|default(13) }}px; --room-center-vs-size: {{ room_center_design_config.vs_size|default(150) }}px; --room-center-score-width: {{ room_center_design_config.score_width|default(340) }}px; --room-center-score-padding: {{ room_center_design_config.score_padding|default(14) }}px; --room-center-score-input-height: {{ room_center_design_config.score_input_height|default(44) }}px; --room-center-action-height: {{ room_center_design_config.action_height|default(46) }}px;" data-center-bars="{{ 'visible' if room_panel_layout_config.center_bars_visible|default(true) else 'hidden' }}" data-center-layout="{{ room_center_design_config.vertical_layout|default('compact') }}">
+
+{% include "_streak_animation.html" %}
+
+    <div class="room-stage-topbar panel">
+        <div class="room-stage-title-wrap">
+            <div>
+                <h1 class="room-stage-title">{% if is_tournament_room %}PHÒNG ĐẤU C1{% else %}PHÒNG ĐẤU{% endif %} <span class="room-code-badge">#{{ room.room_code }}</span></h1>
+                <p class="room-stage-subtitle" data-room-mode-subtitle data-mode-rank="{{ room_stage_subtitle_rank }}" data-mode-c1="{{ room_stage_subtitle_c1 }}" data-mode-mini="{{ room_stage_subtitle_mini }}">{% if is_tournament_room %}{{ room_stage_subtitle_c1 }}{% else %}{{ room_stage_subtitle_rank }}{% endif %}</p>
+            </div>
+        </div>
+    <div class="room-mode-switch-strip">
+        <div class="room-mode-switch-grid">
+            {% if not is_tournament_room %}
+            <button class="room-mode-switch-card is-active" type="button" data-room-layout-tab="rank">
+                <span class="room-mode-switch-kicker">RANK</span>
+                <strong>Xếp hạng</strong>
+            </button>
+            {% else %}
+            <button class="room-mode-switch-card" type="button" onclick="event.preventDefault(); document.getElementById('quickCreateRoomForm').submit();">
+                <span class="room-mode-switch-kicker">RANK</span>
+                <strong>Xếp hạng</strong>
+            </button>
+            {% endif %}
+
+            {% if is_tournament_room %}
+            <button class="room-mode-switch-card is-active" type="button" data-room-layout-tab="c1">
+                <span class="room-mode-switch-kicker">C1</span>
+                <strong>Giải đấu</strong>
+            </button>
+            {% else %}
+            <button class="room-mode-switch-card" type="button" onclick="event.preventDefault(); document.getElementById('quickCreateC1RoomForm').submit();">
+                <span class="room-mode-switch-kicker">C1</span>
+                <strong>Giải đấu</strong>
+            </button>
+            {% endif %}
+
+            {% if not is_tournament_room %}
+            <button class="room-mode-switch-card" type="button" data-room-layout-tab="mini_cup">
+                <span class="room-mode-switch-kicker">MINI CUP</span>
+                <strong>Đấu cúp</strong>
+            </button>
+            {% else %}
+            <button class="room-mode-switch-card is-disabled" type="button" disabled title="Mini Cup dùng chung khung Phòng đấu thường">
+                <span class="room-mode-switch-kicker">MINI CUP</span>
+                <strong>Đấu cúp</strong>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+        {% if room.status == 'waiting_ready' and not room.has_guest and (room_room_viewer_is_host or current_user.role == 'admin') %}
+        <div class="room-stage-share-wrap">
+            <button id="copyRoomShareLink"
+                    class="room-share-button"
+                    type="button"
+                    data-share-path="{{ url_for('room_join_shared', room_id=room.id) }}"
+                    aria-label="Copy link chia sẻ phòng đấu">
+                <span class="room-share-icon" aria-hidden="true">🔗</span>
+                <span class="room-share-copy">
+                    <strong>Chia sẻ phòng</strong>
+                    <small>Copy link tham gia</small>
+                </span>
+            </button>
+            <span id="roomShareStatus" class="room-share-status" role="status" aria-live="polite"></span>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="room-match-shell room-arena-frame">
+        <section class="room-side-card room-team-card home" aria-label="Chủ phòng">
+            <div class="room-player-heading-plain">
+                {{ player_avatar(name=room.host_name, avatar_url=room.host_avatar_url, achievement=room.host_achievement, size='sm', frame=room.host_avatar_frame) }}
+                <div class="room-player-name {{ room.host_name_style_class or '' }}"><span>{{ room.host_name }}</span>{% if room.host_profile_badge %}<img class="equipped-profile-badge room-equipped-profile-badge" src="{{ room.host_profile_badge.image_url }}" alt="{{ room.host_profile_badge.name }}" title="{{ room.host_profile_badge.name }}" loading="lazy">{% endif %}</div>
+                <div class="room-player-rankline">
+                    <img src="{{ asset_url('ranks/' ~ room.host_rank_info.slug ~ '.webp') }}" alt="{{ room.host_rank_info.name }}" loading="lazy">
+                    <span>{{ room.host_rank_info.name }}</span>
+                </div>
+                {% if room.host_streak_badge %}
+                <div class="win-streak-badge win-streak-badge-host">
+                    <span>{{ room.host_streak_badge.icon }}</span>
+                    <strong>{{ room.host_streak_badge.title }}</strong>
+                    <span>· {{ room.host_streak_badge.count }} trận thắng</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="room-card-club-area{% if (room.status == 'waiting_ready' and room.friendly_random3_active) or room.random_selection_match_active %} room-card-club-area--random3{% endif %}">
+                {% if room.random_selection_match_active %}
+                    <div class="room-side-random3-selector room-random-selection-display room-side-random3-selector--home">
+                        <div class="room-side-random3-title">3 CLB CỦA CHỦ NHÀ</div>
+                        <div class="room-side-random3-grid">
+                            {% for team in room.random_selection_match.host_options %}
+                            <div class="room-side-random3-card is-display-only">
+                                {% if team.logo %}<img src="{{ team.logo }}" alt="Logo {{ team.name }}" loading="lazy">{% else %}<div class="friendly-random3-placeholder">?</div>{% endif %}
+                                <strong title="{{ team.name }}">{{ team.name }}</strong>
+                                <small>{{ team.tier or '' }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% elif room.status == 'waiting_ready' and room.friendly_random3_active %}
+                    {% set host_random3_choice = room.friendly_random3.host_choice %}
+                    {% if room_room_viewer_is_host or current_user.role == 'admin' %}
+                        <div class="room-side-random3-selector room-side-random3-selector--home">
+                            <div class="room-side-random3-title">3 CLB CỦA CHỦ NHÀ</div>
+                            {% if host_random3_choice is none %}
+                            <div class="room-side-random3-grid">
+                                {% for team in room.friendly_random3.host_options %}
+                                <form method="post" action="{{ url_for('room_choose_random3_friendly', room_id=room.id) }}" class="room-side-random3-card" data-room-async="1">
+                                    <input type="hidden" name="choice_index" value="{{ loop.index0 }}">
+                                    {% if current_user.role == 'admin' %}<input type="hidden" name="side" value="host">{% endif %}
+                                    {% if team.logo %}<img src="{{ team.logo }}" alt="Logo {{ team.name }}" loading="lazy">{% else %}<div class="friendly-random3-placeholder">?</div>{% endif %}
+                                    <strong title="{{ team.name }}">{{ team.name }}</strong>
+                                    <button type="submit">CHỌN CLB</button>
+                                </form>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="room-side-random3-picked">✓ BẠN ĐÃ CHỌN CLB<br><small>Chờ đối thủ hoàn tất lựa chọn</small></div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="room-side-random3-opponent-state">{% if host_random3_choice is none %}<strong>CHỦ NHÀ ĐANG CHỌN CLB</strong><small>3 lựa chọn được hiển thị ở phía Chủ nhà</small>{% else %}<strong>✓ CHỦ NHÀ ĐÃ CHỌN</strong><small>Chờ phía Khách hoàn tất</small>{% endif %}</div>
+                    {% endif %}
+                {% else %}
+                    {% if room.host_team_logo_url %}<img class="room-club-logo-large" src="{{ room.host_team_logo_url }}" alt="Logo {{ room.host_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
+                    <div class="room-team-name-lg">{{ room.host_team or 'CHƯA CHỌN ĐỘI' }}</div>
+                    {% if room.host_team_total_stats and not is_tournament_room %}
+                    <div class="room-team-points-block"><div class="room-team-points-value">{{ room.host_team_total_stats }}</div></div>
+                    {% endif %}
+                    <div class="room-team-league-text">{% if room.host_team_league_logo_url %}<img class="room-league-logo" src="{{ room.host_team_league_logo_url }}" alt="Logo {{ room.host_team_league }}" loading="lazy">{% endif %}<span>{{ room.host_team_league or 'Chưa có giải' }}</span></div>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="room-center-stage-plain" aria-label="Khu vực điều khiển trận đấu">
+            {# UI Rank selector uses system_features.rank_standard_enabled; visible label: RANDOM #}
+        {% include "partials/room_mode_center_display.html" %}
+
+        {% if not is_tournament_room and room.status == "waiting_ready" and room.friendly_random3_active %}
+            <div class="room-center-random3-status" aria-label="Trạng thái Random 3 chọn 1">
+                <div class="room-center-random3-status-row">
+                    <span class="home">CHỦ NHÀ <strong>{% if room.friendly_random3.host_choice is none %}ĐANG CHỌN{% else %}✓ ĐÃ CHỌN{% endif %}</strong></span>
+                    <span class="away">ĐỘI KHÁCH <strong>{% if room.friendly_random3.guest_choice is none %}ĐANG CHỌN{% else %}✓ ĐÃ CHỌN{% endif %}</strong></span>
+                </div>
+                <small>Hãy chọn CLB trong khung của bạn</small>
+            </div>
+        {% endif %}
+
+            {% if room.has_guest %}
+                {% if room.status == 'waiting_result_confirm' and not is_tournament_room %}
+                    <div class="room-result-review" aria-label="Tỷ số đang chờ xác nhận">
+                        <div class="room-result-score">{{ room.host_score }} <span>-</span> {{ room.guest_score }}</div>
+                        {% if room_viewer_is_guest or current_user.role == 'admin' %}
+                        <div class="room-result-actions">
+                            <form method="post" action="{{ url_for('room_confirm_result', room_id=room.id) }}">
+                                <button class="room-result-btn confirm" type="submit">✓ Xác Nhận</button>
+                            </form>
+                            <details class="room-result-dispute">
+                                <summary class="room-result-btn disagree">× Không Đồng Ý</summary>
+                                <form class="dispute-form room-result-dispute-form room-action-confirm-form"
+                                      method="post"
+                                      action="{{ url_for('room_dispute_result', room_id=room.id) }}"
+                                      enctype="multipart/form-data"
+                                      data-modal-tone="warning"
+                                      data-modal-icon="⚠"
+                                      data-modal-title="Gửi tranh chấp?"
+                                      data-modal-message="Trận sẽ tạm thời chưa được tính điểm và được chuyển tới Admin xử lý."
+                                      data-modal-note="CHỜ ADMIN XỬ LÝ"
+                                      data-modal-confirm-label="Gửi tranh chấp">
+                                    <label>Lý do tranh chấp</label>
+                                    <select name="reason_code" required>
+                                        <option value="">-- Chọn lý do --</option>
+                                        <option value="wrong_score">Sai tỷ số</option>
+                                        <option value="wrong_winner">Sai người thắng</option>
+                                        <option value="interrupted">Trận bị gián đoạn</option>
+                                        <option value="unilateral_entry">Kết quả nhập không đúng thỏa thuận</option>
+                                        <option value="other">Lý do khác</option>
+                                    </select>
+                                    <label>Ghi chú cho Admin</label>
+                                    <textarea name="details" maxlength="500" rows="3" placeholder="Mô tả ngắn vấn đề để Admin xử lý chính xác..."></textarea>
+                                    <label>Ảnh bằng chứng (không bắt buộc)</label>
+                                    <input type="file" name="evidence" accept="image/png,image/jpeg,image/webp">
+                                    <button class="btn red" type="submit">Gửi tranh chấp</button>
+                                </form>
+                            </details>
+                        </div>
+                        {% else %}
+                        <div class="room-result-waiting">Đang chờ sân khách xác nhận</div>
+                        {% endif %}
+                    </div>
+                    {% if room_room_viewer_is_host %}
+                    <div class="room-center-primary-actions room-post-result-actions room-action-zone is-post-result">
+<form class="room-exit-confirm-form" method="post" action="{{ url_for('room_post_result_exit', room_id=room.id) }}"
+                              data-modal-tone="safe"
+                              data-modal-icon="🚪"
+                              data-modal-title="Thoát an toàn"
+                              data-modal-message="Bạn đã hoàn tất việc gửi kết quả. Trận vẫn được giữ để khách xác nhận."
+                              data-modal-note="KHÔNG TRỪ RP"
+                              data-modal-confirm-label="Thoát và về sảnh">
+                            <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                        </form>
+
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <img class="room-center-vs-image" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/VS.webp" alt="VS" loading="eager">
+                    {% if room.status == 'playing' and not is_tournament_room and room.match_mode != 'friendly' and (room_room_viewer_is_host or current_user.role == 'admin') %}
+                        <div class="room-center-score-panel">
+                            <h3 class="room-score-title">Kết quả trận đấu</h3>
+                            <form method="post" action="{{ url_for('room_submit_result', room_id=room.id) }}" class="room-score-form room-center-score-form">
+                                <div class="room-score-fields">
+                                    <label>
+                                        <span>Sân Nhà</span>
+                                        <input type="number" min="0" max="99" step="1" required inputmode="numeric" name="host_score" value="0" autocomplete="off">
+                                    </label>
+                                    <label>
+                                        <span>Sân Khách</span>
+                                        <input type="number" min="0" max="99" step="1" required inputmode="numeric" name="guest_score" value="0" autocomplete="off">
+                                    </label>
+                                </div>
+                                <button class="btn green room-submit-result-btn" type="submit">Gửi Kết Quả</button>
+                            </form>
+                        </div>
+                    {% elif room.status == 'playing' and not is_tournament_room and room.match_mode != 'friendly' and room_viewer_is_guest %}
+                        <div class="room-center-primary-actions room-action-zone">
+                            <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}"
+                                  data-modal-tone="danger"
+                                  data-modal-icon="⚠"
+                                  data-modal-title="Xác nhận bỏ cuộc"
+                                  data-modal-message="Trận đấu chưa kết thúc. Thoát phòng lúc này sẽ bị tính là bỏ cuộc và hệ thống trừ 20 RP."
+                                  data-modal-note="−20 RP"
+                                  data-modal-confirm-label="Bỏ cuộc và thoát">
+                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            </form>
+                        </div>
+                    {% elif room.status == 'waiting_ready' and is_tournament_room and tournament_fixed_club_mode %}
+                        {% include 'partials/c1_fixed_waiting_controls.html' %}
+                    {% elif room.status == 'waiting_ready' and is_tournament_room and tournament_meta %}
+                        {% if not room_viewer_is_guest or current_user.role == 'admin' %}
+                        <div class="room-center-c1-random-wrap room-action-zone">
+                            {% if not room.has_guest %}
+                                <button class="room-center-random-trigger disabled c1-random-center" type="button" disabled>
+                                    <span class="room-center-random-title room-random-button-label">🎲 QUAY ĐỘI</span>
+                                    <span class="room-center-random-sub">Chờ đối thủ vào phòng</span>
+                                </button>
+                            {% elif not room.guest_ready %}
+                                <button class="room-center-random-trigger disabled c1-random-center" type="button" disabled>
+                                    <span class="room-center-random-title room-random-button-label">🎲 QUAY ĐỘI</span>
+                                    <span class="room-center-random-sub">Chờ đội khách bấm Sẵn sàng</span>
+                                </button>
+                            {% elif (tournament_stage1_pool_count or 0) != 16 %}
+                                <button class="room-center-random-trigger disabled c1-random-center" type="button" disabled>
+                                    <span class="room-center-random-title room-random-button-label">🎲 QUAY ĐỘI</span>
+                                    <span class="room-center-random-sub">Admin chưa đủ 16 CLB C1</span>
+                                </button>
+                            {% elif room.host_team %}
+                                <div class="room-center-random-trigger disabled c1-random-center">
+                                    <span class="room-center-random-title room-random-button-label">✅ ĐÃ QUAY ĐỘI</span>
+                                    <span class="room-center-random-sub">Hai CLB đã được khóa cho trận này</span>
+                                </div>
+                            {% elif room_room_viewer_is_host or current_user.role == 'admin' %}
+                                <form class="room-center-random-form" method="post" action="{{ url_for('tournament_room_random_stage1_clubs', tournament_id=tournament_meta.tournament_id, room_id=room.id) }}" data-room-async="1" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
+                                    <button class="room-center-random-trigger c1-random-center" type="submit">
+                                        <span class="room-center-random-title room-random-button-label">🎲 QUAY ĐỘI</span>
+                                        <span class="room-center-random-sub">Random 2 CLB khác nhau trong Pool 16 đội C1</span>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <div class="room-center-random-trigger disabled c1-random-center">
+                                    <span class="room-center-random-title room-random-button-label">🎲 QUAY ĐỘI</span>
+                                    <span class="room-center-random-sub">Chờ chủ phòng quay đội</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% if room_viewer_is_guest %}
+                        <div class="room-center-primary-actions room-action-zone">
+                            {% if not room.guest_ready %}
+                            <form method="post" action="{{ url_for('room_guest_ready', room_id=room.id) }}">
+                                <button class="btn green room-center-action-btn" type="submit">Sẵn Sàng</button>
+                            </form>
+                            {% else %}
+                            <form method="post" action="{{ url_for('room_guest_unready', room_id=room.id) }}">
+                                <button class="btn gray room-center-action-btn" type="submit">Hủy Sẵn Sàng</button>
+                            </form>
+                            {% endif %}
+                            <form method="post" action="{{ url_for('room_leave', room_id=room.id) }}">
+                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            </form>
+                        </div>
+                        {% elif room_room_viewer_is_host %}
+                        <div class="room-center-primary-actions room-action-zone">
+                            <form method="post" action="{{ url_for('room_leave', room_id=room.id) }}">
+                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    {% elif room.status == 'waiting_ready' and not room.friendly_random3_active %}
+                        {% if daily_rank_limit_blocked %}
+                        <div class="room-limit-warning">
+                            <strong>ĐÃ ĐỦ GIỚI HẠN TRẬN RANK HÔM NAY</strong>
+                            <span>{{ daily_rank_limit_message }}</span>
+                        </div>
+                        {% endif %}
+                        {% if (room_room_viewer_is_host or current_user.role == 'admin') and room.guest_ready and not daily_rank_limit_blocked %}
+                        <form class="room-center-random-form" method="post" action="{% if room.team_tier == 'random3_pick1' %}{{ url_for('room_start_random3_friendly', room_id=room.id) }}{% elif room.team_tier == 'random_selection_match' %}{{ url_for('room_start_random_selection_match', room_id=room.id) }}{% else %}{{ url_for('room_random_teams', room_id=room.id) }}{% endif %}" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.classList.add('loading');">
+                            {% if room.team_tier not in ['random3_pick1', 'random_selection_match'] %}<input type="hidden" name="match_mode" value="ranked">{% endif %}
+                            <button class="room-center-random-trigger {% if room.team_tier in ['random3_pick1', 'random_selection_match'] %}random3-trigger{% endif %}" type="submit">
+                                <span class="room-center-random-title room-random-button-label">QUAY QUÂN</span>
+                                <span class="room-center-random-sub">{% if room.team_tier == 'random3_pick1' %}Random 3 CLB rồi chọn 1{% elif room.team_tier == 'random_selection_match' %}Mỗi bên nhận thẳng 3 CLB{% else %}Random trực tiếp 1 CLB cho mỗi bên{% endif %}</span>
+                            </button>
+                        </form>
+                        {% else %}
+                        <div class="room-center-random-trigger disabled">
+                            <span class="room-center-random-title room-random-button-label">{% if room_viewer_is_guest %}ĐỢI QUAY RANDOM ĐỘI{% elif not room.guest_ready %}ĐỢI KHÁCH SẴN SÀNG{% else %}QUAY RANDOM ĐỘI{% endif %}</span>
+                            <span class="room-center-random-sub">{% if room_viewer_is_guest %}Đang chờ chủ phòng quay đội{% elif not room.guest_ready %}Khách chưa sẵn sàng{% else %}Đang chờ chủ phòng quay đội{% endif %}</span>
+                        </div>
+                        {% endif %}
+                        {% if room_viewer_is_guest %}
+                        <div class="room-center-primary-actions room-action-zone">
+                            {% if not room.guest_ready and not daily_rank_limit_blocked %}
+                            <form method="post" action="{{ url_for('room_guest_ready', room_id=room.id) }}">
+                                <button class="btn green room-center-action-btn" type="submit">Sẵn Sàng</button>
+                            </form>
+                            {% else %}
+                            <form method="post" action="{{ url_for('room_guest_unready', room_id=room.id) }}">
+                                <button class="btn gray room-center-action-btn" type="submit">Hủy Sẵn Sàng</button>
+                            </form>
+                            {% endif %}
+                            {% if room.guest_ready and not daily_rank_limit_blocked %}
+                            <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}"
+                                  data-modal-tone="danger"
+                                  data-modal-icon="⚠"
+                                  data-modal-title="Thoát khi đối thủ đã sẵn sàng"
+                                  data-modal-message="Bạn đã Sẵn Sàng. Thoát phòng lúc này sẽ bị tính là bỏ cuộc và hệ thống trừ 20 RP."
+                                  data-modal-note="−20 RP"
+                                  data-modal-confirm-label="Bỏ cuộc và thoát">
+                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            </form>
+                            {% else %}
+                            <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
+                                  data-modal-tone="safe"
+                                  data-modal-icon="🚪"
+                                  data-modal-title="Thoát an toàn"
+                                  data-modal-message="Bạn chưa Sẵn Sàng nên có thể rời phòng ngay. Phòng của chủ phòng vẫn được giữ lại."
+                                  data-modal-note="KHÔNG TRỪ RP"
+                                  data-modal-confirm-label="Rời phòng">
+                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% elif room_room_viewer_is_host %}
+                        <div class="room-center-primary-actions room-action-zone">
+                            {% if room.guest_ready and not daily_rank_limit_blocked %}
+                            <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_host_forfeit', room_id=room.id) }}"
+                                  data-modal-tone="danger"
+                                  data-modal-icon="⚠"
+                                  data-modal-title="Thoát khi đối thủ đã sẵn sàng"
+                                  data-modal-message="Khách đã Sẵn Sàng. Chủ phòng thoát lúc này sẽ bị tính là bỏ cuộc và hệ thống trừ 20 RP."
+                                  data-modal-note="−20 RP"
+                                  data-modal-confirm-label="Bỏ cuộc và đóng phòng">
+                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            </form>
+                            {% else %}
+                            <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
+                                  data-modal-tone="safe"
+                                  data-modal-icon="🚪"
+                                  data-modal-title="Thoát an toàn"
+                                  data-modal-message="Khách chưa Sẵn Sàng nên bạn có thể đóng phòng mà không bị trừ RP."
+                                  data-modal-note="KHÔNG TRỪ RP"
+                                  data-modal-confirm-label="Thoát và đóng phòng">
+                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        {% if room.status in ['waiting_result_confirm', 'disputed'] and room_room_viewer_is_host %}
+                        <div class="room-center-primary-actions room-action-zone">
+                            <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_post_result_exit', room_id=room.id) }}"
+                                  data-modal-tone="safe"
+                                  data-modal-icon="🚪"
+                                  data-modal-title="Thoát an toàn"
+                                  data-modal-message="Bạn đã hoàn tất việc gửi kết quả. Trận vẫn được giữ để khách xác nhận hoặc Admin xử lý tranh chấp."
+                                  data-modal-note="KHÔNG TRỪ RP"
+                                  data-modal-confirm-label="Thoát và về sảnh">
+                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            </form>
+                        </div>
+                        {% elif room.status == 'confirmed' and (room_room_viewer_is_host or room_viewer_is_guest) %}
+                        {% if is_tournament_room and tournament_meta %}
+                        <div class="room-center-primary-actions room-action-zone">
+                            {% if tournament_pair_is_complete %}
+                            <div class="room-center-state-pill">✅ Cặp đấu đã hoàn tất</div>
+                            <a class="btn gray room-center-action-btn" href="{{ url_for('tournaments') }}">Về giải đấu</a>
+                            {% else %}
+                            {# V1.5.44: C1 không còn màn hậu trận "Đá Tiếp". Nếu còn trận kế tiếp,
+                               backend phải tự đưa chính room về waiting_ready giống Rank. #}
+                            <div class="room-center-state-pill">Đang chuyển sang trận tiếp theo...</div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        {% set current_has_rematch_ready = (room_room_viewer_is_host and room.rematch_host_ready) or (room_viewer_is_guest and room.rematch_guest_ready) %}
+                        <div class="room-center-primary-actions room-action-zone">
+                            <form method="post" action="{{ url_for('room_rematch', room_id=room.id) }}">
+                                <button class="btn gold room-center-action-btn" type="submit" {% if current_has_rematch_ready %}disabled{% endif %}>{{ 'Đã Chọn Đá Tiếp' if current_has_rematch_ready else 'Đá Tiếp' }}</button>
+                            </form>
+                            <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_rematch_decline', room_id=room.id) }}"
+                                  data-modal-tone="warning"
+                                  data-modal-icon="🚪"
+                                  data-modal-title="Thoát an toàn"
+                                  data-modal-message="Bạn không muốn đá tiếp? Đối thủ sẽ nhận được thông báo và cả hai sẽ được đưa về sảnh chính."
+                                  data-modal-note="KHÔNG TRỪ RP"
+                                  data-modal-confirm-label="Thoát và về sảnh">
+                                <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                        {% elif room.status not in ['playing', 'waiting_result_confirm'] %}
+                        <div class="room-center-state-pill">{{ room.status|replace('_',' ')|title }}</div>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% else %}
+                <img class="room-center-vs-image" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1.3.40/VS.webp" alt="VS" loading="eager">
+                {% if room_room_viewer_is_host or current_user.role == 'admin' %}
+                {% if not is_tournament_room %}<div class="room-quick-match-row room-action-zone">
+                    {% if system_features.get('quick_match_enabled', true) %}
+                    <button class="btn room-center-action-btn room-quick-match-btn room-quick-match-{{ quick_match_config.get('color', 'blue') }}" type="button"
+                            data-quick-match-url="{{ url_for('quick_match_invite') }}">
+                        <span class="quick-match-icon">⚡</span><span class="quick-match-label">TÌM NHANH</span>
+                    </button>
+                    {% endif %}
+                </div>{% endif %}
+                {% if is_tournament_room and tournament_meta and tournament_fixed_club_mode %}
+                <div class="room-center-c1-random-wrap room-action-zone" style="margin-bottom:12px">
+                    <div class="room-center-random-trigger disabled c1-random-center"><span class="room-center-random-title">🏆 C1 GĐ2</span><span class="room-center-random-sub">CLB đã gắn với HLV · chờ mời đối thủ</span></div>
+                </div>
+                {% elif is_tournament_room and tournament_meta %}
+                <div class="room-center-c1-random-wrap room-action-zone" style="margin-bottom:12px">
+                    <button class="room-center-random-trigger disabled c1-random-center" type="button" disabled>
+                        <span class="room-center-random-title room-random-button-label">🎲 QUAY ĐỘI</span>
+                        <span class="room-center-random-sub">Chờ đối thủ vào phòng</span>
+                    </button>
+                </div>
+                {% endif %}
+                <div class="room-center-primary-actions room-action-zone">
+                    {% if is_tournament_room and tournament_meta %}
+                    <a class="btn gold room-center-action-btn" href="#c1InvitePanel">Mời HLV C1</a>
+                    {% else %}
+                    <a class="btn gold room-center-action-btn" href="{{ url_for('players') }}">Mời Đấu</a>
+                    {% endif %}
+                    <form class="room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
+                          data-modal-tone="warning"
+                          data-modal-icon="🚪"
+                          data-modal-title="Thoát an toàn"
+                          data-modal-message="Phòng hiện chưa có đối thủ. Khi bạn thoát, phòng này sẽ được đóng."
+                          data-modal-note="ĐÓNG PHÒNG"
+                          data-modal-confirm-label="Thoát và đóng phòng">
+                        <button class="btn red room-center-action-btn" type="submit">Thoát Phòng</button>
+                    </form>
+                </div>
+                {% endif %}
+            {% endif %}
+
+            {% if is_tournament_room and room.status == 'playing' %}
+            <p class="c1-room-live-help">Trận C1 đang diễn ra · Chủ phòng nhập tỷ số bên dưới, đội khách xác nhận sau khi gửi. Nếu trận gián đoạn, liên hệ Admin C1; không áp dụng bỏ cuộc Rank.</p>
+            {% endif %}
+            {% if is_tournament_room %}
+            <div class="c1-center-result-wrap">
+                {% include "partials/tournament_room_result.html" %}
+            </div>
+            {% endif %}
+        </section>
+
+        <section class="room-side-card room-team-card away" aria-label="Khách">
+            <div class="room-player-heading-plain">
+                {{ player_avatar(name=room.guest_name, avatar_url=room.guest_avatar_url, achievement=room.guest_achievement, size='sm', frame=room.guest_avatar_frame) }}
+                <div class="room-player-name {{ room.guest_name_style_class or '' }}"><span>{{ room.guest_name }}</span>{% if room.guest_profile_badge %}<img class="equipped-profile-badge room-equipped-profile-badge" src="{{ room.guest_profile_badge.image_url }}" alt="{{ room.guest_profile_badge.name }}" title="{{ room.guest_profile_badge.name }}" loading="lazy">{% endif %}</div>
+                {% if room.has_guest and room.guest_rank_info %}
+                <div class="room-player-rankline">
+                    <img src="{{ asset_url('ranks/' ~ room.guest_rank_info.slug ~ '.webp') }}" alt="{{ room.guest_rank_info.name }}" loading="lazy">
+                    <span>{{ room.guest_rank_info.name }}</span>
+                </div>
+                {% if room.guest_streak_badge %}
+                <div class="win-streak-badge win-streak-badge-guest">
+                    <span>{{ room.guest_streak_badge.icon }}</span>
+                    <strong>{{ room.guest_streak_badge.title }}</strong>
+                    <span>· {{ room.guest_streak_badge.count }} trận thắng</span>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="room-player-rankline empty"><span>Đang chờ người chơi</span></div>
+                {% endif %}
+                {% if room.has_guest %}
+                <div class="room-ready-status {{ 'is-ready' if room.guest_ready else 'is-not-ready' }}">
+                    <span class="room-ready-dot"></span>{{ '✓ Đã sẵn sàng · CLB theo HLV' if tournament_fixed_club_mode and room.guest_ready else ('Chưa sẵn sàng · CLB theo HLV' if tournament_fixed_club_mode else room.guest_ready_label) }}
+                </div>
+                {% if room.status == "waiting_ready" and room_room_viewer_is_host and not is_tournament_room %}
+                <form class="room-guest-card-kick room-exit-confirm-form" method="post" action="{{ url_for('room_kick_guest', room_id=room.id) }}"
+                      data-modal-tone="danger"
+                      data-modal-icon="🚫"
+                      data-modal-title="Đưa đối thủ ra khỏi phòng?"
+                      data-modal-message="{{ room.guest_name }} sẽ rời phòng. Kể cả khi đã Sẵn sàng, thao tác này vẫn không trừ RP vì trận chưa bắt đầu."
+                      data-modal-note="KHÔNG TRỪ RP"
+                      data-modal-confirm-label="Đưa khỏi phòng">
+                    <button class="btn red room-guest-card-kick-btn" type="submit">🚫 Đưa khỏi phòng</button>
+                </form>
+                {% endif %}
+                {% endif %}
+            </div>
+            <div class="room-card-club-area{% if (room.status == 'waiting_ready' and room.friendly_random3_active) or room.random_selection_match_active %} room-card-club-area--random3{% endif %}">
+                {% if room.random_selection_match_active and room.has_guest %}
+                    <div class="room-side-random3-selector room-random-selection-display room-side-random3-selector--away">
+                        <div class="room-side-random3-title">3 CLB CỦA ĐỘI KHÁCH</div>
+                        <div class="room-side-random3-grid">
+                            {% for team in room.random_selection_match.guest_options %}
+                            <div class="room-side-random3-card is-display-only">
+                                {% if team.logo %}<img src="{{ team.logo }}" alt="Logo {{ team.name }}" loading="lazy">{% else %}<div class="friendly-random3-placeholder">?</div>{% endif %}
+                                <strong title="{{ team.name }}">{{ team.name }}</strong>
+                                <small>{{ team.tier or '' }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% elif room.status == 'waiting_ready' and room.friendly_random3_active and room.has_guest %}
+                    {% set guest_random3_choice = room.friendly_random3.guest_choice %}
+                    {% if room_viewer_is_guest or current_user.role == 'admin' %}
+                        <div class="room-side-random3-selector room-side-random3-selector--away">
+                            <div class="room-side-random3-title">3 CLB CỦA ĐỘI KHÁCH</div>
+                            {% if guest_random3_choice is none %}
+                            <div class="room-side-random3-grid">
+                                {% for team in room.friendly_random3.guest_options %}
+                                <form method="post" action="{{ url_for('room_choose_random3_friendly', room_id=room.id) }}" class="room-side-random3-card" data-room-async="1">
+                                    <input type="hidden" name="choice_index" value="{{ loop.index0 }}">
+                                    {% if current_user.role == 'admin' %}<input type="hidden" name="side" value="guest">{% endif %}
+                                    {% if team.logo %}<img src="{{ team.logo }}" alt="Logo {{ team.name }}" loading="lazy">{% else %}<div class="friendly-random3-placeholder">?</div>{% endif %}
+                                    <strong title="{{ team.name }}">{{ team.name }}</strong>
+                                    <button type="submit">CHỌN CLB</button>
+                                </form>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="room-side-random3-picked">✓ BẠN ĐÃ CHỌN CLB<br><small>Chờ đối thủ hoàn tất lựa chọn</small></div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="room-side-random3-opponent-state">{% if guest_random3_choice is none %}<strong>ĐỘI KHÁCH ĐANG CHỌN CLB</strong><small>3 lựa chọn được hiển thị ở phía Đội khách</small>{% else %}<strong>✓ ĐỘI KHÁCH ĐÃ CHỌN</strong><small>Chờ phía Chủ nhà hoàn tất</small>{% endif %}</div>
+                    {% endif %}
+                {% else %}
+                    {% if room.guest_team_logo_url %}<img class="room-club-logo-large" src="{{ room.guest_team_logo_url }}" alt="Logo {{ room.guest_team or 'CLB' }}" loading="lazy">{% else %}<div class="room-team-placeholder-shield">?</div>{% endif %}
+                    <div class="room-team-name-lg">{{ room.guest_team or 'CHƯA CHỌN ĐỘI' }}</div>
+                    {% if room.guest_team_total_stats and not is_tournament_room %}
+                    <div class="room-team-points-block"><div class="room-team-points-value">{{ room.guest_team_total_stats }}</div></div>
+                    {% endif %}
+                    <div class="room-team-league-text">{% if room.guest_team_league_logo_url %}<img class="room-league-logo" src="{{ room.guest_team_league_logo_url }}" alt="Logo {{ room.guest_team_league }}" loading="lazy">{% endif %}<span>{{ room.guest_team_league or 'Chưa có giải' }}</span></div>
+                {% endif %}
+            </div>
+        </section>
+
+        {% if not is_tournament_room %}<div class="room-mode-dock-slot" aria-label="Bộ chọn chế độ thi đấu">
+            {% include "partials/room_mode_selector_strip.html" %}
+        </div>{% endif %}
+
+        <aside class="room-side-rail room-arena-right-rail" aria-label="Thông tin bổ sung của phòng">
+            {% include "partials/parsec_room_panel.html" %}
+            {% include "partials/room_history_panel.html" %}
+            {% include "partials/player_h2h_panel.html" %}
+        </aside>
+    </div>
+
+    <div class="panel room-extra-controls">
+    <h2 class="room-control-title">Điều khiển phòng</h2>
+
+
+<style>
+.tournament-c1-host-layout{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;align-items:stretch!important;width:100%;margin-top:8px}.tournament-c1-host-layout>.tournament-only-random-grid,.tournament-c1-host-layout>.tournament-host-guide{min-width:0;width:100%;margin:0!important;height:100%;box-sizing:border-box}.tournament-c1-host-layout>.tournament-only-random-grid{display:block}.tournament-c1-host-layout .tournament-only-random-card{height:100%;box-sizing:border-box}.tournament-c1-host-layout .tournament-host-guide ol{margin-bottom:0}@media(max-width:900px){.tournament-c1-host-layout{grid-template-columns:1fr!important}.tournament-c1-host-layout>.tournament-host-guide{margin-top:0!important}}
+.c1-center-result-wrap{width:100%;margin-top:12px}.c1-center-result-wrap>.panel{margin:0!important;padding:14px!important;border-color:rgba(245,184,55,.28)!important;background:rgba(8,12,20,.72)}.c1-center-result-wrap form{justify-content:center}.c1-center-result-wrap .room-result-review{text-align:center}.room-center-c1-random-wrap{display:flex;justify-content:center;width:100%}.c1-random-center{width:min(330px,92%);min-height:88px;border:1px solid rgba(245,184,55,.55);box-shadow:0 0 22px rgba(245,184,55,.12)}.c1-random-center:not(.disabled){cursor:pointer;border-color:#f5b837;box-shadow:0 0 30px rgba(245,184,55,.25)}
+.tournament-only-random-card{border:1px solid rgba(245,184,55,.35);background:linear-gradient(135deg,rgba(245,184,55,.08),rgba(255,255,255,.02));}
+.tournament-room-mode-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}.tournament-room-mode-head h3{margin:0 0 6px}.tournament-pool-badge{display:inline-flex;align-items:center;min-height:32px;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.16);font-size:12px;font-weight:700}.tournament-mode-rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}.tournament-mode-rules span{padding:9px 10px;border:1px solid rgba(255,255,255,.1);border-radius:9px;font-size:13px}.tournament-random-action{display:flex;justify-content:center;margin-top:14px}.tournament-random-btn{min-width:220px;font-size:16px;font-weight:800}.tournament-room-wait,.tournament-room-live{text-align:center;margin:14px 0 0;font-weight:700}@media(max-width:640px){.tournament-mode-rules{grid-template-columns:1fr}.tournament-room-mode-head{display:block}.tournament-pool-badge{margin-top:8px}}
+
+/* V1.6.45: compact mode navigation; descriptive banners removed. */
+.room-mode-switch-strip{margin:7px 0 10px;padding:5px 8px;background:linear-gradient(180deg,rgba(7,21,54,.94),rgba(5,15,40,.90));border:1px solid rgba(90,163,255,.18);border-radius:12px}
+.room-mode-switch-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-width:670px;margin:0 auto;gap:6px}
+.room-mode-switch-card{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:42px;padding:7px 10px;border-radius:9px;border:1px solid rgba(98,164,255,.22);background:linear-gradient(180deg,rgba(11,25,58,.98),rgba(6,18,42,.98));color:#eef5ff;cursor:pointer;text-align:center;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease}
+.room-mode-switch-card:hover:not(:disabled){border-color:rgba(241,202,104,.58);background:rgba(35,49,78,.96)}
+.room-mode-switch-card.is-active{border-color:rgba(241,202,104,.85);background:linear-gradient(180deg,rgba(62,48,8,.95),rgba(20,27,53,.98));box-shadow:0 0 0 1px rgba(241,202,104,.1) inset}
+.room-mode-switch-card.is-disabled{opacity:.54;cursor:not-allowed}
+.room-mode-switch-kicker{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#f1ca68;font-weight:900;white-space:nowrap}
+.room-mode-switch-card strong{font-size:12px;font-weight:650;line-height:1.1;white-space:nowrap}
+#roomLiveShell[data-room-ui-mode="mini_cup"] .room-center-stage-plain{background:linear-gradient(180deg,rgba(9,22,43,.96),rgba(16,13,37,.98));box-shadow:0 0 0 1px rgba(255,97,145,.1) inset,0 22px 48px rgba(0,0,0,.32)}
+#roomLiveShell[data-room-ui-mode="mini_cup"] .room-stage-topbar{background:linear-gradient(90deg,rgba(8,24,55,.92),rgba(43,10,34,.92));border-color:rgba(255,109,154,.24)}
+#roomLiveShell[data-room-ui-mode="mini_cup"] .room-match-shell{box-shadow:0 24px 44px rgba(0,0,0,.36),0 0 0 1px rgba(255,93,154,.08) inset}
+@media(max-width:560px){.room-mode-switch-strip{padding:5px}.room-mode-switch-grid{gap:4px}.room-mode-switch-card{flex-direction:column;gap:2px;min-height:42px;padding:5px 2px}.room-mode-switch-kicker{font-size:11px}.room-mode-switch-card strong{font-size:10px}}
+
+/* V1.6.47: no room logo; equal side tracks keep the three mode buttons centered. */
+#roomLiveShell .room-stage-topbar{
+  display:grid;
+  grid-template-columns:minmax(205px,1fr) minmax(315px,520px) minmax(205px,1fr);
+  align-items:center;
+  column-gap:clamp(10px,1.2vw,22px);
+  row-gap:8px;
+  min-height:68px;
+  padding:10px 16px;
+  overflow:visible;
+}
+#roomLiveShell .room-stage-topbar .room-stage-title-wrap{
+  grid-column:1;grid-row:1;min-width:0;justify-self:start;
+}
+#roomLiveShell .room-stage-topbar .room-stage-title{font-size:clamp(19px,1.55vw,28px);gap:6px}
+#roomLiveShell .room-stage-topbar .room-code-badge{font-size:12px;padding:4px 7px;border-radius:7px}
+#roomLiveShell .room-stage-topbar .room-stage-subtitle{font-size:11px;margin-top:3px;line-height:1.35}
+#roomLiveShell .room-stage-topbar .room-mode-switch-strip{
+  grid-column:2;grid-row:1;justify-self:center;
+  display:block;min-width:0;width:100%;max-width:520px;
+  margin:0;padding:0;border:0;border-radius:0;
+  background:transparent;box-shadow:none;position:relative;z-index:3;
+}
+#roomLiveShell .room-stage-topbar .room-mode-switch-grid{max-width:none;gap:5px;margin:0}
+#roomLiveShell .room-stage-topbar .room-mode-switch-card{min-height:39px;padding:5px 6px;gap:5px;border-radius:8px}
+#roomLiveShell .room-stage-topbar .room-mode-switch-kicker{font-size:11px}
+#roomLiveShell .room-stage-topbar .room-mode-switch-card strong{font-size:11px}
+#roomLiveShell .room-stage-topbar .room-stage-share-wrap{
+  grid-column:3;grid-row:1;min-width:0;justify-self:end;
+}
+#roomLiveShell .room-stage-topbar .room-share-button{min-width:145px;min-height:42px;padding:6px 9px;gap:7px}
+#roomLiveShell .room-stage-topbar .room-share-icon{width:26px;height:26px;font-size:14px}
+#roomLiveShell .room-stage-topbar .room-share-copy strong{font-size:12px}
+#roomLiveShell .room-stage-topbar .room-share-copy small{font-size:10px;margin-top:2px}
+@media(max-width:1120px){
+  #roomLiveShell .room-stage-topbar{grid-template-columns:minmax(0,1fr) auto;}
+  #roomLiveShell .room-stage-topbar .room-stage-title-wrap{grid-column:1;grid-row:1}
+  #roomLiveShell .room-stage-topbar .room-stage-share-wrap{grid-column:2;grid-row:1}
+  #roomLiveShell .room-stage-topbar .room-mode-switch-strip{
+    grid-column:1/-1;grid-row:2;justify-self:center;max-width:520px;
+  }
+}
+@media(max-width:620px){
+  #roomLiveShell .room-stage-topbar{padding:9px;column-gap:7px}
+  #roomLiveShell .room-stage-topbar .room-stage-title{font-size:18px}
+  #roomLiveShell .room-stage-topbar .room-stage-subtitle{font-size:10px}
+  #roomLiveShell .room-stage-topbar .room-share-button{min-width:36px;width:38px;height:38px;min-height:38px;padding:5px}
+  #roomLiveShell .room-stage-topbar .room-share-copy{display:none}
+  #roomLiveShell .room-stage-topbar .room-mode-switch-strip{max-width:none}
+  #roomLiveShell .room-stage-topbar .room-mode-switch-card{flex-direction:column;gap:1px;min-height:39px;padding:4px 1px}
+  #roomLiveShell .room-stage-topbar .room-mode-switch-kicker{font-size:10px}
+  #roomLiveShell .room-stage-topbar .room-mode-switch-card strong{font-size:9px}
+}
+</style>
+    {% include "partials/tournament_room_invite.html" %}
+{% if is_tournament_room and tournament_meta and tournament_fixed_club_mode %}
+    <div class="panel" style="margin:12px 0;padding:16px;border:1px solid rgba(241,202,104,.32);border-radius:13px;background:#091a29">
+      <h3 style="margin:0 0 8px;color:#f1ca68">🏆 PHÒNG ĐẤU C1 GĐ2 · CLB THEO HLV</h3>
+      <p class="small">Hai HLV dùng CLB đã được phân bổ. Không quay đội trong phòng. CLB được lấy theo phân bổ mới nhất khi bắt đầu trận; sau đó giữ nguyên đến khi xác nhận kết quả.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;font-weight:800">
+        <span style="padding:10px;border:1px solid rgba(241,202,104,.25);border-radius:9px">{{ room.host_name }}: {{ room.host_team or 'Chưa có CLB' }}</span>
+        <span style="padding:10px;border:1px solid rgba(241,202,104,.25);border-radius:9px">{{ room.guest_name or 'Đối thủ' }}: {{ room.guest_team or 'Chưa vào phòng' }}</span>
+      </div>
+      <p class="small">Đủ hai HLV → Chủ phòng bấm Bắt đầu trận → Chủ phòng nhập tỷ số → Khách xác nhận. Điểm GĐ2 cộng dồn GĐ1 trên BXH C1 duy nhất. Vé đổi CLB vẫn dùng tại trang Giải đấu theo hạn Admin; chỉ tác động các trận chưa bắt đầu.</p>
+    </div>
+    {% elif is_tournament_room and tournament_meta %}
+    <div class="tournament-c1-host-layout">
+    <div class="room-mode-grid tournament-only-random-grid">
+        <div class="room-mode-card tournament-only-random-card">
+            <div class="tournament-room-mode-head">
+                <div>
+                    <h3>🏆 PHÒNG ĐẤU C1</h3>
+                    <p class="small"><strong>CHẾ ĐỘ DUY NHẤT: 🎲 RANDOM CLB</strong></p>
+                </div>
+                <span class="tournament-pool-badge">Pool C1: {{ tournament_stage1_pool_count or 0 }}/16 CLB đã chọn</span>
+            </div>
+            <div class="tournament-mode-rules">
+                <span>✅ Chỉ Random trong Pool CLB GĐ1 của Admin</span>
+                <span>✅ Hai HLV nhận 2 CLB khác nhau</span>
+                <span>❌ Không Random 3 chọn 1</span>
+                <span>❌ Không Random Select Match</span>
+            </div>
+            {% if room.status == 'playing' %}
+                <p class="small tournament-room-live">🔴 CLB đã được Random · Trận đấu đang diễn ra.</p>
+            {% else %}
+                <div class="tournament-random-action">
+                {% if not room.has_guest %}
+                    <button class="btn gray tournament-random-btn" type="button" disabled>🎲 RANDOM CLB · Chờ đối thủ vào phòng</button>
+                {% elif not room.guest_ready %}
+                    <button class="btn gray tournament-random-btn" type="button" disabled>🎲 RANDOM CLB · Chờ khách Sẵn sàng</button>
+                {% elif (tournament_stage1_pool_count or 0) != 16 %}
+                    <button class="btn gray tournament-random-btn" type="button" disabled>🎲 RANDOM CLB · Admin chưa đủ 16 đội</button>
+                {% elif room.host_team %}
+                    <button class="btn gray tournament-random-btn" type="button" disabled>✅ Đã Random CLB</button>
+                {% elif room_room_viewer_is_host or current_user.role == 'admin' %}
+                    <form method="post" action="{{ url_for('tournament_room_random_stage1_clubs', tournament_id=tournament_meta.tournament_id, room_id=room.id) }}" data-room-async="1">
+                        <button class="btn gold tournament-random-btn" type="submit">🎲 RANDOM CLB</button>
+                    </form>
+                {% else %}
+                    <button class="btn gray tournament-random-btn" type="button" disabled>🎲 RANDOM CLB · Chờ chủ phòng quay đội</button>
+                {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="td-host-guide tournament-host-guide" style="margin-top:0;padding:13px 14px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:#091a29">
+        <div style="font-weight:900;color:#f1ca68;margin-bottom:10px">🎮 HƯỚNG DẪN TEST HOST</div>
+        <div style="color:#dce6ed;font-size:13px;line-height:1.6">
+            <div>1. Vào Discord: <a href="https://discord.gg/VTmJBNvx" target="_blank" rel="noopener" style="color:#7bb7ff">discord.gg/VTmJBNvx</a></div>
+            <div>2. Kết nối tay cầm.</div>
+            <div>3. Vào chế độ <strong>Giao hữu</strong>.</div>
+            <div>4. Chọn 2 đội bất kỳ để test.</div>
+            <div>5. Không chỉnh đội hình, vào trận luôn.</div>
+            <div>6. Đá thử khoảng 5 phút trong game để kiểm tra độ ổn định, lag và delay tay cầm.</div>
+            <div>7. Nếu đối thủ xác nhận OK thì thoát trận test và bắt đầu chọn đội thi đấu chính thức.</div>
+        </div>
+    </div>
+    </div>
+    {% endif %}
+
+
+    {% if not is_tournament_room and (system_features.friendly_enabled or system_features.friendly_random3_enabled) and room.status == "waiting_ready" %}
+
+        {% if room_room_viewer_is_host or current_user.role == "admin" %}
+            {% if room.has_guest %}
+            <div class="room-mode-grid">
+
+                {% if system_features.friendly_enabled %}
+                <form method="post" action="{{ url_for('room_random_teams', room_id=room.id) }}" class="room-mode-card" onsubmit="const b=this.querySelector('button'); b.disabled=true; b.textContent='Đang quay đội...';">
+                    <input type="hidden" name="match_mode" value="friendly">
+                    <h3>🤝 Giao hữu</h3>
+                    <label>Chọn Tier CLB</label>
+                    <select name="friendly_tier" required>
+                        {% for tier in friendly_tiers %}
+                        <option value="{{ tier }}" {% if room.friendly_tier == tier %}selected{% endif %}>Tier {{ tier }}</option>
+                        {% endfor %}
+                    </select>
+                    <p class="small">Hai CLB khác nhau trong cùng Tier. Không lưu lịch sử, không tính RP.</p>
+                    <button class="btn gold" type="submit">{% if room.note and room.note.startswith('TOURNAMENT_ROOM|') %}🎲 Random CLB GĐ1{% else %}🎲 Quay đội Giao hữu{% endif %}</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endif %}
+
+    {% endif %}
+
+
+{% if not is_tournament_room and room.status == "friendly_playing" and ((room.team_tier == "random3_pick1" and system_features.friendly_random3_enabled) or (room.team_tier != "random3_pick1" and system_features.friendly_enabled)) %}
+    <div class="friendly-match-banner">
+        <h3>🤝 Trận giao hữu Tier {{ room.friendly_tier }}</h3>
+        <p>Không lưu lịch sử • Không cộng/trừ RP • Hai đội không trùng nhau.</p>
+        {% if room_room_viewer_is_host or current_user.role == "admin" %}
+        <form class="inline-form" method="post" action="{{ url_for('room_reroll_friendly', room_id=room.id) }}">
+            <button class="btn gold" type="submit">🎲 Tự Random Tiếp</button>
+        </form>
+        <form class="inline-form" method="post" action="{{ url_for('room_finish_friendly', room_id=room.id) }}">
+            <button class="btn gray" type="submit">✅ Kết thúc giao hữu</button>
+        </form>
+        {% else %}
+        <p class="small">Chờ chủ phòng kết thúc giao hữu để quay trận tiếp theo.</p>
+        {% endif %}
+        {% if room_viewer_is_guest %}
+        <form class="inline-form room-exit-confirm-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}"
+              data-modal-tone="danger"
+              data-modal-icon="⚠"
+              data-modal-title="Thoát giao hữu"
+              data-modal-message="Bạn có thể rời trận giao hữu mà không bị trừ RP và không lưu lịch sử."
+              data-modal-note="KHÔNG TRỪ RP"
+              data-modal-confirm-label="Thoát phòng">
+            <button class="btn red" type="submit">🚪 Thoát Phòng</button>
+        </form>
+        <p class="small">Giao hữu không tính RP. Bạn có thể thoát phòng an toàn.</p>
+        {% elif room_room_viewer_is_host %}
+        <form class="inline-form" method="post" action="{{ url_for('room_leave', room_id=room.id) }}">
+            <button class="btn red" type="submit">🚪 Thoát phòng</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if room.status == "playing" and not is_tournament_room and room_viewer_is_guest %}
+    <div class="guest-forfeit-box">
+        <form class="inline-form room-exit-confirm-form" method="post" action="{{ url_for('room_guest_forfeit', room_id=room.id) }}"
+              data-modal-tone="danger"
+              data-modal-icon="⚠"
+              data-modal-title="Thoát khi đối thủ đã sẵn sàng"
+              data-modal-message="Trận đã bắt đầu. Thoát phòng lúc này được tính là bỏ cuộc."
+              data-modal-note="−20 RP"
+              data-modal-confirm-label="Bỏ cuộc và thoát">
+            <button class="btn red" type="submit">🚪 Thoát Phòng</button>
+        </form>
+        <p class="small danger-text">Thoát phòng sau khi đã quay đội được tính là bỏ cuộc và bị trừ 20 RP.</p>
+    </div>
+    {% endif %}
+
+    {% if room.status == "playing" and not is_tournament_room and room_room_viewer_is_host %}
+    <div class="guest-forfeit-box host-forfeit-box">
+        <form class="inline-form room-exit-confirm-form" method="post" action="{{ url_for('room_host_forfeit', room_id=room.id) }}"
+              data-modal-tone="danger"
+              data-modal-icon="⚠"
+              data-modal-title="Bỏ cuộc và thoát phòng"
+              data-modal-message="Trận đã bắt đầu. Chủ phòng thoát lúc này được tính là bỏ cuộc."
+              data-modal-note="−20 RP"
+              data-modal-confirm-label="Bỏ cuộc và thoát">
+            <button class="btn red" type="submit">🚪 Thoát Phòng</button>
+        </form>
+        <p class="small danger-text">Thoát phòng sau khi đã quay đội được tính là bỏ cuộc và bị trừ 20 RP.</p>
+    </div>
+    {% endif %}
+
+    {% if room.status == "confirmed" %}
+    <div class="room-finished-summary">
+        <strong><span class="{{ room.host_name_style_class or '' }}">{{ room.host_name }}</span> {{ room.host_score }} - {{ room.guest_score }} <span class="{{ room.guest_name_style_class or '' }}">{{ room.guest_name }}</span></strong>
+    </div>
+    {% endif %}
+
+    {% if room.status == "cancelled" %}
+    <p>{{ room.note or "Phòng đã bị hủy." }}</p>
+    <a class="btn gray" href="{{ url_for('dashboard') }}">Về sảnh chính</a>
+    {% endif %}
+
+    {% if room.status == "disputed" %}
+    <div class="dispute-status-card">
+        <div class="dispute-status-heading">
+            <h3>⚠️ Đang chờ Admin xử lý</h3>
+            <span class="badge disputed">Chưa tính điểm</span>
+        </div>
+        <p class="dispute-score"><strong><span class="{{ room.host_name_style_class or '' }}">{{ room.host_name }}</span> {{ room.host_score }} - {{ room.guest_score }} <span class="{{ room.guest_name_style_class or '' }}">{{ room.guest_name }}</span></strong></p>
+        {% if room.dispute %}
+        <div class="dispute-detail-grid">
+            <div><span>Người gửi</span><strong>{{ room.dispute.raised_by_name }}</strong></div>
+            <div><span>Lý do</span><strong>{{ room.dispute.reason_label }}</strong></div>
+            <div><span>Thời gian</span><strong>{{ format_vn_datetime(room.dispute.created_at) }}</strong></div>
+            <div><span>Trạng thái</span><strong>Đang chờ Admin</strong></div>
+        </div>
+        {% if room.dispute.details %}<div class="dispute-note"><strong>Ghi chú:</strong> {{ room.dispute.details }}</div>{% endif %}
+        {% if room.dispute.evidence_url %}
+        <div class="dispute-evidence-block">
+            <strong>Ảnh bằng chứng</strong>
+            <a href="{{ room.dispute.evidence_url }}" target="_blank" rel="noopener">
+                <img src="{{ room.dispute.evidence_url }}" alt="Ảnh bằng chứng tranh chấp" loading="lazy">
+                <span>Mở ảnh kích thước đầy đủ</span>
+            </a>
+        </div>
+        {% endif %}
+        {% endif %}
+        <p class="small">Hai người có thể về sảnh và tiếp tục sử dụng app. Trận này chỉ được tính điểm sau khi Admin xử lý.</p>
+        {% if room.dispute and current_user.id == room.dispute.raised_by_id %}
+        <form class="inline-form room-action-confirm-form"
+              method="post"
+              action="{{ url_for('room_withdraw_dispute', room_id=room.id) }}"
+              data-modal-tone="warning"
+              data-modal-icon="↩"
+              data-modal-title="Rút tranh chấp?"
+              data-modal-message="Bạn sẽ chấp nhận tỷ số ban đầu và điểm rank được cập nhật ngay."
+              data-modal-note="XÁC NHẬN KẾT QUẢ"
+              data-modal-confirm-label="Rút tranh chấp">
+            <button class="btn green" type="submit">↩️ Rút tranh chấp và chấp nhận kết quả</button>
+        </form>
+        {% endif %}
+        <a class="btn gray" href="{{ url_for('dashboard') }}">Về sảnh chính</a>
+    </div>
+    {% endif %}
+        </div>
+
+    </div>
+</div>
+
+{% if system_features.room_chat_enabled %}
+<button id="roomChatToggleButton" class="chat-floating-toggle room-chat-floating-toggle" type="button" onclick="toggleRoomChat()">
+    💬 <span id="roomChatToggleText">Chat phòng</span>
+</button>
+<div id="bottomRoomChat" class="bottom-lobby-chat bottom-room-chat chat-collapsed" hidden data-room-chat-panel>
+    <button class="bottom-chat-close" type="button" onclick="toggleRoomChat()" aria-label="Đóng Chat Phòng" title="Đóng">×</button>
+    <div class="bottom-chat-header">
+        <strong>💬 Chat Phòng</strong>
+        <span class="bottom-chat-hint">Chỉ người trong phòng • Không lưu lịch sử</span>
+    </div>
+    <div id="roomChatBox" class="bottom-chat-messages">
+        <div class="bottom-chat-empty">Chưa có tin nhắn trong phòng.</div>
+    </div>
+    <form class="bottom-chat-form room-chat-form" autocomplete="off">
+        <input type="text" name="message" maxlength="200" placeholder="Nhập tin nhắn..." required>
+        <button class="btn green" type="submit">Gửi</button>
+    </form>
+    <div id="roomChatStatus" class="bottom-chat-status">Tin nhắn chỉ tồn tại tạm thời trong phiên phòng.</div>
+</div>
+{% endif %}
+
+<div id="roomExitConfirmModal" class="room-action-modal" hidden aria-hidden="true">
+    <div class="room-action-modal-card" role="dialog" aria-modal="true" aria-labelledby="roomActionModalTitle" aria-describedby="roomActionModalMessage">
+        <button class="room-action-modal-close" type="button" data-room-modal-cancel aria-label="Đóng">×</button>
+        <div id="roomActionModalIcon" class="room-action-modal-icon" aria-hidden="true">⚠</div>
+        <div class="room-action-modal-copy">
+            <span class="room-action-modal-kicker">PES ARENA</span>
+            <h2 id="roomActionModalTitle">Xác nhận thao tác</h2>
+            <p id="roomActionModalMessage"></p>
+        </div>
+        <div id="roomActionModalNote" class="room-action-modal-note">−20 RP</div>
+        <div class="room-action-modal-actions">
+            <button id="roomActionModalCancel" class="room-action-modal-button secondary" type="button" data-room-modal-cancel>Ở lại phòng</button>
+            <button id="roomActionModalConfirm" class="room-action-modal-button primary" type="button">Xác nhận</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function fallbackCopyRoomLink(value) {
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    return copied;
+}
+
+async function copySharedRoomLink() {
+    const button = document.getElementById("copyRoomShareLink");
+    const status = document.getElementById("roomShareStatus");
+    if (!button) return;
+
+    const shareUrl = new URL(button.dataset.sharePath, window.location.origin).toString();
+    let copied = false;
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(shareUrl);
+            copied = true;
+        } else {
+            copied = fallbackCopyRoomLink(shareUrl);
+        }
+    } catch (error) {
+        copied = fallbackCopyRoomLink(shareUrl);
+    }
+
+    const strong = button.querySelector("strong");
+    const small = button.querySelector("small");
+    if (copied) {
+        button.classList.add("is-copied");
+        if (strong) strong.textContent = "Đã copy link";
+        if (small) small.textContent = "Gửi link này cho đối thủ";
+        if (status) status.textContent = "Đã sao chép link phòng đấu.";
+        window.setTimeout(function () {
+            button.classList.remove("is-copied");
+            if (strong) strong.textContent = "Chia sẻ phòng";
+            if (small) small.textContent = "Copy link tham gia";
+            if (status) status.textContent = "";
+        }, 3500);
+    } else {
+        if (status) status.textContent = "Không thể tự copy. Hãy sao chép link trên thanh địa chỉ.";
+        window.prompt("Copy link phòng đấu:", shareUrl);
+    }
+}
+
+function bindRoomShareButton() {
+    const shareButton = document.getElementById("copyRoomShareLink");
+    if (!shareButton || shareButton.dataset.roomShareBound === "1") return;
+    shareButton.dataset.roomShareBound = "1";
+    shareButton.addEventListener("click", copySharedRoomLink);
+}
+
+let currentRoomStateKey = {{ initial_room_state_key|tojson }};
+let currentRoomGuestId = {{ (room.guest_user_id|default('', true))|tojson }};
+let currentRoomStatus = {{ room.status|tojson }};
+const currentRoomUserIsHost = {{ (room_room_viewer_is_host or current_user.role == 'admin')|tojson }};
+const currentRoomUserIsGuest = {{ (room_viewer_is_guest)|tojson }};
+const currentRoomIsTournament = {{ (is_tournament_room)|tojson }};
+const currentRoomPath = {{ url_for('room_detail', room_id=room.id)|tojson }};
+const currentRoomRefreshPath = {{ (request.full_path[:-1] if request.full_path.endswith('?') else request.full_path)|tojson }};
+const ROOM_LAYOUT_STORAGE_KEY = "pes_arena_room_layout_mode";
+
+let roomCountdownSeconds = 0;
+let roomStartCountdownSeconds = 0;
+let roomStartCountdownMode = "down";
+let roomCountdownTimer = null;
+
+function renderRoomCountdown(seconds) {
+    const countdown = document.getElementById("roomCountdown");
+    if (!countdown) return;
+    const safeSeconds = Math.max(0, Number(seconds) || 0);
+    const minutes = Math.floor(safeSeconds / 60);
+    const remain = Math.floor(safeSeconds % 60);
+    countdown.textContent = String(minutes).padStart(2, "0") + ":" + String(remain).padStart(2, "0");
+}
+
+function renderRoomStartCountdown(seconds) {
+    const countdown = document.getElementById("roomStartCountdown");
+    if (!countdown) return;
+    const safeSeconds = Math.max(0, Number(seconds) || 0);
+    const minutes = Math.floor(safeSeconds / 60);
+    const remain = Math.floor(safeSeconds % 60);
+    countdown.textContent = String(minutes).padStart(2, "0") + ":" + String(remain).padStart(2, "0");
+}
+
+function syncRoomCountdownsFromDom() {
+    const roomCountdown = document.getElementById("roomCountdown");
+    const startCountdown = document.getElementById("roomStartCountdown");
+    roomCountdownSeconds = Number(roomCountdown?.dataset.seconds || 0);
+    roomStartCountdownSeconds = Number(startCountdown?.dataset.seconds || 0);
+    roomStartCountdownMode = startCountdown?.dataset.mode || "down";
+    renderRoomCountdown(roomCountdownSeconds);
+    renderRoomStartCountdown(roomStartCountdownSeconds);
+}
+
+syncRoomCountdownsFromDom();
+if (roomCountdownTimer) window.clearInterval(roomCountdownTimer);
+roomCountdownTimer = window.setInterval(function () {
+    if (roomCountdownSeconds > 0) roomCountdownSeconds -= 1;
+    if (roomStartCountdownMode === "up") {
+        roomStartCountdownSeconds += 1;
+    } else if (roomStartCountdownSeconds > 0) {
+        roomStartCountdownSeconds -= 1;
+    }
+    renderRoomCountdown(roomCountdownSeconds);
+    renderRoomStartCountdown(roomStartCountdownSeconds);
+}, 1000);
+
+const roomScoreDraftKey = "pes-room-score-draft:{{ room.id }}";
+let roomScoreFormDirty = false;
+let roomScoreForm = null;
+let roomScoreInputs = [];
+
+function saveRoomScoreDraft() {
+    if (!roomScoreInputs.length) return;
+    roomScoreFormDirty = true;
+    try {
+        const draft = {};
+        roomScoreInputs.forEach(function (input) { draft[input.name] = input.value; });
+        sessionStorage.setItem(roomScoreDraftKey, JSON.stringify(draft));
+    } catch (error) {}
+}
+
+function restoreRoomScoreDraft() {
+    if (!roomScoreInputs.length) return;
+    try {
+        const raw = sessionStorage.getItem(roomScoreDraftKey);
+        if (!raw) return;
+        const draft = JSON.parse(raw);
+        roomScoreInputs.forEach(function (input) {
+            if (Object.prototype.hasOwnProperty.call(draft, input.name)) input.value = draft[input.name];
+        });
+        roomScoreFormDirty = true;
+    } catch (error) {}
+}
+
+function clearRoomScoreDraft() {
+    roomScoreFormDirty = false;
+    try { sessionStorage.removeItem(roomScoreDraftKey); } catch (error) {}
+}
+
+function bindRoomScoreDraft() {
+    roomScoreForm = document.querySelector(".room-score-form");
+    roomScoreInputs = roomScoreForm
+        ? Array.from(roomScoreForm.querySelectorAll('input[name="host_score"], input[name="guest_score"]'))
+        : [];
+    roomScoreInputs.forEach(function (input) {
+        if (input.dataset.roomDraftBound === "1") return;
+        input.dataset.roomDraftBound = "1";
+
+        // Khi ô đang là 0, bấm/focus sẽ chọn toàn bộ để số mới thay thế 0.
+        // Nhập 4 sẽ thành 4, không còn trường hợp 40.
+        const selectDefaultScore = function () {
+            if (String(input.value).trim() === "0") {
+                window.requestAnimationFrame(function () { input.select(); });
+            }
+        };
+        input.addEventListener("focus", selectDefaultScore);
+        input.addEventListener("click", selectDefaultScore);
+        input.addEventListener("mouseup", function (event) {
+            if (String(input.value).trim() === "0") {
+                event.preventDefault();
+                input.select();
+            }
+        });
+        input.addEventListener("wheel", function (event) {
+            // Không cho con lăn chuột vô tình đổi tỷ số khi đang đặt chuột trên ô.
+            if (document.activeElement === input) {
+                event.preventDefault();
+                input.blur();
+            }
+        }, { passive: false });
+        input.addEventListener("input", function () {
+            if (input.value !== "") {
+                const score = Math.max(0, Math.min(99, Number.parseInt(input.value, 10) || 0));
+                input.value = String(score);
+            }
+            saveRoomScoreDraft();
+        });
+    });
+    restoreRoomScoreDraft();
+}
+
+let roomStateRequestInFlight = false;
+let roomStateController = null;
+let roomStateImmediateTimer = null;
+let roomStateStopped = false;
+let roomViewRefreshInFlight = false;
+let roomActionRequestInFlight = false;
+
+function getRoomStateInterval() {
+    if (document.hidden) return 90000;
+    if (currentRoomStatus === "playing") return currentRoomUserIsGuest ? 4500 : 10000;
+    if (currentRoomStatus === "friendly_playing") return 15000;
+    if (currentRoomStatus === "waiting_result_confirm") return currentRoomUserIsGuest ? 3000 : 6000;
+    if (currentRoomStatus === "waiting_ready") return currentRoomIsTournament ? 2500 : 6000;
+    // C1: sau leg cuối trạng thái confirmed chỉ cần poll nhẹ; leg 2 đã tự mở ngay khi Guest xác nhận leg 1.
+    if (currentRoomStatus === "confirmed") return currentRoomIsTournament ? 8000 : 8000;
+    return 15000;
+}
+
+function shouldShowRoomAjaxNotice(flash) {
+    if (!flash || !flash.message) return false;
+
+    // Các bước thành công đã được phản ánh trực tiếp trên giao diện phòng.
+    // Không mở modal lớn sau mỗi lần Sẵn Sàng, quay đội, nhập kết quả,
+    // xác nhận hoặc Đá tiếp vì làm gián đoạn trải nghiệm người chơi.
+    if (flash.tone === "success") return false;
+
+    const normalized = String(flash.message || "")
+        .trim()
+        .toLocaleLowerCase("vi-VN");
+    const quietRoomSteps = [
+        "bạn đã chọn đá tiếp",
+        "cả hai đã đồng ý đá tiếp",
+        "đã nhập kết quả",
+        "đang chờ người được mời xác nhận",
+        "bạn đã sẵn sàng",
+        "đã hủy trạng thái sẵn sàng",
+        "đã tự random tiếp",
+        "đã kết thúc giao hữu"
+    ];
+    return !quietRoomSteps.some(function (prefix) {
+        return normalized.startsWith(prefix) || normalized.includes(prefix);
+    });
+}
+
+function showRoomAjaxNotice(message, tone) {
+    if (!message) return;
+    if (window.PESRoomActionModal && typeof window.PESRoomActionModal.showNotice === "function") {
+        window.PESRoomActionModal.showNotice({
+            tone: tone || "warning",
+            icon: tone === "danger" ? "⚠" : "ℹ",
+            title: tone === "danger" ? "Không thể thực hiện" : "Thông báo phòng đấu",
+            message: message,
+            note: "PES ARENA",
+            confirmLabel: "Đã hiểu"
+        });
+    }
+}
+
+function handleRoomSessionResponse(response) {
+    if (!response) return false;
+    const redirectedPath = response.redirected
+        ? new URL(response.url, window.location.origin).pathname
+        : "";
+    if ([401, 403].includes(response.status) || redirectedPath === "/login") {
+        stopRoomStatePolling();
+        showRoomAjaxNotice("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", "warning");
+        window.setTimeout(function () {
+            window.location.href = redirectedPath || "/login";
+        }, 900);
+        return true;
+    }
+    return false;
+}
+
+function getFlashFromDocument(doc) {
+    const alert = doc.querySelector(".player-main > .alert, main .alert");
+    if (!alert) return null;
+    return {
+        message: (alert.textContent || "").trim(),
+        tone: alert.classList.contains("danger") ? "danger" : (alert.classList.contains("success") ? "success" : "warning")
+    };
+}
+
+function getSavedRoomLayoutMode() {
+    try {
+        return window.localStorage ? localStorage.getItem(ROOM_LAYOUT_STORAGE_KEY) || "" : "";
+    } catch (error) {
+        return "";
+    }
+}
+
+function applyRoomLayoutMode(mode) {
+    const shell = document.getElementById("roomLiveShell");
+    if (!shell) return;
+    const baseMode = shell.dataset.baseRoomMode || "rank";
+    const effectiveMode = baseMode === "c1" ? "c1" : (mode === "mini_cup" ? "mini_cup" : "rank");
+    shell.dataset.roomUiMode = effectiveMode;
+    shell.classList.remove("room-ui-mode-rank", "room-ui-mode-mini_cup", "room-ui-mode-c1");
+    shell.classList.add(`room-ui-mode-${effectiveMode}`);
+
+    const subtitle = shell.querySelector("[data-room-mode-subtitle]");
+    if (subtitle) {
+        if (effectiveMode === "mini_cup") subtitle.textContent = subtitle.dataset.modeMini || subtitle.textContent;
+        else if (effectiveMode === "c1") subtitle.textContent = subtitle.dataset.modeC1 || subtitle.textContent;
+        else subtitle.textContent = subtitle.dataset.modeRank || subtitle.textContent;
+    }
+
+    shell.querySelectorAll("[data-room-layout-tab]").forEach(function (button) {
+        button.classList.toggle("is-active", button.dataset.roomLayoutTab === effectiveMode);
+    });
+
+    if (baseMode !== "c1") {
+        try {
+            if (window.localStorage) localStorage.setItem(ROOM_LAYOUT_STORAGE_KEY, effectiveMode);
+        } catch (error) {}
+    }
+}
+
+function bindRoomModeTabs() {
+    const shell = document.getElementById("roomLiveShell");
+    if (!shell) return;
+    shell.querySelectorAll("[data-room-layout-tab]").forEach(function (button) {
+        if (button.dataset.roomLayoutBound === "1") return;
+        button.dataset.roomLayoutBound = "1";
+        button.addEventListener("click", function () {
+            applyRoomLayoutMode(button.dataset.roomLayoutTab || "rank");
+        });
+    });
+    const baseMode = shell.dataset.baseRoomMode || "rank";
+    const preferredMode = baseMode === "c1" ? "c1" : getSavedRoomLayoutMode() || "rank";
+    applyRoomLayoutMode(preferredMode);
+}
+
+function rebindRoomDynamicUi() {
+    bindRoomShareButton();
+    bindRoomModeTabs();
+    bindRoomScoreDraft();
+    bindRoomAjaxForms();
+    if (typeof bindRoomChatForm === "function") bindRoomChatForm();
+    syncRoomCountdownsFromDom();
+    if (window.PESRoomActionModal && typeof window.PESRoomActionModal.refreshForms === "function") {
+        window.PESRoomActionModal.refreshForms();
+    }
+    if (typeof currentRoomChatKey !== "undefined") currentRoomChatKey = "";
+    if (typeof requestImmediateRoomChatRefresh === "function" && !document.hidden) {
+        requestImmediateRoomChatRefresh();
+    }
+}
+
+function replaceRoomShellFromDocument(doc) {
+    const currentShell = document.getElementById("roomLiveShell");
+    const nextShell = doc.getElementById("roomLiveShell");
+    if (!currentShell || !nextShell) return false;
+
+    currentShell.replaceWith(nextShell);
+    currentRoomStateKey = nextShell.dataset.roomStateKey || currentRoomStateKey;
+    currentRoomStatus = nextShell.dataset.roomStatus || currentRoomStatus;
+    currentRoomGuestId = nextShell.dataset.roomGuestId || "";
+    rebindRoomDynamicUi();
+    return true;
+}
+
+async function fetchRoomDocument(url, options) {
+    const response = await fetch(url, Object.assign({
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: {"X-PES-Room-Ajax": "1"}
+    }, options || {}));
+    if (handleRoomSessionResponse(response)) {
+        throw new Error("room_session_ended");
+    }
+    const text = await response.text();
+    const doc = new DOMParser().parseFromString(text, "text/html");
+    return {response: response, doc: doc};
+}
+
+async function refreshRoomView() {
+    if (roomViewRefreshInFlight || roomStateStopped) return false;
+    roomViewRefreshInFlight = true;
+    try {
+        const result = await fetchRoomDocument(currentRoomRefreshPath);
+        if (!result.response.ok) return false;
+        return replaceRoomShellFromDocument(result.doc);
+    } catch (error) {
+        return false;
+    } finally {
+        roomViewRefreshInFlight = false;
+    }
+}
+
+function shouldAjaxRoomForm(form) {
+    if (!form || String(form.method || "get").toLowerCase() !== "post") return false;
+    if (form.classList.contains("room-exit-confirm-form") || form.classList.contains("room-chat-form")) return false;
+    if (form.querySelector('input[type="file"]')) return false;
+    const action = String(form.action || "");
+    if (!action.includes(currentRoomPath)) return false;
+    return !/(\/leave|\/forfeit|\/rematch\/decline|\/dispute|\/withdraw-dispute)(?:$|\?)/.test(action);
+}
+
+function bindRoomAjaxForms() {
+    const shell = document.getElementById("roomLiveShell");
+    if (!shell) return;
+    shell.querySelectorAll("form").forEach(function (form) {
+        if (!shouldAjaxRoomForm(form) || form.dataset.roomAjaxBound === "1") return;
+        form.dataset.roomAjaxBound = "1";
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+            if (roomActionRequestInFlight) return;
+            roomActionRequestInFlight = true;
+
+            const submitter = event.submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+            const oldText = submitter ? submitter.textContent : "";
+            if (submitter) {
+                submitter.disabled = true;
+                submitter.textContent = "Đang xử lý...";
+            }
+
+            try {
+                if (form.classList.contains("room-score-form")) {
+                    const scoreFields = Array.from(form.querySelectorAll('input[name="host_score"], input[name="guest_score"]'));
+                    const invalidField = scoreFields.find(function (input) {
+                        const raw = String(input.value || "").trim();
+                        const value = Number(raw);
+                        return raw === "" || !Number.isInteger(value) || value < 0 || value > 99;
+                    });
+                    if (invalidField) {
+                        invalidField.focus();
+                        throw new Error("invalid_room_score");
+                    }
+                }
+                const body = new FormData(form);
+                if (submitter && submitter.name && !body.has(submitter.name)) body.append(submitter.name, submitter.value || "");
+                const result = await fetchRoomDocument(form.action, {method: "POST", body: body});
+                const responsePath = new URL(result.response.url, window.location.origin).pathname;
+
+                if (!responsePath.startsWith(currentRoomPath)) {
+                    window.location.href = result.response.url;
+                    return;
+                }
+
+                const flash = getFlashFromDocument(result.doc);
+                const updated = replaceRoomShellFromDocument(result.doc);
+                if (updated && form.classList.contains("room-score-form") && (!flash || flash.tone !== "danger")) {
+                    clearRoomScoreDraft();
+                }
+                if (shouldShowRoomAjaxNotice(flash)) {
+                    showRoomAjaxNotice(flash.message, flash.tone);
+                }
+                if (!updated && !flash) showRoomAjaxNotice("Không thể cập nhật phòng. Vui lòng thử lại sau vài giây.", "warning");
+            } catch (error) {
+                if (error && error.message === "invalid_room_score") {
+                    showRoomAjaxNotice("Hãy nhập đủ hai tỷ số từ 0 đến 99.", "warning");
+                } else {
+                    showRoomAjaxNotice("Kết nối phòng đấu bị gián đoạn. Tỷ số vẫn được giữ; vui lòng thử lại.", "danger");
+                }
+            } finally {
+                roomActionRequestInFlight = false;
+                if (submitter && document.contains(submitter)) {
+                    submitter.disabled = false;
+                    submitter.textContent = oldText;
+                }
+                if (roomStateImmediateTimer) window.clearTimeout(roomStateImmediateTimer);
+                roomStateImmediateTimer = window.setTimeout(requestImmediateRoomStateCheck, 750);
+            }
+        });
+    });
+}
+
+function checkRoomState() {
+    // Không thay lại toàn bộ khung phòng trong lúc chủ phòng đang nhập tỷ số.
+    // Tránh mất focus hoặc có cảm giác "không điền được" khi polling trả dữ liệu mới.
+    if (roomScoreFormDirty && currentRoomStatus === "playing") {
+        return Promise.resolve();
+    }
+    if (roomStateStopped || roomStateRequestInFlight || roomActionRequestInFlight || roomViewRefreshInFlight) {
+        return Promise.resolve();
+    }
+
+    const task = function () {
+        if (roomStateStopped || roomStateRequestInFlight || roomActionRequestInFlight || roomViewRefreshInFlight) {
+            return Promise.resolve();
+        }
+
+        roomStateRequestInFlight = true;
+        const stateUrl = new URL("{{ url_for('api_room_state', room_id=room.id) }}", window.location.origin);
+        if (currentRoomStateKey) stateUrl.searchParams.set("since", currentRoomStateKey);
+
+        return fetch(stateUrl.toString(), {
+            method: "GET",
+            credentials: "same-origin",
+            cache: "no-store"
+        })
+        .then(function (res) {
+            if (handleRoomSessionResponse(res)) return null;
+            const stopReason = res.headers.get("X-PES-Polling-Stop") || "";
+            if (stopReason) {
+                stopRoomStatePolling();
+                if (["room_not_found", "room_access_ended"].includes(stopReason)) {
+                    window.location.href = "{{ url_for('dashboard') }}";
+                }
+                return null;
+            }
+            if (res.status === 204 || res.status === 304) return null;
+            if (!res.ok) return null;
+            return res.json();
+        })
+        .then(async function (data) {
+            if (!data || !data.ok || roomStateStopped) return;
+            currentRoomStatus = data.status || currentRoomStatus;
+            if (data.status === "cancelled") {
+                stopRoomStatePolling();
+                window.location.href = "{{ url_for('dashboard') }}";
+                return;
+            }
+            if (data.rematch_expired) {
+                stopRoomStatePolling();
+                if (window.PESRoomActionModal && typeof window.PESRoomActionModal.showNotice === "function") {
+                    window.PESRoomActionModal.showNotice({
+                        tone: "warning",
+                        icon: "⌛",
+                        title: "Yêu cầu đá tiếp đã hết hạn",
+                        message: "Yêu cầu đá tiếp đã hết hạn sau 60 giây. Bạn sẽ được đưa về sảnh chính.",
+                        note: "VỀ SẢNH CHÍNH",
+                        confirmLabel: "Về sảnh chính",
+                        redirectUrl: "{{ url_for('dashboard') }}",
+                        autoRedirectMs: 4500
+                    });
+                } else {
+                    window.location.href = "{{ url_for('dashboard') }}";
+                }
+                return;
+            }
+            if (typeof data.timeout_seconds !== "undefined") {
+                roomCountdownSeconds = Number(data.timeout_seconds) || 0;
+                renderRoomCountdown(roomCountdownSeconds);
+            }
+            if (data.rematch_declined) {
+                stopRoomStatePolling();
+                if (!data.rematch_declined_by_me && window.PESRoomActionModal && typeof window.PESRoomActionModal.showNotice === "function") {
+                    window.PESRoomActionModal.showNotice({
+                        tone: "warning",
+                        icon: "🚪",
+                        title: "Đối thủ đã rời phòng",
+                        message: "Đối thủ không muốn đá tiếp. Bạn sẽ được đưa về sảnh chính.",
+                        note: "PHIÊN ĐẤU ĐÃ KẾT THÚC",
+                        confirmLabel: "Về sảnh chính",
+                        redirectUrl: "{{ url_for('dashboard') }}",
+                        autoRedirectMs: 5000
+                    });
+                } else {
+                    window.location.href = "{{ url_for('dashboard') }}";
+                }
+                return;
+            }
+            const apiGuestId = String(data.guest_user_id || "");
+            if (apiGuestId !== String(currentRoomGuestId || "") || data.state_key !== currentRoomStateKey) {
+                await refreshRoomView();
+            }
+        })
+        .catch(function () {})
+        .finally(function () {
+            roomStateRequestInFlight = false;
+        });
+    };
+
+    return window.PESNet && typeof PESNet.singleFlight === "function"
+        ? PESNet.singleFlight("api:room-state:{{ room.id }}", task)
+        : task();
+}
+
+function requestImmediateRoomStateCheck() {
+    if (document.hidden || roomStateStopped) return;
+    if (roomStateController && typeof roomStateController.runNow === "function") {
+        roomStateController.runNow();
+    }
+}
+
+function stopRoomStatePolling() {
+    roomStateStopped = true;
+    if (roomStateImmediateTimer) window.clearTimeout(roomStateImmediateTimer);
+    roomStateImmediateTimer = null;
+    if (roomStateController && typeof roomStateController.stop === "function") {
+        roomStateController.stop();
+    } else if (window.PESNet && typeof PESNet.stop === "function") {
+        PESNet.stop("room-state:{{ room.id }}");
+    }
+    roomStateController = null;
+    if (typeof stopRoomChatPolling === "function") stopRoomChatPolling();
+    if (roomCountdownTimer) window.clearInterval(roomCountdownTimer);
+    roomCountdownTimer = null;
+}
+
+function startRoomStatePolling() {
+    roomStateStopped = false;
+    if (window.PESNet && typeof PESNet.createPoller === "function") {
+        roomStateController = PESNet.createPoller({
+            key: "room-state:{{ room.id }}",
+            task: checkRoomState,
+            visibleInterval: getRoomStateInterval,
+            hiddenInterval: 60000,
+            runWhenHidden: false,
+            immediate: false,
+            jitter: 350
+        });
+        roomStateController.runNow();
+        return;
+    }
+
+    // Dự phòng khi file pes_polling.js chưa tải được: vẫn chỉ có một timer.
+    let fallbackTimer = null;
+    const fallbackRun = function () {
+        if (roomStateStopped) return;
+        checkRoomState().finally(function () {
+            if (!roomStateStopped) fallbackTimer = window.setTimeout(fallbackRun, getRoomStateInterval());
+        });
+    };
+    fallbackTimer = window.setTimeout(fallbackRun, 300);
+    roomStateController = {
+        runNow: fallbackRun,
+        stop: function () {
+            if (fallbackTimer) window.clearTimeout(fallbackTimer);
+            fallbackTimer = null;
+        }
+    };
+}
+
+if (window.PESRoomStateController && typeof window.PESRoomStateController.stop === "function") {
+    window.PESRoomStateController.stop();
+}
+window.PESRoomStateController = {stop: stopRoomStatePolling, runNow: requestImmediateRoomStateCheck};
+
+document.addEventListener("DOMContentLoaded", function () {
+    rebindRoomDynamicUi();
+    startRoomStatePolling();
+});
+
+</script>
+
+{% if system_features.room_chat_enabled %}
+<script>
+let currentRoomChatKey = "";
+let roomChatPoller = null;
+
+function toggleRoomChat() {
+    const panel = document.getElementById("bottomRoomChat");
+    const button = document.getElementById("roomChatToggleButton");
+    if (!panel) return;
+    const willOpen = panel.hidden || panel.classList.contains("chat-collapsed");
+
+    // Tránh 2 khung Chat Sảnh và Chat Phòng đè lên nhau.
+    if (willOpen) {
+        const lobbyPanel = document.getElementById("bottomLobbyChat");
+        if (lobbyPanel && !lobbyPanel.hidden && !lobbyPanel.classList.contains("chat-collapsed") && typeof toggleLobbyChat === "function") {
+            toggleLobbyChat();
+        }
+    }
+
+    panel.hidden = !willOpen;
+    panel.classList.toggle("chat-collapsed", !willOpen);
+    if (button) button.classList.toggle("chat-toggle-open", willOpen);
+    if (willOpen) {
+        document.dispatchEvent(new CustomEvent("pes:room-chat-opened"));
+        bindRoomChatForm();
+        requestImmediateRoomChatRefresh();
+        const input = panel.querySelector('input[name="message"]');
+        if (input) window.setTimeout(() => input.focus(), 50);
+    } else {
+        document.dispatchEvent(new CustomEvent("pes:room-chat-closed"));
+    }
+}
+
+let roomChatRequestInFlight = false;
+let roomChatSendInFlight = false;
+
+function escapeRoomHtml(text) {
+    const div = document.createElement("div");
+    div.innerText = text || "";
+    return div.innerHTML;
+}
+
+function renderRoomAvatar(url, name, achievement, frameUrl) {
+    const safeName = escapeRoomHtml(name || "?");
+    const initial = escapeRoomHtml((name || "?").trim().charAt(0).toUpperCase() || "?");
+    const safeFrame = frameUrl ? escapeRoomHtml(frameUrl) : "";
+    const badge = achievement && achievement.icon
+        ? `<span class="avatar-achievement" title="${escapeRoomHtml(achievement.name || 'Huy hiệu')}">${escapeRoomHtml(achievement.icon)}</span>`
+        : "";
+    const avatarBody = url
+        ? `<img class="player-avatar-image" src="${escapeRoomHtml(url)}" alt="Ảnh đại diện ${safeName}" loading="lazy">`
+        : `<span class="player-avatar-fallback">${initial}</span>`;
+    const frame = safeFrame
+        ? `<img class="player-avatar-equipped-frame" src="${safeFrame}" alt="" aria-hidden="true" loading="lazy">`
+        : "";
+    return `<span class="player-avatar avatar-xs${safeFrame ? ' has-equipped-frame' : ''}">${avatarBody}${frame}${badge}</span>`;
+}
+
+function renderRoomChat(messages) {
+    const box = document.getElementById("roomChatBox");
+    if (!box) return;
+
+    const nextKey = (messages || []).map(function (msg) {
+        return [msg.id || "", msg.created_at || "", msg.message || ""].join(":");
+    }).join("|");
+    if (nextKey === currentRoomChatKey) return;
+    currentRoomChatKey = nextKey;
+
+    if (!messages || !messages.length) {
+        box.innerHTML = '<div class="bottom-chat-empty">Chưa có tin nhắn trong phòng.</div>';
+        return;
+    }
+
+    box.innerHTML = messages.map(function (msg) {
+        const adminBadge = msg.user_role === "admin" ? '<span class="badge gold">ADMIN</span>' : '';
+        const adminClass = msg.user_role === "admin" ? 'admin' : '';
+        return `
+            <div class="bottom-chat-message">
+                <div class="chat-message-head">${renderRoomAvatar(msg.user_avatar_url, msg.user_name, msg.user_achievement, msg.user_avatar_frame_url)}<span class="chat-name ${adminClass}">${escapeRoomHtml(msg.user_name)}</span>${adminBadge}</div>
+                <span class="bottom-chat-time">${escapeRoomHtml(msg.created_at_display || msg.created_at)}</span>
+                <div class="bottom-chat-text">${escapeRoomHtml(msg.message)}</div>
+            </div>
+        `;
+    }).join("");
+
+    box.scrollTop = box.scrollHeight;
+}
+
+
+function bindRoomChatForm() {
+    const form = document.querySelector(".room-chat-form");
+    if (!form || form.dataset.roomChatBound === "1") return;
+    form.dataset.roomChatBound = "1";
+
+    form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (roomChatSendInFlight || roomStateStopped) return;
+
+        const input = form.querySelector('input[name="message"]');
+        const button = form.querySelector('button[type="submit"]');
+        const status = document.getElementById("roomChatStatus");
+        const message = input ? input.value.trim() : "";
+        if (!message) return;
+
+        roomChatSendInFlight = true;
+        if (input) input.disabled = true;
+        if (button) button.disabled = true;
+        if (status) status.textContent = "Đang gửi tin nhắn...";
+
+        const task = function () {
+            return fetch("{{ url_for('api_send_room_chat', room_id=room.id) }}", {
+                method: "POST",
+                credentials: "same-origin",
+                cache: "no-store",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: JSON.stringify({message: message})
+            });
+        };
+
+        const request = window.PESNet && typeof PESNet.singleFlight === "function"
+            ? PESNet.singleFlight("api:room-chat-send:{{ room.id }}", task)
+            : task();
+
+        request
+            .then(function (res) {
+                if (handleRoomSessionResponse(res)) {
+                    return {ok: false, error: "Phiên đăng nhập đã kết thúc."};
+                }
+                if (res.status === 204 || res.headers.get("X-PES-Polling-Stop")) {
+                    stopRoomChatPolling();
+                    return {ok: false, error: "Phiên chat phòng đã kết thúc."};
+                }
+                return res.json().catch(function () {
+                    return {ok: false, error: "Phản hồi chat không hợp lệ."};
+                });
+            })
+            .then(function (data) {
+                if (!data || !data.ok) {
+                    if (status) status.textContent = (data && data.error) || "Không gửi được tin nhắn.";
+                    return;
+                }
+                if (input) input.value = "";
+                if (status) status.textContent = "";
+                // API gửi trả luôn snapshot mới nhất: render ngay để không có cảm giác delay.
+                if (Array.isArray(data.messages)) renderRoomChat(data.messages);
+                else requestImmediateRoomChatRefresh();
+            })
+            .catch(function () {
+                if (status) status.textContent = "Kết nối chat bị gián đoạn. Vui lòng thử lại.";
+            })
+            .finally(function () {
+                roomChatSendInFlight = false;
+                if (input && document.contains(input)) {
+                    input.disabled = false;
+                    input.focus();
+                }
+                if (button && document.contains(button)) button.disabled = false;
+            });
+    });
+}
+
+function stopRoomChatPolling() {
+    if (roomChatPoller && typeof roomChatPoller.stop === "function") {
+        roomChatPoller.stop();
+    } else if (window.PESNet && typeof PESNet.stop === "function") {
+        PESNet.stop("room-chat:{{ room.id }}");
+    }
+    roomChatPoller = null;
+}
+
+function loadRoomChat() {
+    if (document.hidden || roomStateStopped || roomChatRequestInFlight) return Promise.resolve();
+
+    const task = function () {
+        if (roomStateStopped || roomChatRequestInFlight) return Promise.resolve();
+        roomChatRequestInFlight = true;
+        return fetch("{{ url_for('api_room_chat', room_id=room.id) }}", {
+            credentials: "same-origin",
+            cache: "no-store"
+        })
+        .then(function (res) {
+            if (handleRoomSessionResponse(res)) return null;
+            if (res.status === 204 || res.headers.get("X-PES-Polling-Stop")) {
+                stopRoomChatPolling();
+                return null;
+            }
+            if (!res.ok) {
+                if ([401, 403, 404, 410].includes(res.status)) stopRoomChatPolling();
+                return null;
+            }
+            return res.json();
+        })
+        .then(function (data) {
+            if (data && data.ok) renderRoomChat(data.messages);
+        })
+        .catch(function () {})
+        .finally(function () {
+            roomChatRequestInFlight = false;
+        });
+    };
+
+    return window.PESNet && typeof PESNet.singleFlight === "function"
+        ? PESNet.singleFlight("api:room-chat:{{ room.id }}", task)
+        : task();
+}
+
+function requestImmediateRoomChatRefresh() {
+    if (document.hidden || roomStateStopped) return;
+    if (roomChatPoller && typeof roomChatPoller.runNow === "function") roomChatPoller.runNow();
+    else loadRoomChat();
+}
+
+function startRoomChatPolling() {
+    stopRoomChatPolling();
+    if (!window.PESNet) return loadRoomChat();
+    roomChatPoller = PESNet.createPoller({
+        key: "room-chat:{{ room.id }}",
+        task: loadRoomChat,
+        visibleInterval: 3000,
+        hiddenInterval: 30000,
+        runWhenHidden: false,
+        immediate: true,
+        jitter: 1000
+    });
+    return roomChatPoller;
+}
+
+window.addEventListener("DOMContentLoaded", function () {
+    bindRoomChatForm();
+    const chatPanel = document.querySelector('.room-chat-side, [data-room-chat-panel]');
+    if (chatPanel && chatPanel.offsetParent !== null) startRoomChatPolling();
+});
+document.addEventListener('pes:room-chat-opened', startRoomChatPolling);
+document.addEventListener('pes:room-chat-closed', stopRoomChatPolling);
+
+function stopRoomLiveWork() {
+    stopRoomStatePolling();
+    stopRoomChatPolling();
+}
+window.addEventListener("pagehide", function (event) {
+    // BFCache cần giữ controller để PESNet có thể resume khi người dùng quay lại.
+    if (!event.persisted) stopRoomLiveWork();
+}, {once: true});
+window.addEventListener("beforeunload", stopRoomLiveWork, {once: true});
+</script>
+{% endif %}
+
+
+
+
+<script>
+(function initRoomExitConfirmModal() {
+    const modal = document.getElementById("roomExitConfirmModal");
+    if (!modal) return;
+
+    const title = document.getElementById("roomActionModalTitle");
+    const message = document.getElementById("roomActionModalMessage");
+    const note = document.getElementById("roomActionModalNote");
+    const icon = document.getElementById("roomActionModalIcon");
+    const confirmButton = document.getElementById("roomActionModalConfirm");
+    const cancelButton = document.getElementById("roomActionModalCancel");
+    const closeButton = modal.querySelector(".room-action-modal-close");
+    const cancelButtons = modal.querySelectorAll("[data-room-modal-cancel]");
+
+    let pendingForm = null;
+    let returnFocus = null;
+    let submitting = false;
+    let noticeMode = false;
+    let noticeRedirectUrl = "";
+    let noticeTimer = null;
+
+    function clearNoticeTimer() {
+        if (noticeTimer) {
+            window.clearTimeout(noticeTimer);
+            noticeTimer = null;
+        }
+    }
+
+    function setDismissControlsVisible(visible) {
+        if (cancelButton) cancelButton.hidden = !visible;
+        if (closeButton) closeButton.hidden = !visible;
+    }
+
+    function revealModal() {
+        modal.hidden = false;
+        modal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("room-action-modal-open");
+        window.requestAnimationFrame(function () {
+            modal.classList.add("is-open");
+            confirmButton.focus();
+        });
+    }
+
+    function redirectNotice() {
+        if (!noticeRedirectUrl) return;
+        const target = noticeRedirectUrl;
+        noticeRedirectUrl = "";
+        clearNoticeTimer();
+        confirmButton.disabled = true;
+        confirmButton.textContent = "Đang chuyển về sảnh...";
+        window.location.href = target;
+    }
+
+    function closeModal() {
+        if (submitting || noticeMode) return;
+        clearNoticeTimer();
+        modal.classList.remove("is-open");
+        modal.setAttribute("aria-hidden", "true");
+        window.setTimeout(function () {
+            modal.hidden = true;
+        }, 180);
+        document.body.classList.remove("room-action-modal-open");
+        pendingForm = null;
+        if (returnFocus && typeof returnFocus.focus === "function") returnFocus.focus();
+    }
+
+    function openModal(form) {
+        clearNoticeTimer();
+        noticeMode = false;
+        noticeRedirectUrl = "";
+        pendingForm = form;
+        returnFocus = document.activeElement;
+        setDismissControlsVisible(true);
+
+        const tone = form.dataset.modalTone || "warning";
+        modal.dataset.tone = tone;
+        icon.textContent = form.dataset.modalIcon || "⚠";
+        title.textContent = form.dataset.modalTitle || "Xác nhận thao tác";
+        message.textContent = form.dataset.modalMessage || "Bạn có chắc chắn muốn tiếp tục?";
+        note.textContent = form.dataset.modalNote || "";
+        note.hidden = !form.dataset.modalNote;
+        confirmButton.textContent = form.dataset.modalConfirmLabel || "Xác nhận";
+        confirmButton.disabled = false;
+        submitting = false;
+        revealModal();
+    }
+
+    function showNotice(options) {
+        const settings = options || {};
+        clearNoticeTimer();
+        pendingForm = null;
+        returnFocus = null;
+        submitting = false;
+        noticeMode = true;
+        noticeRedirectUrl = settings.redirectUrl || "";
+        setDismissControlsVisible(!noticeRedirectUrl);
+
+        modal.dataset.tone = settings.tone || "warning";
+        icon.textContent = settings.icon || "ℹ";
+        title.textContent = settings.title || "Thông báo phòng đấu";
+        message.textContent = settings.message || "";
+        note.textContent = settings.note || "";
+        note.hidden = !settings.note;
+        confirmButton.textContent = settings.confirmLabel || "Tiếp tục";
+        confirmButton.disabled = false;
+        revealModal();
+
+        const autoRedirectMs = Number(settings.autoRedirectMs || 0);
+        if (noticeRedirectUrl && autoRedirectMs > 0) {
+            noticeTimer = window.setTimeout(redirectNotice, Math.max(1500, autoRedirectMs));
+        }
+    }
+
+    function refreshForms() {
+        document.querySelectorAll(".room-exit-confirm-form, .room-action-confirm-form").forEach(function (form) {
+            if (form.dataset.roomActionModalBound === "1") return;
+            form.dataset.roomActionModalBound = "1";
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();
+                if (submitting || noticeMode) return;
+                openModal(form);
+            });
+        });
+    }
+
+    refreshForms();
+
+    cancelButtons.forEach(function (button) {
+        button.addEventListener("click", closeModal);
+    });
+
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal) closeModal();
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (!modal.classList.contains("is-open") || noticeMode) return;
+        if (event.key === "Escape") {
+            event.preventDefault();
+            closeModal();
+        }
+    });
+
+    confirmButton.addEventListener("click", function () {
+        if (noticeMode) {
+            if (noticeRedirectUrl) {
+                redirectNotice();
+            } else {
+                noticeMode = false;
+                closeModal();
+            }
+            return;
+        }
+        if (!pendingForm || submitting) return;
+        submitting = true;
+        confirmButton.disabled = true;
+        confirmButton.textContent = "Đang xử lý...";
+        const formToSubmit = pendingForm;
+        window.setTimeout(function () {
+            HTMLFormElement.prototype.submit.call(formToSubmit);
+        }, 120);
+    });
+
+    window.PESRoomActionModal = {
+        showNotice: showNotice,
+        refreshForms: refreshForms
+    };
+})();
+</script>
+
+{% endblock %}

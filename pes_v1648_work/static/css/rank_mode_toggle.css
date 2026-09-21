@@ -1,0 +1,1041 @@
+/* Rank Mode Toggle Module — selector có phạm vi, không ghi đè CSS toàn cục. */
+.admin-system-features-panel .admin-feature-help {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border: 1px solid rgba(59, 130, 246, .25);
+    border-radius: 10px;
+    background: rgba(59, 130, 246, .08);
+    line-height: 1.5;
+}
+
+.room-center-mode-zone .room-center-mode-actions--single {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 430px;
+    margin-inline: auto;
+}
+
+.room-center-mode-zone .room-center-mode-actions--single > form,
+.room-center-mode-zone .room-center-mode-actions--single .room-mode-select-btn {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 640px) {
+    .room-center-mode-zone .room-center-mode-actions--single {
+        max-width: 100%;
+    }
+}
+
+/* PES Arena V1.2.9.29 — đưa bộ chọn chế độ xuống dưới, chế độ đã chọn hiển thị ở trung tâm. */
+.room-selected-mode-hero {
+    width: min(100%, 320px);
+    margin: 0 auto 12px;
+    padding: 13px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 1px solid rgba(255, 207, 72, .45);
+    border-radius: 16px;
+    background: radial-gradient(circle at 50% 18%, rgba(255, 196, 55, .14), transparent 45%), rgba(3, 9, 19, .72);
+    box-shadow: inset 0 0 28px rgba(255, 197, 54, .05), 0 10px 28px rgba(0, 0, 0, .3);
+}
+.room-selected-mode-hero.mode-random3 {
+    border-color: rgba(196, 82, 255, .52);
+    background: radial-gradient(circle at 50% 18%, rgba(192, 70, 255, .16), transparent 46%), rgba(8, 6, 24, .76);
+}
+.room-selected-mode-kicker {
+    margin-bottom: 8px;
+    color: #f7f8fb;
+    font-size: 11px;
+    font-weight: 1000;
+    letter-spacing: .13em;
+}
+.room-selected-mode-emblem {
+    width: 78px;
+    height: 88px;
+    display: grid;
+    place-items: center;
+    position: relative;
+    margin-bottom: 7px;
+    clip-path: polygon(50% 0, 91% 17%, 86% 68%, 50% 100%, 14% 68%, 9% 17%);
+    background: linear-gradient(145deg, #ffe783 0%, #a96e08 48%, #fff0a1 100%);
+    filter: drop-shadow(0 8px 14px rgba(212, 145, 9, .34));
+}
+.room-selected-mode-emblem::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    clip-path: inherit;
+    background: linear-gradient(160deg, rgba(34, 24, 3, .96), rgba(91, 55, 5, .92));
+}
+.mode-random3 .room-selected-mode-emblem {
+    background: linear-gradient(145deg, #f4c8ff 0%, #9d32ed 45%, #ff69cf 100%);
+    filter: drop-shadow(0 8px 14px rgba(183, 50, 255, .3));
+}
+.mode-random3 .room-selected-mode-emblem::before {
+    background: linear-gradient(160deg, rgba(28, 7, 51, .98), rgba(72, 12, 88, .94));
+}
+.room-selected-mode-emblem-core {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border: 2px solid rgba(255, 232, 145, .7);
+    border-radius: 50%;
+    color: #ffe782;
+    font-size: 27px;
+    font-weight: 1000;
+    line-height: 1;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .8);
+}
+.mode-random3 .room-selected-mode-emblem-core {
+    border-color: rgba(245, 193, 255, .72);
+    color: #f6d6ff;
+}
+.room-selected-mode-name {
+    color: #ffd75d;
+    font-size: 15px;
+    font-weight: 1000;
+    letter-spacing: .055em;
+    text-shadow: 0 0 16px rgba(255, 195, 39, .28);
+}
+.mode-random3 .room-selected-mode-name {
+    color: #efb9ff;
+    text-shadow: 0 0 16px rgba(212, 77, 255, .28);
+}
+.room-selected-mode-state {
+    margin-top: 5px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: rgba(22, 113, 47, .34);
+    border: 1px solid rgba(91, 221, 115, .36);
+    color: #c8ffd2;
+    font-size: 10px;
+    font-weight: 900;
+}
+.room-selected-mode-hero.is-compact {
+    padding-top: 10px;
+    padding-bottom: 9px;
+}
+.room-selected-mode-hero.is-compact .room-selected-mode-emblem {
+    width: 58px;
+    height: 65px;
+    margin-bottom: 4px;
+}
+.room-selected-mode-hero.is-compact .room-selected-mode-emblem-core {
+    width: 36px;
+    height: 36px;
+    font-size: 21px;
+}
+
+.room-mode-dock {
+    margin: 10px 0 14px;
+    padding: 0 2px;
+}
+.room-mode-dock-heading {
+    display: grid;
+    grid-template-columns: minmax(24px, 1fr) auto minmax(24px, 1fr);
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    color: #e0b93f;
+    font-size: 11px;
+    font-weight: 1000;
+    letter-spacing: .12em;
+}
+.room-mode-dock-heading span {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(224, 185, 63, .52));
+}
+.room-mode-dock-heading span:last-child { transform: scaleX(-1); }
+.room-mode-dock-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+.room-mode-dock-grid.is-single {
+    grid-template-columns: minmax(220px, 520px);
+    justify-content: center;
+}
+.room-mode-dock-form { margin: 0; min-width: 0; }
+.room-mode-dock-card.room-mode-select-btn {
+    min-height: 112px;
+    width: 100%;
+    position: relative;
+    padding: 12px 12px 10px;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 10px;
+    background: linear-gradient(160deg, rgba(8, 24, 43, .95), rgba(6, 13, 25, .96));
+    box-shadow: inset 0 0 28px rgba(41, 132, 255, .04), 0 8px 22px rgba(0, 0, 0, .22);
+    color: #dce9f7;
+    transform: none;
+    filter: none;
+}
+.room-mode-dock-card.room-mode-select-btn.mode-random3 {
+    background: linear-gradient(160deg, rgba(27, 13, 48, .95), rgba(10, 12, 28, .96)) !important;
+    box-shadow: inset 0 0 28px rgba(197, 67, 255, .05), 0 8px 22px rgba(0, 0, 0, .22) !important;
+}
+.room-mode-dock-card.room-mode-select-btn.selected {
+    outline: 2px solid #ffe27a;
+    outline-offset: -2px;
+    border-color: rgba(255, 226, 122, .95);
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 32px rgba(255, 215, 80, .08), 0 0 17px rgba(255, 202, 54, .22), 0 10px 24px rgba(0, 0, 0, .3) !important;
+}
+.room-mode-dock-card.room-mode-select-btn.mode-random3.selected {
+    outline-color: #e9b4ff;
+    border-color: rgba(226, 160, 255, .9);
+    box-shadow: inset 0 0 32px rgba(205, 91, 255, .09), 0 0 17px rgba(192, 69, 255, .24), 0 10px 24px rgba(0, 0, 0, .3) !important;
+}
+.room-mode-dock-card.room-mode-select-btn:not(.is-readonly):hover {
+    transform: translateY(-3px);
+    filter: brightness(1.12);
+}
+.room-mode-dock-number {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    display: grid;
+    place-items: center;
+    border-radius: 5px;
+    background: rgba(71, 157, 231, .35);
+    border: 1px solid rgba(102, 188, 255, .45);
+    color: #d9f2ff;
+    font-size: 10px;
+    font-weight: 1000;
+}
+.mode-random3 .room-mode-dock-number {
+    background: rgba(190, 74, 226, .34);
+    border-color: rgba(221, 124, 255, .42);
+    color: #f3ddff;
+}
+.room-mode-dock-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 3px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 205, 72, .28), rgba(255, 205, 72, .02) 65%);
+    font-size: 29px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .4));
+}
+.room-mode-dock-icon-random3 {
+    border: 2px solid rgba(232, 183, 255, .5);
+    color: #efd1ff;
+    font-weight: 1000;
+    font-size: 24px;
+}
+.room-mode-dock-card strong {
+    font-size: 11px;
+    line-height: 1.15;
+    color: #f5f8fc;
+}
+.room-mode-dock-card small {
+    font-size: 9px;
+    line-height: 1.2;
+    color: #92a5b8;
+}
+.room-mode-dock-card.is-readonly { cursor: default; }
+.room-mode-dock-note {
+    margin-top: 7px;
+    color: #7f91a5;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+/* Trạng thái Random 3 chọn 1 giữ nguyên logic, chỉ gọn lại vì tên chế độ đã nằm trong hero trung tâm. */
+.room-center-random3-status { margin-top: -3px; }
+.room-center-random3-status .room-center-mode-title { display: none; }
+
+@media (min-width: 900px) {
+    .room-mode-dock-grid { grid-template-columns: repeat(2, minmax(0, 300px)); justify-content: center; }
+}
+@media (max-width: 640px) {
+    .room-selected-mode-hero { width: 100%; }
+    .room-selected-mode-emblem { width: 64px; height: 72px; }
+    .room-selected-mode-emblem-core { width: 39px; height: 39px; font-size: 23px; }
+    .room-mode-dock-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .room-mode-dock-card.room-mode-select-btn { min-height: 104px; padding-inline: 7px; }
+    .room-mode-dock-card strong { font-size: 10px; }
+    .room-mode-dock-card small { font-size: 8px; }
+}
+
+/* PES Arena V1.2.9.30 — bộ chọn chế độ nằm ngay bên trong khung đấu,
+   dưới 3 cột Chủ phòng / Trung tâm / Đối thủ; rail bên phải giữ nguyên. */
+.room-layout-v137 .room-mode-dock-slot {
+    min-width: 0;
+    align-self: start;
+    display: flex;
+    justify-content: center;
+    padding: 0 8px 4px;
+}
+.room-layout-v137 .room-mode-dock-slot .room-mode-dock {
+    width: min(100%, 650px);
+    margin: 0;
+    padding: 0;
+}
+
+@media (min-width: 1181px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-areas:
+            "home center away rail"
+            "modes modes modes rail" !important;
+    }
+    .room-layout-v137 .room-mode-dock-slot { grid-area: modes; }
+    .room-layout-v137 .room-arena-right-rail { grid-area: rail; }
+}
+
+@media (min-width: 981px) and (max-width: 1180px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-areas:
+            "home center away"
+            "modes modes modes"
+            "rail rail rail" !important;
+    }
+    .room-layout-v137 .room-mode-dock-slot { grid-area: modes; }
+    .room-layout-v137 .room-arena-right-rail { grid-area: rail; }
+}
+
+@media (max-width: 980px) {
+    .room-layout-v137 .room-mode-dock-slot {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .room-layout-v137 .room-mode-dock-slot {
+        order: 4;
+        padding: 4px 0;
+    }
+    .room-layout-v137 .room-arena-right-rail { order: 5; }
+}
+
+/* PES Arena V1.2.9.32 — 5 vỏ chế độ mới, cố ý khóa vì chưa có Core. */
+.room-mode-dock-card.mode-coming-soon {
+    background: linear-gradient(160deg, rgba(22, 29, 38, .88), rgba(9, 13, 20, .96)) !important;
+    border-color: rgba(153, 168, 184, .22);
+    box-shadow: inset 0 0 24px rgba(130, 150, 170, .035), 0 8px 20px rgba(0, 0, 0, .18) !important;
+}
+.room-mode-dock-card.is-locked {
+    opacity: .62;
+    filter: grayscale(.32) saturate(.72);
+    cursor: not-allowed !important;
+    user-select: none;
+}
+.room-mode-dock-card.is-locked:hover {
+    transform: none !important;
+    filter: grayscale(.32) saturate(.72) !important;
+}
+.room-mode-lock-badge {
+    position: absolute;
+    top: 7px;
+    right: 8px;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 6px;
+    background: rgba(0,0,0,.32);
+    font-size: 11px;
+}
+
+/* PES Arena V1.2.9.33 — dùng logo cho 7 chế độ, thanh chế độ trải 1 hàng ngang trên desktop. */
+.room-selected-mode-hero {
+    width: min(100%, 330px);
+}
+.room-selected-mode-logo-shell {
+    width: min(100%, 240px);
+    margin: 0 auto 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.room-selected-mode-logo {
+    display: block;
+    width: 100%;
+    max-width: 208px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .34));
+}
+.room-selected-mode-name {
+    margin-top: 2px;
+}
+
+.room-mode-dock {
+    margin: 10px 0 14px;
+    padding: 0 2px;
+}
+.room-mode-dock-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+    align-items: stretch;
+}
+.room-mode-dock-grid.is-single {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    justify-content: stretch;
+}
+.room-mode-dock-form { margin: 0; min-width: 0; }
+.room-mode-dock-card.room-mode-select-btn {
+    min-height: 106px;
+    width: 100%;
+    position: relative;
+    padding: 8px 8px 9px;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 12px;
+    background: linear-gradient(160deg, rgba(8, 24, 43, .95), rgba(6, 13, 25, .96));
+    box-shadow: inset 0 0 28px rgba(41, 132, 255, .04), 0 8px 22px rgba(0, 0, 0, .22);
+    color: #dce9f7;
+    transform: none;
+    filter: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+.room-mode-dock-card.room-mode-select-btn.mode-random3 {
+    background: linear-gradient(160deg, rgba(27, 13, 48, .95), rgba(10, 12, 28, .96)) !important;
+    box-shadow: inset 0 0 28px rgba(197, 67, 255, .05), 0 8px 22px rgba(0, 0, 0, .22) !important;
+}
+.room-mode-dock-card.room-mode-select-btn.selected {
+    outline: 2px solid #ffe27a;
+    outline-offset: -2px;
+    border-color: rgba(255, 226, 122, .95);
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 32px rgba(255, 215, 80, .08), 0 0 17px rgba(255, 202, 54, .22), 0 10px 24px rgba(0, 0, 0, .3) !important;
+}
+.room-mode-dock-card.room-mode-select-btn.mode-random3.selected {
+    outline-color: #e9b4ff;
+    border-color: rgba(226, 160, 255, .9);
+    box-shadow: inset 0 0 32px rgba(205, 91, 255, .09), 0 0 17px rgba(192, 69, 255, .24), 0 10px 24px rgba(0, 0, 0, .3) !important;
+}
+.room-mode-dock-card.room-mode-select-btn:not(.is-readonly):hover {
+    transform: translateY(-3px);
+    filter: brightness(1.1);
+}
+.room-mode-dock-number {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    display: grid;
+    place-items: center;
+    border-radius: 5px;
+    background: rgba(71, 157, 231, .35);
+    border: 1px solid rgba(102, 188, 255, .45);
+    color: #d9f2ff;
+    font-size: 10px;
+    font-weight: 1000;
+}
+.mode-random3 .room-mode-dock-number {
+    background: rgba(190, 74, 226, .34);
+    border-color: rgba(221, 124, 255, .42);
+    color: #f3ddff;
+}
+.room-mode-dock-logo {
+    display: block;
+    width: 100%;
+    max-width: 98px;
+    height: 40px;
+    object-fit: contain;
+    margin-top: 8px;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .3));
+    pointer-events: none;
+}
+.room-mode-dock-title {
+    font-size: 9px;
+    line-height: 1.12;
+    color: #f5f8fc;
+    text-align: center;
+    margin-top: 1px;
+}
+.room-mode-dock-status {
+    font-size: 8px;
+    line-height: 1.2;
+    color: #92a5b8;
+    text-align: center;
+}
+.room-mode-dock-card.mode-coming-soon .room-mode-dock-title { color: #d1d9e2; }
+.room-mode-dock-card.mode-coming-soon .room-mode-dock-status { color: #778696; }
+.room-mode-dock-card.is-readonly { cursor: default; }
+.room-mode-dock-note {
+    margin-top: 7px;
+    color: #7f91a5;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.room-layout-v137 .room-mode-dock-slot {
+    min-width: 0;
+    align-self: start;
+    display: flex;
+    justify-content: center;
+    padding: 0 8px 4px;
+}
+.room-layout-v137 .room-mode-dock-slot .room-mode-dock {
+    width: min(100%, 1240px);
+    margin: 0;
+    padding: 0;
+}
+
+@media (min-width: 1181px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-areas:
+            "home center away rail"
+            "modes modes modes rail" !important;
+    }
+    .room-layout-v137 .room-mode-dock-slot { grid-area: modes; }
+    .room-layout-v137 .room-arena-right-rail { grid-area: rail; }
+}
+
+@media (min-width: 981px) and (max-width: 1180px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-areas:
+            "home center away"
+            "modes modes modes"
+            "rail rail rail" !important;
+    }
+    .room-layout-v137 .room-mode-dock-slot { grid-area: modes; }
+    .room-layout-v137 .room-arena-right-rail { grid-area: rail; }
+    .room-layout-v137 .room-mode-dock-slot .room-mode-dock { width: min(100%, 980px); }
+    .room-mode-dock-grid,
+    .room-mode-dock-grid.is-single {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 980px) {
+    .room-layout-v137 .room-mode-dock-slot {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+    .room-mode-dock-grid,
+    .room-mode-dock-grid.is-single {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .room-selected-mode-hero { width: 100%; }
+    .room-selected-mode-logo { max-width: 180px; }
+    .room-layout-v137 .room-mode-dock-slot {
+        order: 4;
+        padding: 4px 0;
+    }
+    .room-layout-v137 .room-arena-right-rail { order: 5; }
+    .room-mode-dock-grid,
+    .room-mode-dock-grid.is-single { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .room-mode-dock-card.room-mode-select-btn { min-height: 98px; padding-inline: 7px; }
+    .room-mode-dock-logo { max-width: 82px; height: 34px; }
+    .room-mode-dock-title { font-size: 8px; }
+    .room-mode-dock-status { font-size: 7px; }
+}
+
+
+/* PES Arena V1.2.9.34 — nền chế độ trong suốt, logo điều chỉnh được từ Admin, 3 khung chính bằng nhau. */
+.room-layout-v137 {
+    --room-mode-logo-bg-opacity: 0;
+    --room-mode-logo-scale: 1;
+}
+.room-selected-mode-hero {
+    background: rgba(3, 9, 19, var(--room-mode-logo-bg-opacity, 0)) !important;
+    box-shadow: none !important;
+    border-color: rgba(255, 207, 72, .35);
+}
+.room-selected-mode-hero.mode-random3 {
+    background: rgba(20, 6, 35, var(--room-mode-logo-bg-opacity, 0)) !important;
+    box-shadow: none !important;
+    border-color: rgba(196, 82, 255, .35);
+}
+.room-selected-mode-logo-shell,
+.room-mode-dock-heading,
+.room-mode-dock,
+.room-mode-dock-grid,
+.room-mode-dock-form {
+    background: transparent !important;
+}
+.room-selected-mode-logo,
+.room-mode-dock-logo {
+    opacity: 1;
+    transform: scale(var(--room-mode-logo-scale, 1));
+    transform-origin: center center;
+}
+.room-mode-dock-card.room-mode-select-btn,
+.room-mode-dock-card.mode-coming-soon {
+    background: rgba(8, 24, 43, var(--room-mode-logo-bg-opacity, 0)) !important;
+    box-shadow: none !important;
+}
+.room-mode-dock-card.room-mode-select-btn.mode-random3 {
+    background: rgba(27, 13, 48, var(--room-mode-logo-bg-opacity, 0)) !important;
+    box-shadow: none !important;
+}
+.room-mode-dock-card.room-mode-select-btn {
+    border-color: rgba(255,255,255,.2);
+}
+.room-mode-dock-card.room-mode-select-btn.selected {
+    background-color: rgba(8, 24, 43, var(--room-mode-logo-bg-opacity, 0)) !important;
+}
+.room-mode-dock-card.room-mode-select-btn.mode-random3.selected {
+    background-color: rgba(27, 13, 48, var(--room-mode-logo-bg-opacity, 0)) !important;
+}
+.room-mode-dock-card.is-locked {
+    background-color: rgba(22, 29, 38, var(--room-mode-logo-bg-opacity, 0)) !important;
+}
+@media (min-width: 1181px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(220px, .7fr) !important;
+    }
+}
+@media (min-width: 981px) and (max-width: 1180px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
+@media (max-width: 980px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+/* ========================================================================== 
+   PES Arena V1.3 — room layout correction
+   1) 3 main panels have equal width + exact equal height on desktop.
+   2) Invite / Leave actions are centered as one balanced button group.
+   3) MODE strip/cards are fully transparent; Admin opacity affects only the
+      small backing directly behind each mode logo, never the whole strip/card.
+   ========================================================================== */
+
+/* The complete mode area must stay transparent regardless of visual theme. */
+.room-layout-v137 .room-mode-dock-slot,
+.room-layout-v137 .room-mode-dock,
+.room-layout-v137 .room-mode-dock-heading,
+.room-layout-v137 .room-mode-dock-grid,
+.room-layout-v137 .room-mode-dock-form,
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn,
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn.mode-ranked,
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn.mode-random3,
+.room-layout-v137 .room-mode-dock-card.mode-coming-soon,
+.room-layout-v137 .room-mode-dock-card.is-locked,
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn.selected,
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn.mode-random3.selected,
+.room-layout-v137[data-room-style] .room-mode-dock-slot,
+.room-layout-v137[data-room-style] .room-mode-dock,
+.room-layout-v137[data-room-style] .room-mode-dock-grid,
+.room-layout-v137[data-room-style] .room-mode-dock-card.room-mode-select-btn {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Keep only a light selection outline; no opaque selected-card surface. */
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn {
+    box-shadow: none !important;
+}
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn.selected {
+    box-shadow: 0 0 15px rgba(255, 202, 54, .18) !important;
+}
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn.mode-random3.selected {
+    box-shadow: 0 0 15px rgba(192, 69, 255, .18) !important;
+}
+
+/* Admin background-opacity control applies ONLY behind the logo itself. */
+.room-layout-v137 .room-selected-mode-hero,
+.room-layout-v137 .room-selected-mode-hero.mode-random3 {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+.room-layout-v137 .room-selected-mode-logo-shell,
+.room-layout-v137 .room-mode-dock-logo-shell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(6, 15, 30, var(--room-mode-logo-bg-opacity, 0)) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+.room-layout-v137 .room-selected-mode-logo-shell {
+    width: min(100%, 240px);
+    min-height: 92px;
+    padding: 8px 12px;
+}
+.room-layout-v137 .room-mode-dock-logo-shell {
+    width: min(100%, 112px);
+    height: 54px;
+    margin-top: 7px;
+    padding: 4px 7px;
+}
+.room-layout-v137 .room-mode-dock-logo {
+    margin-top: 0 !important;
+}
+
+/* Three primary panels: exactly the same width and height.
+   The first grid row is sized by its tallest one of the three panels, then all
+   three stretch to that same row height. This also stays correct in result/
+   dispute/random states where the center can contain more content. */
+@media (min-width: 981px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(220px, .7fr) !important;
+        align-items: stretch !important;
+    }
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        width: 100% !important;
+        min-width: 0 !important;
+        height: 100% !important;
+        max-height: none !important;
+        box-sizing: border-box !important;
+        align-self: stretch !important;
+    }
+}
+
+/* Center the two primary room actions as a balanced group. */
+.room-layout-v137 .room-center-primary-actions {
+    width: min(100%, 330px) !important;
+    max-width: 330px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    justify-content: center !important;
+    justify-items: stretch !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+.room-layout-v137 .room-center-primary-actions > a,
+.room-layout-v137 .room-center-primary-actions > form,
+.room-layout-v137 .room-center-primary-actions > form > .room-center-action-btn,
+.room-layout-v137 .room-center-primary-actions > .room-center-action-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+.room-layout-v137 .room-center-primary-actions > form {
+    display: block !important;
+}
+
+@media (max-width: 640px) {
+    .room-layout-v137 .room-center-primary-actions {
+        width: min(100%, 330px) !important;
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* V1.3 responsive column correction: 4th rail exists only on wide desktop. */
+@media (min-width: 1181px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(220px, .7fr) !important;
+    }
+}
+@media (min-width: 981px) and (max-width: 1180px) {
+    .room-layout-v137 .room-arena-frame {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
+
+/* PES Arena V1.3.4 — compact fixed equal-height primary room panels after timer removal.
+   Host / center / guest always share one explicit height on desktop so no panel
+   grows independently and the empty lower area is reduced. */
+@media (min-width: 1281px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        height: 535px !important;
+        min-height: 535px !important;
+        max-height: 535px !important;
+        align-self: stretch !important;
+        box-sizing: border-box !important;
+    }
+}
+@media (min-width: 981px) and (max-width: 1280px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        height: 510px !important;
+        min-height: 510px !important;
+        max-height: 510px !important;
+        align-self: stretch !important;
+        box-sizing: border-box !important;
+    }
+}
+
+/* Keep content vertically balanced inside the shorter center panel. */
+@media (min-width: 981px) {
+    .room-layout-v137 .room-center-stage-plain {
+        justify-content: center !important;
+        overflow: visible !important;
+    }
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-team-card.away {
+        overflow: hidden !important;
+    }
+}
+
+/* Tablet/mobile keep natural content height; only paired side cards remain equal
+   when they share the same grid row. */
+@media (min-width: 641px) and (max-width: 980px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-team-card.away {
+        height: 470px !important;
+        min-height: 470px !important;
+        max-height: 470px !important;
+    }
+    .room-layout-v137 .room-center-stage-plain {
+        height: auto !important;
+        min-height: 390px !important;
+        max-height: none !important;
+    }
+}
+@media (max-width: 640px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+    }
+}
+
+
+
+/* PES Arena V1.3.6 — equal-height room panels without clipping content.
+   V1.3.4 used hard max-heights, which could hide actions in longer states.
+   V1.3.6 keeps a comfortable minimum height but lets the tallest panel define
+   the row height; CSS Grid then stretches Host / Center / Guest equally. */
+@media (min-width: 981px) {
+    .room-layout-v137 .room-arena-frame {
+        align-items: stretch !important;
+    }
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        height: auto !important;
+        min-height: 600px !important;
+        max-height: none !important;
+        align-self: stretch !important;
+        box-sizing: border-box !important;
+    }
+    .room-layout-v137 .room-center-stage-plain {
+        justify-content: center !important;
+        overflow: visible !important;
+    }
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-team-card.away {
+        overflow: hidden !important;
+    }
+}
+@media (min-width: 981px) and (max-width: 1280px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        min-height: 570px !important;
+    }
+}
+@media (min-width: 641px) and (max-width: 980px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-team-card.away {
+        height: auto !important;
+        min-height: 500px !important;
+        max-height: none !important;
+    }
+    .room-layout-v137 .room-center-stage-plain {
+        height: auto !important;
+        min-height: 440px !important;
+        max-height: none !important;
+    }
+}
+
+
+/* PES Arena V1.3.8 — Admin controls the two center decorative bars and equal room-panel height. */
+.room-layout-v137 {
+    --room-panel-height: 600px;
+}
+.room-layout-v137[data-center-bars="hidden"] .room-center-stage-plain::before,
+.room-layout-v137[data-center-bars="hidden"] .room-center-stage-plain::after {
+    display: none !important;
+    content: none !important;
+}
+@media (min-width: 981px) {
+    .room-layout-v137 .room-team-card.home,
+    .room-layout-v137 .room-center-stage-plain,
+    .room-layout-v137 .room-team-card.away {
+        height: auto !important;
+        min-height: var(--room-panel-height, 600px) !important;
+        max-height: none !important;
+        align-self: stretch !important;
+        box-sizing: border-box !important;
+    }
+}
+
+
+/* PES Arena V1.3.8 — logo trong CÁC CHẾ ĐỘ THI ĐẤU lớn hơn và có scale riêng từ Admin. */
+.room-layout-v137 { --room-mode-dock-logo-scale: 1.35; }
+.room-layout-v137 .room-selected-mode-logo {
+    transform: scale(var(--room-mode-logo-scale, 1)) !important;
+}
+.room-layout-v137 .room-mode-dock-logo {
+    transform: scale(var(--room-mode-dock-logo-scale, 1.35)) !important;
+    transform-origin: center center;
+    max-width: 104px;
+    height: 46px;
+}
+.room-layout-v137 .room-mode-dock-logo-shell {
+    width: min(100%, 126px);
+    height: 66px;
+    padding: 5px 8px;
+    overflow: visible;
+}
+.room-layout-v137 .room-mode-dock-card.room-mode-select-btn {
+    min-height: 122px;
+}
+@media (max-width: 640px) {
+    .room-layout-v137 .room-mode-dock-logo { max-width: 88px; height: 38px; }
+    .room-layout-v137 .room-mode-dock-logo-shell { height: 58px; }
+    .room-layout-v137 .room-mode-dock-card.room-mode-select-btn { min-height: 112px; }
+}
+
+
+/* PES Arena V1.3.11 — Admin đặt chiều cao cơ sở, nhưng 3 khung không dùng thanh cuộn nội bộ.
+   Nếu nội dung cần nhiều chỗ hơn, hàng tự giãn và cả 3 khung vẫn cao bằng nhau. */
+@media (min-width: 981px) {
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.home,
+    .room-layout-v137 .room-arena-frame > section.room-center-stage-plain,
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.away {
+        height: auto !important;
+        min-height: var(--room-panel-height, 600px) !important;
+        max-height: none !important;
+        align-self: stretch !important;
+        box-sizing: border-box !important;
+        overflow-y: visible !important;
+        scrollbar-width: none !important;
+    }
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.home::-webkit-scrollbar,
+    .room-layout-v137 .room-arena-frame > section.room-center-stage-plain::-webkit-scrollbar,
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.away::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+}
+
+
+/* PES Arena V1.3.13 — granular Admin sizing for center control area.
+   Real dimensions are changed so the browser reflows naturally; transform/zoom
+   is deliberately avoided because they leave invisible layout gaps. */
+.room-layout-v137 {
+    --room-center-stage-padding: 18px;
+    --room-center-stage-gap: 18px;
+    --room-center-mode-width: 320px;
+    --room-center-mode-padding: 13px;
+    --room-center-vs-size: 150px;
+    --room-center-score-width: 340px;
+    --room-center-score-padding: 14px;
+    --room-center-score-input-height: 44px;
+    --room-center-action-height: 46px;
+}
+.room-layout-v137 .room-center-stage-plain {
+    padding: var(--room-center-stage-padding, 18px) 8px !important;
+    gap: var(--room-center-stage-gap, 18px) !important;
+}
+.room-layout-v137[data-center-layout="compact"] .room-center-stage-plain { justify-content: center !important; }
+.room-layout-v137[data-center-layout="spread"] .room-center-stage-plain { justify-content: space-evenly !important; }
+.room-layout-v137[data-center-layout="top"] .room-center-stage-plain { justify-content: flex-start !important; }
+.room-layout-v137 .room-selected-mode-hero,
+.room-layout-v137 .room-selected-mode-hero.mode-random3 {
+    width: min(100%, var(--room-center-mode-width, 320px)) !important;
+    padding: var(--room-center-mode-padding, 13px) 14px !important;
+    box-sizing: border-box !important;
+}
+.room-layout-v137 .room-selected-mode-hero.is-compact {
+    padding-top: max(4px, calc(var(--room-center-mode-padding, 13px) - 3px)) !important;
+    padding-bottom: max(4px, calc(var(--room-center-mode-padding, 13px) - 4px)) !important;
+}
+.room-layout-v137 .room-center-vs-image {
+    width: var(--room-center-vs-size, 150px) !important;
+    height: var(--room-center-vs-size, 150px) !important;
+    max-width: min(100%, var(--room-center-vs-size, 150px)) !important;
+    max-height: var(--room-center-vs-size, 150px) !important;
+    object-fit: contain !important;
+    box-sizing: border-box !important;
+}
+.room-layout-v137 .room-center-score-panel {
+    width: min(100%, var(--room-center-score-width, 340px)) !important;
+    padding: var(--room-center-score-padding, 14px) !important;
+    margin-top: 0 !important;
+    box-sizing: border-box !important;
+}
+.room-layout-v137 .room-score-fields input {
+    height: var(--room-center-score-input-height, 44px) !important;
+    min-height: var(--room-center-score-input-height, 44px) !important;
+}
+.room-layout-v137 :is(.room-center-action-btn,.room-submit-result-btn,.room-quick-match-btn) {
+    min-height: var(--room-center-action-height, 46px) !important;
+    height: var(--room-center-action-height, 46px) !important;
+    box-sizing: border-box !important;
+}
+.room-layout-v137 .room-center-primary-actions,
+.room-layout-v137 .room-quick-match-row {
+    margin-top: 0 !important;
+}
+@media (max-width: 640px) {
+    .room-layout-v137 .room-center-stage-plain { padding-inline: 6px !important; }
+    .room-layout-v137 .room-center-vs-image {
+        width: min(var(--room-center-vs-size, 150px), 128px) !important;
+        height: min(var(--room-center-vs-size, 150px), 128px) !important;
+    }
+}
+
+/* PES Arena V1.3.13 — loại bỏ scroll nội bộ thật sự ở 3 khung chính.
+   Wheel khi trỏ lên khung chỉ cuộn toàn trang; bản thân từng khung không còn là scroll container. */
+@media (min-width: 981px) {
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.home,
+    .room-layout-v137 .room-arena-frame > section.room-center-stage-plain,
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.away {
+        overflow: visible !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+        overscroll-behavior: auto !important;
+        scrollbar-width: auto !important;
+    }
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.home::-webkit-scrollbar,
+    .room-layout-v137 .room-arena-frame > section.room-center-stage-plain::-webkit-scrollbar,
+    .room-layout-v137 .room-arena-frame > section.room-side-card.room-team-card.away::-webkit-scrollbar {
+        display: initial !important;
+        width: initial !important;
+        height: initial !important;
+    }
+}
+
+
+/* PES Arena V1.3.16 — Random Selection Match: 3 CLB mỗi bên, không có bước chọn CLB. */
+.room-mode-dock-card.mode-random-selection.selected{outline-color:#7dd3fc;border-color:rgba(125,211,252,.9);box-shadow:inset 0 0 32px rgba(56,189,248,.08),0 0 17px rgba(56,189,248,.22),0 10px 24px rgba(0,0,0,.3)!important}
+.room-random-selection-display .room-side-random3-card.is-display-only{cursor:default;pointer-events:none}
+.room-random-selection-display .room-side-random3-card.is-display-only button{display:none!important}
+.room-random-selection-display .room-side-random3-card.is-display-only small{display:block;text-align:center;color:#9fb2c7;font-size:9px;font-weight:800}

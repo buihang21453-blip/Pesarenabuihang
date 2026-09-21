@@ -1,0 +1,5 @@
+PES ARENA V1.5.58
+- Sửa overlay Tiến trình: dòng 🎁 Thưởng hoàn thành sớm luôn hiển thị.
+- Nếu hạn thưởng còn hiệu lực: hiển thị countdown.
+- Nếu đã hết hạn: hiển thị Đã hết thời gian thưởng.
+- Nếu chưa cấu hình mốc thưởng: hiển thị Chưa cấu hình hạn thưởng thay vì ẩn dòng.

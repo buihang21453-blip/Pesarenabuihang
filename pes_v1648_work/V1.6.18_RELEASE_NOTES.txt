@@ -1,0 +1,11 @@
+PES Arena V1.6.18 — Vé Random CLB
+
+BẮT BUỘC: chạy SQL_V1.6.18_ATOMIC_REWARD_CLUB_REROLL.sql trên Supabase SQL Editor TRƯỚC KHI deploy source.
+
+- HLV tự quay và Admin quay hộ dùng chung một RPC transaction.
+- Đổi CLB, trừ vé, cập nhật lịch sử và trả CLB cũ phải thành công cùng nhau.
+- PostgreSQL tự rollback nếu bất kỳ bước nào lỗi, không còn lưu dữ liệu dở dang bằng nhiều REST calls.
+- Không tự retry giao dịch khi lỗi mạng và chưa rõ kết quả; kiểm tra vé + CLB trước khi quay lại.
+- Không sửa lịch 32 trận, không reset vé hoặc CLB hiện tại.
+
+Chưa kết nối DB production nên chưa xác định traceback gốc từ Vercel / chưa test Supabase thật.

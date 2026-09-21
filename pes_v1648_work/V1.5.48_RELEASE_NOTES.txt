@@ -1,0 +1,5 @@
+PES ARENA V1.5.48 - HIỆN GIỜ LINH HOẠT CHO TÀI KHOẢN TEST
+
+- Cổng ĐẶT LỊCH THI ĐẤU hiển thị Giờ linh hoạt cho tài khoản test giống HLV thật.
+- Tài khoản test dùng cùng route availability/custom; dữ liệu vẫn lưu riêng, không ảnh hưởng dữ liệu giải thật.
+- Giữ nguyên khung giờ 3 ngày Hôm nay / Ngày mai / Ngày kia.

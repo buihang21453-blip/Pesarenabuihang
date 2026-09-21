@@ -1,0 +1,27 @@
+PES ARENA V1.5.24 - QUICK MATCH CHECK + C1 GAME 2 READY FIX
+
+Quick Match hiện tại:
+- Nút Tìm Nhanh kích hoạt cửa sổ tìm trong 30 phút.
+- Chỉ ghép người Online thật.
+- Đối thủ phải đã bật Tìm Nhanh trong 30 phút hoặc đang ở phòng một mình chờ.
+- Loại người đang có trận, đang gửi invite khác, phòng đã có người, Admin.
+- Ưu tiên: cùng Rank -> lệch <=300 -> <=500 -> <=1000 -> <=2000 RP.
+- Quá 2000 RP không ghép.
+- Nếu chưa có ứng viên, vẫn giữ trạng thái tìm 30 phút.
+
+C1 Trận 2:
+- Đổi nhãn nút thành "🏆 Trận 2".
+- Chỉ Host/Admin được bấm chuyển sang Trận 2.
+- Guest ở màn kết thúc Trận 1 thấy "Chờ Chủ phòng mở Trận 2".
+- Khi Host bấm:
+  + giữ nguyên room_id, Host, Guest
+  + chuyển tournament_match_id sang leg 2 đúng cặp
+  + status = waiting_ready
+  + guest_ready = false
+  + reset CLB và tỷ số room
+- Backend đọc lại DB để verify toàn bộ trạng thái trước khi báo thành công.
+- Dọn cache room để Guest polling nhận thay đổi ngay.
+- Guest nhận notification "Trận 2 đã sẵn sàng".
+- Sau polling, Guest thấy nút Sẵn Sàng.
+
+Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.

@@ -1,0 +1,1 @@
+V1.6.28: Admin xem Sảnh chờ C1 như HLV trong chế độ chỉ xem. Chọn HLV; xem Host rảnh, phòng đang hoạt động, lịch rảnh và 4 đối thủ. Không SQL mới, không thay đổi kết quả, vé hoặc lịch.

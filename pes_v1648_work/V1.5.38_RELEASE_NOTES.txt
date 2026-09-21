@@ -1,0 +1,16 @@
+PES ARENA V1.5.38 - C1 Repair Missing Match 2
+
+FIX CHÍNH
+- Sửa lỗi C1 hoàn tất Trận 1 nhưng cả hai bên hiện "✅ Cặp đấu đã hoàn tất" và không thể đá Trận 2.
+- GĐ1 giờ xét đúng luật 2 trận/cặp thay vì chỉ đếm số row tournament_matches đang tồn tại.
+- Với dữ liệu lịch cũ bị thiếu leg 2, giao diện vẫn hiện Đá Tiếp.
+- Khi bấm Đá Tiếp, backend mới tự tạo leg còn thiếu rồi tái sử dụng chính phòng hiện tại cho Trận 2.
+- Không tạo/sửa dữ liệu trong GET/render phòng.
+
+FILE TÁC ĐỘNG
+- app.py
+- modules/room_access_routes.py
+- modules/room_rematch_routes.py
+- modules/tournament_competition.py
+- templates/room_detail.html
+- templates/_room_live_content.html

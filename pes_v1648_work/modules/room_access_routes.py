@@ -1,0 +1,813 @@
+"""Route truy cập phòng: danh sách phòng, tham gia bằng link, xem phòng và rời phòng.
+
+Module đăng ký route theo dependency của app.py để giữ nguyên endpoint và tránh import vòng.
+"""
+
+def register_routes(context):
+    """Đăng ký nhóm route vào Flask app hiện tại."""
+    globals().update(context)
+
+    @app.route("/rooms")
+    @login_required
+    def rooms():
+        user = current_user()
+        all_rooms = list_rooms()
+        my_rooms = [r for r in all_rooms if user["id"] in [r["host_user_id"], r["guest_user_id"]]]
+        return render_template("rooms.html", rooms=my_rooms)
+
+
+    @app.route("/room/join/<room_id>", methods=["GET"])
+    def room_join_shared(room_id):
+        """Cho phép một tài khoản tham gia phòng trống từ link được chia sẻ.
+
+        Route này tự ghi nhớ phòng nếu người mở link chưa đăng nhập. Việc nhận chỗ
+        khách được cập nhật có điều kiện để hai người bấm cùng lúc không thể cùng
+        chiếm một phòng.
+        """
+        if not session.get("user_id"):
+            session["pending_room_join_id"] = str(room_id)
+            flash("Hãy đăng nhập để tham gia phòng đấu được chia sẻ.", "warning")
+            return redirect(url_for("login"))
+
+        user = current_user()
+        if not user:
+            session.clear()
+            session["pending_room_join_id"] = str(room_id)
+            flash("Phiên đăng nhập không hợp lệ. Hãy đăng nhập lại để vào phòng.", "warning")
+            return redirect(url_for("login"))
+
+        if user.get("account_status", "approved") != "approved":
+            session.clear()
+            flash("Tài khoản chưa được phép tham gia phòng đấu.", "danger")
+            return redirect(url_for("login"))
+
+        try:
+            room = get_room(room_id)
+        except Exception as exc:
+            app.logger.warning("Shared room join load failed room=%s: %s", room_id, exc)
+            flash("Phòng đang tải chậm. Vui lòng mở lại link sau vài giây.", "warning")
+            return redirect(url_for("dashboard"))
+
+        if not room:
+            flash("Link phòng không còn tồn tại hoặc phòng đã bị xóa.", "danger")
+            return redirect(url_for("dashboard"))
+
+        # Phòng Tournament không dùng cơ chế link chia sẻ của Rank/Giao hữu.
+        # Chỉ route của trận giải mới được phép gán đúng đối thủ vào phòng.
+        note = str(room.get("note") or "")
+        if note.startswith("TOURNAMENT_ROOM|"):
+            # C1 always wins over any stale Rank fields/cached room state.
+            room["match_mode"] = "tournament"
+            room["match_mode_label"] = "C1"
+            try:
+                import json
+                meta = json.loads(note[len("TOURNAMENT_ROOM|"):])
+            except Exception:
+                meta = {}
+            uid = str(user.get("id") or "")
+            allowed = {str(meta.get("home_user_id") or ""), str(meta.get("away_user_id") or "")}
+            if uid not in allowed and not is_admin_user(user):
+                flash("Đây là phòng của trận giải đấu. Chỉ đúng 2 HLV của trận mới được vào.", "danger")
+                return redirect(url_for("tournaments"))
+            tid = str(meta.get("tournament_id") or "")
+            mid = str(meta.get("tournament_match_id") or "")
+            if tid and mid and not is_admin_user(user):
+                return redirect(url_for("tournament_match_room_enter", tournament_id=tid, match_id=mid))
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        user_id = user.get("id")
+        if user_id in {room.get("host_user_id"), room.get("guest_user_id")} or is_admin_user(user):
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        if room.get("status") != "waiting_ready":
+            flash("Phòng đã bắt đầu hoặc không còn nhận người tham gia.", "warning")
+            return redirect(url_for("dashboard"))
+
+        if room.get("guest_user_id"):
+            flash("Phòng đã có đủ hai người chơi.", "warning")
+            return redirect(url_for("dashboard"))
+
+        if is_player_in_cooldown(user):
+            flash(f"Bạn đang trong thời gian chờ {cooldown_text(user)}.", "warning")
+            return redirect(url_for("dashboard"))
+
+        # Giao hữu is not a Rank match; daily Rank caps must not block its link.
+        if str(room.get("match_mode") or "").lower() not in {"friendly", "tournament"}:
+            limit_message = daily_rank_block_message(room.get("host_user_id"), user_id)
+            if limit_message:
+                flash(limit_message, "warning")
+                return redirect(url_for("dashboard"))
+
+        existing_room = active_room_for_user(user_id)
+        if existing_room:
+            flash("Bạn đang có một phòng chưa hoàn tất. Hãy xử lý phòng đó trước.", "warning")
+            return redirect(url_for("room_detail", room_id=existing_room.get("id")))
+
+        if active_match_for_user(user_id):
+            flash("Bạn đang có trận chưa hoàn tất nên chưa thể vào phòng khác.", "warning")
+            return redirect(url_for("dashboard"))
+
+        host_id = room.get("host_user_id")
+        host_other_room = active_room_for_user(host_id, exclude_room_id=room_id)
+        if active_match_for_user(host_id) or host_other_room:
+            flash("Chủ phòng đang ở một phòng hoặc trận khác. Link này không còn hiệu lực.", "warning")
+            return redirect(url_for("dashboard"))
+
+        joined_at = now_iso()
+        update_result = execute_query(
+            db.table("match_rooms").update({
+                "invite_id": None,
+                "guest_user_id": user_id,
+                "guest_ready": False,
+                "guest_team": None,
+                "guest_team_overall": None,
+                "guest_team_logo_url": None,
+                "guest_team_league": None,
+                "note": f'{user.get("display_name") or user.get("username") or "Người chơi"} đã tham gia qua link chia sẻ. Khách chưa sẵn sàng.',
+                "state_expires_at": None,
+                "updated_at": joined_at,
+            })
+            .eq("id", room_id)
+            .eq("status", "waiting_ready")
+            .is_("guest_user_id", "null"),
+            "join_shared_room",
+            attempts=3,
+        )
+
+        joined_rows = update_result.data or []
+        if not joined_rows:
+            latest_room = get_room(room_id)
+            if latest_room and latest_room.get("guest_user_id") == user_id:
+                return redirect(url_for("room_detail", room_id=room_id))
+            flash("Có người khác vừa tham gia trước bạn hoặc phòng đã thay đổi trạng thái.", "warning")
+            return redirect(url_for("dashboard"))
+
+        # Link chia sẻ có thể được dùng khi chủ phòng từng gửi lời mời riêng.
+        # Hủy lời mời đang treo để người được mời cũ không thể nhận chỗ lần nữa.
+        old_invite_id = room.get("invite_id")
+        if old_invite_id:
+            try:
+                execute_query(
+                    db.table("match_invites").update({
+                        "status": "cancelled",
+                        "updated_at": joined_at,
+                    }).eq("id", old_invite_id).eq("status", "pending"),
+                    "cancel_invite_after_shared_join",
+                    attempts=2,
+                )
+            except Exception as exc:
+                app.logger.warning("Shared room stale invite cleanup failed invite=%s: %s", old_invite_id, exc)
+
+        cache_delete("_rz_rooms_all")
+        cache_delete("_rz_invites_all")
+        cache_delete("_rz_current_pending_invites")
+        ttl_cache_delete("rooms_raw")
+        ttl_cache_delete("invites_raw")
+
+        flash("Bạn đã tham gia phòng qua link chia sẻ. Hãy bấm Sẵn Sàng khi đã chuẩn bị xong.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+
+    def build_room_template_context(room):
+        viewer = current_user() or {}
+        tournament_meta = None
+        tournament_match = None
+        tournament_result_proposal = {}
+        tournament_pair_completed_count = 0
+        tournament_pair_total_count = 0
+        tournament_pair_remaining_count = 0
+        tournament_pair_is_complete = False
+        tournament_has_next_match = False
+        tournament_stage1_pool = []
+        tournament_invite_members = []
+        tournament_viewer_is_member = False
+        tournament_viewer_is_admin = bool(is_admin_user(viewer))
+        note = str(room.get("note") or "")
+        if note.startswith("TOURNAMENT_ROOM|"):
+            # C1 always wins over any stale Rank fields/cached room state.
+            room["match_mode"] = "tournament"
+            room["match_mode_label"] = "C1"
+            try:
+                import json
+                tournament_meta = json.loads(note[len("TOURNAMENT_ROOM|"):])
+                tid = str(tournament_meta.get("tournament_id") or "")
+                mid = str(tournament_meta.get("tournament_match_id") or "")
+                if tid:
+                    memr = execute_query(db.table("tournament_members").select("user_id,status").eq("tournament_id",tid).eq("status","active"),"room_tournament_members_context",attempts=2)
+                    member_rows = [dict(x) for x in (memr.data or [])]
+                    official_member_ids = [str(x.get("user_id")) for x in member_rows if x.get("user_id")]
+                    member_ids = list(official_member_ids)
+                    if tournament_meta.get("test_sandbox_room"):
+                        tr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key","c1_test_accounts_v1").limit(1),"room_c1_test_accounts_context",attempts=2)
+                        ts = ((tr.data or [{}])[0].get("setting_value") or {})
+                        member_ids = [str(x) for x in (ts.get("user_ids") or []) if str(x).strip()][:2]
+
+                        # V1.5.44: cứu các SANDBOX room bị kẹt ở confirmed bởi V1.5.44.
+                        # Rank sau khi xác nhận kết quả sẽ reset ngay chính room về waiting_ready.
+                        # TEST C1 cũng phải như vậy, nhưng lưu kết quả trong meta riêng để không ghi
+                        # tournament_matches/BXH C1 thật/Rank.
+                        if str(room.get("status") or "") == "confirmed":
+                            test_result=dict(tournament_meta.get("test_result") or {})
+                            if str(test_result.get("status") or "") == "confirmed":
+                                current_round=max(1,int(test_result.get("test_round_no") or tournament_meta.get("test_round_no") or 1))
+                                test_result["test_round_no"]=current_round
+                                test_result["result_id"]=test_result.get("result_id") or f"{room.get('id')}:test:{current_round}"
+                                history=list(tournament_meta.get("test_result_history") or [])
+                                result_id=str(test_result.get("result_id") or "")
+                                if not any(str(x.get("result_id") or "")==result_id for x in history):
+                                    history.append(test_result)
+                                tournament_meta["test_result_history"]=history[-100:]
+                                tournament_meta["test_round_no"]=current_round+1
+                                tournament_meta["test_result"]={}
+                                tournament_meta["transition_token"]=now_iso()
+                                sandbox_patch={
+                                    "note":"TOURNAMENT_ROOM|" + json.dumps(tournament_meta,ensure_ascii=False,separators=(",",":")),
+                                    "status":"waiting_ready","guest_ready":False,
+                                    "host_team":None,"guest_team":None,
+                                    "host_team_overall":None,"guest_team_overall":None,
+                                    "host_team_logo_url":None,"guest_team_logo_url":None,
+                                    "host_team_league":None,"guest_team_league":None,
+                                    "host_score":None,"guest_score":None,"match_id":None,
+                                    "submitted_by_id":None,"invite_id":None,"state_expires_at":None,
+                                    "match_mode":"tournament","team_tier":"TOURNAMENT","updated_at":now_iso(),
+                                }
+                                recovered=execute_query(
+                                    db.table("match_rooms").update(sandbox_patch).eq("id",room.get("id")).eq("status","confirmed"),
+                                    "room_c1_test_recover_confirmed_like_rank",attempts=2,
+                                )
+                                if recovered is not None and (recovered.data or []):
+                                    room.update(sandbox_patch)
+                                    cache_delete("_rz_rooms_all")
+                                    ttl_cache_delete("rooms_raw")
+                                    app.logger.warning(
+                                        "C1 TEST recovered confirmed room=%s -> test_round=%s waiting_ready",
+                                        room.get("id"), current_round+1,
+                                    )
+                    tournament_viewer_is_member = str(viewer.get("id") or "") in official_member_ids
+                    if member_ids:
+                        ur = execute_query(db.table("users").select("id,username,display_name,is_online,last_seen_at").in_("id",member_ids),"room_tournament_member_users_context",attempts=2)
+                        users = {str(x.get("id")):dict(x) for x in (ur.data or [])}
+                        active_rooms = list_rooms()
+                        busy_ids = set()
+                        for ar in active_rooms:
+                            if ar.get("status") in {"playing", "friendly_playing"}:
+                                if ar.get("host_user_id"):
+                                    busy_ids.add(str(ar.get("host_user_id")))
+                                if ar.get("guest_user_id"):
+                                    busy_ids.add(str(ar.get("guest_user_id")))
+                        for member_id in member_ids:
+                            if member_id == str(room.get("host_user_id") or ""):
+                                continue
+                            u = users.get(member_id) or {}
+                            is_online = bool(is_user_online_now(u))
+                            is_busy = member_id in busy_ids
+                            tournament_invite_members.append({
+                                "user_id":member_id,
+                                "display_name":u.get("display_name") or u.get("username") or "HLV",
+                                "is_online":is_online,
+                                "is_busy":is_busy,
+                                "presence_label":"Đang thi đấu" if is_busy else ("Online" if is_online else "Offline"),
+                            })
+                        tournament_invite_members.sort(key=lambda x:(0 if x.get("is_online") and not x.get("is_busy") else 1 if x.get("is_busy") else 2, (x.get("display_name") or "").casefold()))
+                    pr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key","stage1_club_pool").limit(1),"room_tournament_stage1_pool_context",attempts=2)
+                    pool_state = ((pr.data or [{}])[0].get("setting_value") or {})
+                    tournament_stage1_pool = pool_state.get("clubs") or []
+                if tid and mid:
+                    mr = execute_query(db.table("tournament_matches").select("*").eq("id",mid).eq("tournament_id",tid).limit(1),"room_tournament_match_context",attempts=2)
+                    tournament_match = (mr.data or [None])[0]
+                    if tournament_match:
+                        # V1.5.35: trạng thái cặp đấu dựa trên số bản ghi lịch thực tế,
+                        # không giả định GĐ1=2 hay GĐ2=1 trong UI.
+                        pair_ids = {str(tournament_match.get("home_user_id") or ""), str(tournament_match.get("away_user_id") or "")}
+                        stage_code = str(tournament_match.get("stage_code") or "")
+                        cr = execute_query(
+                            db.table("tournament_matches").select("id,home_user_id,away_user_id,status,stage_code,leg_no,created_at").eq("tournament_id",tid).eq("stage_code",stage_code),
+                            "room_tournament_pair_flow_context",
+                            attempts=2,
+                        )
+                        pair_rows = [
+                            dict(row) for row in (cr.data or [])
+                            if {str(row.get("home_user_id") or ""), str(row.get("away_user_id") or "")} == pair_ids
+                            and str(row.get("status") or "").lower() != "cancelled"
+                        ]
+                        pair_rows.sort(key=lambda row:(int(row.get("leg_no") or 999), str(row.get("created_at") or ""), str(row.get("id") or "")))
+                        actual_pair_count = len(pair_rows)
+                        tournament_pair_completed_count = sum(1 for row in pair_rows if str(row.get("status") or "").lower() == "completed")
+                        remaining_rows = [row for row in pair_rows if str(row.get("status") or "").lower() not in {"completed","cancelled"}]
+                        next_rows = [row for row in remaining_rows if str(row.get("id") or "") != str(tournament_match.get("id") or "")]
+
+                        # V1.5.38: GĐ1 chính thức là 2 trận/cặp. Một số lịch cũ chỉ có
+                        # 1 row tournament_matches nên sau Trận 1 UI đã kết luận nhầm
+                        # "Cặp đấu đã hoàn tất". Render không sửa DB, nhưng phải hiểu
+                        # số trận kỳ vọng để vẫn mở nút Đá Tiếp; route rematch sẽ bù
+                        # leg còn thiếu một cách có kiểm soát khi người chơi bấm.
+                        expected_pair_count = actual_pair_count
+                        if stage_code == "stage1":
+                            expected_pair_count = max(2, actual_pair_count)
+                            try:
+                                st = execute_query(
+                                    db.table("tournament_stages").select("max_matches_per_opponent").eq("tournament_id",tid).eq("stage_code",stage_code).limit(1),
+                                    "room_tournament_pair_expected_count",
+                                    attempts=2,
+                                )
+                                strow = (st.data or [None])[0] if st is not None else None
+                                configured = int((strow or {}).get("max_matches_per_opponent") or 0)
+                                if configured > 0:
+                                    expected_pair_count = max(2, configured, actual_pair_count)
+                            except Exception:
+                                expected_pair_count = max(2, actual_pair_count)
+
+                        missing_scheduled_rows = max(0, expected_pair_count - actual_pair_count)
+                        tournament_pair_total_count = expected_pair_count
+                        tournament_pair_remaining_count = len(remaining_rows) + missing_scheduled_rows
+                        tournament_has_next_match = bool(next_rows) or missing_scheduled_rows > 0
+                        tournament_pair_is_complete = (
+                            tournament_pair_completed_count >= expected_pair_count
+                            and not remaining_rows
+                            and missing_scheduled_rows == 0
+                        )
+
+                        # V1.5.44: tự phục hồi các phòng C1 bị kẹt ở `confirmed` bởi các bản cũ.
+                        # Rank không có màn "Đá Tiếp": sau khi xác nhận Trận N, chính room cũ
+                        # phải trở lại waiting_ready cho Trận N+1. Chỉ thực hiện recovery khi
+                        # backend đã nhìn thấy một row trận kế tiếp thật sự; không tạo lịch trong GET.
+                        if str(room.get("status") or "") == "confirmed" and not tournament_pair_is_complete and next_rows:
+                            next_match_row = dict(next_rows[0])
+                            history = list(tournament_meta.get("previous_match_ids") or [])
+                            current_mid = str(tournament_match.get("id") or "")
+                            if current_mid and current_mid not in history:
+                                history.append(current_mid)
+                            tournament_meta.update({
+                                "tournament_match_id": str(next_match_row.get("id") or ""),
+                                "stage_code": next_match_row.get("stage_code") or stage_code,
+                                "home_user_id": str(next_match_row.get("home_user_id") or ""),
+                                "away_user_id": str(next_match_row.get("away_user_id") or ""),
+                                "previous_match_ids": history,
+                                "current_leg_no": int(next_match_row.get("leg_no") or (int(tournament_match.get("leg_no") or 1) + 1)),
+                                "transition_token": now_iso(),
+                            })
+                            recovery_patch = {
+                                "note": "TOURNAMENT_ROOM|" + json.dumps(tournament_meta, ensure_ascii=False, separators=(",", ":")),
+                                "status": "waiting_ready",
+                                "guest_ready": False,
+                                "host_team": None,
+                                "guest_team": None,
+                                "host_team_overall": None,
+                                "guest_team_overall": None,
+                                "host_team_logo_url": None,
+                                "guest_team_logo_url": None,
+                                "host_team_league": None,
+                                "guest_team_league": None,
+                                "host_score": None,
+                                "guest_score": None,
+                                "match_id": None,
+                                "submitted_by_id": None,
+                                "invite_id": None,
+                                "state_expires_at": None,
+                                "match_mode": "tournament",
+                                "team_tier": "TOURNAMENT_GD1" if str(next_match_row.get("stage_code") or "") == "stage1" else "TOURNAMENT",
+                                "updated_at": now_iso(),
+                            }
+                            recovered = execute_query(
+                                db.table("match_rooms").update(recovery_patch).eq("id", room.get("id")).eq("status", "confirmed"),
+                                "room_c1_recover_confirmed_to_waiting_ready",
+                                attempts=2,
+                            )
+                            if recovered is not None and (recovered.data or []):
+                                room.update(recovery_patch)
+                                tournament_match = next_match_row
+                                tournament_result_proposal = {}
+                                tournament_has_next_match = False
+                                cache_delete("_rz_rooms_all")
+                                ttl_cache_delete("rooms_raw")
+                                app.logger.warning(
+                                    "C1 recovered stale confirmed room=%s -> match=%s leg=%s",
+                                    room.get("id"), next_match_row.get("id"), next_match_row.get("leg_no"),
+                                )
+
+                        # Bình thường render chỉ đọc trạng thái. Khối trên chỉ là recovery có điều kiện
+                        # cho dữ liệu cũ đã kẹt ở confirmed, nhằm loại bỏ state machine Đá Tiếp của C1.
+                    sr = execute_query(db.table("tournament_settings").select("setting_value").eq("tournament_id",tid).eq("setting_key",f"match_result_proposal:{mid}").limit(1),"room_tournament_result_context",attempts=2)
+                    tournament_result_proposal = ((sr.data or [{}])[0].get("setting_value") or {})
+            except Exception as exc:
+                # Keep successfully parsed C1 metadata and any already loaded match.
+                # A supplementary query failure must not silently turn a C1 room
+                # into Rank or hide its result controls; missing matches get an
+                # explicit warning instead of exposing an unsafe result form.
+                app.logger.warning("Tournament room context failed room=%s: %s", room.get("id"), exc)
+        # V1.6.24: fixed HLV clubs on GĐ2/KO. Display the CURRENT allocation
+        # while waiting; never change persisted room teams during GET/polling.
+        # Once playing, the team snapshot belongs to that match and is immutable.
+        tournament_fixed_club_mode = bool(
+            tournament_meta and not tournament_meta.get("test_sandbox_room")
+            and str(((tournament_match or {}).get("stage_code") or tournament_meta.get("stage_code") or "")) in {"league","knockout"}
+        )
+        tournament_fixed_clubs_ready = False
+        if tournament_fixed_club_mode and str(room.get("status") or "") == "waiting_ready":
+            try:
+                t_id=str(tournament_meta.get("tournament_id") or "")
+                h_id=str(room.get("host_user_id") or "")
+                g_id=str(room.get("guest_user_id") or "")
+                ids=[x for x in (h_id,g_id) if x]
+                rows=execute_query(
+                    db.table("tournament_members").select("user_id,fixed_club_name")
+                    .eq("tournament_id",t_id).in_("user_id",ids),
+                    "room_c1_fixed_club_display",attempts=2,
+                ) if ids else None
+                clubs={str(r.get("user_id") or ""):str(r.get("fixed_club_name") or "").strip() for r in (getattr(rows,"data",None) or [])}
+                tournament_fixed_clubs_ready=bool(h_id and g_id and clubs.get(h_id) and clubs.get(g_id) and clubs.get(h_id)!=clubs.get(g_id))
+                # In-memory display only: new tickets can change allocations
+                # before start. Do not overwrite the previous game's snapshot.
+                for side,player_id in (("host",h_id),("guest",g_id)):
+                    fresh=clubs.get(player_id) or None
+                    if room.get(side+"_team")!=fresh:
+                        room[side+"_team"]=fresh
+                        room[side+"_team_overall"]=None
+                        room[side+"_team_logo_url"]=None
+                        room[side+"_team_league"]=None
+                        room[side+"_team_league_logo_url"]=None
+                        room[side+"_team_total_stats"]=0
+                        if fresh:
+                            info=get_db_team_info(fresh) or {}
+                            room[side+"_team_logo_url"]=info.get("logo_url")
+                            room[side+"_team_league"]=info.get("league")
+                            room[side+"_team_league_logo_url"]=get_league_logo_url(info.get("league"))
+                            room[side+"_team_total_stats"]=int(info.get("total_stats") or 0)
+            except Exception:
+                app.logger.exception("C1 fixed club display unavailable room=%s",room.get("id"))
+                tournament_fixed_clubs_ready=False
+        daily_limit_message = None
+        if room.get("status") == "waiting_ready" and room.get("match_mode") not in {MATCH_MODE_FRIENDLY, "tournament"} and not tournament_meta:
+            daily_limit_message = daily_rank_block_message(
+                room.get("host_user_id"), room.get("guest_user_id")
+            )
+        return {
+            "room": room,
+            "initial_room_state_key": build_room_state_key(room),
+            "friendly_tiers": get_available_team_tiers(),
+            "room_head_to_head": build_room_head_to_head(room),
+            "player_head_to_head": build_player_head_to_head(room),
+            # Luôn truyền cấu hình Tìm Nhanh vào cả trang đầy đủ và HTML polling.
+            # Nếu thiếu, Jinja dùng màu mặc định và có thể không phản ánh lựa chọn Admin.
+            "quick_match_config": get_quick_match_config(),
+            "room_visual_style": get_room_visual_style(),
+            "room_mode_logo_config": get_room_mode_logo_config(),
+            "room_panel_layout_config": get_room_panel_layout_config(),
+            "room_center_design_config": get_room_center_design_config(),
+            "daily_rank_limit_blocked": bool(daily_limit_message),
+            "daily_rank_limit_message": daily_limit_message,
+            # Supabase có thể trả ID ở kiểu khác session. Dùng so sánh chuẩn hóa
+            # để giao diện không làm mất nút hành động của chủ/khách.
+            "viewer_is_host": _same_user_id(viewer.get("id"), room.get("host_user_id")),
+            "viewer_is_guest": _same_user_id(viewer.get("id"), room.get("guest_user_id")),
+            "parsec_room": build_room_parsec_context(room, viewer),
+            "tournament_meta": tournament_meta,
+            "tournament_match": tournament_match,
+            "tournament_result_proposal": tournament_result_proposal,
+            "tournament_pair_completed_count": tournament_pair_completed_count,
+            "tournament_pair_total_count": tournament_pair_total_count,
+            "tournament_pair_remaining_count": tournament_pair_remaining_count,
+            "tournament_pair_is_complete": tournament_pair_is_complete,
+            "tournament_has_next_match": tournament_has_next_match,
+            "tournament_stage1_pool": tournament_stage1_pool,
+            "tournament_fixed_club_mode": tournament_fixed_club_mode,
+            "tournament_fixed_clubs_ready": tournament_fixed_clubs_ready,
+            "tournament_stage1_pool_count": len(tournament_stage1_pool),
+            "tournament_invite_members": tournament_invite_members,
+            "tournament_viewer_is_member": tournament_viewer_is_member,
+            "tournament_viewer_is_admin": tournament_viewer_is_admin,
+            "is_tournament_room": bool(tournament_meta),
+        }
+
+
+    @app.route("/room/<room_id>")
+    @login_required
+
+    def room_detail(room_id):
+        user = current_user()
+
+        try:
+            room = get_room(room_id)
+        except Exception:
+            flash("Phòng đang tải chậm hoặc Supabase vừa ngắt kết nối. Vui lòng thử lại sau vài giây.", "warning")
+            return redirect(url_for("rooms"))
+
+        if not room:
+            flash("Không tìm thấy phòng.", "danger")
+            return redirect(url_for("rooms"))
+
+        if close_room_if_host_browser_offline(room):
+            flash("Chủ phòng đã Offline nên phòng được đóng. Khách không bị ảnh hưởng.", "warning")
+            return redirect(url_for("rooms"))
+
+        note = str(room.get("note") or "")
+        if note.startswith("TOURNAMENT_ROOM|") and not is_admin_user(user):
+            try:
+                import json
+                meta = json.loads(note[len("TOURNAMENT_ROOM|"):])
+            except Exception:
+                meta = {}
+            allowed={str(meta.get("home_user_id") or ""),str(meta.get("away_user_id") or "")}
+            if str(user.get("id") or "") not in allowed:
+                flash("Đây là phòng của trận giải đấu. Chỉ đúng 2 HLV của trận mới được vào.", "danger")
+                return redirect(url_for("tournaments"))
+        elif user["id"] not in [room["host_user_id"], room["guest_user_id"]] and not is_admin_user(user):
+            flash("Bạn không thuộc phòng này.", "danger")
+            return redirect(url_for("rooms"))
+
+        return render_template("room_detail.html", **build_room_template_context(room))
+
+
+    @app.route("/api/room/<room_id>/view")
+    @login_required
+    def api_room_view(room_id):
+        """HTML động của phòng, chỉ tải khi state_key thật sự thay đổi."""
+        user = current_user()
+        try:
+            room = get_room(room_id)
+        except Exception:
+            return "", 503
+
+        if not room:
+            return "", 404
+        if close_room_if_host_browser_offline(room):
+            response = make_response("", 204)
+            response.headers["X-PES-Polling-Stop"] = "host_browser_offline"
+            return response
+        note = str(room.get("note") or "")
+        if note.startswith("TOURNAMENT_ROOM|"):
+            # C1 always wins over any stale Rank fields/cached room state.
+            room["match_mode"] = "tournament"
+            room["match_mode_label"] = "C1"
+            if str(room.get("team_tier") or "").upper() not in {"TOURNAMENT_GD1","TOURNAMENT"}:
+                room["team_tier"] = "TOURNAMENT"
+            try:
+                execute_query(
+                    db.table("match_rooms").update({
+                        "match_mode":"tournament",
+                        "team_tier":room.get("team_tier") or "TOURNAMENT",
+                        "updated_at":now_iso(),
+                    }).eq("id",room.get("id")),
+                    "normalize_c1_room_mode",
+                    attempts=1,
+                )
+            except Exception as exc:
+                app.logger.warning("C1 room mode normalize failed room=%s: %s", room.get("id"), exc)
+            try:
+                import json
+                meta = json.loads(note[len("TOURNAMENT_ROOM|"):])
+            except Exception:
+                meta = {}
+            is_room_member = str(user.get("id") or "") in {str(meta.get("home_user_id") or ""),str(meta.get("away_user_id") or "")}
+        else:
+            is_room_member = (
+                _same_user_id(user.get("id"), room.get("host_user_id"))
+                or _same_user_id(user.get("id"), room.get("guest_user_id"))
+            )
+        if not is_room_member and not is_admin_user(user):
+            return "", 403
+
+        response = make_response(
+            render_template("_room_live_content.html", **build_room_template_context(room))
+        )
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+        response.headers["X-PES-Room-Partial"] = "1"
+        return response
+
+
+    @app.route("/room/<room_id>/kick-guest", methods=["POST"], endpoint="room_kick_guest")
+    @login_required
+    def room_kick_guest(room_id):
+        """Cho phép chủ phòng đưa khách ra khỏi phòng trước khi trận bắt đầu."""
+        user = current_user()
+        room = get_room(room_id)
+
+        if not room:
+            flash("Không tìm thấy phòng.", "danger")
+            return redirect(url_for("dashboard"))
+
+        if not _same_user_id(user.get("id"), room.get("host_user_id")):
+            flash("Chỉ chủ phòng mới có thể đưa đối thủ ra khỏi phòng.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        # Generic kick overwrites note with plain text and erases C1 match metadata.
+        # Do not use it on tournament rooms; use the C1 room leave/invite lifecycle.
+        if str(room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament":
+            flash("Phòng C1 không hỗ trợ nút đuổi khách của Rank. Hãy dùng thao tác phòng C1 để bảo toàn trận giải.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+        if room.get("status") != "waiting_ready":
+            flash("Chỉ có thể đưa đối thủ ra khi trận chưa bắt đầu.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        # Phòng đã liên kết match tuyệt đối không được dùng thao tác kích khách,
+        # kể cả khi status bị sai do dữ liệu cũ, để tránh làm mồ côi trận/RP.
+        if room.get("match_id"):
+            flash("Phòng đã có trận đấu liên kết nên không thể đưa người chơi ra.", "danger")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        guest_id = room.get("guest_user_id")
+        if not guest_id:
+            flash("Phòng hiện chưa có đối thủ.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        guest = get_user(guest_id) or {}
+        guest_name = guest.get("display_name") or guest.get("username") or "Đối thủ"
+        host_name = user.get("display_name") or user.get("username") or "Chủ phòng"
+        old_invite_id = room.get("invite_id")
+        updated_at = now_iso()
+        result = execute_query(
+            db.table("match_rooms").update({
+                "guest_user_id": None,
+                "guest_ready": False,
+                "guest_team": None,
+                "guest_team_overall": None,
+                "guest_team_logo_url": None,
+                "guest_team_league": None,
+                "host_team": None,
+                "host_team_overall": None,
+                "host_team_logo_url": None,
+                "host_team_league": None,
+                "match_id": None,
+                "invite_id": None,
+                "status": "waiting_ready",
+                "note": f"{guest_name} đã được chủ phòng đưa ra khỏi phòng.",
+                "state_expires_at": None,
+                "updated_at": updated_at,
+            })
+            .eq("id", room_id)
+            .eq("host_user_id", user.get("id"))
+            .eq("status", "waiting_ready")
+            .eq("guest_user_id", guest_id),
+            "host_kick_room_guest",
+            attempts=2,
+        )
+
+        if not (result.data or []):
+            flash("Phòng vừa thay đổi trạng thái. Vui lòng tải lại và kiểm tra.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        # Đóng lời mời gắn với lượt vào phòng này. Trước đây chỉ xóa invite_id
+        # trong room nên lời mời có thể vẫn hiện là đang xử lý ở nơi khác.
+        if old_invite_id:
+            try:
+                execute_query(
+                    db.table("match_invites").update({
+                        "status": "cancelled",
+                        "updated_at": updated_at,
+                    }).eq("id", old_invite_id),
+                    "cancel_invite_after_host_kick",
+                    attempts=2,
+                )
+            except Exception as exc:
+                app.logger.warning("Kick guest invite cleanup failed room=%s invite=%s: %s", room_id, old_invite_id, exc)
+
+        try:
+            create_user_notification(
+                guest_id,
+                "Bạn đã bị đưa khỏi phòng đấu",
+                f"{host_name} đã đưa bạn ra khỏi phòng #{room.get('room_code') or str(room_id)[:6].upper()}. Trận chưa bắt đầu nên bạn không bị trừ RP.",
+                url_for("players"),
+                "system",
+            )
+        except Exception as exc:
+            app.logger.warning("Kick guest notification failed room=%s guest=%s: %s", room_id, guest_id, exc)
+
+        cache_delete("_rz_rooms_all")
+        cache_delete("_rz_invites_all")
+        cache_delete("_rz_current_pending_invites")
+        ttl_cache_delete("rooms_raw")
+        ttl_cache_delete("invites_raw")
+
+        flash(f"Đã đưa {guest_name} ra khỏi phòng. Không ai bị trừ RP và bạn có thể mời đối thủ khác.", "success")
+        return redirect(url_for("room_detail", room_id=room_id))
+
+
+    @app.route("/room/<room_id>/leave", methods=["POST"])
+    @login_required
+    def room_leave(room_id):
+        user = current_user()
+        room = get_room(room_id)
+
+        if not room:
+            flash("Không tìm thấy phòng.", "danger")
+            return redirect(url_for("dashboard"))
+
+        if not (_same_user_id(user.get("id"), room.get("host_user_id")) or _same_user_id(user.get("id"), room.get("guest_user_id"))):
+            flash("Bạn không thuộc phòng này.", "danger")
+            return redirect(url_for("dashboard"))
+
+        if room.get("status") not in {"waiting_ready", "friendly_playing"}:
+            flash("Không thể rời phòng khi trận xếp hạng đang thi đấu hoặc đang chờ xác nhận kết quả.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        # Phòng C1 có vòng đời riêng và tuyệt đối không áp dụng phạt bỏ cuộc/RP
+        # ở bước chờ Sẵn Sàng. Đồng thời phải giữ nguyên metadata Tournament.
+        tournament_note = str(room.get("note") or "")
+        is_tournament_room = tournament_note.startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament"
+        if is_tournament_room and room.get("status") == "waiting_ready":
+            if _same_user_id(user.get("id"), room.get("guest_user_id")):
+                new_note = tournament_note
+                if tournament_note.startswith("TOURNAMENT_ROOM|"):
+                    try:
+                        import json
+                        meta = json.loads(tournament_note[len("TOURNAMENT_ROOM|"):])
+                        meta["invited_user_id"] = ""
+                        # Phòng mở/test chưa gắn trận có thể mời người khác sau khi khách rời.
+                        if not str(meta.get("tournament_match_id") or ""):
+                            meta["away_user_id"] = ""
+                            meta["away_name"] = ""
+                        new_note = "TOURNAMENT_ROOM|" + json.dumps(meta, ensure_ascii=False, separators=(",", ":"))
+                    except Exception:
+                        new_note = tournament_note
+                execute_query(
+                    db.table("match_rooms").update({
+                        "guest_user_id": None,
+                        "guest_ready": False,
+                        "guest_team": None,
+                        "guest_team_overall": None,
+                        "guest_team_logo_url": None,
+                        "guest_team_league": None,
+                        "host_team": None,
+                        "host_team_overall": None,
+                        "host_team_logo_url": None,
+                        "host_team_league": None,
+                        "status": "waiting_ready",
+                        "match_id": None,
+                        "invite_id": None,
+                        "note": new_note,
+                        "state_expires_at": None,
+                        "updated_at": now_iso(),
+                    }).eq("id", room_id),
+                    "c1_guest_leave_keep_room",
+                )
+                flash("Bạn đã rời Phòng C1. Không ảnh hưởng RP/Rank.", "success")
+                return redirect(url_for("dashboard"))
+            execute_query(
+                db.table("match_rooms").update({
+                    "status": "cancelled",
+                    "guest_ready": False,
+                    "updated_at": now_iso(),
+                }).eq("id", room_id),
+                "c1_host_close_room",
+            )
+            flash("Bạn đã đóng Phòng C1. Không ảnh hưởng RP/Rank.", "success")
+            return redirect(url_for("dashboard"))
+
+        # Nếu một trong hai người đã chạm giới hạn Rank ngày thì phòng không còn
+        # được phép bắt đầu trận mới. Mọi người được rời phòng an toàn, kể cả khi
+        # giao diện cũ vẫn còn guest_ready=true, để tránh bị trừ RP oan.
+        daily_limit_blocked = bool(
+            room.get("status") == "waiting_ready"
+            and str(room.get("match_mode") or "").lower() not in {"friendly", "tournament"}
+            and daily_rank_block_message(room.get("host_user_id"), room.get("guest_user_id"))
+        )
+        if daily_limit_blocked:
+            room["guest_ready"] = False
+
+        # Ở bước chờ Sẵn Sàng, luồng rời phòng không phạt chỉ hợp lệ khi khách
+        # chưa Sẵn Sàng. Kiểm tra tại backend để không thể né phạt bằng POST
+        # trực tiếp vào endpoint /leave hoặc do giao diện vừa bị thay đổi trạng thái.
+        if room.get("status") == "waiting_ready" and bool(room.get("guest_ready")):
+            if _same_user_id(user.get("id"), room.get("guest_user_id")):
+                flash("Bạn đã Sẵn Sàng. Thoát lúc này được tính là bỏ cuộc và trừ 20 RP.", "warning")
+            else:
+                flash("Khách đã Sẵn Sàng. Chủ phòng thoát lúc này được tính là bỏ cuộc và trừ 20 RP.", "warning")
+            return redirect(url_for("room_detail", room_id=room_id))
+
+        if user["id"] == room.get("guest_user_id"):
+            execute_query(
+                db.table("match_rooms").update({
+                    "guest_user_id": None,
+                    "guest_ready": False,
+                    "guest_team": None,
+                    "guest_team_overall": None,
+                    "guest_team_logo_url": None,
+                    "host_team": None,
+                    "host_team_overall": None,
+                    "host_team_logo_url": None,
+                    "host_team_league": None,
+                    "guest_team_league": None,
+                    "status": "waiting_ready",
+                    "match_id": None,
+                    "invite_id": None,
+                    "note": f'{user["display_name"]} đã rời phòng. Chủ phòng có thể mời đối thủ khác.',
+                    "state_expires_at": None,
+                    "updated_at": now_iso(),
+                }).eq("id", room_id),
+                "guest_leave_keep_room",
+            )
+            flash("Bạn đã rời phòng. Phòng vẫn được giữ cho chủ phòng và không ảnh hưởng điểm rank.", "success")
+            return redirect(url_for("dashboard"))
+
+        execute_query(
+            db.table("match_rooms").update({
+                "status": "cancelled",
+                "guest_ready": False,
+                "note": f'{user["display_name"]} đã đóng phòng.',
+                "state_expires_at": None,
+                "updated_at": now_iso(),
+            }).eq("id", room_id),
+            "host_close_room",
+        )
+        flash("Bạn đã thoát và đóng phòng đấu.", "success")
+        return redirect(url_for("dashboard"))

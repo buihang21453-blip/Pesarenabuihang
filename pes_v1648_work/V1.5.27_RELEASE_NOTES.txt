@@ -1,0 +1,5 @@
+PES ARENA V1.5.27
+- Lịch đối thủ chia theo 3 ngày.
+- Giờ trùng được tô xanh ngay khi người dùng tích giờ rảnh, chưa cần bấm Lưu.
+- Đồng bộ APP_VERSION hiển thị toàn hệ thống từ V1.5.24 lên V1.5.27.
+- Không thay đổi SQL/database schema.

@@ -1,0 +1,20 @@
+PES ARENA V1.5.42 - C1 NEXT MATCH COPIES RANK FLOW
+
+Mục tiêu
+- Copy đúng cơ chế chuyển Trận 1 -> Trận 2 của phòng Rank sang phòng C1.
+
+Flow Rank chuẩn được áp sang C1
+1. Trận hiện tại được xác nhận kết quả.
+2. Chính room hiện tại chuyển sang trận C1 kế tiếp của đúng cặp HLV.
+3. Room reset về status=waiting_ready.
+4. guest_ready=False.
+5. Xóa đội, overall, logo/league, tỷ số, match_id và dữ liệu submit của trận cũ.
+6. Giữ nguyên host/guest và cập nhật tournament_match_id / current_leg_no sang trận mới.
+7. Khách phải bấm Sẵn Sàng lại.
+8. Chỉ sau khi guest_ready=True, Chủ phòng mới được Quay đội.
+9. Không cần tạo room mới và không cần nút Đá Tiếp ở flow bình thường.
+
+Sửa lỗi V1.5.41
+- Bỏ guest_ready=True tự động ở Trận 2+.
+- Sửa mâu thuẫn update guest_ready=True nhưng verify lại yêu cầu False.
+- Đồng bộ route dự phòng room_rematch với cùng cơ chế Rank.

@@ -1,0 +1,18 @@
+{# Database status only; unknown remains unknown. Completion is not inferred from date or generated fixtures. #}
+{% set db_stages = {} %}
+{% for s in ops.get('stages',[]) %}{% if s.get('stage_code') in ['stage1','league','knockout'] %}{% set _ = db_stages.update({s.get('stage_code'): (s.get('status') or 'unknown')|lower}) %}{% endif %}{% endfor %}
+{% set phase = namespace(current='gd1') %}
+{% if db_stages.get('knockout') == 'open' %}{% set phase.current='ko' %}{% elif db_stages.get('league') == 'open' %}{% set phase.current='gd2' %}{% elif db_stages.get('stage1') == 'open' %}{% set phase.current='gd1' %}{% elif db_stages.get('stage1') == 'completed' and db_stages.get('league') != 'completed' %}{% set phase.current='gd2' %}{% elif db_stages.get('league') == 'completed' %}{% set phase.current='ko' %}{% endif %}
+<div class="c1-stage-console" aria-label="Tiến trình giải đấu C1">
+  <div class="c1-console-title"><strong>🏆 TIẾN TRÌNH C1</strong><small>Trạng thái đọc từ dữ liệu giai đoạn đã lưu; không suy đoán theo ngày hoặc số trận đã sinh.</small></div>
+  <nav class="c1-stage-admin-tabs c1-phase-nav" aria-label="Chọn giai đoạn C1" data-c1-default-stage="{{ phase.current }}">
+    {% for item in [('gd1','stage1','GĐ1'),('gd2','league','GĐ2'),('ko','knockout','Knockout')] %}
+    {% set code = db_stages.get(item[1],'unknown') %}
+    <a href="#c1-admin-{{ item[0] }}" class="c1-stage-choice btn gray" data-c1-stage-tab="{{ item[0] }}" data-c1-stage-status="{{ code }}">
+      {{ '✓' if code == 'completed' else ('▶' if code == 'open' else ('○' if code == 'pending' else '?')) }} {{ item[2] }}
+      <span class="c1-phase-status">{{ 'Đã hoàn tất' if code == 'completed' else ('Đang diễn ra' if code == 'open' else ('Chưa bắt đầu' if code == 'pending' else 'Chưa xác định')) }}</span>
+    </a>
+    {% endfor %}
+  </nav>
+  <p class="small c1-console-hint">Giai đoạn đang mở được chọn mặc định. Bạn vẫn có thể xem lịch sử các giai đoạn khác. Chức năng nguy hiểm vẫn tuân theo xác thực phía máy chủ.</p>
+</div>

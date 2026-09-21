@@ -1,0 +1,1149 @@
+"""Tournament Test Mode V1.4.103.
+
+A fully isolated sandbox stored as JSON. It never writes Rank matches, tournament
+production matches, Zcoin, Lucky Box or real tournament members.
+"""
+from datetime import datetime, timezone, timedelta
+import random
+import uuid
+from functools import wraps
+
+SANDBOX_TABLE = "tournament_test_sandboxes"
+
+
+def register_routes(context):
+    globals().update(context)
+
+    def test_center_only(fn):
+        """Allow the tournament sandbox on the deployed site for authorized admins.
+
+        Every route using this decorator is already protected by login_required,
+        admin_required and the system_features_manage permission. The sandbox writes
+        only to tournament_test_sandboxes; it must never create Rank matches, mutate
+        real tournament matches, RP, Zcoin or real tournament membership.
+        """
+        @wraps(fn)
+        def wrapped(*args, **kwargs):
+            return fn(*args, **kwargs)
+        return wrapped
+
+    def _empty_state():
+        return {
+            "enabled": True,
+            "players": [],
+            "registrations": [],
+            "registration_open": True,
+            "current_stage": "registration",
+            "stage1_target": 6,
+            "pot_count": 3,
+            "stage1_matches": [],
+            "stage1_ranking": [],
+            "pots": [],
+            "league_matches": [],
+            "league_ranking": [],
+            "knockout": [],
+            "schedule_test": None,
+            "availability_test": {},
+            "availability_bookings": {},
+            "journey_mode": False,
+            "journey_player_id": None,
+            "test_stage_open": False,
+            "duel_test": {"player_a": None, "player_b": None, "room": None, "invite": None, "reports": {}, "dispute": False, "final_result": None, "events": []},
+            "hosts": [
+                {"id":"host-bac","name":"Host Test Bắc","region":"Bắc","status":"available"},
+                {"id":"host-trung","name":"Host Test Trung","region":"Trung","status":"available"},
+                {"id":"host-nam","name":"Host Test Nam","region":"Nam","status":"available"},
+            ],
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    def _admin_id():
+        return str((current_user() or {}).get("id") or "")
+
+    def _load_state():
+        aid = _admin_id()
+        if not aid:
+            return _empty_state(), False
+        try:
+            result = execute_query(
+                db.table(SANDBOX_TABLE).select("state").eq("admin_user_id", aid).limit(1),
+                "tournament_test_load", attempts=2,
+            )
+            rows = result.data or []
+            if rows and isinstance(rows[0].get("state"), dict):
+                state = _empty_state()
+                state.update(dict(rows[0]["state"]))
+                return state, True
+        except Exception as exc:
+            app.logger.warning("Tournament test mode unavailable: %s", exc)
+        return _empty_state(), False
+
+    def _save_state(state):
+        aid = _admin_id()
+        state["updated_at"] = datetime.now(timezone.utc).isoformat()
+        execute_query(
+            db.table(SANDBOX_TABLE).upsert({
+                "admin_user_id": aid,
+                "state": state,
+                "updated_at": state["updated_at"],
+            }, on_conflict="admin_user_id"),
+            "tournament_test_save", attempts=2,
+        )
+
+    def _player_name(pid, players):
+        p = next((x for x in players if x.get("id") == pid), None)
+        return (p or {}).get("name") or pid
+
+    def _round_robin_rounds(players):
+        ids = [p["id"] for p in players]
+        if len(ids) % 2:
+            ids.append(None)
+        n = len(ids)
+        fixed = ids[0]
+        rotating = ids[1:]
+        rounds = []
+        for _ in range(n - 1):
+            row = [fixed] + rotating
+            pairs = []
+            for i in range(n // 2):
+                a, b = row[i], row[n - 1 - i]
+                if a and b:
+                    pairs.append((a, b))
+            rounds.append(pairs)
+            rotating = [rotating[-1]] + rotating[:-1]
+        return rounds
+
+    def _regular_pairs(player_ids, degree):
+        """Return a deterministic simple regular graph as player pairs."""
+        n=len(player_ids)
+        if degree < 0 or degree >= n or (n * degree) % 2:
+            return []
+        pairs=set()
+        for offset in range(1, (degree // 2) + 1):
+            for i in range(n):
+                a,b=player_ids[i],player_ids[(i+offset) % n]
+                if a != b: pairs.add(tuple(sorted((a,b))))
+        if degree % 2:
+            for i in range(n // 2):
+                pairs.add(tuple(sorted((player_ids[i],player_ids[i+n//2]))))
+        return sorted(pairs)
+
+    def _balanced_stage1_pairs(players, target):
+        """Exactly target matches/player, with no pair repeated more than twice."""
+        ids=[p["id"] for p in players]
+        n=len(ids)
+        if n < 2 or n * target % 2 or target > 2 * (n - 1):
+            return None
+        if target <= n - 1:
+            return _regular_pairs(ids, target)
+        first=[tuple(sorted((ids[i],ids[j]))) for i in range(n) for j in range(i+1,n)]
+        return first + _regular_pairs(ids, target - (n - 1))
+
+    def _score(seed):
+        r = random.Random(seed)
+        return r.randint(0, 4), r.randint(0, 4)
+
+    def _ranking(players, matches):
+        table = {p["id"]: {"user_id":p["id"],"display_name":p["name"],"played":0,"wins":0,"draws":0,"losses":0,"gf":0,"ga":0,"gd":0,"points":0,"opponents":set()} for p in players}
+        for m in matches:
+            if m.get("status") != "completed":
+                continue
+            h, a = m["home"], m["away"]
+            if h not in table or a not in table:
+                continue
+            hs, av = int(m.get("home_score",0)), int(m.get("away_score",0))
+            H,A = table[h], table[a]
+            H["played"] += 1; A["played"] += 1
+            H["gf"] += hs; H["ga"] += av; A["gf"] += av; A["ga"] += hs
+            H["opponents"].add(a); A["opponents"].add(h)
+            if hs > av:
+                H["wins"] += 1; H["points"] += 3; A["losses"] += 1
+            elif hs < av:
+                A["wins"] += 1; A["points"] += 3; H["losses"] += 1
+            else:
+                H["draws"] += 1; A["draws"] += 1; H["points"] += 1; A["points"] += 1
+        rows=[]
+        for r in table.values():
+            r["gd"] = r["gf"] - r["ga"]
+            r["opponent_count"] = len(r.pop("opponents"))
+            rows.append(r)
+        rows.sort(key=lambda x:(x["points"],x["gd"],x["gf"],x["wins"],x["display_name"]), reverse=True)
+        for idx,r in enumerate(rows,1): r["rank"] = idx
+        return rows
+
+    def _decorate_matches(matches, players):
+        out=[]
+        for m in matches:
+            row=dict(m)
+            row["home_name"]=_player_name(row.get("home"),players)
+            row["away_name"]=_player_name(row.get("away"),players)
+            out.append(row)
+        return out
+
+    def _registration_for(state, player_id):
+        return next((r for r in (state.get("registrations") or []) if r.get("user_id") == player_id), None)
+
+    def _registration_counts(state):
+        rows = state.get("registrations") or []
+        return {key: sum(1 for row in rows if row.get("status") == key)
+                for key in ("pending", "approved", "rejected", "withdrawn")}
+
+    STAGES = [
+        ("registration", "Đăng ký"),
+        ("stage1", "GĐ1 - Vòng Khởi Động"),
+        ("schedule", "Đặt lịch thi đấu"),
+        ("league", "GĐ2 - League Phase"),
+        ("playoff", "Play-off"),
+        ("r16", "Vòng 1/8"),
+        ("qf", "Tứ kết"),
+        ("sf", "Bán kết"),
+        ("final", "Chung kết"),
+    ]
+    STAGE_KEYS = {key for key, _ in STAGES}
+
+
+    SCHEDULE_CASES = [
+        ("unscheduled", "Chưa hẹn"),
+        ("waiting_outgoing", "Tôi chờ đối thủ"),
+        ("incoming", "Có đề xuất đến"),
+        ("rejected", "Bị từ chối"),
+        ("scheduled", "Đã chốt"),
+        ("soon", "Sắp đấu"),
+        ("completed", "Hoàn thành"),
+        ("overdue", "Quá hạn"),
+        ("admin_fixed", "Admin chốt hộ"),
+    ]
+    SCHEDULE_CASE_KEYS = {key for key, _ in SCHEDULE_CASES}
+
+    AVAILABILITY_CASES = [
+        ("no_overlap", "Chưa có giờ trùng"),
+        ("has_overlap", "Có giờ trùng"),
+        ("empty_mine", "HLV Yến chưa đặt lịch"),
+    ]
+    AVAILABILITY_CASE_KEYS = {key for key, _ in AVAILABILITY_CASES}
+
+    def _availability_days_test():
+        vn_tz=timezone(timedelta(hours=7))
+        today=datetime.now(vn_tz).date()
+        labels=("Hôm nay","Ngày mai","Ngày kia")
+        days=[]
+        now=datetime.now(vn_tz)
+        for offset,label in enumerate(labels):
+            d=today+timedelta(days=offset)
+            hours=[11,12,18,19,20,21] if d.weekday()<5 else list(range(11,22))
+            slots=[]
+            for hour in hours:
+                dt=datetime(d.year,d.month,d.day,hour,0,tzinfo=vn_tz)
+                if dt>now:
+                    slots.append({"iso":dt.isoformat(),"time":f"{hour:02d}:00"})
+            days.append({"date":d.isoformat(),"label":label,"weekday":d.strftime("%d/%m"),"slots":slots})
+        return days
+
+    def _seed_availability_test(state, case="no_overlap"):
+        players=state.get("players") or []
+        if len(players)<2:
+            return
+        case=case if case in AVAILABILITY_CASE_KEYS else "no_overlap"
+        a,b=players[0],players[1]
+        # Friendly names make the two-view test obvious.
+        a["name"]="HLV Yến"; a["zalo_name"]="Yến"
+        b["name"]="HLV Nam"; b["zalo_name"]="Nam"
+        days=_availability_days_test()
+        flat=[x["iso"] for d in days for x in d["slots"]]
+        av={str(p.get("id")):[] for p in players}
+        if case=="has_overlap":
+            av[str(a["id"])]=flat[:2]+flat[4:5]
+            av[str(b["id"])]=flat[1:3]+flat[5:6]
+        elif case=="empty_mine":
+            av[str(a["id"])]=[]
+            av[str(b["id"])]=flat[1:4]
+        else:
+            av[str(a["id"])]=flat[:2]
+            av[str(b["id"])]=flat[3:6]
+        state["availability_test"]=av
+        state["availability_bookings"]={}
+        state["current_stage"]="schedule"
+
+    def _availability_view(state, view_as):
+        days=_availability_days_test()
+        av=state.get("availability_test") or {}
+        mine=set(av.get(str(view_as)) or [])
+        players=state.get("players") or []
+        opponents=[]
+        for p in players:
+            pid=str(p.get("id"))
+            if pid==str(view_as):
+                continue
+            slots=sorted(set(av.get(pid) or []))
+            overlap=sorted(mine & set(slots))
+            opponents.append({"id":pid,"name":p.get("name") or pid,"slots":slots,"overlap":overlap,"booking":(state.get("availability_bookings") or {}).get("|".join(sorted((str(view_as),pid))))})
+            if len(opponents)>=5:
+                break
+        labels={x["iso"]:f"{d['label']} · {x['time']}" for d in days for x in d["slots"]}
+        return {"days":days,"mine_set":mine,"opponents":opponents,"labels":labels}
+
+    def _schedule_test_case(state, case):
+        players=state.get("players") or []
+        if len(players) < 2:
+            raise ValueError("Cần ít nhất 2 HLV Test để kiểm tra lịch thi đấu.")
+        case = case if case in SCHEDULE_CASE_KEYS else "unscheduled"
+        a,b=players[0],players[1]
+        now=datetime.now(timezone.utc)
+        proposed=(now+timedelta(hours=2)).isoformat()
+        base={
+            "case":case,"match_id":"schedule-test-01","home":a["id"],"away":b["id"],
+            "home_name":a["name"],"away_name":b["name"],"status":"pending",
+            "scheduled_at":None,"deadline_at":(now+timedelta(days=2)).isoformat(),
+            "request":None,"home_score":None,"away_score":None,"admin_fixed":False,
+        }
+        view_as=a["id"]
+        if case=="waiting_outgoing":
+            base["request"]={"id":"sched-test-req","status":"pending","proposed_by":a["id"],"proposed_at":proposed,"note":""}
+        elif case=="incoming":
+            base["request"]={"id":"sched-test-req","status":"pending","proposed_by":a["id"],"proposed_at":proposed,"note":""}; view_as=b["id"]
+        elif case=="rejected":
+            base["request"]={"id":"sched-test-req","status":"rejected","proposed_by":a["id"],"proposed_at":proposed,"note":"Bận giờ này, đề xuất giờ khác nhé."}
+        elif case=="scheduled":
+            base.update({"status":"scheduled","scheduled_at":proposed})
+        elif case=="soon":
+            base.update({"status":"scheduled","scheduled_at":(now+timedelta(minutes=30)).isoformat()})
+        elif case=="completed":
+            base.update({"status":"completed","scheduled_at":(now-timedelta(hours=2)).isoformat(),"home_score":2,"away_score":1})
+        elif case=="overdue":
+            base["deadline_at"]=(now-timedelta(hours=6)).isoformat()
+        elif case=="admin_fixed":
+            base.update({"status":"scheduled","scheduled_at":proposed,"admin_fixed":True})
+        state["schedule_test"]=base
+        state["current_stage"]="schedule"
+        return view_as
+
+    def _schedule_view(state, view_as):
+        row=dict(state.get("schedule_test") or {})
+        if not row:
+            return None
+        players=state.get("players") or []
+        pmap={p.get("id"):p for p in players}
+        opp_id=row.get("away") if view_as==row.get("home") else row.get("home")
+        row["opponent"]=pmap.get(opp_id) or {}
+        row["is_home"]=view_as==row.get("home")
+        req=row.get("request") or {}
+        row["request_is_mine"]=bool(req and req.get("proposed_by")==view_as)
+        row["can_accept"]=bool(req and req.get("status")=="pending" and req.get("proposed_by")!=view_as)
+        return row
+
+    def _build_full_simulation(count=36, target=5, pot_count=4):
+        count=max(4,min(36,int(count or 36)))
+        target=max(5,min(6,int(target or 5)))
+        pot_count=3 if int(pot_count or 4) == 3 else 4
+        state=_empty_state(); state["stage1_target"]=target; state["pot_count"]=pot_count
+        players=[]
+        for i in range(1,count+1):
+            players.append({
+                "id":f"test-hlv-{i:02d}", "name":f"Test HLV {i:02d}", "is_test":True,
+                "zalo_name":f"Test HLV {i:02d} Zalo", "has_host":i % 2 == 1,
+                "host_region":["Bắc","Trung","Nam"][(i-1)%3],
+            })
+        state["players"]=players
+        state["registrations"]=[{
+            "id":f"test-reg-{i:02d}", "user_id":p["id"], "display_name":p["name"],
+            "status":"approved", "has_host":p["has_host"], "host_region":p["host_region"],
+            "zalo_name":p["zalo_name"], "payment_status":"reported",
+            "registered_at":datetime.now(timezone.utc).isoformat(),
+        } for i,p in enumerate(players,1)]
+        state["registration_open"] = False
+
+        pairs=_balanced_stage1_pairs(players,target)
+        if pairs is None:
+            raise ValueError(f"Không thể chia đều {target} trận cho {count} HLV")
+        s1=[]; per_round=max(1,len(players)//2)
+        for seq,(a,b) in enumerate(pairs,1):
+            rnd=((seq-1)//per_round)+1; hs,av=_score(f"all-s1-{rnd}-{a}-{b}")
+            s1.append({"id":f"s1-{seq}","round":rnd,"home":a,"away":b,"home_score":hs,"away_score":av,"status":"completed"})
+        state["stage1_matches"]=s1; state["stage1_ranking"]=_ranking(players,s1)
+
+        chunk=(len(players)+pot_count-1)//pot_count; pots=[[] for _ in range(pot_count)]
+        for i,row in enumerate(state["stage1_ranking"]):
+            pi=min(i//chunk,pot_count-1)
+            pots[pi].append({"user_id":row["user_id"],"display_name":row["display_name"],"seed":i+1,"pot":pi+1})
+        state["pots"]=pots
+        members_by_pot={idx+1:[x["user_id"] for x in pot] for idx,pot in enumerate(pots)}
+        seen=set(); lg=[]; seq=1
+        # 1 opponent from each pot; deterministic and intentionally simple for UI testing.
+        for p in players:
+            uid=p["id"]
+            for pot_no,candidates in members_by_pot.items():
+                for opp in sorted(x for x in candidates if x!=uid):
+                    key=tuple(sorted((uid,opp)))
+                    if key in seen: continue
+                    seen.add(key); hs,av=_score(f"all-lg-{uid}-{opp}")
+                    lg.append({"id":f"lg-{seq}","home":uid,"away":opp,"home_score":hs,"away_score":av,"status":"completed","home_pot":next((x["pot"] for pot in pots for x in pot if x["user_id"]==uid),None),"away_pot":pot_no})
+                    seq+=1; break
+        state["league_matches"]=lg; state["league_ranking"]=_ranking(players,lg)
+
+        ranking=state["league_ranking"]; names={p["id"]:p["name"] for p in players}; ko=[]
+        direct=[r["user_id"] for r in ranking[:min(8,len(ranking))]]
+        playoff_pool=[r["user_id"] for r in ranking[8:24]]
+        playoff_winners=[]; playoff_pairs=[]
+        half=len(playoff_pool)//2
+        for i in range(half):
+            a=playoff_pool[i]; b=playoff_pool[-(i+1)]
+            a1,b1=_score(f"po1-{a}-{b}"); b2,a2=_score(f"po2-{b}-{a}"); aa,bb=a1+a2,b1+b2
+            w=a if aa>bb or (aa==bb and a<b) else b
+            playoff_winners.append(w)
+            playoff_pairs.append({"home":a,"away":b,"home_name":names[a],"away_name":names[b],"leg1":f"{a1}-{b1}","leg2":f"{b2}-{a2}","aggregate":f"{aa}-{bb}","winner":w,"winner_name":names[w]})
+        if playoff_pairs:
+            ko.append({"key":"playoff","name":"Play-off","pairs":playoff_pairs})
+        current=(direct+playoff_winners)[:16]
+        if len(current)<2:
+            current=[r["user_id"] for r in ranking[:min(16,len(ranking))]]
+        labels={16:("r16","Vòng 1/8"),8:("qf","Tứ kết"),4:("sf","Bán kết"),2:("final","Chung kết")}
+        while len(current)>=2:
+            key,label=labels.get(len(current),(f"top{len(current)}",f"Top {len(current)}"))
+            nxt=[]; prs=[]
+            for i in range(0,len(current)-1,2):
+                a,b=current[i],current[i+1]
+                if key=="final":
+                    # Bo3: trận 1 + 2 90', trận 3 là trận quyết định có ET/PEN nếu cần.
+                    g1a,g1b=_score(f"f1-{a}-{b}"); g2a,g2b=_score(f"f2-{a}-{b}")
+                    wins_a=(g1a>g1b)+(g2a>g2b); wins_b=(g1b>g1a)+(g2b>g2a)
+                    g3a,g3b=_score(f"f3-{a}-{b}")
+                    if g3a==g3b: g3a += 1
+                    wins_a += g3a>g3b; wins_b += g3b>g3a
+                    w=a if wins_a>wins_b else b
+                    prs.append({"home":a,"away":b,"home_name":names.get(a,a),"away_name":names.get(b,b),"leg1":f"Trận 1: {g1a}-{g1b}","leg2":f"Trận 2: {g2a}-{g2b}","decider":f"Trận 3: {g3a}-{g3b} (có ET/PEN)","aggregate":f"Bo3 {wins_a}-{wins_b}","winner":w,"winner_name":names.get(w,w)})
+                else:
+                    a1,b1=_score(f"{key}1-{a}-{b}"); b2,a2=_score(f"{key}2-{b}-{a}"); aa,bb=a1+a2,b1+b2
+                    w=a if aa>bb or (aa==bb and a<b) else b
+                    prs.append({"home":a,"away":b,"home_name":names.get(a,a),"away_name":names.get(b,b),"leg1":f"{a1}-{b1}","leg2":f"{b2}-{a2}","aggregate":f"{aa}-{bb}","winner":w,"winner_name":names.get(w,w)})
+                nxt.append(w)
+            ko.append({"key":key,"name":label,"pairs":prs}); current=nxt
+            if len(current)==1: break
+        state["knockout"]=ko
+        return state
+
+    def _force_journey_player(state, player_id):
+        """Keep one Test HLV visible through every stage for end-to-end UX testing."""
+        players=state.get("players") or []
+        names={p.get("id"):p.get("name") for p in players}
+        pname=names.get(player_id, player_id)
+        for key in ("stage1_ranking","league_ranking"):
+            rows=list(state.get(key) or [])
+            mine=next((r for r in rows if r.get("user_id")==player_id),None)
+            if mine:
+                rows=[mine]+[r for r in rows if r.get("user_id")!=player_id]
+                for idx,row in enumerate(rows,1): row["rank"]=idx
+                state[key]=rows
+        # Put the journey HLV in Pot 1 for a predictable player view.
+        if state.get("pots"):
+            mine=None
+            for pot in state["pots"]:
+                for row in list(pot):
+                    if row.get("user_id")==player_id:
+                        mine=row; pot.remove(row); break
+                if mine: break
+            if mine:
+                mine["pot"]=1; state["pots"][0].insert(0,mine)
+        # Ensure the same HLV appears and advances in every knockout screen.
+        for rnd in state.get("knockout") or []:
+            if not rnd.get("pairs"): continue
+            pair=rnd["pairs"][0]
+            pair["home"]=player_id; pair["home_name"]=pname
+            pair["winner"]=player_id; pair["winner_name"]=pname
+            if pair.get("away")==player_id:
+                alt=next((p for p in players if p.get("id")!=player_id),None)
+                if alt:
+                    pair["away"]=alt["id"]; pair["away_name"]=alt["name"]
+            if rnd.get("key")=="final":
+                pair["aggregate"]="Bo3 2-1"
+                pair["leg1"]="Trận 1: 2-1"; pair["leg2"]="Trận 2: 0-1"; pair["decider"]="Trận 3: 2-1 (có ET/PEN nếu cần)"
+        return state
+
+    def _build_single_hlv_journey(count=36, target=5, pot_count=4):
+        state=_build_full_simulation(count,target,pot_count)
+        player_id="test-hlv-01"
+        state["journey_mode"]=True; state["journey_player_id"]=player_id
+        state["registration_open"]=True
+        # Other HLVs are ready; the tester completes only their own registration.
+        state["registrations"]=[r for r in (state.get("registrations") or []) if r.get("user_id")!=player_id]
+        state["current_stage"]="registration"
+        _force_journey_player(state,player_id)
+        return state
+
+    def _default_view_for_stage(state, stage):
+        players=state.get("players") or []
+        if stage in {"playoff","r16","qf","sf","final"}:
+            rnd=next((r for r in (state.get("knockout") or []) if r.get("key")==stage),None)
+            if rnd and rnd.get("pairs"):
+                return rnd["pairs"][0].get("home") or rnd["pairs"][0].get("away")
+        if stage=="schedule" and state.get("schedule_test"):
+            row=state.get("schedule_test") or {}
+            case=row.get("case")
+            if case=="incoming": return row.get("away")
+            return row.get("home")
+        if stage=="league" and state.get("league_ranking"):
+            return state["league_ranking"][0].get("user_id")
+        if stage=="stage1" and state.get("stage1_ranking"):
+            return state["stage1_ranking"][0].get("user_id")
+        if stage=="registration":
+            # Prefer a player with no registration so the complete form can be tested.
+            registered={r.get("user_id") for r in (state.get("registrations") or [])}
+            p=next((x for x in players if x.get("id") not in registered),None)
+            if p: return p.get("id")
+        return players[0].get("id") if players else "spectator"
+
+    def _duel(state):
+        row = state.get("duel_test")
+        if not isinstance(row, dict):
+            row = {}
+        base = {"player_a": None, "player_b": None, "room": None, "invite": None, "reports": {}, "dispute": False, "final_result": None, "events": []}
+        base.update(row)
+        state["duel_test"] = base
+        return base
+
+    def _duel_event(state, text):
+        duel = _duel(state)
+        events = list(duel.get("events") or [])
+        events.append({"at": datetime.now(timezone.utc).isoformat(), "text": str(text)})
+        duel["events"] = events[-30:]
+
+    def _apply_duel_result(state, score_a, score_b):
+        duel = _duel(state)
+        a, b = duel.get("player_a"), duel.get("player_b")
+        if not a or not b:
+            return
+        stage = state.get("current_stage")
+        key = "league_matches" if stage == "league" else "stage1_matches"
+        matches = list(state.get(key) or [])
+        match = next((m for m in matches if {m.get("home"), m.get("away")} == {a, b}), None)
+        if not match:
+            match = {"id": f"duel-{uuid.uuid4().hex[:8]}", "round": 1, "home": a, "away": b, "status": "pending"}
+            matches.append(match)
+        if match.get("home") == a:
+            match["home_score"], match["away_score"] = int(score_a), int(score_b)
+        else:
+            match["home_score"], match["away_score"] = int(score_b), int(score_a)
+        match["status"] = "completed"
+        state[key] = matches
+        players = state.get("players") or []
+        if key == "league_matches":
+            state["league_ranking"] = _ranking(players, matches)
+        else:
+            state["stage1_ranking"] = _ranking(players, matches)
+
+    def _stage_context(state, stage, view_as):
+        players=state.get("players") or []
+        stage = stage if stage in STAGE_KEYS else (state.get("current_stage") if state.get("current_stage") in STAGE_KEYS else "registration")
+        my_s1_matches=[m for m in _decorate_matches(state.get("stage1_matches") or [],players) if view_as in (m.get("home"),m.get("away"))]
+        my_league_matches=[m for m in _decorate_matches(state.get("league_matches") or [],players) if view_as in (m.get("home"),m.get("away"))]
+        my_pot=None
+        for pot in state.get("pots") or []:
+            for row in pot:
+                if row.get("user_id")==view_as: my_pot=row.get("pot")
+        my_ko=[]
+        for rnd in state.get("knockout") or []:
+            if rnd.get("key")==stage:
+                my_ko=[p for p in rnd.get("pairs") or [] if view_as in (p.get("home"),p.get("away"))]
+                break
+        return stage,my_s1_matches,my_league_matches,my_pot,my_ko
+
+    @app.get('/admin/tournament-test-mode')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_mode():
+        state, ready = _load_state()
+        view_as = (request.args.get("view_as") or "admin").strip()
+        players = state.get("players") or []
+        me = next((p for p in players if p.get("id") == view_as), None)
+        s1 = state.get("stage1_ranking") or []
+        league = state.get("league_ranking") or []
+        my_s1 = next((r for r in s1 if r.get("user_id") == view_as), None)
+        my_league = next((r for r in league if r.get("user_id") == view_as), None)
+        return render_template(
+            'tournament_test_mode.html', state=state, sandbox_ready=ready,
+            view_as=view_as, me=me, my_s1=my_s1, my_league=my_league,
+            registration_counts=_registration_counts(state), schedule_cases=SCHEDULE_CASES, availability_cases=AVAILABILITY_CASES,
+            stage1_matches=_decorate_matches(state.get("stage1_matches") or [],players),
+            league_matches=_decorate_matches(state.get("league_matches") or [],players),
+            journey_player_id=state.get("journey_player_id"), journey_mode=bool(state.get("journey_mode")),
+        )
+
+    @app.get('/admin/tournament-test-mode/public')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_public():
+        state, ready = _load_state()
+        players = state.get("players") or []
+        view_as = (request.args.get("view_as") or (players[0]["id"] if players else "spectator")).strip()
+        me = next((p for p in players if p.get("id") == view_as), None)
+        registration = _registration_for(state, view_as) if me else None
+        member = bool(registration and registration.get("status") == "approved")
+        my_s1 = next((r for r in (state.get("stage1_ranking") or []) if r.get("user_id") == view_as), None)
+        my_league = next((r for r in (state.get("league_ranking") or []) if r.get("user_id") == view_as), None)
+        stage,my_s1_matches,my_league_matches,my_pot,my_ko = _stage_context(state, (request.args.get("stage") or "").strip(), view_as)
+        return render_template(
+            'tournament_test_public.html', state=state, sandbox_ready=ready,
+            players=players, view_as=view_as, me=me, registration=registration,
+            member=member, my_s1=my_s1, my_league=my_league, stage=stage, stages=STAGES, stage_label=dict(STAGES).get(stage, stage),
+            my_s1_matches=my_s1_matches, my_league_matches=my_league_matches, my_pot=my_pot, my_ko=my_ko,
+            schedule_test=_schedule_view(state, view_as), schedule_cases=SCHEDULE_CASES, availability_test=_availability_view(state, view_as), availability_cases=AVAILABILITY_CASES,
+            registration_counts=_registration_counts(state),
+            stage1_matches=_decorate_matches(state.get("stage1_matches") or [], players),
+            league_matches=_decorate_matches(state.get("league_matches") or [], players),
+            journey_player_id=state.get("journey_player_id"), journey_mode=bool(state.get("journey_mode")),
+            duel=_duel(state), test_stage_open=bool(state.get("test_stage_open")),
+        )
+
+    @app.get('/admin/tournament-test-center')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center():
+        state, ready = _load_state()
+        # First visit on localhost should be immediately usable: seed 16 sandbox HLVs.
+        if len(state.get("players") or []) < 2:
+            state = _build_full_simulation(16, 6, 3)
+            state["current_stage"] = "stage1"
+            state["test_stage_open"] = True
+            players_seed = state.get("players") or []
+            duel_seed = _duel(state)
+            if len(players_seed) >= 2:
+                duel_seed["player_a"] = players_seed[0]["id"]
+                duel_seed["player_b"] = players_seed[1]["id"]
+                _duel_event(state, "Tự tạo 16 HLV sandbox để bắt đầu kiểm tra trên localhost")
+            _save_state(state)
+            ready = True
+        players = state.get("players") or []
+        duel = _duel(state)
+        return render_template('tournament_test_center.html', state=state, sandbox_ready=ready,
+            players=players, duel=duel, stages=STAGES,
+            stage_label=dict(STAGES).get(state.get("current_stage"), state.get("current_stage")),
+            player_a=next((p for p in players if p.get("id")==duel.get("player_a")), None),
+            player_b=next((p for p in players if p.get("id")==duel.get("player_b")), None))
+
+    @app.post('/admin/tournament-test-center/setup')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center_setup():
+        state, _ = _load_state()
+        if len(state.get("players") or []) < 2:
+            state = _build_full_simulation(16, 6, 3)
+        players = state.get("players") or []
+        valid = {p.get("id") for p in players}
+        a = (request.form.get("player_a") or "").strip() or players[0]["id"]
+        b = (request.form.get("player_b") or "").strip() or players[1]["id"]
+        if a not in valid or b not in valid or a == b:
+            flash("HLV A và HLV B phải là hai HLV Test khác nhau.", "warning")
+            return redirect(url_for('admin_tournament_test_center'))
+        duel = _duel(state)
+        duel.update({"player_a":a,"player_b":b,"room":None,"invite":None,"reports":{},"dispute":False,"final_result":None,"events":[]})
+        stage=(request.form.get("stage") or "stage1").strip()
+        state["current_stage"] = stage if stage in STAGE_KEYS else "stage1"
+        state["test_stage_open"] = request.form.get("stage_open") == "1"
+        _duel_event(state, f"Đã chọn {_player_name(a,players)} và {_player_name(b,players)}")
+        _save_state(state)
+        flash("Đã sẵn sàng Test Center 2 HLV.", "success")
+        return redirect(url_for('admin_tournament_test_center'))
+
+    @app.post('/admin/tournament-test-center/stage/<stage>/<action>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center_stage(stage, action):
+        state, _ = _load_state()
+        if stage not in STAGE_KEYS:
+            flash("Giai đoạn Test không hợp lệ.", "error")
+            return redirect(url_for('admin_tournament_test_center'))
+        state["current_stage"] = stage
+        state["test_stage_open"] = action == "open"
+        _duel_event(state, f"Admin {'MỞ' if state['test_stage_open'] else 'KHÓA'} {dict(STAGES).get(stage,stage)}")
+        _save_state(state)
+        return redirect(url_for('admin_tournament_test_center'))
+
+    @app.post('/admin/tournament-test-center/duel/<action>/<player_id>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center_duel(action, player_id):
+        state, _ = _load_state(); duel = _duel(state); players=state.get("players") or []
+        a,b=duel.get("player_a"),duel.get("player_b")
+        if player_id not in {a,b}:
+            flash("HLV không thuộc cặp Test hiện tại.", "error")
+            return redirect(url_for('admin_tournament_test_center'))
+        other = b if player_id == a else a
+        if action in {"create_room","invite"} and not state.get("test_stage_open"):
+            flash("Admin chưa mở giai đoạn, HLV chưa được phép tạo/mời phòng.", "warning")
+        elif action == "create_room":
+            duel["room"] = {"id":f"test-room-{uuid.uuid4().hex[:8]}","created_by":player_id,"room_type":"tournament","tournament_match":True,"stage":state.get("current_stage"),"members":[player_id],"status":"waiting"}
+            duel["invite"] = None; duel["reports"]={}; duel["dispute"]=False; duel["final_result"]=None
+            _duel_event(state, f"{_player_name(player_id,players)} tạo phòng Tournament")
+        elif action == "invite":
+            if not duel.get("room"):
+                flash("Hãy tạo phòng trước.", "warning")
+            else:
+                duel["invite"]={"from":player_id,"to":other,"status":"pending"}
+                _duel_event(state, f"{_player_name(player_id,players)} mời {_player_name(other,players)}")
+        elif action == "accept":
+            inv=duel.get("invite") or {}
+            if inv.get("to") != player_id or inv.get("status") != "pending":
+                flash("Không có lời mời hợp lệ cho HLV này.", "warning")
+            elif not duel.get("room"):
+                flash("Phòng Test không còn tồn tại.", "warning")
+            else:
+                inv["status"]="accepted"; duel["invite"]=inv
+                members=list(duel["room"].get("members") or [])
+                if player_id not in members: members.append(player_id)
+                duel["room"]["members"]=members; duel["room"]["status"]="ready"
+                duel["room"]["room_type"]="tournament"; duel["room"]["tournament_match"]=True
+                _duel_event(state, f"{_player_name(player_id,players)} nhận lời và vào cùng phòng Tournament")
+        _save_state(state)
+        return redirect(url_for('admin_tournament_test_public', view_as=player_id, stage=state.get("current_stage")))
+
+    @app.post('/admin/tournament-test-center/report/<player_id>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center_report(player_id):
+        state,_=_load_state(); duel=_duel(state); players=state.get("players") or []
+        if player_id not in {duel.get("player_a"),duel.get("player_b")}:
+            flash("HLV không thuộc cặp Test.","error"); return redirect(url_for('admin_tournament_test_center'))
+        try:
+            sa=max(0,min(30,int(request.form.get("score_a") or 0))); sb=max(0,min(30,int(request.form.get("score_b") or 0)))
+        except Exception:
+            flash("Tỷ số không hợp lệ.","warning"); return redirect(url_for('admin_tournament_test_public',view_as=player_id,stage=state.get("current_stage")))
+        reports=dict(duel.get("reports") or {}); reports[player_id]={"score_a":sa,"score_b":sb}; duel["reports"]=reports
+        _duel_event(state, f"{_player_name(player_id,players)} báo kết quả {sa}-{sb}")
+        a,b=duel.get("player_a"),duel.get("player_b")
+        if a in reports and b in reports:
+            ra,rb=reports[a],reports[b]
+            if ra["score_a"]==rb["score_a"] and ra["score_b"]==rb["score_b"]:
+                duel["dispute"]=False; duel["final_result"]={"score_a":ra["score_a"],"score_b":ra["score_b"],"source":"players"}
+                _apply_duel_result(state,ra["score_a"],ra["score_b"]); _duel_event(state,"Hai HLV báo giống nhau: tự động chốt kết quả")
+            else:
+                duel["dispute"]=True; duel["final_result"]=None; _duel_event(state,"Phát hiện kết quả khác nhau: chuyển Admin xử lý")
+        _save_state(state)
+        return redirect(url_for('admin_tournament_test_public',view_as=player_id,stage=state.get("current_stage")))
+
+    @app.post('/admin/tournament-test-center/resolve')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center_resolve():
+        state,_=_load_state(); duel=_duel(state)
+        try:
+            sa=max(0,min(30,int(request.form.get("score_a") or 0))); sb=max(0,min(30,int(request.form.get("score_b") or 0)))
+        except Exception:
+            flash("Tỷ số Admin nhập không hợp lệ.","warning"); return redirect(url_for('admin_tournament_test_center'))
+        duel["dispute"]=False; duel["final_result"]={"score_a":sa,"score_b":sb,"source":"admin"}
+        _apply_duel_result(state,sa,sb); _duel_event(state,f"Admin chốt kết quả {sa}-{sb}")
+        _save_state(state); flash("Admin đã chốt kết quả và tính lại BXH Test.","success")
+        return redirect(url_for('admin_tournament_test_center'))
+
+    @app.post('/admin/tournament-test-center/reset-duel')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    @test_center_only
+    def admin_tournament_test_center_reset_duel():
+        state,_=_load_state(); duel=_duel(state); a,b=duel.get("player_a"),duel.get("player_b")
+        state["duel_test"]={"player_a":a,"player_b":b,"room":None,"invite":None,"reports":{},"dispute":False,"final_result":None,"events":[]}
+        _save_state(state); flash("Đã reset kịch bản 2 HLV, giữ nguyên cặp đang chọn.","success")
+        return redirect(url_for('admin_tournament_test_center'))
+
+    @app.post('/admin/tournament-test-mode/create-players')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_create_players():
+        count=max(4,min(36,int(request.form.get("count") or 16)))
+        target=max(5,min(6,int(request.form.get("target") or 5)))
+        state=_empty_state()
+        state["stage1_target"]=target
+        state["players"]=[{"id":f"test-hlv-{i:02d}","name":f"Test HLV {i:02d}","is_test":True} for i in range(1,count+1)]
+        _save_state(state)
+        flash(f"Đã tạo {count} HLV giả trong sandbox. Không tạo tài khoản thật.","success")
+        return redirect(url_for('admin_tournament_test_mode'))
+
+    @app.post('/admin/tournament-test-mode/seed-registrations')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_seed_registrations():
+        state, _ = _load_state()
+        players = state.get("players") or []
+        if not players:
+            count=max(4,min(36,int(request.form.get("count") or 16)))
+            players=[{"id":f"test-hlv-{i:02d}","name":f"Test HLV {i:02d}","is_test":True} for i in range(1,count+1)]
+            state["players"] = players
+        rows=[]
+        for i,p in enumerate(players):
+            status = "pending" if i < 4 else ("approved" if i < max(5, len(players)-4) else ("rejected" if i < len(players)-2 else None))
+            if status:
+                rows.append({"id":f"test-reg-{i+1:02d}","user_id":p["id"],"display_name":p["name"],
+                             "status":status,"has_host":i%2==0,"host_region":["Bắc","Trung","Nam"][i%3],"zalo_name":f"{p['name']} Zalo","payment_status":"reported","registered_at":datetime.now(timezone.utc).isoformat()})
+        state["registrations"] = rows
+        state["registration_open"] = True
+        _save_state(state)
+        flash("Đã tạo mẫu đăng ký: có đơn chờ duyệt, đã duyệt, từ chối và HLV chưa đăng ký.","success")
+        return redirect(url_for('admin_tournament_test_mode'))
+
+    @app.post('/admin/tournament-test-mode/register/<player_id>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_register(player_id):
+        state,_=_load_state()
+        player=next((p for p in (state.get("players") or []) if p.get("id")==player_id),None)
+        if not player or not state.get("registration_open", True):
+            flash("Không thể gửi đăng ký Test lúc này.","warning")
+        else:
+            rows=[r for r in (state.get("registrations") or []) if r.get("user_id")!=player_id]
+            host_choice=(request.form.get("host_choice") or "").strip().lower()
+            host_region=(request.form.get("host_region") or "").strip()
+            zalo_name=(request.form.get("zalo_name") or "").strip()
+            payment_confirmed=request.form.get("payment_confirmed") == "1"
+            if host_choice not in {"yes","no"} or host_region not in {"Bắc","Trung","Nam"} or not zalo_name or not payment_confirmed:
+                flash("Hãy chọn Host, khu vực và xác nhận chuyển khoản trong form Test.","warning")
+                return redirect(url_for('admin_tournament_test_public',view_as=player_id,register='1'))
+            rows.append({"id":f"test-reg-{uuid.uuid4().hex[:8]}","user_id":player_id,"display_name":player["name"],
+                         "status":"pending","has_host":host_choice=="yes","host_region":host_region,"zalo_name":zalo_name[:80],
+                         "payment_status":"reported","payment_reported_at":datetime.now(timezone.utc).isoformat(),
+                         "registered_at":datetime.now(timezone.utc).isoformat()})
+            state["registrations"]=rows; _save_state(state)
+            flash(f"{player['name']} đã gửi đăng ký và đang chờ Admin duyệt.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=player_id))
+
+    @app.post('/admin/tournament-test-mode/registration/<registration_id>/<decision>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_registration_review(registration_id, decision):
+        if decision not in {"approved","rejected"}:
+            decision="rejected"
+        state,_=_load_state(); found=None
+        for row in state.get("registrations") or []:
+            if row.get("id")==registration_id:
+                row["status"]=decision; row["reviewed_at"]=datetime.now(timezone.utc).isoformat(); found=row; break
+        if found:
+            _save_state(state); flash("Đã duyệt HLV vào giải Test." if decision=="approved" else "Đã từ chối đơn Test.","success")
+        else: flash("Không tìm thấy đơn đăng ký Test.","error")
+        return redirect(url_for('admin_tournament_test_mode'))
+
+    @app.post('/admin/tournament-test-mode/generate-stage1')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_generate_stage1():
+        state,_=_load_state(); players=state.get("players") or []
+        if len(players)<4:
+            flash("Hãy tạo HLV Test trước.","warning"); return redirect(url_for('admin_tournament_test_mode'))
+        target=int(state.get("stage1_target") or 5)
+        pairs=_balanced_stage1_pairs(players,target)
+        if pairs is None:
+            flash(f"Không thể chia đều {target} trận cho {len(players)} HLV. Hãy đổi số HLV hoặc chọn số trận khác.","error")
+            return redirect(url_for('admin_tournament_test_mode'))
+        matches=[]; per_round=max(1,len(players)//2)
+        for seq,(a,b) in enumerate(pairs,1):
+            rnd=((seq-1)//per_round)+1; hs,av=_score(f"s1-{rnd}-{a}-{b}")
+            matches.append({"id":f"s1-{seq}","round":rnd,"home":a,"away":b,"home_score":hs,"away_score":av,"status":"completed"})
+        state["stage1_matches"]=matches
+        state["stage1_ranking"]=_ranking(players,matches)
+        state["pots"]=[]; state["league_matches"]=[]; state["league_ranking"]=[]; state["knockout"]=[]
+        _save_state(state)
+        flash(f"Đã mô phỏng GĐ1: {len(matches)} trận. Mỗi HLV {target} đối thủ khác nhau.","success")
+        return redirect(url_for('admin_tournament_test_mode'))
+
+    @app.post('/admin/tournament-test-mode/generate-pots')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_generate_pots():
+        state,_=_load_state(); ranking=state.get("stage1_ranking") or []
+        if not ranking:
+            flash("Hãy sinh GĐ1 trước.","warning"); return redirect(url_for('admin_tournament_test_mode'))
+        pot_count=3 if int(request.form.get("pot_count") or 4) == 3 else 4
+        pots=[[] for _ in range(pot_count)]
+        if pot_count==3 and len(ranking)==16:
+            for i,row in enumerate(ranking):
+                p=0 if i<5 else (1 if i<11 else 2)
+                pots[p].append({"user_id":row["user_id"],"display_name":row["display_name"],"seed":i+1,"pot":p+1})
+        else:
+            chunk=(len(ranking)+pot_count-1)//pot_count
+            for i,row in enumerate(ranking):
+                p=min(i//chunk,pot_count-1)
+                pots[p].append({"user_id":row["user_id"],"display_name":row["display_name"],"seed":i+1,"pot":p+1})
+        state["pots"]=pots; state["pot_count"]=pot_count; _save_state(state)
+        flash(f"Đã chia {pot_count} Pot theo BXH GĐ1.","success")
+        return redirect(url_for('admin_tournament_test_mode'))
+
+    @app.post('/admin/tournament-test-mode/generate-league')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_generate_league():
+        state,_=_load_state(); players=state.get("players") or []; pots=state.get("pots") or []
+        if not pots:
+            flash("Hãy chia Pot trước.","warning"); return redirect(url_for('admin_tournament_test_mode'))
+        per_pot=max(1,min(2,int(request.form.get("matches_per_pot") or 1)))
+        pot_of={x["user_id"]:x["pot"] for pot in pots for x in pot}
+        members_by_pot={idx+1:[x["user_id"] for x in pot] for idx,pot in enumerate(pots)}
+        seen=set(); matches=[]; seq=1
+        for p in players:
+            uid=p["id"]
+            for pot_no,candidates in members_by_pot.items():
+                choices=[x for x in candidates if x!=uid]
+                choices=sorted(choices, key=lambda x: (x, uid))
+                added=0
+                for opp in choices:
+                    key=tuple(sorted((uid,opp)))
+                    if key in seen: continue
+                    seen.add(key); hs,av=_score(f"lg-{uid}-{opp}")
+                    matches.append({"id":f"lg-{seq}","home":uid,"away":opp,"home_score":hs,"away_score":av,"status":"completed","home_pot":pot_of.get(uid),"away_pot":pot_of.get(opp)}); seq+=1; added+=1
+                    if added>=per_pot: break
+        state["league_matches"]=matches
+        state["league_ranking"]=_ranking(players,matches)
+        _save_state(state)
+        flash(f"Đã mô phỏng League Phase: {len(matches)} trận.","success")
+        return redirect(url_for('admin_tournament_test_mode'))
+
+    @app.post('/admin/tournament-test-mode/simulate-knockout')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_knockout():
+        state,_=_load_state(); league=state.get("league_ranking") or state.get("stage1_ranking") or []
+        qualifiers=[r["user_id"] for r in league[:16]]
+        if len(qualifiers)<2:
+            flash("Chưa đủ dữ liệu để mô phỏng Knockout.","warning"); return redirect(url_for('admin_tournament_test_mode'))
+        rounds=[]; current=qualifiers; names={p["id"]:p["name"] for p in state.get("players") or []}
+        labels={16:"R16",8:"Tứ kết",4:"Bán kết",2:"Chung kết"}
+        while len(current)>=2:
+            nxt=[]; pair_rows=[]
+            for i in range(0,len(current)-1,2):
+                a,b=current[i],current[i+1]
+                a1,b1=_score(f"ko1-{a}-{b}"); b2,a2=_score(f"ko2-{b}-{a}")
+                agg_a=a1+a2; agg_b=b1+b2
+                winner=a if (agg_a, names.get(a,a)) >= (agg_b, names.get(b,b)) else b
+                if agg_a==agg_b: winner=a if a<b else b
+                nxt.append(winner)
+                pair_rows.append({"home":a,"away":b,"home_name":names.get(a,a),"away_name":names.get(b,b),"leg1":f"{a1}-{b1}","leg2":f"{b2}-{a2}","aggregate":f"{agg_a}-{agg_b}","winner":winner,"winner_name":names.get(winner,winner)})
+            rounds.append({"name":labels.get(len(current),f"Top {len(current)}"),"pairs":pair_rows})
+            current=nxt
+            if len(current)==1: break
+        state["knockout"]=rounds; _save_state(state)
+        flash("Đã mô phỏng Knockout hai lượt đến Chung kết.","success")
+        return redirect(url_for('admin_tournament_test_mode'))
+
+    @app.post('/admin/tournament-test-mode/run-all')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_run_all():
+        count=max(4,min(36,int(request.form.get("count") or 36)))
+        target=max(5,min(6,int(request.form.get("target") or 5)))
+        pot_count=3 if int(request.form.get("pot_count") or 4) == 3 else 4
+        try:
+            state=_build_full_simulation(count,target,pot_count)
+        except ValueError as exc:
+            flash(str(exc),"error"); return redirect(url_for('admin_tournament_test_mode'))
+        state["current_stage"]="registration"
+        _save_state(state)
+        flash(f"Đã tạo Tournament Test Console: {count} HLV · GĐ1 {target} trận/HLV · {pot_count} Pot.","success")
+        return redirect(url_for('admin_tournament_test_mode'))
+
+    @app.post('/admin/tournament-test-mode/prepare-stage/<stage>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_prepare_stage(stage):
+        if stage not in STAGE_KEYS:
+            flash("Giai đoạn Test không hợp lệ.","error"); return redirect(url_for('admin_tournament_test_mode'))
+        old,_=_load_state()
+        count=max(4,min(36,int(request.form.get("count") or len(old.get("players") or []) or 36)))
+        target=max(5,min(6,int(request.form.get("target") or old.get("stage1_target") or 5)))
+        pot_count=3 if int(request.form.get("pot_count") or old.get("pot_count") or 4) == 3 else 4
+        if stage=="registration":
+            state=_empty_state(); state["stage1_target"]=target; state["pot_count"]=pot_count
+            state["players"]=[{
+                "id":f"test-hlv-{i:02d}","name":f"Test HLV {i:02d}","is_test":True,
+                "zalo_name":f"Test HLV {i:02d} Zalo","has_host":i%2==1,"host_region":["Bắc","Trung","Nam"][(i-1)%3]
+            } for i in range(1,count+1)]
+            state["registration_open"]=True
+            # Mixed states make the registration screen testable immediately.
+            state["registrations"]=[]
+            for i,p in enumerate(state["players"][:min(8,count)]):
+                status="pending" if i<3 else ("approved" if i<6 else "rejected")
+                state["registrations"].append({"id":f"test-reg-{i+1:02d}","user_id":p["id"],"display_name":p["name"],"status":status,"has_host":p["has_host"],"host_region":p["host_region"],"zalo_name":p["zalo_name"],"payment_status":"reported","registered_at":datetime.now(timezone.utc).isoformat()})
+        else:
+            try:
+                state=_build_full_simulation(count,target,pot_count)
+            except ValueError as exc:
+                flash(str(exc),"error"); return redirect(url_for('admin_tournament_test_mode'))
+        state["current_stage"]=stage
+        if stage=="schedule":
+            _seed_availability_test(state,"no_overlap")
+        _save_state(state)
+        label=dict(STAGES).get(stage,stage)
+        flash(f"Đã chuẩn bị dữ liệu Test cho {label}. Bây giờ có thể chọn HLV và xem đúng góc nhìn vòng này.","success")
+        view_as=(request.form.get("view_as") or "").strip()
+        if request.form.get("open_player_view") == "1":
+            if not view_as or not any(p.get("id")==view_as for p in state.get("players") or []):
+                view_as=_default_view_for_stage(state,stage)
+            return redirect(url_for('admin_tournament_test_public',view_as=view_as,stage=stage))
+        return redirect(url_for('admin_tournament_test_mode'))
+
+
+    @app.post('/admin/tournament-test-mode/prepare-schedule/<case>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_prepare_schedule(case):
+        if case not in SCHEDULE_CASE_KEYS:
+            flash("Trạng thái lịch Test không hợp lệ.","error")
+            return redirect(url_for('admin_tournament_test_mode'))
+        state,_=_load_state()
+        if len(state.get("players") or []) < 2:
+            try:
+                state=_build_full_simulation(36, int(state.get("stage1_target") or 5), int(state.get("pot_count") or 4))
+            except ValueError as exc:
+                flash(str(exc),"error")
+                return redirect(url_for('admin_tournament_test_mode'))
+        view_as=_schedule_test_case(state,case)
+        _save_state(state)
+        label=dict(SCHEDULE_CASES).get(case,case)
+        flash(f"Đã chuẩn bị Test lịch: {label}.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=view_as,stage='schedule'))
+
+
+    @app.post('/admin/tournament-test-mode/prepare-availability/<case>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_prepare_availability(case):
+        state,_=_load_state()
+        if len(state.get("players") or []) < 2:
+            state=_build_full_simulation(36,6,3)
+        _seed_availability_test(state,case)
+        _save_state(state)
+        flash("Đã chuẩn bị Test Đặt lịch 3 ngày.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=state["players"][0]["id"],stage='schedule'))
+
+    @app.post('/admin/tournament-test-mode/availability/<player_id>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_availability_save(player_id):
+        state,_=_load_state()
+        allowed={x["iso"] for d in _availability_days_test() for x in d["slots"]}
+        selected=[x for x in request.form.getlist("slots") if x in allowed]
+        av=state.get("availability_test") or {}
+        av[str(player_id)]=sorted(set(selected))
+        state["availability_test"]=av
+        _save_state(state)
+        flash("Đã cập nhật lịch cá nhân Test. Lịch này áp dụng cho tất cả đối thủ.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=player_id,stage='schedule'))
+
+    @app.post('/admin/tournament-test-mode/availability/<player_id>/book/<opponent_id>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_availability_book(player_id,opponent_id):
+        state,_=_load_state(); slot=(request.form.get("slot_at") or "").strip()
+        av=state.get("availability_test") or {}
+        overlap=set(av.get(str(player_id)) or []) & set(av.get(str(opponent_id)) or [])
+        if slot not in overlap:
+            flash("Khung giờ này không còn trùng giữa hai HLV.","warning")
+        else:
+            bookings=state.get("availability_bookings") or {}
+            bookings["|".join(sorted((str(player_id),str(opponent_id))))]=slot
+            state["availability_bookings"]=bookings; _save_state(state)
+            flash("Đã chốt lịch Test từ khung giờ trùng.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=player_id,stage='schedule'))
+
+    @app.post('/admin/tournament-test-mode/start-single-journey')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_start_single_journey():
+        old,_=_load_state()
+        count=max(16,min(36,int(request.form.get("count") or 36)))
+        target=max(5,min(6,int(request.form.get("target") or old.get("stage1_target") or 5)))
+        pot_count=3 if int(request.form.get("pot_count") or old.get("pot_count") or 4)==3 else 4
+        try:
+            state=_build_single_hlv_journey(count,target,pot_count)
+        except ValueError as exc:
+            flash(str(exc),"error"); return redirect(url_for('admin_tournament_test_mode'))
+        _save_state(state)
+        flash("Đã tạo hành trình 1 HLV. Bạn là Test HLV 01; các HLV còn lại do hệ thống tự mô phỏng.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=state["journey_player_id"],stage='registration'))
+
+    @app.post('/admin/tournament-test-mode/journey/approve-registration')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_journey_approve_registration():
+        state,_=_load_state(); pid=state.get("journey_player_id")
+        reg=_registration_for(state,pid)
+        if reg and reg.get("status")=="pending":
+            reg["status"]="approved"; reg["reviewed_at"]=datetime.now(timezone.utc).isoformat(); _save_state(state)
+            flash("Đối thủ/Admin Test đã duyệt đăng ký ngay.","success")
+        return redirect(url_for('admin_tournament_test_public',view_as=pid,stage='registration'))
+
+    @app.post('/admin/tournament-test-mode/journey/schedule/<action>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_journey_schedule(action):
+        state,_=_load_state(); pid=state.get("journey_player_id") or "test-hlv-01"
+        if not state.get("schedule_test"):
+            _schedule_test_case(state,"unscheduled")
+        row=state.get("schedule_test") or {}; now=datetime.now(timezone.utc)
+        if action=="propose":
+            row["case"]="waiting_outgoing"; row["request"]={"id":"journey-request","status":"pending","proposed_by":pid,"proposed_at":(now+timedelta(hours=2)).isoformat(),"note":""}
+        elif action=="approve":
+            req=row.get("request") or {}
+            row["case"]="scheduled"; row["status"]="scheduled"; row["scheduled_at"]=req.get("proposed_at") or (now+timedelta(hours=2)).isoformat()
+        elif action=="complete":
+            row["case"]="completed"; row["status"]="completed"; row["scheduled_at"]=row.get("scheduled_at") or (now-timedelta(hours=2)).isoformat(); row["home_score"]=2; row["away_score"]=1
+        state["schedule_test"]=row; state["current_stage"]="schedule"; _save_state(state)
+        return redirect(url_for('admin_tournament_test_public',view_as=pid,stage='schedule'))
+
+    @app.post('/admin/tournament-test-mode/journey/go/<stage>')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_journey_go(stage):
+        if stage not in STAGE_KEYS:
+            flash("Giai đoạn Test không hợp lệ.","error"); return redirect(url_for('admin_tournament_test_mode'))
+        state,_=_load_state(); pid=state.get("journey_player_id") or "test-hlv-01"
+        state["journey_mode"]=True; state["journey_player_id"]=pid; state["current_stage"]=stage
+        if stage=="schedule" and not state.get("schedule_test"):
+            # Use the journey player as HLV A and an automatic opponent as HLV B.
+            players=state.get("players") or []
+            others=[p for p in players if p.get("id")!=pid]
+            if others:
+                a=next((p for p in players if p.get("id")==pid),players[0]); b=others[0]
+                state["players"]=[a,b]+[p for p in players if p.get("id") not in {a.get("id"),b.get("id")}]
+                _schedule_test_case(state,"unscheduled")
+            _seed_availability_test(state,"no_overlap")
+        _force_journey_player(state,pid); _save_state(state)
+        return redirect(url_for('admin_tournament_test_public',view_as=pid,stage=stage))
+
+    @app.post('/admin/tournament-test-mode/reset')
+    @login_required
+    @admin_required
+    @admin_permission_required("system_features_manage")
+    def admin_tournament_test_reset():
+        aid=_admin_id()
+        execute_query(db.table(SANDBOX_TABLE).delete().eq("admin_user_id",aid),"tournament_test_reset",attempts=2)
+        flash("Đã xóa toàn bộ dữ liệu Test Mode. Dữ liệu thật không bị ảnh hưởng.","success")
+        return redirect(url_for('admin_tournament_test_mode'))

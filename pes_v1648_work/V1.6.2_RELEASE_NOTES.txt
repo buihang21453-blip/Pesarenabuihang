@@ -1,0 +1,35 @@
+PES ARENA V1.6.2 — TÁCH LỊCH ĐỐI THỦ KHỎI VÉ RANDOM CLB
+
+Luồng GĐ2 chính thức:
+- Random CLB gốc cho đủ 16 HLV theo Tier/Pot.
+- Ngay khi đủ 16 CLB hợp lệ, Admin có thể bấm "Sinh lịch GĐ2 · 4 trận".
+- Thuật toán vẫn bắt buộc: Tier HLV 5–6–5, 32 trận, 4 trận/HLV, 4 đối thủ khác nhau, mỗi HLV gặp đủ Tier 1/2/3.
+- Sau khi sinh, các cặp đối thủ là cố định. Việc HLV dùng vé thưởng để đổi CLB không tạo lại, xóa hay thay đổi tournament_matches.
+- Có thể bắt đầu/công bố lễ bốc thăm đối thủ ngay cả khi 3 HLV còn vé thưởng.
+- SilverKeyhunter / Xuân Nam / BaKarot vẫn dùng vé đến khi chốt, dùng hết vé hoặc tới deadline Admin cấu hình.
+- Đổi CLB chỉ cập nhật CLB của HLV; Tier HLV và đối thủ giữ nguyên.
+- Mở GĐ2 vẫn yêu cầu lịch hợp lệ + công bố đối thủ hoàn tất + pha vé đã đóng. Admin "Bắt đầu GĐ2 ngay" có thể đóng vé chưa dùng theo cơ chế V1.6.1.
+
+Backend:
+- modules/tournament_competition_parts/league.py
+  + Bỏ gate yêu cầu pha vé phải đóng trước khi sinh lịch.
+  + Bỏ gate yêu cầu pha vé phải đóng trước khi bắt đầu công bố đối thủ.
+  + Giữ nguyên validation 32 trận / 4 trận / đủ 3 Tier / không trùng đối thủ.
+- modules/tournament_competition_parts/core.py
+  + Cập nhật mô tả trạng thái vé và readiness V1.6.2; không thay đổi gate mở GĐ2.
+
+UI:
+- templates/admin.html
+  + Kịch bản GĐ2 hiển thị Sinh lịch/Bốc đối thủ trước, vé thưởng tiếp tục hoạt động song song.
+  + Ghi rõ "đối thủ cố định, vé chỉ đổi CLB".
+
+Database:
+- Không schema/migration mới.
+- Không thay đổi tournament_matches khi HLV reroll CLB.
+
+Kiểm thử local:
+- Python compile.
+- Jinja parse.
+- Test thuật toán lịch nhiều lượt để xác nhận 32 trận, 4 trận/HLV, đủ 3 Tier, không trùng đối thủ.
+- Static check xác nhận route reroll CLB không update/delete tournament_matches.
+- Chưa test Supabase Production / 2 tài khoản test thực tế.

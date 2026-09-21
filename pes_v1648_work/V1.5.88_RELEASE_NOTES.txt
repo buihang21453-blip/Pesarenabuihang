@@ -1,0 +1,6 @@
+V1.5.88 | Fix Admin kết thúc GĐ1 HTTP 500
+1. Chạy SQL_V1.5.88_STAGE_STATUS_PENDING.sql trên Supabase TRƯỚC KHI deploy.
+2. Triển khai ZIP sau khi migration thành công.
+3. Xác minh GĐ1=completed, GĐ2=pending, kết quả/BXH nguyên vẹn; test Admin và 2 tài khoản test.
+4. Nếu còn lỗi: xem Vercel Function Logs; không bấm cưỡng chế để thử khi toàn bộ trận đã hoàn thành.
+Chưa xác thực Production hoặc Supabase thực tế.

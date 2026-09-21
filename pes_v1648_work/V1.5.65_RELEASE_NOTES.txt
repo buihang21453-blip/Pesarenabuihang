@@ -1,0 +1,7 @@
+PES ARENA V1.5.65
+
+Fix popup lịch rảnh cho tài khoản test:
+- Form LƯU LỊCH trong popup dùng route test khi hub.is_test=True.
+- HLV thật vẫn lưu vào tournament_availability_slots.
+- Giờ linh hoạt giữ nguyên route dùng chung đã hỗ trợ test.
+- Sau lưu redirect về /tournaments, mine_set được đọc lại và popup biến mất khi đã có ít nhất một slot.
