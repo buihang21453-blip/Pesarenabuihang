@@ -75,7 +75,6 @@
             </button>
             {% endif %}
         </div>
-        <p class="room-mode-switch-note">Một giao diện chung cho nhiều chức năng. Với phòng thường, bạn có thể đổi layout <strong>Rank ↔ Mini Cup</strong>; với phòng giải, tab <strong>C1</strong> dùng chung khung này.</p>
     </div>
 
     <div class="room-match-shell room-arena-frame">
@@ -145,41 +144,6 @@
         </section>
 
         <section class="room-center-stage-plain" aria-label="Khu vực điều khiển trận đấu">
-            <div class="room-mode-layout-hero" aria-label="Bố cục chế độ phòng đấu">
-                <div class="room-mode-layout-card" data-layout-mode="rank">
-                    <div class="room-mode-layout-copy">
-                        <span class="room-mode-layout-kicker">RANK</span>
-                        <strong>Phòng đấu Xếp hạng</strong>
-                        <p>Tìm nhanh đối thủ, chọn chế độ phù hợp và vào trận ngay trong cùng một giao diện.</p>
-                    </div>
-                    <div class="room-mode-layout-pills">
-                        <span>1 vs 1</span><span>Random</span><span>RP</span>
-                    </div>
-                </div>
-                {% if is_tournament_room %}
-                <div class="room-mode-layout-card" data-layout-mode="c1">
-                    <div class="room-mode-layout-copy">
-                        <span class="room-mode-layout-kicker">C1</span>
-                        <strong>Phòng đấu C1</strong>
-                        <p>Dùng cùng khung phòng đấu nhưng ưu tiên lịch giải, thể thức lượt đi/lượt về và xác nhận kết quả ngay trong phòng.</p>
-                    </div>
-                    <div class="room-mode-layout-pills">
-                        <span>Giải đấu</span><span>1 vs 1</span><span>Xác nhận tỷ số</span>
-                    </div>
-                </div>
-                {% else %}
-                <div class="room-mode-layout-card" data-layout-mode="mini_cup">
-                    <div class="room-mode-layout-copy">
-                        <span class="room-mode-layout-kicker">MINI CUP</span>
-                        <strong>Phòng đấu Mini Cup</strong>
-                        <p>Giữ nguyên khung phòng đấu nhưng đổi không khí sang thi đấu cúp: gọn hơn, nhanh hơn và phù hợp giải nhỏ.</p>
-                    </div>
-                    <div class="room-mode-layout-pills">
-                        <span>Đấu cúp</span><span>Knockout</span><span>1 trận duy nhất</span>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
             {# UI Rank selector uses system_features.rank_standard_enabled; visible label: RANDOM #}
         {% include "partials/room_mode_center_display.html" %}
 
@@ -626,33 +590,19 @@
 .tournament-only-random-card{border:1px solid rgba(245,184,55,.35);background:linear-gradient(135deg,rgba(245,184,55,.08),rgba(255,255,255,.02));}
 .tournament-room-mode-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}.tournament-room-mode-head h3{margin:0 0 6px}.tournament-pool-badge{display:inline-flex;align-items:center;min-height:32px;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.16);font-size:12px;font-weight:700}.tournament-mode-rules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}.tournament-mode-rules span{padding:9px 10px;border:1px solid rgba(255,255,255,.1);border-radius:9px;font-size:13px}.tournament-random-action{display:flex;justify-content:center;margin-top:14px}.tournament-random-btn{min-width:220px;font-size:16px;font-weight:800}.tournament-room-wait,.tournament-room-live{text-align:center;margin:14px 0 0;font-weight:700}@media(max-width:640px){.tournament-mode-rules{grid-template-columns:1fr}.tournament-room-mode-head{display:block}.tournament-pool-badge{margin-top:8px}}
 
-.room-mode-switch-strip{margin:14px 0 18px;padding:16px 18px;background:linear-gradient(180deg,rgba(7,21,54,.92),rgba(5,15,40,.88));border:1px solid rgba(90,163,255,.18)}
-.room-mode-switch-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.room-mode-switch-card{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;min-height:78px;padding:14px 18px;border-radius:18px;border:1px solid rgba(98,164,255,.2);background:linear-gradient(180deg,rgba(11,25,58,.98),rgba(6,18,42,.98));color:#eef5ff;cursor:pointer;transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;text-align:left}
-.room-mode-switch-card:hover{transform:translateY(-1px);border-color:rgba(241,202,104,.58);box-shadow:0 12px 26px rgba(0,0,0,.28)}
-.room-mode-switch-card.is-active{border-color:rgba(241,202,104,.88);background:linear-gradient(180deg,rgba(62,48,8,.95),rgba(20,27,53,.98));box-shadow:0 0 0 1px rgba(241,202,104,.16) inset,0 18px 32px rgba(0,0,0,.32)}
-.room-mode-switch-card.is-disabled{opacity:.56;cursor:not-allowed}
-.room-mode-switch-kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#f1ca68;font-weight:900}
-.room-mode-switch-card strong{font-size:20px;line-height:1.1}
-.room-mode-switch-note{margin:12px 2px 0;color:#a8bfdc;font-size:13px}
-.room-mode-layout-hero{margin:0 0 14px;display:block}
-.room-mode-layout-card{display:none;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border-radius:18px;border:1px solid rgba(91,160,255,.18);background:linear-gradient(135deg,rgba(8,23,54,.94),rgba(6,17,38,.96));box-shadow:0 10px 22px rgba(0,0,0,.2)}
-.room-mode-layout-copy{display:flex;flex-direction:column;gap:4px}
-.room-mode-layout-kicker{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#f1ca68;font-weight:900}
-.room-mode-layout-copy strong{font-size:24px;color:#fff}
-.room-mode-layout-copy p{margin:0;color:#bdd1ec;font-size:13px;max-width:760px}
-.room-mode-layout-pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.room-mode-layout-pills span{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);font-size:12px;font-weight:800;color:#f4f8ff}
-#roomLiveShell[data-room-ui-mode="rank"] .room-mode-layout-card[data-layout-mode="rank"],
-#roomLiveShell[data-room-ui-mode="c1"] .room-mode-layout-card[data-layout-mode="c1"],
-#roomLiveShell[data-room-ui-mode="mini_cup"] .room-mode-layout-card[data-layout-mode="mini_cup"]{display:flex}
+/* V1.6.45: compact mode navigation; descriptive banners removed. */
+.room-mode-switch-strip{margin:7px 0 10px;padding:5px 8px;background:linear-gradient(180deg,rgba(7,21,54,.94),rgba(5,15,40,.90));border:1px solid rgba(90,163,255,.18);border-radius:12px}
+.room-mode-switch-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-width:670px;margin:0 auto;gap:6px}
+.room-mode-switch-card{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:42px;padding:7px 10px;border-radius:9px;border:1px solid rgba(98,164,255,.22);background:linear-gradient(180deg,rgba(11,25,58,.98),rgba(6,18,42,.98));color:#eef5ff;cursor:pointer;text-align:center;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease}
+.room-mode-switch-card:hover:not(:disabled){border-color:rgba(241,202,104,.58);background:rgba(35,49,78,.96)}
+.room-mode-switch-card.is-active{border-color:rgba(241,202,104,.85);background:linear-gradient(180deg,rgba(62,48,8,.95),rgba(20,27,53,.98));box-shadow:0 0 0 1px rgba(241,202,104,.1) inset}
+.room-mode-switch-card.is-disabled{opacity:.54;cursor:not-allowed}
+.room-mode-switch-kicker{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#f1ca68;font-weight:900;white-space:nowrap}
+.room-mode-switch-card strong{font-size:12px;font-weight:650;line-height:1.1;white-space:nowrap}
 #roomLiveShell[data-room-ui-mode="mini_cup"] .room-center-stage-plain{background:linear-gradient(180deg,rgba(9,22,43,.96),rgba(16,13,37,.98));box-shadow:0 0 0 1px rgba(255,97,145,.1) inset,0 22px 48px rgba(0,0,0,.32)}
-#roomLiveShell[data-room-ui-mode="mini_cup"] .room-mode-layout-card[data-layout-mode="mini_cup"]{border-color:rgba(255,84,132,.34);background:linear-gradient(135deg,rgba(20,16,50,.96),rgba(43,10,34,.96))}
-#roomLiveShell[data-room-ui-mode="mini_cup"] .room-mode-layout-card[data-layout-mode="mini_cup"] .room-mode-layout-kicker{color:#ff77a8}
 #roomLiveShell[data-room-ui-mode="mini_cup"] .room-stage-topbar{background:linear-gradient(90deg,rgba(8,24,55,.92),rgba(43,10,34,.92));border-color:rgba(255,109,154,.24)}
 #roomLiveShell[data-room-ui-mode="mini_cup"] .room-match-shell{box-shadow:0 24px 44px rgba(0,0,0,.36),0 0 0 1px rgba(255,93,154,.08) inset}
-@media(max-width:980px){.room-mode-switch-grid{grid-template-columns:1fr}.room-mode-layout-card{flex-direction:column;align-items:flex-start}.room-mode-layout-pills{justify-content:flex-start}}
-
+@media(max-width:560px){.room-mode-switch-strip{padding:5px}.room-mode-switch-grid{gap:4px}.room-mode-switch-card{flex-direction:column;gap:2px;min-height:42px;padding:5px 2px}.room-mode-switch-kicker{font-size:11px}.room-mode-switch-card strong{font-size:10px}}
 </style>
     {% include "partials/tournament_room_invite.html" %}
 {% if is_tournament_room and tournament_meta and tournament_fixed_club_mode %}

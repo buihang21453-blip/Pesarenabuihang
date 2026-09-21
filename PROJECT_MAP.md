@@ -1,3 +1,9 @@
+## V1.6.45 — Giao diện thanh chế độ gọn
+
+- `templates/room_detail.html`: loại phần diễn giải và hero banner theo mode; CSS nút chế độ chiều cao nhỏ, tối đa 670px, responsive. Giữ nguyên liên kết route và JS đổi mode.
+- `app.py`, `templates/admin_parts/c1_gd2_clubs.html`: đồng bộ version.
+- Không sửa dịch vụ giải đấu, API hay DB.
+
 ## V1.6.44 — Phòng đấu đa chức năng
 
 - `templates/room_detail.html`: thêm thanh chọn chế độ phía trên, hero theo chế độ và CSS/JS đổi layout trong cùng một giao diện.

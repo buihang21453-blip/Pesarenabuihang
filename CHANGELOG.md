@@ -1,3 +1,11 @@
+## V1.6.45 — Thu gọn thanh chế độ Phòng đấu
+
+- Bỏ hoàn toàn đoạn diễn giải "Một giao diện chung cho nhiều chức năng..." phía dưới thanh chọn chế độ.
+- Bỏ các banner/hero mô tả dài RANK, C1, MINI CUP và các chip 1 vs 1 / Random / RP / Knockout khỏi phần đầu khu vực điều khiển.
+- Thu gọn ba nút RANK — Xếp hạng, C1 — Giải đấu, MINI CUP — Đấu cúp thành thanh ngang ngắn, căn giữa; đáp ứng màn hình nhỏ bằng nhãn hai dòng.
+- Giữ nguyên hành vi chuyển Rank/C1, lựa chọn giao diện Mini Cup, chức năng phòng đấu, kết quả, Parsec, lịch sử và quyền truy cập.
+- Không đổi API/DB, không cần SQL mới.
+
 ## V1.6.44 — Phòng đấu đa chức năng với thanh chọn chế độ
 
 - Nâng Phòng đấu thành một khung giao diện đa chức năng với thanh chọn chế độ phía trên gồm **RANK / C1 / MINI CUP**.

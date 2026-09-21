@@ -1,3 +1,9 @@
+## V1.6.45 — Thanh chế độ không chiếm không gian trận đấu
+
+- Chỉ hiển thị ba nút chế độ ngắn gọn phía trên; không đặt lời giải thích dài hoặc các banner trùng lặp làm mất diện tích phòng đấu.
+- Không thay đổi logic Rank/C1/Mini Cup hoặc route chỉ để sửa trình bày.
+- Duy trì tài liệu dự án, nâng version, kiểm tra template và loại cache khi đóng gói.
+
 ## V1.6.44 — Quy tắc Phòng đấu đa chức năng
 
 - Một khung Phòng đấu có thể chứa nhiều layout, nhưng **không được trộn logic nghiệp vụ** giữa Rank, C1 và Mini Cup.
