@@ -1,3 +1,10 @@
+## V1.6.50 — Đưa đồng hồ GĐ2 lên khung đếm ngược trong ảnh giải C1
+
+- Thay trực tiếp khung “⚡ GĐ2 SẴN SÀNG MỞ” trên ảnh bìa giải C1 bằng đồng hồ thời gian GĐ2 đã có ở V1.6.49.
+- Hiển thị giờ khởi tranh, hạn kết thúc, thời gian còn lại và trạng thái tự chuyển trước/trong/sau giải ngay trong vị trí khung cũ; giữ khẩu hiệu.
+- Bỏ đồng hồ trùng dưới tiêu đề giải và đoạn JavaScript đếm ngược lễ bốc thăm cũ đã bị thay thế; chỉ một đồng hồ cập nhật mỗi giây.
+- Không thay đổi mốc giờ trong database, luồng giải đấu, lịch, RP hay API. Không có SQL mới.
+
 ## V1.6.49 — Đồng hồ đếm ngược GĐ2 C1
 
 - Trang Giải đấu C1 hiển thị giờ khởi tranh và hạn kết thúc GĐ2 theo cấu hình Admin đã lưu (giờ Việt Nam).

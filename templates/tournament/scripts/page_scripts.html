@@ -1,5 +1,5 @@
 <script>
-/* V1.6.49: client-only clock; deadlines always read from persisted server values. */
+/* V1.6.50: one GD2 clock in the media overlay; deadlines from persisted server values. */
 (function(){
   var clocks=Array.from(document.querySelectorAll('[data-c1-gd2-clock]'));
   if(!clocks.length)return;
@@ -18,6 +18,8 @@
       phase='ended';target=end;caption='Đã hết thời gian GĐ2';status='Đã đến hạn kết thúc';
     }
     box.dataset.phase=phase;
+    var heading=box.querySelector('[data-gd2-clock-title]');
+    if(heading)heading.textContent=phase==='upcoming'?'⏳ GĐ2 · SẮP KHỞI TRANH':phase==='active'?'⏱️ GĐ2 · ĐANG THI ĐẤU':phase==='ended'?'🏁 GĐ2 · ĐÃ HẾT GIỜ':'⏱️ GĐ2 · ĐỒNG HỒ THI ĐẤU';
     var label=box.querySelector('[data-gd2-clock-status]');if(label)label.textContent=status;
     label=box.querySelector('[data-gd2-clock-caption]');if(label)label.textContent=caption;
     var remaining=Number.isFinite(target)?Math.max(0,Math.floor((target-now)/1000)):null;
@@ -88,29 +90,7 @@
   });
 })();
 </script>
-<script>
-(function(){
-  var cards=Array.from(document.querySelectorAll('[data-gd2-ceremony-card]'));
-  if(!cards.length) return;
-  function fmt(ts){var dt=new Date(ts);if(isNaN(dt.getTime()))return '';return new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric',hour12:false}).format(dt);}
-  function render(card){
-    var now=Date.now(), draw=Date.parse(card.dataset.drawAt||''), reward=Date.parse(card.dataset.rewardDeadline||''), league=Date.parse(card.dataset.leagueStart||'');
-    var box=card.querySelector('[data-center-countdown]'), title=card.querySelector('[data-gd2-phase-title]'), label=card.querySelector('[data-draw-date]'), status=card.querySelector('[data-draw-status]');
-    var target=draw, phase='draw';
-    if(isFinite(draw)&&now>=draw){target=reward;phase='reward';}
-    if(isFinite(reward)&&now>=reward){target=league;phase='league';}
-    if(phase==='draw'){if(title)title.textContent='⏳ LỄ BỐC THĂM CLB GĐ2';if(status)status.textContent='Đếm ngược đến lễ bốc thăm';}
-    else if(phase==='reward'){if(title)title.textContent='🎟 THỜI GIAN SỬ DỤNG VÉ THƯỞNG';if(status)status.textContent='3 HLV có vé có thể Random lại và chốt CLB';}
-    else {if(title)title.textContent='⚡ GĐ2 SẴN SÀNG MỞ';if(status)status.textContent='Đã đến mốc mở GĐ2 · chờ đủ điều kiện bốc thăm đối thủ';}
-    if(label&&isFinite(target))label.textContent=fmt(new Date(target).toISOString());
-    if(!box||!isFinite(target))return;
-    box.dataset.centerCountdown=new Date(target).toISOString();
-    var sec=Math.max(0,Math.floor((target-now)/1000)),vals={d:Math.floor(sec/86400),h:Math.floor((sec%86400)/3600),m:Math.floor((sec%3600)/60),s:sec%60};
-    Object.keys(vals).forEach(function(k){var el=box.querySelector('[data-'+k+']');if(el)el.firstChild.nodeValue=vals[k];});
-  }
-  function refresh(){cards.forEach(render);} refresh(); window.setInterval(refresh,1000);
-})();
-</script>
+
 <script>
 (function(){
   var boxes=Array.from(document.querySelectorAll('[data-public-countdown]'));

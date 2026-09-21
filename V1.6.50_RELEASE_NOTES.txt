@@ -1,0 +1,1 @@
+PES ARENA V1.6.50 — Đồng hồ GĐ2 ở vị trí khung SẴN SÀNG MỞ trên ảnh bìa giải C1. Bỏ đồng hồ trùng dưới tiêu đề. Không thay đổi dữ liệu và không có SQL mới.

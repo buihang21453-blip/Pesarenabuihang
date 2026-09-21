@@ -115,4 +115,19 @@
 .c1-gd2-clock[data-phase="ended"] .c1-gd2-clock-units b{color:#9baebd}
 .c1-gd2-clock[data-phase="active"] .c1-gd2-clock-head>span{color:#84e3aa}
 @media(max-width:520px){.c1-gd2-clock{padding:12px}.c1-gd2-clock-dates{display:grid;gap:5px}.c1-gd2-clock-units b{font-size:20px}.c1-gd2-clock-units{gap:5px}}
+
+/* V1.6.50: GĐ2 countdown REPLACES the old ready/draw overlay in the media banner. */
+.tournament-card-media .c1-gd2-clock-in-media{position:absolute;z-index:4;right:16px;top:15px;left:auto;width:min(510px,58%);margin:0;padding:13px 15px;border:1px solid rgba(255,190,40,.72);border-radius:14px;background:linear-gradient(135deg,rgba(65,25,12,.95),rgba(10,25,39,.97));box-shadow:0 10px 34px rgba(0,0,0,.38),0 0 24px rgba(255,145,0,.12);text-align:left}
+.c1-gd2-clock-in-media .c1-gd2-clock-head strong{font-size:15px;color:#ffe071}
+.c1-gd2-clock-in-media .tournament-progress-slogan{display:block;margin-top:4px;font-size:11px;font-weight:800;font-style:italic;color:#fbd27e}
+.c1-gd2-clock-in-media .c1-gd2-clock-dates{margin-top:7px;gap:3px 12px;font-size:11px}
+.c1-gd2-clock-in-media .c1-gd2-clock-dates>span{white-space:normal}
+.c1-gd2-clock-in-media .c1-gd2-clock-dates small{font-size:10px}
+.c1-gd2-clock-in-media .c1-gd2-clock-caption{margin:8px 0 5px;font-size:11px}
+.c1-gd2-clock-in-media .c1-gd2-clock-units{max-width:none;gap:6px}
+.c1-gd2-clock-in-media .c1-gd2-clock-units>div{padding:6px 4px}
+.c1-gd2-clock-in-media .c1-gd2-clock-units b{font-size:21px}
+.c1-gd2-clock-in-media .c1-gd2-clock-units small{margin-top:3px}
+@media(max-width:720px){.tournament-card-media .c1-gd2-clock-in-media{right:10px;left:10px;top:45px;width:auto;max-width:none;padding:10px 12px}.c1-gd2-clock-in-media .c1-gd2-clock-head{gap:4px}.c1-gd2-clock-in-media .c1-gd2-clock-head strong{font-size:13px}.c1-gd2-clock-in-media .c1-gd2-clock-units b{font-size:18px}}
+
 </style>

@@ -1,3 +1,12 @@
+## V1.6.50 — Vị trí đồng hồ GĐ2
+
+- `templates/tournament/cards/c1_media.html`: nhúng đồng hồ vào đúng vị trí overlay trên ảnh giải C1.
+- `templates/tournament/cards/c1_header_nav.html`: bỏ đồng hồ ở dưới header, giữ menu giải.
+- `templates/tournament/scripts/page_scripts.html`: đồng hồ duy nhất cập nhật trạng thái và đếm ngược; bỏ script lễ bốc thăm cũ ở khung đã thay.
+- `templates/tournament/styles.html`: đồng hồ vừa khung overlay desktop/mobile.
+- `tests/test_c1_gd2_clock_v1649.py`, `tests/test_c1_gd2_clock_location_v1650.py`: kiểm tra nội dung và vị trí đồng hồ.
+- `app.py`, `templates/admin_parts/c1_gd2_clubs.html`: đồng bộ V1.6.50. Không có SQL mới.
+
 ## V1.6.49 — Đồng hồ GĐ2 C1
 
 - `modules/tournament_routes.py`: thêm nhãn giờ khởi tranh/hạn kết thúc GĐ2 theo Asia/Ho_Chi_Minh từ competition_timing.

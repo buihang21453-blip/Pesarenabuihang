@@ -1,3 +1,9 @@
+## V1.6.50 — Đồng hồ GĐ2 trên ảnh giải
+
+- Khung overlay ảnh bìa C1 chỉ có một đồng hồ GĐ2 và không còn nhãn “GĐ2 SẴN SÀNG MỞ” với 0 ngày giả.
+- Đếm ngược dựa trên `league_start_at` và `league_end_at` đã lưu, không tự đặt ngày; chưa cấu hình phải báo rõ.
+- Trạng thái đếm ngược chỉ để hiển thị, không tự mở hay đóng giải; giao diện di động không tràn ảnh bìa.
+
 ## V1.6.49 — Quy tắc hiển thị thời gian C1 GĐ2
 
 - Mốc khởi tranh và hạn kết thúc phải đọc từ `competition_timing.league_start_at` / `league_end_at`; định dạng múi giờ Việt Nam (UTC+7).
