@@ -1,3 +1,10 @@
+## V1.6.53 — Quy tắc màu lịch rảnh GĐ2
+
+- Trong Sảnh chờ GĐ2, giờ rảnh của HLV mặc định màu xanh dương.
+- Nếu cùng một ISO slot xuất hiện ở lịch của HLV và ít nhất một đối thủ GĐ2 đang hiển thị, **cả hai phía đều phải tô xanh lá**.
+- Không dùng lịch đối thủ ở giai đoạn khác để đánh dấu overlap trong Sảnh chờ GĐ2.
+- Giờ linh hoạt 30 phút được xử lý như slot bình thường và phải áp dụng cùng quy tắc màu.
+
 ## V1.6.52 — Quy tắc lịch rảnh
 
 - Mọi slot đã lưu, kể cả slot linh hoạt 30 phút, phải hiển thị ở “Lịch của tôi” và Góc nhìn HLV Admin.

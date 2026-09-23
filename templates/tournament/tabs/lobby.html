@@ -26,7 +26,7 @@
           <div class="c1-lobby-my-day-label"><strong>{{ day.label }}</strong><small>{{ day.weekday }}</small></div>
           <div class="c1-lobby-times">
             {% for slot in day.opponent_slots %}
-              <span class="c1-lobby-time c1-lobby-my-time" data-my-slot-iso="{{ slot.iso }}" data-availability-scope="{{ tournament.id }}">{{ slot.label }}</span>
+              <span class="c1-lobby-time c1-lobby-my-time{{ ' is-overlap' if slot.is_overlap else '' }}" data-my-slot-iso="{{ slot.iso }}" data-availability-scope="{{ tournament.id }}">{{ slot.label }}</span>
             {% else %}
               <span class="c1-lobby-no-times">Chưa đăng ký giờ rảnh</span>
             {% endfor %}
@@ -37,7 +37,7 @@
         {% endfor %}
       </div>
     </section>
-    <div class="c1-lobby-rivals-heading"><span class="c1-lobby-section-kicker">02 · LỊCH RẢNH CỦA ĐỐI THỦ</span><h3>👥 4 đối thủ GĐ2</h3><p>Tier · CLB · logo · Pot và giờ rảnh từng ngày. Lịch của tôi màu xanh dương; <span class="c1-lobby-legend-dot"></span> xanh lá chỉ dành cho giờ đối thủ trùng cả ngày và giờ.</p></div>
+    <div class="c1-lobby-rivals-heading"><span class="c1-lobby-section-kicker">02 · LỊCH RẢNH CỦA ĐỐI THỦ</span><h3>👥 4 đối thủ GĐ2</h3><p>Tier · CLB · logo · Pot và giờ rảnh từng ngày. Lịch của tôi màu xanh dương; khung giờ của tôi và đối thủ đều chuyển xanh lá khi trùng chính xác ngày và giờ.</p></div>
 
     {% if hub.is_test and hub.league_opponents|length != 4 %}
       {% if hub.test_opponent %}

@@ -352,8 +352,9 @@ def register_routes(context):
             av_rows,_=_safe_rows(db.table('tournament_availability_slots').select('slot_at').eq('tournament_id',tournament_id).eq('user_id',uid),'tournament_landing_mine_availability')
             mine=_landing_parse_slots([r.get('slot_at') for r in av_rows])
         mine_set=set(mine)
-        # V1.6.52: render self availability from saved slots, including custom half-hour times.
-        mine_availability_days=_landing_group_slots(mine,mine_set)
+        # V1.6.52: self availability reads the saved slots, including custom half-hour times.
+        # V1.6.53 recolors these slots later, after the visible GĐ2 opponents are known.
+        mine_availability_days=_landing_group_slots(mine,set())
 
         match_rows,_=_safe_rows(db.table('tournament_matches').select('*').eq('tournament_id',tournament_id).or_(f'home_user_id.eq.{uid},away_user_id.eq.{uid}').order('created_at'),'tournament_landing_my_matches') if member else ([],None)
         # A pre-generated 32-match schedule stays secret until this HLV has been
@@ -389,6 +390,9 @@ def register_routes(context):
                     availability_by_id.setdefault(aid,[]).append(av.get('slot_at'))
         decorated=[]
         opponent_slot_set=set()
+        # Only the opponents shown in the GĐ2 lobby may make 'Lịch của tôi' green.
+        # Keep this separate from opponent_slot_set, which is also used by the broader schedule tab.
+        lobby_opponent_slot_set=set()
         for m in match_rows:
             row=dict(m); h=str(row.get('home_user_id') or ''); a=str(row.get('away_user_id') or '')
             row['home_name']=names.get(h,'HLV'); row['away_name']=names.get(a,'HLV'); row['home_zalo_name']=zalos.get(h,''); row['away_zalo_name']=zalos.get(a,'')
@@ -406,6 +410,7 @@ def register_routes(context):
                 state=_landing_setting(tournament_id,f'c1_test_availability_{oid}',{}) or {}
                 opp=_landing_parse_slots(state.get('slots') or [])
                 opponent_slot_set.update(opp)
+                lobby_opponent_slot_set.update(opp)
                 test_opp_days=_landing_group_slots(opp,mine_set)
 
         s1_reveals=_landing_setting(tournament_id,'stage1_player_reveals',{}) or {}
@@ -507,6 +512,7 @@ def register_routes(context):
                 club=om.get('fixed_club_name') or ''
                 opp=_landing_parse_slots(availability_by_id.get(oid,[]))
                 opponent_slot_set.update(opp)
+                lobby_opponent_slot_set.update(opp)
                 league_opponents.append({'user_id':oid,'name':names.get(oid,'HLV'),'tier':om.get('pot_no'),
                     'club':club,'club_pot':C1_CLUB_POT_BY_NAME.get(club),'club_logo':club_logos.get(club,''),
                     'zalo':zalos.get(oid,''),'match_id':m.get('id'),'status':m.get('status'),
@@ -514,6 +520,11 @@ def register_routes(context):
                     'availability_days':_landing_group_slots(opp,mine_set)})
             if len(league_opponents)!=4:
                 app.logger.warning('League opponents incomplete: user=%s, count=%s, error=%s',uid,len(league_opponents),league_opponent_error)
+
+        # V1.6.53: a slot in 'Lịch của tôi' is green only when that exact ISO slot
+        # is also registered by at least one opponent currently shown in the GĐ2 lobby.
+        # Non-overlapping own slots remain blue.
+        mine_availability_days=_landing_group_slots(mine,lobby_opponent_slot_set)
 
         room_rows,_=_safe_rows(db.table('match_rooms').select('*').order('updated_at',desc=True).limit(160),'tournament_landing_center_rooms')
         tournament_match_rows,_=_safe_rows(db.table('tournament_matches').select('*').eq('tournament_id',tournament_id),'tournament_landing_center_match_rows')

@@ -1,0 +1,7 @@
+PES ARENA V1.6.53 — TÔ XANH LỊCH CỦA TÔI KHI TRÙNG
+
+- Lịch của tôi trong Sảnh chờ GĐ2 sẽ chuyển xanh lá nếu trùng chính xác ngày và giờ với đối thủ.
+- Khung không trùng vẫn màu xanh dương.
+- Đối thủ vẫn tô xanh như trước.
+- Hỗ trợ cả giờ linh hoạt 30 phút.
+- Không có SQL mới.

@@ -1,3 +1,10 @@
+## V1.6.53 — Tô xanh hai phía khi trùng availability
+
+- `modules/tournament_routes.py`: dựng riêng `lobby_opponent_slot_set` từ các đối thủ GĐ2 đang hiển thị và đánh dấu overlap cho `mine_availability_days`.
+- `templates/tournament/tabs/lobby.html`: thêm class `is-overlap` cho khung giờ của chính HLV khi trùng.
+- `tests/test_c1_lobby_gd2_visibility.py`: kiểm thử khung giờ của tôi và đối thủ cùng nhận trạng thái overlap.
+- `app.py`: bump version V1.6.53.
+
 ## V1.6.52 — Hiển thị availability C1
 
 - `modules/tournament_routes.py`: thêm `mine_availability_days` từ dữ liệu slot đã lưu.

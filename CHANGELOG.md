@@ -1,3 +1,11 @@
+## V1.6.53 — Lịch của tôi cũng tô xanh khi trùng giờ đối thủ
+
+- Sảnh chờ C1 GĐ2 giờ tô xanh cả khung giờ trong **Lịch của tôi** khi trùng chính xác ngày + giờ với ít nhất một trong các đối thủ GĐ2 đang hiển thị.
+- Giờ của tôi không trùng vẫn giữ màu xanh dương; giờ đối thủ trùng vẫn giữ màu xanh lá như trước.
+- So khớp theo ISO slot chính xác, bao gồm cả giờ linh hoạt 30 phút.
+- Tách tập giờ đối thủ dùng cho Sảnh chờ GĐ2 khỏi tập giờ rộng hơn của tab Lịch để tránh tô xanh nhầm do đối thủ ở giai đoạn khác.
+- Không đổi database, lịch thi đấu hay logic kết quả; không cần SQL mới.
+
 ## V1.6.52 — Sửa Giờ rảnh của tôi trong Góc nhìn HLV Admin
 
 - Nguyên nhân: khối “Lịch của tôi” chỉ duyệt các slot giờ tròn có sẵn trong form, trong khi giờ linh hoạt được lưu theo bước 30 phút. Vì vậy Admin chọn HLV có giờ 18:30/19:30 có thể thấy trống, còn lịch đối thủ vẫn hiện đúng.
