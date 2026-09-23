@@ -21,18 +21,19 @@
         <span class="c1-lobby-block-hint">Các khung giờ đã đăng ký</span>
       </div>
       <div class="c1-lobby-my-days">
-        {% for day in hub.days %}
+        {% for day in hub.mine_availability_days|default([]) %}
         <div class="c1-lobby-my-day">
           <div class="c1-lobby-my-day-label"><strong>{{ day.label }}</strong><small>{{ day.weekday }}</small></div>
           <div class="c1-lobby-times">
-            {% set mine=namespace(count=0) %}
-            {% for slot in day.slots if slot.iso in hub.mine_set %}
-              {% set mine.count=mine.count+1 %}
+            {% for slot in day.opponent_slots %}
               <span class="c1-lobby-time c1-lobby-my-time" data-my-slot-iso="{{ slot.iso }}" data-availability-scope="{{ tournament.id }}">{{ slot.label }}</span>
+            {% else %}
+              <span class="c1-lobby-no-times">Chưa đăng ký giờ rảnh</span>
             {% endfor %}
-            {% if mine.count == 0 %}<span class="c1-lobby-no-times">Chưa đăng ký giờ rảnh</span>{% endif %}
           </div>
         </div>
+        {% else %}
+          <div class="c1-lobby-no-times">Chưa có dữ liệu giờ rảnh.</div>
         {% endfor %}
       </div>
     </section>

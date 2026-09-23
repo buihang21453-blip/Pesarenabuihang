@@ -30,6 +30,14 @@ class LobbyVisibilityTests(unittest.TestCase):
             })
         hub = {
             'days': today, 'mine_set': {'2026-09-18T19:00:00+07:00'},
+            'mine_availability_days': [
+                {'label':'Hôm nay','weekday':'Thứ Sáu','opponent_slots':[
+                    {'iso':'2026-09-18T19:00:00+07:00','label':'19:00','is_overlap':True},
+                    {'iso':'2026-09-18T19:30:00+07:00','label':'19:30','is_overlap':True},
+                ]},
+                {'label':'Ngày mai','weekday':'Thứ Bảy','opponent_slots':[]},
+                {'label':'Ngày kia','weekday':'Chủ nhật','opponent_slots':[]},
+            ],
             'league_opponents': rivals, 'is_test': False,
             'admin_preview': False, 'host_ready': [{'display_name':'Không được thấy', 'region': 'HN'}],
             'availability_error': False,
@@ -42,6 +50,7 @@ class LobbyVisibilityTests(unittest.TestCase):
         self.assertEqual(html.count('class="c1-lobby-day"'), 12)
         self.assertEqual(html.count('is-overlap'), 4)
         self.assertLess(html.index('01 · LỊCH CỦA TÔI'), html.index('02 · LỊCH RẢNH CỦA ĐỐI THỦ'))
+        self.assertIn('19:30', html)
         self.assertNotIn('Host đang rảnh', html)
         for rival in rivals:
             self.assertIn(rival['name'], html)

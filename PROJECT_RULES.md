@@ -1,3 +1,8 @@
+## V1.6.52 — Quy tắc lịch rảnh
+
+- Mọi slot đã lưu, kể cả slot linh hoạt 30 phút, phải hiển thị ở “Lịch của tôi” và Góc nhìn HLV Admin.
+- Danh sách giờ checkbox chỉ là giao diện nhập; không được dùng làm nguồn hiển thị đầy đủ của lịch đã lưu.
+
 ## V1.6.51 — Quy tắc chú ý Chat Phòng
 
 - Vào Phòng đấu phải thấy Chat Phòng ngay; không lưu trạng thái thu nhỏ qua lần vào phòng mới.

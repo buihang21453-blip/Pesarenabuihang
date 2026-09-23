@@ -352,6 +352,8 @@ def register_routes(context):
             av_rows,_=_safe_rows(db.table('tournament_availability_slots').select('slot_at').eq('tournament_id',tournament_id).eq('user_id',uid),'tournament_landing_mine_availability')
             mine=_landing_parse_slots([r.get('slot_at') for r in av_rows])
         mine_set=set(mine)
+        # V1.6.52: render self availability from saved slots, including custom half-hour times.
+        mine_availability_days=_landing_group_slots(mine,mine_set)
 
         match_rows,_=_safe_rows(db.table('tournament_matches').select('*').eq('tournament_id',tournament_id).or_(f'home_user_id.eq.{uid},away_user_id.eq.{uid}').order('created_at'),'tournament_landing_my_matches') if member else ([],None)
         # A pre-generated 32-match schedule stays secret until this HLV has been
@@ -559,7 +561,7 @@ def register_routes(context):
             center_rooms.append({'id':r.get('id'),'status':r.get('status'),'host_user_id':r.get('host_user_id'),'guest_user_id':r.get('guest_user_id'),'host_team':r.get('host_team'),'guest_team':r.get('guest_team'),'public_label':public_label,'public_status':public_status,'tournament_match':mm})
 
         return {
-            'member': member or {'user_id':uid}, 'is_test':is_test, 'days':days, 'mine_set':mine_set,
+            'member': member or {'user_id':uid}, 'is_test':is_test, 'days':days, 'mine_set':mine_set, 'mine_availability_days':mine_availability_days,
             'matches':decorated, 'names':names, 'zalos':zalos,
             'stage1_opened':bool(s1_reveals.get(uid)), 'league_mine':league_mine,
             'league_opened':bool(league_reveals.get(uid)) or bool(league_draw.get('completed')) or league_started,

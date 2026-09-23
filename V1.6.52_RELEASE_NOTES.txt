@@ -1,0 +1,3 @@
+PES ARENA V1.6.52 — FIX GIỜ RẢNH CỦA TÔI
+
+Sửa lỗi giờ linh hoạt 30 phút đã lưu nhưng không hiển thị trong “Lịch của tôi” khi Admin chọn Góc nhìn HLV. Phần lịch cá nhân giờ dùng trực tiếp dữ liệu đã lưu giống phần đối thủ. Không có SQL mới.

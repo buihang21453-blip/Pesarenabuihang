@@ -1,3 +1,10 @@
+## V1.6.52 — Sửa Giờ rảnh của tôi trong Góc nhìn HLV Admin
+
+- Nguyên nhân: khối “Lịch của tôi” chỉ duyệt các slot giờ tròn có sẵn trong form, trong khi giờ linh hoạt được lưu theo bước 30 phút. Vì vậy Admin chọn HLV có giờ 18:30/19:30 có thể thấy trống, còn lịch đối thủ vẫn hiện đúng.
+- Sửa để lịch của chính HLV được dựng trực tiếp từ toàn bộ `tournament_availability_slots` đã lưu, bao gồm giờ linh hoạt.
+- Áp dụng cả góc nhìn HLV thường và Admin xem như HLV; không đổi DB, lịch GĐ2 hay quyền truy cập.
+- Không có SQL mới.
+
 ## V1.6.51 — Chat Phòng mở mặc định và báo tin nhắn mới
 
 - Khi người chơi vào Phòng đấu, **Chat Phòng mở sẵn mặc định**; chỉ thu nhỏ khi người chơi chủ động bấm nút thu nhỏ/Chat phòng.

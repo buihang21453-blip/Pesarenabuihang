@@ -1,3 +1,9 @@
+## V1.6.52 — Hiển thị availability C1
+
+- `modules/tournament_routes.py`: thêm `mine_availability_days` từ dữ liệu slot đã lưu.
+- `templates/tournament/tabs/lobby.html`: “LỊCH CỦA TÔI” hiển thị trực tiếp slot đã lưu, không phụ thuộc danh sách checkbox giờ tròn.
+- `tests/test_c1_lobby_gd2_visibility.py`: thêm hồi quy cho giờ linh hoạt 19:30.
+
 ## V1.6.51 — Chat Phòng nổi bật hơn
 
 - `templates/room_detail.html`: Chat Phòng mở mặc định, thêm badge chưa đọc, nhận diện tin mới của đối thủ, trạng thái MỚI và logic mở/thu nhỏ.
