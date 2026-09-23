@@ -874,11 +874,12 @@
 </div>
 
 {% if system_features.room_chat_enabled %}
-<button id="roomChatToggleButton" class="chat-floating-toggle room-chat-floating-toggle" type="button" onclick="toggleRoomChat()">
+<button id="roomChatToggleButton" class="chat-floating-toggle room-chat-floating-toggle chat-toggle-open" type="button" onclick="toggleRoomChat()" aria-expanded="true">
     💬 <span id="roomChatToggleText">Chat phòng</span>
+    <span id="roomChatUnreadBadge" class="room-chat-unread-badge" hidden>0</span>
 </button>
-<div id="bottomRoomChat" class="bottom-lobby-chat bottom-room-chat chat-collapsed" hidden data-room-chat-panel>
-    <button class="bottom-chat-close" type="button" onclick="toggleRoomChat()" aria-label="Đóng Chat Phòng" title="Đóng">×</button>
+<div id="bottomRoomChat" class="bottom-lobby-chat bottom-room-chat" data-room-chat-panel>
+    <button class="bottom-chat-close" type="button" onclick="toggleRoomChat()" aria-label="Thu nhỏ Chat Phòng" title="Thu nhỏ">×</button>
     <div class="bottom-chat-header">
         <strong>💬 Chat Phòng</strong>
         <span class="bottom-chat-hint">Chỉ người trong phòng • Không lưu lịch sử</span>
@@ -1542,6 +1543,48 @@ document.addEventListener("DOMContentLoaded", function () {
 <script>
 let currentRoomChatKey = "";
 let roomChatPoller = null;
+let roomChatUnreadCount = 0;
+let roomChatKnownMessageIds = new Set();
+let roomChatInitialSnapshotLoaded = false;
+const currentRoomChatUserId = {{ current_user.id|tojson }};
+
+function isRoomChatOpen() {
+    const panel = document.getElementById("bottomRoomChat");
+    return !!(panel && !panel.hidden && !panel.classList.contains("chat-collapsed"));
+}
+
+function updateRoomChatUnreadUi() {
+    const button = document.getElementById("roomChatToggleButton");
+    const badge = document.getElementById("roomChatUnreadBadge");
+    if (badge) {
+        badge.textContent = String(roomChatUnreadCount);
+        badge.hidden = roomChatUnreadCount <= 0;
+    }
+    if (button) button.classList.toggle("has-unread", roomChatUnreadCount > 0);
+}
+
+function markRoomChatRead() {
+    roomChatUnreadCount = 0;
+    updateRoomChatUnreadUi();
+}
+
+function signalIncomingRoomChat(count) {
+    if (!count) return;
+    const panel = document.getElementById("bottomRoomChat");
+    if (isRoomChatOpen()) {
+        if (panel) {
+            panel.classList.remove("room-chat-incoming-flash");
+            void panel.offsetWidth;
+            panel.classList.add("room-chat-incoming-flash");
+            window.setTimeout(function () {
+                if (panel) panel.classList.remove("room-chat-incoming-flash");
+            }, 1300);
+        }
+        return;
+    }
+    roomChatUnreadCount += count;
+    updateRoomChatUnreadUi();
+}
 
 function toggleRoomChat() {
     const panel = document.getElementById("bottomRoomChat");
@@ -1559,8 +1602,12 @@ function toggleRoomChat() {
 
     panel.hidden = !willOpen;
     panel.classList.toggle("chat-collapsed", !willOpen);
-    if (button) button.classList.toggle("chat-toggle-open", willOpen);
+    if (button) {
+        button.classList.toggle("chat-toggle-open", willOpen);
+        button.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    }
     if (willOpen) {
+        markRoomChatRead();
         document.dispatchEvent(new CustomEvent("pes:room-chat-opened"));
         bindRoomChatForm();
         requestImmediateRoomChatRefresh();
@@ -1604,7 +1651,19 @@ function renderRoomChat(messages) {
         return [msg.id || "", msg.created_at || "", msg.message || ""].join(":");
     }).join("|");
     if (nextKey === currentRoomChatKey) return;
+
+    const incomingNewIds = [];
+    (messages || []).forEach(function (msg) {
+        const id = String(msg.id || "");
+        if (!id) return;
+        if (roomChatInitialSnapshotLoaded && !roomChatKnownMessageIds.has(id) && String(msg.user_id || "") !== String(currentRoomChatUserId || "")) {
+            incomingNewIds.push(id);
+        }
+        roomChatKnownMessageIds.add(id);
+    });
+    roomChatInitialSnapshotLoaded = true;
     currentRoomChatKey = nextKey;
+    signalIncomingRoomChat(incomingNewIds.length);
 
     if (!messages || !messages.length) {
         box.innerHTML = '<div class="bottom-chat-empty">Chưa có tin nhắn trong phòng.</div>';
@@ -1614,9 +1673,10 @@ function renderRoomChat(messages) {
     box.innerHTML = messages.map(function (msg) {
         const adminBadge = msg.user_role === "admin" ? '<span class="badge gold">ADMIN</span>' : '';
         const adminClass = msg.user_role === "admin" ? 'admin' : '';
+        const incomingNew = incomingNewIds.includes(String(msg.id || ""));
         return `
-            <div class="bottom-chat-message">
-                <div class="chat-message-head">${renderRoomAvatar(msg.user_avatar_url, msg.user_name, msg.user_achievement, msg.user_avatar_frame_url)}<span class="chat-name ${adminClass}">${escapeRoomHtml(msg.user_name)}</span>${adminBadge}</div>
+            <div class="bottom-chat-message${incomingNew ? ' room-chat-message-new' : ''}">
+                <div class="chat-message-head">${renderRoomAvatar(msg.user_avatar_url, msg.user_name, msg.user_achievement, msg.user_avatar_frame_url)}<span class="chat-name ${adminClass}">${escapeRoomHtml(msg.user_name)}</span>${adminBadge}${incomingNew ? '<span class="room-chat-new-chip">MỚI</span>' : ''}</div>
                 <span class="bottom-chat-time">${escapeRoomHtml(msg.created_at_display || msg.created_at)}</span>
                 <div class="bottom-chat-text">${escapeRoomHtml(msg.message)}</div>
             </div>
@@ -1771,7 +1831,22 @@ function startRoomChatPolling() {
 window.addEventListener("DOMContentLoaded", function () {
     bindRoomChatForm();
     const chatPanel = document.querySelector('.room-chat-side, [data-room-chat-panel]');
-    if (chatPanel && chatPanel.offsetParent !== null) startRoomChatPolling();
+    const chatButton = document.getElementById("roomChatToggleButton");
+    if (chatPanel) {
+        // Chat phòng luôn mở mặc định khi vào phòng. Chỉ thu nhỏ sau khi người chơi chủ động bấm.
+        chatPanel.hidden = false;
+        chatPanel.classList.remove("chat-collapsed");
+        if (chatButton) {
+            chatButton.classList.add("chat-toggle-open");
+            chatButton.setAttribute("aria-expanded", "true");
+        }
+        markRoomChatRead();
+        const lobbyPanel = document.getElementById("bottomLobbyChat");
+        if (lobbyPanel && !lobbyPanel.hidden && !lobbyPanel.classList.contains("chat-collapsed") && typeof toggleLobbyChat === "function") {
+            toggleLobbyChat();
+        }
+        startRoomChatPolling();
+    }
 });
 document.addEventListener('pes:room-chat-opened', startRoomChatPolling);
 document.addEventListener('pes:room-chat-closed', stopRoomChatPolling);

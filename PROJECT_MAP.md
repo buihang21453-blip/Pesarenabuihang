@@ -1,3 +1,11 @@
+## V1.6.51 — Chat Phòng nổi bật hơn
+
+- `templates/room_detail.html`: Chat Phòng mở mặc định, thêm badge chưa đọc, nhận diện tin mới của đối thủ, trạng thái MỚI và logic mở/thu nhỏ.
+- `static/style.css`: badge đỏ, pulse nút Chat Phòng, flash khung chat và highlight tin nhắn mới.
+- `tests/test_room_chat_attention_v1651.py`: kiểm tra mặc định mở và các hook UI tin chưa đọc.
+- `app.py`, `templates/admin_parts/c1_gd2_clubs.html`: đồng bộ version V1.6.51.
+- Không đổi DB/API; không cần SQL.
+
 ## V1.6.50 — Vị trí đồng hồ GĐ2
 
 - `templates/tournament/cards/c1_media.html`: nhúng đồng hồ vào đúng vị trí overlay trên ảnh giải C1.

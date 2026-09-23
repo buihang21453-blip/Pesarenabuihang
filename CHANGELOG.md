@@ -1,3 +1,11 @@
+## V1.6.51 — Chat Phòng mở mặc định và báo tin nhắn mới
+
+- Khi người chơi vào Phòng đấu, **Chat Phòng mở sẵn mặc định**; chỉ thu nhỏ khi người chơi chủ động bấm nút thu nhỏ/Chat phòng.
+- Nếu có tin nhắn mới từ người còn lại khi Chat Phòng đang thu nhỏ, nút Chat Phòng hiện **badge số tin chưa đọc** và hiệu ứng nhấp/pulse để gây chú ý.
+- Nếu Chat Phòng đang mở, tin nhắn mới từ đối thủ được làm nổi bật bằng viền xanh, chip **MỚI** và hiệu ứng flash nhẹ trên khung chat.
+- Mở lại Chat Phòng sẽ tự xóa badge chưa đọc. Chat Sảnh đang mở sẽ được thu lại để không đè lên Chat Phòng.
+- Không đổi API chat, bảng dữ liệu hoặc schema; không có SQL mới.
+
 ## V1.6.50 — Đưa đồng hồ GĐ2 lên khung đếm ngược trong ảnh giải C1
 
 - Thay trực tiếp khung “⚡ GĐ2 SẴN SÀNG MỞ” trên ảnh bìa giải C1 bằng đồng hồ thời gian GĐ2 đã có ở V1.6.49.

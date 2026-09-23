@@ -1,3 +1,10 @@
+## V1.6.51 — Quy tắc chú ý Chat Phòng
+
+- Vào Phòng đấu phải thấy Chat Phòng ngay; không lưu trạng thái thu nhỏ qua lần vào phòng mới.
+- Chỉ tin nhắn mới từ **người khác** mới tạo badge/chỉ báo chưa đọc; tin do chính người dùng gửi không được tự tăng badge.
+- Khi chat đang mở, tín hiệu tin mới phải dễ thấy nhưng không che thao tác trận đấu; khi thu nhỏ, badge phải duy trì đến lúc người dùng mở lại.
+- Chat Phòng vẫn dùng cơ chế quyền truy cập và API hiện tại; không được làm thay đổi logic Rank/C1/Mini Cup.
+
 ## V1.6.50 — Đồng hồ GĐ2 trên ảnh giải
 
 - Khung overlay ảnh bìa C1 chỉ có một đồng hồ GĐ2 và không còn nhãn “GĐ2 SẴN SÀNG MỞ” với 0 ngày giả.

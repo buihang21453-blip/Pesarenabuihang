@@ -1,0 +1,7 @@
+PES ARENA V1.6.51 — CHAT PHÒNG MỞ MẶC ĐỊNH
+
+- Chat Phòng tự mở khi vào phòng đấu.
+- Người chơi chỉ thu nhỏ khi chủ động bấm.
+- Tin mới của đối thủ có badge chưa đọc khi chat thu nhỏ.
+- Khi chat đang mở, tin mới được highlight và gắn nhãn MỚI.
+- Không có SQL mới.
