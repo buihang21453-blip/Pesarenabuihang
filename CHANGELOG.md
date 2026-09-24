@@ -1,3 +1,11 @@
+## V1.6.61 — Tối giản khu vực Cup Nhà vô địch
+
+- Bỏ toàn bộ nền, viền và khung bao quanh khu vực Cup trong Bảng theo dõi Knockout.
+- Chỉ giữ biểu tượng Cup tại vị trí Nhà vô địch cùng tên HLV/thông báo chờ chủ nhân.
+- Bỏ hiệu ứng glow nền của Cup; chỉ giữ bóng đổ nhẹ trực tiếp trên Cup.
+- Không thay đổi logic Knockout, kết quả hay vé Random CLB.
+- Không có SQL mới.
+
 ## V1.6.60 — Hiện đúng nút Admin Random hộ vé Top 3
 
 - Sửa điều kiện hiển thị nút **🎲 Admin Random hộ** trong Bảng theo dõi Knockout.

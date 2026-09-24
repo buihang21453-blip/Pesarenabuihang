@@ -1,3 +1,9 @@
+## V1.6.61 — Quy tắc hiển thị Cup
+
+- Khu vực Nhà vô địch trong bracket không dùng nền panel riêng.
+- Cup phải đứng trực tiếp tại vị trí người chiến thắng; chỉ tên/nhãn vô địch được hiển thị bên dưới.
+- Thay đổi này chỉ là UI, không can thiệp logic xác định nhà vô địch.
+
 ## V1.6.60 — Quy tắc quyền Admin ở Knockout
 
 - UI quản trị phải nhận diện Admin thống nhất với backend: `role=admin` hoặc `admin_level` thuộc `owner/admin`.

@@ -1,0 +1,6 @@
+PES ARENA V1.6.61
+
+- Tối giản khu vực Cup trong Bảng theo dõi Knockout.
+- Bỏ nền/viền/khung lớn của khu vực Cup.
+- Chỉ giữ Cup tại vị trí Nhà vô địch và tên HLV chiến thắng.
+- Không đổi DB, không có SQL mới.

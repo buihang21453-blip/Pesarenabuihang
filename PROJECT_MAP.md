@@ -1,3 +1,9 @@
+## V1.6.61 — Champion Cup tối giản
+
+- `templates/tournament/components/knockout_dashboard.html`: bỏ lớp glow của Cup.
+- `templates/tournament/styles.html`: bỏ background/border/box-shadow của toàn bộ champion card, chỉ giữ Cup và chữ.
+- `app.py`: bump version `V1.6.61`.
+
 ## V1.6.60 — Admin Random hộ Top 3 visibility fix
 
 - `templates/tournament/components/knockout_dashboard.html`: nhận diện đầy đủ Admin/Owner bằng `role` và `admin_level`, ưu tiên nút Random hộ.
