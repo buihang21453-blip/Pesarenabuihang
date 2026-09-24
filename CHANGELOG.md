@@ -1,3 +1,11 @@
+## V1.6.67 — Hiển thị logo CLB ở Bảng theo dõi Knockout
+
+- Bổ sung logo CLB tại `Bảng theo dõi Knockout` trên `/tournaments` cho cả hai HLV trong từng cặp đấu.
+- Khu `Vé Random CLB Top 3` cũng hiển thị logo CLB hiện tại để Admin dễ theo dõi và thao tác.
+- Khu `Nhà vô địch` hiển thị thêm logo CLB vô địch cùng Tier và tên CLB.
+- Tái sử dụng loader logo CLB hiện có; nếu CLB chưa có logo thì fallback sang biểu tượng bóng đá.
+- Không thay đổi DB, không có SQL mới.
+
 ## V1.6.66 — Hiện Tier và CLB trên Bảng theo dõi Knockout
 
 - Mỗi HLV trong sơ đồ Tứ kết/Bán kết/Chung kết giờ hiển thị trực tiếp **Tier** và **CLB hiện tại** ngay dưới tên.

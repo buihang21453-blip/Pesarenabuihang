@@ -36,7 +36,7 @@
       {% for t in ko.get('tickets',[]) %}
       <div class="c1-ko-ticket-item{{ ' is-mine' if current_user and current_user.id|string == t.user_id|string else '' }}">
         <span>#{{ t.rank }} · {{ t.name }}</span>
-        <b>{{ t.club }} <small class="c1-ko-club-rule">· Tier {{ t.hlv_tier or '—' }} → Pot {{ t.expected_club_pot or '—' }}</small></b>
+        <b>{% if t.club_logo %}<img class="c1-ko-inline-club-logo" src="{{ t.club_logo }}" alt="Logo {{ t.club }}" loading="lazy" onerror="this.remove()">{% endif %}{{ t.club }} <small class="c1-ko-club-rule">· Tier {{ t.hlv_tier or '—' }} → Pot {{ t.expected_club_pot or '—' }}</small></b>
         <em>🎟 {{ t.remaining }}/{{ t.total }}</em>
         {% set ko_viewer_is_admin = current_user and (current_user.role == 'admin' or current_user.admin_level in ['owner','admin']) %}
         {% if ko_viewer_is_admin and t.can_admin_undo_reroll and t.undo_reroll_target %}
@@ -97,14 +97,14 @@
           <div class="c1-ko-team-row">
             <div class="c1-ko-team-info">
               <strong>{{ pair.home_name }}</strong>
-              <small><span class="c1-ko-tier-chip">Tier {{ pair.home_tier or '—' }}</span><span class="c1-ko-club-chip">⚽ {{ pair.home_club }}</span></small>
+              <small><span class="c1-ko-tier-chip">Tier {{ pair.home_tier or '—' }}</span><span class="c1-ko-club-chip">{% if pair.home_club_logo %}<img class="c1-ko-club-logo" src="{{ pair.home_club_logo }}" alt="Logo {{ pair.home_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ pair.home_club }}</span></small>
             </div>
             <b>{{ pair.home_total if pair.has_score else '—' }}</b>
           </div>
           <div class="c1-ko-team-row">
             <div class="c1-ko-team-info">
               <strong>{{ pair.away_name }}</strong>
-              <small><span class="c1-ko-tier-chip">Tier {{ pair.away_tier or '—' }}</span><span class="c1-ko-club-chip">⚽ {{ pair.away_club }}</span></small>
+              <small><span class="c1-ko-tier-chip">Tier {{ pair.away_tier or '—' }}</span><span class="c1-ko-club-chip">{% if pair.away_club_logo %}<img class="c1-ko-club-logo" src="{{ pair.away_club_logo }}" alt="Logo {{ pair.away_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ pair.away_club }}</span></small>
             </div>
             <b>{{ pair.away_total if pair.has_score else '—' }}</b>
           </div>
@@ -133,7 +133,7 @@
         </div>
         <strong>{{ ko.get('champion_name') or 'CUP ĐANG CHỜ CHỦ NHÂN' }}</strong>
         {% if ko.get('champion_user_id') %}
-        <div class="c1-ko-champion-meta"><span class="c1-ko-tier-chip">Tier {{ ko.get('champion_tier') or '—' }}</span><span class="c1-ko-club-chip">⚽ {{ ko.get('champion_club') or '—' }}</span></div>
+        <div class="c1-ko-champion-meta"><span class="c1-ko-tier-chip">Tier {{ ko.get('champion_tier') or '—' }}</span><span class="c1-ko-club-chip">{% if ko.get('champion_club_logo') %}<img class="c1-ko-club-logo" src="{{ ko.get('champion_club_logo') }}" alt="Logo {{ ko.get('champion_club') }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ ko.get('champion_club') or '—' }}</span></div>
         {% endif %}
         <span>{% if ko.get('champion_user_id') %}Vinh danh nhà vô địch C1 mùa này{% else %}Chiếc cúp sẽ thuộc về HLV thắng Chung kết{% endif %}</span>
       </div>

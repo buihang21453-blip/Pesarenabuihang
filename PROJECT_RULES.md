@@ -1,3 +1,9 @@
+## V1.6.67 — Quy tắc hiển thị logo CLB Knockout
+
+- Logo CLB trong `Bảng theo dõi Knockout` chỉ là dữ liệu hiển thị, không ảnh hưởng logic giải hoặc logic Random CLB.
+- Nếu không tìm được logo, giao diện phải fallback an toàn về biểu tượng bóng đá thay vì làm vỡ layout.
+- Không thêm bảng mới và không yêu cầu migration SQL.
+
 ## V1.6.66 — Dữ liệu HLV trên Knockout
 
 - Tier hiển thị trên bracket lấy từ `tournament_members.pot_no`; CLB lấy từ `tournament_members.fixed_club_name`.

@@ -185,6 +185,19 @@ def register_routes(context):
 
         members = member_rows or []
         member_map = {str(m.get("user_id")): m for m in members if m.get("user_id")}
+        club_names = sorted({str((m.get("fixed_club_name") or "")).strip() for m in members if (m.get("fixed_club_name") or "").strip()})
+        club_logos = {}
+        if club_names:
+            try:
+                import os
+                from modules.tournament_club_logos import load_draw_club_logos
+                club_logos, _ = load_draw_club_logos(
+                    db, execute_query, os.getenv('SUPABASE_URL', ''), club_names,
+                    logger=(print if globals().get('app') and getattr(app, 'debug', False) else None),
+                )
+            except Exception as exc:
+                print(f"tournament_public_knockout_club_logos warning: {exc}")
+                club_logos = {}
 
         round_order = {"qf": 0, "sf": 1, "final": 2}
         round_labels = {"qf": "TỨ KẾT", "sf": "BÁN KẾT", "final": "CHUNG KẾT"}
@@ -237,6 +250,8 @@ def register_routes(context):
                 "home_name": names.get(home_id, "HLV"), "away_name": names.get(away_id, "HLV"),
                 "home_tier": int(home_member.get("pot_no") or 0), "away_tier": int(away_member.get("pot_no") or 0),
                 "home_club": home_member.get("fixed_club_name") or "—", "away_club": away_member.get("fixed_club_name") or "—",
+                "home_club_logo": club_logos.get(home_member.get("fixed_club_name") or "", ""),
+                "away_club_logo": club_logos.get(away_member.get("fixed_club_name") or "", ""),
                 "home_total": totals.get(home_id, 0), "away_total": totals.get(away_id, 0),
                 "has_score": completed > 0, "completed_legs": completed, "leg_count": len(legs),
                 "status": pair_status, "status_label": status_labels.get(pair_status, pair_status),
@@ -299,6 +314,7 @@ def register_routes(context):
                 "user_id": str(ticket_uid), "name": names.get(str(ticket_uid), "HLV"),
                 "rank": int(e.get("rank") or 0), "remaining": int(e.get("tickets_remaining") or 0),
                 "total": int(e.get("tickets_total") or 0), "club": current_club,
+                "club_logo": club_logos.get(current_club, ""),
                 "hlv_tier": hlv_tier, "expected_club_pot": expected_club_pot,
                 "current_club_pot": current_club_pot,
                 "club_pot_mismatch": bool(current_club != "—" and expected_club_pot and current_club_pot != expected_club_pot),
@@ -316,6 +332,7 @@ def register_routes(context):
             "champion_name": names.get(champion_uid, "") if champion_uid else "",
             "champion_tier": int(champion_member.get("pot_no") or 0) if champion_uid else 0,
             "champion_club": champion_member.get("fixed_club_name") or "" if champion_uid else "",
+            "champion_club_logo": club_logos.get(champion_member.get("fixed_club_name") or "", "") if champion_uid else "",
             "my_next": my_next, "tickets": tickets, "my_ticket": my_ticket,
         }
 

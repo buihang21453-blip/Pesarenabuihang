@@ -1,0 +1,6 @@
+PES ARENA V1.6.67 — KNOCKOUT HIỂN THỊ LOGO CLB
+
+- Thêm logo CLB cho từng HLV tại Bảng theo dõi Knockout.
+- Khu vé Random Top 3 và Nhà vô địch cũng có logo CLB.
+- Nếu thiếu logo, hệ thống dùng icon ⚽ để fallback.
+- Không có SQL mới.

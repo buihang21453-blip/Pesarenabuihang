@@ -1,3 +1,10 @@
+## V1.6.67 — Logo CLB trong Knockout dashboard
+
+- `modules/tournament_routes.py`: nạp map logo CLB cho các CLB đang xuất hiện trong Knockout và đưa vào payload public.
+- `templates/tournament/components/knockout_dashboard.html`: hiển thị logo CLB ở cặp đấu, khu vé Top 3 và khu Nhà vô địch.
+- `templates/tournament/styles.html`: thêm CSS cho logo CLB và fallback icon.
+- `app.py`: bump version lên `V1.6.67`.
+
 ## V1.6.66 — Knockout hiển thị Tier + CLB
 
 - `modules/tournament_routes.py`: public Knockout payload bổ sung `home_tier/home_club`, `away_tier/away_club`, `champion_tier/champion_club`.
