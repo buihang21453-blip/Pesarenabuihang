@@ -1,3 +1,13 @@
+## V1.6.54 — Rà soát luồng mời Rank và cách ly C1
+
+- Sửa `matchmaking_snapshot()` để đọc đủ `note` và `match_mode`; trước đó snapshot không có hai cột này nên kiểm tra phòng C1 ở luồng gửi lời mời Rank có thể nhận diện sai.
+- Snapshot tách rõ phòng C1 và phòng thường của từng người; nếu dữ liệu cũ còn nhiều phòng active thì C1 được ưu tiên để Rank không chen vào giải đấu.
+- Gửi lời mời Rank thủ công: chặn cả người gửi hoặc người nhận nếu có bất kỳ Phòng đấu C1 active.
+- Nhận lời mời Rank: kiểm tra lại trạng thái trực tiếp của cả hai HLV ngay lúc bấm Nhận; vẫn cho phép HLV đang ở phòng Rank một mình đóng phòng cũ và vào phòng người mời.
+- Tìm Nhanh: khóa khi người gửi đang ở C1 và loại mọi ứng viên đang ở C1.
+- Popup lời mời: khi HLV đang ở Phòng đấu C1, API không trả lời mời Rank để popup không chen vào giữa trận giải.
+- Không thay đổi schema/SQL.
+
 ## V1.6.53 — Lịch của tôi cũng tô xanh khi trùng giờ đối thủ
 
 - Sảnh chờ C1 GĐ2 giờ tô xanh cả khung giờ trong **Lịch của tôi** khi trùng chính xác ngày + giờ với ít nhất một trong các đối thủ GĐ2 đang hiển thị.

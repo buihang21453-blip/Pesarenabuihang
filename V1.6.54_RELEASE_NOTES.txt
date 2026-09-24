@@ -1,0 +1,7 @@
+PES ARENA V1.6.54 — RÀ SOÁT LUỒNG MỜI RANK / C1
+
+- Sửa nhận diện C1 trong snapshot matchmaking.
+- Phòng Rank một mình vẫn nhận lời mời bình thường.
+- Người chưa vào phòng vẫn nhận lời mời nếu không có trận active.
+- HLV đang ở C1 bị cách ly khỏi lời mời Rank và Tìm Nhanh; popup Rank không chen vào C1.
+- Không có SQL mới.

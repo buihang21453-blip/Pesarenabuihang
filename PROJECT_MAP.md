@@ -1,3 +1,10 @@
+## V1.6.54 — Invite/Matchmaking isolation Rank ↔ C1
+
+- `modules/legacy_room_activity_service.py`: snapshot phòng lấy thêm loại phòng, tách `c1_room_*` và `normal_room_*`, ưu tiên C1 khi có dữ liệu active trùng.
+- `modules/invite_routes.py`: chặn gửi/nhận/Tìm Nhanh Rank khi có C1 active và ẩn popup Rank trong C1.
+- `tests/test_rank_invite_c1_isolation_v1654.py`: kiểm thử hồi quy cho các điểm cách ly C1.
+- Không có SQL mới.
+
 ## V1.6.53 — Tô xanh hai phía khi trùng availability
 
 - `modules/tournament_routes.py`: dựng riêng `lobby_opponent_slot_set` từ các đối thủ GĐ2 đang hiển thị và đánh dấu overlap cho `mine_availability_days`.

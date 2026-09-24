@@ -7,6 +7,14 @@ avoid circular imports and preserve the existing business logic.
 def register_routes(context):
     globals().update(context)
 
+    def _room_is_c1(room):
+        if not room:
+            return False
+        return bool(
+            str(room.get("note") or "").startswith("TOURNAMENT_ROOM|")
+            or str(room.get("match_mode") or "").lower() == "tournament"
+        )
+
     @app.route("/api/invites/pending")
     @login_required
     def api_pending_invites():
@@ -16,6 +24,8 @@ def register_routes(context):
             return jsonify({"invites": []})
 
         try:
+            active_room = active_room_for_user(user["id"])
+            user_in_c1 = _room_is_c1(active_room)
             # Lấy nhiều bản ghi thay vì chỉ 1 bản ghi mới nhất. Nếu lời mời mới nhất
             # vừa hết hạn trong lúc xử lý, lời mời hợp lệ cũ hơn vẫn phải được trả về.
             result = execute_query(
@@ -37,6 +47,11 @@ def register_routes(context):
                 sender = get_user(invite.get("from_user_id")) or {}
                 decorate_player_achievements(sender)
                 is_c1_invite = str(invite.get("tier") or "") == "C1_TOURNAMENT"
+                # Khi người chơi đang ở Phòng C1, tuyệt đối không đẩy popup Rank
+                # vào giữa luồng giải đấu. Lời mời cũ sẽ tự hết hạn/có thể bị hủy
+                # ở luồng phản hồi; API chỉ không hiển thị để tránh chen ngang.
+                if user_in_c1 and not is_c1_invite:
+                    continue
                 data.append({
                     "id": invite["id"],
                     "from_name": sender.get("display_name", "Unknown"),
@@ -129,10 +144,10 @@ def register_routes(context):
             flash("Không thể kiểm tra trạng thái phòng lúc này. Vui lòng thử lại sau vài giây.", "danger")
             return redirect(url_for("players"))
 
-        sender_room = state.get("room_a")
-        receiver_room = state.get("room_b")
-        sender_room_is_c1 = bool(sender_room and (str(sender_room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(sender_room.get("match_mode") or "").lower() == "tournament"))
-        receiver_room_is_c1 = bool(receiver_room and (str(receiver_room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(receiver_room.get("match_mode") or "").lower() == "tournament"))
+        sender_room = state.get("normal_room_a") or state.get("room_a")
+        receiver_room = state.get("normal_room_b") or state.get("room_b")
+        sender_room_is_c1 = bool(state.get("c1_room_a"))
+        receiver_room_is_c1 = bool(state.get("c1_room_b"))
         if sender_room_is_c1:
             flash("Bạn đang ở Phòng đấu C1. Hãy thoát/đóng Phòng C1 trước khi gửi lời mời Rank.", "warning")
             return redirect(url_for("dashboard"))
@@ -245,9 +260,11 @@ def register_routes(context):
             print(f"quick_match state ERROR user={user.get('id')}: {type(exc).__name__}: {exc}")
             return jsonify({"ok": False, "message": "Không thể kiểm tra trạng thái phòng lúc này."}), 503
 
-        sender_room = state.get("room_a")
+        if state.get("c1_room_a"):
+            return jsonify({"ok": False, "message": "Bạn đang ở Phòng đấu C1 nên Tìm Nhanh Rank tạm khóa."}), 409
+        sender_room = state.get("normal_room_a") or state.get("room_a")
         if state.get("match_a") or not is_solo_waiting_room(sender_room, user["id"]):
-            return jsonify({"ok": False, "message": "Tìm Nhanh chỉ dùng khi bạn đang ở phòng một mình."}), 409
+            return jsonify({"ok": False, "message": "Tìm Nhanh chỉ dùng khi bạn đang ở phòng Rank một mình."}), 409
 
         rooms = state.get("rooms") or []
         matches = state.get("matches") or []
@@ -348,6 +365,9 @@ def register_routes(context):
                 opponent_requested_at and opponent_requested_at >= quick_match_cutoff
             )
             opponent_room = room_by_user.get(oid)
+            if _room_is_c1(opponent_room):
+                busy_total += 1
+                continue
             opponent_solo_waiting = bool(
                 opponent_room and is_solo_waiting_room(opponent_room, oid)
             )
@@ -682,23 +702,28 @@ def register_routes(context):
             flash("Hành động không hợp lệ.", "danger")
             return redirect(url_for("invites"))
 
-        receiver_match = active_match_for_user(user["id"])
-        receiver_room = active_room_for_user(user["id"])
-        receiver_room_is_c1 = bool(receiver_room and (str(receiver_room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(receiver_room.get("match_mode") or "").lower() == "tournament"))
-        if receiver_room_is_c1:
-            flash("Bạn đang ở Phòng đấu C1. Hãy thoát/đóng Phòng C1 trước khi nhận lời mời Rank.", "warning")
+        inviter_id = invite.get("from_user_id")
+        try:
+            invite_state = matchmaking_snapshot(user["id"], inviter_id)
+        except Exception as exc:
+            print(f"respond_invite state ERROR invite={invite_id}: {type(exc).__name__}: {exc}")
+            flash("Không thể kiểm tra trạng thái hai phòng lúc này. Vui lòng thử lại sau vài giây.", "danger")
+            return redirect(url_for("dashboard"))
+
+        receiver_match = invite_state.get("match_a")
+        receiver_room = invite_state.get("normal_room_a") or invite_state.get("room_a")
+        if invite_state.get("c1_room_a"):
+            flash("Bạn đang ở Phòng đấu C1. Lời mời Rank không thể chen vào luồng giải đấu.", "warning")
             return redirect(url_for("dashboard"))
         if receiver_match:
             flash("Bạn đang có trận chưa hoàn tất nên không thể nhận lời mời.", "warning")
             return redirect(url_for("dashboard"))
         if receiver_room and not is_solo_waiting_room(receiver_room, user["id"]):
-            flash("Phòng của bạn đã có đủ 2 người hoặc đã bắt đầu nên không thể nhận lời mời khác.", "warning")
+            flash("Phòng Rank của bạn đã có đủ 2 người hoặc đã bắt đầu nên không thể nhận lời mời khác.", "warning")
             return redirect(url_for("dashboard"))
 
-        inviter_id = invite.get("from_user_id")
-        inviter_room = active_room_for_user(inviter_id)
-        inviter_room_is_c1 = bool(inviter_room and (str(inviter_room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(inviter_room.get("match_mode") or "").lower() == "tournament"))
-        if inviter_room_is_c1:
+        inviter_room = invite_state.get("normal_room_b") or invite_state.get("room_b")
+        if invite_state.get("c1_room_b"):
             execute_query(
                 db.table("match_invites").update({"status":"cancelled","updated_at":now_iso()}).eq("id", invite_id),
                 "cancel_rank_invite_sender_in_c1",
@@ -706,7 +731,7 @@ def register_routes(context):
             )
             flash("Người mời đang ở Phòng đấu C1 nên lời mời Rank đã được hủy.", "warning")
             return redirect(url_for("dashboard"))
-        if active_match_for_user(inviter_id) or (inviter_room and not is_solo_waiting_room(inviter_room, inviter_id)):
+        if invite_state.get("match_b") or (inviter_room and not is_solo_waiting_room(inviter_room, inviter_id)):
             execute_query(
                 db.table("match_invites").update({
                     "status": "cancelled",

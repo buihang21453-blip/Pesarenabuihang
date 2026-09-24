@@ -458,7 +458,7 @@ def matchmaking_snapshot(user_a, user_b=None):
         ids.add(str(user_b))
     rooms_result = execute_query(
         db.table("match_rooms")
-        .select("id,match_id,host_user_id,guest_user_id,status,invite_id")
+        .select("id,match_id,host_user_id,guest_user_id,status,invite_id,note,match_mode,team_tier,updated_at")
         .in_("status", ["waiting_ready", "playing", "friendly_playing", "waiting_result_confirm", "waiting_confirm", "disputed"]),
         "matchmaking_active_rooms",
         attempts=3,
@@ -502,9 +502,30 @@ def matchmaking_snapshot(user_a, user_b=None):
             continue
         invites.append(invite)
 
-    def room_for(uid):
+    def _is_c1_room(room):
+        return bool(
+            room
+            and (
+                str(room.get("note") or "").startswith("TOURNAMENT_ROOM|")
+                or str(room.get("match_mode") or "").lower() == "tournament"
+            )
+        )
+
+    def rooms_for(uid):
         uid = str(uid)
-        return next((r for r in rooms if uid in {str(r.get("host_user_id")), str(r.get("guest_user_id"))}), None)
+        return [r for r in rooms if uid in {str(r.get("host_user_id")), str(r.get("guest_user_id"))}]
+
+    def room_for(uid):
+        owned = rooms_for(uid)
+        # Nếu dữ liệu cũ vô tình còn nhiều phòng active, ưu tiên C1 để không cho
+        # luồng Rank chen vào giải đấu.
+        return next((r for r in owned if _is_c1_room(r)), owned[0] if owned else None)
+
+    def c1_room_for(uid):
+        return next((r for r in rooms_for(uid) if _is_c1_room(r)), None)
+
+    def normal_room_for(uid):
+        return next((r for r in rooms_for(uid) if not _is_c1_room(r)), None)
 
     def match_for(uid):
         uid = str(uid)
@@ -520,6 +541,10 @@ def matchmaking_snapshot(user_a, user_b=None):
         "invites": invites,
         "room_a": room_for(user_a),
         "room_b": room_for(user_b) if user_b else None,
+        "c1_room_a": c1_room_for(user_a),
+        "c1_room_b": c1_room_for(user_b) if user_b else None,
+        "normal_room_a": normal_room_for(user_a),
+        "normal_room_b": normal_room_for(user_b) if user_b else None,
         "match_a": match_for(user_a),
         "match_b": match_for(user_b) if user_b else None,
         "pair_pending": pair_pending,

@@ -1,3 +1,11 @@
+## V1.6.54 — Quy tắc cách ly lời mời Rank và C1
+
+- Bất kỳ Phòng đấu C1 active nào cũng làm người chơi không khả dụng cho lời mời Rank/Tìm Nhanh.
+- Người đang ở phòng Rank một mình vẫn được phép nhận lời mời Rank khác; hệ thống đóng phòng trống cũ trước khi hoàn tất lời mời.
+- Người chưa có phòng vẫn được nhận lời mời Rank bình thường nếu không có trận active.
+- Popup Rank không được xuất hiện khi người chơi đang ở C1.
+- Kiểm tra trạng thái phải dùng dữ liệu phòng trực tiếp đủ `note`/`match_mode`; không suy luận loại phòng từ snapshot thiếu cột.
+
 ## V1.6.53 — Quy tắc màu lịch rảnh GĐ2
 
 - Trong Sảnh chờ GĐ2, giờ rảnh của HLV mặc định màu xanh dương.
