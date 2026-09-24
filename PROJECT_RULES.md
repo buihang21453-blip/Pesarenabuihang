@@ -1,3 +1,8 @@
+## V1.6.55 — Quy tắc trạng thái phòng một người
+
+- Phòng Rank/Giao hữu chỉ còn chủ phòng, không có `guest_user_id` và không có `match_id` thật phải được xem là **đang chờ trong phòng**, không phải đang thi đấu.
+- Không áp dụng tự sửa này cho C1/Tournament. Phòng còn `match_id` thật luôn phải giữ trạng thái khóa cho tới khi luồng trận xử lý xong.
+
 ## V1.6.54 — Quy tắc cách ly lời mời Rank và C1
 
 - Bất kỳ Phòng đấu C1 active nào cũng làm người chơi không khả dụng cho lời mời Rank/Tìm Nhanh.

@@ -342,7 +342,14 @@ def build_player_activity_map(rooms=None, matches=None):
     for room in rooms:
         if not room_is_active(room):
             continue
-        if room.get("status") == "waiting_ready":
+        # Phòng chỉ còn chủ phòng, không có match_id thật, phải hiển thị là
+        # "Đang trong phòng" kể cả dữ liệu cũ còn status=playing.
+        is_solo_without_match = bool(
+            room.get("host_user_id")
+            and not room.get("guest_user_id")
+            and not room.get("match_id")
+        )
+        if room.get("status") == "waiting_ready" or is_solo_without_match:
             code, label = "in_room", "Đang trong phòng"
         elif room.get("status") == "waiting_result_confirm":
             code, label = "waiting_confirm", "Chờ xác nhận"

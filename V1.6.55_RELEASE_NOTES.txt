@@ -1,0 +1,7 @@
+PES ARENA V1.6.55 — FIX SOLO ROOM STATUS
+
+- Sửa một số phòng Rank chỉ còn 1 người nhưng bị hiển thị Đang thi đấu.
+- Phòng không có khách và không có match thật được chuẩn hóa về trạng thái chờ.
+- Luồng mời Rank có thể tiếp tục dùng phòng trống này.
+- C1 không bị can thiệp.
+- Không có SQL mới.

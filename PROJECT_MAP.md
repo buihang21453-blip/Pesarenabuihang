@@ -1,3 +1,9 @@
+## V1.6.55 — Chuẩn hóa trạng thái phòng Rank trống
+
+- `modules/legacy_room_activity_service.py`: mở rộng nhận diện solo room và tự sửa status Rank trống bị stale.
+- `modules/legacy_match_service.py`: activity map không còn gắn nhãn `Đang thi đấu` cho phòng chỉ còn chủ và không có match.
+- `tests/test_rank_solo_room_status_v1655.py`: hồi quy trạng thái hiển thị và luồng mời.
+
 ## V1.6.54 — Invite/Matchmaking isolation Rank ↔ C1
 
 - `modules/legacy_room_activity_service.py`: snapshot phòng lấy thêm loại phòng, tách `c1_room_*` và `normal_room_*`, ưu tiên C1 khi có dữ liệu active trùng.

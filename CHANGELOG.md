@@ -1,3 +1,10 @@
+## V1.6.55 — Sửa phòng Rank một mình bị báo “Đang thi đấu”
+
+- Sửa nhận diện phòng Rank chỉ còn chủ phòng: nếu `guest_user_id` và `match_id` đều trống thì đây là phòng chờ, không phải trận đang thi đấu, kể cả dữ liệu cũ còn `status=playing`.
+- Dashboard/Players hiển thị đúng `Đang trong phòng` thay vì `Đang thi đấu`.
+- Luồng mời Rank coi phòng trống dạng này là có thể nhận/gửi lời mời; snapshot tự sửa status cũ về `waiting_ready` để thao tác attach/accept không bị chặn.
+- Không tự sửa Phòng C1 và không reset phòng còn `match_id` thật. Không có SQL mới.
+
 ## V1.6.54 — Rà soát luồng mời Rank và cách ly C1
 
 - Sửa `matchmaking_snapshot()` để đọc đủ `note` và `match_mode`; trước đó snapshot không có hai cột này nên kiểm tra phòng C1 ở luồng gửi lời mời Rank có thể nhận diện sai.

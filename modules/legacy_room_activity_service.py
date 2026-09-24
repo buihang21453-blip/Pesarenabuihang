@@ -437,13 +437,26 @@ def has_pending_invite_between(user_a, user_b):
 
 
 def is_solo_waiting_room(room, user_id):
-    """True only when user is the host of an empty room that has not started."""
+    """True khi user đang một mình trong phòng Rank/Giao hữu chưa có trận thật.
+
+    Dữ liệu cũ đôi khi để lại ``status=playing`` sau khi khách đã rời nhưng
+    ``guest_user_id`` và ``match_id`` đều rỗng. Trạng thái đó về nghiệp vụ vẫn
+    là phòng trống và không được coi người chơi là đang thi đấu.
+    """
     if not room or not user_id:
+        return False
+    note = str(room.get("note") or "")
+    is_c1 = note.startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament"
+    if is_c1:
         return False
     return bool(
         str(room.get("host_user_id")) == str(user_id)
-        and room.get("status") == "waiting_ready"
         and not room.get("guest_user_id")
+        and not room.get("match_id")
+        and room.get("status") in {
+            "waiting_ready", "playing", "friendly_playing",
+            "waiting_result_confirm", "waiting_confirm", "disputed"
+        }
     )
 
 
@@ -510,6 +523,34 @@ def matchmaking_snapshot(user_a, user_b=None):
                 or str(room.get("match_mode") or "").lower() == "tournament"
             )
         )
+
+    # Tự sửa dữ liệu phòng Rank trống nhưng còn status cũ như ``playing``.
+    # Không đụng phòng C1 và không reset phòng còn match_id thật.
+    for room in rooms:
+        if (
+            not _is_c1_room(room)
+            and room.get("host_user_id")
+            and not room.get("guest_user_id")
+            and not room.get("match_id")
+            and room.get("status") != "waiting_ready"
+        ):
+            old_status = room.get("status")
+            try:
+                execute_query(
+                    db.table("match_rooms").update({
+                        "status": "waiting_ready",
+                        "guest_ready": False,
+                        "state_expires_at": None,
+                        "updated_at": now_iso(),
+                    }).eq("id", room.get("id")),
+                    "repair_stale_solo_rank_room_status",
+                    attempts=1,
+                )
+            except Exception as exc:
+                print(f"repair stale solo room warning id={room.get('id')} status={old_status}: {exc}")
+            # Dù DB update tạm lỗi, snapshot hiện tại vẫn phải phản ánh đúng nghiệp vụ.
+            room["status"] = "waiting_ready"
+            room["guest_ready"] = False
 
     def rooms_for(uid):
         uid = str(uid)
