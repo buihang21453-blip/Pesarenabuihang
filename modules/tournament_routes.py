@@ -281,6 +281,7 @@ def register_routes(context):
                 "user_id": str(ticket_uid), "name": names.get(str(ticket_uid), "HLV"),
                 "rank": int(e.get("rank") or 0), "remaining": int(e.get("tickets_remaining") or 0),
                 "total": int(e.get("tickets_total") or 0), "club": member.get("fixed_club_name") or "—",
+                "club_finalized": bool(e.get("club_finalized")), "ticket_waived": bool(e.get("ticket_waived")),
             })
         tickets.sort(key=lambda x: (x["rank"] or 99, x["name"]))
         my_ticket = next((x for x in tickets if x["user_id"] == uid), None)

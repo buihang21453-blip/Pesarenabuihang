@@ -1,3 +1,11 @@
+## V1.6.62 — Top 3 reroll Pot 3 / giữ CLB hiện tại
+
+- `modules/tournament_competition_parts/rewards.py`: khóa pool reroll vào Pot 3; thêm action chốt giữ CLB không tiêu vé.
+- `modules/tournament_routes.py`: public payload thêm trạng thái `club_finalized` / `ticket_waived`.
+- `templates/tournament/components/knockout_dashboard.html`: thêm nút giữ CLB và trạng thái đã chốt.
+- `templates/tournament/styles.html`: style cho nhóm action vé.
+- `tests/test_c1_top3_reroll_pot3_keepclub_v1662.py`: regression tests.
+
 ## V1.6.61 — Champion Cup tối giản
 
 - `templates/tournament/components/knockout_dashboard.html`: bỏ lớp glow của Cup.

@@ -1,0 +1,6 @@
+PES ARENA V1.6.62
+
+- Fix Admin/HLV Random lại CLB Top 3 chỉ trong Pot 3 còn trống.
+- Thêm nút: Tôi chọn CLB này, không cần sử dụng vé Random.
+- Chọn giữ CLB không tiêu vé nhưng chốt quyền Random cho Knockout.
+- Không đổi DB, không SQL mới.

@@ -1,3 +1,11 @@
+## V1.6.62 — Vé Random Top 3 chỉ quay Pot 3 + nút giữ CLB
+
+- Sửa luồng Random lại CLB Top 3: cả HLV tự quay và Admin quay hộ chỉ được chọn trong các CLB **Pot 3 còn trống**.
+- Không còn trường hợp vé Top 3 rơi sang CLB Pot 1 hoặc Pot 2.
+- Thêm nút **✅ Tôi chọn CLB này, không cần sử dụng vé Random** cho chính HLV Top 3.
+- Khi chọn giữ CLB, vé không bị tính là đã sử dụng nhưng được đóng/finalize để không thể Random lại sau khi đã chốt.
+- Không đổi DB, không có SQL mới.
+
 ## V1.6.61 — Tối giản khu vực Cup Nhà vô địch
 
 - Bỏ toàn bộ nền, viền và khung bao quanh khu vực Cup trong Bảng theo dõi Knockout.

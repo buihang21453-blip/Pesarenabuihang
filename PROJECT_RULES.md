@@ -1,3 +1,9 @@
+## V1.6.62 — Quy tắc vé Random CLB Top 3
+
+- Vé Random sau GĐ2 của Top 1–3 chỉ được Random trong **Pot 3** còn trống; áp dụng giống nhau cho HLV và Admin quay hộ.
+- HLV có thể chốt giữ CLB hiện tại bằng nút `Tôi chọn CLB này`; thao tác này không tiêu vé nhưng đóng quyền Random bằng vé đó cho vòng Knockout.
+- Sau khi HLV bắt đầu Knockout, cả Random và chốt lại trạng thái CLB đều bị khóa.
+
 ## V1.6.61 — Quy tắc hiển thị Cup
 
 - Khu vực Nhà vô địch trong bracket không dùng nền panel riêng.

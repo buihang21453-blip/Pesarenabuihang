@@ -101,6 +101,9 @@ def register_rewards(context):
         state=_setting(tournament_id,LEAGUE_TOP3_REROLL_KEY,{}) or {}
         entries=dict(state.get("entries") or {})
         entry=dict(entries.get(uid) or {})
+        if entry.get("club_finalized"):
+            flash("HLV đã chọn giữ CLB hiện tại và không sử dụng vé Random.","warning")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         if int(entry.get("tickets_remaining") or 0)<=0:
             flash("HLV không còn vé Random lại CLB GĐ2.","warning")
             return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
@@ -120,9 +123,12 @@ def register_rewards(context):
         old_club,_=_one(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("name",old_name),"ops_league_reroll_old_club")
         skipped=set(str(x) for x in (entry.get("skipped_club_ids") or []))
         if old_club: skipped.add(str(old_club.get("id")))
-        pool=_available_clubs(tournament_id,skipped)
+        # Top 3 BXH thuộc Tier 1 nên vé Random sau GĐ2 chỉ được quay trong
+        # CLB Pot 3 còn trống. Không bao giờ rơi sang Pot 1/2.
+        pool=[c for c in _available_clubs(tournament_id,skipped)
+              if int(C1_CLUB_POT_BY_NAME.get(str(c.get("name") or "")) or 0)==3]
         if not pool:
-            flash("Không còn CLB trống phù hợp để Random lại.","error")
+            flash("Không còn CLB Pot 3 trống phù hợp để Random lại.","error")
             return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         new_club=random.choice(pool)
         # Chỉ nhả CLB cũ sau khi đã chắc chắn có CLB mới để nhận.
@@ -174,6 +180,56 @@ def register_rewards(context):
             flash("Thiếu HLV cần Random CLB hộ.","error")
             return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         return _league_top3_reroll_for(tournament_id,uid,admin_actor=admin_uid)
+
+    def _league_top3_keep_current_club(tournament_id, uid):
+        """Finalize current club without spending the Top-3 reroll ticket."""
+        uid=str(uid or "")
+        member=_member(tournament_id,uid)
+        if not member:
+            flash("HLV không thuộc giải đấu này.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        state=_setting(tournament_id,LEAGUE_TOP3_REROLL_KEY,{}) or {}
+        entries=dict(state.get("entries") or {})
+        entry=dict(entries.get(uid) or {})
+        if not entry:
+            flash("HLV không có vé Random CLB Top 3 để chốt.","warning")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        if entry.get("club_finalized"):
+            flash("Bạn đã chốt giữ CLB hiện tại.","info")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        knockout_for_me=[m for m in _matches(tournament_id,"knockout")
+                         if uid in {str(m.get("home_user_id") or ""),str(m.get("away_user_id") or "")}]
+        started=[m for m in knockout_for_me if str(m.get("status") or "pending") not in {"pending","scheduled","cancelled"}]
+        if started:
+            flash("HLV đã bắt đầu vòng Knockout nên không thể đổi trạng thái vé/CLB nữa.","warning")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        club=str(member.get("fixed_club_name") or "")
+        if not club:
+            flash("HLV chưa có CLB để chốt.","warning")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        entry["club_finalized"]=True
+        entry["ticket_waived"]=True
+        entry["finalized_club"]=club
+        entry["finalized_at"]=now_iso()
+        entry.setdefault("history",[]).append({
+            "at":now_iso(),"action":"KEEP_CURRENT_CLUB","club":club,
+            "ticket_spent":False,"actor_role":"player","actor_user_id":uid,
+        })
+        entries[uid]=entry
+        state["entries"]=entries
+        state["updated_at"]=now_iso()
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,"setting_key":LEAGUE_TOP3_REROLL_KEY,
+            "setting_value":state,"updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_league_top3_keep_current_club",attempts=2)
+        flash(f"Đã chọn giữ CLB {club}. Vé Random không bị sử dụng và được đóng lại cho vòng Knockout.","success")
+        return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+
+    @app.post('/tournaments/<tournament_id>/league-top3/keep-club')
+    @login_required
+    def tournament_league_top3_keep_club(tournament_id):
+        uid=str((current_user() or {}).get("id") or "")
+        return _league_top3_keep_current_club(tournament_id,uid)
 
     @app.post('/admin/tournaments/<tournament_id>/league/finish')
     @login_required
