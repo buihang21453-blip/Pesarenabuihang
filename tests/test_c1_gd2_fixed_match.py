@@ -89,6 +89,25 @@ class FixedMatchTests(unittest.TestCase):
         self.assertTrue(ok)
         self.assertEqual(self.db.rows['tournament_matches'][0]['status'], 'playing')
 
+    def test_recovers_when_fixture_playing_but_room_still_waiting_ready(self):
+        self.db.rows['tournament_matches'][0]['status'] = 'playing'
+        ok, message, clubs = self.start()
+        self.assertTrue(ok, message)
+        self.assertEqual(clubs, ('Porto', 'Napoli'))
+        self.assertEqual(self.db.rows['match_rooms'][0]['status'], 'playing')
+        self.assertIn('khôi phục', message.lower())
+
+    def test_knockout_fixed_match_uses_same_service(self):
+        import json
+        room = self.db.rows['match_rooms'][0]
+        room['note'] = 'TOURNAMENT_ROOM|' + json.dumps(dict(
+            tournament_id='tour', tournament_match_id='fixture', stage_code='knockout'))
+        self.db.rows['tournament_matches'][0]['stage_code'] = 'knockout'
+        self.db.rows['tournament_stages'][0]['stage_code'] = 'knockout'
+        ok, message, _ = self.start()
+        self.assertTrue(ok, message)
+        self.assertEqual(room['status'], 'playing')
+
 
 class UIContractTests(unittest.TestCase):
     @classmethod

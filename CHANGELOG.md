@@ -1,3 +1,11 @@
+## V1.6.56 — Sửa C1 GĐ2 mất form nhập tỷ số khi room/fixture lệch trạng thái
+
+- Sửa trường hợp `tournament_matches.status=playing` nhưng `match_rooms.status=waiting_ready`, khiến chủ phòng chỉ thấy nút “TIẾP TỤC TRẬN C1” và khối xác nhận kết quả nhưng không có ô nhập tỷ số.
+- Service bắt đầu C1 giờ tự phục hồi room sang `playing` nếu fixture chính thức đã `playing`, giữ nguyên hai CLB cố định và không quay lại CLB.
+- Khi có request song song, đọc lại fixture trước khi rollback để không tạo lại trạng thái lệch giữa hai bảng.
+- Mở cùng cơ chế tự bắt đầu cho cả GĐ2 (`league`) và Knockout (`knockout`).
+- Không đổi schema/SQL, không ảnh hưởng Rank.
+
 ## V1.6.55 — Sửa phòng Rank một mình bị báo “Đang thi đấu”
 
 - Sửa nhận diện phòng Rank chỉ còn chủ phòng: nếu `guest_user_id` và `match_id` đều trống thì đây là phòng chờ, không phải trận đang thi đấu, kể cả dữ liệu cũ còn `status=playing`.

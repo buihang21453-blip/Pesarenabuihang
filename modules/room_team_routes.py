@@ -608,7 +608,7 @@ def register_routes(context):
             try:
                 import json
                 metadata = json.loads(str(room.get("note"))[len("TOURNAMENT_ROOM|"):])
-                if (str(metadata.get("stage_code") or "") == "league"
+                if (str(metadata.get("stage_code") or "") in {"league", "knockout"}
                         and not metadata.get("test_sandbox_room")):
                     from modules.c1_fixed_match_service import start_assigned_club_match
                     started, message, _ = start_assigned_club_match(

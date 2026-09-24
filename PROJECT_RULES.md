@@ -1,3 +1,9 @@
+## V1.6.56 — Đồng bộ trạng thái C1
+
+- Với C1 GĐ2/KO, `match_rooms` và `tournament_matches` phải cùng phản ánh trạng thái `playing` khi trận đã khởi động.
+- Nếu fixture đã `playing` nhưng room còn `waiting_ready`, phải phục hồi room sang `playing`; không được rollback fixture hoặc buộc quay CLB lại.
+- Trước khi rollback sau update cạnh tranh, luôn đọc lại fixture để tránh tạo trạng thái lệch hai bảng.
+
 ## V1.6.55 — Quy tắc trạng thái phòng một người
 
 - Phòng Rank/Giao hữu chỉ còn chủ phòng, không có `guest_user_id` và không có `match_id` thật phải được xem là **đang chờ trong phòng**, không phải đang thi đấu.

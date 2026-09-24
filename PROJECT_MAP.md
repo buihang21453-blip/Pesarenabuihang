@@ -1,3 +1,10 @@
+## V1.6.56 — C1 fixed-match state recovery
+
+- `modules/c1_fixed_match_service.py`: phục hồi room `waiting_ready` khi fixture đã `playing`; xử lý race condition trước rollback.
+- `modules/room_team_routes.py`: guest Ready tự bắt đầu cho cả `league` và `knockout`.
+- `tests/test_c1_gd2_fixed_match.py`: thêm kiểm thử fixture playing/room waiting và Knockout.
+- `app.py`: nâng version lên V1.6.56.
+
 ## V1.6.55 — Chuẩn hóa trạng thái phòng Rank trống
 
 - `modules/legacy_room_activity_service.py`: mở rộng nhận diện solo room và tự sửa status Rank trống bị stale.

@@ -51,8 +51,11 @@ def start_assigned_club_match(db, execute_query, tournament_id, room_id, now_iso
         "c1_fixed_start_stage", attempts=2,
     )
     stage = (getattr(stage_result, "data", None) or [None])[0]
-    if not stage or stage.get("status") != "open" or match.get("status") not in {"pending", "scheduled"}:
-        return False, "Giai đoạn chưa mở hoặc trận không còn ở trạng thái chờ.", ()
+    if not stage or stage.get("status") != "open":
+        return False, "Giai đoạn C1 chưa mở.", ()
+    match_status = str(match.get("status") or "").lower()
+    if match_status not in {"pending", "scheduled", "playing"}:
+        return False, "Trận C1 không còn ở trạng thái có thể bắt đầu.", ()
     host_id, guest_id = str(room.get("host_user_id") or ""), str(room.get("guest_user_id") or "")
     expected = {str(match.get("home_user_id") or ""), str(match.get("away_user_id") or "")}
     if not host_id or not guest_id or host_id == guest_id or {host_id, guest_id} != expected:
@@ -86,7 +89,23 @@ def start_assigned_club_match(db, execute_query, tournament_id, room_id, now_iso
         "c1_fixed_start_room", attempts=2,
     )
     if not (getattr(updated, "data", None) or []):
+        # Có request khác vừa đổi room. Nếu room đã playing thì coi là idempotent,
+        # tránh đẩy Host về màn chờ và làm mất form nhập tỷ số.
+        fresh_room_result = execute_query(
+            db.table("match_rooms").select("*").eq("id", rid).limit(1),
+            "c1_fixed_start_recheck_room", attempts=2,
+        )
+        fresh_room = (getattr(fresh_room_result, "data", None) or [None])[0]
+        if fresh_room and str(fresh_room.get("status") or "").lower() == "playing":
+            return True, "Trận C1 đã bắt đầu.", (fresh_room.get("host_team"), fresh_room.get("guest_team"))
         return False, "Trạng thái phòng vừa thay đổi. Hãy làm mới phòng.", ()
+
+    # Trường hợp lỗi lệch trạng thái từng gặp: tournament_match đã là `playing`
+    # nhưng match_rooms vẫn `waiting_ready`. Khi đó chỉ cần phục hồi room; tuyệt
+    # đối không rollback về waiting_ready và không bắt người chơi quay/bắt đầu lại.
+    if match_status == "playing":
+        return True, "Đã khôi phục Phòng C1 đang thi đấu. Chủ phòng có thể nhập tỷ số.", (host_club, guest_club)
+
     try:
         changed = execute_query(
             db.table("tournament_matches").update({"status": "playing", "updated_at": started_at})
@@ -94,9 +113,20 @@ def start_assigned_club_match(db, execute_query, tournament_id, room_id, now_iso
             "c1_fixed_start_scheduled_match", attempts=2,
         )
         if not (getattr(changed, "data", None) or []):
+            # Có thể request song song đã chuyển fixture sang playing. Đọc lại trước
+            # khi rollback, vì rollback trong tình huống này chính là nguyên nhân tạo
+            # trạng thái: fixture=playing nhưng room=waiting_ready.
+            fresh_match_result = execute_query(
+                db.table("tournament_matches").select("*").eq("id", mid).eq("tournament_id", tid).limit(1),
+                "c1_fixed_start_recheck_match", attempts=2,
+            )
+            fresh_match = (getattr(fresh_match_result, "data", None) or [None])[0]
+            if fresh_match and str(fresh_match.get("status") or "").lower() == "playing":
+                return True, "Đã bắt đầu trận C1 với CLB được gán sẵn.", (host_club, guest_club)
             raise RuntimeError("Scheduled C1 match transition updated no rows")
     except Exception:
-        # Room/match are separate updates: restore only if this room is still playing.
+        # Room/match are separate updates: restore only when fixture thật sự chưa
+        # chuyển sang playing. Không tạo lại state lệch giữa hai bảng.
         execute_query(
             db.table("match_rooms").update({
                 "status": "waiting_ready", "guest_ready": True,

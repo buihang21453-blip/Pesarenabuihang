@@ -1,0 +1,6 @@
+PES ARENA V1.6.56 — SỬA FORM NHẬP KẾT QUẢ C1 GĐ2
+
+- Tự phục hồi Phòng C1 nếu fixture đã playing nhưng room vẫn waiting_ready.
+- Chủ phòng sau khi trạng thái đồng bộ sẽ thấy lại form nhập tỷ số.
+- Guest Ready áp dụng tự bắt đầu cho GĐ2 và Knockout.
+- Không có SQL mới.
