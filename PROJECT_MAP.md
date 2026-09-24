@@ -1,3 +1,13 @@
+## V1.6.57 — Knockout Dashboard
+
+- `modules/tournament_routes.py`: dựng payload Knockout công khai, ghép cặp theo aggregate_group, trạng thái/tổng tỷ số, trận tiếp theo của HLV và trạng thái vé Top 3.
+- `templates/tournament/components/knockout_dashboard.html`: bảng theo dõi Tứ kết/Bán kết/Chung kết trên `/tournaments`.
+- `templates/tournament/cards/champions_league.html`: đưa Knockout Dashboard vào màn hình chính giải C1.
+- `templates/tournament/styles.html`: CSS responsive cho bracket, trận tiếp theo và vé Top 3.
+- `modules/tournament_competition_parts/rewards.py`: bracket đã sinh vẫn cho dùng vé; khóa reroll khi HLV đã bắt đầu Knockout.
+- `tests/test_c1_knockout_dashboard_v1657.py`: kiểm thử giao diện bracket/trận tiếp theo và guard vé.
+- `app.py`: nâng `APP_VERSION` lên V1.6.57.
+
 ## V1.6.56 — C1 fixed-match state recovery
 
 - `modules/c1_fixed_match_service.py`: phục hồi room `waiting_ready` khi fixture đã `playing`; xử lý race condition trước rollback.

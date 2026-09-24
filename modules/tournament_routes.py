@@ -144,6 +144,153 @@ def register_routes(context):
         )
         return rows[0] if rows else None
 
+    def _public_knockout_payload(tournament_id, viewer_id, member_rows=None, name_map=None):
+        """Build public knockout tracking data for /tournaments.
+
+        This is read-only presentation data. It never advances the bracket and never
+        mutates tournament matches. Top-3 reroll tickets remain independent from
+        bracket generation; the action route performs its own safety gate.
+        """
+        match_rows, _ = _safe_rows(
+            db.table("tournament_matches").select("*")
+            .eq("tournament_id", tournament_id).eq("stage_code", "knockout").order("created_at"),
+            "tournament_public_knockout_matches",
+        )
+        if not match_rows:
+            return {
+                "generated": False, "rounds": {}, "current_round": None,
+                "my_next": None, "tickets": [], "my_ticket": None,
+            }
+
+        ids = set()
+        for row in match_rows:
+            if row.get("home_user_id"): ids.add(str(row.get("home_user_id")))
+            if row.get("away_user_id"): ids.add(str(row.get("away_user_id")))
+        names = dict(name_map or {})
+        missing = [uid for uid in ids if uid not in names]
+        if missing:
+            user_rows, _ = _safe_rows(
+                db.table("users").select("id,username,display_name").in_("id", missing),
+                "tournament_public_knockout_users",
+            )
+            names.update({str(u.get("id")): (u.get("display_name") or u.get("username") or "HLV") for u in user_rows})
+
+        flow_rows, _ = _safe_rows(
+            db.table("tournament_settings").select("setting_value")
+            .eq("tournament_id", tournament_id).eq("setting_key", "knockout_flow").limit(1),
+            "tournament_public_knockout_flow",
+        )
+        flow = ((flow_rows[0].get("setting_value") if flow_rows else {}) or {})
+        if not isinstance(flow, dict): flow = {}
+
+        round_order = {"qf": 0, "sf": 1, "final": 2}
+        round_labels = {"qf": "TỨ KẾT", "sf": "BÁN KẾT", "final": "CHUNG KẾT"}
+        status_labels = {
+            "pending": "Chờ thi đấu", "scheduled": "Đã lên lịch", "playing": "Đang thi đấu",
+            "completed": "Hoàn tất", "disputed": "Chờ BTC xử lý", "cancelled": "Đã hủy",
+        }
+        grouped = {}
+        for row in match_rows:
+            code = str(row.get("round_code") or "")
+            if code not in round_order:
+                continue
+            key = str(row.get("aggregate_group") or f"{code}:{row.get('home_user_id')}:{row.get('away_user_id')}")
+            grouped.setdefault((code, key), []).append(dict(row))
+
+        rounds = {code: [] for code in round_order}
+        for (code, key), legs in grouped.items():
+            legs.sort(key=lambda x: (int(x.get("leg_no") or 1), str(x.get("created_at") or "")))
+            first = legs[0]
+            home_id = str(first.get("home_user_id") or "")
+            away_id = str(first.get("away_user_id") or "")
+            totals = {home_id: 0, away_id: 0}
+            completed = 0
+            for leg in legs:
+                if str(leg.get("status") or "") == "completed":
+                    completed += 1
+                    h, a = str(leg.get("home_user_id") or ""), str(leg.get("away_user_id") or "")
+                    try:
+                        totals[h] = totals.get(h, 0) + int(leg.get("home_score") or 0)
+                        totals[a] = totals.get(a, 0) + int(leg.get("away_score") or 0)
+                    except (TypeError, ValueError):
+                        pass
+            statuses = [str(x.get("status") or "pending") for x in legs]
+            if statuses and all(x in {"completed", "cancelled"} for x in statuses):
+                pair_status = "completed"
+            elif "disputed" in statuses:
+                pair_status = "disputed"
+            elif "playing" in statuses:
+                pair_status = "playing"
+            elif "scheduled" in statuses:
+                pair_status = "scheduled"
+            else:
+                pair_status = "pending"
+            next_leg = next((x for x in legs if str(x.get("status") or "") not in {"completed", "cancelled"}), None)
+            rounds[code].append({
+                "key": key, "round_code": code, "round_label": round_labels[code],
+                "home_user_id": home_id, "away_user_id": away_id,
+                "home_name": names.get(home_id, "HLV"), "away_name": names.get(away_id, "HLV"),
+                "home_total": totals.get(home_id, 0), "away_total": totals.get(away_id, 0),
+                "has_score": completed > 0, "completed_legs": completed, "leg_count": len(legs),
+                "status": pair_status, "status_label": status_labels.get(pair_status, pair_status),
+                "next_leg": next_leg, "legs": legs,
+            })
+        for code in rounds:
+            rounds[code].sort(key=lambda p: min(str(x.get("created_at") or "") for x in p["legs"]))
+
+        uid = str(viewer_id or "")
+        my_candidates = []
+        if uid:
+            for row in match_rows:
+                code = str(row.get("round_code") or "")
+                if code not in round_order:
+                    continue
+                if uid not in {str(row.get("home_user_id") or ""), str(row.get("away_user_id") or "")}:
+                    continue
+                if str(row.get("status") or "") in {"completed", "cancelled"}:
+                    continue
+                my_candidates.append(dict(row))
+        my_candidates.sort(key=lambda x: (round_order.get(str(x.get("round_code") or ""), 99), int(x.get("leg_no") or 1), str(x.get("created_at") or "")))
+        my_next = None
+        if my_candidates:
+            row = my_candidates[0]
+            h, a = str(row.get("home_user_id") or ""), str(row.get("away_user_id") or "")
+            opponent = a if uid == h else h
+            my_next = {
+                "id": row.get("id"), "round_code": row.get("round_code"),
+                "round_label": round_labels.get(str(row.get("round_code") or ""), "Knockout"),
+                "leg_no": int(row.get("leg_no") or 1), "status": row.get("status") or "pending",
+                "status_label": status_labels.get(str(row.get("status") or "pending"), str(row.get("status") or "pending")),
+                "opponent_name": names.get(opponent, "HLV"), "scheduled_at": row.get("scheduled_at"),
+            }
+
+        members = member_rows or []
+        member_map = {str(m.get("user_id")): m for m in members if m.get("user_id")}
+        ticket_rows, _ = _safe_rows(
+            db.table("tournament_settings").select("setting_value")
+            .eq("tournament_id", tournament_id).eq("setting_key", "league_top3_club_reroll_v1").limit(1),
+            "tournament_public_knockout_ticket_state",
+        )
+        ticket_state = ((ticket_rows[0].get("setting_value") if ticket_rows else {}) or {})
+        entries = (ticket_state.get("entries") or {}) if isinstance(ticket_state, dict) else {}
+        tickets = []
+        for ticket_uid, entry in entries.items():
+            e = entry if isinstance(entry, dict) else {}
+            member = member_map.get(str(ticket_uid)) or {}
+            tickets.append({
+                "user_id": str(ticket_uid), "name": names.get(str(ticket_uid), "HLV"),
+                "rank": int(e.get("rank") or 0), "remaining": int(e.get("tickets_remaining") or 0),
+                "total": int(e.get("tickets_total") or 0), "club": member.get("fixed_club_name") or "—",
+            })
+        tickets.sort(key=lambda x: (x["rank"] or 99, x["name"]))
+        my_ticket = next((x for x in tickets if x["user_id"] == uid), None)
+
+        return {
+            "generated": True, "rounds": rounds, "current_round": flow.get("current_round") or "qf",
+            "completed": bool(flow.get("completed")), "champion_user_id": flow.get("champion_user_id"),
+            "my_next": my_next, "tickets": tickets, "my_ticket": my_ticket,
+        }
+
     def _decorate_registration_rows(rows):
         user_ids = [str(row.get("user_id")) for row in rows if row.get("user_id")]
         users = {}
@@ -1060,6 +1207,9 @@ def register_routes(context):
                 for idx, row in enumerate(public_ranking, 1):
                     row["rank"] = idx
                 item["public_stage1_ranking"] = public_ranking
+                item["public_knockout"] = _public_knockout_payload(
+                    item.get("id"), user_id, member_rows_full, names
+                )
                 status = (item.get("status") or "").lower()
                 if status in {"registration", "upcoming"}:
                     item["phase_name"] = "Sắp khai mạc" if item.get("stage1_start_at") else "Đăng ký"

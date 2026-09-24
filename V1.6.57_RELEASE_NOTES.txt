@@ -1,0 +1,9 @@
+PES ARENA V1.6.57 — KNOCKOUT DASHBOARD
+
+- Bảng theo dõi Knockout xuất hiện ngay tại /tournaments.
+- Hiển thị Tứ kết, Bán kết, Chung kết, tổng tỷ số, trạng thái từng lượt.
+- HLV thấy Trận tiếp theo của tôi và có nút vào đúng Phòng đấu C1.
+- Hiển thị trạng thái vé Random CLB của Top 3.
+- Đã sinh Top 8 vẫn dùng được vé nếu HLV chưa bắt đầu trận Knockout.
+- Khóa đổi CLB sau khi HLV đã bắt đầu Knockout.
+- Không có SQL mới.

@@ -1,3 +1,11 @@
+## V1.6.57 — Quy tắc Knockout và vé Random CLB
+
+- Bảng Knockout trên `/tournaments` là dữ liệu theo dõi công khai, chỉ đọc; render không được tự sinh hoặc tự đẩy vòng.
+- Top 8 đã sinh không làm mất vé Random CLB Top 1–3. HLV được dùng vé miễn là chưa bắt đầu bất kỳ trận Knockout nào của chính mình.
+- Sau khi một trận Knockout của HLV chuyển khỏi pending/scheduled/cancelled, khóa đổi CLB để bảo toàn cùng một CLB trong cặp đấu đang diễn ra.
+- Phòng C1 đang `waiting_ready` tiếp tục lấy CLB hiện tại từ `tournament_members`; phòng đã `playing` giữ snapshot CLB lúc bắt đầu.
+- Không thay đổi BXH GĐ1+GĐ2, cách sinh Top 8 hoặc logic tự đẩy vòng.
+
 ## V1.6.56 — Đồng bộ trạng thái C1
 
 - Với C1 GĐ2/KO, `match_rooms` và `tournament_matches` phải cùng phản ánh trạng thái `playing` khi trận đã khởi động.

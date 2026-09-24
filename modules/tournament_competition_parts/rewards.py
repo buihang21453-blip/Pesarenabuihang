@@ -98,16 +98,25 @@ def register_rewards(context):
         entries=dict(state.get("entries") or {})
         entry=dict(entries.get(uid) or {})
         if int(entry.get("tickets_remaining") or 0)<=0:
-            flash("Bạn không còn vé Random lại CLB GĐ2.","warning"); return redirect(url_for("tournaments")+"#ranking")
+            flash("Bạn không còn vé Random lại CLB GĐ2.","warning"); return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        # V1.6.57: sinh bracket Top 8 không làm mất vé. Vé vẫn dùng được miễn là
+        # chính HLV chưa bắt đầu bất kỳ trận Knockout nào. Khi trận đã playing/completed/
+        # disputed, khóa reroll để CLB không đổi giữa một cặp đấu Knockout.
+        knockout_for_me=[m for m in _matches(tournament_id,"knockout")
+                         if uid in {str(m.get("home_user_id") or ""),str(m.get("away_user_id") or "")}]
+        started=[m for m in knockout_for_me if str(m.get("status") or "pending") not in {"pending","scheduled","cancelled"}]
+        if started:
+            flash("Bạn đã bắt đầu vòng Knockout nên vé Random CLB đã được khóa để giữ công bằng cho cặp đấu.","warning")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         old_name=str(member.get("fixed_club_name") or "")
         if not old_name:
-            flash("Bạn chưa có CLB để Random lại.","warning"); return redirect(url_for("tournaments")+"#ranking")
+            flash("Bạn chưa có CLB để Random lại.","warning"); return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         old_club,_=_one(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("name",old_name),"ops_league_reroll_old_club")
         skipped=set(str(x) for x in (entry.get("skipped_club_ids") or []))
         if old_club: skipped.add(str(old_club.get("id")))
         pool=_available_clubs(tournament_id,skipped)
         if not pool:
-            flash("Không còn CLB trống phù hợp để Random lại.","error"); return redirect(url_for("tournaments")+"#ranking")
+            flash("Không còn CLB trống phù hợp để Random lại.","error"); return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         new_club=random.choice(pool)
         # Chỉ nhả CLB cũ sau khi đã chắc chắn có CLB mới để nhận.
         if old_club:
@@ -121,7 +130,7 @@ def register_rewards(context):
             "tournament_id":tournament_id,"setting_key":LEAGUE_TOP3_REROLL_KEY,"setting_value":state,"updated_at":now_iso(),
         },on_conflict="tournament_id,setting_key"),"ops_league_top3_reroll_use",attempts=2)
         flash(f"Đã dùng 1 vé: {old_name} → {new_club.get('name')}. CLB {old_name} sẽ không xuất hiện lại cho bạn.","success")
-        return redirect(url_for("tournaments")+"#ranking")
+        return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
 
     @app.post('/admin/tournaments/<tournament_id>/league/finish')
     @login_required

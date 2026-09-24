@@ -1,0 +1,81 @@
+{% set ko = tournament.public_knockout|default({}) %}
+{% if ko.get('generated') %}
+<section class="c1-knockout-dashboard" id="knockout-{{ tournament.id }}" aria-label="Theo dõi Knockout C1">
+  <header class="c1-ko-head">
+    <div>
+      <span class="c1-ko-kicker">CHAMPIONS LEAGUE ARENA · KNOCKOUT</span>
+      <h3>🏆 Bảng theo dõi Knockout</h3>
+      <p>Top 8 · Tứ kết → Bán kết → Chung kết. Admin và mọi người đều xem được tiến độ ngay tại Trung tâm giải đấu.</p>
+    </div>
+    <span class="c1-ko-round-badge">Vòng hiện tại · {{ (ko.get('current_round') or 'qf')|upper }}</span>
+  </header>
+
+  {% if ko.get('my_next') %}
+  {% set nxt = ko.get('my_next') %}
+  <div class="c1-ko-next-match">
+    <div class="c1-ko-next-copy">
+      <span>⚡ TRẬN TIẾP THEO CỦA TÔI</span>
+      <strong>{{ nxt.round_label }} · {% if nxt.round_code == 'final' %}Trận{% else %}Lượt{% endif %} {{ nxt.leg_no }}</strong>
+      <small>Đối thủ: <b>{{ nxt.opponent_name }}</b> · {{ nxt.status_label }}{% if nxt.scheduled_at %} · {{ (nxt.scheduled_at|string)|replace('T',' ') }}{% endif %}</small>
+    </div>
+    <a class="btn green c1-ko-enter-btn" href="{{ url_for('tournament_match_room_enter', tournament_id=tournament.id, match_id=nxt.id) }}">🎮 Vào Phòng đấu C1</a>
+  </div>
+  {% elif tournament.my_member %}
+  <div class="c1-ko-next-match is-muted">
+    <div class="c1-ko-next-copy"><span>⚡ TRẬN TIẾP THEO CỦA TÔI</span><strong>Chưa có trận cần thi đấu</strong><small>Hệ thống sẽ cập nhật khi xác định vòng tiếp theo.</small></div>
+  </div>
+  {% endif %}
+
+  {% if ko.get('tickets') %}
+  <div class="c1-ko-ticket-strip">
+    <div class="c1-ko-ticket-title"><strong>🎟 Vé Random CLB Top 3</strong><span>Bracket đã sinh không làm mất vé; chỉ khóa khi HLV đã bắt đầu Knockout.</span></div>
+    <div class="c1-ko-ticket-list">
+      {% for t in ko.get('tickets',[]) %}
+      <div class="c1-ko-ticket-item{{ ' is-mine' if current_user and current_user.id|string == t.user_id|string else '' }}">
+        <span>#{{ t.rank }} · {{ t.name }}</span>
+        <b>{{ t.club }}</b>
+        <em>🎟 {{ t.remaining }}/{{ t.total }}</em>
+        {% if current_user and current_user.id|string == t.user_id|string and t.remaining|int > 0 %}
+        <form method="post" action="{{ url_for('tournament_league_top3_reroll_club', tournament_id=tournament.id) }}" data-pes-confirm="Dùng 1 vé để Random lại CLB trước khi bắt đầu trận Knockout?" data-pes-confirm-title="Random lại CLB" data-pes-confirm-action="Dùng vé">
+          <button class="btn gold" type="submit">🎲 Random lại CLB</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="c1-ko-bracket" aria-label="Sơ đồ Knockout">
+    {% for code,label,expected in [('qf','TỨ KẾT',4),('sf','BÁN KẾT',2),('final','CHUNG KẾT',1)] %}
+    {% set pairs = ko.get('rounds',{}).get(code,[]) %}
+    <div class="c1-ko-round c1-ko-round-{{ code }}">
+      <div class="c1-ko-round-title"><span>{{ label }}</span><small>{{ pairs|length }}/{{ expected }} cặp</small></div>
+      <div class="c1-ko-pairs">
+        {% for pair in pairs %}
+        <article class="c1-ko-pair is-{{ pair.status }}">
+          <div class="c1-ko-pair-status"><span>{{ pair.status_label }}</span><small>{{ pair.completed_legs }}/{{ pair.leg_count }} trận xong</small></div>
+          <div class="c1-ko-team-row">
+            <strong>{{ pair.home_name }}</strong>
+            <b>{{ pair.home_total if pair.has_score else '—' }}</b>
+          </div>
+          <div class="c1-ko-team-row">
+            <strong>{{ pair.away_name }}</strong>
+            <b>{{ pair.away_total if pair.has_score else '—' }}</b>
+          </div>
+          <div class="c1-ko-leg-row">
+            {% for leg in pair.legs %}
+            <span title="{{ leg.status }}">{% if code == 'final' %}Trận{% else %}Lượt{% endif %} {{ leg.leg_no }} · {% if leg.status == 'completed' %}{{ leg.home_score }}–{{ leg.away_score }}{% elif leg.status == 'playing' %}Đang đá{% elif leg.status == 'disputed' %}Tranh chấp{% elif leg.status == 'cancelled' %}Hủy{% else %}Chờ{% endif %}</span>
+            {% endfor %}
+          </div>
+        </article>
+        {% endfor %}
+        {% for _ in range(expected - (pairs|length)) %}
+        <article class="c1-ko-pair is-placeholder"><div class="c1-ko-pair-status"><span>Chờ xác định</span></div><div class="c1-ko-team-row"><strong>—</strong><b>—</b></div><div class="c1-ko-team-row"><strong>—</strong><b>—</b></div></article>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

@@ -1,3 +1,13 @@
+## V1.6.57 — Bảng theo dõi Knockout ngay tại /tournaments
+
+- Thêm bảng Knockout công khai ngay trên trang `/tournaments`: Tứ kết → Bán kết → Chung kết, Admin và mọi người đều xem được.
+- Hiển thị từng cặp, tổng tỷ số, trạng thái từng lượt và số trận đã hoàn tất.
+- HLV thuộc Top 8 có khối **Trận tiếp theo của tôi** cùng nút vào Phòng đấu C1 đúng fixture.
+- Hiển thị trạng thái 3 vé Random CLB Top 1–3 ngay cạnh bảng Knockout; HLV còn vé có thể dùng trực tiếp tại đây.
+- Sinh Top 8 → Tứ kết không làm mất vé. Vé còn dùng được khi các trận Knockout của chính HLV vẫn chỉ ở trạng thái pending/scheduled.
+- Khi HLV đã bắt đầu/hoàn tất/tranh chấp bất kỳ trận Knockout nào, khóa Random CLB để không đổi CLB giữa cặp đấu.
+- Không thay DB, không cần SQL mới.
+
 ## V1.6.56 — Sửa C1 GĐ2 mất form nhập tỷ số khi room/fixture lệch trạng thái
 
 - Sửa trường hợp `tournament_matches.status=playing` nhưng `match_rooms.status=waiting_ready`, khiến chủ phòng chỉ thấy nút “TIẾP TỤC TRẬN C1” và khối xác nhận kết quả nhưng không có ô nhập tỷ số.
