@@ -1,0 +1,7 @@
+PES ARENA V1.6.58 — ADMIN RANDOM CLB HỘ TOP 3
+
+- Admin có thể dùng hộ vé Random CLB Top 3 ngay tại bảng Knockout.
+- Dùng đúng vé còn lại của HLV và giữ nguyên bracket.
+- Cùng khóa an toàn với HLV: đã bắt đầu Knockout thì không thể đổi CLB.
+- Ghi lịch sử actor Admin và gửi thông báo cho HLV.
+- Không có SQL mới.

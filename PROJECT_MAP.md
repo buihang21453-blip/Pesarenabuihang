@@ -1,3 +1,10 @@
+## V1.6.58 — Admin proxy Random CLB Top 3
+
+- `modules/tournament_competition_parts/rewards.py`: gom logic dùng vé Top 3 vào helper dùng chung, thêm route Admin quay hộ và ghi actor/notification.
+- `templates/tournament/components/knockout_dashboard.html`: hiển thị nút **Admin Random hộ** cho Admin trên từng vé còn hiệu lực.
+- `tests/test_c1_knockout_admin_reroll_v1658.py`: kiểm tra route và quyền hiển thị nút Admin.
+- `app.py`: nâng version lên V1.6.58.
+
 ## V1.6.57 — Knockout Dashboard
 
 - `modules/tournament_routes.py`: dựng payload Knockout công khai, ghép cặp theo aggregate_group, trạng thái/tổng tỷ số, trận tiếp theo của HLV và trạng thái vé Top 3.

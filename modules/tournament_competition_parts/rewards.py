@@ -87,36 +87,43 @@ def register_rewards(context):
         },on_conflict="tournament_id,setting_key"),"ops_league_top3_reroll_grant",attempts=2)
         return state
 
-    @app.post('/tournaments/<tournament_id>/league-top3/reroll-club')
-    @login_required
-    def tournament_league_top3_reroll_club(tournament_id):
-        uid=str((current_user() or {}).get("id") or "")
+    def _league_top3_reroll_for(tournament_id, uid, admin_actor=None):
+        """Spend one post-GĐ2 Top-3 reroll ticket for the target HLV.
+
+        Player and Admin-proxy actions use exactly the same safety gates so an
+        Admin can help the HLV without bypassing the Knockout-start lock.
+        """
+        uid=str(uid or "")
         member=_member(tournament_id,uid)
         if not member:
-            flash("Bạn không thuộc giải đấu này.","error"); return redirect(url_for("tournaments"))
+            flash("HLV không thuộc giải đấu này.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         state=_setting(tournament_id,LEAGUE_TOP3_REROLL_KEY,{}) or {}
         entries=dict(state.get("entries") or {})
         entry=dict(entries.get(uid) or {})
         if int(entry.get("tickets_remaining") or 0)<=0:
-            flash("Bạn không còn vé Random lại CLB GĐ2.","warning"); return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
-        # V1.6.57: sinh bracket Top 8 không làm mất vé. Vé vẫn dùng được miễn là
-        # chính HLV chưa bắt đầu bất kỳ trận Knockout nào. Khi trận đã playing/completed/
-        # disputed, khóa reroll để CLB không đổi giữa một cặp đấu Knockout.
+            flash("HLV không còn vé Random lại CLB GĐ2.","warning")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        # V1.6.57+: sinh bracket Top 8 không làm mất vé. Vé vẫn dùng được miễn là
+        # chính HLV chưa bắt đầu bất kỳ trận Knockout nào. Admin quay hộ cũng phải
+        # đi qua cùng khóa này để không thể đổi CLB giữa một cặp đấu Knockout.
         knockout_for_me=[m for m in _matches(tournament_id,"knockout")
                          if uid in {str(m.get("home_user_id") or ""),str(m.get("away_user_id") or "")}]
         started=[m for m in knockout_for_me if str(m.get("status") or "pending") not in {"pending","scheduled","cancelled"}]
         if started:
-            flash("Bạn đã bắt đầu vòng Knockout nên vé Random CLB đã được khóa để giữ công bằng cho cặp đấu.","warning")
+            flash("HLV đã bắt đầu vòng Knockout nên vé Random CLB đã được khóa để giữ công bằng cho cặp đấu.","warning")
             return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         old_name=str(member.get("fixed_club_name") or "")
         if not old_name:
-            flash("Bạn chưa có CLB để Random lại.","warning"); return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+            flash("HLV chưa có CLB để Random lại.","warning")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         old_club,_=_one(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("name",old_name),"ops_league_reroll_old_club")
         skipped=set(str(x) for x in (entry.get("skipped_club_ids") or []))
         if old_club: skipped.add(str(old_club.get("id")))
         pool=_available_clubs(tournament_id,skipped)
         if not pool:
-            flash("Không còn CLB trống phù hợp để Random lại.","error"); return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+            flash("Không còn CLB trống phù hợp để Random lại.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         new_club=random.choice(pool)
         # Chỉ nhả CLB cũ sau khi đã chắc chắn có CLB mới để nhận.
         if old_club:
@@ -124,13 +131,49 @@ def register_rewards(context):
         _club_assign(tournament_id,uid,new_club)
         entry["tickets_remaining"]=int(entry.get("tickets_remaining") or 0)-1
         entry["skipped_club_ids"]=list(skipped)
-        entry.setdefault("history",[]).append({"at":now_iso(),"from":old_name,"to":new_club.get("name")})
+        event={"at":now_iso(),"from":old_name,"to":new_club.get("name")}
+        if admin_actor:
+            event["actor_role"]="admin"
+            event["actor_user_id"]=str(admin_actor)
+        else:
+            event["actor_role"]="player"
+            event["actor_user_id"]=uid
+        entry.setdefault("history",[]).append(event)
         entries[uid]=entry; state["entries"]=entries; state["updated_at"]=now_iso()
         execute_query(db.table("tournament_settings").upsert({
             "tournament_id":tournament_id,"setting_key":LEAGUE_TOP3_REROLL_KEY,"setting_value":state,"updated_at":now_iso(),
         },on_conflict="tournament_id,setting_key"),"ops_league_top3_reroll_use",attempts=2)
-        flash(f"Đã dùng 1 vé: {old_name} → {new_club.get('name')}. CLB {old_name} sẽ không xuất hiện lại cho bạn.","success")
+        actor_text="Admin đã dùng hộ 1 vé" if admin_actor else "Đã dùng 1 vé"
+        flash(f"{actor_text}: {old_name} → {new_club.get('name')}. CLB {old_name} sẽ không xuất hiện lại cho HLV này.","success")
+        if admin_actor:
+            try:
+                create_user_notification(
+                    uid,
+                    "🎲 Admin đã Random lại CLB giúp bạn",
+                    f"CLB trước Knockout đã đổi: {old_name} → {new_club.get('name')}. Vé còn lại: {entry.get('tickets_remaining',0)}.",
+                    "/tournaments",
+                    "c1_league_top3_admin_reroll",
+                )
+            except Exception:
+                pass
         return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+
+    @app.post('/tournaments/<tournament_id>/league-top3/reroll-club')
+    @login_required
+    def tournament_league_top3_reroll_club(tournament_id):
+        uid=str((current_user() or {}).get("id") or "")
+        return _league_top3_reroll_for(tournament_id,uid)
+
+    @app.post('/admin/tournaments/<tournament_id>/league-top3/reroll-club-for')
+    @login_required
+    @admin_required
+    def admin_tournament_league_top3_reroll_club_for(tournament_id):
+        uid=str(request.form.get("user_id") or "")
+        admin_uid=str((current_user() or {}).get("id") or "")
+        if not uid:
+            flash("Thiếu HLV cần Random CLB hộ.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        return _league_top3_reroll_for(tournament_id,uid,admin_actor=admin_uid)
 
     @app.post('/admin/tournaments/<tournament_id>/league/finish')
     @login_required

@@ -39,6 +39,11 @@
         <form method="post" action="{{ url_for('tournament_league_top3_reroll_club', tournament_id=tournament.id) }}" data-pes-confirm="Dùng 1 vé để Random lại CLB trước khi bắt đầu trận Knockout?" data-pes-confirm-title="Random lại CLB" data-pes-confirm-action="Dùng vé">
           <button class="btn gold" type="submit">🎲 Random lại CLB</button>
         </form>
+        {% elif current_user and current_user.role == 'admin' and t.remaining|int > 0 %}
+        <form method="post" action="{{ url_for('admin_tournament_league_top3_reroll_club_for', tournament_id=tournament.id) }}" data-pes-confirm="Admin sẽ dùng 1 vé của {{ t.name }} để Random lại CLB trước Knockout. Bạn xác nhận?" data-pes-confirm-title="Admin Random CLB hộ HLV" data-pes-confirm-action="Random hộ">
+          <input type="hidden" name="user_id" value="{{ t.user_id }}">
+          <button class="btn gold" type="submit">🎲 Admin Random hộ</button>
+        </form>
         {% endif %}
       </div>
       {% endfor %}

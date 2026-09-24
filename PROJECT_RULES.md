@@ -1,3 +1,10 @@
+## V1.6.58 — Quy tắc Admin dùng hộ vé Top 3
+
+- Admin chỉ được dùng hộ **vé thật còn lại của đúng HLV**; không cấp thêm vé ngầm.
+- Admin và HLV dùng chung một hàm kiểm tra: đã bắt đầu Knockout thì khóa Random CLB.
+- Random hộ không được sinh lại bracket, đổi đối thủ hoặc sửa kết quả trận.
+- Lịch sử phải ghi ai là người thực hiện; khi Admin dùng hộ, HLV được thông báo.
+
 ## V1.6.57 — Quy tắc Knockout và vé Random CLB
 
 - Bảng Knockout trên `/tournaments` là dữ liệu theo dõi công khai, chỉ đọc; render không được tự sinh hoặc tự đẩy vòng.

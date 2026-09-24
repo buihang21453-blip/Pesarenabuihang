@@ -1,3 +1,11 @@
+## V1.6.58 — Admin dùng hộ vé Random CLB Top 3 trước Knockout
+
+- Admin có nút **🎲 Admin Random hộ** ngay tại Bảng theo dõi Knockout cho từng HLV Top 3 còn vé.
+- Admin dùng đúng vé của HLV mục tiêu; không tạo thêm vé và không thay đổi bracket/đối thủ Knockout.
+- Admin phải đi qua cùng khóa an toàn như HLV: chỉ được Random khi HLV chưa bắt đầu bất kỳ trận Knockout nào.
+- Lịch sử vé ghi actor Admin và HLV nhận thông báo sau khi Admin Random hộ.
+- Không đổi database/schema, không cần SQL mới.
+
 ## V1.6.57 — Bảng theo dõi Knockout ngay tại /tournaments
 
 - Thêm bảng Knockout công khai ngay trên trang `/tournaments`: Tứ kết → Bán kết → Chung kết, Admin và mọi người đều xem được.
