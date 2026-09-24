@@ -13,7 +13,7 @@ class Top3RerollPot3KeepClubV1662Tests(unittest.TestCase):
     def _tour(self, finalized=False):
         return {'id':'tour','my_member':{'user_id':'u1'},'public_knockout':{
             'generated':True,'current_round':'qf','my_next':None,
-            'tickets':[{'user_id':'u1','rank':1,'name':'HLV 1','club':'Como','remaining':1,'total':1,'club_finalized':finalized}],
+            'tickets':[{'user_id':'u1','rank':1,'name':'HLV 1','club':'Como','remaining':1,'total':1,'club_finalized':finalized,'hlv_tier':1,'expected_club_pot':3,'current_club_pot':3,'club_pot_mismatch':False}],
             'rounds':{'qf':[],'sf':[],'final':[]}}}
 
     def test_player_sees_keep_current_club_button(self):
@@ -28,11 +28,12 @@ class Top3RerollPot3KeepClubV1662Tests(unittest.TestCase):
         self.assertIn('Đã chọn giữ CLB này',html)
         self.assertNotIn('🎲 Random lại CLB</button>',html)
 
-    def test_reroll_backend_filters_strictly_to_pot3(self):
+    def test_reroll_backend_keeps_tier1_strictly_in_pot3_via_mapping(self):
         src=(self.root/'modules'/'tournament_competition_parts'/'rewards.py').read_text()
         self.assertIn('C1_CLUB_POT_BY_NAME',src)
-        self.assertIn('==3',src)
-        self.assertIn('Không còn CLB Pot 3 trống',src)
+        self.assertIn('expected_club_pot=4-hlv_tier',src)
+        self.assertIn('==expected_club_pot',src)
+        self.assertIn('Tier 1 -> Pot 3',src)
         self.assertIn('club_finalized',src)
         self.assertIn('ticket_spent":False',src)
 

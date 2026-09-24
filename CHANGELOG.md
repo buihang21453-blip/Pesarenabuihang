@@ -1,3 +1,11 @@
+## V1.6.63 — Khóa Random CLB theo đúng Tier HLV + sửa dữ liệu đã Random sai
+
+- Random Top 3 không còn hard-code Pot 3. Hệ thống đọc `tournament_members.pot_no` như **Tier HLV** và áp dụng đúng: Tier 1 → Pot 3, Tier 2 → Pot 2, Tier 3 → Pot 1.
+- Admin Random hộ và HLV tự Random dùng chung một bộ lọc, tuyệt đối không được rơi sang Pot khác.
+- Bổ sung cảnh báo `CLB sai Tier/Pot` trên `/tournaments`. Admin có nút **🔧 Sửa CLB sai Tier/Pot** cho dữ liệu đã bị lỗi ở version cũ.
+- Nút sửa chỉ chọn lại CLB còn trống trong đúng Pot, không trừ thêm vé và không hoàn lại vé đã tiêu; lịch sử sửa được ghi vào ticket state.
+- Không có SQL mới.
+
 ## V1.6.62 — Vé Random Top 3 chỉ quay Pot 3 + nút giữ CLB
 
 - Sửa luồng Random lại CLB Top 3: cả HLV tự quay và Admin quay hộ chỉ được chọn trong các CLB **Pot 3 còn trống**.

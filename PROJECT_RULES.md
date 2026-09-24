@@ -1,3 +1,10 @@
+## V1.6.63 — Quy tắc bất biến Tier HLV → Pot CLB
+
+- `tournament_members.pot_no` là **Tier HLV** do tên cột legacy; không được hiểu là Pot CLB.
+- Mapping bắt buộc: **Tier 1 → Pot 3 · Tier 2 → Pot 2 · Tier 3 → Pot 1**.
+- Mọi Random CLB GĐ2/Top 3/Knockout phải lọc theo Pot CLB suy ra từ Tier HLV trước khi chọn. Không fallback sang Pot khác khi hết CLB.
+- Dữ liệu lịch sử sai mapping chỉ được sửa qua thao tác Admin có kiểm tra chưa bắt đầu Knockout và không được trừ thêm vé.
+
 ## V1.6.62 — Quy tắc vé Random CLB Top 3
 
 - Vé Random sau GĐ2 của Top 1–3 chỉ được Random trong **Pot 3** còn trống; áp dụng giống nhau cho HLV và Admin quay hộ.

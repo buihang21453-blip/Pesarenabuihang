@@ -277,10 +277,17 @@ def register_routes(context):
         for ticket_uid, entry in entries.items():
             e = entry if isinstance(entry, dict) else {}
             member = member_map.get(str(ticket_uid)) or {}
+            hlv_tier = int(member.get("pot_no") or 0)
+            expected_club_pot = 4 - hlv_tier if hlv_tier in {1,2,3} else 0
+            current_club = member.get("fixed_club_name") or "—"
+            current_club_pot = int(C1_CLUB_POT_BY_NAME.get(current_club) or 0)
             tickets.append({
                 "user_id": str(ticket_uid), "name": names.get(str(ticket_uid), "HLV"),
                 "rank": int(e.get("rank") or 0), "remaining": int(e.get("tickets_remaining") or 0),
-                "total": int(e.get("tickets_total") or 0), "club": member.get("fixed_club_name") or "—",
+                "total": int(e.get("tickets_total") or 0), "club": current_club,
+                "hlv_tier": hlv_tier, "expected_club_pot": expected_club_pot,
+                "current_club_pot": current_club_pot,
+                "club_pot_mismatch": bool(current_club != "—" and expected_club_pot and current_club_pot != expected_club_pot),
                 "club_finalized": bool(e.get("club_finalized")), "ticket_waived": bool(e.get("ticket_waived")),
             })
         tickets.sort(key=lambda x: (x["rank"] or 99, x["name"]))

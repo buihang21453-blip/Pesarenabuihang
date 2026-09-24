@@ -123,12 +123,18 @@ def register_rewards(context):
         old_club,_=_one(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("name",old_name),"ops_league_reroll_old_club")
         skipped=set(str(x) for x in (entry.get("skipped_club_ids") or []))
         if old_club: skipped.add(str(old_club.get("id")))
-        # Top 3 BXH thuộc Tier 1 nên vé Random sau GĐ2 chỉ được quay trong
-        # CLB Pot 3 còn trống. Không bao giờ rơi sang Pot 1/2.
+        # V1.6.63: tuyệt đối bám đúng Tier HLV đã chốt ở GĐ2. Cột pot_no của
+        # tournament_members là Tier HLV (legacy naming), không phải Pot CLB.
+        # Quy tắc chính thức: Tier 1 -> Pot 3, Tier 2 -> Pot 2, Tier 3 -> Pot 1.
+        hlv_tier=int(member.get("pot_no") or 0)
+        expected_club_pot=4-hlv_tier if hlv_tier in {1,2,3} else 0
+        if expected_club_pot not in {1,2,3}:
+            flash("HLV chưa có Tier hợp lệ nên không thể Random CLB.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         pool=[c for c in _available_clubs(tournament_id,skipped)
-              if int(C1_CLUB_POT_BY_NAME.get(str(c.get("name") or "")) or 0)==3]
+              if int(C1_CLUB_POT_BY_NAME.get(str(c.get("name") or "")) or 0)==expected_club_pot]
         if not pool:
-            flash("Không còn CLB Pot 3 trống phù hợp để Random lại.","error")
+            flash(f"Không còn CLB Pot {expected_club_pot} trống phù hợp cho HLV Tier {hlv_tier}.","error")
             return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         new_club=random.choice(pool)
         # Chỉ nhả CLB cũ sau khi đã chắc chắn có CLB mới để nhận.
@@ -137,7 +143,8 @@ def register_rewards(context):
         _club_assign(tournament_id,uid,new_club)
         entry["tickets_remaining"]=int(entry.get("tickets_remaining") or 0)-1
         entry["skipped_club_ids"]=list(skipped)
-        event={"at":now_iso(),"from":old_name,"to":new_club.get("name")}
+        event={"at":now_iso(),"from":old_name,"to":new_club.get("name"),
+               "hlv_tier":hlv_tier,"club_pot":expected_club_pot}
         if admin_actor:
             event["actor_role"]="admin"
             event["actor_user_id"]=str(admin_actor)
@@ -150,7 +157,7 @@ def register_rewards(context):
             "tournament_id":tournament_id,"setting_key":LEAGUE_TOP3_REROLL_KEY,"setting_value":state,"updated_at":now_iso(),
         },on_conflict="tournament_id,setting_key"),"ops_league_top3_reroll_use",attempts=2)
         actor_text="Admin đã dùng hộ 1 vé" if admin_actor else "Đã dùng 1 vé"
-        flash(f"{actor_text}: {old_name} → {new_club.get('name')}. CLB {old_name} sẽ không xuất hiện lại cho HLV này.","success")
+        flash(f"{actor_text}: {old_name} → {new_club.get('name')} · Tier {hlv_tier} → Pot {expected_club_pot}. CLB {old_name} sẽ không xuất hiện lại cho HLV này.","success")
         if admin_actor:
             try:
                 create_user_notification(
@@ -180,6 +187,79 @@ def register_rewards(context):
             flash("Thiếu HLV cần Random CLB hộ.","error")
             return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         return _league_top3_reroll_for(tournament_id,uid,admin_actor=admin_uid)
+
+    def _repair_league_top3_wrong_pot(tournament_id, uid, admin_actor=None):
+        """Repair an already-assigned Top-3 club that violates Tier -> club-Pot mapping.
+
+        This is a data-recovery action for historical buggy rerolls. It never spends
+        another ticket and never restores a consumed ticket; it only replaces the
+        invalid current club with an available club from the HLV's correct Pot.
+        """
+        uid=str(uid or "")
+        member=_member(tournament_id,uid)
+        if not member:
+            flash("HLV không thuộc giải đấu này.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        hlv_tier=int(member.get("pot_no") or 0)
+        expected_club_pot=4-hlv_tier if hlv_tier in {1,2,3} else 0
+        if expected_club_pot not in {1,2,3}:
+            flash("HLV chưa có Tier hợp lệ nên không thể sửa CLB.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        old_name=str(member.get("fixed_club_name") or "")
+        current_pot=int(C1_CLUB_POT_BY_NAME.get(old_name) or 0)
+        if current_pot==expected_club_pot:
+            flash(f"CLB {old_name} đang đúng quy tắc Tier {hlv_tier} → Pot {expected_club_pot}; không cần sửa.","info")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        knockout_for_me=[m for m in _matches(tournament_id,"knockout")
+                         if uid in {str(m.get("home_user_id") or ""),str(m.get("away_user_id") or "")}]
+        started=[m for m in knockout_for_me if str(m.get("status") or "pending") not in {"pending","scheduled","cancelled"}]
+        if started:
+            flash("HLV đã bắt đầu Knockout nên không thể tự sửa CLB nữa; BTC cần xử lý thủ công để tránh thay CLB giữa trận.","warning")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        state=_setting(tournament_id,LEAGUE_TOP3_REROLL_KEY,{}) or {}
+        entries=dict(state.get("entries") or {})
+        entry=dict(entries.get(uid) or {})
+        skipped=set(str(x) for x in (entry.get("skipped_club_ids") or []))
+        old_club,_=_one(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("name",old_name),"ops_league_repair_old_club")
+        if old_club:
+            skipped.add(str(old_club.get("id")))
+        pool=[c for c in _available_clubs(tournament_id,skipped)
+              if int(C1_CLUB_POT_BY_NAME.get(str(c.get("name") or "")) or 0)==expected_club_pot]
+        if not pool:
+            flash(f"Không còn CLB Pot {expected_club_pot} trống để sửa cho HLV Tier {hlv_tier}.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        new_club=random.choice(pool)
+        if old_club:
+            execute_query(db.table("tournament_clubs").update({"selected_by":None,"selected_at":None})
+                          .eq("id",old_club.get("id")).eq("selected_by",uid),
+                          "ops_league_repair_release_wrong",attempts=2)
+        _club_assign(tournament_id,uid,new_club)
+        entry.setdefault("history",[]).append({
+            "at":now_iso(),"action":"REPAIR_WRONG_CLUB_POT","from":old_name,"to":new_club.get("name"),
+            "hlv_tier":hlv_tier,"expected_club_pot":expected_club_pot,"ticket_spent":False,
+            "actor_role":"admin" if admin_actor else "system",
+            "actor_user_id":str(admin_actor or ""),
+        })
+        entries[uid]=entry
+        state["entries"]=entries
+        state["updated_at"]=now_iso()
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,"setting_key":LEAGUE_TOP3_REROLL_KEY,
+            "setting_value":state,"updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_league_top3_repair_wrong_pot",attempts=2)
+        flash(f"Đã sửa CLB sai Pot: {old_name} → {new_club.get('name')} · HLV Tier {hlv_tier} chỉ dùng CLB Pot {expected_club_pot}. Không trừ thêm vé.","success")
+        return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+
+    @app.post('/admin/tournaments/<tournament_id>/league-top3/repair-wrong-pot')
+    @login_required
+    @admin_required
+    def admin_tournament_league_top3_repair_wrong_pot(tournament_id):
+        uid=str(request.form.get("user_id") or "")
+        admin_uid=str((current_user() or {}).get("id") or "")
+        if not uid:
+            flash("Thiếu HLV cần sửa CLB sai Tier/Pot.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        return _repair_league_top3_wrong_pot(tournament_id,uid,admin_actor=admin_uid)
 
     def _league_top3_keep_current_club(tournament_id, uid):
         """Finalize current club without spending the Top-3 reroll ticket."""

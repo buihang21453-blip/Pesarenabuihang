@@ -1,3 +1,10 @@
+## V1.6.63 — Top 3 reroll theo Tier HLV
+
+- `modules/tournament_competition_parts/rewards.py`: random động theo Tier→Pot và route Admin sửa dữ liệu CLB sai Pot.
+- `modules/tournament_routes.py`: public Knockout ticket payload có `hlv_tier`, `expected_club_pot`, `current_club_pot`, `club_pot_mismatch`.
+- `templates/tournament/components/knockout_dashboard.html`: hiển thị quy tắc Tier→Pot và nút sửa lỗi cho Admin.
+- `templates/tournament/styles.html`: style cảnh báo CLB sai Tier/Pot.
+
 ## V1.6.62 — Top 3 reroll Pot 3 / giữ CLB hiện tại
 
 - `modules/tournament_competition_parts/rewards.py`: khóa pool reroll vào Pot 3; thêm action chốt giữ CLB không tiêu vé.

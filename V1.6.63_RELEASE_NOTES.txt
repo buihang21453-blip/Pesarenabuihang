@@ -1,0 +1,9 @@
+PES ARENA V1.6.63 — TOP 3 REROLL ĐÚNG TIER HLV
+
+- Tier 1 → chỉ CLB Pot 3.
+- Tier 2 → chỉ CLB Pot 2.
+- Tier 3 → chỉ CLB Pot 1.
+- Admin Random hộ và HLV tự Random dùng cùng quy tắc.
+- Có nút Admin sửa CLB đã bị random sai Pot ở version cũ; không trừ thêm vé.
+- Trường hợp Xuân Nam Tier 1 đang bị Liverpool (Pot 1): sau khi deploy, Admin vào /tournaments và bấm “🔧 Sửa CLB sai Tier/Pot” tại thẻ Xuân Nam để hệ thống đổi sang một CLB Pot 3 còn trống.
+- Không cần SQL.
