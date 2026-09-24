@@ -1,0 +1,7 @@
+PES ARENA V1.6.65 — ADMIN CHỐT GIỮ CLB HỘ
+
+- Admin/Owner có thêm nút chốt giữ CLB hiện tại cho HLV Top 3.
+- Không sử dụng vé Random.
+- Sau khi chốt, vé Random được đóng lại và không thể dùng để Random nữa.
+- Chỉ có trên giao diện Admin/Owner.
+- Không đổi DB, không SQL mới.

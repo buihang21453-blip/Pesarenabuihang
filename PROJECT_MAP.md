@@ -1,3 +1,10 @@
+## V1.6.65 — Admin giữ CLB hộ
+
+- `modules/tournament_competition_parts/rewards.py`: mở rộng `_league_top3_keep_current_club(..., admin_actor=None)` và thêm route Admin `league-top3/keep-club-for`.
+- `templates/tournament/components/knockout_dashboard.html`: thêm nút Admin chốt giữ CLB bên cạnh Admin Random hộ.
+- `tests/test_c1_top3_admin_keep_club_v1665.py`: regression test quyền Admin giữ CLB hộ mà không tiêu vé.
+- `app.py`: bump version lên `V1.6.65`.
+
 ## V1.6.64 — Admin Undo Top-3 Reroll
 
 - `modules/tournament_competition_parts/rewards.py`: thêm `_admin_undo_league_top3_reroll` và route Admin `/league-top3/undo-reroll`.

@@ -261,8 +261,13 @@ def register_rewards(context):
             return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         return _repair_league_top3_wrong_pot(tournament_id,uid,admin_actor=admin_uid)
 
-    def _league_top3_keep_current_club(tournament_id, uid):
-        """Finalize current club without spending the Top-3 reroll ticket."""
+    def _league_top3_keep_current_club(tournament_id, uid, admin_actor=None):
+        """Finalize current club without spending the Top-3 reroll ticket.
+
+        The HLV may do this for themself, and an Admin/Owner may explicitly
+        perform the same finalization on the HLV's behalf. The action never
+        consumes the reroll ticket; it only closes the reroll decision.
+        """
         uid=str(uid or "")
         member=_member(tournament_id,uid)
         if not member:
@@ -291,9 +296,12 @@ def register_rewards(context):
         entry["ticket_waived"]=True
         entry["finalized_club"]=club
         entry["finalized_at"]=now_iso()
+        actor_uid=str(admin_actor or uid)
+        actor_role="admin" if admin_actor else "player"
         entry.setdefault("history",[]).append({
             "at":now_iso(),"action":"KEEP_CURRENT_CLUB","club":club,
-            "ticket_spent":False,"actor_role":"player","actor_user_id":uid,
+            "ticket_spent":False,"actor_role":actor_role,"actor_user_id":actor_uid,
+            "for_user_id":uid,
         })
         entries[uid]=entry
         state["entries"]=entries
@@ -302,7 +310,10 @@ def register_rewards(context):
             "tournament_id":tournament_id,"setting_key":LEAGUE_TOP3_REROLL_KEY,
             "setting_value":state,"updated_at":now_iso(),
         },on_conflict="tournament_id,setting_key"),"ops_league_top3_keep_current_club",attempts=2)
-        flash(f"Đã chọn giữ CLB {club}. Vé Random không bị sử dụng và được đóng lại cho vòng Knockout.","success")
+        if admin_actor:
+            flash(f"Admin đã chốt giữ CLB {club} cho HLV. Vé Random không bị sử dụng và quyền Random được đóng lại cho vòng Knockout.","success")
+        else:
+            flash(f"Đã chọn giữ CLB {club}. Vé Random không bị sử dụng và được đóng lại cho vòng Knockout.","success")
         return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
 
     @app.post('/tournaments/<tournament_id>/league-top3/keep-club')
@@ -310,6 +321,17 @@ def register_rewards(context):
     def tournament_league_top3_keep_club(tournament_id):
         uid=str((current_user() or {}).get("id") or "")
         return _league_top3_keep_current_club(tournament_id,uid)
+
+    @app.post('/admin/tournaments/<tournament_id>/league-top3/keep-club-for')
+    @login_required
+    @admin_required
+    def admin_tournament_league_top3_keep_club_for(tournament_id):
+        uid=str(request.form.get("user_id") or "")
+        admin_uid=str((current_user() or {}).get("id") or "")
+        if not uid:
+            flash("Thiếu HLV cần chốt giữ CLB.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        return _league_top3_keep_current_club(tournament_id,uid,admin_actor=admin_uid)
 
     def _admin_undo_league_top3_reroll(tournament_id, uid, admin_actor=None):
         """Undo the latest un-undone Top-3 reroll and restore its previous club/ticket.

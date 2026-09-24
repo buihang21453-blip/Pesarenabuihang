@@ -1,3 +1,9 @@
+## V1.6.65 — Quy tắc Admin chốt giữ CLB hộ
+
+- Nút chốt giữ CLB hộ chỉ hiển thị với Admin/Owner.
+- Admin chốt giữ CLB cho HLV Top 3 không tiêu vé Random nhưng phải đóng quyền Random lại của vé đó, tương đương việc HLV tự chọn giữ CLB.
+- Không cho chốt sau khi HLV đã bắt đầu Knockout.
+
 ## V1.6.64 — Quy tắc hoàn tác vé Random
 
 - Chỉ Admin được hoàn tác lượt Random CLB Top 3; HLV không có quyền tự hoàn tác.

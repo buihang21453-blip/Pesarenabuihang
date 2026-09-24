@@ -56,10 +56,16 @@
           </form>
         </div>
         {% elif ko_viewer_is_admin and t.remaining|int > 0 %}
-        <form class="c1-ko-admin-reroll-form" method="post" action="{{ url_for('admin_tournament_league_top3_reroll_club_for', tournament_id=tournament.id) }}" data-pes-confirm="Admin sẽ dùng 1 vé của {{ t.name }} để Random lại CLB đúng Tier {{ t.hlv_tier }} → Pot {{ t.expected_club_pot }}. Bạn xác nhận?" data-pes-confirm-title="Admin Random CLB hộ HLV" data-pes-confirm-action="Random hộ">
-          <input type="hidden" name="user_id" value="{{ t.user_id }}">
-          <button class="btn gold" type="submit">🎲 Admin Random hộ {{ t.name }} · Pot {{ t.expected_club_pot }}</button>
-        </form>
+        <div class="c1-ko-ticket-actions c1-ko-admin-ticket-actions">
+          <form class="c1-ko-admin-reroll-form" method="post" action="{{ url_for('admin_tournament_league_top3_reroll_club_for', tournament_id=tournament.id) }}" data-pes-confirm="Admin sẽ dùng 1 vé của {{ t.name }} để Random lại CLB đúng Tier {{ t.hlv_tier }} → Pot {{ t.expected_club_pot }}. Bạn xác nhận?" data-pes-confirm-title="Admin Random CLB hộ HLV" data-pes-confirm-action="Random hộ">
+            <input type="hidden" name="user_id" value="{{ t.user_id }}">
+            <button class="btn gold" type="submit">🎲 Admin Random hộ {{ t.name }} · Pot {{ t.expected_club_pot }}</button>
+          </form>
+          <form class="c1-ko-admin-keep-form" method="post" action="{{ url_for('admin_tournament_league_top3_keep_club_for', tournament_id=tournament.id) }}" data-pes-confirm="Admin sẽ chốt giữ nguyên CLB {{ t.club }} cho {{ t.name }} và KHÔNG sử dụng vé Random. Sau khi chốt, HLV sẽ không thể dùng vé này để Random lại nữa. Bạn xác nhận?" data-pes-confirm-title="Admin chốt giữ CLB hộ HLV" data-pes-confirm-action="Chốt giữ CLB">
+            <input type="hidden" name="user_id" value="{{ t.user_id }}">
+            <button class="btn green" type="submit">✅ Admin chọn giữ {{ t.club }} · Không dùng vé</button>
+          </form>
+        </div>
         {% elif current_user and current_user.id|string == t.user_id|string and t.remaining|int > 0 %}
         <div class="c1-ko-ticket-actions">
           <form method="post" action="{{ url_for('tournament_league_top3_reroll_club', tournament_id=tournament.id) }}" data-pes-confirm="Dùng 1 vé để Random lại CLB đúng Tier {{ t.hlv_tier }} → Pot {{ t.expected_club_pot }} trước khi bắt đầu Knockout?" data-pes-confirm-title="Random lại CLB đúng Tier" data-pes-confirm-action="Dùng vé">

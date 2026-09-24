@@ -1,3 +1,11 @@
+## V1.6.65 — Admin chốt giữ CLB hộ HLV Top 3
+
+- Bổ sung nút **✅ Admin chọn giữ [CLB] · Không dùng vé** chỉ trên giao diện Admin/Owner tại Bảng theo dõi Knockout.
+- Admin có thể chốt giữ CLB hiện tại thay cho HLV Top 3; thao tác này không tiêu vé Random nhưng đóng quyền Random lại của vé đó.
+- Ghi lịch sử thao tác với `actor_role=admin` và `for_user_id` để phân biệt Admin thao tác hộ.
+- Vẫn chặn nếu HLV đã bắt đầu Knockout, giống luồng HLV tự chốt.
+- Không có SQL mới.
+
 ## V1.6.64 — Admin hoàn tác vé Random CLB Top 3
 
 - Thêm nút Admin-only **↩ Hoàn tác vé Random → [CLB cũ]** trong thẻ vé Top 3 trên `/tournaments`.
