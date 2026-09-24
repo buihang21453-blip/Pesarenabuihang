@@ -1,0 +1,7 @@
+PES ARENA V1.6.59 — BRACKET KNOCKOUT ĐẸP HƠN
+
+- Làm đẹp Bảng theo dõi Knockout trên /tournaments.
+- Hiển thị rõ ba cột Tứ kết, Bán kết, Chung kết.
+- Bổ sung thẻ cúp dành cho Nhà vô địch.
+- Khi có nhà vô địch, bảng sẽ hiện tên HLV chiến thắng ngay tại cột cúp.
+- Không đổi DB, không có SQL mới.

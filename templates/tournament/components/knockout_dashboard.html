@@ -59,6 +59,7 @@
       <div class="c1-ko-pairs">
         {% for pair in pairs %}
         <article class="c1-ko-pair is-{{ pair.status }}">
+          <div class="c1-ko-pair-seed">Cặp {{ loop.index }}</div>
           <div class="c1-ko-pair-status"><span>{{ pair.status_label }}</span><small>{{ pair.completed_legs }}/{{ pair.leg_count }} trận xong</small></div>
           <div class="c1-ko-team-row">
             <strong>{{ pair.home_name }}</strong>
@@ -81,6 +82,21 @@
       </div>
     </div>
     {% endfor %}
+
+    <div class="c1-ko-round c1-ko-round-champion">
+      <div class="c1-ko-round-title c1-ko-round-title--champion">
+        <span>NHÀ VÔ ĐỊCH</span>
+        <small>{{ 'Đã xác định' if ko.get('champion_user_id') else 'Đang chờ Chung kết' }}</small>
+      </div>
+      <div class="c1-ko-champion-card{{ ' is-ready' if ko.get('champion_user_id') else '' }}">
+        <div class="c1-ko-cup-wrap" aria-hidden="true">
+          <div class="c1-ko-cup-glow"></div>
+          <div class="c1-ko-cup-icon">🏆</div>
+        </div>
+        <strong>{{ ko.get('champion_name') or 'CUP ĐANG CHỜ CHỦ NHÂN' }}</strong>
+        <span>{% if ko.get('champion_user_id') %}Vinh danh nhà vô địch C1 mùa này{% else %}Chiếc cúp sẽ thuộc về HLV thắng Chung kết{% endif %}</span>
+      </div>
+    </div>
   </div>
 </section>
 {% endif %}

@@ -1,3 +1,11 @@
+## V1.6.59 — Làm đẹp Bảng theo dõi Knockout
+
+- Nâng cấp giao diện `Bảng theo dõi Knockout` trên `/tournaments` theo dạng bracket đẹp hơn, rõ ba vòng **Tứ kết → Bán kết → Chung kết**.
+- Mỗi cặp đấu có nhãn cặp, trạng thái, tổng tỷ số và các lượt trận gọn gàng hơn để dễ theo dõi tiến độ.
+- Bổ sung cột **NHÀ VÔ ĐỊCH** với cúp vàng nổi bật; khi xác định xong sẽ hiện tên nhà vô địch ngay trên bảng.
+- Giữ nguyên logic giải đấu, vé Random CLB Top 3 và quyền Admin Random hộ; chỉ thay đổi phần trình bày.
+- Không có SQL mới.
+
 ## V1.6.58 — Admin dùng hộ vé Random CLB Top 3 trước Knockout
 
 - Admin có nút **🎲 Admin Random hộ** ngay tại Bảng theo dõi Knockout cho từng HLV Top 3 còn vé.

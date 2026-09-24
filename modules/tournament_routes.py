@@ -285,9 +285,11 @@ def register_routes(context):
         tickets.sort(key=lambda x: (x["rank"] or 99, x["name"]))
         my_ticket = next((x for x in tickets if x["user_id"] == uid), None)
 
+        champion_uid = str(flow.get("champion_user_id") or "")
         return {
             "generated": True, "rounds": rounds, "current_round": flow.get("current_round") or "qf",
             "completed": bool(flow.get("completed")), "champion_user_id": flow.get("champion_user_id"),
+            "champion_name": names.get(champion_uid, "") if champion_uid else "",
             "my_next": my_next, "tickets": tickets, "my_ticket": my_ticket,
         }
 

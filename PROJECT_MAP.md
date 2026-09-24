@@ -1,3 +1,10 @@
+## V1.6.59 — Bracket Knockout đẹp hơn
+
+- `templates/tournament/components/knockout_dashboard.html`: làm mới layout bracket, thêm cột cúp nhà vô địch và nhãn cặp đấu.
+- `templates/tournament/styles.html`: bổ sung CSS cho sơ đồ Knockout kiểu bracket và thẻ cúp vô địch.
+- `modules/tournament_routes.py`: mở rộng dữ liệu public Knockout để trả thêm `champion_name` cho giao diện.
+- `app.py`: bump version lên `V1.6.59`.
+
 ## V1.6.58 — Admin proxy Random CLB Top 3
 
 - `modules/tournament_competition_parts/rewards.py`: gom logic dùng vé Top 3 vào helper dùng chung, thêm route Admin quay hộ và ghi actor/notification.

@@ -1,3 +1,9 @@
+## V1.6.59 — Quy tắc giao diện Knockout
+
+- Bảng theo dõi Knockout trên `/tournaments` là giao diện công khai, chỉ đọc; không được tự ý làm phát sinh thay đổi kết quả, lịch hoặc nhánh đấu.
+- Cột `NHÀ VÔ ĐỊCH` chỉ hiển thị tên khi `knockout_flow.champion_user_id` đã được xác định chính thức.
+- Mọi thay đổi ở version này chỉ là UI/UX; luồng vé Random CLB Top 3 và vào Phòng đấu C1 giữ nguyên như trước.
+
 ## V1.6.58 — Quy tắc Admin dùng hộ vé Top 3
 
 - Admin chỉ được dùng hộ **vé thật còn lại của đúng HLV**; không cấp thêm vé ngầm.
