@@ -95,11 +95,17 @@
           <div class="c1-ko-pair-seed">Cặp {{ loop.index }}</div>
           <div class="c1-ko-pair-status"><span>{{ pair.status_label }}</span><small>{{ pair.completed_legs }}/{{ pair.leg_count }} trận xong</small></div>
           <div class="c1-ko-team-row">
-            <strong>{{ pair.home_name }}</strong>
+            <div class="c1-ko-team-info">
+              <strong>{{ pair.home_name }}</strong>
+              <small><span class="c1-ko-tier-chip">Tier {{ pair.home_tier or '—' }}</span><span class="c1-ko-club-chip">⚽ {{ pair.home_club }}</span></small>
+            </div>
             <b>{{ pair.home_total if pair.has_score else '—' }}</b>
           </div>
           <div class="c1-ko-team-row">
-            <strong>{{ pair.away_name }}</strong>
+            <div class="c1-ko-team-info">
+              <strong>{{ pair.away_name }}</strong>
+              <small><span class="c1-ko-tier-chip">Tier {{ pair.away_tier or '—' }}</span><span class="c1-ko-club-chip">⚽ {{ pair.away_club }}</span></small>
+            </div>
             <b>{{ pair.away_total if pair.has_score else '—' }}</b>
           </div>
           <div class="c1-ko-leg-row">
@@ -126,6 +132,9 @@
           <div class="c1-ko-cup-icon">🏆</div>
         </div>
         <strong>{{ ko.get('champion_name') or 'CUP ĐANG CHỜ CHỦ NHÂN' }}</strong>
+        {% if ko.get('champion_user_id') %}
+        <div class="c1-ko-champion-meta"><span class="c1-ko-tier-chip">Tier {{ ko.get('champion_tier') or '—' }}</span><span class="c1-ko-club-chip">⚽ {{ ko.get('champion_club') or '—' }}</span></div>
+        {% endif %}
         <span>{% if ko.get('champion_user_id') %}Vinh danh nhà vô địch C1 mùa này{% else %}Chiếc cúp sẽ thuộc về HLV thắng Chung kết{% endif %}</span>
       </div>
     </div>

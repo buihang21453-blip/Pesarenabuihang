@@ -1,3 +1,8 @@
+## V1.6.66 — Dữ liệu HLV trên Knockout
+
+- Tier hiển thị trên bracket lấy từ `tournament_members.pot_no`; CLB lấy từ `tournament_members.fixed_club_name`.
+- Bracket chỉ hiển thị dữ liệu hiện tại, không được tự thay đổi Tier/CLB hoặc kết quả thi đấu.
+
 ## V1.6.65 — Quy tắc Admin chốt giữ CLB hộ
 
 - Nút chốt giữ CLB hộ chỉ hiển thị với Admin/Owner.

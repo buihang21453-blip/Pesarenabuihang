@@ -1,3 +1,10 @@
+## V1.6.66 — Hiện Tier và CLB trên Bảng theo dõi Knockout
+
+- Mỗi HLV trong sơ đồ Tứ kết/Bán kết/Chung kết giờ hiển thị trực tiếp **Tier** và **CLB hiện tại** ngay dưới tên.
+- Khi đã xác định nhà vô địch, khu Cup cũng hiển thị Tier và CLB của HLV vô địch.
+- Dữ liệu lấy từ `tournament_members.pot_no` và `fixed_club_name`, nên cập nhật theo CLB đã chốt/Random hiện tại.
+- Không đổi logic thi đấu, bracket hay vé Random; không có SQL mới.
+
 ## V1.6.65 — Admin chốt giữ CLB hộ HLV Top 3
 
 - Bổ sung nút **✅ Admin chọn giữ [CLB] · Không dùng vé** chỉ trên giao diện Admin/Owner tại Bảng theo dõi Knockout.

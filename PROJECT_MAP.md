@@ -1,3 +1,9 @@
+## V1.6.66 — Knockout hiển thị Tier + CLB
+
+- `modules/tournament_routes.py`: public Knockout payload bổ sung `home_tier/home_club`, `away_tier/away_club`, `champion_tier/champion_club`.
+- `templates/tournament/components/knockout_dashboard.html`: hiển thị Tier + CLB dưới tên từng HLV trong bracket.
+- `templates/tournament/styles.html`: chip Tier/CLB gọn trong từng cặp đấu.
+
 ## V1.6.65 — Admin giữ CLB hộ
 
 - `modules/tournament_competition_parts/rewards.py`: mở rộng `_league_top3_keep_current_club(..., admin_actor=None)` và thêm route Admin `league-top3/keep-club-for`.

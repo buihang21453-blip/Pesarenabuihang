@@ -183,6 +183,9 @@ def register_routes(context):
         flow = ((flow_rows[0].get("setting_value") if flow_rows else {}) or {})
         if not isinstance(flow, dict): flow = {}
 
+        members = member_rows or []
+        member_map = {str(m.get("user_id")): m for m in members if m.get("user_id")}
+
         round_order = {"qf": 0, "sf": 1, "final": 2}
         round_labels = {"qf": "TỨ KẾT", "sf": "BÁN KẾT", "final": "CHUNG KẾT"}
         status_labels = {
@@ -226,10 +229,14 @@ def register_routes(context):
             else:
                 pair_status = "pending"
             next_leg = next((x for x in legs if str(x.get("status") or "") not in {"completed", "cancelled"}), None)
+            home_member = member_map.get(home_id) or {}
+            away_member = member_map.get(away_id) or {}
             rounds[code].append({
                 "key": key, "round_code": code, "round_label": round_labels[code],
                 "home_user_id": home_id, "away_user_id": away_id,
                 "home_name": names.get(home_id, "HLV"), "away_name": names.get(away_id, "HLV"),
+                "home_tier": int(home_member.get("pot_no") or 0), "away_tier": int(away_member.get("pot_no") or 0),
+                "home_club": home_member.get("fixed_club_name") or "—", "away_club": away_member.get("fixed_club_name") or "—",
                 "home_total": totals.get(home_id, 0), "away_total": totals.get(away_id, 0),
                 "has_score": completed > 0, "completed_legs": completed, "leg_count": len(legs),
                 "status": pair_status, "status_label": status_labels.get(pair_status, pair_status),
@@ -264,8 +271,6 @@ def register_routes(context):
                 "opponent_name": names.get(opponent, "HLV"), "scheduled_at": row.get("scheduled_at"),
             }
 
-        members = member_rows or []
-        member_map = {str(m.get("user_id")): m for m in members if m.get("user_id")}
         ticket_rows, _ = _safe_rows(
             db.table("tournament_settings").select("setting_value")
             .eq("tournament_id", tournament_id).eq("setting_key", "league_top3_club_reroll_v1").limit(1),
@@ -304,10 +309,13 @@ def register_routes(context):
         my_ticket = next((x for x in tickets if x["user_id"] == uid), None)
 
         champion_uid = str(flow.get("champion_user_id") or "")
+        champion_member = member_map.get(champion_uid) or {}
         return {
             "generated": True, "rounds": rounds, "current_round": flow.get("current_round") or "qf",
             "completed": bool(flow.get("completed")), "champion_user_id": flow.get("champion_user_id"),
             "champion_name": names.get(champion_uid, "") if champion_uid else "",
+            "champion_tier": int(champion_member.get("pot_no") or 0) if champion_uid else 0,
+            "champion_club": champion_member.get("fixed_club_name") or "" if champion_uid else "",
             "my_next": my_next, "tickets": tickets, "my_ticket": my_ticket,
         }
 

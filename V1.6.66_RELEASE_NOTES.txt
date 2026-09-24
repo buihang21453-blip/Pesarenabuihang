@@ -1,0 +1,5 @@
+PES ARENA V1.6.66
+
+- Bảng theo dõi Knockout hiển thị Tier và CLB hiện tại của từng HLV.
+- Áp dụng cho Tứ kết, Bán kết, Chung kết và Nhà vô địch.
+- Không đổi DB / không cần SQL.
