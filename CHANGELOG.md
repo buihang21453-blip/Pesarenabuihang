@@ -1,3 +1,12 @@
+## V1.6.60 — Hiện đúng nút Admin Random hộ vé Top 3
+
+- Sửa điều kiện hiển thị nút **🎲 Admin Random hộ** trong Bảng theo dõi Knockout.
+- Trước đây giao diện chỉ kiểm tra `role == admin`; tài khoản Owner/Admin phụ dùng `admin_level=owner/admin` có thể không thấy nút dù backend cho phép.
+- Giờ cả `role=admin`, `admin_level=owner` và `admin_level=admin` đều thấy công cụ Random hộ.
+- Admin được ưu tiên hiển thị nút quản trị ngay cả khi tài khoản Admin trùng với HLV Top 3.
+- Bổ sung nhãn **Chế độ Admin** và tên HLV ngay trên nút để tránh Random nhầm người.
+- Không đổi DB, không có SQL mới.
+
 ## V1.6.59 — Làm đẹp Bảng theo dõi Knockout
 
 - Nâng cấp giao diện `Bảng theo dõi Knockout` trên `/tournaments` theo dạng bracket đẹp hơn, rõ ba vòng **Tứ kết → Bán kết → Chung kết**.

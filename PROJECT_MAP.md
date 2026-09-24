@@ -1,3 +1,10 @@
+## V1.6.60 — Admin Random hộ Top 3 visibility fix
+
+- `templates/tournament/components/knockout_dashboard.html`: nhận diện đầy đủ Admin/Owner bằng `role` và `admin_level`, ưu tiên nút Random hộ.
+- `templates/tournament/styles.html`: thêm nhãn Chế độ Admin và trạng thái vé đã dùng.
+- `tests/test_c1_knockout_admin_reroll_v1658.py`: thêm kiểm thử Owner/Admin phụ.
+- `app.py`: bump version `V1.6.60`.
+
 ## V1.6.59 — Bracket Knockout đẹp hơn
 
 - `templates/tournament/components/knockout_dashboard.html`: làm mới layout bracket, thêm cột cúp nhà vô địch và nhãn cặp đấu.

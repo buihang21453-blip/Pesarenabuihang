@@ -1,3 +1,9 @@
+## V1.6.60 — Quy tắc quyền Admin ở Knockout
+
+- UI quản trị phải nhận diện Admin thống nhất với backend: `role=admin` hoặc `admin_level` thuộc `owner/admin`.
+- Nếu người xem có quyền Admin, nút **Admin Random hộ** được ưu tiên hơn nút dùng vé cá nhân để tránh nhập nhằng vai trò.
+- Random hộ vẫn tiêu đúng vé của HLV mục tiêu và vẫn chịu khóa an toàn khi HLV đã bắt đầu Knockout.
+
 ## V1.6.59 — Quy tắc giao diện Knockout
 
 - Bảng theo dõi Knockout trên `/tournaments` là giao diện công khai, chỉ đọc; không được tự ý làm phát sinh thay đổi kết quả, lịch hoặc nhánh đấu.

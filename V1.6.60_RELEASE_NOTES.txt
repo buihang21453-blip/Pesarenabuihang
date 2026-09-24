@@ -1,0 +1,6 @@
+PES ARENA V1.6.60 — FIX HIỂN THỊ ADMIN RANDOM HỘ
+
+- Owner/Admin phụ giờ nhìn thấy nút Admin Random hộ vé Top 3 trên /tournaments.
+- Nút ghi rõ tên HLV được Random hộ.
+- Giữ nguyên khóa an toàn Knockout và số vé hiện có.
+- Không có SQL mới.

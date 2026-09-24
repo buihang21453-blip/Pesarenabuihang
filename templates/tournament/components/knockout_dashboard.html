@@ -29,21 +29,27 @@
   {% if ko.get('tickets') %}
   <div class="c1-ko-ticket-strip">
     <div class="c1-ko-ticket-title"><strong>🎟 Vé Random CLB Top 3</strong><span>Bracket đã sinh không làm mất vé; chỉ khóa khi HLV đã bắt đầu Knockout.</span></div>
+    {% if current_user and (current_user.role == 'admin' or current_user.admin_level in ['owner','admin']) %}
+    <div class="c1-ko-admin-reroll-hint">🛠️ Chế độ Admin: có thể dùng vé Random CLB hộ từng HLV Top 3 ngay tại các thẻ bên dưới.</div>
+    {% endif %}
     <div class="c1-ko-ticket-list">
       {% for t in ko.get('tickets',[]) %}
       <div class="c1-ko-ticket-item{{ ' is-mine' if current_user and current_user.id|string == t.user_id|string else '' }}">
         <span>#{{ t.rank }} · {{ t.name }}</span>
         <b>{{ t.club }}</b>
         <em>🎟 {{ t.remaining }}/{{ t.total }}</em>
-        {% if current_user and current_user.id|string == t.user_id|string and t.remaining|int > 0 %}
+        {% set ko_viewer_is_admin = current_user and (current_user.role == 'admin' or current_user.admin_level in ['owner','admin']) %}
+        {% if ko_viewer_is_admin and t.remaining|int > 0 %}
+        <form class="c1-ko-admin-reroll-form" method="post" action="{{ url_for('admin_tournament_league_top3_reroll_club_for', tournament_id=tournament.id) }}" data-pes-confirm="Admin sẽ dùng 1 vé của {{ t.name }} để Random lại CLB trước Knockout. Bạn xác nhận?" data-pes-confirm-title="Admin Random CLB hộ HLV" data-pes-confirm-action="Random hộ">
+          <input type="hidden" name="user_id" value="{{ t.user_id }}">
+          <button class="btn gold" type="submit">🎲 Admin Random hộ {{ t.name }}</button>
+        </form>
+        {% elif current_user and current_user.id|string == t.user_id|string and t.remaining|int > 0 %}
         <form method="post" action="{{ url_for('tournament_league_top3_reroll_club', tournament_id=tournament.id) }}" data-pes-confirm="Dùng 1 vé để Random lại CLB trước khi bắt đầu trận Knockout?" data-pes-confirm-title="Random lại CLB" data-pes-confirm-action="Dùng vé">
           <button class="btn gold" type="submit">🎲 Random lại CLB</button>
         </form>
-        {% elif current_user and current_user.role == 'admin' and t.remaining|int > 0 %}
-        <form method="post" action="{{ url_for('admin_tournament_league_top3_reroll_club_for', tournament_id=tournament.id) }}" data-pes-confirm="Admin sẽ dùng 1 vé của {{ t.name }} để Random lại CLB trước Knockout. Bạn xác nhận?" data-pes-confirm-title="Admin Random CLB hộ HLV" data-pes-confirm-action="Random hộ">
-          <input type="hidden" name="user_id" value="{{ t.user_id }}">
-          <button class="btn gold" type="submit">🎲 Admin Random hộ</button>
-        </form>
+        {% elif t.remaining|int <= 0 %}
+        <div class="c1-ko-ticket-used">✓ Đã dùng hết vé</div>
         {% endif %}
       </div>
       {% endfor %}

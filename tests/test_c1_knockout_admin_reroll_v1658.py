@@ -23,14 +23,26 @@ class KnockoutAdminRerollV1658Tests(unittest.TestCase):
 
     def test_admin_sees_proxy_reroll_button(self):
         tpl = self.env.get_template('tournament/components/knockout_dashboard.html')
-        html = tpl.render(tournament=self._tournament(), current_user=SimpleNamespace(id='admin', role='admin'))
+        html = tpl.render(tournament=self._tournament(), current_user=SimpleNamespace(id='admin', role='admin', admin_level='none'))
         self.assertIn('Admin Random hộ', html)
         self.assertIn('admin_tournament_league_top3_reroll_club_for', html)
         self.assertIn('name="user_id" value="u1"', html)
 
+
+    def test_owner_admin_level_sees_proxy_reroll_button(self):
+        tpl = self.env.get_template('tournament/components/knockout_dashboard.html')
+        html = tpl.render(tournament=self._tournament(), current_user=SimpleNamespace(id='owner', role='user', admin_level='owner'))
+        self.assertIn('Admin Random hộ HLV 1', html)
+        self.assertIn('Chế độ Admin', html)
+
+    def test_secondary_admin_level_sees_proxy_reroll_button(self):
+        tpl = self.env.get_template('tournament/components/knockout_dashboard.html')
+        html = tpl.render(tournament=self._tournament(), current_user=SimpleNamespace(id='admin2', role='user', admin_level='admin'))
+        self.assertIn('Admin Random hộ HLV 1', html)
+
     def test_normal_viewer_does_not_see_admin_proxy_button(self):
         tpl = self.env.get_template('tournament/components/knockout_dashboard.html')
-        html = tpl.render(tournament=self._tournament(), current_user=SimpleNamespace(id='u9', role='user'))
+        html = tpl.render(tournament=self._tournament(), current_user=SimpleNamespace(id='u9', role='user', admin_level='none'))
         self.assertNotIn('Admin Random hộ', html)
 
     def test_backend_uses_same_guard_for_player_and_admin(self):
