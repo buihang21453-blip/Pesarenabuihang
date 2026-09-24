@@ -1,3 +1,11 @@
+## V1.6.64 — Admin Undo Top-3 Reroll
+
+- `modules/tournament_competition_parts/rewards.py`: thêm `_admin_undo_league_top3_reroll` và route Admin `/league-top3/undo-reroll`.
+- `modules/tournament_routes.py`: đưa `undo_reroll_target` / `can_admin_undo_reroll` vào public knockout payload.
+- `templates/tournament/components/knockout_dashboard.html`: thêm nút Admin-only hoàn tác vé Random.
+- `templates/tournament/styles.html`: style nhỏ cho nút hoàn tác.
+- `app.py`: bump `V1.6.64`.
+
 ## V1.6.63 — Top 3 reroll theo Tier HLV
 
 - `modules/tournament_competition_parts/rewards.py`: random động theo Tier→Pot và route Admin sửa dữ liệu CLB sai Pot.

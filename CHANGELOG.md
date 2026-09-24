@@ -1,3 +1,12 @@
+## V1.6.64 — Admin hoàn tác vé Random CLB Top 3
+
+- Thêm nút Admin-only **↩ Hoàn tác vé Random → [CLB cũ]** trong thẻ vé Top 3 trên `/tournaments`.
+- Hoàn tác sẽ khôi phục đúng CLB trước lần Random gần nhất (ví dụ Xuân Nam: trở lại PSV) và trả lại 1 vé Random đã tiêu.
+- Có thể hoàn tác cả trường hợp sau đó đã chạy `Sửa CLB sai Tier/Pot`; hệ thống tìm ngược lượt Random gốc trong lịch sử.
+- Chỉ cho phép khi HLV chưa bắt đầu Knockout, CLB cũ vẫn còn hợp lệ/đúng Pot và chưa bị HLV khác chiếm.
+- Chức năng chỉ hiển thị và chỉ có route cho Admin; HLV thường không thấy nút.
+- Không có SQL mới.
+
 ## V1.6.63 — Khóa Random CLB theo đúng Tier HLV + sửa dữ liệu đã Random sai
 
 - Random Top 3 không còn hard-code Pot 3. Hệ thống đọc `tournament_members.pot_no` như **Tier HLV** và áp dụng đúng: Tier 1 → Pot 3, Tier 2 → Pot 2, Tier 3 → Pot 1.

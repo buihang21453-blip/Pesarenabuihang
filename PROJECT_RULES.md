@@ -1,3 +1,11 @@
+## V1.6.64 — Quy tắc hoàn tác vé Random
+
+- Chỉ Admin được hoàn tác lượt Random CLB Top 3; HLV không có quyền tự hoàn tác.
+- Hoàn tác phải trả HLV về đúng CLB `from` của lượt Random chưa bị hoàn tác gần nhất và khôi phục 1 vé đã tiêu.
+- Không được hoàn tác sau khi HLV đã bắt đầu Knockout.
+- Không được giành lại CLB nếu CLB cũ đã được HLV khác sử dụng hoặc nếu CLB đó sai Pot so với Tier hiện tại.
+- Lịch sử không bị xóa: lượt Random được đánh dấu `undone_at/undone_by` và thêm event `ADMIN_UNDO_REROLL`.
+
 ## V1.6.63 — Quy tắc bất biến Tier HLV → Pot CLB
 
 - `tournament_members.pot_no` là **Tier HLV** do tên cột legacy; không được hiểu là Pot CLB.

@@ -281,6 +281,15 @@ def register_routes(context):
             expected_club_pot = 4 - hlv_tier if hlv_tier in {1,2,3} else 0
             current_club = member.get("fixed_club_name") or "—"
             current_club_pot = int(C1_CLUB_POT_BY_NAME.get(current_club) or 0)
+            undo_target = ""
+            for ev in reversed(e.get("history") or []):
+                if not isinstance(ev, dict):
+                    continue
+                action = str(ev.get("action") or "")
+                is_legacy_reroll = bool(ev.get("from") and ev.get("to") and action not in {"REPAIR_WRONG_CLUB_POT", "ADMIN_UNDO_REROLL", "KEEP_CURRENT_CLUB"})
+                if (action == "REROLL_CLUB" or is_legacy_reroll) and not ev.get("undone_at"):
+                    undo_target = str(ev.get("from") or "")
+                    break
             tickets.append({
                 "user_id": str(ticket_uid), "name": names.get(str(ticket_uid), "HLV"),
                 "rank": int(e.get("rank") or 0), "remaining": int(e.get("tickets_remaining") or 0),
@@ -289,6 +298,7 @@ def register_routes(context):
                 "current_club_pot": current_club_pot,
                 "club_pot_mismatch": bool(current_club != "—" and expected_club_pot and current_club_pot != expected_club_pot),
                 "club_finalized": bool(e.get("club_finalized")), "ticket_waived": bool(e.get("ticket_waived")),
+                "undo_reroll_target": undo_target, "can_admin_undo_reroll": bool(undo_target),
             })
         tickets.sort(key=lambda x: (x["rank"] or 99, x["name"]))
         my_ticket = next((x for x in tickets if x["user_id"] == uid), None)

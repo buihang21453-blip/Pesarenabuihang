@@ -39,6 +39,12 @@
         <b>{{ t.club }} <small class="c1-ko-club-rule">· Tier {{ t.hlv_tier or '—' }} → Pot {{ t.expected_club_pot or '—' }}</small></b>
         <em>🎟 {{ t.remaining }}/{{ t.total }}</em>
         {% set ko_viewer_is_admin = current_user and (current_user.role == 'admin' or current_user.admin_level in ['owner','admin']) %}
+        {% if ko_viewer_is_admin and t.can_admin_undo_reroll and t.undo_reroll_target %}
+        <form class="c1-ko-admin-undo-form" method="post" action="{{ url_for('admin_tournament_league_top3_undo_reroll', tournament_id=tournament.id) }}" data-pes-confirm="Hoàn tác lượt Random gần nhất của {{ t.name }} và khôi phục CLB {{ t.undo_reroll_target }}? Vé Random cũng sẽ được trả lại. Chỉ thực hiện nếu HLV chưa bắt đầu Knockout." data-pes-confirm-title="Hoàn tác vé Random" data-pes-confirm-action="Hoàn tác">
+          <input type="hidden" name="user_id" value="{{ t.user_id }}">
+          <button class="btn gray" type="submit">↩ Hoàn tác vé Random → {{ t.undo_reroll_target }}</button>
+        </form>
+        {% endif %}
         {% if t.club_finalized %}
         <div class="c1-ko-ticket-used">✅ Đã chọn giữ CLB này · Không sử dụng vé Random</div>
         {% elif ko_viewer_is_admin and t.club_pot_mismatch %}

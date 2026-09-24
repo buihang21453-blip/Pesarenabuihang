@@ -143,8 +143,8 @@ def register_rewards(context):
         _club_assign(tournament_id,uid,new_club)
         entry["tickets_remaining"]=int(entry.get("tickets_remaining") or 0)-1
         entry["skipped_club_ids"]=list(skipped)
-        event={"at":now_iso(),"from":old_name,"to":new_club.get("name"),
-               "hlv_tier":hlv_tier,"club_pot":expected_club_pot}
+        event={"at":now_iso(),"action":"REROLL_CLUB","from":old_name,"to":new_club.get("name"),
+               "hlv_tier":hlv_tier,"club_pot":expected_club_pot,"ticket_spent":True}
         if admin_actor:
             event["actor_role"]="admin"
             event["actor_user_id"]=str(admin_actor)
@@ -310,6 +310,113 @@ def register_rewards(context):
     def tournament_league_top3_keep_club(tournament_id):
         uid=str((current_user() or {}).get("id") or "")
         return _league_top3_keep_current_club(tournament_id,uid)
+
+    def _admin_undo_league_top3_reroll(tournament_id, uid, admin_actor=None):
+        """Undo the latest un-undone Top-3 reroll and restore its previous club/ticket.
+
+        Admin-only recovery tool. It is intentionally blocked after the HLV has
+        started Knockout, and it only restores the exact club saved in reroll
+        history when that club is still free and belongs to the HLV's proper Pot.
+        """
+        uid=str(uid or "")
+        member=_member(tournament_id,uid)
+        if not member:
+            flash("HLV không thuộc giải đấu này.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        state=_setting(tournament_id,LEAGUE_TOP3_REROLL_KEY,{}) or {}
+        entries=dict(state.get("entries") or {})
+        entry=dict(entries.get(uid) or {})
+        history=list(entry.get("history") or [])
+        reroll_idx=None
+        reroll_event=None
+        for idx in range(len(history)-1,-1,-1):
+            ev=history[idx] if isinstance(history[idx],dict) else {}
+            action=str(ev.get("action") or "")
+            is_legacy_reroll=bool(ev.get("from") and ev.get("to") and action not in {"REPAIR_WRONG_CLUB_POT","ADMIN_UNDO_REROLL","KEEP_CURRENT_CLUB"})
+            is_reroll=action=="REROLL_CLUB" or is_legacy_reroll
+            if is_reroll and not ev.get("undone_at"):
+                reroll_idx=idx; reroll_event=dict(ev); break
+        if reroll_event is None:
+            flash("Không tìm thấy lượt Random CLB nào có thể hoàn tác cho HLV này.","warning")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        knockout_for_me=[m for m in _matches(tournament_id,"knockout")
+                         if uid in {str(m.get("home_user_id") or ""),str(m.get("away_user_id") or "")}]
+        started=[m for m in knockout_for_me if str(m.get("status") or "pending") not in {"pending","scheduled","cancelled"}]
+        if started:
+            flash("HLV đã bắt đầu Knockout nên không thể hoàn tác CLB/vé Random nữa.","warning")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        restore_name=str(reroll_event.get("from") or "").strip()
+        if not restore_name:
+            flash("Lịch sử Random không có CLB cũ để khôi phục.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        hlv_tier=int(member.get("pot_no") or 0)
+        expected_club_pot=4-hlv_tier if hlv_tier in {1,2,3} else 0
+        restore_pot=int(C1_CLUB_POT_BY_NAME.get(restore_name) or 0)
+        if expected_club_pot not in {1,2,3} or restore_pot!=expected_club_pot:
+            flash(f"Không thể hoàn tác về {restore_name}: CLB không đúng quy tắc Tier {hlv_tier} → Pot {expected_club_pot}.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        restore_club,_=_one(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("name",restore_name),"ops_league_undo_restore_club")
+        if not restore_club or not restore_club.get("is_available"):
+            flash(f"Không thể hoàn tác: CLB {restore_name} không còn trong pool hợp lệ.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        restore_owner=str(restore_club.get("selected_by") or "")
+        if restore_owner and restore_owner!=uid:
+            flash(f"Không thể hoàn tác về {restore_name}: CLB này hiện đã được HLV khác sử dụng.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        current_name=str(member.get("fixed_club_name") or "")
+        current_club,_=_one(db.table("tournament_clubs").select("*").eq("tournament_id",tournament_id).eq("name",current_name),"ops_league_undo_current_club")
+        if current_club and str(current_club.get("id"))!=str(restore_club.get("id")):
+            execute_query(db.table("tournament_clubs").update({"selected_by":None,"selected_at":None})
+                          .eq("id",current_club.get("id")).eq("selected_by",uid),
+                          "ops_league_undo_release_current",attempts=2)
+        if restore_owner!=uid:
+            _club_assign(tournament_id,uid,restore_club)
+        else:
+            execute_query(db.table("tournament_members").update({
+                "fixed_club_id":restore_club.get("club_key"),"fixed_club_name":restore_club.get("name")
+            }).eq("tournament_id",tournament_id).eq("user_id",uid),"ops_league_undo_member_restore",attempts=2)
+        total=max(0,int(entry.get("tickets_total") or 0))
+        remaining=max(0,int(entry.get("tickets_remaining") or 0))
+        entry["tickets_remaining"]=min(total,remaining+1) if total else remaining+1
+        skipped=[str(x) for x in (entry.get("skipped_club_ids") or []) if str(x)!=str(restore_club.get("id"))]
+        entry["skipped_club_ids"]=skipped
+        entry.pop("club_finalized",None); entry.pop("ticket_waived",None)
+        entry.pop("finalized_club",None); entry.pop("finalized_at",None)
+        reroll_event["undone_at"]=now_iso()
+        reroll_event["undone_by"]=str(admin_actor or "")
+        history[reroll_idx]=reroll_event
+        history.append({
+            "at":now_iso(),"action":"ADMIN_UNDO_REROLL","from":current_name,"to":restore_name,
+            "restored_ticket":True,"actor_role":"admin","actor_user_id":str(admin_actor or ""),
+            "source_reroll_at":reroll_event.get("at"),
+        })
+        entry["history"]=history
+        entries[uid]=entry; state["entries"]=entries; state["updated_at"]=now_iso()
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,"setting_key":LEAGUE_TOP3_REROLL_KEY,
+            "setting_value":state,"updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_league_top3_undo_reroll",attempts=2)
+        flash(f"Đã hoàn tác vé Random: {current_name} → {restore_name}. Vé Random của HLV đã được khôi phục.","success")
+        try:
+            create_user_notification(
+                uid,"↩ Admin đã hoàn tác vé Random CLB",
+                f"CLB của bạn đã được khôi phục về {restore_name}; vé Random cũng đã được trả lại.",
+                "/tournaments","c1_league_top3_admin_undo_reroll",
+            )
+        except Exception:
+            pass
+        return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+
+    @app.post('/admin/tournaments/<tournament_id>/league-top3/undo-reroll')
+    @login_required
+    @admin_required
+    def admin_tournament_league_top3_undo_reroll(tournament_id):
+        uid=str(request.form.get("user_id") or "")
+        admin_uid=str((current_user() or {}).get("id") or "")
+        if not uid:
+            flash("Thiếu HLV cần hoàn tác vé Random.","error")
+            return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
+        return _admin_undo_league_top3_reroll(tournament_id,uid,admin_actor=admin_uid)
 
     @app.post('/admin/tournaments/<tournament_id>/league/finish')
     @login_required

@@ -1,0 +1,7 @@
+PES ARENA V1.6.64 — ADMIN HOÀN TÁC VÉ RANDOM
+
+- Admin có thể hoàn tác lượt Random CLB Top 3 gần nhất.
+- Khôi phục CLB trước Random và trả lại vé đã sử dụng.
+- Hỗ trợ sửa trường hợp Xuân Nam cần quay về PSV nếu PSV vẫn chưa bị HLV khác chiếm.
+- Khóa hoàn tác khi HLV đã bắt đầu Knockout.
+- Không đổi DB, không SQL mới.
