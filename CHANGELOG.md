@@ -1,3 +1,11 @@
+## V1.6.72 — Dọn gọn poster Knockout
+
+- Bỏ phần cúp phụ nhỏ phía dưới và bỏ dòng `CUP ĐANG CHỜ CHỦ NHÂN` trong Bảng theo dõi Knockout.
+- Tăng độ trong suốt của lớp nền màu phủ để nhìn rõ ảnh nền `NenCup.webp` hơn.
+- Sửa hiển thị card HLV ở Tứ kết để không lặp logo CLB: mỗi HLV chỉ còn `Hạng → Logo lớn → Tên HLV → Tên CLB`.
+- Giữ ảnh cúp chính ở trung tâm, bỏ các phần lặp không cần thiết.
+- Không có SQL mới.
+
 ## V1.6.71 — Sửa bố cục Knockout + dùng ảnh Cup và nền Cup
 
 - Sắp xếp lại hoàn toàn bố cục `Bảng theo dõi Knockout` để tránh lộn xộn khi lên giao diện thật.

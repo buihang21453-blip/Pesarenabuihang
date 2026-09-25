@@ -1,3 +1,9 @@
+## V1.6.72 — Tối giản card HLV trong Knockout
+
+- `templates/tournament/components/knockout_dashboard.html`: bỏ khối cúp phụ/placeholder dưới cùng, đơn giản hóa phần thông tin HLV trong card Tứ kết.
+- `templates/tournament/styles.html`: làm nền phủ trong hơn, thêm style `c1-ko-showcase-club`, bỏ style của khối cúp phụ đã loại bỏ.
+- `app.py`: bump version lên `V1.6.72`.
+
 ## V1.6.71 — Knockout poster ổn định hơn
 
 - `templates/tournament/components/knockout_dashboard.html`: sắp xếp lại nhánh bracket cho đúng vị trí và thay icon cúp bằng ảnh cúp thật.

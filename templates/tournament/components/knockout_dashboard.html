@@ -92,14 +92,14 @@
                 <div class="c1-ko-seed-label">Hạng 1</div>
                 {% if qf1.home_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf1.home_club_logo }}" alt="Logo {{ qf1.home_club }}" loading="lazy" onerror="this.remove()">{% endif %}
                 <div class="c1-ko-showcase-name">{{ qf1.home_name }}</div>
-                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf1.home_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf1.home_club_logo %}<img class="c1-ko-club-logo" src="{{ qf1.home_club_logo }}" alt="Logo {{ qf1.home_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf1.home_club }}</span></div>
+                <div class="c1-ko-showcase-club">{{ qf1.home_club }}</div>
               </div>
               <div class="c1-ko-showcase-vs">VS</div>
               <div class="c1-ko-showcase-team">
                 <div class="c1-ko-seed-label">Hạng 8</div>
                 {% if qf1.away_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf1.away_club_logo }}" alt="Logo {{ qf1.away_club }}" loading="lazy" onerror="this.remove()">{% endif %}
                 <div class="c1-ko-showcase-name">{{ qf1.away_name }}</div>
-                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf1.away_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf1.away_club_logo %}<img class="c1-ko-club-logo" src="{{ qf1.away_club_logo }}" alt="Logo {{ qf1.away_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf1.away_club }}</span></div>
+                <div class="c1-ko-showcase-club">{{ qf1.away_club }}</div>
               </div>
             </div>
             <footer class="c1-ko-card-footer"><span>{{ qf1.status_label }}</span><b>{{ qf1.home_total if qf1.has_score else '—' }} : {{ qf1.away_total if qf1.has_score else '—' }}</b></footer>
@@ -133,14 +133,14 @@
                 <div class="c1-ko-seed-label">Hạng 2</div>
                 {% if qf2.home_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf2.home_club_logo }}" alt="Logo {{ qf2.home_club }}" loading="lazy" onerror="this.remove()">{% endif %}
                 <div class="c1-ko-showcase-name">{{ qf2.home_name }}</div>
-                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf2.home_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf2.home_club_logo %}<img class="c1-ko-club-logo" src="{{ qf2.home_club_logo }}" alt="Logo {{ qf2.home_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf2.home_club }}</span></div>
+                <div class="c1-ko-showcase-club">{{ qf2.home_club }}</div>
               </div>
               <div class="c1-ko-showcase-vs">VS</div>
               <div class="c1-ko-showcase-team">
                 <div class="c1-ko-seed-label">Hạng 7</div>
                 {% if qf2.away_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf2.away_club_logo }}" alt="Logo {{ qf2.away_club }}" loading="lazy" onerror="this.remove()">{% endif %}
                 <div class="c1-ko-showcase-name">{{ qf2.away_name }}</div>
-                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf2.away_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf2.away_club_logo %}<img class="c1-ko-club-logo" src="{{ qf2.away_club_logo }}" alt="Logo {{ qf2.away_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf2.away_club }}</span></div>
+                <div class="c1-ko-showcase-club">{{ qf2.away_club }}</div>
               </div>
             </div>
             <footer class="c1-ko-card-footer"><span>{{ qf2.status_label }}</span><b>{{ qf2.home_total if qf2.has_score else '—' }} : {{ qf2.away_total if qf2.has_score else '—' }}</b></footer>
@@ -170,12 +170,6 @@
           <div class="c1-ko-placeholder-body">Thắng Bán kết 1 <span>VS</span> Thắng Bán kết 2</div>
           {% endif %}
         </article>
-
-        <div class="c1-ko-champion-inline{{ ' is-ready' if ko.get('champion_user_id') else '' }}">
-          <div class="c1-ko-champion-inline-cup"><img class="c1-ko-champion-cup-image" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/Giaidau/C1mua1/cupc1.webp" alt="Cup C1" loading="lazy"></div>
-          <strong>{{ ko.get('champion_name') or 'CUP ĐANG CHỜ CHỦ NHÂN' }}</strong>
-          {% if ko.get('champion_user_id') %}<div class="c1-ko-champion-meta"><span class="c1-ko-tier-chip">Tier {{ ko.get('champion_tier') or '—' }}</span><span class="c1-ko-club-chip">{% if ko.get('champion_club_logo') %}<img class="c1-ko-club-logo" src="{{ ko.get('champion_club_logo') }}" alt="Logo {{ ko.get('champion_club') }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ ko.get('champion_club') or '—' }}</span></div>{% endif %}
-        </div>
       </div>
 
       <div class="c1-ko-side c1-ko-side-right">
@@ -188,14 +182,14 @@
                 <div class="c1-ko-seed-label">Hạng 3</div>
                 {% if qf3.home_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf3.home_club_logo }}" alt="Logo {{ qf3.home_club }}" loading="lazy" onerror="this.remove()">{% endif %}
                 <div class="c1-ko-showcase-name">{{ qf3.home_name }}</div>
-                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf3.home_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf3.home_club_logo %}<img class="c1-ko-club-logo" src="{{ qf3.home_club_logo }}" alt="Logo {{ qf3.home_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf3.home_club }}</span></div>
+                <div class="c1-ko-showcase-club">{{ qf3.home_club }}</div>
               </div>
               <div class="c1-ko-showcase-vs">VS</div>
               <div class="c1-ko-showcase-team">
                 <div class="c1-ko-seed-label">Hạng 6</div>
                 {% if qf3.away_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf3.away_club_logo }}" alt="Logo {{ qf3.away_club }}" loading="lazy" onerror="this.remove()">{% endif %}
                 <div class="c1-ko-showcase-name">{{ qf3.away_name }}</div>
-                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf3.away_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf3.away_club_logo %}<img class="c1-ko-club-logo" src="{{ qf3.away_club_logo }}" alt="Logo {{ qf3.away_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf3.away_club }}</span></div>
+                <div class="c1-ko-showcase-club">{{ qf3.away_club }}</div>
               </div>
             </div>
             <footer class="c1-ko-card-footer"><span>{{ qf3.status_label }}</span><b>{{ qf3.home_total if qf3.has_score else '—' }} : {{ qf3.away_total if qf3.has_score else '—' }}</b></footer>
@@ -229,14 +223,14 @@
                 <div class="c1-ko-seed-label">Hạng 4</div>
                 {% if qf4.home_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf4.home_club_logo }}" alt="Logo {{ qf4.home_club }}" loading="lazy" onerror="this.remove()">{% endif %}
                 <div class="c1-ko-showcase-name">{{ qf4.home_name }}</div>
-                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf4.home_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf4.home_club_logo %}<img class="c1-ko-club-logo" src="{{ qf4.home_club_logo }}" alt="Logo {{ qf4.home_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf4.home_club }}</span></div>
+                <div class="c1-ko-showcase-club">{{ qf4.home_club }}</div>
               </div>
               <div class="c1-ko-showcase-vs">VS</div>
               <div class="c1-ko-showcase-team">
                 <div class="c1-ko-seed-label">Hạng 5</div>
                 {% if qf4.away_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf4.away_club_logo }}" alt="Logo {{ qf4.away_club }}" loading="lazy" onerror="this.remove()">{% endif %}
                 <div class="c1-ko-showcase-name">{{ qf4.away_name }}</div>
-                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf4.away_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf4.away_club_logo %}<img class="c1-ko-club-logo" src="{{ qf4.away_club_logo }}" alt="Logo {{ qf4.away_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf4.away_club }}</span></div>
+                <div class="c1-ko-showcase-club">{{ qf4.away_club }}</div>
               </div>
             </div>
             <footer class="c1-ko-card-footer"><span>{{ qf4.status_label }}</span><b>{{ qf4.home_total if qf4.has_score else '—' }} : {{ qf4.away_total if qf4.has_score else '—' }}</b></footer>
@@ -250,4 +244,4 @@
   </div>
 </section>
 
-{ 0.000000e+00ndif {% endif %}
+{% endif %}

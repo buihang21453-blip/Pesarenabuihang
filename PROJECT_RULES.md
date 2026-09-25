@@ -1,3 +1,9 @@
+## V1.6.72 — Quy tắc hiển thị poster Knockout
+
+- Card HLV ở Tứ kết không được lặp logo CLB; logo chỉ hiển thị một lần ở kích thước lớn.
+- Thông tin tối thiểu của card HLV: seed/hạng, logo CLB lớn, tên HLV, tên CLB.
+- Ảnh nền phải được nhìn thấy rõ; lớp phủ màu không được quá đậm che mất nền.
+
 ## V1.6.71 — Quy tắc hiển thị Knockout poster
 
 - Bracket phải ưu tiên bố cục ổn định, không được để card chồng lấn lên nhau ở màn hình desktop.

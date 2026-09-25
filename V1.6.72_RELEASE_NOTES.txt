@@ -1,0 +1,6 @@
+PES ARENA V1.6.72 — TỐI GIẢN POSTER KNOCKOUT
+
+- Bỏ cúp phụ nhỏ và bỏ dòng CUP ĐANG CHỜ CHỦ NHÂN.
+- Nền phủ trong hơn để nhìn rõ ảnh nền NenCup.webp.
+- Card HLV không lặp logo; chỉ còn Hạng + logo lớn + tên HLV + tên CLB.
+- Không có SQL mới.
