@@ -8,7 +8,7 @@ def read(rel):
 
 
 def test_v1675_version():
-    assert 'APP_VERSION = "V1.6.75"' in read('app.py')
+    assert 'APP_VERSION = "V1.6.76"' in read('app.py')
 
 
 def test_knockout_control_payload_includes_qf_sf_final():

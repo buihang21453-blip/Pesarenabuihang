@@ -363,3 +363,7 @@ Nếu map khác source, **không đoán**: kiểm tra source rồi cập nhật 
 ---
 
 **Maintained from V1.6.74 · current V1.6.75.**
+
+
+### C1 KO semifinal branch
+- `modules/tournament_competition_parts/core.py` + `templates/tournament/components/knockout_dashboard.html`: BK1 = Winner TK1 vs Winner TK3; BK2 = Winner TK2 vs Winner TK4.

@@ -920,6 +920,9 @@ def register_core(context):
 
     def _round_pairs(tournament_id, round_code):
         rows=[m for m in _matches(tournament_id,"knockout") if m.get("round_code")==round_code]
+        # Bracket slot identity follows creation order (TK1, TK2, TK3, TK4).
+        # Sort explicitly so DB return order cannot silently change semifinal branches.
+        rows.sort(key=lambda m:(str(m.get("created_at") or ""), str(m.get("id") or ""), int(m.get("leg_no") or 1)))
         groups={}
         for m in rows:
             key=m.get("aggregate_group") or str(m.get("id"))
@@ -970,6 +973,7 @@ def register_core(context):
         for leg in legs:
             h,a=(home,away) if leg%2==1 else (away,home)
             execute_query(db.table("tournament_matches").insert({"tournament_id":tournament_id,"stage_code":"knockout","round_code":round_code,"leg_no":leg,"aggregate_group":group,"home_user_id":h,"away_user_id":a,"status":"pending","created_at":now_iso(),"updated_at":now_iso()}),"ops_ko_auto_insert",attempts=2)
+        return group
 
     def _maybe_advance_knockout(tournament_id):
         state=_setting(tournament_id,"knockout_flow",{}) or {}
@@ -977,8 +981,35 @@ def register_core(context):
         if not current: return state
         groups=_round_pairs(tournament_id,current)
         if not groups: return state
+        group_items=list(groups.items())
+        # Preserve the original quarterfinal slot numbers saved when the bracket is generated.
+        # This makes TK1/TK2/TK3/TK4 deterministic even if the DB changes row-return order.
+        if current=="qf":
+            preferred=[str(x) for x in (state.get("qf_pair_keys") or []) if x]
+            # Compatibility for brackets generated before V1.6.76: infer TK1..TK4
+            # from the saved Top-8 seed pairs (1-8, 2-7, 3-6, 4-5).
+            if not preferred:
+                seeds=[str(x) for x in (state.get("direct_top8") or []) if x]
+                if len(seeds)>=8:
+                    inferred=[]
+                    for idx in range(4):
+                        expected={seeds[idx],seeds[-(idx+1)]}
+                        for key,matches in group_items:
+                            if not matches: continue
+                            first=matches[0]
+                            actual={str(first.get("home_user_id") or ""),str(first.get("away_user_id") or "")}
+                            if actual==expected:
+                                inferred.append(str(key)); break
+                    if len(inferred)==4:
+                        preferred=inferred
+            if preferred:
+                lookup=dict(group_items)
+                ordered=[(key,lookup[key]) for key in preferred if key in lookup]
+                seen={key for key,_ in ordered}
+                ordered.extend((key,matches) for key,matches in group_items if key not in seen)
+                group_items=ordered
         winners=[]
-        for matches in groups.values():
+        for _,matches in group_items:
             w=_pair_winner(matches)
             if not w: return state
             winners.append(w)
@@ -999,11 +1030,17 @@ def register_core(context):
                     direct=state.get("direct_r16") or []
                     entrants=direct+winners
                 else:
-                    entrants=winners
-                # Seed outer-to-inner where possible for a clear bracket.
+                    entrants=list(winners)
                 pairs=[]
-                while len(entrants)>=2:
-                    pairs.append((entrants.pop(0),entrants.pop(-1)))
+                if current=="qf" and nxt=="sf" and len(entrants)==4:
+                    # PES Arena C1 branch rule (V1.6.76):
+                    # BK1 = Winner TK1 vs Winner TK3
+                    # BK2 = Winner TK2 vs Winner TK4
+                    pairs=[(entrants[0],entrants[2]),(entrants[1],entrants[3])]
+                else:
+                    # Other rounds keep the existing outer-to-inner pairing rule.
+                    while len(entrants)>=2:
+                        pairs.append((entrants.pop(0),entrants.pop(-1)))
                 for a,b in pairs: _insert_ko_pair(tournament_id,nxt,a,b,two_legged=(nxt!="final"))
                 state["current_round"]=nxt
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"knockout_flow","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_ko_flow_save",attempts=2)

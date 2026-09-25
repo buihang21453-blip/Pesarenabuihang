@@ -1,0 +1,17 @@
+PES ARENA V1.6.76 — C1 KO SEMIFINAL BRANCH
+
+1. Nhánh Bán kết mới
+- BK1 = Winner Tứ kết 1 vs Winner Tứ kết 3.
+- BK2 = Winner Tứ kết 2 vs Winner Tứ kết 4.
+
+2. Bracket UI
+- Nhánh trái: TK1 + TK3 → BK1.
+- Nhánh phải: TK2 + TK4 → BK2.
+
+3. Ổn định dữ liệu
+- Khi sinh Top 8, lưu qf_pair_keys theo thứ tự TK1..TK4.
+- Progression dùng slot này để không phụ thuộc thứ tự bản ghi DB.
+
+4. Không thay đổi
+- Cặp Tứ kết vẫn: 1–8, 2–7, 3–6, 4–5.
+- Admin vẫn mở/khóa từng cặp ở QF/SF/Final.

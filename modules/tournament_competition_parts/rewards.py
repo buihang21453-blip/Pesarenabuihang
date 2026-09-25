@@ -478,13 +478,13 @@ def register_rewards(context):
         if existing:
             execute_query(db.table("tournament_matches").delete().eq("tournament_id",tournament_id).eq("stage_code","knockout"),"ops_ko_clear",attempts=2)
         ids=[str(r.get("user_id")) for r in ranking[:8]]
-        state={"use_playoff":False,"completed":False,"champion_user_id":None,"created_at":now_iso(),"direct_top8":ids,"current_round":"qf"}
+        state={"use_playoff":False,"completed":False,"champion_user_id":None,"created_at":now_iso(),"direct_top8":ids,"current_round":"qf","qf_pair_keys":[]}
         execute_query(db.table("tournament_settings").upsert({
             "tournament_id":tournament_id,"setting_key":KNOCKOUT_UNLOCK_KEY,
             "setting_value":{"entries":{},"sequence":0,"updated_at":now_iso()},"updated_at":now_iso(),
         },on_conflict="tournament_id,setting_key"),"ops_ko_unlock_reset",attempts=2)
         for i in range(4):
-            _insert_ko_pair(tournament_id,"qf",ids[i],ids[-(i+1)],True)
+            state["qf_pair_keys"].append(_insert_ko_pair(tournament_id,"qf",ids[i],ids[-(i+1)],True))
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"knockout_flow","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_ko_generate_state",attempts=2)
         execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","knockout"),"ops_ko_generate_open",attempts=2)
         flash("Đã sinh Knockout: Top 8 vào thẳng Tứ kết · không Play-off.","success"); return redirect_admin("tournaments")

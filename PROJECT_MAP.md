@@ -1,4 +1,4 @@
-## V1.6.75 — Knockout Admin Unlock đủ Tứ kết → Bán kết → Chung kết
+## V1.6.76 — Knockout Admin Unlock đủ Tứ kết → Bán kết → Chung kết
 - `modules/tournament_competition_parts/core.py`: control payload đã bao phủ `qf`, `sf`, `final`; pair mới chưa có unlock entry được xem là locked.
 - `modules/tournament_competition_parts/rewards.py`: route mở/khóa dùng chung cho mọi aggregate pair Knockout.
 - `templates/admin_parts/c1_knockout.html`: mô tả rõ Admin điều hành cả Tứ kết, Bán kết và Chung kết.

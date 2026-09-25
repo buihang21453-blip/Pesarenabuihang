@@ -1,4 +1,11 @@
 ## V1.6.75 — Admin mở/khóa mọi vòng Knockout
+
+## V1.6.76 — C1 KO semifinal branch TK1–TK3 / TK2–TK4
+- Đổi nhánh Bán kết C1: Winner TK1 gặp Winner TK3; Winner TK2 gặp Winner TK4.
+- Lưu `qf_pair_keys` khi sinh Top 8 để danh tính TK1–TK4 ổn định, không phụ thuộc thứ tự DB trả về.
+- Đồng bộ poster/bracket: nhánh trái hiển thị TK1 + TK3 → BK1; nhánh phải TK2 + TK4 → BK2.
+- Giữ nguyên cơ chế Admin mở/khóa từng cặp KO ở Tứ kết, Bán kết và Chung kết.
+- Bổ sung regression test V1.6.76.
 - Làm rõ panel `🎛️ Điều hành từng cặp KO` áp dụng cho toàn bộ **Tứ kết · Bán kết · Chung kết**.
 - Bán kết và Chung kết khi hệ thống tự sinh vẫn mặc định bị khóa; Admin phải chủ động mở từng cặp trước khi HLV vào phòng.
 - Admin có thể mở cặp ở vòng hiện tại theo bất kỳ thứ tự nào; cơ chế lock/unlock dùng chung theo `aggregate_group`.

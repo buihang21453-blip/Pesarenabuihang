@@ -1,4 +1,4 @@
-## V1.6.75 — Quy tắc mở khóa toàn bộ vòng Knockout
+## V1.6.76 — Quy tắc mở khóa toàn bộ vòng Knockout
 - `🎛️ Điều hành từng cặp KO` bắt buộc áp dụng thống nhất cho **Tứ kết (`qf`) · Bán kết (`sf`) · Chung kết (`final`)**.
 - Mọi cặp mới sinh ở vòng sau mặc định khóa; Admin phải mở cặp trước khi HLV được vào/bắt đầu trận.
 - Không tự động mở Bán kết hoặc Chung kết chỉ vì vòng trước đã hoàn tất.
