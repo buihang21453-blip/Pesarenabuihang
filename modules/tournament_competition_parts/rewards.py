@@ -479,11 +479,59 @@ def register_rewards(context):
             execute_query(db.table("tournament_matches").delete().eq("tournament_id",tournament_id).eq("stage_code","knockout"),"ops_ko_clear",attempts=2)
         ids=[str(r.get("user_id")) for r in ranking[:8]]
         state={"use_playoff":False,"completed":False,"champion_user_id":None,"created_at":now_iso(),"direct_top8":ids,"current_round":"qf"}
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,"setting_key":KNOCKOUT_UNLOCK_KEY,
+            "setting_value":{"entries":{},"sequence":0,"updated_at":now_iso()},"updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_ko_unlock_reset",attempts=2)
         for i in range(4):
             _insert_ko_pair(tournament_id,"qf",ids[i],ids[-(i+1)],True)
         execute_query(db.table("tournament_settings").upsert({"tournament_id":tournament_id,"setting_key":"knockout_flow","setting_value":state,"updated_at":now_iso()},on_conflict="tournament_id,setting_key"),"ops_ko_generate_state",attempts=2)
         execute_query(db.table("tournament_stages").update({"status":"open","updated_at":now_iso()}).eq("tournament_id",tournament_id).eq("stage_code","knockout"),"ops_ko_generate_open",attempts=2)
         flash("Đã sinh Knockout: Top 8 vào thẳng Tứ kết · không Play-off.","success"); return redirect_admin("tournaments")
+
+    @app.post('/admin/tournaments/<tournament_id>/knockout/pair-access')
+    @login_required
+    @admin_required
+    def admin_tournament_knockout_pair_access(tournament_id):
+        pair_key=str(request.form.get("pair_key") or "").strip()
+        action=str(request.form.get("action") or "unlock").strip().lower()
+        if not pair_key or action not in {"unlock","lock"}:
+            flash("Yêu cầu mở/khóa cặp Knockout không hợp lệ.","error")
+            return redirect_admin("tournaments")
+        legs=[m for m in _matches(tournament_id,"knockout") if _knockout_pair_key(m)==pair_key]
+        if not legs:
+            flash("Không tìm thấy cặp Knockout này.","error")
+            return redirect_admin("tournaments")
+        statuses={str(x.get("status") or "pending") for x in legs}
+        if "playing" in statuses:
+            flash("Cặp đấu đang thi đấu nên không thể thay đổi khóa.","warning")
+            return redirect_admin("tournaments")
+        if all(x in {"completed","cancelled"} for x in statuses):
+            flash("Cặp đấu đã hoàn tất nên không cần thay đổi khóa.","warning")
+            return redirect_admin("tournaments")
+        if action=="lock" and ("completed" in statuses or "disputed" in statuses):
+            flash("Cặp đấu đã có kết quả/đang chờ xử lý nên không thể khóa lại.","warning")
+            return redirect_admin("tournaments")
+        state=_knockout_unlock_state(tournament_id)
+        entries=dict(state.get("entries") or {})
+        entry=dict(entries.get(pair_key) or {})
+        if action=="unlock":
+            if not entry.get("unlocked"):
+                seq=int(state.get("sequence") or 0)+1
+                state["sequence"]=seq
+                entry.update({"unlocked":True,"unlock_order":seq,"unlocked_at":now_iso(),"unlocked_by":str((current_user() or {}).get("id") or "admin")})
+            msg="Đã mở cặp Knockout. Hai HLV có thể vào Phòng đấu C1."
+        else:
+            entry.update({"unlocked":False,"locked_at":now_iso(),"locked_by":str((current_user() or {}).get("id") or "admin")})
+            msg="Đã khóa lại cặp Knockout. Hai HLV chưa thể vào phòng."
+        entries[pair_key]=entry
+        state["entries"]=entries; state["updated_at"]=now_iso()
+        execute_query(db.table("tournament_settings").upsert({
+            "tournament_id":tournament_id,"setting_key":KNOCKOUT_UNLOCK_KEY,
+            "setting_value":state,"updated_at":now_iso(),
+        },on_conflict="tournament_id,setting_key"),"ops_ko_pair_access_save",attempts=2)
+        flash(msg,"success")
+        return redirect_admin("tournaments")
 
     @app.post('/admin/tournaments/<tournament_id>/knockout/match')
     @login_required

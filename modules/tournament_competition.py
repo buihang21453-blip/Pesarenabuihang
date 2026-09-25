@@ -45,6 +45,7 @@ STAGE_LABELS = {
 ROUND_ORDER = ["playoff", "r16", "qf", "sf", "final"]
 STAGE1_ALLOWED_TIERS = {"S+", "S"}
 TOURNAMENT_ROOM_PREFIX = "TOURNAMENT_ROOM|"
+KNOCKOUT_UNLOCK_KEY = "knockout_match_unlocks_v1"
 
 C1_CLUB_POTS = {
     1: ["Bayern", "Real Madrid", "Barcelona", "PSG", "Liverpool", "Man City", "Arsenal", "Inter"],
@@ -70,6 +71,7 @@ def register_routes(context):
         "ROUND_ORDER": ROUND_ORDER,
         "STAGE1_ALLOWED_TIERS": STAGE1_ALLOWED_TIERS,
         "TOURNAMENT_ROOM_PREFIX": TOURNAMENT_ROOM_PREFIX,
+        "KNOCKOUT_UNLOCK_KEY": KNOCKOUT_UNLOCK_KEY,
         "C1_CLUB_POTS": C1_CLUB_POTS,
         "C1_CLUB_POOL": C1_CLUB_POOL,
         "C1_CLUB_POT_BY_NAME": C1_CLUB_POT_BY_NAME,

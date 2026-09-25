@@ -1,0 +1,9 @@
+PES ARENA V1.6.73 — ADMIN ĐIỀU HÀNH MỞ/KHÓA TỪNG CẶP KNOCKOUT
+
+1. Admin → C1 → Knockout có panel điều hành từng cặp.
+2. Admin được mở bất kỳ cặp nào; không bắt buộc TK1 → TK2 → TK3 → TK4.
+3. Cặp mới sinh mặc định khóa. Bán kết/Chung kết cũng mặc định khóa.
+4. HLV thấy trạng thái khóa/mở ngay trên trang Knockout.
+5. Khi khóa, nút Vào Phòng đấu C1 bị vô hiệu hóa.
+6. Backend chặn truy cập trực tiếp URL, mời/nhận phòng và bắt đầu trận nếu cặp KO chưa mở.
+7. Dữ liệu khóa/mở lưu trong tournament_settings; KHÔNG CẦN chạy SQL migration.

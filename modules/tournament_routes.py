@@ -183,6 +183,16 @@ def register_routes(context):
         flow = ((flow_rows[0].get("setting_value") if flow_rows else {}) or {})
         if not isinstance(flow, dict): flow = {}
 
+        unlock_rows, _ = _safe_rows(
+            db.table("tournament_settings").select("setting_value")
+            .eq("tournament_id", tournament_id).eq("setting_key", "knockout_match_unlocks_v1").limit(1),
+            "tournament_public_knockout_unlocks",
+        )
+        unlock_state = ((unlock_rows[0].get("setting_value") if unlock_rows else {}) or {})
+        if not isinstance(unlock_state, dict): unlock_state = {}
+        unlock_entries = unlock_state.get("entries") or {}
+        if not isinstance(unlock_entries, dict): unlock_entries = {}
+
         members = member_rows or []
         member_map = {str(m.get("user_id")): m for m in members if m.get("user_id")}
         club_names = sorted({str((m.get("fixed_club_name") or "")).strip() for m in members if (m.get("fixed_club_name") or "").strip()})
@@ -242,6 +252,18 @@ def register_routes(context):
             else:
                 pair_status = "pending"
             next_leg = next((x for x in legs if str(x.get("status") or "") not in {"completed", "cancelled"}), None)
+            access_entry = unlock_entries.get(key) or {}
+            pair_unlocked = bool(access_entry.get("unlocked"))
+            if pair_status == "pending" and not pair_unlocked:
+                pair_status_label = "🔒 Chờ BTC mở trận"
+            elif pair_status in {"pending", "scheduled"} and pair_unlocked:
+                pair_status_label = "🟢 BTC đã mở trận"
+            elif pair_status == "playing":
+                pair_status_label = "🔴 Đang thi đấu"
+            elif pair_status == "completed":
+                pair_status_label = "✅ Hoàn tất"
+            else:
+                pair_status_label = status_labels.get(pair_status, pair_status)
             home_member = member_map.get(home_id) or {}
             away_member = member_map.get(away_id) or {}
             rounds[code].append({
@@ -254,7 +276,8 @@ def register_routes(context):
                 "away_club_logo": club_logos.get(away_member.get("fixed_club_name") or "", ""),
                 "home_total": totals.get(home_id, 0), "away_total": totals.get(away_id, 0),
                 "has_score": completed > 0, "completed_legs": completed, "leg_count": len(legs),
-                "status": pair_status, "status_label": status_labels.get(pair_status, pair_status),
+                "status": pair_status, "status_label": pair_status_label,
+                "is_unlocked": pair_unlocked, "unlock_order": int(access_entry.get("unlock_order") or 0),
                 "next_leg": next_leg, "legs": legs,
             })
         for code in rounds:
@@ -278,11 +301,18 @@ def register_routes(context):
             row = my_candidates[0]
             h, a = str(row.get("home_user_id") or ""), str(row.get("away_user_id") or "")
             opponent = a if uid == h else h
+            pair_key = str(row.get("aggregate_group") or row.get("id") or "")
+            access_entry = unlock_entries.get(pair_key) or {}
+            is_unlocked = bool(access_entry.get("unlocked"))
+            raw_status = str(row.get("status") or "pending")
+            next_status_label = ("🔒 Chờ BTC mở trận" if not is_unlocked and raw_status in {"pending","scheduled"}
+                                 else "🟢 BTC đã mở trận" if is_unlocked and raw_status in {"pending","scheduled"}
+                                 else status_labels.get(raw_status, raw_status))
             my_next = {
                 "id": row.get("id"), "round_code": row.get("round_code"),
                 "round_label": round_labels.get(str(row.get("round_code") or ""), "Knockout"),
                 "leg_no": int(row.get("leg_no") or 1), "status": row.get("status") or "pending",
-                "status_label": status_labels.get(str(row.get("status") or "pending"), str(row.get("status") or "pending")),
+                "status_label": next_status_label, "is_unlocked": is_unlocked, "can_enter": is_unlocked,
                 "opponent_name": names.get(opponent, "HLV"), "scheduled_at": row.get("scheduled_at"),
             }
 

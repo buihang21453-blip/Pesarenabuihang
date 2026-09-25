@@ -1,3 +1,12 @@
+## V1.6.73 — Quy tắc điều hành Knockout
+- Sau khi sinh cặp KO, mặc định cặp đó bị khóa.
+- Admin có thể mở bất kỳ cặp nào, không bắt buộc theo thứ tự số trận.
+- Chỉ Admin được mở/khóa; không cho khóa lại khi cặp đã bắt đầu/đã có kết quả.
+- Mở khóa áp dụng cho toàn bộ cặp (`aggregate_group`), không tách riêng lượt 1/lượt 2.
+- Bán kết và Chung kết mới sinh cũng mặc định khóa.
+- UI chỉ là lớp hiển thị; backend phải chặn URL/phòng/start khi chưa mở.
+- Không cần migration SQL; dùng `tournament_settings.knockout_match_unlocks_v1`.
+
 ## V1.6.72 — Quy tắc hiển thị poster Knockout
 
 - Card HLV ở Tứ kết không được lặp logo CLB; logo chỉ hiển thị một lần ở kích thước lớn.

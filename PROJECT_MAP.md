@@ -1,3 +1,13 @@
+## V1.6.73 — Admin mở/khóa từng cặp Knockout
+- `modules/tournament_competition_parts/core.py`: helper đọc trạng thái khóa/mở và payload điều hành KO cho Admin.
+- `modules/tournament_competition_parts/rewards.py`: route Admin mở/khóa bất kỳ cặp KO; reset trạng thái khóa khi sinh lại bracket.
+- `modules/tournament_competition_parts/rooms.py`: chặn vào/tạo/mời/nhận phòng khi cặp KO chưa mở.
+- `modules/c1_fixed_match_service.py`: lớp chặn cuối trước khi chuyển trận sang `playing`.
+- `modules/tournament_routes.py`: public payload hiển thị trạng thái khóa/mở và `can_enter`.
+- `templates/admin_parts/c1_knockout.html`: panel điều hành từng cặp KO.
+- `templates/tournament/components/knockout_dashboard.html`: HLV thấy `CHỜ BTC MỞ TRẬN` khi bị khóa.
+- Không cần SQL mới: trạng thái lưu trong `tournament_settings` key `knockout_match_unlocks_v1`.
+
 ## V1.6.72 — Tối giản card HLV trong Knockout
 
 - `templates/tournament/components/knockout_dashboard.html`: bỏ khối cúp phụ/placeholder dưới cùng, đơn giản hóa phần thông tin HLV trong card Tứ kết.

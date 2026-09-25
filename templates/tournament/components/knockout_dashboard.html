@@ -18,7 +18,11 @@
       <strong>{{ nxt.round_label }} · {% if nxt.round_code == 'final' %}Trận{% else %}Lượt{% endif %} {{ nxt.leg_no }}</strong>
       <small>Đối thủ: <b>{{ nxt.opponent_name }}</b> · {{ nxt.status_label }}{% if nxt.scheduled_at %} · {{ (nxt.scheduled_at|string)|replace('T',' ') }}{% endif %}</small>
     </div>
+    {% if nxt.can_enter %}
     <a class="btn green c1-ko-enter-btn" href="{{ url_for('tournament_match_room_enter', tournament_id=tournament.id, match_id=nxt.id) }}">🎮 Vào Phòng đấu C1</a>
+    {% else %}
+    <button class="btn c1-ko-enter-btn c1-ko-enter-locked" type="button" disabled>🔒 CHỜ BTC MỞ TRẬN</button>
+    {% endif %}
   </div>
   {% elif tournament.my_member %}
   <div class="c1-ko-next-match is-muted">

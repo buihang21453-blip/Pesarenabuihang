@@ -177,6 +177,13 @@ def register_rooms(context):
             return redirect(url_for("c1_room_accept",tournament_id=tid,room_id=pending.get("id")))
         existing=_c1_open_room_for_user(tid,uid)
         if existing:
+            existing_meta=existing.get("tournament_meta") or _room_meta(existing) or {}
+            linked_id=str(existing_meta.get("tournament_match_id") or "")
+            if str(existing_meta.get("stage_code") or "")=="knockout" and linked_id:
+                linked_match,_=_one(db.table("tournament_matches").select("*").eq("id",linked_id).eq("tournament_id",tid),"ops_c1_open_existing_ko_gate")
+                if linked_match and not _knockout_pair_is_unlocked(tid,linked_match):
+                    flash("🔒 BTC đã khóa cặp Knockout này. Chưa thể vào Phòng đấu C1.","warning")
+                    return redirect(url_for("tournaments")+"#knockout-"+tid)
             return redirect(url_for("room_detail",room_id=existing.get("id")))
         me=next((m for m in members if str(m.get("user_id"))==uid),None)
         active=active_room_for_user(uid)
@@ -230,6 +237,14 @@ def register_rooms(context):
         # Stage1 deliberately retains its per-match random-club rules.
         league_open=str((_stage(tid,"league") or {}).get("status") or "")=="open"
         knockout_open=str((_stage(tid,"knockout") or {}).get("status") or "")=="open"
+        if knockout_open and me and not is_test_account:
+            ko_candidates=[m for m in _matches(tid,"knockout")
+                           if uid in {str(m.get("home_user_id") or ""),str(m.get("away_user_id") or "")}
+                           and str(m.get("status") or "pending") not in {"completed","cancelled"}]
+            ko_candidates.sort(key=lambda m:(int(m.get("leg_no") or 1),str(m.get("created_at") or "")))
+            if ko_candidates and not _knockout_pair_is_unlocked(tid,ko_candidates[0]):
+                flash("🔒 BTC chưa mở cặp Knockout của bạn. Vui lòng chờ Admin mở trận.","warning")
+                return redirect(url_for("tournaments")+"#knockout-"+tid)
         fixed_host=(_member(tid,uid) or {}).get("fixed_club_name") if (league_open or knockout_open) else None
         if (league_open or knockout_open) and me and not fixed_host:
             flash("HLV chưa có CLB cố định; không thể tạo phòng C1 GĐ2/KO.","error")
@@ -272,6 +287,9 @@ def register_rooms(context):
                 flash("Chỉ được mời HLV đang tham gia C1.","error"); return redirect(url_for("room_detail",room_id=room_id))
             match=_c1_pair_match(tournament_id,host_uid,opponent_uid)
             host_member=next((m for m in members if str(m.get("user_id"))==host_uid),None)
+            if match and str(match.get("stage_code") or "")=="knockout" and not _knockout_pair_is_unlocked(tournament_id,match):
+                flash("🔒 Cặp Knockout này chưa được BTC mở. Chưa thể gửi lời mời thi đấu.","warning")
+                return redirect(url_for("room_detail",room_id=room_id))
             if not match and not is_admin_user(user):
                 flash("HLV này không có trận C1 đang chờ thi đấu với bạn.","warning"); return redirect(url_for("room_detail",room_id=room_id))
         if match:
@@ -338,6 +356,12 @@ def register_rooms(context):
             return redirect(url_for("room_detail",room_id=room_id))
         if str(meta.get("invited_user_id") or "")!=uid and not is_admin_user(user):
             flash("Phòng này không mời tài khoản của bạn.","error"); return redirect(url_for("c1_rooms",tournament_id=tournament_id))
+        linked_match_id=str(meta.get("tournament_match_id") or "")
+        if linked_match_id and str(meta.get("stage_code") or "")=="knockout":
+            linked_match,_=_one(db.table("tournament_matches").select("*").eq("id",linked_match_id).eq("tournament_id",tournament_id),"ops_c1_accept_ko_gate")
+            if linked_match and not _knockout_pair_is_unlocked(tournament_id,linked_match):
+                flash("🔒 BTC đã khóa cặp Knockout này. Chưa thể vào phòng.","warning")
+                return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
         if not is_admin_user(user) and not _member(tournament_id,uid) and not (meta.get("test_sandbox_room") and _is_c1_test_user(tournament_id,uid)):
             flash("Chỉ HLV chính thức hoặc tài khoản thử nghiệm được cấp quyền mới vào phòng.","error"); return redirect(url_for("tournaments"))
         if room.get("guest_user_id"):
@@ -435,6 +459,9 @@ def register_rooms(context):
             stage_rows,_=_rows(db.table("tournament_stages").select("stage_code,status").eq("tournament_id",tournament_id).eq("stage_code",stage_code),"ops_room_stage_gate")
             if not stage_rows or stage_rows[0].get("status")!="open":
                 flash("Giai đoạn chưa mở; chưa thể tạo phòng thi đấu.","warning"); return redirect(url_for('tournaments')+"#rooms")
+            if stage_code=="knockout" and not _knockout_pair_is_unlocked(tournament_id,match):
+                flash("🔒 BTC chưa mở cặp Knockout này. Vui lòng chờ Admin mở trận.","warning")
+                return redirect(url_for('tournaments')+"#knockout-"+str(tournament_id))
             participants=[_member(tournament_id,match.get(key)) for key in ("home_user_id","away_user_id")]
             if any(not m or not m.get("fixed_club_name") for m in participants):
                 flash("Hai HLV phải được gán CLB cố định trước khi vào phòng.","error"); return redirect(url_for('tournaments')+"#rooms")

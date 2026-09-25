@@ -53,6 +53,18 @@ def start_assigned_club_match(db, execute_query, tournament_id, room_id, now_iso
     stage = (getattr(stage_result, "data", None) or [None])[0]
     if not stage or stage.get("status") != "open":
         return False, "Giai đoạn C1 chưa mở.", ()
+    if str(match.get("stage_code") or "") == "knockout":
+        access_result = execute_query(
+            db.table("tournament_settings").select("setting_value").eq("tournament_id", tid)
+            .eq("setting_key", "knockout_match_unlocks_v1").limit(1),
+            "c1_fixed_start_ko_unlock", attempts=2,
+        )
+        access_row = (getattr(access_result, "data", None) or [None])[0]
+        access_state = (access_row or {}).get("setting_value") or {}
+        entries = access_state.get("entries") or {} if isinstance(access_state, dict) else {}
+        pair_key = str(match.get("aggregate_group") or match.get("id") or "")
+        if not bool((entries.get(pair_key) or {}).get("unlocked")):
+            return False, "BTC chưa mở cặp Knockout này.", ()
     match_status = str(match.get("status") or "").lower()
     if match_status not in {"pending", "scheduled", "playing"}:
         return False, "Trận C1 không còn ở trạng thái có thể bắt đầu.", ()

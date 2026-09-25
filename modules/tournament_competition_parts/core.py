@@ -107,6 +107,78 @@ def register_core(context):
         rows,_=_rows(q.order("created_at"), "ops_matches")
         return rows
 
+    def _knockout_unlock_state(tournament_id):
+        state=_setting(tournament_id,KNOCKOUT_UNLOCK_KEY,{}) or {}
+        if not isinstance(state,dict):
+            return {"entries":{},"sequence":0}
+        entries=state.get("entries") or {}
+        if not isinstance(entries,dict): entries={}
+        return {**state,"entries":entries,"sequence":int(state.get("sequence") or 0)}
+
+    def _knockout_pair_key(match):
+        if not match: return ""
+        return str(match.get("aggregate_group") or match.get("id") or "")
+
+    def _knockout_pair_is_unlocked(tournament_id, match):
+        if not match or str(match.get("stage_code") or "")!="knockout":
+            return True
+        key=_knockout_pair_key(match)
+        entry=(_knockout_unlock_state(tournament_id).get("entries") or {}).get(key) or {}
+        return bool(entry.get("unlocked"))
+
+    def _knockout_control_payload(tournament_id):
+        rows=_matches(tournament_id,"knockout")
+        if not rows:
+            return {"generated":False,"pairs":[],"open_count":0,"locked_count":0}
+        members={str(x.get("user_id")):x for x in _all_members(tournament_id)}
+        state=_knockout_unlock_state(tournament_id)
+        entries=state.get("entries") or {}
+        grouped={}
+        round_order={"qf":0,"sf":1,"final":2}
+        round_labels={"qf":"Tứ kết","sf":"Bán kết","final":"Chung kết"}
+        for m in rows:
+            code=str(m.get("round_code") or "")
+            if code not in round_order: continue
+            key=_knockout_pair_key(m)
+            grouped.setdefault((code,key),[]).append(m)
+        pairs=[]
+        for (code,key),legs in grouped.items():
+            legs.sort(key=lambda x:(int(x.get("leg_no") or 1),str(x.get("created_at") or "")))
+            first=legs[0]; entry=entries.get(key) or {}
+            statuses=[str(x.get("status") or "pending") for x in legs]
+            completed=all(x in {"completed","cancelled"} for x in statuses)
+            playing="playing" in statuses
+            disputed="disputed" in statuses
+            unlocked=bool(entry.get("unlocked"))
+            if completed: status_code="completed"; status_label="✅ Hoàn tất"
+            elif playing: status_code="playing"; status_label="🔴 Đang thi đấu"
+            elif disputed: status_code="disputed"; status_label="⚠ Chờ BTC xử lý"
+            elif unlocked: status_code="unlocked"; status_label="🟢 Đã mở"
+            else: status_code="locked"; status_label="🔒 Chưa mở"
+            hid=str(first.get("home_user_id") or ""); aid=str(first.get("away_user_id") or "")
+            hm=members.get(hid) or {}; am=members.get(aid) or {}
+            pairs.append({
+                "key":key,"round_code":code,"round_label":round_labels.get(code,code.upper()),
+                "home_user_id":hid,"away_user_id":aid,
+                "home_name":hm.get("display_name") or "HLV 1","away_name":am.get("display_name") or "HLV 2",
+                "status":status_code,"status_label":status_label,"unlocked":unlocked,
+                "unlock_order":int(entry.get("unlock_order") or 0),"unlocked_at":entry.get("unlocked_at"),
+                "can_unlock":not completed and not playing,"can_lock":unlocked and not completed and not playing and not disputed,
+                "completed_legs":sum(1 for x in statuses if x=="completed"),"leg_count":len(legs),
+                "created_at":str(first.get("created_at") or ""),
+            })
+        pairs.sort(key=lambda x:(round_order.get(x["round_code"],9),x["created_at"]))
+        counters={"qf":0,"sf":0,"final":0}
+        for pair in pairs:
+            counters[pair["round_code"]]+=1
+            pair["display_no"]=counters[pair["round_code"]]
+            pair["display_label"]=("Chung kết" if pair["round_code"]=="final" else f'{pair["round_label"]} {pair["display_no"]}')
+        return {
+            "generated":True,"pairs":pairs,
+            "open_count":sum(1 for x in pairs if x["unlocked"] and x["status"] not in {"completed"}),
+            "locked_count":sum(1 for x in pairs if not x["unlocked"] and x["status"] not in {"completed"}),
+        }
+
 
     def _pair_matches(tournament_id, match, include_cancelled=False):
         """Các trận của đúng cặp HLV trong cùng giai đoạn. Không giả định số lượt."""
@@ -1361,6 +1433,7 @@ def register_core(context):
                 "matches":matches,"hosts":hosts,"clubs":clubs,"me_progress":me_progress,"rewards":_reward_summary(tournament_id,user_id),"availability":availability,
                 "host_ready":host_ready,"my_has_host":bool(my_host_profile.get("has_host")),
                 "event_ops":ops_events,"knockout_flow":_setting(tournament_id,"knockout_flow",{}) or {},
+                "knockout_control":_knockout_control_payload(tournament_id),
                 "stage1_club_pool":_stage1_club_pool(tournament_id),"tournament_rooms":_tournament_rooms(tournament_id),
                 "all_team_options":_stage1_eligible_clubs(),"stage1_team_options":_stage1_eligible_clubs(),"league_config":_setting(tournament_id,"league_config",{}) or {},
                 "stage1_readiness":_stage1_readiness(tournament_id),

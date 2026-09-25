@@ -5,5 +5,36 @@
           <form method="post" action="{{ url_for('admin_tournament_knockout_generate',tournament_id=ot.id) }}" onsubmit="return confirm('Sinh Knockout Top 8 vào thẳng Tứ kết?');"><input type="hidden" name="_admin_tab" value="tournaments"><button class="btn green" type="submit">🏆 Sinh Top 8 → Tứ kết</button></form>
         </div>
         {% set kf=ops.get('knockout_flow',{}) %}<p class="small">Vòng hiện tại: <strong>{{ kf.get('current_round','Chưa sinh')|upper }}</strong>{% if kf.get('completed') %} · 🏆 Giải đã hoàn tất{% endif %}</p>
+        {% set kc=ops.get('knockout_control',{}) %}
+        {% if kc.get('generated') %}
+        <div style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(0,0,0,.16)">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+            <div><strong>🎛️ Điều hành từng cặp KO</strong><div class="small">Admin được mở bất kỳ cặp nào, không bắt buộc theo thứ tự. Cặp chưa mở sẽ bị chặn ở backend.</div></div>
+            <div class="small">🟢 Đang mở: <strong>{{ kc.get('open_count',0) }}</strong> · 🔒 Đang khóa: <strong>{{ kc.get('locked_count',0) }}</strong></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px">
+            {% for pair in kc.get('pairs',[]) %}
+            <div style="padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.025)">
+              <div style="display:flex;justify-content:space-between;gap:8px"><strong>{{ pair.display_label }}</strong><span class="small">{{ pair.status_label }}</span></div>
+              <div style="margin:7px 0;font-weight:800">{{ pair.home_name }} <span style="opacity:.6">VS</span> {{ pair.away_name }}</div>
+              <div class="small">{{ pair.completed_legs }}/{{ pair.leg_count }} trận hoàn thành{% if pair.unlock_order %} · Lượt mở #{{ pair.unlock_order }}{% endif %}</div>
+              <div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap">
+                {% if not pair.unlocked and pair.can_unlock %}
+                <form method="post" action="{{ url_for('admin_tournament_knockout_pair_access',tournament_id=ot.id) }}">
+                  <input type="hidden" name="pair_key" value="{{ pair.key }}"><input type="hidden" name="action" value="unlock"><input type="hidden" name="_admin_tab" value="tournaments">
+                  <button class="btn green" type="submit">🔓 Mở cặp này</button>
+                </form>
+                {% elif pair.unlocked and pair.can_lock %}
+                <form method="post" action="{{ url_for('admin_tournament_knockout_pair_access',tournament_id=ot.id) }}" onsubmit="return confirm('Khóa lại {{ pair.display_label }}? Hai HLV sẽ không thể vào phòng cho tới khi mở lại.');">
+                  <input type="hidden" name="pair_key" value="{{ pair.key }}"><input type="hidden" name="action" value="lock"><input type="hidden" name="_admin_tab" value="tournaments">
+                  <button class="btn red" type="submit">🔒 Khóa lại</button>
+                </form>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
       </div>
 

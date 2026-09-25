@@ -39,10 +39,11 @@ class DB:
                                      tournament_id='tour', tournament_match_id='fixture',
                                      stage_code='league')))],
             'tournament_matches': [dict(id='fixture', tournament_id='tour', status='pending',
-                                        stage_code='league', home_user_id='h', away_user_id='g')],
+                                        stage_code='league', aggregate_group='ko-pair', home_user_id='h', away_user_id='g')],
             'tournament_stages': [dict(tournament_id='tour', stage_code='league', status='open')],
             'tournament_members': [dict(tournament_id='tour', user_id='h', status='active', fixed_club_name='Porto'),
                                    dict(tournament_id='tour', user_id='g', status='active', fixed_club_name='Napoli')],
+            'tournament_settings': [],
         }
 
     def table(self, name): return Query(self, name)
@@ -104,9 +105,27 @@ class FixedMatchTests(unittest.TestCase):
             tournament_id='tour', tournament_match_id='fixture', stage_code='knockout'))
         self.db.rows['tournament_matches'][0]['stage_code'] = 'knockout'
         self.db.rows['tournament_stages'][0]['stage_code'] = 'knockout'
+        self.db.rows['tournament_settings'].append(dict(
+            tournament_id='tour', setting_key='knockout_match_unlocks_v1',
+            setting_value={'entries': {'ko-pair': {'unlocked': True}}}))
         ok, message, _ = self.start()
         self.assertTrue(ok, message)
         self.assertEqual(room['status'], 'playing')
+
+    def test_knockout_fixed_match_is_blocked_until_admin_unlocks(self):
+        import json
+        room = self.db.rows['match_rooms'][0]
+        room['note'] = 'TOURNAMENT_ROOM|' + json.dumps(dict(
+            tournament_id='tour', tournament_match_id='fixture', stage_code='knockout'))
+        self.db.rows['tournament_matches'][0]['stage_code'] = 'knockout'
+        self.db.rows['tournament_stages'][0]['stage_code'] = 'knockout'
+        self.db.rows['tournament_settings'].append(dict(
+            tournament_id='tour', setting_key='knockout_match_unlocks_v1',
+            setting_value={'entries': {}}))
+        ok, message, _ = self.start()
+        self.assertFalse(ok)
+        self.assertIn('chưa mở', message.lower())
+        self.assertEqual(room['status'], 'waiting_ready')
 
 
 class UIContractTests(unittest.TestCase):

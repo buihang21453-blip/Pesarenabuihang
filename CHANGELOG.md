@@ -1,3 +1,10 @@
+## V1.6.73 — Admin mở/khóa từng cặp Knockout
+- Admin có panel điều hành từng cặp KO và có thể mở bất kỳ cặp nào, không cần theo thứ tự.
+- Cặp KO mặc định bị khóa sau khi sinh; trạng thái lưu trong `tournament_settings` với key `knockout_match_unlocks_v1` (không cần migration SQL).
+- HLV thấy `🔒 Chờ BTC mở trận`; chỉ khi Admin mở mới hiện nút vào Phòng đấu C1.
+- Backend chặn nhiều đường vào: nút trực tiếp, phòng C1 tự mở/mời/nhận lời và bước bắt đầu trận cố định.
+- Bán kết/Chung kết mới sinh cũng mặc định khóa cho tới khi Admin mở.
+
 ## V1.6.72 — Dọn gọn poster Knockout
 
 - Bỏ phần cúp phụ nhỏ phía dưới và bỏ dòng `CUP ĐANG CHỜ CHỦ NHÂN` trong Bảng theo dõi Knockout.
