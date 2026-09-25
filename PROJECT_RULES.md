@@ -1,3 +1,10 @@
+## V1.6.75 — Quy tắc mở khóa toàn bộ vòng Knockout
+- `🎛️ Điều hành từng cặp KO` bắt buộc áp dụng thống nhất cho **Tứ kết (`qf`) · Bán kết (`sf`) · Chung kết (`final`)**.
+- Mọi cặp mới sinh ở vòng sau mặc định khóa; Admin phải mở cặp trước khi HLV được vào/bắt đầu trận.
+- Không tự động mở Bán kết hoặc Chung kết chỉ vì vòng trước đã hoàn tất.
+- Quyền mở/khóa tính theo `aggregate_group`, nên áp dụng cho toàn bộ lượt của cùng một cặp.
+- Backend guard vẫn là nguồn quyết định cuối cùng; UI không được tự cho phép khi chưa unlock.
+
 ## V1.6.74 — Quy tắc Feature → File Map
 - `FEATURE_FILE_MAP.md` là tài liệu root bắt buộc dùng để định vị file trước khi sửa feature.
 - Khi thêm feature, chuyển ownership sang file khác, tách/gộp module hoặc thêm regression test, phải cập nhật `FEATURE_FILE_MAP.md`.

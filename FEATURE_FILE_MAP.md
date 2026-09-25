@@ -1,6 +1,6 @@
 # PES Arena — FEATURE → FILE MAP
 
-**Version:** V1.6.74  
+**Version:** V1.6.75  
 **Mục đích:** Tra nhanh “muốn sửa chức năng X thì phải mở file nào”, giảm việc phải đọc lại toàn bộ dự án và giảm rủi ro sửa lan sang module không liên quan.
 
 > Đây là tài liệu bảo trì cấp root. Khi thêm feature mới, đổi file phụ trách hoặc tách/gộp module, phải cập nhật file này cùng `PROJECT_MAP.md` và `CHANGELOG.md`.
@@ -152,7 +152,7 @@
 | Champion display | `templates/tournament/components/knockout_dashboard.html`, `modules/tournament_routes.py` | UI/Route | Nhà vô địch | KO flow | `tests/test_knockout_champion_cup_v1661.py` *(legacy assertions cần đối chiếu khi UI đổi)* |
 | Fixed-match C1 | `modules/c1_fixed_match_service.py`, `modules/room_team_routes.py`, `templates/partials/c1_fixed_waiting_controls.html` | Service/Route/UI | Ready/start/snapshot CLB | Tournament fixture + room | `tests/test_c1_gd2_fixed_match.py` |
 | Đọc trạng thái lock/unlock | `modules/tournament_competition_parts/core.py` | Service | `_knockout_unlock_state`, `_knockout_pair_is_unlocked` | `tournament_settings` | Unlock tests |
-| Admin mở/khóa cặp KO | `modules/tournament_competition_parts/rewards.py`, `templates/admin_parts/c1_knockout.html` | Route/Service/UI | Mở bất kỳ aggregate pair; khóa lại nếu chưa bắt đầu | Core/settings | `tests/test_c1_knockout_admin_unlock_v1673.py` |
+| Admin mở/khóa cặp KO | `modules/tournament_competition_parts/rewards.py`, `templates/admin_parts/c1_knockout.html` | Route/Service/UI | Mở/khóa bất kỳ aggregate pair ở Tứ kết, Bán kết hoặc Chung kết; không ép thứ tự | Core/settings | `tests/test_c1_knockout_admin_unlock_v1673.py`, `tests/test_c1_knockout_unlock_all_rounds_v1675.py` |
 | Mặc định khóa cặp mới | `modules/tournament_competition_parts/rewards.py` | Service | Tứ kết/Bán kết/CK mới sinh = locked | Bracket generation | Unlock tests |
 | Chặn tạo/vào/mời phòng KO khóa | `modules/tournament_competition_parts/rooms.py` | Route/Service | Backend guard | Core unlock helper | Unlock + fixed-match tests |
 | Chặn start KO khóa | `modules/c1_fixed_match_service.py` | Service | Guard cuối trước `playing` | Fixture + unlock helper | Fixed-match tests |
@@ -362,4 +362,4 @@ Nếu map khác source, **không đoán**: kiểm tra source rồi cập nhật 
 
 ---
 
-**Maintained from V1.6.74.**
+**Maintained from V1.6.74 · current V1.6.75.**

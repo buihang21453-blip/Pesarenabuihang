@@ -1,0 +1,9 @@
+PES Arena V1.6.75
+
+KNOCKOUT ADMIN PAIR ACCESS — ALL ROUNDS
+
+- Panel Admin mở/khóa từng cặp áp dụng cho Tứ kết, Bán kết và Chung kết.
+- Bán kết/Chung kết mới sinh mặc định bị khóa cho tới khi Admin mở.
+- Admin không phải mở theo thứ tự số cặp.
+- Backend tiếp tục chặn phòng/start khi cặp chưa được mở.
+- Không cần SQL migration.

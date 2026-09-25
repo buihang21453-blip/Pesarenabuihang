@@ -1,3 +1,10 @@
+## V1.6.75 — Admin mở/khóa mọi vòng Knockout
+- Làm rõ panel `🎛️ Điều hành từng cặp KO` áp dụng cho toàn bộ **Tứ kết · Bán kết · Chung kết**.
+- Bán kết và Chung kết khi hệ thống tự sinh vẫn mặc định bị khóa; Admin phải chủ động mở từng cặp trước khi HLV vào phòng.
+- Admin có thể mở cặp ở vòng hiện tại theo bất kỳ thứ tự nào; cơ chế lock/unlock dùng chung theo `aggregate_group`.
+- Bổ sung regression test đảm bảo QF/SF/Final đều nằm trong cùng control payload và cùng backend guard.
+- Không có migration SQL mới.
+
 ## V1.6.74 — Feature → File Map
 - Thêm `FEATURE_FILE_MAP.md` hoàn chỉnh ở thư mục root.
 - Map các feature lớn của PES Arena tới file/module chính, layer, trách nhiệm, dependency và regression test.

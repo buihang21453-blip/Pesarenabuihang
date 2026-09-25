@@ -1,3 +1,9 @@
+## V1.6.75 — Knockout Admin Unlock đủ Tứ kết → Bán kết → Chung kết
+- `modules/tournament_competition_parts/core.py`: control payload đã bao phủ `qf`, `sf`, `final`; pair mới chưa có unlock entry được xem là locked.
+- `modules/tournament_competition_parts/rewards.py`: route mở/khóa dùng chung cho mọi aggregate pair Knockout.
+- `templates/admin_parts/c1_knockout.html`: mô tả rõ Admin điều hành cả Tứ kết, Bán kết và Chung kết.
+- `tests/test_c1_knockout_unlock_all_rounds_v1675.py`: regression guard cho cả 3 vòng.
+
 ## V1.6.74 — Feature → File Map cấp dự án
 - Thêm `FEATURE_FILE_MAP.md` ở root: bản đồ feature → file/module → layer → responsibility → dependency → regression test cho các nhóm Core, Auth, Rank, Room, C1, KO, Economy, Admin và Docs.
 - Bổ sung quick lookup để lần sửa sau ưu tiên chỉ mở file trực tiếp sở hữu feature và dependencies cần thiết.
