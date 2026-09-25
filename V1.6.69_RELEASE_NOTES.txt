@@ -1,0 +1,4 @@
+PES ARENA V1.6.69
+
+- Đổi nhãn trạng thái vé đã chốt thành: Không Sử Dụng Vé.
+- Không đổi logic hệ thống.

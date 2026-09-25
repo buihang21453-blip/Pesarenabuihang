@@ -1,3 +1,8 @@
+## V1.6.69 — Rút gọn text trạng thái vé
+
+- `templates/tournament/components/knockout_dashboard.html`: đổi nhãn trạng thái vé đã chốt thành `Không Sử Dụng Vé`.
+- `app.py`: bump version lên `V1.6.69`.
+
 ## V1.6.68 — Admin-only ticket controls + larger club logos
 
 - `templates/tournament/components/knockout_dashboard.html`: bỏ thao tác vé của HLV, bỏ nút hoàn tác, giữ các hành động điều hành chỉ cho Admin.

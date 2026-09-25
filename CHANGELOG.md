@@ -1,3 +1,9 @@
+## V1.6.69 — Rút gọn nhãn trạng thái vé
+
+- Đổi nhãn `✅ Admin đã chốt giữ CLB này · Không sử dụng vé Random` thành `Không Sử Dụng Vé` trong Bảng theo dõi Knockout.
+- Không thay đổi logic vé, CLB hay quyền Admin.
+- Không có SQL mới.
+
 ## V1.6.68 — Admin độc quyền thao tác vé Random + logo Knockout lớn hơn
 
 - Các thao tác vé Random CLB, sửa/hoàn lại CLB sai Pot và chốt giữ CLB ở Knockout chỉ Admin/Owner được sử dụng.

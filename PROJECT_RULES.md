@@ -1,3 +1,8 @@
+## V1.6.69 — Trạng thái vé
+
+- Trạng thái HLV đã chốt không dùng vé Random hiển thị ngắn gọn là `Không Sử Dụng Vé`.
+- Đây chỉ là thay đổi hiển thị, không thay đổi dữ liệu hay nghiệp vụ.
+
 ## V1.6.68 — Quy tắc quyền thao tác CLB trước Knockout
 
 - Vé Random CLB Top 3 và hành động chốt giữ/sửa CLB trước Knockout là quyền điều hành của Admin/Owner.

@@ -40,7 +40,7 @@
         <b>{% if t.club_logo %}<img class="c1-ko-inline-club-logo" src="{{ t.club_logo }}" alt="Logo {{ t.club }}" loading="lazy" onerror="this.remove()">{% endif %}{{ t.club }} <small class="c1-ko-club-rule">· Tier {{ t.hlv_tier or '—' }} → Pot {{ t.expected_club_pot or '—' }}</small></b>
         <em>🎟 {{ t.remaining }}/{{ t.total }}</em>
         {% if t.club_finalized %}
-        <div class="c1-ko-ticket-used">✅ Admin đã chốt giữ CLB này · Không sử dụng vé Random</div>
+        <div class="c1-ko-ticket-used">Không Sử Dụng Vé</div>
         {% elif ko_viewer_is_admin and t.club_pot_mismatch %}
         <div class="c1-ko-ticket-actions">
           <div class="c1-ko-pot-error">⚠ CLB hiện tại đang sai: HLV Tier {{ t.hlv_tier }} phải dùng CLB Pot {{ t.expected_club_pot }}, nhưng {{ t.club }} thuộc Pot {{ t.current_club_pot or '?' }}.</div>
