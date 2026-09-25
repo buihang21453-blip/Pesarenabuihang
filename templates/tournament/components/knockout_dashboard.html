@@ -72,141 +72,182 @@
   {% set qf_pairs = ko.get('rounds',{}).get('qf',[]) %}
   {% set sf_pairs = ko.get('rounds',{}).get('sf',[]) %}
   {% set final_pairs = ko.get('rounds',{}).get('final',[]) %}
-  {% set qf_left = qf_pairs[:2] %}
-  {% set qf_right = qf_pairs[2:4] %}
-  {% set sf_left = sf_pairs[:1] %}
-  {% set sf_right = sf_pairs[1:2] %}
+  {% set qf1 = qf_pairs[0] if qf_pairs|length > 0 else None %}
+  {% set qf2 = qf_pairs[1] if qf_pairs|length > 1 else None %}
+  {% set qf3 = qf_pairs[2] if qf_pairs|length > 2 else None %}
+  {% set qf4 = qf_pairs[3] if qf_pairs|length > 3 else None %}
+  {% set sf1 = sf_pairs[0] if sf_pairs|length > 0 else None %}
+  {% set sf2 = sf_pairs[1] if sf_pairs|length > 1 else None %}
   {% set final_pair = final_pairs[0] if final_pairs else None %}
 
   <div class="c1-ko-stage" aria-label="Sơ đồ Knockout đẹp">
-    <div class="c1-ko-stage-lines" aria-hidden="true">
-      <span class="c1-ko-line c1-ko-line-l1"></span>
-      <span class="c1-ko-line c1-ko-line-l2"></span>
-      <span class="c1-ko-line c1-ko-line-r1"></span>
-      <span class="c1-ko-line c1-ko-line-r2"></span>
-      <span class="c1-ko-line c1-ko-line-c1"></span>
-      <span class="c1-ko-line c1-ko-line-c2"></span>
-    </div>
-
-    <div class="c1-ko-column c1-ko-column-left">
-      <div class="c1-ko-stack c1-ko-stack-qf">
-        {% for pair in qf_left %}
-        {% set qf_idx = loop.index %}
-        <article class="c1-ko-match-card c1-ko-match-card-qf is-{{ pair.status }}">
-          <header class="c1-ko-card-header"><strong>TỨ KẾT {{ qf_idx }}</strong><small>{{ pair.completed_legs }}/{{ pair.leg_count }} trận</small></header>
-          <div class="c1-ko-card-body">
-            <div class="c1-ko-showcase-team">
-              <div class="c1-ko-seed-label">Hạng {{ qf_idx }}</div>
-              {% if pair.home_club_logo %}<img class="c1-ko-showcase-logo" src="{{ pair.home_club_logo }}" alt="Logo {{ pair.home_club }}" loading="lazy" onerror="this.remove()">{% endif %}
-              <div class="c1-ko-showcase-name">{{ pair.home_name }}</div>
-              <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ pair.home_tier or '—' }}</span><span class="c1-ko-club-chip">{% if pair.home_club_logo %}<img class="c1-ko-club-logo" src="{{ pair.home_club_logo }}" alt="Logo {{ pair.home_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ pair.home_club }}</span></div>
+    <div class="c1-ko-grid-poster">
+      <div class="c1-ko-side c1-ko-side-left">
+        <div class="c1-ko-side-qf c1-ko-side-qf-top">
+          {% if qf1 %}
+          <article class="c1-ko-match-card c1-ko-match-card-qf is-{{ qf1.status }}">
+            <header class="c1-ko-card-header"><strong>TỨ KẾT 1</strong><small>{{ qf1.completed_legs }}/{{ qf1.leg_count }} trận</small></header>
+            <div class="c1-ko-card-body">
+              <div class="c1-ko-showcase-team">
+                <div class="c1-ko-seed-label">Hạng 1</div>
+                {% if qf1.home_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf1.home_club_logo }}" alt="Logo {{ qf1.home_club }}" loading="lazy" onerror="this.remove()">{% endif %}
+                <div class="c1-ko-showcase-name">{{ qf1.home_name }}</div>
+                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf1.home_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf1.home_club_logo %}<img class="c1-ko-club-logo" src="{{ qf1.home_club_logo }}" alt="Logo {{ qf1.home_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf1.home_club }}</span></div>
+              </div>
+              <div class="c1-ko-showcase-vs">VS</div>
+              <div class="c1-ko-showcase-team">
+                <div class="c1-ko-seed-label">Hạng 8</div>
+                {% if qf1.away_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf1.away_club_logo }}" alt="Logo {{ qf1.away_club }}" loading="lazy" onerror="this.remove()">{% endif %}
+                <div class="c1-ko-showcase-name">{{ qf1.away_name }}</div>
+                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf1.away_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf1.away_club_logo %}<img class="c1-ko-club-logo" src="{{ qf1.away_club_logo }}" alt="Logo {{ qf1.away_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf1.away_club }}</span></div>
+              </div>
             </div>
-            <div class="c1-ko-showcase-vs">VS</div>
-            <div class="c1-ko-showcase-team">
-              <div class="c1-ko-seed-label">Hạng {{ 9 - qf_idx }}</div>
-              {% if pair.away_club_logo %}<img class="c1-ko-showcase-logo" src="{{ pair.away_club_logo }}" alt="Logo {{ pair.away_club }}" loading="lazy" onerror="this.remove()">{% endif %}
-              <div class="c1-ko-showcase-name">{{ pair.away_name }}</div>
-              <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ pair.away_tier or '—' }}</span><span class="c1-ko-club-chip">{% if pair.away_club_logo %}<img class="c1-ko-club-logo" src="{{ pair.away_club_logo }}" alt="Logo {{ pair.away_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ pair.away_club }}</span></div>
-            </div>
-          </div>
-          <footer class="c1-ko-card-footer"><span>{{ pair.status_label }}</span><b>{{ pair.home_total if pair.has_score else '—' }} : {{ pair.away_total if pair.has_score else '—' }}</b></footer>
-        </article>
-        {% endfor %}
-        {% for _ in range(2 - (qf_left|length)) %}
-        <article class="c1-ko-match-card c1-ko-match-card-qf is-placeholder"><header class="c1-ko-card-header"><strong>TỨ KẾT</strong></header><div class="c1-ko-placeholder-body">Chờ xác định cặp đấu</div></article>
-        {% endfor %}
-      </div>
-
-      <div class="c1-ko-stack c1-ko-stack-sf">
-        {% for pair in sf_left %}
-        <article class="c1-ko-match-card c1-ko-match-card-sf is-{{ pair.status }}">
-          <header class="c1-ko-card-header"><strong>BÁN KẾT 1</strong><small>{{ pair.completed_legs }}/{{ pair.leg_count }} trận</small></header>
-          <div class="c1-ko-mini-teams">
-            <div class="c1-ko-mini-team"><span>{{ pair.home_name }}</span><b>{{ pair.home_total if pair.has_score else '—' }}</b></div>
-            <div class="c1-ko-mini-team"><span>{{ pair.away_name }}</span><b>{{ pair.away_total if pair.has_score else '—' }}</b></div>
-          </div>
-          <footer class="c1-ko-card-footer"><span>{{ pair.status_label }}</span></footer>
-        </article>
-        {% endfor %}
-        {% for _ in range(1 - (sf_left|length)) %}
-        <article class="c1-ko-match-card c1-ko-match-card-sf is-placeholder"><header class="c1-ko-card-header"><strong>BÁN KẾT 1</strong></header><div class="c1-ko-placeholder-body">Chờ xác định</div></article>
-        {% endfor %}
-      </div>
-    </div>
-
-    <div class="c1-ko-column c1-ko-column-center">
-      <div class="c1-ko-hero-cup">
-        <div class="c1-ko-hero-glow"></div>
-        <div class="c1-ko-hero-trophy">🏆</div>
-        <div class="c1-ko-hero-title">PES ARENA<br>C1</div>
-      </div>
-      <article class="c1-ko-match-card c1-ko-match-card-final{{ ' is-' ~ final_pair.status if final_pair else ' is-placeholder' }}">
-        <header class="c1-ko-card-header"><strong>CHUNG KẾT</strong>{% if final_pair %}<small>{{ final_pair.completed_legs }}/{{ final_pair.leg_count }} trận</small>{% endif %}</header>
-        {% if final_pair %}
-        <div class="c1-ko-final-body">
-          <div class="c1-ko-final-name">{{ final_pair.home_name }}</div>
-          <div class="c1-ko-final-vs">VS</div>
-          <div class="c1-ko-final-name">{{ final_pair.away_name }}</div>
-          <div class="c1-ko-final-score">{{ final_pair.home_total if final_pair.has_score else '—' }} : {{ final_pair.away_total if final_pair.has_score else '—' }}</div>
+            <footer class="c1-ko-card-footer"><span>{{ qf1.status_label }}</span><b>{{ qf1.home_total if qf1.has_score else '—' }} : {{ qf1.away_total if qf1.has_score else '—' }}</b></footer>
+          </article>
+          {% else %}
+          <article class="c1-ko-match-card c1-ko-match-card-qf is-placeholder"><header class="c1-ko-card-header"><strong>TỨ KẾT 1</strong></header><div class="c1-ko-placeholder-body">Chờ xác định cặp đấu</div></article>
+          {% endif %}
         </div>
-        <footer class="c1-ko-card-footer"><span>{{ final_pair.status_label }}</span></footer>
-        {% else %}
-        <div class="c1-ko-placeholder-body">Thắng Bán kết 1 <span>VS</span> Thắng Bán kết 2</div>
-        {% endif %}
-      </article>
-      <div class="c1-ko-champion-inline{{ ' is-ready' if ko.get('champion_user_id') else '' }}">
-        <div class="c1-ko-champion-inline-cup">🏆</div>
-        <strong>{{ ko.get('champion_name') or 'CUP ĐANG CHỜ CHỦ NHÂN' }}</strong>
-        {% if ko.get('champion_user_id') %}<div class="c1-ko-champion-meta"><span class="c1-ko-tier-chip">Tier {{ ko.get('champion_tier') or '—' }}</span><span class="c1-ko-club-chip">{% if ko.get('champion_club_logo') %}<img class="c1-ko-club-logo" src="{{ ko.get('champion_club_logo') }}" alt="Logo {{ ko.get('champion_club') }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ ko.get('champion_club') or '—' }}</span></div>{% endif %}
+
+        <div class="c1-ko-side-sf c1-ko-side-sf-left">
+          {% if sf1 %}
+          <article class="c1-ko-match-card c1-ko-match-card-sf is-{{ sf1.status }}">
+            <header class="c1-ko-card-header"><strong>BÁN KẾT 1</strong><small>{{ sf1.completed_legs }}/{{ sf1.leg_count }} trận</small></header>
+            <div class="c1-ko-mini-teams">
+              <div class="c1-ko-mini-team"><span>{{ sf1.home_name }}</span><b>{{ sf1.home_total if sf1.has_score else '—' }}</b></div>
+              <div class="c1-ko-mini-team"><span>{{ sf1.away_name }}</span><b>{{ sf1.away_total if sf1.has_score else '—' }}</b></div>
+            </div>
+            <footer class="c1-ko-card-footer"><span>{{ sf1.status_label }}</span></footer>
+          </article>
+          {% else %}
+          <article class="c1-ko-match-card c1-ko-match-card-sf is-placeholder"><header class="c1-ko-card-header"><strong>BÁN KẾT 1</strong></header><div class="c1-ko-placeholder-body">Chờ xác định</div></article>
+          {% endif %}
+        </div>
+
+        <div class="c1-ko-side-qf c1-ko-side-qf-bottom">
+          {% if qf2 %}
+          <article class="c1-ko-match-card c1-ko-match-card-qf is-{{ qf2.status }}">
+            <header class="c1-ko-card-header"><strong>TỨ KẾT 2</strong><small>{{ qf2.completed_legs }}/{{ qf2.leg_count }} trận</small></header>
+            <div class="c1-ko-card-body">
+              <div class="c1-ko-showcase-team">
+                <div class="c1-ko-seed-label">Hạng 2</div>
+                {% if qf2.home_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf2.home_club_logo }}" alt="Logo {{ qf2.home_club }}" loading="lazy" onerror="this.remove()">{% endif %}
+                <div class="c1-ko-showcase-name">{{ qf2.home_name }}</div>
+                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf2.home_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf2.home_club_logo %}<img class="c1-ko-club-logo" src="{{ qf2.home_club_logo }}" alt="Logo {{ qf2.home_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf2.home_club }}</span></div>
+              </div>
+              <div class="c1-ko-showcase-vs">VS</div>
+              <div class="c1-ko-showcase-team">
+                <div class="c1-ko-seed-label">Hạng 7</div>
+                {% if qf2.away_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf2.away_club_logo }}" alt="Logo {{ qf2.away_club }}" loading="lazy" onerror="this.remove()">{% endif %}
+                <div class="c1-ko-showcase-name">{{ qf2.away_name }}</div>
+                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf2.away_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf2.away_club_logo %}<img class="c1-ko-club-logo" src="{{ qf2.away_club_logo }}" alt="Logo {{ qf2.away_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf2.away_club }}</span></div>
+              </div>
+            </div>
+            <footer class="c1-ko-card-footer"><span>{{ qf2.status_label }}</span><b>{{ qf2.home_total if qf2.has_score else '—' }} : {{ qf2.away_total if qf2.has_score else '—' }}</b></footer>
+          </article>
+          {% else %}
+          <article class="c1-ko-match-card c1-ko-match-card-qf is-placeholder"><header class="c1-ko-card-header"><strong>TỨ KẾT 2</strong></header><div class="c1-ko-placeholder-body">Chờ xác định cặp đấu</div></article>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="c1-ko-center">
+        <div class="c1-ko-hero-cup" aria-hidden="true">
+          <img class="c1-ko-hero-cup-image" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/Giaidau/C1mua1/cupc1.webp" alt="Cup C1" loading="lazy">
+        </div>
+
+        <article class="c1-ko-match-card c1-ko-match-card-final{{ ' is-' ~ final_pair.status if final_pair else ' is-placeholder' }}">
+          <header class="c1-ko-card-header"><strong>CHUNG KẾT</strong>{% if final_pair %}<small>{{ final_pair.completed_legs }}/{{ final_pair.leg_count }} trận</small>{% endif %}</header>
+          {% if final_pair %}
+          <div class="c1-ko-final-body">
+            <div class="c1-ko-final-name">{{ final_pair.home_name }}</div>
+            <div class="c1-ko-final-vs">VS</div>
+            <div class="c1-ko-final-name">{{ final_pair.away_name }}</div>
+            <div class="c1-ko-final-score">{{ final_pair.home_total if final_pair.has_score else '—' }} : {{ final_pair.away_total if final_pair.has_score else '—' }}</div>
+          </div>
+          <footer class="c1-ko-card-footer"><span>{{ final_pair.status_label }}</span></footer>
+          {% else %}
+          <div class="c1-ko-placeholder-body">Thắng Bán kết 1 <span>VS</span> Thắng Bán kết 2</div>
+          {% endif %}
+        </article>
+
+        <div class="c1-ko-champion-inline{{ ' is-ready' if ko.get('champion_user_id') else '' }}">
+          <div class="c1-ko-champion-inline-cup"><img class="c1-ko-champion-cup-image" src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/Giaidau/C1mua1/cupc1.webp" alt="Cup C1" loading="lazy"></div>
+          <strong>{{ ko.get('champion_name') or 'CUP ĐANG CHỜ CHỦ NHÂN' }}</strong>
+          {% if ko.get('champion_user_id') %}<div class="c1-ko-champion-meta"><span class="c1-ko-tier-chip">Tier {{ ko.get('champion_tier') or '—' }}</span><span class="c1-ko-club-chip">{% if ko.get('champion_club_logo') %}<img class="c1-ko-club-logo" src="{{ ko.get('champion_club_logo') }}" alt="Logo {{ ko.get('champion_club') }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ ko.get('champion_club') or '—' }}</span></div>{% endif %}
+        </div>
+      </div>
+
+      <div class="c1-ko-side c1-ko-side-right">
+        <div class="c1-ko-side-qf c1-ko-side-qf-top">
+          {% if qf3 %}
+          <article class="c1-ko-match-card c1-ko-match-card-qf is-{{ qf3.status }}">
+            <header class="c1-ko-card-header"><strong>TỨ KẾT 3</strong><small>{{ qf3.completed_legs }}/{{ qf3.leg_count }} trận</small></header>
+            <div class="c1-ko-card-body">
+              <div class="c1-ko-showcase-team">
+                <div class="c1-ko-seed-label">Hạng 3</div>
+                {% if qf3.home_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf3.home_club_logo }}" alt="Logo {{ qf3.home_club }}" loading="lazy" onerror="this.remove()">{% endif %}
+                <div class="c1-ko-showcase-name">{{ qf3.home_name }}</div>
+                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf3.home_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf3.home_club_logo %}<img class="c1-ko-club-logo" src="{{ qf3.home_club_logo }}" alt="Logo {{ qf3.home_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf3.home_club }}</span></div>
+              </div>
+              <div class="c1-ko-showcase-vs">VS</div>
+              <div class="c1-ko-showcase-team">
+                <div class="c1-ko-seed-label">Hạng 6</div>
+                {% if qf3.away_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf3.away_club_logo }}" alt="Logo {{ qf3.away_club }}" loading="lazy" onerror="this.remove()">{% endif %}
+                <div class="c1-ko-showcase-name">{{ qf3.away_name }}</div>
+                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf3.away_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf3.away_club_logo %}<img class="c1-ko-club-logo" src="{{ qf3.away_club_logo }}" alt="Logo {{ qf3.away_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf3.away_club }}</span></div>
+              </div>
+            </div>
+            <footer class="c1-ko-card-footer"><span>{{ qf3.status_label }}</span><b>{{ qf3.home_total if qf3.has_score else '—' }} : {{ qf3.away_total if qf3.has_score else '—' }}</b></footer>
+          </article>
+          {% else %}
+          <article class="c1-ko-match-card c1-ko-match-card-qf is-placeholder"><header class="c1-ko-card-header"><strong>TỨ KẾT 3</strong></header><div class="c1-ko-placeholder-body">Chờ xác định cặp đấu</div></article>
+          {% endif %}
+        </div>
+
+        <div class="c1-ko-side-sf c1-ko-side-sf-right">
+          {% if sf2 %}
+          <article class="c1-ko-match-card c1-ko-match-card-sf is-{{ sf2.status }}">
+            <header class="c1-ko-card-header"><strong>BÁN KẾT 2</strong><small>{{ sf2.completed_legs }}/{{ sf2.leg_count }} trận</small></header>
+            <div class="c1-ko-mini-teams">
+              <div class="c1-ko-mini-team"><span>{{ sf2.home_name }}</span><b>{{ sf2.home_total if sf2.has_score else '—' }}</b></div>
+              <div class="c1-ko-mini-team"><span>{{ sf2.away_name }}</span><b>{{ sf2.away_total if sf2.has_score else '—' }}</b></div>
+            </div>
+            <footer class="c1-ko-card-footer"><span>{{ sf2.status_label }}</span></footer>
+          </article>
+          {% else %}
+          <article class="c1-ko-match-card c1-ko-match-card-sf is-placeholder"><header class="c1-ko-card-header"><strong>BÁN KẾT 2</strong></header><div class="c1-ko-placeholder-body">Chờ xác định</div></article>
+          {% endif %}
+        </div>
+
+        <div class="c1-ko-side-qf c1-ko-side-qf-bottom">
+          {% if qf4 %}
+          <article class="c1-ko-match-card c1-ko-match-card-qf is-{{ qf4.status }}">
+            <header class="c1-ko-card-header"><strong>TỨ KẾT 4</strong><small>{{ qf4.completed_legs }}/{{ qf4.leg_count }} trận</small></header>
+            <div class="c1-ko-card-body">
+              <div class="c1-ko-showcase-team">
+                <div class="c1-ko-seed-label">Hạng 4</div>
+                {% if qf4.home_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf4.home_club_logo }}" alt="Logo {{ qf4.home_club }}" loading="lazy" onerror="this.remove()">{% endif %}
+                <div class="c1-ko-showcase-name">{{ qf4.home_name }}</div>
+                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf4.home_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf4.home_club_logo %}<img class="c1-ko-club-logo" src="{{ qf4.home_club_logo }}" alt="Logo {{ qf4.home_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf4.home_club }}</span></div>
+              </div>
+              <div class="c1-ko-showcase-vs">VS</div>
+              <div class="c1-ko-showcase-team">
+                <div class="c1-ko-seed-label">Hạng 5</div>
+                {% if qf4.away_club_logo %}<img class="c1-ko-showcase-logo" src="{{ qf4.away_club_logo }}" alt="Logo {{ qf4.away_club }}" loading="lazy" onerror="this.remove()">{% endif %}
+                <div class="c1-ko-showcase-name">{{ qf4.away_name }}</div>
+                <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ qf4.away_tier or '—' }}</span><span class="c1-ko-club-chip">{% if qf4.away_club_logo %}<img class="c1-ko-club-logo" src="{{ qf4.away_club_logo }}" alt="Logo {{ qf4.away_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ qf4.away_club }}</span></div>
+              </div>
+            </div>
+            <footer class="c1-ko-card-footer"><span>{{ qf4.status_label }}</span><b>{{ qf4.home_total if qf4.has_score else '—' }} : {{ qf4.away_total if qf4.has_score else '—' }}</b></footer>
+          </article>
+          {% else %}
+          <article class="c1-ko-match-card c1-ko-match-card-qf is-placeholder"><header class="c1-ko-card-header"><strong>TỨ KẾT 4</strong></header><div class="c1-ko-placeholder-body">Chờ xác định cặp đấu</div></article>
+          {% endif %}
+        </div>
       </div>
     </div>
-
-    <div class="c1-ko-column c1-ko-column-right">
-      <div class="c1-ko-stack c1-ko-stack-sf">
-        {% for pair in sf_right %}
-        <article class="c1-ko-match-card c1-ko-match-card-sf is-{{ pair.status }}">
-          <header class="c1-ko-card-header"><strong>BÁN KẾT 2</strong><small>{{ pair.completed_legs }}/{{ pair.leg_count }} trận</small></header>
-          <div class="c1-ko-mini-teams">
-            <div class="c1-ko-mini-team"><span>{{ pair.home_name }}</span><b>{{ pair.home_total if pair.has_score else '—' }}</b></div>
-            <div class="c1-ko-mini-team"><span>{{ pair.away_name }}</span><b>{{ pair.away_total if pair.has_score else '—' }}</b></div>
-          </div>
-          <footer class="c1-ko-card-footer"><span>{{ pair.status_label }}</span></footer>
-        </article>
-        {% endfor %}
-        {% for _ in range(1 - (sf_right|length)) %}
-        <article class="c1-ko-match-card c1-ko-match-card-sf is-placeholder"><header class="c1-ko-card-header"><strong>BÁN KẾT 2</strong></header><div class="c1-ko-placeholder-body">Chờ xác định</div></article>
-        {% endfor %}
-      </div>
-
-      <div class="c1-ko-stack c1-ko-stack-qf">
-        {% for pair in qf_right %}
-        {% set qf_idx = loop.index + 2 %}
-        <article class="c1-ko-match-card c1-ko-match-card-qf is-{{ pair.status }}">
-          <header class="c1-ko-card-header"><strong>TỨ KẾT {{ qf_idx }}</strong><small>{{ pair.completed_legs }}/{{ pair.leg_count }} trận</small></header>
-          <div class="c1-ko-card-body">
-            <div class="c1-ko-showcase-team">
-              <div class="c1-ko-seed-label">Hạng {{ qf_idx }}</div>
-              {% if pair.home_club_logo %}<img class="c1-ko-showcase-logo" src="{{ pair.home_club_logo }}" alt="Logo {{ pair.home_club }}" loading="lazy" onerror="this.remove()">{% endif %}
-              <div class="c1-ko-showcase-name">{{ pair.home_name }}</div>
-              <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ pair.home_tier or '—' }}</span><span class="c1-ko-club-chip">{% if pair.home_club_logo %}<img class="c1-ko-club-logo" src="{{ pair.home_club_logo }}" alt="Logo {{ pair.home_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ pair.home_club }}</span></div>
-            </div>
-            <div class="c1-ko-showcase-vs">VS</div>
-            <div class="c1-ko-showcase-team">
-              <div class="c1-ko-seed-label">Hạng {{ 9 - qf_idx }}</div>
-              {% if pair.away_club_logo %}<img class="c1-ko-showcase-logo" src="{{ pair.away_club_logo }}" alt="Logo {{ pair.away_club }}" loading="lazy" onerror="this.remove()">{% endif %}
-              <div class="c1-ko-showcase-name">{{ pair.away_name }}</div>
-              <div class="c1-ko-showcase-meta"><span class="c1-ko-tier-chip">Tier {{ pair.away_tier or '—' }}</span><span class="c1-ko-club-chip">{% if pair.away_club_logo %}<img class="c1-ko-club-logo" src="{{ pair.away_club_logo }}" alt="Logo {{ pair.away_club }}" loading="lazy" onerror="this.remove()">{% else %}<span class="c1-ko-club-fallback">⚽</span>{% endif %}{{ pair.away_club }}</span></div>
-            </div>
-          </div>
-          <footer class="c1-ko-card-footer"><span>{{ pair.status_label }}</span><b>{{ pair.home_total if pair.has_score else '—' }} : {{ pair.away_total if pair.has_score else '—' }}</b></footer>
-        </article>
-        {% endfor %}
-        {% for _ in range(2 - (qf_right|length)) %}
-        <article class="c1-ko-match-card c1-ko-match-card-qf is-placeholder"><header class="c1-ko-card-header"><strong>TỨ KẾT</strong></header><div class="c1-ko-placeholder-body">Chờ xác định cặp đấu</div></article>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
   </div>
 </section>
-{% endif %}
+
+{ 0.000000e+00ndif {% endif %}

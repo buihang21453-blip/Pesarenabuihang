@@ -1,3 +1,9 @@
+## V1.6.71 — Quy tắc hiển thị Knockout poster
+
+- Bracket phải ưu tiên bố cục ổn định, không được để card chồng lấn lên nhau ở màn hình desktop.
+- Ảnh cúp và nền Cup chỉ dùng cho phần trình bày; không ảnh hưởng logic trận đấu.
+- Khi responsive xuống màn hình nhỏ, các cột có thể xếp dọc nhưng vẫn phải giữ đủ thông tin và không vỡ layout.
+
 ## V1.6.70 — Quy tắc giao diện Knockout dạng sơ đồ
 
 - Giao diện `Bảng theo dõi Knockout` chỉ thay đổi phần trình bày, tuyệt đối không làm thay đổi seed, lịch hay kết quả Knockout.

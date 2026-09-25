@@ -1,3 +1,9 @@
+## V1.6.71 — Knockout poster ổn định hơn
+
+- `templates/tournament/components/knockout_dashboard.html`: sắp xếp lại nhánh bracket cho đúng vị trí và thay icon cúp bằng ảnh cúp thật.
+- `templates/tournament/styles.html`: thay nền bằng `NenCup.webp`, cân lại tỷ lệ card, khoảng cách và lưới bố cục để tránh chồng lấn.
+- `app.py`: bump version lên `V1.6.71`.
+
 ## V1.6.70 — Knockout bracket kiểu poster
 
 - `templates/tournament/components/knockout_dashboard.html`: đổi từ lưới cột đơn giản sang sơ đồ bracket đối xứng, có cúp trung tâm và card chung kết.

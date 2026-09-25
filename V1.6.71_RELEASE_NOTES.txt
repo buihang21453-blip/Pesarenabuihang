@@ -1,0 +1,6 @@
+PES ARENA V1.6.71 — SỬA BỐ CỤC KNOCKOUT + ẢNH CUP/NỀN
+
+- Sắp xếp lại Bảng theo dõi Knockout cho đúng vị trí và tỷ lệ.
+- Dùng ảnh cúp cupc1.webp thay cho icon cúp.
+- Dùng nền NenCup.webp cho toàn bộ khu sơ đồ Knockout.
+- Không đổi DB, không có SQL mới.

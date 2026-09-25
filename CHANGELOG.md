@@ -1,3 +1,12 @@
+## V1.6.71 — Sửa bố cục Knockout + dùng ảnh Cup và nền Cup
+
+- Sắp xếp lại hoàn toàn bố cục `Bảng theo dõi Knockout` để tránh lộn xộn khi lên giao diện thật.
+- Dùng layout poster cân đối hơn: cột trái `Tứ kết 1/2 + Bán kết 1`, cột giữa `Cup + Chung kết + Nhà vô địch`, cột phải `Bán kết 2 + Tứ kết 3/4`.
+- Thay icon cúp bằng ảnh thật: `cupc1.webp`.
+- Thay nền khu Knockout bằng ảnh nền: `NenCup.webp`.
+- Căn lại tỷ lệ card, logo, khoảng cách và responsive để hiển thị gọn gàng hơn.
+- Không có SQL mới.
+
 ## V1.6.70 — Bảng theo dõi Knockout dạng sơ đồ đẹp
 
 - Thiết kế lại `Bảng theo dõi Knockout` trên `/tournaments` theo dạng sơ đồ nhánh đẹp hơn, lấy cảm hứng từ poster bracket với bố cục **Tứ kết hai bên → Bán kết hai bên → Cúp C1 ở giữa → Chung kết ở trung tâm**.
