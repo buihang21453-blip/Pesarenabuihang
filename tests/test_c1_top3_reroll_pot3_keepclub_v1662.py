@@ -16,16 +16,17 @@ class Top3RerollPot3KeepClubV1662Tests(unittest.TestCase):
             'tickets':[{'user_id':'u1','rank':1,'name':'HLV 1','club':'Como','remaining':1,'total':1,'club_finalized':finalized,'hlv_tier':1,'expected_club_pot':3,'current_club_pot':3,'club_pot_mismatch':False}],
             'rounds':{'qf':[],'sf':[],'final':[]}}}
 
-    def test_player_sees_keep_current_club_button(self):
+    def test_player_cannot_see_keep_or_reroll_controls(self):
         tpl=self.env.get_template('tournament/components/knockout_dashboard.html')
         html=tpl.render(tournament=self._tour(),current_user=SimpleNamespace(id='u1',role='user',admin_level='none'))
-        self.assertIn('Tôi chọn CLB này, không cần sử dụng vé Random',html)
-        self.assertIn('tournament_league_top3_keep_club',html)
+        self.assertNotIn('Tôi chọn CLB này, không cần sử dụng vé Random',html)
+        self.assertNotIn('🎲 Random lại CLB</button>',html)
+        self.assertNotIn('Admin chọn giữ',html)
 
     def test_finalized_club_hides_reroll_buttons(self):
         tpl=self.env.get_template('tournament/components/knockout_dashboard.html')
         html=tpl.render(tournament=self._tour(True),current_user=SimpleNamespace(id='u1',role='user',admin_level='none'))
-        self.assertIn('Đã chọn giữ CLB này',html)
+        self.assertIn('Admin đã chốt giữ CLB này',html)
         self.assertNotIn('🎲 Random lại CLB</button>',html)
 
     def test_reroll_backend_keeps_tier1_strictly_in_pot3_via_mapping(self):

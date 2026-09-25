@@ -29,8 +29,9 @@
   {% if ko.get('tickets') %}
   <div class="c1-ko-ticket-strip">
     <div class="c1-ko-ticket-title"><strong>🎟 Vé Random CLB Top 3</strong><span>Random luôn theo đúng Tier HLV: Tier 1 → Pot 3 · Tier 2 → Pot 2 · Tier 3 → Pot 1.</span></div>
-    {% if current_user and (current_user.role == 'admin' or current_user.admin_level in ['owner','admin']) %}
-    <div class="c1-ko-admin-reroll-hint">🛠️ Chế độ Admin: có thể dùng vé Random CLB hộ từng HLV Top 3 ngay tại các thẻ bên dưới.</div>
+    {% set ko_viewer_is_admin = current_user and (current_user.role == 'admin' or current_user.admin_level in ['owner','admin']) %}
+    {% if ko_viewer_is_admin %}
+    <div class="c1-ko-admin-reroll-hint">🛠️ Chế độ Admin: Random CLB, sửa CLB sai Pot và chọn giữ CLB chỉ Admin mới được thao tác.</div>
     {% endif %}
     <div class="c1-ko-ticket-list">
       {% for t in ko.get('tickets',[]) %}
@@ -38,15 +39,8 @@
         <span>#{{ t.rank }} · {{ t.name }}</span>
         <b>{% if t.club_logo %}<img class="c1-ko-inline-club-logo" src="{{ t.club_logo }}" alt="Logo {{ t.club }}" loading="lazy" onerror="this.remove()">{% endif %}{{ t.club }} <small class="c1-ko-club-rule">· Tier {{ t.hlv_tier or '—' }} → Pot {{ t.expected_club_pot or '—' }}</small></b>
         <em>🎟 {{ t.remaining }}/{{ t.total }}</em>
-        {% set ko_viewer_is_admin = current_user and (current_user.role == 'admin' or current_user.admin_level in ['owner','admin']) %}
-        {% if ko_viewer_is_admin and t.can_admin_undo_reroll and t.undo_reroll_target %}
-        <form class="c1-ko-admin-undo-form" method="post" action="{{ url_for('admin_tournament_league_top3_undo_reroll', tournament_id=tournament.id) }}" data-pes-confirm="Hoàn tác lượt Random gần nhất của {{ t.name }} và khôi phục CLB {{ t.undo_reroll_target }}? Vé Random cũng sẽ được trả lại. Chỉ thực hiện nếu HLV chưa bắt đầu Knockout." data-pes-confirm-title="Hoàn tác vé Random" data-pes-confirm-action="Hoàn tác">
-          <input type="hidden" name="user_id" value="{{ t.user_id }}">
-          <button class="btn gray" type="submit">↩ Hoàn tác vé Random → {{ t.undo_reroll_target }}</button>
-        </form>
-        {% endif %}
         {% if t.club_finalized %}
-        <div class="c1-ko-ticket-used">✅ Đã chọn giữ CLB này · Không sử dụng vé Random</div>
+        <div class="c1-ko-ticket-used">✅ Admin đã chốt giữ CLB này · Không sử dụng vé Random</div>
         {% elif ko_viewer_is_admin and t.club_pot_mismatch %}
         <div class="c1-ko-ticket-actions">
           <div class="c1-ko-pot-error">⚠ CLB hiện tại đang sai: HLV Tier {{ t.hlv_tier }} phải dùng CLB Pot {{ t.expected_club_pot }}, nhưng {{ t.club }} thuộc Pot {{ t.current_club_pot or '?' }}.</div>
@@ -64,15 +58,6 @@
           <form class="c1-ko-admin-keep-form" method="post" action="{{ url_for('admin_tournament_league_top3_keep_club_for', tournament_id=tournament.id) }}" data-pes-confirm="Admin sẽ chốt giữ nguyên CLB {{ t.club }} cho {{ t.name }} và KHÔNG sử dụng vé Random. Sau khi chốt, HLV sẽ không thể dùng vé này để Random lại nữa. Bạn xác nhận?" data-pes-confirm-title="Admin chốt giữ CLB hộ HLV" data-pes-confirm-action="Chốt giữ CLB">
             <input type="hidden" name="user_id" value="{{ t.user_id }}">
             <button class="btn green" type="submit">✅ Admin chọn giữ {{ t.club }} · Không dùng vé</button>
-          </form>
-        </div>
-        {% elif current_user and current_user.id|string == t.user_id|string and t.remaining|int > 0 %}
-        <div class="c1-ko-ticket-actions">
-          <form method="post" action="{{ url_for('tournament_league_top3_reroll_club', tournament_id=tournament.id) }}" data-pes-confirm="Dùng 1 vé để Random lại CLB đúng Tier {{ t.hlv_tier }} → Pot {{ t.expected_club_pot }} trước khi bắt đầu Knockout?" data-pes-confirm-title="Random lại CLB đúng Tier" data-pes-confirm-action="Dùng vé">
-            <button class="btn gold" type="submit">🎲 Random lại CLB</button>
-          </form>
-          <form method="post" action="{{ url_for('tournament_league_top3_keep_club', tournament_id=tournament.id) }}" data-pes-confirm="Giữ nguyên {{ t.club }} cho vòng Knockout và không sử dụng vé Random? Sau khi chốt sẽ không Random lại bằng vé này nữa." data-pes-confirm-title="Chọn giữ CLB hiện tại" data-pes-confirm-action="Chọn CLB này">
-            <button class="btn green" type="submit">✅ Tôi chọn CLB này, không cần sử dụng vé Random</button>
           </form>
         </div>
         {% elif t.remaining|int <= 0 %}

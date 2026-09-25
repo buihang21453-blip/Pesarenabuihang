@@ -22,14 +22,14 @@ def _tour():
     }
 
 
-def test_admin_only_undo_button_points_back_to_psv():
+def test_undo_button_is_removed_from_current_knockout_dashboard():
     env=Environment(loader=FileSystemLoader(str(ROOT/'templates')))
     env.globals['url_for']=lambda endpoint, **kw: f'/{endpoint}'
     tpl=env.get_template('tournament/components/knockout_dashboard.html')
     admin=tpl.render(tournament=_tour(),current_user=SimpleNamespace(id='a',role='admin',admin_level='none'))
     user=tpl.render(tournament=_tour(),current_user=SimpleNamespace(id='u',role='user',admin_level='none'))
-    assert '↩ Hoàn tác vé Random → PSV' in admin
-    assert 'admin_tournament_league_top3_undo_reroll' in admin
+    assert '↩ Hoàn tác vé Random → PSV' not in admin
+    assert 'admin_tournament_league_top3_undo_reroll' not in admin
     assert '↩ Hoàn tác vé Random → PSV' not in user
 
 

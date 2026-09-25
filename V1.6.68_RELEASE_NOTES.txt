@@ -1,0 +1,7 @@
+PES ARENA V1.6.68
+
+- Vé Random / sửa CLB / chốt giữ CLB chỉ Admin thao tác.
+- HLV không còn nút tự Random hoặc tự giữ CLB.
+- Bỏ nút Hoàn tác vé Random khỏi giao diện Knockout.
+- Logo CLB ở Bảng theo dõi Knockout được phóng to và làm rõ hơn.
+- Không có SQL mới.

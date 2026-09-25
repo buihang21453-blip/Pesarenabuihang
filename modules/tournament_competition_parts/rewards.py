@@ -174,8 +174,10 @@ def register_rewards(context):
     @app.post('/tournaments/<tournament_id>/league-top3/reroll-club')
     @login_required
     def tournament_league_top3_reroll_club(tournament_id):
-        uid=str((current_user() or {}).get("id") or "")
-        return _league_top3_reroll_for(tournament_id,uid)
+        # V1.6.68: thao tác vé Random sau GĐ2 là quyền điều hành của Admin בלבד.
+        # Giữ route cũ để tương thích link/bookmark nhưng không cho HLV tự sử dụng.
+        flash("Vé Random CLB sau GĐ2 chỉ Admin mới được phép sử dụng hộ HLV.","warning")
+        return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
 
     @app.post('/admin/tournaments/<tournament_id>/league-top3/reroll-club-for')
     @login_required
@@ -319,8 +321,9 @@ def register_rewards(context):
     @app.post('/tournaments/<tournament_id>/league-top3/keep-club')
     @login_required
     def tournament_league_top3_keep_club(tournament_id):
-        uid=str((current_user() or {}).get("id") or "")
-        return _league_top3_keep_current_club(tournament_id,uid)
+        # V1.6.68: việc chốt giữ CLB cũng chỉ Admin thực hiện để đồng bộ điều hành.
+        flash("Chỉ Admin mới được phép chốt giữ CLB cho HLV ở giai đoạn Knockout.","warning")
+        return redirect(url_for("tournaments")+"#knockout-"+str(tournament_id))
 
     @app.post('/admin/tournaments/<tournament_id>/league-top3/keep-club-for')
     @login_required

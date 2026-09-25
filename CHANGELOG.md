@@ -1,3 +1,11 @@
+## V1.6.68 — Admin độc quyền thao tác vé Random + logo Knockout lớn hơn
+
+- Các thao tác vé Random CLB, sửa/hoàn lại CLB sai Pot và chốt giữ CLB ở Knockout chỉ Admin/Owner được sử dụng.
+- HLV thường không còn nút tự Random hoặc tự chốt giữ CLB; route cũ cũng bị chặn phía server để tránh gọi trực tiếp.
+- Bỏ nút `↩ Hoàn tác vé Random → ...` khỏi Bảng theo dõi Knockout vì không còn phù hợp với luồng điều hành hiện tại.
+- Tăng kích thước logo CLB trong bracket, khu vé Top 3 và khu Nhà vô địch để nhìn rõ hơn.
+- Không thay đổi DB, không có SQL mới.
+
 ## V1.6.67 — Hiển thị logo CLB ở Bảng theo dõi Knockout
 
 - Bổ sung logo CLB tại `Bảng theo dõi Knockout` trên `/tournaments` cho cả hai HLV trong từng cặp đấu.

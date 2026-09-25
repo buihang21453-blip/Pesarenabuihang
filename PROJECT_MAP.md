@@ -1,3 +1,10 @@
+## V1.6.68 — Admin-only ticket controls + larger club logos
+
+- `templates/tournament/components/knockout_dashboard.html`: bỏ thao tác vé của HLV, bỏ nút hoàn tác, giữ các hành động điều hành chỉ cho Admin.
+- `modules/tournament_competition_parts/rewards.py`: chặn server-side hai route HLV tự Random và tự chốt giữ CLB.
+- `templates/tournament/styles.html`: tăng logo CLB ở bracket/Top3/champion.
+- `app.py`: bump version lên `V1.6.68`.
+
 ## V1.6.67 — Logo CLB trong Knockout dashboard
 
 - `modules/tournament_routes.py`: nạp map logo CLB cho các CLB đang xuất hiện trong Knockout và đưa vào payload public.

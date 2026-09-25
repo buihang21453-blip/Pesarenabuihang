@@ -1,3 +1,10 @@
+## V1.6.68 — Quy tắc quyền thao tác CLB trước Knockout
+
+- Vé Random CLB Top 3 và hành động chốt giữ/sửa CLB trước Knockout là quyền điều hành của Admin/Owner.
+- HLV chỉ được xem trạng thái CLB/vé; không được gọi trực tiếp route để Random hoặc chốt giữ.
+- Không hiển thị nút hoàn tác vé Random trong dashboard Knockout.
+- Logo CLB phải ưu tiên độ rõ, fallback an toàn nếu thiếu ảnh.
+
 ## V1.6.67 — Quy tắc hiển thị logo CLB Knockout
 
 - Logo CLB trong `Bảng theo dõi Knockout` chỉ là dữ liệu hiển thị, không ảnh hưởng logic giải hoặc logic Random CLB.
