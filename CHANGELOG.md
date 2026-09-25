@@ -1,3 +1,11 @@
+## V1.6.70 — Bảng theo dõi Knockout dạng sơ đồ đẹp
+
+- Thiết kế lại `Bảng theo dõi Knockout` trên `/tournaments` theo dạng sơ đồ nhánh đẹp hơn, lấy cảm hứng từ poster bracket với bố cục **Tứ kết hai bên → Bán kết hai bên → Cúp C1 ở giữa → Chung kết ở trung tâm**.
+- Tứ kết hiển thị hai đội đối đầu theo card lớn, logo CLB to và rõ hơn, nhấn mạnh seed `Hạng 1–8`.
+- Bán kết thu gọn dạng card trung gian; Chung kết đặt ở trung tâm bên dưới cúp để người xem theo dõi trực quan hơn.
+- Giữ nguyên dữ liệu Knockout, logic thi đấu, vé Random CLB và quyền Admin; chỉ thay đổi UI/UX hiển thị.
+- Không có SQL mới.
+
 ## V1.6.69 — Rút gọn nhãn trạng thái vé
 
 - Đổi nhãn `✅ Admin đã chốt giữ CLB này · Không sử dụng vé Random` thành `Không Sử Dụng Vé` trong Bảng theo dõi Knockout.

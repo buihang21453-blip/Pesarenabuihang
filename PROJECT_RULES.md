@@ -1,3 +1,9 @@
+## V1.6.70 — Quy tắc giao diện Knockout dạng sơ đồ
+
+- Giao diện `Bảng theo dõi Knockout` chỉ thay đổi phần trình bày, tuyệt đối không làm thay đổi seed, lịch hay kết quả Knockout.
+- Seed Tứ kết vẫn theo quy tắc cũ `#1 vs #8, #2 vs #7, #3 vs #6, #4 vs #5`; giao diện chỉ biểu diễn lại theo dạng poster đẹp hơn.
+- Khi không đủ dữ liệu các vòng sau, phải hiển thị placeholder an toàn kiểu `Chờ xác định`.
+
 ## V1.6.69 — Trạng thái vé
 
 - Trạng thái HLV đã chốt không dùng vé Random hiển thị ngắn gọn là `Không Sử Dụng Vé`.

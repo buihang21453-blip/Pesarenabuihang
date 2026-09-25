@@ -1,0 +1,6 @@
+PES ARENA V1.6.70 — KNOCKOUT BRACKET KIỂU POSTER
+
+- Làm mới Bảng theo dõi Knockout theo kiểu sơ đồ nhánh đẹp.
+- Tứ kết hiển thị thành card lớn, Bán kết hai bên, Chung kết ở giữa.
+- Có cúp C1 trung tâm tạo cảm giác giống poster giải đấu.
+- Không đổi DB và không có SQL mới.

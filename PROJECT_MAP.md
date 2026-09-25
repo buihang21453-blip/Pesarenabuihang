@@ -1,3 +1,9 @@
+## V1.6.70 — Knockout bracket kiểu poster
+
+- `templates/tournament/components/knockout_dashboard.html`: đổi từ lưới cột đơn giản sang sơ đồ bracket đối xứng, có cúp trung tâm và card chung kết.
+- `templates/tournament/styles.html`: thêm CSS cho layout poster-style bracket, nhánh nối trang trí, card Tứ kết/Bán kết/Chung kết và cúp trung tâm.
+- `app.py`: bump version lên `V1.6.70`.
+
 ## V1.6.69 — Rút gọn text trạng thái vé
 
 - `templates/tournament/components/knockout_dashboard.html`: đổi nhãn trạng thái vé đã chốt thành `Không Sử Dụng Vé`.
