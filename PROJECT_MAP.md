@@ -1,3 +1,8 @@
+## V1.6.74 — Feature → File Map cấp dự án
+- Thêm `FEATURE_FILE_MAP.md` ở root: bản đồ feature → file/module → layer → responsibility → dependency → regression test cho các nhóm Core, Auth, Rank, Room, C1, KO, Economy, Admin và Docs.
+- Bổ sung quick lookup để lần sửa sau ưu tiên chỉ mở file trực tiếp sở hữu feature và dependencies cần thiết.
+- `app.py`: bump version lên `V1.6.74`; không thay đổi logic nghiệp vụ hoặc schema database.
+
 ## V1.6.73 — Admin mở/khóa từng cặp Knockout
 - `modules/tournament_competition_parts/core.py`: helper đọc trạng thái khóa/mở và payload điều hành KO cho Admin.
 - `modules/tournament_competition_parts/rewards.py`: route Admin mở/khóa bất kỳ cặp KO; reset trạng thái khóa khi sinh lại bracket.

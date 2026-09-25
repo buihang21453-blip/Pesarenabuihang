@@ -1,3 +1,10 @@
+## V1.6.74 — Feature → File Map
+- Thêm `FEATURE_FILE_MAP.md` hoàn chỉnh ở thư mục root.
+- Map các feature lớn của PES Arena tới file/module chính, layer, trách nhiệm, dependency và regression test.
+- Thêm Quick Lookup, regression groups, mức độ an toàn khi sửa và quy tắc cập nhật map.
+- Đồng bộ `PROJECT_MAP.md`, `PROJECT_RULES.md` và `APP_VERSION` lên V1.6.74.
+- Không thay đổi logic C1/Rank/Room/Economy và không có migration SQL.
+
 ## V1.6.73 — Admin mở/khóa từng cặp Knockout
 - Admin có panel điều hành từng cặp KO và có thể mở bất kỳ cặp nào, không cần theo thứ tự.
 - Cặp KO mặc định bị khóa sau khi sinh; trạng thái lưu trong `tournament_settings` với key `knockout_match_unlocks_v1` (không cần migration SQL).

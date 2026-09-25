@@ -1,3 +1,10 @@
+## V1.6.74 — Quy tắc Feature → File Map
+- `FEATURE_FILE_MAP.md` là tài liệu root bắt buộc dùng để định vị file trước khi sửa feature.
+- Khi thêm feature, chuyển ownership sang file khác, tách/gộp module hoặc thêm regression test, phải cập nhật `FEATURE_FILE_MAP.md`.
+- Map chỉ là chỉ dẫn bảo trì; source code hiện tại vẫn là nguồn sự thật cao nhất khi có xung đột.
+- Không được dựa vào việc ẩn nút UI để thay cho backend permission/guard.
+- Thay đổi V1.6.74 chỉ là tài liệu kiến trúc + đồng bộ version; không đổi nghiệp vụ và không cần SQL mới.
+
 ## V1.6.73 — Quy tắc điều hành Knockout
 - Sau khi sinh cặp KO, mặc định cặp đó bị khóa.
 - Admin có thể mở bất kỳ cặp nào, không bắt buộc theo thứ tự số trận.

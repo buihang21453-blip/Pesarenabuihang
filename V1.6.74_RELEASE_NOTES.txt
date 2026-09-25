@@ -1,0 +1,8 @@
+PES ARENA V1.6.74 — FEATURE → FILE MAP
+
+1. Thêm FEATURE_FILE_MAP.md tại root project.
+2. Tài liệu map các nhóm Core, Auth, Rank, Room, C1, Knockout, Economy, Admin và Docs.
+3. Mỗi feature ghi rõ primary files, layer, responsibility, dependencies và regression checks.
+4. Có Quick Lookup “muốn sửa X thì mở file nào”, regression groups và change-safety levels.
+5. Đồng bộ PROJECT_MAP.md, PROJECT_RULES.md, CHANGELOG.md và APP_VERSION.
+6. Không thay đổi logic nghiệp vụ và không cần SQL migration mới.
