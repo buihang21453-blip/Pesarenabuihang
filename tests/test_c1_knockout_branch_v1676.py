@@ -6,7 +6,7 @@ def read(rel):
     return (ROOT / rel).read_text(encoding="utf-8")
 
 def test_version_bumped():
-    assert 'APP_VERSION = "V1.6.76"' in read('app.py')
+    assert 'APP_VERSION = "V1.6.77"' in read('app.py')
 
 def test_qf_slot_keys_saved_at_generation():
     rewards = read('modules/tournament_competition_parts/rewards.py')

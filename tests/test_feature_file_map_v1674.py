@@ -8,7 +8,7 @@ MAP = ROOT / "FEATURE_FILE_MAP.md"
 def test_feature_file_map_exists_and_is_versioned():
     text = MAP.read_text(encoding="utf-8")
     assert "# PES Arena — FEATURE → FILE MAP" in text
-    assert "**Version:** V1.6.75" in text
+    assert "**Version:** V1.6.77" in text
     assert "# 9. C1 KNOCKOUT" in text
     assert "# 14. QUICK LOOKUP" in text
     assert "# 15. REGRESSION GROUPS" in text

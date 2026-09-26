@@ -1,6 +1,6 @@
 # PES Arena — FEATURE → FILE MAP
 
-**Version:** V1.6.75  
+**Version:** V1.6.77  
 **Mục đích:** Tra nhanh “muốn sửa chức năng X thì phải mở file nào”, giảm việc phải đọc lại toàn bộ dự án và giảm rủi ro sửa lan sang module không liên quan.
 
 > Đây là tài liệu bảo trì cấp root. Khi thêm feature mới, đổi file phụ trách hoặc tách/gộp module, phải cập nhật file này cùng `PROJECT_MAP.md` và `CHANGELOG.md`.
@@ -81,11 +81,12 @@
 |---|---|---|---|---|---|
 | Danh sách / tạo / vào phòng | `modules/room_access_routes.py`, `modules/room_api_routes.py`, `modules/legacy_room_service.py`, `templates/rooms.html`, `templates/room_detail.html` | Route/Service/UI | Vòng đời phòng cơ bản | Presence/invite/match | Create/join/leave |
 | Activity/status phòng | `modules/legacy_room_activity_service.py` | Service | Xác định trạng thái phòng | Invite/Rank/C1 | `tests/test_rank_solo_room_status_v1655.py` |
+| Ổn định vòng đời phòng Rank đang chơi | `modules/legacy_room_service.py`, `modules/room_api_routes.py`, `modules/room_access_routes.py` | Service/Route | Presence chỉ để hiển thị; không tự hủy phòng `playing` khi host tạm Offline/chuyển sang PES | Session presence, room polling, result routes | `tests/test_rank_room_stability_v1677.py` |
 | Lời mời phòng | `modules/invite_routes.py`, `templates/invites.html` | Route/UI | Gửi/nhận invite | Room activity, C1 isolation | `tests/test_rank_invite_c1_isolation_v1654.py` |
 | Tìm nhanh | `modules/quick_match/service.py` | Service | Matchmaking nhanh | Invite/room | Rank/C1 isolation |
 | Chọn đội / Ready | `modules/room_team_routes.py`, `templates/partials/room_ready_controls.html`, `templates/partials/c1_fixed_waiting_controls.html` | Route/UI | Chọn đội và trạng thái sẵn sàng | Team random, C1 fixed match | `tests/test_c1_gd2_fixed_match.py` |
 | Rematch / forfeit room | `modules/room_rematch_routes.py`, `modules/forfeit_history_service.py` | Route/Service | Đá tiếp/bỏ cuộc | Match result/RP | Rank vs C1 guards |
-| Nhập/xác nhận kết quả | `modules/room_result_routes.py`, `modules/match_result_service.py`, `templates/submit_result.html`, `templates/confirm_result.html` | Route/Service/UI | Kết quả + RP | Rank policy/history | Win/draw/loss + confirm |
+| Nhập/xác nhận kết quả | `modules/room_result_routes.py`, `modules/match_result_service.py`, `templates/submit_result.html`, `templates/confirm_result.html` | Route/Service/UI | Kết quả + RP; Rank chỉ submit khi phòng thật sự `playing` | Rank policy/history, room lifecycle | `tests/test_rank_room_stability_v1677.py` + Win/draw/loss + confirm |
 | Match history | `modules/match_history_routes.py`, `modules/legacy_match_service.py`, `templates/matches.html` | Route/Service/UI | Lịch sử trận | Player/room | History render |
 | Chat phòng | `modules/chat_routes.py`, `modules/legacy_chat_service.py`, `templates/chat.html`, `templates/room_detail.html`, `static/style.css` | Route/Service/UI/Style | Chat + unread attention | Room permission | `tests/test_room_chat_attention_v1651.py` |
 | Thanh mode RANK/C1/MINI CUP | `templates/room_detail.html`, `templates/partials/room_mode_selector_strip.html`, `templates/partials/room_mode_center_display.html`, `static/style.css` | UI/Style | Chọn/hiển thị mode | Room state | `tests/test_room_mode_header_v1646.py`, `test_room_mode_header_v1647.py` |

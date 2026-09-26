@@ -141,86 +141,21 @@ def room_expiry_dt(room):
 
 
 def close_room_if_host_browser_offline(room):
-    """Đóng phòng khi chủ đã đóng tab/trình duyệt và presence chuyển Offline.
+    """Không tự đóng phòng đang thi đấu chỉ vì presence của chủ phòng bị Offline.
 
-    Chỉ áp dụng sau khi trận đã bắt đầu. Khách không được cộng/trừ RP, không
-    thay đổi thắng/hòa/thua hoặc chuỗi. Điều kiện update theo status giúp chống
-    xử lý lặp trên nhiều instance Vercel.
+    V1.6.77: Khi HLV chuyển sang PES/Parsec/fullscreen, heartbeat của tab trình
+    duyệt có thể bị ngắt hoặc browser gửi ``presence/offline`` trong lúc trang
+    bị đóng/khôi phục. Presence chỉ là tín hiệu hiển thị, không đủ chắc chắn để
+    kết luận người chơi đã bỏ trận. Tự hủy phòng ở đây từng làm phòng Rank
+    chuyển sang ``cancelled`` giữa trận; sau đó chủ phòng không thể nhập tỷ số
+    vì route kết quả yêu cầu ``room.status == playing``.
+
+    Vòng đời trận Rank đang chơi được bảo vệ bằng thao tác rời/bỏ trận rõ ràng
+    và timeout không hoạt động dài của phòng. C1 cũng có vòng đời riêng.
     """
-    if not room or room.get("status") not in HOST_BROWSER_OFFLINE_ROOM_STATUSES:
+    if not room:
         return False
-    # V1.6.21: C1 uses tournament results/forfeit rules, never Rank's automatic
-    # offline penalty. In particular, do not overwrite TOURNAMENT_ROOM metadata.
-    if str(room.get("note") or "").startswith("TOURNAMENT_ROOM|") or str(room.get("match_mode") or "").lower() == "tournament":
-        return False
-
-    host_id = room.get("host_user_id")
-    guest_id = room.get("guest_user_id")
-    if not host_id or not guest_id:
-        return False
-
-    try:
-        host = get_user(host_id)
-    except Exception as exc:
-        print(f"Host offline check warning: {exc}")
-        return False
-    if not host or host.get("is_online") is not False:
-        return False
-
-    last_seen = aware_utc(parse_dt(host.get("last_seen_at")))
-    if not last_seen:
-        return False
-    if now_dt() < last_seen + timedelta(seconds=HOST_BROWSER_OFFLINE_GRACE_SECONDS):
-        return False
-
-    original_status = room.get("status")
-    reason = (
-        f"{host.get('display_name') or host.get('username') or 'Chủ phòng'} "
-        "đã đóng trình duyệt khi trận đang diễn ra."
-    )
-    update_data = {
-        "status": "cancelled",
-        "guest_ready": False,
-        "note": reason,
-        "state_expires_at": None,
-        "updated_at": now_iso(),
-    }
-    result = execute_query(
-        db.table("match_rooms").update(update_data)
-        .eq("id", room.get("id"))
-        .eq("status", original_status),
-        "host_browser_offline_close_room",
-    )
-    if not (result.data or []):
-        return False
-
-    room.update(update_data)
-    penalty_delta = apply_room_abandon_penalty(host_id, ROOM_ABANDON_PENALTY)
-    record_room_forfeit_match(
-        room,
-        offender_role="host",
-        penalty_delta=penalty_delta if penalty_delta is not None else -ROOM_ABANDON_PENALTY,
-        reason=reason,
-        event_type="host_browser_offline_forfeit",
-    )
-
-    create_user_notification(
-        host_id,
-        "⚠️ Bạn đã thoát trận",
-        f"Phòng đã đóng do bạn Offline. RP bị trừ: {abs(int(penalty_delta or 0))}.",
-        "/matches",
-        "host_browser_offline_penalty",
-    )
-    create_user_notification(
-        guest_id,
-        "🚪 Chủ phòng đã Offline",
-        "Phòng đã tự đóng. Bạn không bị cộng hoặc trừ RP và có thể tạo phòng mới ngay.",
-        "/rooms",
-        "host_browser_offline_room_closed",
-    )
-    cache_delete("_rz_rooms_all")
-    ttl_cache_delete("rooms_raw")
-    return True
+    return False
 
 
 def close_room_with_timeout_penalty(room, offender_role, reason):

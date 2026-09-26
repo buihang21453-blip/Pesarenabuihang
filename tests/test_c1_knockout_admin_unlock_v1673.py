@@ -9,7 +9,7 @@ def read(rel):
 
 
 def test_v1673_version_and_shared_setting_key():
-    assert 'APP_VERSION = "V1.6.76"' in read('app.py')
+    assert 'APP_VERSION = "V1.6.77"' in read('app.py')
     comp = read('modules/tournament_competition.py')
     assert 'KNOCKOUT_UNLOCK_KEY = "knockout_match_unlocks_v1"' in comp
 

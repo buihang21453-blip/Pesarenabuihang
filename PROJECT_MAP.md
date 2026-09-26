@@ -1,3 +1,10 @@
+## V1.6.77 — Rank Room Stability
+- `modules/legacy_room_service.py`: vòng đời phòng Rank không còn phụ thuộc vào presence Offline ngắn hạn khi trận đang `playing`.
+- `modules/room_api_routes.py`, `modules/room_access_routes.py`: vẫn gọi guard tương thích nhưng guard không còn hủy phòng theo presence.
+- `modules/room_result_routes.py`: giữ invariant chỉ nhập kết quả khi room `playing`.
+- `tests/test_rank_room_stability_v1677.py`: regression cho lỗi phòng tự biến mất / mất quyền nhập kết quả.
+- `FEATURE_FILE_MAP.md`: thêm ownership cho Rank room lifecycle.
+
 ## V1.6.76 — Knockout Admin Unlock đủ Tứ kết → Bán kết → Chung kết
 - `modules/tournament_competition_parts/core.py`: control payload đã bao phủ `qf`, `sf`, `final`; pair mới chưa có unlock entry được xem là locked.
 - `modules/tournament_competition_parts/rewards.py`: route mở/khóa dùng chung cho mọi aggregate pair Knockout.

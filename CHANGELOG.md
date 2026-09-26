@@ -1,3 +1,11 @@
+## V1.6.77 — Rank Room Stability / chống phòng tự biến mất
+- Sửa nguyên nhân phòng Rank có thể tự chuyển sang `cancelled` khi host bị presence đánh dấu Offline trong lúc chuyển sang PES/Parsec/fullscreen.
+- `modules/legacy_room_service.py`: `close_room_if_host_browser_offline()` không còn được phép tự đóng/phạt phòng đang thi đấu chỉ dựa trên trạng thái Online/Offline của trình duyệt.
+- Giữ timeout không hoạt động dài 4 giờ làm lớp an toàn cho phòng đang chơi; thao tác rời/bỏ trận rõ ràng vẫn dùng luồng hiện có.
+- Giữ guard nhập tỷ số: chỉ phòng Rank thật sự ở `playing` mới được submit, tránh ghi kết quả vào phòng đã kết thúc.
+- Thêm `tests/test_rank_room_stability_v1677.py` và cập nhật Feature → File Map.
+- Không có migration SQL mới.
+
 ## V1.6.75 — Admin mở/khóa mọi vòng Knockout
 
 ## V1.6.76 — C1 KO semifinal branch TK1–TK3 / TK2–TK4

@@ -1,0 +1,16 @@
+PES Arena V1.6.77 — Rank Room Stability
+
+Mục tiêu
+- Sửa lỗi phòng Rank đôi lúc tự biến mất giữa trận.
+- Sửa nguyên nhân kéo theo việc không thể nhập kết quả và cảnh báo “Chỉ trận đang đá mới được nhập kết quả”.
+
+Nguyên nhân
+- Luồng polling phòng có thể gọi kiểm tra host Offline.
+- Nếu presence của host bị đánh dấu Offline khi chuyển sang PES/Parsec/fullscreen hoặc browser lifecycle thay đổi, phòng `playing` có thể bị đổi sang `cancelled`.
+- Sau đó form kết quả bị từ chối vì backend đúng ra chỉ cho submit khi room.status == playing.
+
+Thay đổi
+- Presence không còn có quyền tự hủy/phạt phòng đang thi đấu.
+- Giữ guard nhập kết quả nghiêm ngặt.
+- Giữ timeout không hoạt động dài 4 giờ làm safety net.
+- Không thay đổi C1/KO. Không cần SQL migration.

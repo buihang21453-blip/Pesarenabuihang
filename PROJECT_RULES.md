@@ -1,3 +1,9 @@
+## V1.6.77 — Quy tắc ổn định phòng Rank
+- Presence Online/Offline là tín hiệu hiển thị, không được tự động kết luận HLV bỏ trận đang `playing`.
+- Không tự hủy/phạt phòng Rank chỉ vì heartbeat trình duyệt ngắt khi HLV chuyển sang PES/Parsec/fullscreen.
+- Phòng Rank đang chơi chỉ kết thúc qua luồng kết quả, rời/bỏ trận rõ ràng, Admin xử lý, hoặc timeout không hoạt động dài đã định nghĩa.
+- Route nhập kết quả vẫn phải kiểm tra room ở trạng thái `playing`; không nới lỏng guard này để che lỗi vòng đời phòng.
+
 ## V1.6.76 — Quy tắc mở khóa toàn bộ vòng Knockout
 - `🎛️ Điều hành từng cặp KO` bắt buộc áp dụng thống nhất cho **Tứ kết (`qf`) · Bán kết (`sf`) · Chung kết (`final`)**.
 - Mọi cặp mới sinh ở vòng sau mặc định khóa; Admin phải mở cặp trước khi HLV được vào/bắt đầu trận.
