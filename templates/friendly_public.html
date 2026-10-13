@@ -9,46 +9,77 @@
   <link rel="stylesheet" href="{{ static_asset('css/friendly_public.css') }}">
 </head>
 <body class="friendly-page">
-<header class="friendly-public-header">
-  <a class="friendly-brand" href="{{ url_for('index') }}">PES ARENA</a>
-  <div class="friendly-header-actions">
-    <a class="friendly-header-link" href="{{ url_for('ranking') }}">Bảng xếp hạng</a>
-    {% if current_user %}
-      <a class="friendly-header-login" href="{{ url_for('ranking') }}">Vào PES Arena</a>
-    {% else %}
-      <a class="friendly-header-login" href="{{ url_for('login') }}">Đăng nhập</a>
-    {% endif %}
+<div class="friendly-shell" data-friendly-randomizer>
+  <aside class="friendly-sidebar">
+    <a class="friendly-logo" href="{{ url_for('index') }}"><img src="{{ asset_url('pes-arena-logo.webp') }}?v={{ APP_VERSION|urlencode }}" alt="PES Arena"></a>
+    <nav class="friendly-side-nav">
+      <a href="{{ url_for('ranking') }}"><span>🏆</span> BXH</a>
+      <a class="active" href="{{ url_for('friendly_public') }}"><span>🎮</span> Giao hữu <b>Mới</b></a>
+      {% if current_user %}
+      <a href="{{ url_for('ranking') }}"><span>⚽</span> PES Arena</a>
+      {% else %}
+      <span class="locked"><span>🎮</span> Phòng đấu <i>🔒</i></span>
+      <span class="locked"><span>🏆</span> Giải đấu <i>🔒</i></span>
+      <span class="locked"><span>🛒</span> Cửa hàng <i>🔒</i></span>
+      {% endif %}
+    </nav>
+    <div class="friendly-account-box">
+      {% if current_user %}
+        <strong>👤 {{ current_user.display_name or current_user.username }}</strong>
+        <a class="gold-btn" href="{{ url_for('ranking') }}">Vào PES Arena</a>
+      {% else %}
+        <strong>👤 Khách</strong><small>Đăng nhập để tham gia nhiều tính năng hơn!</small>
+        <a class="gold-btn" href="{{ url_for('login') }}">Đăng nhập</a>
+      {% endif %}
+    </div>
+  </aside>
+
+  <div class="friendly-content">
+    <header class="friendly-topbar">
+      <a href="{{ url_for('ranking') }}">🏆 BXH</a>
+      {% if current_user %}
+        <a class="top-login" href="{{ url_for('ranking') }}">👤 Vào PES Arena</a>
+      {% else %}
+        <a class="top-login" href="{{ url_for('login') }}">👤 Đăng nhập</a>
+      {% endif %}
+    </header>
+
+    <main class="friendly-main">
+      <section class="friendly-hero">
+        <div class="friendly-hero-copy">
+          <h1>🎮 GIAO HỮU</h1>
+          <p>Random đội nhanh · Không cần đăng nhập</p>
+          <small>Chọn một chế độ bên dưới để bắt đầu</small>
+        </div>
+      </section>
+
+      <section class="friendly-modes" aria-label="Chế độ giao hữu">
+        <button class="friendly-mode active" type="button" data-friendly-mode="premier_league"><span>🏴</span><strong>Ngoại Hạng Anh</strong></button>
+        <button class="friendly-mode" type="button" data-friendly-mode="la_liga"><span>🇪🇸</span><strong>La Liga</strong></button>
+        <button class="friendly-mode" type="button" data-friendly-mode="five_star"><span>⭐⭐⭐⭐⭐</span><strong>5 Sao</strong></button>
+        <button class="friendly-mode" type="button" data-friendly-mode="four_star"><span>⭐⭐⭐⭐</span><strong>4 Sao</strong></button>
+        <button class="friendly-mode" type="button" data-friendly-mode="club_five_star"><span>🏟️</span><strong>CLB 5★</strong></button>
+        <button class="friendly-mode" type="button" data-friendly-mode="nation_five_star"><span>🌍</span><strong>Quốc Gia 5★</strong></button>
+      </section>
+
+      <section class="friendly-arena">
+        <div class="friendly-arena-title"><span>🏆</span><div><h2 data-mode-name>Ngoại Hạng Anh</h2><p>Random 2 đội cho trận giao hữu</p></div></div>
+        <div class="friendly-matchup">
+          <article class="friendly-team-card">
+            <span>ĐỘI 1</span><strong data-home-team>---</strong>
+            <button type="button" data-random-home>🔀 Random đội 1</button>
+          </article>
+          <div class="friendly-vs">VS</div>
+          <article class="friendly-team-card">
+            <span>ĐỘI 2</span><strong data-away-team>---</strong>
+            <button type="button" data-random-away>🔀 Random đội 2</button>
+          </article>
+        </div>
+        <button class="friendly-random-all" type="button" data-random-again>🔀 RANDOM CẢ 2 ĐỘI</button>
+      </section>
+    </main>
   </div>
-</header>
-<main class="friendly-main">
-  <section class="friendly-card" data-friendly-randomizer>
-    <div data-friendly-home>
-      <h1 class="friendly-title">⚽ Giao Hữu</h1>
-      <p class="friendly-subtitle">Chọn chế độ để random 2 đội</p>
-      <div class="friendly-modes">
-        <button class="friendly-mode" type="button" data-friendly-mode="premier_league">🏴 Ngoại Hạng Anh</button>
-        <button class="friendly-mode" type="button" data-friendly-mode="la_liga">🇪🇸 La Liga</button>
-        <button class="friendly-mode" type="button" data-friendly-mode="five_star">⭐ 5 Sao</button>
-        <button class="friendly-mode" type="button" data-friendly-mode="four_star">⭐ 4 Sao</button>
-        <button class="friendly-mode" type="button" data-friendly-mode="club_five_star">🏟 CLB 5★</button>
-        <button class="friendly-mode" type="button" data-friendly-mode="nation_five_star">🌍 Quốc Gia 5★</button>
-      </div>
-      <p class="friendly-note">Không cần đăng nhập</p>
-    </div>
-    <div class="friendly-result" data-friendly-result hidden>
-      <span class="friendly-mode-label" data-mode-name>Giao hữu</span>
-      <div class="friendly-matchup">
-        <div class="friendly-team" data-home-team>---</div>
-        <div class="friendly-vs">VS</div>
-        <div class="friendly-team" data-away-team>---</div>
-      </div>
-      <div class="friendly-actions">
-        <button class="friendly-random" type="button" data-random-again>🎲 RANDOM LẠI</button>
-        <button class="friendly-back" type="button" data-friendly-back>← Chế độ</button>
-      </div>
-    </div>
-  </section>
-</main>
+</div>
 <script src="{{ static_asset('js/friendly_public.js') }}" defer></script>
 </body>
 </html>

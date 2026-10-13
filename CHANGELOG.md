@@ -1385,3 +1385,11 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 
 ### SQL
 - Không có thay đổi SQL/Database.
+
+## V1.6.92 — Friendly Match UI Redesign
+- Thiết kế lại toàn bộ `/friendly` theo phong cách PES Arena/stadium, bố cục desktop có sidebar và topbar.
+- 6 chế độ luôn hiển thị dạng card; kết quả trận luôn hiển thị ngay bên dưới.
+- Thêm Random đội 1, Random đội 2 và Random cả 2 đội.
+- Giữ nguyên nguyên tắc chỉ hiển thị tên đội, không logo đội.
+- Không thêm API/DB/Realtime: random vẫn chạy 100% client-side.
+- Responsive cho mobile/tablet.
