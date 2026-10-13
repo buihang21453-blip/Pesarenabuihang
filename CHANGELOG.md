@@ -1416,3 +1416,11 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 - Thay icon cờ ở menu Ngoại Hạng Anh bằng logo Premier League từ GitHub Pages source.
 - Thay icon cờ ở menu La Liga bằng logo La Liga từ GitHub Pages source.
 - Chỉ thay giao diện; không đổi random/anti-repeat/API/DB/Realtime.
+
+
+## V1.6.96 — Friendly Login CTA
+- Chuyển lối vào Giao hữu trên màn hình đăng nhập thành một nút CTA lớn ngay dưới logo PES và phía trên dòng Championship Ranking.
+- Nội dung nút: `🎮 GIAO HỮU — RANDOM ĐỘI`.
+- Xóa mục `Random đội / 🎮 GIAO HỮU` nhỏ ở cuối form đăng nhập.
+- Giữ nguyên `/friendly`, random chống trùng 5 lượt, logo EPL/La Liga, DB, Supabase và Realtime.
+- Không có thay đổi SQL/Database.
