@@ -87,9 +87,8 @@ function toggleTheme(){
 <script>
 window.PES_ASSET_BASE_URL={{ asset_base_url()|tojson }};
 window.PES_ASSET_FALLBACK={{ {
-    "general": asset_fallback_base_url(),
-    "shop": shop_asset_base_url(),
-    "luckybox": luckybox_asset_base_url()
+    "pes_root": pes_asset_root_url(),
+    "team_root": team_logo_root_url()
 }|tojson }};
 (function installAssetFallback(){
     function fallbackFor(src){
@@ -100,14 +99,17 @@ window.PES_ASSET_FALLBACK={{ {
             if (pos < 0) return '';
             const relative = decodeURIComponent(url.pathname.slice(pos + marker.length));
             const cfg = window.PES_ASSET_FALLBACK || {};
-            let base = cfg.general || '';
+            let base = cfg.pes_root || '';
             let tail = relative;
-            if (relative.startsWith('shop/')) { base = cfg.shop || base; tail = relative.slice(5); }
-            else if (relative.startsWith('luckybox/')) { base = cfg.luckybox || base; tail = relative.slice(9); }
+            if (relative.startsWith('team-logos/')) {
+                base = cfg.team_root || '';
+                tail = relative.slice('team-logos/'.length);
+            }
             if (!base) return '';
             return base.replace(/\/$/, '') + '/' + tail.split('/').map(encodeURIComponent).join('/');
         } catch (_) { return ''; }
     }
+    window.PESAssetFallbackURL = fallbackFor;
     document.addEventListener('error', function(ev){
         const img = ev.target;
         if (!img || img.tagName !== 'IMG' || img.dataset.pesAssetFallbackTried === '1') return;
@@ -116,7 +118,6 @@ window.PES_ASSET_FALLBACK={{ {
         img.dataset.pesAssetFallbackTried = '1';
         img.src = fallback;
     }, true);
-    // CSS background đặc biệt: thử local trước, chỉ chuyển Supabase khi local 404.
     const loginProbe = new Image();
     loginProbe.onerror = function(){
         const fallback = fallbackFor({{ asset_url('login-background.webp')|tojson }});
@@ -182,7 +183,7 @@ window.PES_ASSET_FALLBACK={{ {
         <a class="sidebar-zalo-group" href="https://zalo.me/g/bqbtai165" target="_blank" rel="noopener noreferrer" aria-label="Tham gia nhóm Zalo PES Arena">
             <span class="sidebar-zalo-title">💬 Nhóm Zalo PES Arena</span>
             <span class="sidebar-zalo-qr-wrap">
-                <img src="https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/v1/zalo_qr.webp" alt="Mã QR nhóm Zalo PES Arena" loading="lazy">
+                <img src="/static/assets/v1/zalo_qr.webp" alt="Mã QR nhóm Zalo PES Arena" loading="lazy">
             </span>
             <strong>Quét QR hoặc bấm để tham gia</strong>
             

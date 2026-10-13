@@ -1316,3 +1316,9 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 - Safe V1.6.82 fallback when RPC migration is unavailable.
 - Added read indexes for hot Players/BXH paths.
 - No asset/storage changes.
+
+
+## V1.6.87
+- Asset Router: GitHub/Vercel first, Supabase fallback.
+- Preserve Supabase namespace tree under static/assets.
+- Keep BXH emergency hotfix.

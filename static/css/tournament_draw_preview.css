@@ -51,17 +51,17 @@
 .draw-logo-sync-status strong{color:#f5c451}.draw-logo-sync-status small{width:100%;color:#bacbd9}
 
 /* V1.6.10: Supabase ceremony art; centre-stage actions, one button per phase. */
-body.draw-preview-page{background-image:linear-gradient(180deg,rgba(1,8,16,.48),rgba(1,9,19,.80)),url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_draw_ceremony_stadium.webp");background-size:cover;background-position:center top;background-attachment:fixed}
-.draw-preview-page:before{background-image:linear-gradient(180deg,transparent 65%,rgba(1,9,19,.55)),url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_crowd_silhouette.webp");background-size:cover,100% auto;background-position:center,bottom center;background-repeat:no-repeat;opacity:.30;z-index:0}
+body.draw-preview-page{background-image:linear-gradient(180deg,rgba(1,8,16,.48),rgba(1,9,19,.80)),url("/static/assets/LeBocThamGD2/gd2_draw_ceremony_stadium.webp");background-size:cover;background-position:center top;background-attachment:fixed}
+.draw-preview-page:before{background-image:linear-gradient(180deg,transparent 65%,rgba(1,9,19,.55)),url("/static/assets/LeBocThamGD2/gd2_crowd_silhouette.webp");background-size:cover,100% auto;background-position:center,bottom center;background-repeat:no-repeat;opacity:.30;z-index:0}
 .draw-preview-header,.draw-stepbar,.draw-preview-shell,.draw-preview-footer{position:relative;z-index:1}
 .draw-center-stage{position:relative;isolation:isolate;overflow:hidden;justify-content:center;padding:24px 16px 32px;min-height:610px}
 .draw-center-stage>*{position:relative;z-index:1}
-.draw-center-stage:before{content:"";position:absolute;inset:0;background:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_stadium_lights_frame.webp") center/cover no-repeat;pointer-events:none;opacity:.24;z-index:0}
-.draw-center-stage:after{content:"";position:absolute;inset:auto 0 0;height:48%;background:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_club_reveal_stage.webp") center bottom/contain no-repeat;pointer-events:none;opacity:.27;z-index:0}
+.draw-center-stage:before{content:"";position:absolute;inset:0;background:url("/static/assets/LeBocThamGD2/gd2_stadium_lights_frame.webp") center/cover no-repeat;pointer-events:none;opacity:.24;z-index:0}
+.draw-center-stage:after{content:"";position:absolute;inset:auto 0 0;height:48%;background:url("/static/assets/LeBocThamGD2/gd2_club_reveal_stage.webp") center bottom/contain no-repeat;pointer-events:none;opacity:.27;z-index:0}
 .draw-club-reveal{position:relative;isolation:isolate;min-height:185px;align-content:center;background:linear-gradient(180deg,rgba(1,12,24,.89),rgba(1,12,24,.90));border-color:rgba(243,199,93,.55)}
-.draw-club-reveal:before{content:"";position:absolute;inset:-5px;background:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_club_reveal_frame.webp") center/100% 100% no-repeat;opacity:.46;pointer-events:none;z-index:-1}
-.draw-club-reveal:not(:has(.draw-club-logo:not([hidden])))>span{background-image:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_random_club_card.webp");background-size:contain;background-position:center;background-repeat:no-repeat;width:80px;height:84px;border-radius:0;background-color:transparent;text-shadow:0 2px 6px #000}
-.draw-avatar,.draw-mini-avatar,.draw-opponent-avatar{background-image:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_coach_avatar_placeholder.webp");background-position:center;background-size:cover}
+.draw-club-reveal:before{content:"";position:absolute;inset:-5px;background:url("/static/assets/LeBocThamGD2/gd2_club_reveal_frame.webp") center/100% 100% no-repeat;opacity:.46;pointer-events:none;z-index:-1}
+.draw-club-reveal:not(:has(.draw-club-logo:not([hidden])))>span{background-image:url("/static/assets/LeBocThamGD2/gd2_random_club_card.webp");background-size:contain;background-position:center;background-repeat:no-repeat;width:80px;height:84px;border-radius:0;background-color:transparent;text-shadow:0 2px 6px #000}
+.draw-avatar,.draw-mini-avatar,.draw-opponent-avatar{background-image:url("/static/assets/LeBocThamGD2/gd2_coach_avatar_placeholder.webp");background-position:center;background-size:cover}
 .draw-ceremony-actions{width:100%;margin:20px auto 0;flex-direction:column;gap:8px;padding:12px 10px;border:0;background:transparent;box-shadow:none}.draw-ceremony-actions .draw-primary-action,.draw-ceremony-actions .draw-sim-primary{width:min(365px,100%)}.draw-ceremony-actions .ceremony-button{width:100%;min-height:56px}.draw-action-description{text-align:center}.draw-center-stage .preview-hint{max-width:90%}.draw-ceremony-actions button:not(:disabled):hover{filter:brightness(1.1)}.draw-ceremony-actions button:disabled{opacity:.48;cursor:not-allowed}.draw-center-stage .draw-ceremony-actions{z-index:3}
 @media(max-width:650px){.draw-center-stage{min-height:570px}.draw-ceremony-actions{margin-top:12px}.draw-center-stage:after{opacity:.15}}
 
@@ -75,14 +75,14 @@ body.draw-preview-page{background-image:linear-gradient(180deg,rgba(1,8,16,.48),
 
 /* V1.6.12 — show the eight supplied WebP layers at their intended proportions.
    Existing CSS gradients remain as fallbacks while Supabase images load. */
-:root{--gd2-assets:"https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/";--gd2-gold:#edc46a}
+:root{--gd2-assets:"/static/assets/LeBocThamGD2/";--gd2-gold:#edc46a}
 body.draw-preview-page{
  background-color:#030e1c;
- background-image:linear-gradient(180deg,rgba(0,7,17,.18) 0%,rgba(0,9,21,.20) 40%,rgba(0,6,15,.68) 100%),url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_draw_ceremony_stadium.webp");
+ background-image:linear-gradient(180deg,rgba(0,7,17,.18) 0%,rgba(0,9,21,.20) 40%,rgba(0,6,15,.68) 100%),url("/static/assets/LeBocThamGD2/gd2_draw_ceremony_stadium.webp");
  background-position:center top,center top;background-size:cover,cover;background-repeat:no-repeat;background-attachment:fixed;
 }
 .draw-preview-page:before{
- background-image:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_crowd_silhouette.webp");
+ background-image:url("/static/assets/LeBocThamGD2/gd2_crowd_silhouette.webp");
  background-size:100% auto;background-position:center bottom;background-repeat:no-repeat;opacity:.55;
 }
 .draw-preview-header,.draw-stepbar{background:rgba(2,12,24,.83);backdrop-filter:blur(7px)}
@@ -97,11 +97,11 @@ body.draw-preview-page{
 .draw-center-stage{
  min-height:665px;padding:17px 20px 25px;justify-content:flex-start;
  background:linear-gradient(180deg,rgba(2,12,26,.36),rgba(3,13,26,.25) 60%,rgba(2,11,23,.66)),
- url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_stadium_lights_frame.webp") center top/100% 100% no-repeat;
+ url("/static/assets/LeBocThamGD2/gd2_stadium_lights_frame.webp") center top/100% 100% no-repeat;
  border-color:rgba(255,212,116,.85);box-shadow:0 0 25px rgba(243,199,93,.13),inset 0 0 32px rgba(13,71,117,.20);
 }
 .draw-center-stage:before{
- inset:auto 0 0;height:55%;background:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_club_reveal_stage.webp") center bottom/100% auto no-repeat;opacity:.67;
+ inset:auto 0 0;height:55%;background:url("/static/assets/LeBocThamGD2/gd2_club_reveal_stage.webp") center bottom/100% auto no-repeat;opacity:.67;
 }
 .draw-center-stage:after{inset:0;background:none;display:none}
 .draw-center-stage .stage-kicker{margin-top:0;color:#fff4d6;text-shadow:0 2px 5px #000}
@@ -111,7 +111,7 @@ body.draw-preview-page{
 /* Portrait artwork already includes a border, crest and question mark. Keep original ratio, never stretch it over a horizontal panel. */
 .draw-club-reveal{
  flex:none;width:min(270px,80%);height:302px;min-height:0;margin:10px auto 0;padding:38px 20px 30px;align-content:center;justify-items:center;gap:6px;
- background-color:transparent;background-image:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_random_club_card.webp");
+ background-color:transparent;background-image:url("/static/assets/LeBocThamGD2/gd2_random_club_card.webp");
  background-position:center;background-repeat:no-repeat;background-size:contain;border:0;border-radius:0;box-shadow:none;
 }
 .draw-club-reveal:before{display:none}
@@ -122,7 +122,7 @@ body.draw-preview-page{
 .draw-club-reveal:not(:has(.draw-club-logo:not([hidden]))) small{display:none}
 /* Revealed result uses the dedicated open-centre reveal frame, not a stretched question card. */
 .draw-club-reveal:has(.draw-club-logo:not([hidden])){
- background-image:url("https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/gd2_club_reveal_frame.webp");
+ background-image:url("/static/assets/LeBocThamGD2/gd2_club_reveal_frame.webp");
  background-position:center;background-size:contain;
 }
 .draw-club-reveal .draw-club-logo{width:95px;height:95px;max-width:50%;object-fit:contain;filter:drop-shadow(0 4px 9px #000)}

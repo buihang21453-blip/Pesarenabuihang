@@ -56,7 +56,7 @@ from modules.session_runtime_service import (
 )
 from modules.static_asset_service import (
     asset_url, asset_fallback_url, asset_base_url, asset_fallback_base_url,
-    shop_asset_base_url, luckybox_asset_base_url,
+    shop_asset_base_url, luckybox_asset_base_url, pes_asset_root_url, team_logo_root_url,
 )
 from modules.profile import equipment_service as profile_equipment_service
 from modules.win_streaks import (
@@ -69,7 +69,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.6.86"
+APP_VERSION = "V1.6.87"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -226,6 +226,8 @@ app.jinja_env.globals["asset_base_url"] = asset_base_url
 app.jinja_env.globals["asset_fallback_base_url"] = asset_fallback_base_url
 app.jinja_env.globals["shop_asset_base_url"] = shop_asset_base_url
 app.jinja_env.globals["luckybox_asset_base_url"] = luckybox_asset_base_url
+app.jinja_env.globals["pes_asset_root_url"] = pes_asset_root_url
+app.jinja_env.globals["team_logo_root_url"] = team_logo_root_url
 
 PES_ARENA_TEST_MODE = (os.getenv("PES_ARENA_TEST_MODE") or "false").strip().lower() in {"1", "true", "yes", "on"}
 ALLOW_SIMPLE_TEST_PASSWORDS = (os.getenv("ALLOW_SIMPLE_TEST_PASSWORDS") or "false").strip().lower() in {"1", "true", "yes", "on"}

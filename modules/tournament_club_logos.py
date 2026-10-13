@@ -32,8 +32,8 @@ _ALIASES = {
 # for the two clubs absent from the 2026-09-17 clubs_import CSV export. Do not
 # overwrite a valid clubs_import logo or claim the Storage object was verified.
 _MANUAL_LOGO_FALLBACK = {
-    'porto': 'https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/team-logos/porto.webp',
-    'rb leipzig': 'https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/team-logos/leipzig.webp',
+    'porto': '/static/assets/team-logos/porto.webp',
+    'rb leipzig': '/static/assets/team-logos/leipzig.webp',
 }
 
 

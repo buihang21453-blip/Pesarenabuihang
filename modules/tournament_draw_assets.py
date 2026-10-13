@@ -2,7 +2,7 @@
 Browser CSS uses progressive fallback; deployment cannot verify remote HTTP here.
 Icons spritesheet requires cropping coordinates and is intentionally not shown whole.
 """
-GD2_ASSET_BASE = "https://wlnvdfghatgeygecwrqb.supabase.co/storage/v1/object/public/pes-assets/LeBocThamGD2/"
+GD2_ASSET_BASE = "/static/assets/LeBocThamGD2/"
 GD2_ASSETS = {
     "crowd_silhouette": GD2_ASSET_BASE + "gd2_crowd_silhouette.webp",
     "ui_icons_spritesheet": GD2_ASSET_BASE + "gd2_ui_icons_spritesheet.webp",
