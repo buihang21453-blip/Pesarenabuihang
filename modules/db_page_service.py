@@ -34,6 +34,14 @@ def players_page(*, page, page_size, query, status, viewer, invisible_ids, onlin
 
 def leaderboard_page(*, season_number, page, page_size, query, rank_filter, viewer,
                      invisible_ids, placement_matches, inactive_days):
+    # V1.6.86 HOTFIX: temporarily keep BXH on the proven legacy reader.
+    # The V1.6.83 RPC remains installed/available, but an authenticated /bxh
+    # request can fail after the RPC branch is entered on production data.
+    # Returning None activates ranking_routes.py's preserved V1.6.82 fallback
+    # and prevents the leaderboard page from being taken down while the exact
+    # production traceback is collected and the RPC parity issue is corrected.
+    return None
+
     min_points = max_points = None
     if rank_filter and rank_filter != "all":
         rank = next((r for r in get_rank_ranges() if str(r.get("slug")) == str(rank_filter)), None)

@@ -1,3 +1,10 @@
+## V1.6.86
+- Asset dual-source: GitHub/Vercel first, Supabase fallback for asset_url-managed images.
+- New local root: `/static/assets/`.
+- Rank frame images moved onto the same resolver.
+- Added asset migration tree/documentation.
+- No raster assets bundled in release ZIP.
+
 # V1.6.82 — Database Usage Optimization
 
 - DB-side pagination for normal personal match history.

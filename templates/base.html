@@ -84,7 +84,47 @@ function toggleTheme(){
 .account-test-switch button:hover{background:rgba(255,255,255,.06)}
 @media(max-width:700px){.admin-test-switch-banner{align-items:flex-start;flex-direction:column}.admin-test-switch-spacer{height:100px}}
 </style>
-<script>window.PES_ASSET_BASE_URL={{ asset_base_url()|tojson }};</script>
+<script>
+window.PES_ASSET_BASE_URL={{ asset_base_url()|tojson }};
+window.PES_ASSET_FALLBACK={{ {
+    "general": asset_fallback_base_url(),
+    "shop": shop_asset_base_url(),
+    "luckybox": luckybox_asset_base_url()
+}|tojson }};
+(function installAssetFallback(){
+    function fallbackFor(src){
+        try {
+            const url = new URL(src, window.location.origin);
+            const marker = '/static/assets/';
+            const pos = url.pathname.indexOf(marker);
+            if (pos < 0) return '';
+            const relative = decodeURIComponent(url.pathname.slice(pos + marker.length));
+            const cfg = window.PES_ASSET_FALLBACK || {};
+            let base = cfg.general || '';
+            let tail = relative;
+            if (relative.startsWith('shop/')) { base = cfg.shop || base; tail = relative.slice(5); }
+            else if (relative.startsWith('luckybox/')) { base = cfg.luckybox || base; tail = relative.slice(9); }
+            if (!base) return '';
+            return base.replace(/\/$/, '') + '/' + tail.split('/').map(encodeURIComponent).join('/');
+        } catch (_) { return ''; }
+    }
+    document.addEventListener('error', function(ev){
+        const img = ev.target;
+        if (!img || img.tagName !== 'IMG' || img.dataset.pesAssetFallbackTried === '1') return;
+        const fallback = fallbackFor(img.currentSrc || img.src);
+        if (!fallback) return;
+        img.dataset.pesAssetFallbackTried = '1';
+        img.src = fallback;
+    }, true);
+    // CSS background đặc biệt: thử local trước, chỉ chuyển Supabase khi local 404.
+    const loginProbe = new Image();
+    loginProbe.onerror = function(){
+        const fallback = fallbackFor({{ asset_url('login-background.webp')|tojson }});
+        if (fallback) document.documentElement.style.setProperty('--pes-login-background', 'url("' + fallback.replace(/"/g, '%22') + '")');
+    };
+    loginProbe.src = {{ asset_url('login-background.webp')|tojson }};
+})();
+</script>
 {% block head_extra %}{% endblock %}
 {% block page_styles %}{% endblock %}
 </head>

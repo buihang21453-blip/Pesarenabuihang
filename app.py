@@ -54,7 +54,10 @@ from modules.system_feature_service import post_login_endpoint, dashboard_is_ena
 from modules.session_runtime_service import (
     IDLE_TIMEOUT_SECONDS, PROTECTED_ROOM_STATUSES, idle_decision, room_blocks_idle_logout, client_config as session_client_config,
 )
-from modules.static_asset_service import asset_url, asset_base_url, shop_asset_base_url, luckybox_asset_base_url
+from modules.static_asset_service import (
+    asset_url, asset_fallback_url, asset_base_url, asset_fallback_base_url,
+    shop_asset_base_url, luckybox_asset_base_url,
+)
 from modules.profile import equipment_service as profile_equipment_service
 from modules.win_streaks import (
     WIN_STREAK_TITLES, WIN_STREAK_EVENT_PREFIX, get_win_streak_title,
@@ -66,7 +69,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.6.85"
+APP_VERSION = "V1.6.86"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -217,8 +220,10 @@ def static_asset(filename):
     return f"{url_for('static', filename=clean_name)}?v={fingerprint}"
 
 app.jinja_env.globals["asset_url"] = asset_url
+app.jinja_env.globals["asset_fallback_url"] = asset_fallback_url
 app.jinja_env.globals["static_asset"] = static_asset
 app.jinja_env.globals["asset_base_url"] = asset_base_url
+app.jinja_env.globals["asset_fallback_base_url"] = asset_fallback_base_url
 app.jinja_env.globals["shop_asset_base_url"] = shop_asset_base_url
 app.jinja_env.globals["luckybox_asset_base_url"] = luckybox_asset_base_url
 
