@@ -2,3 +2,11 @@
 
 /* V1.6.95 league logos */
 .friendly-mode-logo{width:42px;height:42px;object-fit:contain;display:block;margin:0 auto 8px}
+
+
+/* V1.6.97 - unified mode icon containers / EPL contrast */
+.friendly-mode .friendly-mode-icon{width:58px;height:58px;flex:0 0 58px;margin:0;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.16);border-radius:14px;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.18),rgba(190,216,235,.09) 58%,rgba(4,17,29,.12) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 5px 14px rgba(0,0,0,.18);font-size:28px;line-height:1;white-space:nowrap;transition:.16s ease}
+.friendly-mode .friendly-mode-logo{width:40px;height:40px;object-fit:contain;display:block;margin:0;filter:drop-shadow(0 1px 2px rgba(255,255,255,.24)) drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+.friendly-mode .friendly-mode-stars{width:92px;flex-basis:58px;font-size:17px;letter-spacing:-2px}
+.friendly-mode:hover .friendly-mode-icon,.friendly-mode.active .friendly-mode-icon{border-color:rgba(255,216,104,.62);background:radial-gradient(circle at 50% 35%,rgba(255,247,210,.28),rgba(246,198,68,.13) 60%,rgba(4,17,29,.12) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 0 16px rgba(246,198,68,.13)}
+@media(max-width:760px){.friendly-mode .friendly-mode-icon{width:50px;height:50px;flex-basis:50px;border-radius:12px}.friendly-mode .friendly-mode-logo{width:35px;height:35px}.friendly-mode .friendly-mode-stars{width:82px;font-size:15px}}

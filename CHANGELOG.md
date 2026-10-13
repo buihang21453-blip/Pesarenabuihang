@@ -1424,3 +1424,10 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 - Xóa mục `Random đội / 🎮 GIAO HỮU` nhỏ ở cuối form đăng nhập.
 - Giữ nguyên `/friendly`, random chống trùng 5 lượt, logo EPL/La Liga, DB, Supabase và Realtime.
 - Không có thay đổi SQL/Database.
+
+
+## V1.6.97 - Friendly Mode Icon Consistency
+- Đồng bộ khung icon cho cả 6 chế độ Giao hữu.
+- Tăng tương phản logo Premier League bằng nền sáng mờ, viền và shadow thống nhất.
+- Logo La Liga, sao 5/4, CLB và Quốc Gia dùng cùng hệ kích thước/căn giữa.
+- Không thay đổi logic random, chống trùng 5 lượt, DB, Supabase hoặc Realtime.
