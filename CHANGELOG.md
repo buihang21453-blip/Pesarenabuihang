@@ -1359,3 +1359,29 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 - Asset Router: GitHub/Vercel first, Supabase fallback.
 - Preserve Supabase namespace tree under static/assets.
 - Keep BXH emergency hotfix.
+
+## V1.6.91 — Guest Friendly Match
+- Thêm trang công khai `/friendly`, dùng được cả khi chưa đăng nhập và đã đăng nhập.
+- Thêm 6 chế độ ngắn gọn: Ngoại Hạng Anh, La Liga, 5 Sao, 4 Sao, CLB 5★, Quốc Gia 5★.
+- Random 2 đội khác nhau hoàn toàn trên trình duyệt; không gọi Supabase DB/Storage/Realtime và không gọi Flask API mỗi lần random.
+- Chỉ hiển thị tên đội, không tải logo đội.
+- Thêm lối vào Giao hữu ở điều hướng công khai, sidebar người đã đăng nhập và màn hình đăng nhập.
+- Giữ nguyên gameplay/xếp hạng/room/history hiện có; kết quả giao hữu công khai không ghi BXH/History.
+
+### File thêm
+- `modules/friendly_public_routes.py`
+- `templates/friendly_public.html`
+- `static/js/friendly_public.js`
+- `static/css/friendly_public.css`
+- `OPTIMIZATION_V1.6.91.md`
+- `tests/test_friendly_public_v1691.py`
+
+### File sửa
+- `app.py`
+- `templates/base.html`
+- `templates/public_ranking.html`
+- `templates/login.html`
+- `CHANGELOG.md`
+
+### SQL
+- Không có thay đổi SQL/Database.

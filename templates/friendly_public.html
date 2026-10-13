@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="description" content="Giao hữu nhanh PES Arena - random đội không cần đăng nhập">
+  <title>Giao hữu • {{ APP_NAME }}</title>
+  <link rel="stylesheet" href="{{ static_asset('style.css') }}">
+  <link rel="stylesheet" href="{{ static_asset('css/friendly_public.css') }}">
+</head>
+<body class="friendly-page">
+<header class="friendly-public-header">
+  <a class="friendly-brand" href="{{ url_for('index') }}">PES ARENA</a>
+  <div class="friendly-header-actions">
+    <a class="friendly-header-link" href="{{ url_for('ranking') }}">Bảng xếp hạng</a>
+    {% if current_user %}
+      <a class="friendly-header-login" href="{{ url_for('ranking') }}">Vào PES Arena</a>
+    {% else %}
+      <a class="friendly-header-login" href="{{ url_for('login') }}">Đăng nhập</a>
+    {% endif %}
+  </div>
+</header>
+<main class="friendly-main">
+  <section class="friendly-card" data-friendly-randomizer>
+    <div data-friendly-home>
+      <h1 class="friendly-title">⚽ Giao Hữu</h1>
+      <p class="friendly-subtitle">Chọn chế độ để random 2 đội</p>
+      <div class="friendly-modes">
+        <button class="friendly-mode" type="button" data-friendly-mode="premier_league">🏴 Ngoại Hạng Anh</button>
+        <button class="friendly-mode" type="button" data-friendly-mode="la_liga">🇪🇸 La Liga</button>
+        <button class="friendly-mode" type="button" data-friendly-mode="five_star">⭐ 5 Sao</button>
+        <button class="friendly-mode" type="button" data-friendly-mode="four_star">⭐ 4 Sao</button>
+        <button class="friendly-mode" type="button" data-friendly-mode="club_five_star">🏟 CLB 5★</button>
+        <button class="friendly-mode" type="button" data-friendly-mode="nation_five_star">🌍 Quốc Gia 5★</button>
+      </div>
+      <p class="friendly-note">Không cần đăng nhập</p>
+    </div>
+    <div class="friendly-result" data-friendly-result hidden>
+      <span class="friendly-mode-label" data-mode-name>Giao hữu</span>
+      <div class="friendly-matchup">
+        <div class="friendly-team" data-home-team>---</div>
+        <div class="friendly-vs">VS</div>
+        <div class="friendly-team" data-away-team>---</div>
+      </div>
+      <div class="friendly-actions">
+        <button class="friendly-random" type="button" data-random-again>🎲 RANDOM LẠI</button>
+        <button class="friendly-back" type="button" data-friendly-back>← Chế độ</button>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="{{ static_asset('js/friendly_public.js') }}" defer></script>
+</body>
+</html>
