@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.6.79"
+APP_VERSION = "V1.6.80"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -254,7 +254,7 @@ supabase_key = (
 
 db = create_client(supabase_url, supabase_key) if supabase_url and supabase_key else None
 
-# V1.6.79: Realtime is signalling-only. Sensitive/game data still travels through
+# V1.6.80: Realtime is signalling-only and production-hardened. Sensitive/game data still travels through
 # authenticated Flask APIs; Broadcast only wakes the correct client up.
 from modules.realtime_events import public_config as realtime_public_config, topic as realtime_topic, publish as realtime_publish
 

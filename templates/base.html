@@ -1158,6 +1158,13 @@ window.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    // Khi Realtime reconnect hoặc trình duyệt online/trở lại tab, đồng bộ ngay
+    // từ API thật để bù mọi event có thể đã bị bỏ lỡ trong thời gian mất kết nối.
+    document.addEventListener("pes:realtime-resync", function () {
+        checkPendingInvites();
+        if (!isRoomPage && !isPassivePage) checkActiveRoom();
+    });
+
     // Watchdog độc lập: nếu một module JS khác lỗi hoặc poller bị dừng quá lâu,
     // lời mời vẫn được kiểm tra lại. Không tạo request trùng nhờ singleFlight.
     window.setInterval(function () {

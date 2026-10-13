@@ -1109,7 +1109,7 @@ let roomViewRefreshInFlight = false;
 let roomActionRequestInFlight = false;
 
 function getRoomStateInterval() {
-    if (window.PESRealtime && PESRealtime.isConnected()) return document.hidden ? 120000 : 30000;
+    if (window.PESRealtime && pesRoomRealtimeTopic && PESRealtime.isRoomConnected(pesRoomRealtimeTopic)) return document.hidden ? 120000 : 30000;
     if (document.hidden) return 90000;
     if (currentRoomStatus === "playing") return currentRoomUserIsGuest ? 6000 : 12000;
     if (currentRoomStatus === "friendly_playing") return 18000;
@@ -1611,7 +1611,11 @@ function toggleRoomChat() {
     if (willOpen) {
         markRoomChatRead();
         document.dispatchEvent(new CustomEvent("pes:room-chat-opened"));
-        bindRoomChatForm();
+        document.addEventListener("pes:realtime-resync", function () {
+        requestImmediateRoomStateCheck();
+        requestImmediateRoomChatRefresh();
+    });
+    bindRoomChatForm();
         requestImmediateRoomChatRefresh();
         const input = panel.querySelector('input[name="message"]');
         if (input) window.setTimeout(() => input.focus(), 50);
@@ -1821,7 +1825,7 @@ function startRoomChatPolling() {
     roomChatPoller = PESNet.createPoller({
         key: "room-chat:{{ room.id }}",
         task: loadRoomChat,
-        visibleInterval: function () { return (window.PESRealtime && PESRealtime.isConnected()) ? 60000 : 6000; },
+        visibleInterval: function () { return (window.PESRealtime && pesRoomRealtimeTopic && PESRealtime.isRoomConnected(pesRoomRealtimeTopic)) ? 60000 : 6000; },
         hiddenInterval: 120000,
         runWhenHidden: false,
         immediate: true,
@@ -1833,9 +1837,13 @@ function startRoomChatPolling() {
 window.addEventListener("DOMContentLoaded", function () {
     if (window.PESRealtime && pesRoomRealtimeTopic) {
         PESRealtime.subscribeRoom(pesRoomRealtimeTopic, function (eventName) {
-            // CHAT_CHANGED refreshes only chat; all room gameplay events refresh state.
+            // Realtime is only a wake-up signal. Authenticated HTTP APIs always
+            // re-read the authoritative state, including after reconnect.
             if (eventName === "CHAT_CHANGED") requestImmediateRoomChatRefresh();
-            else requestImmediateRoomStateCheck();
+            else if (eventName === "__RESYNC__") {
+                requestImmediateRoomStateCheck();
+                requestImmediateRoomChatRefresh();
+            } else requestImmediateRoomStateCheck();
         });
     }
     bindRoomChatForm();

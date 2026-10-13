@@ -1275,3 +1275,11 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 - Không cho kết thúc GĐ2 khi còn trận chưa xác nhận, kể cả force.
 - Thêm điều hướng Admin GĐ1 / GĐ2 / KO và nút xác nhận bắt đầu GĐ2.
 - Chưa xác nhận kiểm thử E2E phòng C1, vé Random và dữ liệu Supabase thật; KHÔNG triển khai Production trước khi kiểm thử.
+
+## V1.6.80 — Realtime Production Hardening
+- Harden Realtime event allowlists ở server và browser.
+- Broadcast chỉ còn wake-up signal `{changed:true}`; không mang business/game data.
+- Tự resync sau reconnect, browser online và tab visible.
+- Room fallback dựa trên trạng thái chính xác của room channel, không chỉ user channel.
+- Giảm heartbeat phát sinh do reconnect bằng throttle 5 phút.
+- Giữ HTTP API/Database làm source of truth; Realtime failure không chặn gameplay.
