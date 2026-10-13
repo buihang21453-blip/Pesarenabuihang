@@ -1447,9 +1447,15 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 - Cache kết quả 5 phút; không polling, không Supabase write.
 - Thêm `modules/vercel_analytics_service.py` và tài liệu cấu hình env.
 
-## V1.6.100 — Friendly Analytics API Diagnostics Fix
+## V1.6.101 — Friendly Analytics API Diagnostics Fix
 - Xác nhận `/friendly` đã được Vercel Web Analytics ghi nhận; sửa phần Admin đọc API thay vì thay tracking.
 - Hiển thị lỗi API cụ thể: thiếu token/project, 401, 403, 404, 429, network hoặc response sai định dạng.
 - Hỗ trợ cả Team ID dạng `team_...` và Team slug; nếu người dùng lỡ nhập slug vào `VERCEL_TEAM_ID`, source tự dùng tham số `slug` đúng chuẩn Vercel.
 - Khi API thành công, Admin hiển thị trực tiếp `visitors` và `pageviews` của `requestPath = '/friendly'`.
 - Giữ cache 5 phút, không polling, không Supabase write, không thay đổi gameplay/realtime/random.
+
+## V1.6.101
+- Admin Lazy Loading Phase 2: overview dùng COUNT-only; dữ liệu chi tiết tải theo tab.
+- Giảm tải Supabase khi chỉ mở `/admin`.
+- Web Analytics 403: scope-aware Team ID/slug/personal fallback và chẩn đoán rõ hơn.
+- Không thay gameplay/realtime/database schema.

@@ -40,19 +40,22 @@ def register_routes(context):
             "waiting_ready", "playing", "friendly_playing",
             "waiting_result_confirm", "waiting_confirm", "disputed",
         ]
-        recent_rooms = admin_safe_load("recent_rooms", lambda: list_rooms(limit=80), [])
+        # V1.6.101 Phase 2: do not download room rows unless the Rooms tab needs them.
+        recent_rooms = admin_safe_load("recent_rooms", lambda: list_rooms(limit=80), []) if active_admin_tab == "rooms" else []
         active_rooms = admin_safe_load(
             "active_rooms", lambda: list_rooms(statuses=active_room_statuses, limit=240), []
-        )
+        ) if active_admin_tab == "rooms" else []
         cancelled_rooms = (
             admin_safe_load("cancelled_rooms", lambda: list_rooms(status="cancelled", limit=300), [])
             if active_admin_tab == "rooms" else []
         )
         all_rooms = recent_rooms
 
-        recent_matches = admin_safe_load("recent_matches", lambda: list_matches(limit=80), [])
-        playing_matches = admin_safe_load("playing_matches", lambda: list_matches("playing", limit=200), [])
-        disputed_matches = admin_safe_load("disputed_matches", lambda: list_matches("disputed", limit=200), [])
+        # V1.6.101 Phase 2: match rows are tab data, not bootstrap data.
+        _need_match_rows = active_admin_tab in {"matches", "review"}
+        recent_matches = admin_safe_load("recent_matches", lambda: list_matches(limit=80), []) if _need_match_rows else []
+        playing_matches = admin_safe_load("playing_matches", lambda: list_matches("playing", limit=200), []) if _need_match_rows else []
+        disputed_matches = admin_safe_load("disputed_matches", lambda: list_matches("disputed", limit=200), []) if _need_match_rows else []
         # Used only to decorate pending disputes. Merge by id without loading match history.
         match_by_id = {}
         for _row in recent_matches + playing_matches + disputed_matches:
@@ -258,13 +261,14 @@ def register_routes(context):
             ),
         }
 
+        # V1.6.101 Phase 2: the expensive all-users + device/IP decoration is Users-tab only.
         raw_users = [
-            u for u in admin_safe_load("users", list_all_users, [])
+            u for u in (admin_safe_load("users", list_all_users, []) if active_admin_tab == "users" else [])
             if str(u.get("account_status") or "approved").lower() != "deleted"
         ]
         admin_users = admin_safe_load(
             "decorate_users", lambda: decorate_admin_users(raw_users), []
-        )
+        ) if active_admin_tab == "users" else []
 
         # Ưu tiên nhóm IP trùng lên đầu và đặt các tài khoản cùng IP cạnh nhau.
         admin_users.sort(key=lambda item: (
@@ -281,10 +285,10 @@ def register_routes(context):
 
         password_reset_requests = admin_safe_load(
             "password_resets", lambda: list_password_reset_requests(None, 100), []
-        )
+        ) if active_admin_tab == "passwords" else []
         raw_disputes = admin_safe_load(
             "match_disputes", lambda: list_match_disputes("pending"), []
-        )
+        ) if active_admin_tab in {"matches", "review"} else []
         pending_disputes = []
         for item in raw_disputes:
             try:
@@ -298,7 +302,7 @@ def register_routes(context):
         )
         duplicate_ip_groups = admin_safe_load(
             "duplicate_ips", lambda: build_duplicate_ip_groups(admin_users), []
-        )
+        ) if active_admin_tab == "users" else []
         duplicate_ip_user_count = len({
             str(account.get("id"))
             for group in duplicate_ip_groups
@@ -345,6 +349,30 @@ def register_routes(context):
             "missing": sum(1 for m in migration_checks if not m["ok"]),
         }
 
+        # V1.6.101: Overview uses COUNT-only queries. It no longer downloads/decorates
+        # users, rooms, matches, invites or password-reset rows just to show four numbers.
+        def _count_rows(table, filters=None):
+            def _load():
+                query = db.table(table).select("id", count="exact").limit(1)
+                for method, key, value in (filters or []):
+                    query = getattr(query, method)(key, value)
+                result = execute_query(query, f"admin_count:{table}", attempts=1)
+                count = getattr(result, "count", None)
+                return int(count if count is not None else len(result.data or []))
+            return admin_safe_load(f"count_{table}", _load, 0)
+
+        if active_admin_tab == "overview":
+            overview_stats = {
+                "players": _count_rows("users", [("eq", "role", "player"), ("neq", "account_status", "deleted")]),
+                "pending_users": _count_rows("users", [("eq", "role", "player"), ("eq", "account_status", "pending")]),
+                "playing_matches": _count_rows("matches", [("eq", "status", "playing")]),
+                "active_rooms": _count_rows("match_rooms", [("in_", "status", active_room_statuses)]),
+                "pending_invites": _count_rows("match_invites", [("eq", "status", "pending")]),
+                "password_resets": _count_rows("password_reset_requests"),
+            }
+        else:
+            overview_stats = {}
+
         # V1.6.100: only the overview needs /friendly traffic. One Vercel API call
         # returns both lifetime visitors and pageviews; cache is handled by the service.
         if active_admin_tab == "overview":
@@ -361,6 +389,7 @@ def register_routes(context):
             "admin.html",
             active_admin_tab=active_admin_tab,
             friendly_analytics=friendly_analytics,
+            overview_stats=overview_stats,
             admin_users=admin_users,
             players=players,
             admins=admins,
@@ -379,8 +408,8 @@ def register_routes(context):
                 )
             ][:30],
             all_rooms=recent_rooms,
-            invites=admin_safe_load("invites", lambda: list_invites("pending"), []),
-            active_announcement=admin_safe_load("announcement", get_active_announcement, None),
+            invites=(admin_safe_load("invites", lambda: list_invites("pending"), []) if active_admin_tab == "rooms" else []),
+            active_announcement=(admin_safe_load("announcement", get_active_announcement, None) if active_admin_tab == "system" else None),
             password_reset_requests=password_reset_requests,
             audit_logs=audit_logs,
             duplicate_ip_groups=duplicate_ip_groups,

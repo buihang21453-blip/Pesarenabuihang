@@ -88,3 +88,5 @@ body[data-page="admin"] .admin-module-frame{display:block;width:100%;min-height:
 .friendly-analytics-metrics strong{font-size:28px;line-height:1;color:#f4c430}
 .friendly-analytics-note{margin:10px 0 0;color:#d6b75b}
 @media(max-width:640px){.friendly-analytics-metrics{grid-template-columns:1fr}.friendly-analytics-metrics strong{font-size:24px}}
+/* V1.6.101 — lightweight Admin overview shortcuts */
+.admin-overview-shortcuts{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
