@@ -1,3 +1,10 @@
+# V1.6.89 — Asset Path Mapping Hotfix
+
+- Corrected main UI asset namespace from `v1.14.41/` to `v1/`.
+- Preserved Shop/LuckyBox under `v1.14.41/`.
+- Fixed Zcoin reward JS local path.
+- Mapping verified against the supplied 243-file asset archive.
+
 # V1.6.88 — Realtime Final Optimization
 
 - Realtime-first optimization for Quick Match, Chat, Room, Invite, Announcement and Tournament Host Ready.

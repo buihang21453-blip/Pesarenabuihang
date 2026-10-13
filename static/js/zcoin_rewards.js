@@ -33,7 +33,7 @@
         overlay.innerHTML = [
             '<div class="zcoin-confetti-layer"></div>',
             '<section class="zcoin-reward-popup" role="dialog" aria-modal="true" aria-label="Nhận Zcoin thành công">',
-            '<img src="' + ((window.PES_ASSET_BASE_URL || '/static').replace(/\/$/, '') + '/zcoin-logo.webp') + '" alt="Zcoin">',
+            '<img src="' + ((window.PES_ASSET_BASE_URL || '/static/assets').replace(/\/$/, '') + '/v1/zcoin-logo.webp') + '" alt="Zcoin">',
             '<h2></h2>',
             '<strong class="zcoin-reward-amount"></strong>',
             '<p></p>',

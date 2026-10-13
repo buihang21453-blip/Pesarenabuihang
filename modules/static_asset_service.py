@@ -1,4 +1,4 @@
-"""PES Arena V1.6.88 asset routing helpers.
+"""PES Arena V1.6.89 asset routing helpers.
 
 Policy: GitHub/Vercel static first, Supabase Storage fallback.
 The local tree mirrors Supabase namespaces under /static/assets.
@@ -24,8 +24,11 @@ def _mapped_path(filename):
     clean=raw.lstrip("/")
     if clean.startswith("team-logos/") or clean.startswith(KNOWN_PES_ROOTS):
         return clean
-    # Legacy logical assets (shop/, luckybox/, ranks/, logo...) live in v1.14.41.
-    return f"v1.14.41/{clean}"
+    # V1.6.89: the real asset archive confirms the main UI bundle lives in v1/.
+    # Only Shop and LuckyBox belong to v1.14.41/. Preserve explicit namespaces.
+    if clean.startswith(("shop/", "luckybox/")):
+        return f"v1.14.41/{clean}"
+    return f"v1/{clean}"
 
 def asset_base_url():
     return "/static/assets"
@@ -39,8 +42,8 @@ def team_logo_root_url():
     return _clean_base(os.getenv("TEAM_LOGO_BASE_URL")) or DEFAULT_TEAM_LOGO_ROOT
 
 def asset_fallback_base_url():
-    # Compatibility: general legacy logical assets are v1.14.41.
-    return f"{pes_asset_root_url()}/v1.14.41"
+    # Main UI assets (logo, background, ranks, Zcoin, Parsec...) live in v1/.
+    return f"{pes_asset_root_url()}/v1"
 
 def shop_asset_base_url():
     return _clean_base(os.getenv("SHOP_ASSET_BASE_URL")) or f"{pes_asset_root_url()}/v1.14.41/shop"
