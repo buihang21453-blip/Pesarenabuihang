@@ -59,7 +59,7 @@
         <div><span>Lượt mở trang</span><strong>{{ friendly_analytics.pageviews if friendly_analytics and friendly_analytics.ok else '—' }}</strong></div>
     </div>
     {% if friendly_analytics and not friendly_analytics.ok %}
-    <p class="small friendly-analytics-note">Chưa có dữ liệu. Hãy bật Vercel Web Analytics và cấu hình token cho Admin.</p>
+    <p class="small friendly-analytics-note">⚠ {{ friendly_analytics.error or 'Không đọc được dữ liệu Vercel Web Analytics.' }}</p>
     {% endif %}
 </section>
 {% endif %}

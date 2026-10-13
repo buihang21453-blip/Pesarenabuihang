@@ -345,7 +345,7 @@ def register_routes(context):
             "missing": sum(1 for m in migration_checks if not m["ok"]),
         }
 
-        # V1.6.99: only the overview needs /friendly traffic. One Vercel API call
+        # V1.6.100: only the overview needs /friendly traffic. One Vercel API call
         # returns both lifetime visitors and pageviews; cache is handled by the service.
         if active_admin_tab == "overview":
             try:
