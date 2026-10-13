@@ -148,20 +148,33 @@ def list_ranking_activity_matches():
     )
     return [dict(x) for x in (result.data or [])]
 
-def list_matches(status=None):
+def list_matches(status=None, limit=None):
+    """List matches with DB-side status/limit for read-heavy admin paths.
+
+    Calls without status/limit preserve the legacy request cache behavior.
+    """
     require_db()
 
-    cached = cache_get("_rz_matches_all")
-    if cached is None:
-        query = db.table("matches").select(MATCH_READ_COLUMNS).order("created_at", desc=True)
-        result = execute_query(query, "list_matches")
+    if status or limit:
+        query = db.table("matches").select(MATCH_READ_COLUMNS)
+        if status:
+            query = query.eq("status", status)
+        query = query.order("created_at", desc=True)
+        if limit:
+            query = query.limit(max(1, int(limit)))
+        result = execute_query(query, "list_matches_filtered")
         cached = result.data or []
-        cache_set("_rz_matches_all", cached)
+    else:
+        cached = cache_get("_rz_matches_all")
+        if cached is None:
+            query = db.table("matches").select(MATCH_READ_COLUMNS).order("created_at", desc=True)
+            result = execute_query(query, "list_matches")
+            cached = result.data or []
+            cache_set("_rz_matches_all", cached)
 
     processed_matches = [auto_confirm_expired_match_if_needed(dict(m)) for m in cached]
     matches = [m for m in processed_matches if not status or m.get("status") == status]
     _decorate_match_identities(matches)
-
     return matches
 
 

@@ -90,7 +90,9 @@ with params as (
            (coalesce(f.wins,0)+coalesce(f.draws,0)+coalesce(f.losses,0)) desc,
            lower(coalesce(f.display_name,f.username,''))
 ), page_rows as (
-  select * from numbered, params p offset ((p.pg-1)*p.psz) limit (select psz from params)
+  select * from numbered
+  offset (select (pg - 1) * psz from params)
+  limit (select psz from params)
 )
 select jsonb_build_object(
   'rows', coalesce((select jsonb_agg(to_jsonb(x)-'total_count') from page_rows x),'[]'::jsonb),
@@ -152,7 +154,9 @@ with params as (
 ), numbered as (
   select s.*,count(*) over() total_count from searched s order by s.position
 ), page_rows as (
-  select * from numbered,params p offset ((p.pg-1)*p.psz) limit (select psz from params)
+  select * from numbered
+  offset (select (pg - 1) * psz from params)
+  limit (select psz from params)
 ), me as (
   select r.* from ranked r where r.id=p_current_user_id limit 1
 ), me_stat as (

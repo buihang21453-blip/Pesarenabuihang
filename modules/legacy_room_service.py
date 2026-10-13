@@ -448,22 +448,41 @@ def enrich_room(room):
     return room
 
 
-def list_rooms(status=None):
-    cached = cache_get("_rz_rooms_all")
-    if cached is None:
-        shared = ttl_cache_get("rooms_raw")
-        if shared is None:
-            query = db.table("match_rooms").select("*").order("created_at", desc=True)
-            result = execute_query(query, "list_rooms")
-            shared = result.data or []
-            ttl_cache_set("rooms_raw", shared, 3)
-        cached = [dict(row) for row in shared]
-        cache_set("_rz_rooms_all", cached)
+def list_rooms(status=None, limit=None, statuses=None):
+    """List rooms; admin may push status/limit filters into Supabase.
+
+    The no-argument path remains byte-for-byte compatible with the legacy cache.
+    """
+    filtered_statuses = [str(x) for x in (statuses or []) if x]
+    if status or filtered_statuses or limit:
+        query = db.table("match_rooms").select("*")
+        if status:
+            query = query.eq("status", status)
+        elif filtered_statuses:
+            query = query.in_("status", filtered_statuses)
+        query = query.order("created_at", desc=True)
+        if limit:
+            query = query.limit(max(1, int(limit)))
+        result = execute_query(query, "list_rooms_filtered")
+        cached = [dict(row) for row in (result.data or [])]
+    else:
+        cached = cache_get("_rz_rooms_all")
+        if cached is None:
+            shared = ttl_cache_get("rooms_raw")
+            if shared is None:
+                query = db.table("match_rooms").select("*").order("created_at", desc=True)
+                result = execute_query(query, "list_rooms")
+                shared = result.data or []
+                ttl_cache_set("rooms_raw", shared, 3)
+            cached = [dict(row) for row in shared]
+            cache_set("_rz_rooms_all", cached)
 
     rooms = []
     for raw in cached:
         room = expire_room_if_needed(dict(raw))
         if status and room.get("status") != status:
+            continue
+        if filtered_statuses and room.get("status") not in filtered_statuses:
             continue
         enrich_room(room)
         rooms.append(room)

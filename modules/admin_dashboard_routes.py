@@ -22,28 +22,31 @@ def register_routes(context):
                 app.logger.exception("Admin load failed [%s]: %s", label, exc)
                 return default
 
-        all_rooms = admin_safe_load("rooms", list_rooms, [])
+        # V1.6.84: /admin is a read page. Do not perform per-user room cleanup here.
+        # Push the visible limits/status filters into Supabase instead of downloading
+        # the complete matches/rooms tables before slicing them in the template.
+        active_room_statuses = [
+            "waiting_ready", "playing", "friendly_playing",
+            "waiting_result_confirm", "waiting_confirm", "disputed",
+        ]
+        recent_rooms = admin_safe_load("recent_rooms", lambda: list_rooms(limit=80), [])
+        active_rooms = admin_safe_load(
+            "active_rooms", lambda: list_rooms(statuses=active_room_statuses, limit=240), []
+        )
+        cancelled_rooms = admin_safe_load(
+            "cancelled_rooms", lambda: list_rooms(status="cancelled", limit=300), []
+        )
+        all_rooms = recent_rooms
 
-        # Dọn các phòng chờ bị nhân đôi do double-click hoặc nhiều Vercel instance
-        # xử lý đồng thời. Chỉ xóa waiting_ready chưa có match_id nên không ảnh hưởng
-        # trận đang đá, kết quả, RP hay tranh chấp.
-        duplicate_cleanup_count = 0
-        participant_ids = {
-            str(value)
-            for room in all_rooms
-            for value in (room.get("host_user_id"), room.get("guest_user_id"))
-            if value
-        }
-        for participant_id in participant_ids:
-            duplicate_cleanup_count += admin_safe_load(
-                f"cleanup_duplicate_rooms:{participant_id}",
-                lambda uid=participant_id: cleanup_duplicate_waiting_rooms(uid),
-                0,
-            )
-        if duplicate_cleanup_count:
-            all_rooms = admin_safe_load("rooms_after_duplicate_cleanup", list_rooms, [])
-
-        all_matches = admin_safe_load("matches", list_matches, [])
+        recent_matches = admin_safe_load("recent_matches", lambda: list_matches(limit=80), [])
+        playing_matches = admin_safe_load("playing_matches", lambda: list_matches("playing", limit=200), [])
+        disputed_matches = admin_safe_load("disputed_matches", lambda: list_matches("disputed", limit=200), [])
+        # Used only to decorate pending disputes. Merge by id without loading match history.
+        match_by_id = {}
+        for _row in recent_matches + playing_matches + disputed_matches:
+            if _row.get("id"):
+                match_by_id[str(_row.get("id"))] = _row
+        all_matches = list(match_by_id.values())
 
         # Báo cáo số trận theo múi giờ Việt Nam. Dùng dữ liệu matches đã tải để
         # tránh phát sinh thêm nhiều truy vấn và giữ kết quả thống nhất với tab Trận đấu.
@@ -79,6 +82,19 @@ def register_routes(context):
         else:
             report_start_date = report_end_date = None
 
+        def _load_report_matches():
+            # Report needs only match columns and should filter the requested date range in DB.
+            query = db.table("matches").select("id,player1_id,player2_id,team1,team2,score1,score2,delta1,delta2,status,note,rp_details,created_at").order("created_at", desc=True)
+            if report_start_date is not None:
+                start_vn = datetime.combine(report_start_date, datetime.min.time(), tzinfo=vn_tz)
+                end_vn = datetime.combine(report_end_date + timedelta(days=1), datetime.min.time(), tzinfo=vn_tz)
+                query = query.gte("created_at", start_vn.astimezone(timezone.utc).isoformat())
+                query = query.lt("created_at", end_vn.astimezone(timezone.utc).isoformat())
+            result = execute_query(query, "admin_match_report", attempts=2)
+            return [dict(row) for row in (result.data or [])]
+
+        report_source_matches = admin_safe_load("match_report_rows", _load_report_matches, [])
+
         def _match_vn_date(match):
             raw = (match or {}).get("created_at")
             if not raw:
@@ -93,7 +109,7 @@ def register_routes(context):
                 return None
 
         report_matches = []
-        for match in all_matches:
+        for match in report_source_matches:
             match_date = _match_vn_date(match)
             if match_date is None:
                 continue
@@ -114,12 +130,24 @@ def register_routes(context):
         # "Đã xác nhận.", làm mất dấu Random 3 chọn 1. Ưu tiên đọc team_tier
         # của phòng liên kết để thống kê đúng cả các trận lịch sử đã bị mất note.
         room_mode_by_match_id = {}
-        for room in all_rooms:
-            match_id = str((room or {}).get("match_id") or "").strip()
-            if not match_id:
+        report_match_ids = [str(m.get("id")) for m in report_matches if m.get("id")]
+        # Supabase/PostgREST URLs become large with huge IN lists, so load in small chunks.
+        for _offset in range(0, len(report_match_ids), 100):
+            _ids = report_match_ids[_offset:_offset + 100]
+            if not _ids:
                 continue
-            team_tier = str((room or {}).get("team_tier") or "").strip().lower()
-            room_mode_by_match_id[match_id] = team_tier
+            _mode_rows = admin_safe_load(
+                "report_room_modes",
+                lambda ids=_ids: (execute_query(
+                    db.table("match_rooms").select("match_id,team_tier").in_("match_id", ids),
+                    "admin_report_room_modes", attempts=2,
+                ).data or []),
+                [],
+            )
+            for room in _mode_rows:
+                match_id = str((room or {}).get("match_id") or "").strip()
+                if match_id:
+                    room_mode_by_match_id[match_id] = str((room or {}).get("team_tier") or "").strip().lower()
 
         def _report_match_mode(match):
             match = match or {}
@@ -275,7 +303,7 @@ def register_routes(context):
             except Exception as exc:
                 return False, str(exc)
 
-        migration_checks = []
+        migration_checks = ttl_cache_get("admin_migration_checks_v1684")
         migration_specs = [
             ("V1.4.30", "02_GIAI_DAU_MODULE_DAY_DU_V1.4.30.sql", "Tournament core", lambda: db.table("tournaments").select("id").limit(1)),
             ("V1.4.34", "04_DANG_KY_HOST_KHU_VUC_THANH_TOAN_V1.4.34.sql", "Đăng ký Host/Khu vực/Thanh toán", lambda: db.table("tournament_registrations").select("has_host,host_region,payment_status").limit(1)),
@@ -286,12 +314,16 @@ def register_routes(context):
             ("V1.4.64", "SQL_CU/SQL_V1.4.64_LE_PHI_GIAI.sql", "Tiền chờ ghép tài khoản", lambda: db.table("tournament_fee_unmatched").select("id").limit(1)),
             ("V1.4.65", "SQL_V1.4.65_MIGRATION_TRACKER.sql", "SQL Migration Tracker", lambda: db.table("schema_migrations").select("migration_key").limit(1)),
         ]
-        for version, filename, title, factory in migration_specs:
-            ok, error = _probe_sql(filename, factory)
-            migration_checks.append({
-                "version": version, "filename": filename, "title": title,
-                "ok": ok, "error": error,
-            })
+        if migration_checks is None:
+            migration_checks = []
+            for version, filename, title, factory in migration_specs:
+                ok, error = _probe_sql(filename, factory)
+                migration_checks.append({
+                    "version": version, "filename": filename, "title": title,
+                    "ok": ok, "error": error,
+                })
+            # Schema state changes rarely; avoid eight probe queries on every Admin request.
+            ttl_cache_set("admin_migration_checks_v1684", migration_checks, 600)
         migration_summary = {
             "total": len(migration_checks),
             "ok": sum(1 for m in migration_checks if m["ok"]),
@@ -304,12 +336,12 @@ def register_routes(context):
             players=players,
             admins=admins,
             pending_users=pending_users,
-            all_matches=all_matches[:80],
-            disputed=[m for m in all_matches if m.get("status") == "disputed"],
-            playing=[m for m in all_matches if m.get("status") == "playing"],
-            rooms=[r for r in all_rooms if r.get("status") in ["waiting_ready", "playing", "friendly_playing", "waiting_result_confirm", "waiting_confirm", "disputed"]],
+            all_matches=recent_matches,
+            disputed=disputed_matches,
+            playing=playing_matches,
+            rooms=active_rooms,
             recent_closed_rooms=[
-                r for r in all_rooms
+                r for r in cancelled_rooms
                 if r.get("status") == "cancelled"
                 and (
                     "đóng trình duyệt" in str(r.get("note") or "").casefold()
@@ -317,7 +349,7 @@ def register_routes(context):
                     or "chủ phòng" in str(r.get("note") or "").casefold()
                 )
             ][:30],
-            all_rooms=all_rooms[:80],
+            all_rooms=recent_rooms,
             invites=admin_safe_load("invites", lambda: list_invites("pending"), []),
             active_announcement=admin_safe_load("announcement", get_active_announcement, None),
             password_reset_requests=password_reset_requests,

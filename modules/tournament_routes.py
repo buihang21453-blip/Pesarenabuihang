@@ -90,6 +90,13 @@ def register_routes(context):
         ttl_cache_set("tournament_design_settings", value, 45)
         return cache_set(request_key, value)
 
+    # V1.6.84: explicit columns for Tournament read-heavy paths.
+    TOURNAMENT_COLUMNS = "id,slug,name,short_name,description,status,registration_open,is_visible,created_by,created_at,updated_at"
+    TOURNAMENT_REG_COLUMNS = "id,tournament_id,user_id,status,registered_at,reviewed_at,reviewed_by,note,has_host,host_region,payment_status,payment_reported_at,zalo_name,amount_paid,fee_amount,responsibility_amount,responsibility_deducted,amount_refunded,payment_note,payment_updated_at,payment_updated_by"
+    TOURNAMENT_MEMBER_COLUMNS = "id,tournament_id,user_id,status,pot_no,seed_no,fixed_club_id,fixed_club_name,approved_at,approved_by,zalo_name"
+    TOURNAMENT_MATCH_COLUMNS = "id,tournament_id,stage_code,round_code,leg_no,aggregate_group,home_user_id,away_user_id,home_score,away_score,home_pen,away_pen,status,scheduled_at,host_id,winner_user_id,completed_at,created_at,updated_at"
+    TOURNAMENT_FEE_COLUMNS = "id,tournament_id,payer_name,zalo_contact,amount_paid,note,status,linked_registration_id,linked_user_id,created_at,created_by,linked_at,linked_by"
+
     def _safe_rows(query, label):
         try:
             result = execute_query(query, label, attempts=2)
@@ -100,7 +107,7 @@ def register_routes(context):
 
     def _list_tournaments():
         rows, error = _safe_rows(
-            db.table("tournaments").select("*").eq("is_visible", True).order("created_at"),
+            db.table("tournaments").select(TOURNAMENT_COLUMNS).eq("is_visible", True).order("created_at"),
             "tournament_list",
         )
         return rows, error
@@ -117,7 +124,7 @@ def register_routes(context):
         if not tournament_id or not user_id:
             return None
         rows, _ = _safe_rows(
-            db.table("tournament_registrations").select("*")
+            db.table("tournament_registrations").select(TOURNAMENT_REG_COLUMNS)
             .eq("tournament_id", tournament_id).eq("user_id", user_id).limit(1),
             "tournament_registration_for_user",
         )
@@ -138,7 +145,7 @@ def register_routes(context):
         if not tournament_id or not user_id:
             return None
         rows, _ = _safe_rows(
-            db.table("tournament_members").select("*")
+            db.table("tournament_members").select(TOURNAMENT_MEMBER_COLUMNS)
             .eq("tournament_id", tournament_id).eq("user_id", user_id).limit(1),
             "tournament_member_for_user",
         )
@@ -152,7 +159,7 @@ def register_routes(context):
         bracket generation; the action route performs its own safety gate.
         """
         match_rows, _ = _safe_rows(
-            db.table("tournament_matches").select("*")
+            db.table("tournament_matches").select(TOURNAMENT_MATCH_COLUMNS)
             .eq("tournament_id", tournament_id).eq("stage_code", "knockout").order("created_at"),
             "tournament_public_knockout_matches",
         )
@@ -407,6 +414,12 @@ def register_routes(context):
         return row
 
     def _admin_tournament_data():
+        # Admin context is identical for all admins and was previously rebuilt on
+        # every /admin request. A short TTL removes a burst of tournament queries
+        # without making management data feel stale.
+        cached_admin = ttl_cache_get("tournament_admin_data_v1684")
+        if cached_admin is not None:
+            return cached_admin
         data = {
             "db_ready": True,
             "tournaments": [],
@@ -427,13 +440,13 @@ def register_routes(context):
             return data
         tournament_id = selected.get("id")
         registrations, _ = _safe_rows(
-            db.table("tournament_registrations").select("*")
+            db.table("tournament_registrations").select(TOURNAMENT_REG_COLUMNS)
             .eq("tournament_id", tournament_id).order("registered_at"),
             "admin_tournament_registrations",
         )
         registrations = [_decorate_finance(row) for row in _decorate_registration_rows(registrations)]
         unmatched, _ = _safe_rows(
-            db.table("tournament_fee_unmatched").select("*")
+            db.table("tournament_fee_unmatched").select(TOURNAMENT_FEE_COLUMNS)
             .eq("tournament_id", tournament_id).eq("status", "waiting").order("created_at", desc=True),
             "admin_tournament_fee_unmatched",
         )
@@ -469,11 +482,12 @@ def register_routes(context):
         }
 
         members, _ = _safe_rows(
-            db.table("tournament_members").select("*")
+            db.table("tournament_members").select(TOURNAMENT_MEMBER_COLUMNS)
             .eq("tournament_id", tournament_id).order("approved_at"),
             "admin_tournament_members",
         )
         data["members"] = _decorate_registration_rows(members)
+        ttl_cache_set("tournament_admin_data_v1684", data, 15)
         return data
 
     @app.context_processor
@@ -578,7 +592,7 @@ def register_routes(context):
         # V1.6.53 recolors these slots later, after the visible GĐ2 opponents are known.
         mine_availability_days=_landing_group_slots(mine,set())
 
-        match_rows,_=_safe_rows(db.table('tournament_matches').select('*').eq('tournament_id',tournament_id).or_(f'home_user_id.eq.{uid},away_user_id.eq.{uid}').order('created_at'),'tournament_landing_my_matches') if member else ([],None)
+        match_rows,_=_safe_rows(db.table('tournament_matches').select(TOURNAMENT_MATCH_COLUMNS).eq('tournament_id',tournament_id).or_(f'home_user_id.eq.{uid},away_user_id.eq.{uid}').order('created_at'),'tournament_landing_my_matches') if member else ([],None)
         # A pre-generated 32-match schedule stays secret until this HLV has been
         # publicly drawn, the entire ceremony completes, or the league opens.
         league_draw=_landing_setting(tournament_id,'league_draw_v2',{}) or {}
@@ -688,7 +702,7 @@ def register_routes(context):
             # Read four saved league fixtures directly, independent of the mixed
             # GĐ1/GĐ2 listing and its response size; never redraw opponents.
             league_matches,league_opponent_error=_safe_rows(
-                db.table('tournament_matches').select('*').eq('tournament_id',tournament_id)
+                db.table('tournament_matches').select(TOURNAMENT_MATCH_COLUMNS).eq('tournament_id',tournament_id)
                 .eq('stage_code','league').or_(f'home_user_id.eq.{uid},away_user_id.eq.{uid}')
                 .order('created_at'), 'tournament_lobby_four_league_fixtures',
             )
@@ -748,8 +762,8 @@ def register_routes(context):
         # Non-overlapping own slots remain blue.
         mine_availability_days=_landing_group_slots(mine,lobby_opponent_slot_set)
 
-        room_rows,_=_safe_rows(db.table('match_rooms').select('*').order('updated_at',desc=True).limit(160),'tournament_landing_center_rooms')
-        tournament_match_rows,_=_safe_rows(db.table('tournament_matches').select('*').eq('tournament_id',tournament_id),'tournament_landing_center_match_rows')
+        room_rows,_=_safe_rows(db.table('match_rooms').select('id,status,note,host_user_id,guest_user_id,host_team,guest_team,updated_at').order('updated_at',desc=True).limit(160),'tournament_landing_center_rooms')
+        tournament_match_rows,_=_safe_rows(db.table('tournament_matches').select(TOURNAMENT_MATCH_COLUMNS).eq('tournament_id',tournament_id),'tournament_landing_center_match_rows')
         match_map={str(x.get('id')):x for x in tournament_match_rows}
         busy=set(); active_room_statuses={'waiting_ready','playing','friendly_playing','waiting_result_confirm','waiting_confirm','disputed'}
         active_rooms,_=_safe_rows(db.table('match_rooms').select('host_user_id,guest_user_id,status').in_('status',list(active_room_statuses)).limit(500),'tournament_landing_busy_rooms')
@@ -818,14 +832,14 @@ def register_routes(context):
     def admin_tournament_lobby(tournament_id):
         """Read-only HLV perspective of the existing C1 lobby; never impersonates the member."""
         rows, error = _safe_rows(
-            db.table('tournaments').select('*').eq('id', tournament_id).limit(1),
+            db.table('tournaments').select(TOURNAMENT_COLUMNS).eq('id', tournament_id).limit(1),
             'admin_c1_lobby_tournament',
         )
         if error or not rows or rows[0].get('name') != 'CHAMPION LEAGUE ARENA':
             flash('Không tìm thấy giải C1 hoặc không đọc được dữ liệu giải.', 'warning')
             return redirect(url_for('admin') + '#c1-admin-gd2')
         members, member_error = _safe_rows(
-            db.table('tournament_members').select('*').eq('tournament_id', tournament_id)
+            db.table('tournament_members').select(TOURNAMENT_MEMBER_COLUMNS).eq('tournament_id', tournament_id)
             .eq('status', 'active').order('seed_no'), 'admin_c1_lobby_members',
         )
         if member_error:
@@ -883,7 +897,7 @@ def register_routes(context):
     def admin_tournament_league_opponent_wall(tournament_id):
         """Compact one-screen wall: every HLV and all 4 GĐ2 opponents at once."""
         tours, error = _safe_rows(
-            db.table('tournaments').select('*').eq('id', tournament_id).limit(1),
+            db.table('tournaments').select(TOURNAMENT_COLUMNS).eq('id', tournament_id).limit(1),
             'admin_league_wall_tournament',
         )
         if error or not tours or tours[0].get('name') != 'CHAMPION LEAGUE ARENA':
@@ -891,7 +905,7 @@ def register_routes(context):
             return redirect(url_for('admin') + '#c1-admin-gd2')
 
         members, member_error = _safe_rows(
-            db.table('tournament_members').select('*').eq('tournament_id', tournament_id)
+            db.table('tournament_members').select(TOURNAMENT_MEMBER_COLUMNS).eq('tournament_id', tournament_id)
             .eq('status', 'active').order('seed_no'),
             'admin_league_wall_members',
         )
@@ -914,7 +928,7 @@ def register_routes(context):
             row['display_name'] = row.get('display_name') or user.get('display_name') or user.get('username') or 'HLV'
 
         match_rows, match_error = _safe_rows(
-            db.table('tournament_matches').select('*').eq('tournament_id', tournament_id).eq('stage_code', 'league')
+            db.table('tournament_matches').select(TOURNAMENT_MATCH_COLUMNS).eq('tournament_id', tournament_id).eq('stage_code', 'league')
             .neq('status', 'cancelled').order('created_at'),
             'admin_league_wall_matches',
         )
@@ -1077,7 +1091,7 @@ def register_routes(context):
                     item["show_stage1_start_countdown"] = False
                 # Public main tournament standings (Stage 1 + League Phase) for the tournament landing page.
                 member_rows_full, _ = _safe_rows(
-                    db.table("tournament_members").select("*").eq("tournament_id", item.get("id")).eq("status", "active"),
+                    db.table("tournament_members").select(TOURNAMENT_MEMBER_COLUMNS).eq("tournament_id", item.get("id")).eq("status", "active"),
                     "tournament_public_ranking_members",
                 )
                 member_ids = [str(r.get("user_id")) for r in member_rows_full if r.get("user_id")]
@@ -1094,14 +1108,14 @@ def register_routes(context):
                 item["central_admin_players"] = {}
                 if can_admin_manage_tournament and member_ids:
                     reg_rows, _ = _safe_rows(
-                        db.table("tournament_registrations").select("*")
+                        db.table("tournament_registrations").select(TOURNAMENT_REG_COLUMNS)
                         .eq("tournament_id", item.get("id")).in_("user_id", member_ids),
                         "tournament_central_admin_profiles",
                     )
                     reg_map = {str(r.get("user_id")): r for r in reg_rows if r.get("user_id")}
                     member_map = {str(m.get("user_id")): m for m in member_rows_full if m.get("user_id")}
                     admin_match_rows, _ = _safe_rows(
-                        db.table("tournament_matches").select("*")
+                        db.table("tournament_matches").select(TOURNAMENT_MATCH_COLUMNS)
                         .eq("tournament_id", item.get("id")).order("created_at"),
                         "tournament_central_admin_matches",
                     )
@@ -1308,7 +1322,7 @@ def register_routes(context):
         user = current_user() or {}
         user_id = user.get("id")
         tournaments_found, error = _safe_rows(
-            db.table("tournaments").select("*").eq("id", tournament_id).limit(1),
+            db.table("tournaments").select(TOURNAMENT_COLUMNS).eq("id", tournament_id).limit(1),
             "tournament_register_lookup",
         )
         if error or not tournaments_found:
@@ -1550,9 +1564,9 @@ def register_routes(context):
         from openpyxl import Workbook
         from openpyxl.styles import Font, Alignment
 
-        regs, _ = _safe_rows(db.table("tournament_registrations").select("*").eq("tournament_id", tournament_id).order("registered_at"), "tournament_export_regs")
+        regs, _ = _safe_rows(db.table("tournament_registrations").select(TOURNAMENT_REG_COLUMNS).eq("tournament_id", tournament_id).order("registered_at"), "tournament_export_regs")
         regs = [_decorate_finance(row) for row in _decorate_registration_rows(regs)]
-        unmatched, _ = _safe_rows(db.table("tournament_fee_unmatched").select("*").eq("tournament_id", tournament_id).eq("status", "waiting").order("created_at"), "tournament_export_unmatched")
+        unmatched, _ = _safe_rows(db.table("tournament_fee_unmatched").select(TOURNAMENT_FEE_COLUMNS).eq("tournament_id", tournament_id).eq("status", "waiting").order("created_at"), "tournament_export_unmatched")
         tours, _ = _safe_rows(db.table("tournaments").select("name").eq("id", tournament_id).limit(1), "tournament_export_name")
         tour_name = (tours[0].get("name") if tours else "PES Arena") or "PES Arena"
 
@@ -1686,7 +1700,7 @@ def register_routes(context):
         # V1.4.76: link against ANY player account on the website, including pending accounts.
         user_id = str(request.form.get("user_id") or "").strip()
         fees, _ = _safe_rows(
-            db.table("tournament_fee_unmatched").select("*").eq("id", fee_id).limit(1),
+            db.table("tournament_fee_unmatched").select(TOURNAMENT_FEE_COLUMNS).eq("id", fee_id).limit(1),
             "fee_unmatched_lookup",
         )
         users, _ = _safe_rows(
@@ -1704,7 +1718,7 @@ def register_routes(context):
         now_value = now_iso()
 
         regs, _ = _safe_rows(
-            db.table("tournament_registrations").select("*")
+            db.table("tournament_registrations").select(TOURNAMENT_REG_COLUMNS)
             .eq("tournament_id", tournament_id).eq("user_id", user_id).limit(1),
             "fee_registration_lookup_by_user",
         )
@@ -1729,7 +1743,7 @@ def register_routes(context):
             reg = rows[0] if rows else None
             if not reg:
                 regs, _ = _safe_rows(
-                    db.table("tournament_registrations").select("*")
+                    db.table("tournament_registrations").select(TOURNAMENT_REG_COLUMNS)
                     .eq("tournament_id", tournament_id).eq("user_id", user_id).limit(1),
                     "fee_registration_reload",
                 )
@@ -1820,7 +1834,7 @@ def register_routes(context):
 
     def _review_registration(registration_id, new_status):
         rows, error = _safe_rows(
-            db.table("tournament_registrations").select("*").eq("id", registration_id).limit(1),
+            db.table("tournament_registrations").select(TOURNAMENT_REG_COLUMNS).eq("id", registration_id).limit(1),
             "admin_tournament_registration_lookup",
         )
         if error or not rows:
@@ -1879,7 +1893,7 @@ def register_routes(context):
     @admin_permission_required("system_features_manage")
     def admin_tournament_registration_cancel(registration_id):
         rows, error = _safe_rows(
-            db.table("tournament_registrations").select("*").eq("id", registration_id).limit(1),
+            db.table("tournament_registrations").select(TOURNAMENT_REG_COLUMNS).eq("id", registration_id).limit(1),
             "admin_tournament_registration_cancel_lookup",
         )
         if error or not rows:

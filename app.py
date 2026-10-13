@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.6.83"
+APP_VERSION = "V1.6.84"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -1696,7 +1696,7 @@ def list_admin_activity_logs(limit=150):
     try:
         result = execute_query(
             db.table("admin_activity_logs")
-            .select("*")
+            .select("id,admin_user_id,admin_name,action,target_type,target_id,target_label,details,ip_address,created_at")
             .order("created_at", desc=True)
             .limit(limit),
             "list_admin_activity_logs",
