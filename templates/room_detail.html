@@ -1109,7 +1109,7 @@ let roomViewRefreshInFlight = false;
 let roomActionRequestInFlight = false;
 
 function getRoomStateInterval() {
-    if (window.PESRealtime && pesRoomRealtimeTopic && PESRealtime.isRoomConnected(pesRoomRealtimeTopic)) return document.hidden ? 120000 : 30000;
+    if (window.PESRealtime && pesRoomRealtimeTopic && PESRealtime.isRoomConnected(pesRoomRealtimeTopic)) return document.hidden ? 300000 : 180000;
     if (document.hidden) return 90000;
     if (currentRoomStatus === "playing") return currentRoomUserIsGuest ? 6000 : 12000;
     if (currentRoomStatus === "friendly_playing") return 18000;
@@ -1825,8 +1825,8 @@ function startRoomChatPolling() {
     roomChatPoller = PESNet.createPoller({
         key: "room-chat:{{ room.id }}",
         task: loadRoomChat,
-        visibleInterval: function () { return (window.PESRealtime && pesRoomRealtimeTopic && PESRealtime.isRoomConnected(pesRoomRealtimeTopic)) ? 60000 : 6000; },
-        hiddenInterval: 120000,
+        visibleInterval: function () { return (window.PESRealtime && pesRoomRealtimeTopic && PESRealtime.isRoomConnected(pesRoomRealtimeTopic)) ? 180000 : 12000; },
+        hiddenInterval: 300000,
         runWhenHidden: false,
         immediate: true,
         jitter: 1000

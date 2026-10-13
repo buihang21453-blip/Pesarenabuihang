@@ -1,3 +1,10 @@
+# V1.6.88 — Realtime Final Optimization
+
+- Realtime-first optimization for Quick Match, Chat, Room, Invite, Announcement and Tournament Host Ready.
+- Polling retained only as sparse recovery fallback.
+- Added `ANNOUNCEMENT_CHANGED`.
+- No DB migration required.
+
 ## V1.6.86
 - Asset dual-source: GitHub/Vercel first, Supabase fallback for asset_url-managed images.
 - New local root: `/static/assets/`.

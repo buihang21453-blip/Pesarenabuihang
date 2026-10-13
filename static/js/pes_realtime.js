@@ -7,7 +7,7 @@
   const tournamentChannels = new Map();
   const USER_EVENTS = new Set(["INVITE_CHANGED", "MATCH_FOUND", "ROOM_ASSIGNED"]);
   const ROOM_EVENTS = new Set(["CHAT_CHANGED", "PLAYER_READY", "ROOM_CHANGED"]);
-  const GLOBAL_EVENTS = new Set(["GLOBAL_CHAT_CHANGED"]);
+  const GLOBAL_EVENTS = new Set(["GLOBAL_CHAT_CHANGED", "ANNOUNCEMENT_CHANGED"]);
   const TOURNAMENT_EVENTS = new Set(["TOURNAMENT_CHANGED", "HOST_READY_CHANGED"]);
 
   function dispatch(name, detail) {

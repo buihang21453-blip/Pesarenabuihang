@@ -13,7 +13,7 @@ import urllib.request
 _ALLOWED = {
     "user": {"INVITE_CHANGED", "MATCH_FOUND", "ROOM_ASSIGNED"},
     "room": {"CHAT_CHANGED", "PLAYER_READY", "ROOM_CHANGED"},
-    "global": {"GLOBAL_CHAT_CHANGED"},
+    "global": {"GLOBAL_CHAT_CHANGED", "ANNOUNCEMENT_CHANGED"},
     "tournament": {"TOURNAMENT_CHANGED", "HOST_READY_CHANGED"},
 }
 

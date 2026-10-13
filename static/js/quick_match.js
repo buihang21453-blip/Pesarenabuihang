@@ -120,21 +120,21 @@
     const data = await response.json().catch(function () { return {}; });
     if (!response.ok || !data.ok) {
       // A missing/stale server state must never leave the button spinning forever.
-      clearInterval(statusTimer);
+      stopStatusWatch();
       saveState(null);
       setButton('idle');
       return;
     }
     if (data.status === 'accepted' || data.status === 'room_filled') {
       saveState(null);
-      clearInterval(statusTimer);
+      stopStatusWatch();
       setButton('idle');
       document.dispatchEvent(new CustomEvent('pes:room-changed'));
       window.location.reload();
       return;
     }
     if (data.status !== 'pending') {
-      clearInterval(statusTimer);
+      stopStatusWatch();
       if (!data.continue_search) {
         saveState(null);
         document.dispatchEvent(new CustomEvent('pes:invite-changed'));
@@ -160,10 +160,35 @@
     }
   }
 
-  function watchState(state) {
-    clearInterval(statusTimer);
-    statusTimer = setInterval(function () { checkState(readState() || state); }, (window.PESRealtime && PESRealtime.isConnected()) ? 30000 : 5000);
+  function stopStatusWatch() {
+    if (statusTimer) clearTimeout(statusTimer);
+    statusTimer = null;
   }
+
+  function scheduleStatusCheck(state) {
+    stopStatusWatch();
+    const delay = (window.PESRealtime && PESRealtime.isConnected()) ? 120000 : 45000;
+    statusTimer = setTimeout(async function () {
+      await checkState(readState() || state);
+      const current = readState();
+      if (current && current.inviteId) scheduleStatusCheck(current);
+    }, delay);
+  }
+
+  function watchState(state) {
+    scheduleStatusCheck(state);
+  }
+
+  function refreshQuickMatchFromSignal() {
+    const current = readState();
+    if (current && current.inviteId) checkState(current);
+  }
+
+  document.addEventListener('pes:realtime-user-event', function (event) {
+    const name = String((event.detail || {}).event || '');
+    if (['INVITE_CHANGED', 'MATCH_FOUND', 'ROOM_ASSIGNED'].includes(name)) refreshQuickMatchFromSignal();
+  });
+  document.addEventListener('pes:realtime-resync', refreshQuickMatchFromSignal);
 
   document.addEventListener('click', function (event) {
     if (event.target.closest('[data-game-notice-close]')) closeNotice();

@@ -90,8 +90,20 @@ function loadGlobalChat() {
 
 window.addEventListener("DOMContentLoaded", function () {
     if (!window.PESNet) return loadGlobalChat();
-    PESNet.createPoller({key: "global-chat-page", task: loadGlobalChat, visibleInterval: 10000, hiddenInterval: 60000, runWhenHidden: false, immediate: true, jitter: 800});
+    PESNet.createPoller({
+        key: "global-chat-page",
+        task: loadGlobalChat,
+        visibleInterval: function () { return (window.PESRealtime && PESRealtime.isConnected()) ? 180000 : 45000; },
+        hiddenInterval: 300000,
+        runWhenHidden: false,
+        immediate: true,
+        jitter: 1500
+    });
 });
+document.addEventListener("pes:realtime-global-event", function (event) {
+    if (String((event.detail || {}).event || "") === "GLOBAL_CHAT_CHANGED") loadGlobalChat();
+});
+document.addEventListener("pes:realtime-resync", loadGlobalChat);
 setTimeout(function () {
     const box = document.getElementById("globalChatBox");
     if (box) box.scrollTop = box.scrollHeight;

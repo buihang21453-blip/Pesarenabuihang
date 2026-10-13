@@ -27,6 +27,7 @@ def register_routes(context):
         )
         announcement_id = created.data[0].get("id") if created.data else None
         log_admin_action("Đăng thông báo", "announcement", announcement_id, title[:40], message[:220])
+        publish_realtime("global", "lobby", "ANNOUNCEMENT_CHANGED", {"changed": True})
 
         flash("Đã đăng thông báo admin.", "success")
         return redirect_admin("system")
@@ -38,6 +39,7 @@ def register_routes(context):
     def admin_clear_announcement():
         db.table("admin_announcements").update({"is_active": False}).eq("is_active", True).execute()
         log_admin_action("Tắt thông báo", "announcement", details="Đã tắt toàn bộ thông báo đang hoạt động.")
+        publish_realtime("global", "lobby", "ANNOUNCEMENT_CHANGED", {"changed": True})
         flash("Đã tắt thông báo admin.", "success")
         return redirect_admin("system")
 
@@ -95,6 +97,7 @@ def register_routes(context):
         )
         announcement_id = created.data[0].get("id") if created.data else None
         log_admin_action("Đăng thông báo", "announcement", announcement_id, title, message)
+        publish_realtime("global", "lobby", "ANNOUNCEMENT_CHANGED", {"changed": True})
 
         return jsonify({"ok": True})
 

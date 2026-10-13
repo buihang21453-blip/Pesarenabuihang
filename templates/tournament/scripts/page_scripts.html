@@ -91,7 +91,7 @@
     }
   });
   // Fallback thưa: Realtime là đường chính, HTTP chỉ tự kiểm tra định kỳ để chống bỏ lỡ event.
-  window.setInterval(function(){if(!document.hidden)refreshAll();},90000);
+  window.setInterval(function(){if(!document.hidden)refreshAll();},300000);
   document.addEventListener('pes:realtime-resync',refreshAll);
   document.addEventListener('visibilitychange',function(){
     if(!document.hidden) refreshAll();

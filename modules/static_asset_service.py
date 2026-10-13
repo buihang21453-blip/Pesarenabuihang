@@ -1,4 +1,4 @@
-"""PES Arena V1.6.87 asset routing helpers.
+"""PES Arena V1.6.88 asset routing helpers.
 
 Policy: GitHub/Vercel static first, Supabase Storage fallback.
 The local tree mirrors Supabase namespaces under /static/assets.

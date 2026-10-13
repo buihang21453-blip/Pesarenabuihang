@@ -26,7 +26,7 @@
           <small class="small" data-host-ready-count>{{ ops.get('host_ready',[])|length }} Host đang rảnh</small>
           <script>(function(){var box=document.querySelector('[data-host-ready-list][data-tournament-id="{{ ot.id }}"]');if(!box)return;function refresh(){fetch('/api/tournaments/'+encodeURIComponent(box.dataset.tournamentId)+'/host-ready',{credentials:'same-origin',cache:'no-store'}).then(function(r){if(!r.ok)throw Error(r.status);return r.json();}).then(function(d){if(!d.ok)return;var target=box.querySelector('[data-host-ready-items]');target.textContent='';(d.hosts||[]).forEach(function(h){var chip=document.createElement('span');chip.className='td-host-chip';chip.textContent='🟢 '+h.display_name+' · '+h.region;target.appendChild(chip);});if(!d.count)target.textContent='Hiện chưa có Host nào đang rảnh.';box.querySelector('[data-host-ready-count]').textContent=d.count+' Host đang rảnh';}).catch(function(){});}refresh();
           if(window.PESRealtime&&PESRealtime.subscribeTournament&&box.dataset.tournamentTopic){PESRealtime.subscribeTournament(box.dataset.tournamentTopic,function(){refresh();});}
-          window.setInterval(function(){if(!document.hidden)refresh();},90000);
+          window.setInterval(function(){if(!document.hidden)refresh();},300000);
           document.addEventListener('pes:realtime-resync',refresh);})();</script>
         </section>
         <h3 style="margin:0 0 6px">3️⃣ Chia Pot & chọn CLB</h3>
