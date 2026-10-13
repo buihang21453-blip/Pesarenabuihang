@@ -1,3 +1,12 @@
+## V1.6.93 — Friendly Random Anti-Repeat
+
+- Giao hữu công khai: chống lặp đội trong 5 lượt random gần nhất.
+- Áp dụng cho Random cả 2 đội, Random Đội 1 và Random Đội 2.
+- Đội 1 và Đội 2 luôn khác nhau.
+- Khi đổi chế độ, lịch sử chống trùng được reset.
+- Với pool quá nhỏ (ví dụ 4 Sao), tự giải phóng lượt cũ nhất tối thiểu để random luôn hoạt động, thay vì treo/vòng lặp vô hạn.
+- Chỉ thay đổi JavaScript phía trình duyệt; không thêm Supabase query, Realtime message hay API request.
+
 # V1.6.90 — Admin Lazy Data Loading Phase 1
 
 ## Mục tiêu

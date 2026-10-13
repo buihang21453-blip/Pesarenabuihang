@@ -9,13 +9,64 @@
     nation_five_star:['Tây Ban Nha','Pháp','Brazil','Anh','Argentina','Bồ Đào Nha','Đức','Hà Lan']
   };
   const LABELS={premier_league:'Ngoại Hạng Anh',la_liga:'La Liga',five_star:'5 Sao',four_star:'4 Sao',club_five_star:'CLB 5★',nation_five_star:'Quốc Gia 5★'};
+  const HISTORY_ROUNDS=5;
   const root=document.querySelector('[data-friendly-randomizer]'); if(!root)return;
   const homeTeam=root.querySelector('[data-home-team]'),awayTeam=root.querySelector('[data-away-team]'),modeName=root.querySelector('[data-mode-name]');
   let activeMode='premier_league', pair=['',''];
+  let recentRounds=[];
+
   function randomIndex(max){if(window.crypto&&window.crypto.getRandomValues){const v=new Uint32Array(1);window.crypto.getRandomValues(v);return v[0]%max;}return Math.floor(Math.random()*max);}
-  function different(pool,other){if(pool.length<2)return pool[0]||'---';let value=pool[randomIndex(pool.length)];while(value===other)value=pool[randomIndex(pool.length)];return value;}
-  function drawBoth(){const pool=POOLS[activeMode];pair[0]=pool[randomIndex(pool.length)];pair[1]=different(pool,pair[0]);render();}
+  function pick(list){return list.length?list[randomIndex(list.length)]:'---';}
+  function blockedTeams(rounds){const blocked=new Set();rounds.forEach(round=>round.forEach(team=>blocked.add(team)));return blocked;}
+
+  // Prefer excluding every team seen in the previous 5 random actions. If a pool is
+  // too small to make that mathematically possible, release the oldest action(s)
+  // only until enough valid teams remain. Home and away are always different.
+  function candidates(pool, needed, additionallyBlocked){
+    let rounds=recentRounds.slice();
+    const extra=new Set(additionallyBlocked||[]);
+    while(true){
+      const blocked=blockedTeams(rounds); extra.forEach(team=>blocked.add(team));
+      const available=pool.filter(team=>!blocked.has(team));
+      if(available.length>=needed || rounds.length===0)return available;
+      rounds.shift();
+    }
+  }
+  function remember(teams){
+    const clean=Array.from(new Set(teams.filter(Boolean)));
+    if(!clean.length)return;
+    recentRounds.push(clean);
+    if(recentRounds.length>HISTORY_ROUNDS)recentRounds.shift();
+  }
+  function resetHistory(){recentRounds=[];}
+
+  function drawBoth(){
+    const pool=POOLS[activeMode]||[];
+    let available=candidates(pool,2,[]);
+    if(available.length<2)available=pool.slice();
+    pair[0]=pick(available);
+    const awayChoices=available.filter(team=>team!==pair[0]);
+    pair[1]=pick(awayChoices.length?awayChoices:pool.filter(team=>team!==pair[0]));
+    remember(pair);
+    render();
+  }
+  function drawOne(side){
+    const pool=POOLS[activeMode]||[];
+    const other=pair[side===0?1:0];
+    let available=candidates(pool,1,[other]);
+    if(!available.length)available=pool.filter(team=>team!==other);
+    pair[side]=pick(available);
+    remember([pair[side]]);
+    render();
+  }
   function render(){modeName.textContent=LABELS[activeMode]||'Giao hữu';homeTeam.textContent=pair[0]||'---';awayTeam.textContent=pair[1]||'---';}
-  root.addEventListener('click',function(e){const mode=e.target.closest('[data-friendly-mode]');if(mode){activeMode=mode.dataset.friendlyMode;root.querySelectorAll('[data-friendly-mode]').forEach(b=>b.classList.toggle('active',b===mode));drawBoth();return;}if(e.target.closest('[data-random-again]')){drawBoth();return;}if(e.target.closest('[data-random-home]')){pair[0]=different(POOLS[activeMode],pair[1]);render();return;}if(e.target.closest('[data-random-away]')){pair[1]=different(POOLS[activeMode],pair[0]);render();}});
+
+  root.addEventListener('click',function(e){
+    const mode=e.target.closest('[data-friendly-mode]');
+    if(mode){activeMode=mode.dataset.friendlyMode;resetHistory();root.querySelectorAll('[data-friendly-mode]').forEach(b=>b.classList.toggle('active',b===mode));drawBoth();return;}
+    if(e.target.closest('[data-random-again]')){drawBoth();return;}
+    if(e.target.closest('[data-random-home]')){drawOne(0);return;}
+    if(e.target.closest('[data-random-away]')){drawOne(1);return;}
+  });
   drawBoth();
 })();
