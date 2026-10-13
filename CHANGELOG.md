@@ -1,3 +1,26 @@
+# V1.6.90 — Admin Lazy Data Loading Phase 1
+
+## Mục tiêu
+- Giảm query Supabase và thời gian xử lý Vercel khi mở `/admin`.
+- Không thay đổi gameplay, Realtime, BXH/RPC hay Asset Router V1.6.89.
+
+## Thay đổi
+- `modules/admin_dashboard_routes.py`: nhận `?tab=...` và chỉ tải các dataset sâu khi đúng tab cần dùng.
+- Báo cáo trận đấu chỉ query lịch sử khi mở tab `match-report`.
+- Danh sách phòng đã hủy 300 dòng chỉ tải khi mở tab `rooms`.
+- Audit log chỉ tải khi Owner mở tab `logs`.
+- 8 migration probe chỉ chạy/cache khi mở tab `database`.
+- Rank/system/maintenance configuration chỉ đọc DB khi mở tab `system` hoặc `season` tương ứng.
+- `static/js/admin_dashboard.js`: khi đổi tab Admin, URL đồng bộ `?tab=<tab>#<tab>` để server tải đúng dữ liệu cần thiết.
+- `templates/admin.html`: giữ tab sau reload và filter báo cáo luôn giữ `tab=match-report`.
+- `app.py`: APP_VERSION -> V1.6.90.
+
+## Không thay đổi
+- Realtime V1.6.88.
+- Asset mapping/fallback V1.6.89.
+- Players/BXH RPC và các hotfix trước đó.
+- Cấu trúc database; không cần chạy SQL mới.
+
 # V1.6.89 — Asset Path Mapping Hotfix
 
 - Corrected main UI asset namespace from `v1.14.41/` to `v1/`.

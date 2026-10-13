@@ -23,6 +23,14 @@
     buttons.forEach(function (button) {
         button.addEventListener('click', function () {
             const tabName = button.dataset.adminTab;
+            const url = new URL(window.location.href);
+            const loadedTab = url.searchParams.get('tab') || 'overview';
+            if (loadedTab !== tabName) {
+                url.searchParams.set('tab', tabName);
+                url.hash = tabName;
+                window.location.assign(url.toString());
+                return;
+            }
             window.location.hash = tabName;
             activateAdminTab(tabName);
         });
@@ -45,7 +53,7 @@
     });
 
     window.addEventListener('hashchange', function () {
-        activateAdminTab(window.location.hash.replace('#', ''));
+        activateAdminTab(window.location.hash.replace('#', '') || (document.getElementById('adminInitialTab') || {}).dataset?.adminInitialTab || 'overview');
     });
     activateAdminTab(window.location.hash.replace('#', ''));
 

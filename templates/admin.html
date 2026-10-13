@@ -19,6 +19,7 @@
 .stage1-status-danger{color:#ff7568;font-weight:900}
 </style>
 {% block content %}
+<div id="adminInitialTab" data-admin-initial-tab="{{ active_admin_tab|default('overview') }}" hidden></div>
 
 <div class="admin-dashboard-heading">
     <div>
@@ -455,7 +456,7 @@
 
         <nav class="admin-report-filter" aria-label="Khoảng thời gian báo cáo">
             {% for key, label in match_report.range_labels.items() %}
-            <a class="{% if match_report.range == key %}active{% endif %}" href="{{ url_for('admin', match_report_range=key) }}#match-report">{{ label }}</a>
+            <a class="{% if match_report.range == key %}active{% endif %}" href="{{ url_for('admin', tab='match-report', match_report_range=key) }}#match-report">{{ label }}</a>
             {% endfor %}
         </nav>
 

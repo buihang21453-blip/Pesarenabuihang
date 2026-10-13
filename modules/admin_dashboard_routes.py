@@ -22,6 +22,17 @@ def register_routes(context):
                 app.logger.exception("Admin load failed [%s]: %s", label, exc)
                 return default
 
+        # V1.6.90: load expensive Admin-only datasets only when their tab is requested.
+        # The main dashboard metrics remain available on every tab; deep datasets are lazy.
+        allowed_admin_tabs = {
+            "overview", "passwords", "users", "rooms", "match-report", "matches",
+            "test-data", "season", "tournaments", "tournament-test", "database",
+            "system", "room-design", "economy", "rp-tools", "logs", "review",
+        }
+        active_admin_tab = str(request.args.get("tab") or "overview").strip().lower()
+        if active_admin_tab not in allowed_admin_tabs:
+            active_admin_tab = "overview"
+
         # V1.6.84: /admin is a read page. Do not perform per-user room cleanup here.
         # Push the visible limits/status filters into Supabase instead of downloading
         # the complete matches/rooms tables before slicing them in the template.
@@ -33,8 +44,9 @@ def register_routes(context):
         active_rooms = admin_safe_load(
             "active_rooms", lambda: list_rooms(statuses=active_room_statuses, limit=240), []
         )
-        cancelled_rooms = admin_safe_load(
-            "cancelled_rooms", lambda: list_rooms(status="cancelled", limit=300), []
+        cancelled_rooms = (
+            admin_safe_load("cancelled_rooms", lambda: list_rooms(status="cancelled", limit=300), [])
+            if active_admin_tab == "rooms" else []
         )
         all_rooms = recent_rooms
 
@@ -93,7 +105,10 @@ def register_routes(context):
             result = execute_query(query, "admin_match_report", attempts=2)
             return [dict(row) for row in (result.data or [])]
 
-        report_source_matches = admin_safe_load("match_report_rows", _load_report_matches, [])
+        report_source_matches = (
+            admin_safe_load("match_report_rows", _load_report_matches, [])
+            if active_admin_tab == "match-report" else []
+        )
 
         def _match_vn_date(match):
             raw = (match or {}).get("created_at")
@@ -279,7 +294,7 @@ def register_routes(context):
 
         audit_logs = (
             admin_safe_load("audit_logs", list_admin_activity_logs, [])
-            if is_owner_user(current_user()) else []
+            if active_admin_tab == "logs" and is_owner_user(current_user()) else []
         )
         duplicate_ip_groups = admin_safe_load(
             "duplicate_ips", lambda: build_duplicate_ip_groups(admin_users), []
@@ -303,7 +318,7 @@ def register_routes(context):
             except Exception as exc:
                 return False, str(exc)
 
-        migration_checks = ttl_cache_get("admin_migration_checks_v1684")
+        migration_checks = ttl_cache_get("admin_migration_checks_v1684") if active_admin_tab == "database" else []
         migration_specs = [
             ("V1.4.30", "02_GIAI_DAU_MODULE_DAY_DU_V1.4.30.sql", "Tournament core", lambda: db.table("tournaments").select("id").limit(1)),
             ("V1.4.34", "04_DANG_KY_HOST_KHU_VUC_THANH_TOAN_V1.4.34.sql", "Đăng ký Host/Khu vực/Thanh toán", lambda: db.table("tournament_registrations").select("has_host,host_region,payment_status").limit(1)),
@@ -314,7 +329,7 @@ def register_routes(context):
             ("V1.4.64", "SQL_CU/SQL_V1.4.64_LE_PHI_GIAI.sql", "Tiền chờ ghép tài khoản", lambda: db.table("tournament_fee_unmatched").select("id").limit(1)),
             ("V1.4.65", "SQL_V1.4.65_MIGRATION_TRACKER.sql", "SQL Migration Tracker", lambda: db.table("schema_migrations").select("migration_key").limit(1)),
         ]
-        if migration_checks is None:
+        if active_admin_tab == "database" and migration_checks is None:
             migration_checks = []
             for version, filename, title, factory in migration_specs:
                 ok, error = _probe_sql(filename, factory)
@@ -332,6 +347,7 @@ def register_routes(context):
 
         return render_template(
             "admin.html",
+            active_admin_tab=active_admin_tab,
             admin_users=admin_users,
             players=players,
             admins=admins,
@@ -365,12 +381,12 @@ def register_routes(context):
             admin_permission_groups=ADMIN_PERMISSION_GROUPS,
             admin_permission_labels=ADMIN_PERMISSION_LABELS,
             current_admin_permissions=_admin_permissions(current_user()),
-            rank_tier_weights=admin_safe_load("rank_tier_weights", lambda: load_rank_tier_weights(force=True), RANK_CLUB_TIER_WEIGHTS),
+            rank_tier_weights=(admin_safe_load("rank_tier_weights", lambda: load_rank_tier_weights(force=True), RANK_CLUB_TIER_WEIGHTS) if active_admin_tab in {"system", "season"} else RANK_CLUB_TIER_WEIGHTS),
             rank_tier_order=CLUB_TIER_ORDER,
-            rank_tier_ranges=admin_safe_load("rank_tier_ranges", load_rank_ranges, DEFAULT_RANKS),
-            system_features=admin_safe_load("system_features", get_system_features, dict(SYSTEM_FEATURE_DEFAULTS)),
-            maintenance_config=admin_safe_load("maintenance_config", get_maintenance_config, _maintenance_default_config()),
-            maintenance_status=admin_safe_load("maintenance_status", get_maintenance_status, {"closed": False, "countdown": None}),
+            rank_tier_ranges=(admin_safe_load("rank_tier_ranges", load_rank_ranges, DEFAULT_RANKS) if active_admin_tab in {"system", "season"} else DEFAULT_RANKS),
+            system_features=(admin_safe_load("system_features", get_system_features, dict(SYSTEM_FEATURE_DEFAULTS)) if active_admin_tab == "system" else dict(SYSTEM_FEATURE_DEFAULTS)),
+            maintenance_config=(admin_safe_load("maintenance_config", get_maintenance_config, _maintenance_default_config()) if active_admin_tab == "system" else _maintenance_default_config()),
+            maintenance_status=(admin_safe_load("maintenance_status", get_maintenance_status, {"closed": False, "countdown": None}) if active_admin_tab == "system" else {"closed": False, "countdown": None}),
             match_report=match_report,
             match_report_daily=match_report_daily,
         )
