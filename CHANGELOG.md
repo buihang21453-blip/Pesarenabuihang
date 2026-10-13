@@ -1302,3 +1302,10 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 - Room fallback dựa trên trạng thái chính xác của room channel, không chỉ user channel.
 - Giảm heartbeat phát sinh do reconnect bằng throttle 5 phút.
 - Giữ HTTP API/Database làm source of truth; Realtime failure không chặn gameplay.
+
+## V1.6.83
+- DB-side Players pagination/search/status via backend-only RPC.
+- DB-side current leaderboard eligibility/ranking/search/rank-filter/pagination via backend-only RPC.
+- Safe V1.6.82 fallback when RPC migration is unavailable.
+- Added read indexes for hot Players/BXH paths.
+- No asset/storage changes.

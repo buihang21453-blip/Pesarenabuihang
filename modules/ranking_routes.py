@@ -25,6 +25,71 @@ def register_routes(context):
             requested_sn = current_sn
         viewing_historical_season = requested_sn != current_sn
 
+        # V1.6.83: current season uses backend-only Supabase RPC so eligibility,
+        # ranking and pagination happen before rows cross the network. Historical
+        # seasons keep the frozen snapshot path below.
+        if not viewing_historical_season:
+            try:
+                page = max(1, int(request.args.get("page") or 1))
+            except (TypeError, ValueError):
+                page = 1
+            page_size = 100
+            query_raw = (request.args.get("q") or "").strip()
+            rank_filter = (request.args.get("rank") or "all").strip()
+            invisible_ids = get_invisible_player_ids()
+            from modules import db_page_service
+            rpc_data = db_page_service.leaderboard_page(
+                season_number=requested_sn, page=page, page_size=page_size, query=query_raw,
+                rank_filter=rank_filter, viewer=user, invisible_ids=invisible_ids,
+                placement_matches=int(current_season.get("placement_matches") or 5),
+                inactive_days=RANKING_INACTIVE_HIDE_DAYS,
+            )
+            if rpc_data is not None:
+                player_rows = [dict(x) for x in (rpc_data.get("rows") or [])]
+                total_players = int(rpc_data.get("total") or 0)
+                total_pages = max(1, (total_players + page_size - 1) // page_size)
+                current_player = dict(rpc_data.get("current_player") or {}) or None
+                current_ranking_status = rpc_data.get("current_status")
+                current_position = current_player.get("position") if current_player else None
+
+                # Cosmetics are now queried only for rows actually rendered.
+                decorate_rows = list(player_rows)
+                if current_player and all(str(x.get("id")) != str(current_player.get("id")) for x in decorate_rows):
+                    decorate_rows.append(current_player)
+                try:
+                    avatar_frame_map = profile_equipment_service.build_avatar_frame_map(decorate_rows)
+                    name_style_map = profile_equipment_service.build_name_style_map(decorate_rows)
+                    profile_badge_map = profile_equipment_service.build_profile_badge_map(decorate_rows)
+                except Exception:
+                    avatar_frame_map={}; name_style_map={}; profile_badge_map={}
+                for player in decorate_rows:
+                    uid=str(player.get("id")); wins=int(player.get("wins") or 0); draws=int(player.get("draws") or 0); losses=int(player.get("losses") or 0)
+                    total=int(player.get("total_matches") or (wins+draws+losses)); player["total_matches"]=total
+                    player["winrate"]=round((wins/total)*100,1) if total else 0
+                    player["record_text"]=f"{wins}T • {draws}H • {losses}B"
+                    player["recent_form"]=list(player.get("recent_form") or [])[:5]
+                    player["rank_info"]=get_player_rank_info(player, player.get("position"))
+                    player["avatar_frame"]=avatar_frame_map.get(uid); player["name_style"]=name_style_map.get(uid); player["profile_badge"]=profile_badge_map.get(uid)
+                    metadata=(player.get("name_style") or {}).get("metadata") if isinstance(player.get("name_style"),dict) else {}
+                    player["name_style_class"]=str((metadata or {}).get("css_class") or "").strip()
+
+                podium_players = player_rows[:3] if page == 1 and not query_raw and rank_filter == "all" else []
+                if not podium_players:
+                    podium_rpc = db_page_service.leaderboard_page(season_number=requested_sn,page=1,page_size=3,query="",rank_filter="all",viewer=user,invisible_ids=invisible_ids,placement_matches=int(current_season.get("placement_matches") or 5),inactive_days=RANKING_INACTIVE_HIDE_DAYS)
+                    podium_players = [dict(x) for x in ((podium_rpc or {}).get("rows") or [])]
+                    for p in podium_players: p["rank_info"] = get_player_rank_info(p, p.get("position")); p["name_style_class"] = ""
+
+                seasons=get_season_history(50); known={int(x.get("season_number") or 0) for x in seasons}
+                if current_sn not in known: seasons.insert(0,current_season)
+                seasons.sort(key=lambda x:int(x.get("season_number") or 0),reverse=True)
+                template_name="ranking.html" if user else "public_ranking.html"
+                return render_template(template_name, players=player_rows, podium_players=podium_players, current_player=current_player,
+                    current_position=current_position,current_ranking_status=current_ranking_status,
+                    ranking_qualify_matches=int(current_season.get("placement_matches") or 5),
+                    current_rank_season=current_season,selected_rank_season=current_season,selected_season_number=requested_sn,
+                    rank_seasons=seasons,viewing_historical_season=False,ranking_inactive_hide_days=RANKING_INACTIVE_HIDE_DAYS,
+                    q=query_raw,rank_filter=rank_filter,page=page,total_pages=total_pages,total_players=total_players)
+
         try:
             all_player_rows = list_players()
         except Exception as exc:

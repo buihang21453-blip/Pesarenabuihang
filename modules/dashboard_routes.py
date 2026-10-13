@@ -149,58 +149,73 @@ def register_routes(context):
     @app.route("/players")
     @login_required
     def players():
-        player_rows = invite_visible_players(current_user(), include_admin=False, force_invisible_refresh=True)
-        rooms = list_rooms()
-        activity_map = build_player_activity_map(rooms=rooms)
-        solo_room_user_ids = {
-            str(room.get("host_user_id"))
-            for room in rooms
-            if is_solo_waiting_room(room, room.get("host_user_id"))
-        }
         viewer = current_user()
-        viewer_room = active_room_for_user(viewer.get("id")) if viewer else None
-        viewer_can_invite = bool(
-            viewer
-            and not active_match_for_user(viewer.get("id"))
-            and (not viewer_room or is_solo_waiting_room(viewer_room, viewer.get("id")))
-        )
-        query = (request.args.get("q") or "").strip().casefold()
+        query_raw = (request.args.get("q") or "").strip()
         status_filter = (request.args.get("status") or "all").strip()
+        try:
+            page = max(1, int(request.args.get("page") or 1))
+        except (TypeError, ValueError):
+            page = 1
+        page_size = 30
+        invisible_ids = get_invisible_player_ids(force=True)
 
-        for player in player_rows:
-            if not player.get("is_online"):
-                status = {"code": "offline", "label": "Offline"}
-            else:
-                status = activity_map.get(player.get("id"), {"code": "ready", "label": "Sẵn sàng"})
-            player["activity_code"] = status["code"]
-            player["activity_label"] = status["label"]
-            player["is_busy"] = status["code"] not in {"ready", "offline"}
-            player["can_receive_invite"] = bool(
-                player.get("is_online")
-                and (status["code"] == "ready" or str(player.get("id")) in solo_room_user_ids)
-            )
-            total = calculated_total_matches(player)
-            player["winrate"] = round((int(player.get("wins", 0) or 0) / total) * 100, 1) if total else 0
-            player["last_seen_display"] = format_vn_datetime(player.get("last_seen_at"))
-
-        viewer_is_admin = is_admin_user(viewer)
-        if query:
-            player_rows = [
-                player for player in player_rows
-                if query in str(player.get("display_name") or "").casefold()
-                or (viewer_is_admin and query in str(player.get("username") or "").casefold())
-            ]
-        if status_filter != "all":
-            player_rows = [player for player in player_rows if player.get("activity_code") == status_filter]
-
-        status_order = {"ready": 0, "in_room": 1, "waiting_confirm": 2, "playing": 3, "offline": 4}
-        player_rows.sort(key=lambda p: (status_order.get(p.get("activity_code"), 9), _player_ranking_sort_key(p)))
-        return render_template(
-            "players.html",
-            players=player_rows,
-            q=request.args.get("q", ""),
-            status_filter=status_filter,
-            viewer_can_invite=viewer_can_invite,
-            viewer_is_admin=viewer_is_admin,
+        from modules import db_page_service
+        rpc_data = db_page_service.players_page(
+            page=page, page_size=page_size, query=query_raw, status=status_filter,
+            viewer=viewer, invisible_ids=invisible_ids, online_timeout_seconds=ONLINE_TIMEOUT_SECONDS,
         )
 
+        if rpc_data is not None:
+            player_rows = [dict(x) for x in (rpc_data.get("rows") or [])]
+            total_players = int(rpc_data.get("total") or 0)
+            page = int(rpc_data.get("page") or page)
+            # Only decorate the visible page, instead of every account in the database.
+            try:
+                avatar_frame_map = profile_equipment_service.build_avatar_frame_map(player_rows)
+                name_style_map = profile_equipment_service.build_name_style_map(player_rows)
+                profile_badge_map = profile_equipment_service.build_profile_badge_map(player_rows)
+            except Exception:
+                avatar_frame_map = {}; name_style_map = {}; profile_badge_map = {}
+            for player in player_rows:
+                uid = str(player.get("id"))
+                player["is_online"] = bool(player.get("online_now"))
+                player["is_busy"] = player.get("activity_code") not in {"ready", "offline"}
+                player["can_receive_invite"] = bool(player.get("is_online") and (player.get("activity_code") == "ready" or player.get("solo_waiting")))
+                total = calculated_total_matches(player)
+                player["winrate"] = round((int(player.get("wins", 0) or 0) / total) * 100, 1) if total else 0
+                player["last_seen_display"] = format_vn_datetime(player.get("last_seen_at"))
+                player["rank_info"] = get_player_rank_info(player, None)
+                player["avatar_frame"] = avatar_frame_map.get(uid)
+                player["name_style"] = name_style_map.get(uid)
+                player["profile_badge"] = profile_badge_map.get(uid)
+                metadata = (player.get("name_style") or {}).get("metadata") if isinstance(player.get("name_style"), dict) else {}
+                player["name_style_class"] = str((metadata or {}).get("css_class") or "").strip()
+        else:
+            # Safe compatibility fallback until SQL_V1.6.83_PLAYERS_BXH_RPC.sql is installed.
+            player_rows = invite_visible_players(viewer, include_admin=False, force_invisible_refresh=True)
+            rooms = list_rooms()
+            activity_map = build_player_activity_map(rooms=rooms)
+            solo_room_user_ids = {str(r.get("host_user_id")) for r in rooms if is_solo_waiting_room(r, r.get("host_user_id"))}
+            for player in player_rows:
+                status = {"code": "offline", "label": "Offline"} if not player.get("is_online") else activity_map.get(player.get("id"), {"code": "ready", "label": "Sẵn sàng"})
+                player["activity_code"] = status["code"]; player["activity_label"] = status["label"]
+                player["is_busy"] = status["code"] not in {"ready", "offline"}
+                player["can_receive_invite"] = bool(player.get("is_online") and (status["code"] == "ready" or str(player.get("id")) in solo_room_user_ids))
+                total = calculated_total_matches(player); player["winrate"] = round((int(player.get("wins",0) or 0)/total)*100,1) if total else 0
+                player["last_seen_display"] = format_vn_datetime(player.get("last_seen_at"))
+            viewer_is_admin = is_admin_user(viewer)
+            q = query_raw.casefold()
+            if q:
+                player_rows = [p for p in player_rows if q in str(p.get("display_name") or "").casefold() or (viewer_is_admin and q in str(p.get("username") or "").casefold())]
+            if status_filter != "all": player_rows = [p for p in player_rows if p.get("activity_code") == status_filter]
+            status_order={"ready":0,"in_room":1,"waiting_confirm":2,"playing":3,"offline":4}
+            player_rows.sort(key=lambda p:(status_order.get(p.get("activity_code"),9),_player_ranking_sort_key(p)))
+            total_players=len(player_rows); lo=(page-1)*page_size; player_rows=player_rows[lo:lo+page_size]
+
+        viewer_room = active_room_for_user(viewer.get("id")) if viewer else None
+        viewer_can_invite = bool(viewer and not active_match_for_user(viewer.get("id")) and (not viewer_room or is_solo_waiting_room(viewer_room, viewer.get("id"))))
+        total_pages = max(1, (total_players + page_size - 1) // page_size)
+        if page > total_pages: page = total_pages
+        return render_template("players.html", players=player_rows, q=query_raw, status_filter=status_filter,
+            viewer_can_invite=viewer_can_invite, viewer_is_admin=is_admin_user(viewer),
+            page=page, total_pages=total_pages, total_players=total_players)

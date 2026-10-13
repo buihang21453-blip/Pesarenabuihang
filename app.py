@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.6.82"
+APP_VERSION = "V1.6.83"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -2860,6 +2860,8 @@ from modules.room_api_routes import register_routes as _register_room_api_routes
 from modules.auth_routes import register_routes as _register_auth_routes
 from modules.chat_routes import register_routes as _register_chat_routes
 from modules.announcement_routes import register_routes as _register_announcement_routes
+from modules import db_page_service as _db_page_service
+_db_page_service.configure(globals())
 from modules.dashboard_routes import register_routes as _register_dashboard_routes
 from modules.ranking_routes import register_routes as _register_ranking_routes
 from modules.invite_routes import register_routes as _register_invite_routes

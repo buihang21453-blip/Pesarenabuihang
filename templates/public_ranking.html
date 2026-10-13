@@ -67,16 +67,17 @@
     <div class="ranking-showcase">
         <div class="podium-stage podium-stage-cups podium-stage-reference">
             <div class="podium-reference-wrap">
+                {% set pp = podium_players if podium_players is defined and podium_players else players %}
                 <img class="podium-reference-image" src="{{ asset_url('podium_top3_reference.webp') }}" alt="Top 3 podium cups">
                 <div class="podium-reference-names">
                     <div class="podium-name-slot podium-name-slot-second">
-                        <span class="podium-name-engrave {{ players[1].name_style_class or '' if players|length > 1 else '' }}">{{ players[1].display_name if players|length > 1 else '---' }}</span>
+                        <span class="podium-name-engrave {{ pp[1].name_style_class or '' if players|length > 1 else '' }}">{{ pp[1].display_name if players|length > 1 else '---' }}</span>
                     </div>
                     <div class="podium-name-slot podium-name-slot-first">
-                        <span class="podium-name-engrave {{ players[0].name_style_class or '' if players|length > 0 else '' }}">{{ players[0].display_name if players|length > 0 else '---' }}</span>
+                        <span class="podium-name-engrave {{ pp[0].name_style_class or '' if players|length > 0 else '' }}">{{ pp[0].display_name if players|length > 0 else '---' }}</span>
                     </div>
                     <div class="podium-name-slot podium-name-slot-third">
-                        <span class="podium-name-engrave {{ players[2].name_style_class or '' if players|length > 2 else '' }}">{{ players[2].display_name if players|length > 2 else '---' }}</span>
+                        <span class="podium-name-engrave {{ pp[2].name_style_class or '' if players|length > 2 else '' }}">{{ pp[2].display_name if players|length > 2 else '---' }}</span>
                     </div>
                 </div>
             </div>
