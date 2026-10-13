@@ -345,9 +345,22 @@ def register_routes(context):
             "missing": sum(1 for m in migration_checks if not m["ok"]),
         }
 
+        # V1.6.99: only the overview needs /friendly traffic. One Vercel API call
+        # returns both lifetime visitors and pageviews; cache is handled by the service.
+        if active_admin_tab == "overview":
+            try:
+                from modules.vercel_analytics_service import get_friendly_analytics
+                friendly_analytics = get_friendly_analytics("/friendly")
+            except Exception as exc:
+                app.logger.exception("Friendly analytics load failed: %s", exc)
+                friendly_analytics = {"ok": False, "visitors": None, "pageviews": None, "error": str(exc)}
+        else:
+            friendly_analytics = {"ok": False, "visitors": None, "pageviews": None, "error": ""}
+
         return render_template(
             "admin.html",
             active_admin_tab=active_admin_tab,
+            friendly_analytics=friendly_analytics,
             admin_users=admin_users,
             players=players,
             admins=admins,

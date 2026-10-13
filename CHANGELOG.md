@@ -1439,3 +1439,10 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 - Preserved the CTA position directly below the PES logo and above the Championship Ranking subtitle.
 - Preserved V1.6.97 friendly mode icon consistency and all random/anti-repeat logic.
 - No database, Supabase, Realtime, matchmaking, ranking, room, or gameplay changes.
+
+## V1.6.99 — Friendly Admin Analytics
+- Thêm Vercel Web Analytics tracking cho `/friendly`.
+- Admin Overview hiển thị Người truy cập + Lượt mở trang.
+- Dùng official Vercel Web Analytics `visits/count`, filter `requestPath eq '/friendly'`.
+- Cache kết quả 5 phút; không polling, không Supabase write.
+- Thêm `modules/vercel_analytics_service.py` và tài liệu cấu hình env.

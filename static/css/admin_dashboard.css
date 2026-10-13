@@ -79,3 +79,12 @@ body[data-page="admin"] .admin-module-frame{display:block;width:100%;min-height:
 .admin-review-actions{display:flex;gap:8px;flex-wrap:wrap}@media(max-width:850px){.admin-functional-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.admin-menu-group{min-width:0}.c1-stage-console .c1-phase-nav{grid-template-columns:1fr}.admin-review-item{grid-template-columns:1fr}}
 
 .admin-review-item .admin-review-check{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;gap:9px;color:#f1ca68}.admin-review-check input{width:17px;height:17px;accent-color:#d6a744}
+
+/* V1.6.99 - /friendly Vercel Web Analytics summary */
+.friendly-analytics-panel{margin-top:14px}
+.friendly-analytics-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.friendly-analytics-metrics>div{padding:16px 18px;border:1px solid rgba(244,196,48,.22);border-radius:14px;background:linear-gradient(135deg,rgba(244,196,48,.08),rgba(18,30,58,.28));display:flex;align-items:center;justify-content:space-between;gap:16px}
+.friendly-analytics-metrics span{font-size:14px;color:var(--muted,#9aa8bd)}
+.friendly-analytics-metrics strong{font-size:28px;line-height:1;color:#f4c430}
+.friendly-analytics-note{margin:10px 0 0;color:#d6b75b}
+@media(max-width:640px){.friendly-analytics-metrics{grid-template-columns:1fr}.friendly-analytics-metrics strong{font-size:24px}}

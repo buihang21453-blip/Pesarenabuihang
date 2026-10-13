@@ -49,6 +49,21 @@
     </article>
 </section>
 
+{% if active_admin_tab|default('overview') == 'overview' %}
+<section class="panel friendly-analytics-panel" aria-label="Thống kê Giao hữu">
+    <div class="admin-section-heading">
+        <div><h2>🎮 Giao hữu</h2><p class="small">Thống kê truy cập <code>/friendly</code> từ Vercel Web Analytics.</p></div>
+    </div>
+    <div class="friendly-analytics-metrics">
+        <div><span>Người truy cập</span><strong>{{ friendly_analytics.visitors if friendly_analytics and friendly_analytics.ok else '—' }}</strong></div>
+        <div><span>Lượt mở trang</span><strong>{{ friendly_analytics.pageviews if friendly_analytics and friendly_analytics.ok else '—' }}</strong></div>
+    </div>
+    {% if friendly_analytics and not friendly_analytics.ok %}
+    <p class="small friendly-analytics-note">Chưa có dữ liệu. Hãy bật Vercel Web Analytics và cấu hình token cho Admin.</p>
+    {% endif %}
+</section>
+{% endif %}
+
 {% include "admin_parts/function_menu.html" %}
 
 <section class="admin-tab-panel" data-admin-panel="overview">
