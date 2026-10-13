@@ -1431,3 +1431,11 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 - Tăng tương phản logo Premier League bằng nền sáng mờ, viền và shadow thống nhất.
 - Logo La Liga, sao 5/4, CLB và Quốc Gia dùng cùng hệ kích thước/căn giữa.
 - Không thay đổi logic random, chống trùng 5 lượt, DB, Supabase hoặc Realtime.
+
+## V1.6.98 - Friendly Login CTA CSS Fix
+- Fixed the large `🎮 GIAO HỮU — RANDOM ĐỘI` login CTA not receiving its styles.
+- Root cause: the CTA `<style>` block was placed after `{% endblock %}` in a child template that extends `base.html`; Jinja does not render that trailing child content.
+- Moved CTA styles into `static/style.css`, which is loaded by `base.html` on the login page.
+- Preserved the CTA position directly below the PES logo and above the Championship Ranking subtitle.
+- Preserved V1.6.97 friendly mode icon consistency and all random/anti-repeat logic.
+- No database, Supabase, Realtime, matchmaking, ranking, room, or gameplay changes.
