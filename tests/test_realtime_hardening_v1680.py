@@ -4,7 +4,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def read(path): return (ROOT / path).read_text(encoding='utf-8')
 
 def test_version_and_realtime_allowlists():
-    assert 'APP_VERSION = "V1.6.80"' in read('app.py')
+    assert 'APP_VERSION = "V1.6.81"' in read('app.py')
     server = read('modules/realtime_events.py')
     js = read('static/js/pes_realtime.js')
     for event in ['INVITE_CHANGED','MATCH_FOUND','ROOM_ASSIGNED','CHAT_CHANGED','PLAYER_READY','ROOM_CHANGED']:

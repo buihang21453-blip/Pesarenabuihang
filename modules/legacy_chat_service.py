@@ -310,6 +310,11 @@ def create_chat_message(user_id, message, scope="global", room_id=None):
             publish_realtime("room", room_id, "CHAT_CHANGED", {"changed": True})
         except Exception as exc:
             print(f"room chat realtime warning: {exc}")
+    elif scope == "global":
+        try:
+            publish_realtime("global", "lobby", "GLOBAL_CHAT_CHANGED", {"changed": True})
+        except Exception as exc:
+            print(f"global chat realtime warning: {exc}")
 
     return True, ""
 

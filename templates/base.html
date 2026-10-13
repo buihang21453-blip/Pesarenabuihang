@@ -34,7 +34,8 @@
         "url": realtime_config.url,
         "key": realtime_config.key,
         "userTopic": realtime_user_topic,
-        "presenceKey": realtime_presence_key
+        "presenceKey": realtime_presence_key,
+        "globalTopic": realtime_global_topic
     }|tojson }};
     </script>
     <script src="{{ static_asset('js/pes_realtime.js') }}" defer></script>
@@ -663,14 +664,21 @@ function startLobbyChatPolling() {
     lobbyChatPoller = PESNet.createPoller({
         key: "lobby-chat",
         task: loadBottomChatSmart,
-        visibleInterval: 45000,
-        hiddenInterval: 180000,
+        visibleInterval: function () { return (window.PESRealtime && PESRealtime.isConnected()) ? 180000 : 45000; },
+        hiddenInterval: 300000,
         runWhenHidden: false,
         immediate: true,
         jitter: 2000
     });
     return lobbyChatPoller;
 }
+
+document.addEventListener("pes:realtime-global-event", function (event) {
+    const name = String((event.detail || {}).event || "");
+    if (name !== "GLOBAL_CHAT_CHANGED") return;
+    if (isLobbyChatOpen) loadBottomChatSmart();
+    else checkLobbyChatUnread();
+});
 
 function stopLobbyChatPolling() {
     if (lobbyChatPoller && typeof lobbyChatPoller.stop === "function") {

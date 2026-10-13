@@ -1,4 +1,4 @@
-"""PES Arena Realtime signalling (V1.6.80 production hardening).
+"""PES Arena Realtime signalling (V1.6.81 production hardening).
 
 Realtime is a wake-up signal only. It never carries authoritative game state.
 Opaque HMAC topics reduce topic guessing; Flask APIs + database remain the
@@ -13,6 +13,8 @@ import urllib.request
 _ALLOWED = {
     "user": {"INVITE_CHANGED", "MATCH_FOUND", "ROOM_ASSIGNED"},
     "room": {"CHAT_CHANGED", "PLAYER_READY", "ROOM_CHANGED"},
+    "global": {"GLOBAL_CHAT_CHANGED"},
+    "tournament": {"TOURNAMENT_CHANGED", "HOST_READY_CHANGED"},
 }
 
 def _public_key():

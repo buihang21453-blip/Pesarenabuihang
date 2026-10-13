@@ -84,7 +84,15 @@
   function refreshAll(){ lists.forEach(refresh); }
   // Đợi heartbeat chung của base.html kịp ghi presence trước lượt refresh đầu tiên.
   window.setTimeout(refreshAll,1200);
-  window.setInterval(refreshAll,15000);
+  lists.forEach(function(box){
+    var topic=box.dataset.tournamentTopic;
+    if(topic && window.PESRealtime && PESRealtime.subscribeTournament){
+      PESRealtime.subscribeTournament(topic,function(){refresh(box);});
+    }
+  });
+  // Fallback thưa: Realtime là đường chính, HTTP chỉ tự kiểm tra định kỳ để chống bỏ lỡ event.
+  window.setInterval(function(){if(!document.hidden)refreshAll();},90000);
+  document.addEventListener('pes:realtime-resync',refreshAll);
   document.addEventListener('visibilitychange',function(){
     if(!document.hidden) refreshAll();
   });

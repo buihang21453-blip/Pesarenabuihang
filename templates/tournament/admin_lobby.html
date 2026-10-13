@@ -71,7 +71,7 @@
 (function(){
   var box=document.querySelector('[data-host-ready-list]');if(!box)return;
   function refresh(){fetch('/api/tournaments/'+encodeURIComponent(box.dataset.tournamentId)+'/host-ready',{credentials:'same-origin',cache:'no-store'}).then(function(r){if(!r.ok)throw Error(r.status);return r.json();}).then(function(data){if(!data.ok)return;var target=box.querySelector('[data-host-ready-items]');if(!target)return;target.replaceChildren();(data.hosts||[]).forEach(function(host){var chip=document.createElement('span');chip.className='td-host-chip';chip.textContent='🟢 '+host.display_name+' · '+host.region;target.appendChild(chip);});if(!(data.hosts||[]).length){var empty=document.createElement('small');empty.textContent='Hiện chưa có Host nào đang rảnh.';target.appendChild(empty);}}).catch(function(){});}
-  refresh();window.setInterval(refresh,15000);
+  refresh();window.setInterval(function(){if(!document.hidden)refresh();},90000);
 })();
 </script>
 {% endblock %}

@@ -1,3 +1,13 @@
+# V1.6.81 — Tournament & Remaining Hot-Path Optimization
+
+- Tournament Host Ready: Realtime wake-up via `TOURNAMENT_CHANGED`; 15s polling is no longer the primary path.
+- Tournament Host Ready fallback: reduced from 15s to 90s while visible, plus immediate resync after reconnect/tab recovery.
+- Global lobby chat: added `GLOBAL_CHAT_CHANGED` Realtime signal; 45s polling remains only as fallback and becomes 180s while Realtime is healthy.
+- Ranking hot query: `season_player_stats` now selects only fields used by the ranking route instead of `select("*")`.
+- Existing Realtime hardening retained: authenticated HTTP/DB remains authoritative; Broadcast is wake-up only.
+- Supabase Storage migration intentionally deferred.
+- Match History already had 20-row UI pagination in V1.6.80; DB-side pagination is not forced here because current filters/search depend on enriched/archived-player data and a blind conversion could change results.
+
 
 ## V1.6.79 — Realtime / Event-driven
 - Supabase Broadcast signalling for Invite, Quick Match, Room Chat and Room State.

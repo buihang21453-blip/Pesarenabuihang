@@ -44,7 +44,7 @@ def register_routes(context):
         # V1.4.20: nguồn dữ liệu BXH chính thức là season_player_stats theo season_number.
         try:
             season_stats_result = execute_query(
-                db.table("season_player_stats").select("*").eq("season_number", requested_sn),
+                db.table("season_player_stats").select("user_id,rank_points,wins,draws,losses,total_matches,recent_form,final_rank,username,display_name").eq("season_number", requested_sn),
                 "ranking_season_player_stats", attempts=2,
             )
             season_stats_rows = [dict(x) for x in (season_stats_result.data or [])]
