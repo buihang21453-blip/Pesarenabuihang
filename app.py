@@ -66,7 +66,7 @@ from modules.win_streaks import (
 load_dotenv()
 
 APP_NAME = "PES Arena – Bản Lĩnh Sân Cỏ"
-APP_VERSION = "V1.6.77"
+APP_VERSION = "V1.6.79"
 # UI release bundle: V1.3
 DEFAULT_POINTS = 1000
 DEVICE_COOKIE_NAME = "rankzone_device_id"
@@ -253,6 +253,16 @@ supabase_key = (
 ).strip()
 
 db = create_client(supabase_url, supabase_key) if supabase_url and supabase_key else None
+
+# V1.6.79: Realtime is signalling-only. Sensitive/game data still travels through
+# authenticated Flask APIs; Broadcast only wakes the correct client up.
+from modules.realtime_events import public_config as realtime_public_config, topic as realtime_topic, publish as realtime_publish
+
+def publish_realtime(kind, identifier, event, payload=None):
+    return realtime_publish(app.secret_key, kind, identifier, event, payload)
+
+def realtime_topic_for(kind, identifier):
+    return realtime_topic(app.secret_key, kind, identifier) if identifier else None
 
 
 # Cache đã tách sang modules/cache_utils.py
@@ -1374,6 +1384,18 @@ def set_device_cookie(response):
             cache_control = "public, max-age=604800, stale-while-revalidate=86400"
         response.headers["Cache-Control"] = cache_control
         response.headers.setdefault("Vary", "Accept-Encoding")
+
+    # Event-driven room state: every successful room mutation wakes the other
+    # participant immediately. HTTP state API remains the source of truth.
+    try:
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"} and response.status_code < 400:
+            room_id = (request.view_args or {}).get("room_id")
+            if room_id:
+                endpoint = str(request.endpoint or "")
+                event = "PLAYER_READY" if "ready" in endpoint else "ROOM_CHANGED"
+                publish_realtime("room", room_id, event, {"endpoint": endpoint})
+    except Exception as exc:
+        print(f"room realtime after_request warning: {exc}")
     return response
 
 
@@ -2457,6 +2479,10 @@ def inject_globals():
         "bell_notifications": bell_notifications,
         "unread_notification_count": unread_notification_count,
         "quick_match_config": get_quick_match_config(),
+        "realtime_config": realtime_public_config(),
+        "realtime_user_topic": realtime_topic_for("user", user.get("id")) if user else None,
+        "realtime_presence_key": realtime_topic_for("presence", user.get("id")) if user else None,
+        "realtime_topic_for": realtime_topic_for,
     }
 
 

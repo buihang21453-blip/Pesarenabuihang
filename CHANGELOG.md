@@ -1,3 +1,21 @@
+
+## V1.6.79 — Realtime / Event-driven
+- Supabase Broadcast signalling for Invite, Quick Match, Room Chat and Room State.
+- PLAYER_READY / ROOM_CHANGED events wake room state sync immediately.
+- Supabase Presence connection added; DB heartbeat reduced to sparse fallback.
+- Realtime-connected polling is fallback-only (Invite 60s, Room State 30s, Chat 60s, Quick Match 30s).
+- Realtime failure automatically keeps the legacy HTTP polling path alive.
+- Broadcast carries no sensitive row payload; opaque HMAC topics are generated server-side.
+- Requires browser-safe `SUPABASE_PUBLISHABLE_KEY` (preferred) or `SUPABASE_ANON_KEY`.
+## V1.6.78 — Usage Optimization / nền tảng chuyển Realtime
+
+- Giảm mạnh polling Pending Invite khi active/idle/background.
+- Giảm heartbeat và activity heartbeat để giảm UPDATE users.
+- Giãn Room Chat polling từ 3s lên 6s trong giai đoạn fallback.
+- Giãn Room State có kiểm soát, giữ `since` + HTTP 204.
+- Tối ưu hot query Chat, bỏ `select(*)` khi không cần.
+- Giữ nguyên nghiệp vụ, UI và schema; chuẩn bị nền tảng cho Realtime ở phase tiếp theo.
+
 ## V1.6.77 — Rank Room Stability / chống phòng tự biến mất
 - Sửa nguyên nhân phòng Rank có thể tự chuyển sang `cancelled` khi host bị presence đánh dấu Offline trong lúc chuyển sang PES/Parsec/fullscreen.
 - `modules/legacy_room_service.py`: `close_room_if_host_browser_offline()` không còn được phép tự đóng/phạt phòng đang thi đấu chỉ dựa trên trạng thái Online/Offline của trình duyệt.

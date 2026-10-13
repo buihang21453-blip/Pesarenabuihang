@@ -148,7 +148,7 @@ def enrich_chat_message(message, users=None):
 
 
 def list_chat_messages(scope="global", room_id=None, limit=20):
-    query = db.table("chat_messages").select("*").eq("scope", scope)
+    query = db.table("chat_messages").select("id,user_id,room_id,scope,message,created_at").eq("scope", scope)
 
     if room_id:
         query = query.eq("room_id", room_id)
@@ -162,7 +162,7 @@ def list_chat_messages(scope="global", room_id=None, limit=20):
 
 
 def user_can_chat(user_id, scope="global", room_id=None):
-    query = db.table("chat_messages").select("*").eq("user_id", user_id).eq("scope", scope)
+    query = db.table("chat_messages").select("created_at").eq("user_id", user_id).eq("scope", scope)
 
     if room_id:
         query = query.eq("room_id", room_id)
@@ -306,6 +306,10 @@ def create_chat_message(user_id, message, scope="global", room_id=None):
 
     if scope == "room" and room_id:
         touch_room_activity(room_id)
+        try:
+            publish_realtime("room", room_id, "CHAT_CHANGED", {"changed": True})
+        except Exception as exc:
+            print(f"room chat realtime warning: {exc}")
 
     return True, ""
 

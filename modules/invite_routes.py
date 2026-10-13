@@ -191,6 +191,8 @@ def register_routes(context):
         ttl_cache_delete("invites_raw")
         cache_delete("_rz_invites_all")
         cache_delete("_rz_current_pending_invites")
+        if invite:
+            publish_realtime("user", to_user_id, "INVITE_CHANGED", {"kind": "rank"})
         if not invite:
             flash("Không thể gửi lời mời lúc này. Vui lòng thử lại.", "danger")
             return redirect(url_for("players"))
@@ -431,6 +433,9 @@ def register_routes(context):
             }), "quick_match_create_invite",
         )
         invite = invite_result.data[0] if invite_result.data else None
+        if invite:
+            publish_realtime("user", opponent.get("id"), "MATCH_FOUND", {"kind": "quick_match"})
+            publish_realtime("user", user.get("id"), "MATCH_FOUND", {"kind": "quick_match"})
         if not invite:
             return jsonify({"ok": False, "message": "Không thể gửi lời mời lúc này."}), 500
         attach_result = execute_query(

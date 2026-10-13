@@ -333,6 +333,8 @@ def register_rooms(context):
             "updated_at":now_iso(),
         }),"ops_c1_create_realtime_invite",attempts=2)
         realtime_invite=(invite_result.data or [None])[0]
+        if realtime_invite:
+            publish_realtime("user", opponent_uid, "INVITE_CHANGED", {"kind": "c1"})
         if not realtime_invite:
             flash("Không thể tạo lời mời C1 realtime. Vui lòng thử lại.","error")
             return redirect(url_for("room_detail",room_id=room_id))

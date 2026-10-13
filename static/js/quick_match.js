@@ -162,7 +162,7 @@
 
   function watchState(state) {
     clearInterval(statusTimer);
-    statusTimer = setInterval(function () { checkState(readState() || state); }, 5000);
+    statusTimer = setInterval(function () { checkState(readState() || state); }, (window.PESRealtime && PESRealtime.isConnected()) ? 30000 : 5000);
   }
 
   document.addEventListener('click', function (event) {
@@ -199,3 +199,11 @@
     }
   }
 })();
+
+// V1.6.79: MATCH_FOUND/INVITE_CHANGED wakes Quick Match immediately; timer is fallback only.
+document.addEventListener('pes:realtime-user-event', function (event) {
+    const name = String((event.detail || {}).event || '');
+    if (!['MATCH_FOUND', 'INVITE_CHANGED', 'ROOM_ASSIGNED'].includes(name)) return;
+    const state = readState();
+    if (state) checkState(state);
+});

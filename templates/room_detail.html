@@ -1109,13 +1109,14 @@ let roomViewRefreshInFlight = false;
 let roomActionRequestInFlight = false;
 
 function getRoomStateInterval() {
+    if (window.PESRealtime && PESRealtime.isConnected()) return document.hidden ? 120000 : 30000;
     if (document.hidden) return 90000;
-    if (currentRoomStatus === "playing") return currentRoomUserIsGuest ? 4500 : 10000;
-    if (currentRoomStatus === "friendly_playing") return 15000;
-    if (currentRoomStatus === "waiting_result_confirm") return currentRoomUserIsGuest ? 3000 : 6000;
-    if (currentRoomStatus === "waiting_ready") return currentRoomIsTournament ? 2500 : 6000;
+    if (currentRoomStatus === "playing") return currentRoomUserIsGuest ? 6000 : 12000;
+    if (currentRoomStatus === "friendly_playing") return 18000;
+    if (currentRoomStatus === "waiting_result_confirm") return currentRoomUserIsGuest ? 4000 : 8000;
+    if (currentRoomStatus === "waiting_ready") return currentRoomIsTournament ? 4000 : 8000;
     // C1: sau leg cuối trạng thái confirmed chỉ cần poll nhẹ; leg 2 đã tự mở ngay khi Guest xác nhận leg 1.
-    if (currentRoomStatus === "confirmed") return currentRoomIsTournament ? 8000 : 8000;
+    if (currentRoomStatus === "confirmed") return currentRoomIsTournament ? 12000 : 12000;
     return 15000;
 }
 
@@ -1541,6 +1542,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 {% if system_features.room_chat_enabled %}
 <script>
+const pesRoomRealtimeTopic = {{ realtime_topic_for("room", room.id)|tojson }};
 let currentRoomChatKey = "";
 let roomChatPoller = null;
 let roomChatUnreadCount = 0;
@@ -1819,8 +1821,8 @@ function startRoomChatPolling() {
     roomChatPoller = PESNet.createPoller({
         key: "room-chat:{{ room.id }}",
         task: loadRoomChat,
-        visibleInterval: 3000,
-        hiddenInterval: 30000,
+        visibleInterval: function () { return (window.PESRealtime && PESRealtime.isConnected()) ? 60000 : 6000; },
+        hiddenInterval: 120000,
         runWhenHidden: false,
         immediate: true,
         jitter: 1000
@@ -1829,6 +1831,13 @@ function startRoomChatPolling() {
 }
 
 window.addEventListener("DOMContentLoaded", function () {
+    if (window.PESRealtime && pesRoomRealtimeTopic) {
+        PESRealtime.subscribeRoom(pesRoomRealtimeTopic, function (eventName) {
+            // CHAT_CHANGED refreshes only chat; all room gameplay events refresh state.
+            if (eventName === "CHAT_CHANGED") requestImmediateRoomChatRefresh();
+            else requestImmediateRoomStateCheck();
+        });
+    }
     bindRoomChatForm();
     const chatPanel = document.querySelector('.room-chat-side, [data-room-chat-panel]');
     const chatButton = document.getElementById("roomChatToggleButton");

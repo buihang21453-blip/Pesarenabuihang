@@ -26,6 +26,19 @@
     <script src="{{ static_asset('js/quick_match.js') }}" defer></script>
     {% endif %}
     <script src="{{ static_asset('js/pes_polling.js') }}" defer></script>
+    {% if current_user and realtime_config and realtime_config.enabled %}
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+    <script>
+    window.PES_REALTIME_CONFIG = {{ {
+        "enabled": realtime_config.enabled,
+        "url": realtime_config.url,
+        "key": realtime_config.key,
+        "userTopic": realtime_user_topic,
+        "presenceKey": realtime_presence_key
+    }|tojson }};
+    </script>
+    <script src="{{ static_asset('js/pes_realtime.js') }}" defer></script>
+    {% endif %}
     <script src="{{ static_asset('js/zcoin.js') }}" defer></script>
     {% if request.endpoint == 'zcoin_rewards' %}
     <script src="{{ static_asset('js/zcoin_rewards.js') }}" defer></script>
@@ -1082,8 +1095,8 @@ window.addEventListener("DOMContentLoaded", function () {
     const heartbeatPoller = PESNet.createPoller({
         key: "heartbeat",
         task: postHeartbeat,
-        visibleInterval: 60000,
-        hiddenInterval: 180000,
+        visibleInterval: 300000,
+        hiddenInterval: 600000,
         runWhenHidden: false,
         immediate: false,
         jitter: 5000
@@ -1092,7 +1105,7 @@ window.addEventListener("DOMContentLoaded", function () {
     let lastActivityHeartbeatAt = 0;
     function refreshOnUserActivity() {
         const now = Date.now();
-        if (now - lastActivityHeartbeatAt < 30000) return;
+        if (now - lastActivityHeartbeatAt < 300000) return;
         lastActivityHeartbeatAt = now;
         if (heartbeatPoller && typeof heartbeatPoller.runNow === "function") heartbeatPoller.runNow();
     }
@@ -1118,7 +1131,7 @@ window.addEventListener("DOMContentLoaded", function () {
     function pendingInviteInterval() {
         // Không có Realtime/WebSocket nên cần lớp dự phòng ngắn khi người dùng
         // đang thực sự thao tác. Khi bỏ máy, tự giãn chu kỳ để giảm request.
-        return (Date.now() - lastInviteActivityAt <= 60000) ? 2200 : 8000;
+        return (window.PESRealtime && PESRealtime.isConnected()) ? 60000 : ((Date.now() - lastInviteActivityAt <= 60000) ? 15000 : 30000);
     }
     // Lời mời phải xuất hiện trên mọi trang đã đăng nhập, kể cả Lịch sử và
     // Hướng dẫn. Khi tab chạy nền vẫn kiểm tra thưa để lời mời không hết hạn
@@ -1130,19 +1143,29 @@ window.addEventListener("DOMContentLoaded", function () {
             key: "pending-invites",
             task: checkPendingInvites,
             visibleInterval: pendingInviteInterval,
-            hiddenInterval: 10000,
+            hiddenInterval: 120000,
             runWhenHidden: true,
             immediate: true,
-            jitter: 250
+            jitter: 750
         });
+
+    // Realtime signal: không mang dữ liệu lời mời; chỉ đánh thức API Flask đã xác thực.
+    document.addEventListener("pes:realtime-user-event", function (event) {
+        const name = String((event.detail || {}).event || "");
+        if (["INVITE_CHANGED", "MATCH_FOUND", "ROOM_ASSIGNED"].includes(name)) {
+            checkPendingInvites();
+            if (!isRoomPage && !isPassivePage) checkActiveRoom();
+        }
+    });
 
     // Watchdog độc lập: nếu một module JS khác lỗi hoặc poller bị dừng quá lâu,
     // lời mời vẫn được kiểm tra lại. Không tạo request trùng nhờ singleFlight.
     window.setInterval(function () {
-        if (Date.now() - lastPendingInvitePollAt >= 15000) {
+        const watchdogLimit = document.hidden ? 90000 : 45000;
+        if (Date.now() - lastPendingInvitePollAt >= watchdogLimit) {
             checkPendingInvites();
         }
-    }, 5000);
+    }, 15000);
 
     // Active room không cần polling định kỳ. Chỉ kiểm tra khi tải trang, quay lại
     // tab hoặc sau các sự kiện lời mời/phòng.
