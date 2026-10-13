@@ -1,0 +1,10 @@
+PES Arena Giai doan 2 - Asset filename mapping
+
+ChatGPT Image 19_10_13 17 thg 9, 2026 (2).webp -> gd2_crowd_silhouette.webp
+ChatGPT Image 19_10_16 17 thg 9, 2026 (7).webp -> gd2_ui_icons_spritesheet.webp
+ChatGPT Image 19_10_16 17 thg 9, 2026 (8).webp -> gd2_coach_avatar_placeholder.webp
+ChatGPT Image 19_10_14 17 thg 9, 2026 (4).webp -> gd2_club_reveal_frame.webp
+ChatGPT Image 19_10_15 17 thg 9, 2026 (6).webp -> gd2_club_reveal_stage.webp
+ChatGPT Image 19_10_14 17 thg 9, 2026 (5).webp -> gd2_random_club_card.webp
+ChatGPT Image 19_10_14 17 thg 9, 2026 (3).webp -> gd2_stadium_lights_frame.webp
+ChatGPT Image 19_10_13 17 thg 9, 2026 (1).webp -> gd2_draw_ceremony_stadium.webp
