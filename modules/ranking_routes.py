@@ -32,7 +32,7 @@ def register_routes(context):
             all_player_rows = []
 
         try:
-            ranking_activity_matches = list_matches()
+            ranking_activity_matches = list_ranking_activity_matches()
         except Exception as exc:
             print(f"ranking activity matches warning: {exc}")
             ranking_activity_matches = []

@@ -65,19 +65,38 @@ def register_routes(context):
         )
         history_view = "all" if requested_view == "all" and can_view_all_history else "mine"
 
+        # V1.6.82: the normal personal-history path is paginated in Supabase.
+        # Keep compatibility filtering for text search, all-system visibility, and
+        # cancelled/forfeit because those rules depend on decorated/legacy data.
+        db_paged = history_view == "mine" and not query and status_filter != "cancelled"
+        if db_paged:
+            rows, total_items = list_history_matches_page(
+                user.get("id"), page=page, per_page=per_page,
+                status=None if status_filter == "all" else status_filter,
+            )
+            total_pages = max(1, (total_items + per_page - 1) // per_page)
+            if page > total_pages:
+                page = total_pages
+                rows, total_items = list_history_matches_page(
+                    user.get("id"), page=page, per_page=per_page,
+                    status=None if status_filter == "all" else status_filter,
+                )
+            history_viewer_id = user.get("id")
+            page_rows = [decorate_match_for_view(match, history_viewer_id) for match in rows]
+            return render_template(
+                "matches.html", matches=page_rows, history_view=history_view,
+                can_view_all_history=can_view_all_history, global_history_enabled=global_history_enabled,
+                status_filter=status_filter, q=request.args.get("q", ""), page=page,
+                total_pages=total_pages, total_items=total_items,
+            )
+
         rows = list_matches()
         invisible_ids = get_invisible_player_ids()
         if history_view != "all":
             user_id = user.get("id")
-            rows = [
-                match for match in rows
-                if user_id in {match.get("player1_id"), match.get("player2_id")}
-            ]
+            rows = [match for match in rows if user_id in {match.get("player1_id"), match.get("player2_id")}]
         else:
-            rows = [
-                match for match in rows
-                if match_visible_to_viewer(match, user, invisible_ids)
-            ]
+            rows = [match for match in rows if match_visible_to_viewer(match, user, invisible_ids)]
 
         if status_filter == "cancelled":
             rows = [match for match in rows if _is_cancelled_or_forfeit_history(match)]

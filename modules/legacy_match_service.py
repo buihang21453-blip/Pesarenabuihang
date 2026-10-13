@@ -3,7 +3,7 @@
 The application injects its runtime dependencies through configure(context).
 """
 
-EXPORTED_NAMES = ['auto_confirm_expired_match_if_needed', 'list_matches', 'match_status_label', '_normalize_match_score', '_same_user_id', '_normalize_match_delta', 'decorate_match_for_view', 'build_player_activity_map', 'get_match', 'get_match_dispute', 'get_match_dispute_by_match', 'list_match_disputes', 'dispute_reason_label', 'create_or_update_match_dispute', 'decorate_match_dispute']
+EXPORTED_NAMES = ['auto_confirm_expired_match_if_needed', 'list_matches', 'list_history_matches_page', 'list_ranking_activity_matches', 'match_status_label', '_normalize_match_score', '_same_user_id', '_normalize_match_delta', 'decorate_match_for_view', 'build_player_activity_map', 'get_match', 'get_match_dispute', 'get_match_dispute_by_match', 'list_match_disputes', 'dispute_reason_label', 'create_or_update_match_dispute', 'decorate_match_dispute']
 
 def configure(context):
     globals().update(context)
@@ -84,21 +84,19 @@ def auto_confirm_expired_match_if_needed(match):
         return match
 
 
-def list_matches(status=None):
-    require_db()
 
-    cached = cache_get("_rz_matches_all")
-    if cached is None:
-        query = db.table("matches").select("*").order("created_at", desc=True)
-        result = execute_query(query, "list_matches")
-        cached = result.data or []
-        cache_set("_rz_matches_all", cached)
+# V1.6.82: explicit columns for read-heavy history/ranking paths.
+# Keep this list intentionally broader than the template so result/forfeit logic
+# continues to have every field it needs without SELECT *.
+MATCH_READ_COLUMNS = ",".join([
+    "id", "player1_id", "player2_id", "team1", "team2", "score1", "score2",
+    "delta1", "delta2", "winner_id", "loser_id", "submitted_by_id",
+    "confirmed_by_id", "status", "note", "rp_details", "created_at", "updated_at",
+])
 
-    processed_matches = [auto_confirm_expired_match_if_needed(dict(m)) for m in cached]
-    matches = [m for m in processed_matches if not status or m.get("status") == status]
+def _decorate_match_identities(matches):
     users = users_map()
     archived_users = archived_users_map()
-
     for match in matches:
         player1_id = str(match.get("player1_id") or "")
         player2_id = str(match.get("player2_id") or "")
@@ -117,6 +115,52 @@ def list_matches(status=None):
         match["submitted_by_name"] = (users.get(match.get("submitted_by_id"), {}) or archived_users.get(str(match.get("submitted_by_id") or ""), {})).get("display_name", "")
         match["winner_name"] = (users.get(match.get("winner_id"), {}) or archived_users.get(str(match.get("winner_id") or ""), {})).get("display_name", "")
         match["loser_name"] = (users.get(match.get("loser_id"), {}) or archived_users.get(str(match.get("loser_id") or ""), {})).get("display_name", "")
+    return matches
+
+def list_history_matches_page(user_id, page=1, per_page=20, status=None):
+    """DB-side page for the common personal-history path.
+
+    Search and the special cancelled/forfeit filter deliberately stay on the
+    compatibility path because they depend on decorated names/legacy forfeit
+    semantics. This keeps behavior correct while removing the expensive
+    all-matches read from the normal /matches?view=mine path.
+    """
+    require_db()
+    page=max(1, int(page or 1)); per_page=max(1, min(int(per_page or 20), 100))
+    start=(page-1)*per_page
+    q=db.table("matches").select(MATCH_READ_COLUMNS, count="exact").or_(
+        f"player1_id.eq.{user_id},player2_id.eq.{user_id}"
+    )
+    if status and status != "all":
+        q=q.eq("status", status)
+    result=execute_query(q.order("created_at", desc=True).range(start, start+per_page-1), "list_history_matches_page", attempts=2)
+    rows=[auto_confirm_expired_match_if_needed(dict(x)) for x in (result.data or [])]
+    _decorate_match_identities(rows)
+    return rows, int(getattr(result, "count", 0) or 0)
+
+def list_ranking_activity_matches():
+    """Small-column ranking activity feed; avoids loading full match rows."""
+    require_db()
+    cols="id,player1_id,player2_id,status,note,created_at"
+    result=execute_query(
+        db.table("matches").select(cols).in_("status", ["confirmed", "cancelled"]).order("created_at", desc=True),
+        "list_ranking_activity_matches", attempts=2,
+    )
+    return [dict(x) for x in (result.data or [])]
+
+def list_matches(status=None):
+    require_db()
+
+    cached = cache_get("_rz_matches_all")
+    if cached is None:
+        query = db.table("matches").select(MATCH_READ_COLUMNS).order("created_at", desc=True)
+        result = execute_query(query, "list_matches")
+        cached = result.data or []
+        cache_set("_rz_matches_all", cached)
+
+    processed_matches = [auto_confirm_expired_match_if_needed(dict(m)) for m in cached]
+    matches = [m for m in processed_matches if not status or m.get("status") == status]
+    _decorate_match_identities(matches)
 
     return matches
 

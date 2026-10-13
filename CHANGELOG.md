@@ -1,3 +1,12 @@
+# V1.6.82 — Database Usage Optimization
+
+- DB-side pagination for normal personal match history.
+- DB-side status filtering before history pagination.
+- Narrow ranking-activity match query.
+- Narrow match history/list read columns.
+- Added recommended Supabase indexes SQL.
+- Assets intentionally unchanged.
+
 # V1.6.81 — Tournament & Remaining Hot-Path Optimization
 
 - Tournament Host Ready: Realtime wake-up via `TOURNAMENT_CHANGED`; 15s polling is no longer the primary path.
