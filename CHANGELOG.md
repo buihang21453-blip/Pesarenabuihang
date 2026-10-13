@@ -1410,3 +1410,9 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 - Giữ nguyên nguyên tắc chỉ hiển thị tên đội, không logo đội.
 - Không thêm API/DB/Realtime: random vẫn chạy 100% client-side.
 - Responsive cho mobile/tablet.
+
+
+## V1.6.95 — Friendly League Logos
+- Thay icon cờ ở menu Ngoại Hạng Anh bằng logo Premier League từ GitHub Pages source.
+- Thay icon cờ ở menu La Liga bằng logo La Liga từ GitHub Pages source.
+- Chỉ thay giao diện; không đổi random/anti-repeat/API/DB/Realtime.
