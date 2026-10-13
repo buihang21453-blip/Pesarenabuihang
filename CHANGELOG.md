@@ -1,3 +1,11 @@
+# V1.6.94 — Guest Friendly Menu Entry
+
+- Làm nổi bật lối vào Giao hữu ở màn hình đăng nhập công khai.
+- Nội dung hiển thị đúng yêu cầu: `Random đội` và nút `🎮 GIAO HỮU`.
+- Không thay đổi logic random/chống trùng 5 lượt của V1.6.93.
+- Không thêm Supabase query, Realtime message hay API call.
+- File sửa: `app.py`, `templates/login.html`, `CHANGELOG.md`.
+
 ## V1.6.93 — Friendly Random Anti-Repeat
 
 - Giao hữu công khai: chống lặp đội trong 5 lượt random gần nhất.
