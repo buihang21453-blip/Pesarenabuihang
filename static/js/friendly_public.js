@@ -3,8 +3,8 @@
   const POOLS = {
     premier_league:['Arsenal','Aston Villa','Bournemouth','Brentford','Brighton','Burnley','Chelsea','Crystal Palace','Everton','Fulham','Leeds United','Liverpool','Manchester City','Manchester United','Newcastle United','Nottingham Forest','Sunderland','Tottenham Hotspur','West Ham United','Wolverhampton'],
     la_liga:['Athletic Club','Atlético Madrid','Barcelona','Celta Vigo','Elche','Espanyol','Getafe','Girona','Levante','Mallorca','Osasuna','Rayo Vallecano','Real Betis','Real Madrid','Real Oviedo','Real Sociedad','Sevilla','Valencia','Villarreal','Alavés'],
-    five_star:['Manchester City','Real Madrid','Bayern Munich','Inter Milan','Arsenal','Liverpool','Barcelona','PSG'],
-    four_star:['Atlético Madrid','Bayer Leverkusen','Borussia Dortmund','Tottenham Hotspur','AC Milan','Juventus'],
+    five_star:[],
+    four_star:[],
     club_five_star:['Real Madrid','Barcelona','Liverpool','Arsenal','Manchester City','Paris Saint-Germain','Inter Milan','Bayern Munich'],
     nation_five_star:['Tây Ban Nha','Pháp','Brazil','Anh','Argentina','Bồ Đào Nha','Đức','Hà Lan']
   };
@@ -42,6 +42,7 @@
 
   function drawBoth(){
     const pool=POOLS[activeMode]||[];
+    if(pool.length<2){ pair=['Chưa có dữ liệu','Chưa có dữ liệu']; render(); return; }
     let available=candidates(pool,2,[]);
     if(available.length<2)available=pool.slice();
     pair[0]=pick(available);
@@ -52,6 +53,7 @@
   }
   function drawOne(side){
     const pool=POOLS[activeMode]||[];
+    if(pool.length<2){ pair=['Chưa có dữ liệu','Chưa có dữ liệu']; render(); return; }
     const other=pair[side===0?1:0];
     let available=candidates(pool,1,[other]);
     if(!available.length)available=pool.filter(team=>team!==other);
@@ -68,5 +70,16 @@
     if(e.target.closest('[data-random-home]')){drawOne(0);return;}
     if(e.target.closest('[data-random-away]')){drawOne(1);return;}
   });
-  drawBoth();
+  async function loadImportedTierPools(){
+    try{
+      const response=await fetch('/api/friendly/club-pools',{headers:{'Accept':'application/json'},cache:'no-store'});
+      if(!response.ok)return;
+      const data=await response.json();
+      if(data&&data.ok){
+        POOLS.five_star=Array.isArray(data.five_star)?data.five_star:[];
+        POOLS.four_star=Array.isArray(data.four_star)?data.four_star:[];
+      }
+    }catch(_err){}
+  }
+  loadImportedTierPools().finally(drawBoth);
 })();

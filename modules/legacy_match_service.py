@@ -388,6 +388,16 @@ def build_player_activity_map(rooms=None, matches=None):
     rooms = list_rooms() if rooms is None else rooms
     matches = list_matches() if matches is None else matches
     activity = {}
+    # A host who is alone in an active waiting room is inviteable.  Stale
+    # matches from an older game must never upgrade that user to "playing".
+    solo_waiting_user_ids = {
+        str(room.get("host_user_id"))
+        for room in rooms
+        if room.get("host_user_id")
+        and not room.get("guest_user_id")
+        and not room.get("match_id")
+        and room.get("status") == "waiting_ready"
+    }
 
     def set_status(user_id, code, label):
         if not user_id:
@@ -416,6 +426,16 @@ def build_player_activity_map(rooms=None, matches=None):
         set_status(room.get("guest_user_id"), code, label)
 
     for match in matches:
+        # Solo waiting room is authoritative for availability. Ignore stale live
+        # match rows left from an older room lifecycle for that player.
+        match_user_ids = {str(match.get("player1_id") or ""), str(match.get("player2_id") or "")}
+        if match_user_ids & solo_waiting_user_ids:
+            for uid in (match.get("player1_id"), match.get("player2_id")):
+                if uid and str(uid) in solo_waiting_user_ids:
+                    activity[uid] = {"code": "in_room", "label": "Đang trong phòng"}
+            # Continue processing the other player normally below only if neither
+            # side is solo; stale pair rows should not mark either side busy.
+            continue
         if match.get("status") == "waiting_confirm":
             code, label = "waiting_confirm", "Chờ xác nhận"
         elif match.get("status") == "playing":

@@ -66,11 +66,13 @@ with params as (
 ), decorated as (
   select b.*,
     case when not online_now then 'offline'
+         when solo_waiting then 'in_room'
          when activity_priority=3 then 'playing'
          when activity_priority=2 then 'waiting_confirm'
          when activity_priority=1 then 'in_room'
          else 'ready' end activity_code,
     case when not online_now then 'Offline'
+         when solo_waiting then 'Đang trong phòng'
          when activity_priority=3 then 'Đang thi đấu'
          when activity_priority=2 then 'Chờ xác nhận'
          when activity_priority=1 then 'Đang trong phòng'

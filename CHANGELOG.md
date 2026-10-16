@@ -1459,3 +1459,12 @@ Không thay đổi BXH, kết quả Trận 1, RP/Rank, thưởng GĐ1.
 - Giảm tải Supabase khi chỉ mở `/admin`.
 - Web Analytics 403: scope-aware Team ID/slug/personal fallback và chẩn đoán rõ hơn.
 - Không thay gameplay/realtime/database schema.
+
+
+## V1.6.102 — Player Activity + Friendly Tier Random Fix
+- Solo waiting room now overrides stale `matches.status=playing`; player remains inviteable while alone in a waiting room.
+- Updated Players RPC SQL with the same solo-room precedence; run `SQL_V1.6.102_FIX_PLAYER_ACTIVITY_RPC.sql` in Supabase.
+- `/friendly` 5★ now reads all active/imported club rows tagged Tier S/S+ from `clubs_import`; 4★ reads Tier A/A+.
+- Removed the hardcoded 5★/4★ club shortlists.
+- Pair generation remains true per-click random selection; it does not use a prebuilt list of matchups.
+- Existing five-action anti-repeat logic remains, relaxing only the oldest history when a pool is too small.
